@@ -50,16 +50,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f619344f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4bcd9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02e515",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x923febc977e81025ed2d2345710b88abb1776c1c9824666fc40e1d1bebc404e9",
+            "hash": "0x549e67a211dd65704f0822ffb7c68d74770e610948a0cadc73be31dfed59facb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -116,16 +136,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b655b8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04d97c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8e942064eedacc8dacc53f65d04349aca216ac139448c6f91d0b142e1738d6bd",
+            "hash": "0x7ffc7d5996a06cf4bc93ce22f52aa41deeb96af10b54cb089aa78af1b772d94c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -182,16 +222,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15bbc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0657ae",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc2b0757a21c3ad0d50d7aa6a8cf3af53954a0d3e963c44d931a36fba6895682e",
+            "hash": "0x83fdcd71ef74139c2aa9fc8f60421f8ef86edf7aa0d3cecc44766c2673ff0c84",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -248,16 +308,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15ba8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0657b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x01bda24763a12ae7db0ef39999861ced42aa5f7b2eabdc2b46b9d81875f332a3",
+            "hash": "0x52790b448bdcb9198e87e3c920b019786b9aa70d858405867ea3dc3e31cf0bb1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -314,16 +394,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15c20",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x065790",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x38f9f2bbc32e9ba43f5502471beda1adf133336a40a7184142c6df8b2dbc0964",
+            "hash": "0xbec6d0187accf5180b3968915afc56252653099231370721a6a8611853521050",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -380,16 +480,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15ba8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0657b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x32bf5977663c4ec190cb3ae8ee9ec813e9daf2e01f2e7ac9190d7480426ea698",
+            "hash": "0x7b02c4981e0fa94ccfb2a7b24fa069c294fb7a7f650f2ec8ba22f5902e06b4f5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -446,16 +566,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15c20",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x065790",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf5dbb4f798e1a4c32d747942f6f998de2a769fe7cf1f8fb9d11b3241de345ad0",
+            "hash": "0xab149c016b92d6f30d15c2668d5a54a362bc5cdbde9f67adce7640447506652d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -512,16 +652,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15ba8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0657b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xff6cf5c6d9e09faae9220674a52845caca3129a0f83a241a86170313e492e81d",
+            "hash": "0xd8c0a4613d2b2a13c22be74a2441f2f64df07910c668198918ca9d119f7ad160",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -578,16 +738,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f620191f4f16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b15c20",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x065790",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2479e9acd451492c33f5eeb90a35aee9fc7888bcf460b0179f556b77a5ede69f",
+            "hash": "0x38dffc7cf9fc87b04b7f1c8fe49b5262eef296c973e40c1149b982e68865752a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -644,16 +824,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5d22c375b92067c32714d2dfe3488e9aab2ec0f9318e34ce1a44c95da23273e2",
+            "hash": "0x11e5ea10444ac8a43755a6d79f6d537ca136191e7cbd6307657a27da7cdae9ed",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -710,16 +910,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2953ec571d794bbdb19fa470d60869a5729cd79c71bb896f7db9b8a1a7094519",
+            "hash": "0xc44cfb1349009c92dbfd0f204b8f93e3b16cd35dafa2ad43ba32047c7c7d6860",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -776,16 +996,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe84bf3cd53dbcdc838f89d8a02edeca9119b99f63c118a3709506704f159ad1a",
+            "hash": "0x7a9903c476db90c2fb30b2bad45d1b1add09141aa0634322ec8458f83665fef8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -842,16 +1082,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5a318874a3eeb5f46f4f2d95b966e0d5c0d70139a959fc73ba58bcddfdc84b3a",
+            "hash": "0x92cd3fd60298ab9e237a737848739eb04f91b2c3fb247079e4c098bb3bcffbee",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -908,16 +1168,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3661f5149034325d0999543a3edd5dad2555f26ac2e1011615d7dacec9a49e5d",
+            "hash": "0x8cf0adb9e5a822b7147e1f04d4b020f2959076c79d9ca0fd40e45a365de627fe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -974,16 +1254,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b78afa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047cb5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xae60e0eb277f34313f8a1657c81ab1b7f66e5dea57b8bbe11af454912bbca678",
+            "hash": "0x1100bfd5af62944947e1fe13797b71b5a731d45bff97d4767a9773234673c167",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1040,16 +1340,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b7a102",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047619",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5b6039a2fe9e7e7b0171493eae686accbcb6ef1a88ecc5856d6a8145c426def4",
+            "hash": "0x167ee8a8093cf8959f9576e082eb81f216008d6c8a785f7d82ee034343b06307",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1106,16 +1426,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b7a102",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047619",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3f216cd353354cfbcd672c6fcc89b5e2e004d1fe1d43ac34e5c585338c30cb41",
+            "hash": "0xb790f2af7fe427c0ccd840cf5e07ca72f99cb4f8c5bc5f957bea964f380815e5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1172,16 +1512,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6301f2825cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7e9028d0b2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x062f4e31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9a7b85bd5eefc3a444efb8ed867715dd7b5e76725f40a8f513a7ecbdc16a37fc",
+            "hash": "0x8b5046c755099e61bfe835d86a48066a0c16939424a07f88a1c448322a6e1287",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1238,16 +1598,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b7a102",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047619",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa705968df716045efdadcfac07f9bc293b8323de175ee083a3bd1805926d0cc8",
+            "hash": "0x7c7201e3f8070a18c641b53bb5f26833ac4daf5ceeeea8e8a869aefe7fb92d2e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1304,16 +1684,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037600060003660006000600f6201129cf16000553d600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b77402",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x048399",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc3fd4c486215b5477e089c7229d3730af6b34e88f18272464490e5ac5075fe49",
+            "hash": "0x9070a115368dada999744010e0bbf8e5dd43d37b1bc5f173e925f24976ee7056",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Negative tests for the BLS12_PAIRING precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L57",
+            "description": "Test function documentation:\nNegative tests for the BLS12_PAIRING precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_pairing.py#L54",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

@@ -65,16 +65,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6667a8cf0590a97eb2b6cc11ea9ce09160a3a67c45f1631e6a4818c12f8a3b0e",
+            "hash": "0x106e8bc494e0461fc5a6668613197fdb9fe8dd9a274b8f90d79366867c7b2166",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -146,16 +168,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000c",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcc9985544142d72d3f58569bc6083a260c477f0de79a224591c545f43feb8f66",
+            "hash": "0x5108cf49eddacfcc07208aa1d9023dd4a108cdca9df541f2956d5ae542dfa5e3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -227,16 +271,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000d",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x165919a2b01543f915b8930619c0ab2c326a21dddd0389f93e25627697853a56",
+            "hash": "0x90ee24a5cc80c36e01e61fed0a6af0f0ac9132b97decc1f82fc16f13565f7ed8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -308,16 +374,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000e",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x816d4955e548915a869c3bb27d923736747bb3859c57dd23445eb9185512ba00",
+            "hash": "0x92fa2d655dfd290cb189d59c5baae8ef16fa050de9250041c5d2006fddaa44cd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -389,16 +477,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000f",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x06ce5315e21140e76f77822a5b781e8b7fa5fcd39c1eef5764734e182731fbdb",
+            "hash": "0x302723200cf2bea9f61272eab9470cc416c2f8ea3b4e356b76419a1c6d5a5262",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -470,16 +580,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000010",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x589b0aba7977e25f4296c4f70d64c6d3edcfa952fc7469e50ca884877e19cd60",
+            "hash": "0x8ca93180302b1b554c0f69f03266b116707e822f18caccb8372fb75d52fba022",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -551,16 +683,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000011",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc99372bacdeea0c759b8b23fa2b7cb02eeaa260ca55fd6c5471dd12858c57557",
+            "hash": "0x1a531b964d6b2ed3a46efee22ebc9e1719219cd8b550056805bb54586d9b248a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -632,16 +786,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100000000000000000000000000000000000000000a",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x46e4846beb03d3a880cf106d4d46aa1c9911b85383a980cde4ccfe340a24844d",
+            "hash": "0x50480982859c929060a0cb9ead496827600680c5da87a04bcda7268c9ec6a4f2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -713,16 +889,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000009",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xae42f37adf8f94c198cc0794319a66de59acaec79baba36544fff70d7956f4bf",
+            "hash": "0xceb525ac69cffa0d3092ec102906082dfec0d92c7a57ab55254ece58894eece0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -794,16 +992,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000005",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc5f7164b6e72ebf4c5ca47f1e23039fff5a6d0880f8f489f6af5dc0fa3bd9367",
+            "hash": "0xd07cf50640f6b568da8c276afe795502c522e45ab485c56935c1a7a204763a2d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -875,16 +1095,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000006",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1b15c4dcd30d5917eafec75ea2b60cc138b25a43982d128264a6ad9ea0b7f127",
+            "hash": "0xd0c87ae9faf21d51a2a1d3e70e229b0dc3f1d0f44318c6f857a245a4fe747506",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -956,16 +1198,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000007",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5389da7480179f5ae3496650e3571ccb1ff5b00d684271668e0c7923ba5f4e91",
+            "hash": "0x8bf5ec33e6a1327616c24bd8cbb8aa014b2d94e6ac8fbedf91123bece93f85f4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1037,16 +1301,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000008",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb2db18b0f561bc5c9c2872da53cb4b6bfb19b811bdf290bfc6fa40bc53d4af02",
+            "hash": "0x065fe05a501c5d9b9659b266ecf41831e21dbbafee344c10c887665d72cf7e6a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1118,16 +1404,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000001",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd080196b484984e665302983e0afc5d50fbdc8f0b79ab58a5238948dc12d3d65",
+            "hash": "0x98656b5bcb450e97a7c8ea8a7176880b154193b1e738645d3a9126a8d73984da",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1199,16 +1507,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000002",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd95a3fab233de90699c67c46a2afc78261c525b12bb3692661b2c4279119408e",
+            "hash": "0xb757ee1d831f998a16895466543773875b67db78583d8a81c267e25372f38593",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1280,16 +1610,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000003",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd48ae93233416ff6457b7ce223b89adec4d8717f745d47df1effa4fc1aeb919a",
+            "hash": "0x348cb9de2957603b22fd78691ccb7a93a218ce2bf98d4d112600afcd121a65d9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1361,16 +1713,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af16000553d60015500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de987780",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000000004",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe2d1567a674f4b048f6ae946acd2b98691913b19e6499a12bb3473c119eb83f7",
+            "hash": "0xbc147cf3089700accf91e532d0b03641bcba19aadc2852a52fdf1b19ceb805e2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test setting the code of an account to a pre-compile address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2555",
+            "description": "Test function documentation:\nTest setting the code of an account to a pre-compile address.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2515",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

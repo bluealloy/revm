@@ -65,16 +65,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x7c98f1c8dc92f5a9abb6007ee831a4e31d104bdc": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa4ad5367787c75ee72b9345ed5b8bd56c5fec001ac7ef603bd9a2549b5484806",
+            "hash": "0x33d167100c1cf33319d51c9c0ee14686fa2542a6736d9f2e5ff2e0eb92b9fac1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -146,16 +168,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x98819367593544e6471a3f1b3a35c37232acf875": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe95c799f3f1e5caadcf50c4e47a34933a762fa4cf699f1ac32b0cf93696a6101",
+            "hash": "0x196d3b1327fe1e06501890be73ecf0cff6554144646a2920f4e780f350bdba0a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -227,16 +271,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2b71df50f79d18b48e92a915c2683f7aa5b8fb6e": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc168129bd3427c6cbb2bc8d17a28c4683e00bd5144a1547b0ac3cf6101741460",
+            "hash": "0x949ca67122fc727f6b13717ec3d7f2cb7ce995a44662073ea94bd4ac837f6e5d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -308,16 +374,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8dbd05ecb7773c0bedf55563f80c36194ee55ebf": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0e48f59214a182d967e48050cfd8535f5903d3265666ea925faafbc7e29a0f77",
+            "hash": "0x10fab513bedada54600997e1ed450cd079d8a8cc92d1dda9c078a962e3bf43fd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -389,16 +477,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x1adfc71c73ee7f57d027847138bf3f07a7dbdf39": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x01e9569d257ce549a0bdf521781a95b8b2a769998ffa37a8fa4d023d06667929",
+            "hash": "0x37ea8b394779f01ec3f6e71894ef6eed94c9dbf3bb370a9ec61ea950af6c46a7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -470,16 +580,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x375ce41e81c764aead9c0ae1e90d01d0d9e629e1": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe196c9fa08d600a254dccdabf6332c0c4645d86f267d9fdbff67bbb5ba47e577",
+            "hash": "0x807416377acd3f77daee3355638201ba3b06e795060ab0621141cd8ec19f5f75",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending a transaction to set the code of an account using synthetic signatures.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2090",
+            "description": "Test function documentation:\nTest sending a transaction to set the code of an account using synthetic signatures.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2055",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

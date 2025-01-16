@@ -50,16 +50,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.TYPE_4_TX_CONTRACT_CREATION"
                 }
             ]
         },
         "_info": {
-            "hash": "0x9268823a74b8653b28fce93801e07af366baa10335b10ed36d5d182f0f024d27",
+            "hash": "0x2426253b35bc79efc7530aad2fe56b703c117c2dcfa987fdc608160a22aff0fe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test sending type-4 tx as a create transaction",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2957",
+            "description": "Test function documentation:\nTest sending type-4 tx as a create transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2910",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

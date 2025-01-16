@@ -58,16 +58,56 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de885766",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055611000ff600060005500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x13",
+                                "0x03": "0x9d35138a4f4b7c27daecd45285b0422b6c9edf3dede08d333d73811a6e119ab0"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0718fb",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf8f4db38b05d004b79a148ecaff7d53e36545fd6758a916ac6132e49cf4b4df5",
+            "hash": "0x490daec8e0bda93dccb3cd6fd90d9ba33a71fbf61a7c5b3bce06cb566ba5408a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -124,16 +164,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de88bd00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60016000540160005530ff600060005500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x11",
+                                "0x03": "0x2fdd3f699f68532615dbf204509ad40c663bff2db0769131903d0fd4bc53a404"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x06fa80",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xaa060397e2965109e61a0073420bad769aaa66299e679da64bd31a1cb3a97406",
+            "hash": "0x938e566e5f414539de994f57e965e4adc2ca2f119e480c5708e86936f2a78bcf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -198,16 +270,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de82b747",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055611000ff600060005500",
+                            "storage": {
+                                "0x00": "0x02"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x13",
+                                "0x05": "0x9d35138a4f4b7c27daecd45285b0422b6c9edf3dede08d333d73811a6e119ab0"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08c904",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x778a19ee3fbb407e73d872d5735183beee0bf002a454212c0836371030514f5c",
+            "hash": "0x98180ba3da1f693a92a1d87b1ff5559f486a2b7cd9b848e0176f3fec58ce6801",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -264,16 +377,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de801393",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x60016000540160005530ff600060005500",
+                            "storage": {
+                                "0x00": "0x02"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x11",
+                                "0x05": "0x2fdd3f699f68532615dbf204509ad40c663bff2db0769131903d0fd4bc53a404"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0993ba",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf670043c80c1ba9b1d7d809befde7adead1f42ff2fd13625663b9cce0403b1f4",
+            "hash": "0xf46df951f1f79fe105db6d82aab0edacb91e2ba6160c6b35172a34cdb0e9b9aa",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -354,16 +501,74 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7c40e5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0ab954",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7b33450bf72976708379e5b1df7dab697862bc569f9029b9ca5702980863a1f8",
+            "hash": "0x645e5c221f436f9e2897aaa41926bdcf5ede1573d9b9ba13e572ef12ff49f70e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -436,16 +641,66 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7ca675",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0a9adc",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x76007076122eb49308cc9091100698e042c121e43bded46f276c6fe6ada7350b",
+            "hash": "0x22ad457158041054cb917785e251704fb5620cbc8fca4eb54fbee5d9c915e916",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -518,16 +773,67 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de799d1d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x02",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b8410",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa0dcc0510999efacc03554f111875b7ef00f187b2d93100af2d00e1c549a4c0f",
+            "hash": "0x3641712c6278125718acc2f8cac037be2aae4f8928e327c76964431a1355a4d6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -600,16 +906,70 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de68b195",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x08",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x07",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x06"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x01",
+                                "0x07": "0x03",
+                                "0x08": "0x01",
+                                "0x0a": "0x01",
+                                "0x0c": "0x3d",
+                                "0x0d": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x109782",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x700d7ba885dac03fb9a12d2a2ef8a21c5123388d56cb5139f2228ef4ad945bfa",
+            "hash": "0x177da31dd948d153e114efef527d46a179a6faeaedca57c4712f639b92569af4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -682,16 +1042,71 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de65a83d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x05",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x05",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x05",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x06"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x02",
+                                "0x06": "0x01",
+                                "0x08": "0x01",
+                                "0x0a": "0x01",
+                                "0x0b": "0x05",
+                                "0x0c": "0x3d",
+                                "0x0d": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1180b6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x826a4995229e3a8ac22da36c9ba8ce1810e2d5f6a22cf66d573af1f6bebab1b1",
+            "hash": "0x93f8aba4e05a57c4ac4560a4ff54049f5657fd33c247bd3409cfcdae75549215",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -756,16 +1171,56 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de885766",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055611000ff600060005500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x13",
+                                "0x03": "0x9d35138a4f4b7c27daecd45285b0422b6c9edf3dede08d333d73811a6e119ab0"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0718fb",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x43140fc3d97ec881a8960489aeb62e952db9371521053f6bf830bcebd2e4ef5c",
+            "hash": "0xec743b40e36d9c817cafca4af0c11e0023c5ea8947a337eb3e620e821de5e19f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -822,16 +1277,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de85b3a8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x60016000540160005530ff600060005500",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0186a0",
+                                "0x02": "0x11",
+                                "0x03": "0x2fdd3f699f68532615dbf204509ad40c663bff2db0769131903d0fd4bc53a404"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07e3b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8bb84fa9f434246cf5fb8d0e91d9c1bf1d151af86b62b61db284f5794c2827ac",
+            "hash": "0xff7a98776eedf829ac5524392ef02b6750d4de7052769df5c48f02b8dd8273a9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -896,16 +1384,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de82b747",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a1",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055611000ff600060005500",
+                            "storage": {
+                                "0x00": "0x02"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x13",
+                                "0x05": "0x9d35138a4f4b7c27daecd45285b0422b6c9edf3dede08d333d73811a6e119ab0"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08c904",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3c0b023aef7ff6d2757345947960c468d9cc4811738f62401113aca2a27a1f42",
+            "hash": "0x2facd4cdf731f200dc11b1fd6e50e7a02aa0799185053c46ca0d3bd373ed1f5d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -962,16 +1491,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7d0a3b",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a1",
+                            "code": "0x60016000540160005530ff600060005500",
+                            "storage": {
+                                "0x00": "0x02"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0186a0",
+                                "0x02": "0x01",
+                                "0x03": "0x0186a1",
+                                "0x04": "0x11",
+                                "0x05": "0x2fdd3f699f68532615dbf204509ad40c663bff2db0769131903d0fd4bc53a404"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0a7cee",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0bbb8c3bdb2bbe8debdb307d99b0b48a5004e5be61e31c6cd6fb3878a703daeb",
+            "hash": "0x2ca75784c790fb84c4ed12ce01fb155c2b7284143d892ceaa23e571d4dacefdb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1052,16 +1616,74 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7c40e5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0ab954",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x043bc1025689e37d5c5f6fd3fbe31ea335a12e23d26227b9c3b241c2e3ef6572",
+            "hash": "0xe81ace2148e907c069c47dda80b4612ec50e72b3d32c9acb2f14dddb16ad942e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1134,16 +1756,67 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de799d1d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a1",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0186a0",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b8410",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x082742e5afd8e85b92d2ee5e807bc6579442a5e3552787718d8612482ac26293",
+            "hash": "0x58b351c7ea4c9932cf14d279dfef94ab6f8e1ab450ac1cbc3a1a7737d71091b1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1216,16 +1889,67 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de799d1d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x02",
+                                "0x06": "0x3d",
+                                "0x07": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b8410",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7bcd3020743ba810c0380c0205aee3084572e13f378b2aeb687ef7ae68a5b151",
+            "hash": "0x596c1d3a663a4ee2efe424b0a00b2dd6f3f4b2bdd8be0d6ed9aeb87e7195ba54",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1298,16 +2022,71 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de65a83d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a8",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x07",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x06"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0186a0",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x06": "0x01",
+                                "0x07": "0x03",
+                                "0x08": "0x01",
+                                "0x0a": "0x01",
+                                "0x0c": "0x3d",
+                                "0x0d": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1180b6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x43b04f41d669e0de02c9c329eda03043c275553e50e61d51f4cad89bd12e4c35",
+            "hash": "0x3710f99ad6f5d546d5203d983cf2d0ba3f100b0416bb9e303b0c067a20b9ca4a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1380,16 +2159,71 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de65a83d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a5",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x05",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x05",
+                            "code": "0x600160005401600055600160003514600e58015760003560005260085801565b306000525b600060005114600c580157600051ff60055801565b005b00",
+                            "storage": {
+                                "0x00": "0x06"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x02": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x02",
+                                "0x06": "0x01",
+                                "0x08": "0x01",
+                                "0x0a": "0x01",
+                                "0x0b": "0x05",
+                                "0x0c": "0x3d",
+                                "0x0d": "0x5328a833ce0080c4d1ed14886e4274aee5ee5c2d08892b5652080be6715345ec"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1180b6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe6f2a2761620b06abfba0761fbf2cff89279d1a96b68dd7bedd580c39bd78efa",
+            "hash": "0x37b7c1dc62e844080ee5709e94373ee74bcd47a095abe43ebd88483c2abc2008",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test calling a previously created account that contains a selfdestruct, and verify its balance\n    is sent to the destination address.\n\n    After EIP-6780, the balance should be sent to the send-all recipient address, similar to\n    the behavior before the EIP, but the account is not deleted.\n\n    Test using:\n        - Different send-all recipient addresses: single, multiple, including self\n        - Different initial balances for the self-destructing contract",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L621",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

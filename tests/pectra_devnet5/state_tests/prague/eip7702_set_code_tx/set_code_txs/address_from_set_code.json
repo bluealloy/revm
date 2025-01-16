@@ -65,16 +65,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3060005500",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de98b9c1",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x00": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe8efd57553d4b19c61fd3fc678b8e6a646c811c8328164852ab73dc649f8cb4a",
+            "hash": "0x937b222390bfe27133adb30862d0c9207fcbb6db52b0db19e22ee1b977e95f8d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the address opcode in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L820",
+            "description": "Test function documentation:\nTest the address opcode in a set-code transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L802",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

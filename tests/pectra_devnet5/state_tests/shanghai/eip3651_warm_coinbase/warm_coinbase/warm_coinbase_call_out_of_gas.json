@@ -56,16 +56,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000416000f150",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000611000607af1600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021942",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4aca0ee0254dd1f06ef9dd5281564d62afa806081f98f40c11f791d4eeec42e0",
+            "hash": "0x002383739a43e9ce5e3ad2098dd1dc94fbeb432c7aa864ba1bb4e569fbe054ec",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -128,16 +156,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9c0a86",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000416000f150",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006079f1600055",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01300b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x15d6c33249a35303ae89169737b91d96957e98ec09693883c34d6c1c61393a44",
+            "hash": "0xea9a8f4ae430486ae3af5e345c8f0c43b9d710bf76b82ee357e80a873748894c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -200,16 +254,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000416000f250",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000611000607af1600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021942",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9fa2238b9787b9a6850285b9ae6f431b54cb77e3f4523a88ed5ada876f2f141d",
+            "hash": "0xb19e292fb3a6cdd916e4547d2162507cff56a5ba79bd446544bfa26c0555d02c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -272,16 +354,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9c0a86",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000416000f250",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006079f1600055",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01300b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe77758ecd61540f6588dc285f51046e0ef4709cbe030b24267892ad680dcb725",
+            "hash": "0xf5205c25b7480c79e531afcad5c0574c94afbe718411c54f5adf9ce02da7c1a2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -344,16 +452,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990142",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000416000f450",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006077f1600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021939",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2da9d388c440ed04b23dc5ef8fb3d38c4b300edea307309e2d8b784a7a0a175b",
+            "hash": "0x6eb995b17a1195c5e47be4f988e5549f2870efcb8b3a2bf3ffaecec717b51b24",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -416,16 +552,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9c0aa4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000416000f450",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006076f1600055",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x013002",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xda5dca4ab894f001292b827f3e4b9b0ba99646939a9fa8a2b55ca814b39aa247",
+            "hash": "0x046f9a8771fc2f4aadbfbc90c24734459d353d8d630f71b867fdabc432323abe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -488,16 +650,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990142",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000416000fa50",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006077f1600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021939",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x708671ce90352d5575195f8486d9a7f58b6e3177eca27eea1ff42fa8acf13f48",
+            "hash": "0xb428ea5db29667d0875ac9dc567130c2ba9fd127c393aa68185d1ac716cb421e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"
@@ -560,16 +750,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9c0aa4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600060006000416000fa50",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060006110006076f1600055",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x013002",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf5193c0a0984bfd3d57adbae375c921aa5160d76ead460b330ed9ff4daea1667",
+            "hash": "0xa06cb4a7484542af112bcbfbf9c61f750df1a97fbc7cfb51c374fcffec2a6873",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes:\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
+            "description": "Test function documentation:\n\n    Test that the coinbase is warm by accessing the COINBASE with each\n    of the following opcodes.\n\n    - CALL\n    - CALLCODE\n    - DELEGATECALL\n    - STATICCALL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3651_warm_coinbase/test_warm_coinbase.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3651.md",
             "reference-spec-version": "d94c694c6f12291bb6626669c3e8587eef3adff1"

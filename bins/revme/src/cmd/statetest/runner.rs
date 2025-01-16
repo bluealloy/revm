@@ -428,7 +428,7 @@ pub fn execute_test_suite(
                             .with_tx(&tx)
                             .with_cfg(&cfg)
                             .with_db(&mut state),
-                        TracerEip3155::new(Box::new(stderr())),
+                        TracerEip3155::new(Box::new(stderr())).without_summary(),
                     );
 
                     let timer = Instant::now();
@@ -474,10 +474,10 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // Print only once or
-                // if we are already in trace mode, just return error
+                // Print only once or if we are already in trace mode, just return error
+                // If trace is true that print_json_outcome will be also true.
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if trace || FAILED.swap(true, Ordering::SeqCst) {
+                if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(TestError {
                         name: name.clone(),
                         path: path.clone(),
@@ -501,7 +501,7 @@ pub fn execute_test_suite(
                         .with_block(&block)
                         .with_tx(&tx)
                         .with_cfg(&cfg),
-                    TracerEip3155::new(Box::new(stderr())),
+                    TracerEip3155::new(Box::new(stderr())).without_summary(),
                 );
 
                 let _ = inspect_main_commit(&mut ctx);

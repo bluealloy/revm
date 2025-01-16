@@ -205,9 +205,10 @@ pub trait EthHandler {
         let init_and_floor_gas = post_execution_gas.0;
         let eip7702_gas_refund = post_execution_gas.1;
 
-        self.eip7623_check_gas_floor(context, &mut exec_result, init_and_floor_gas);
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(context, &mut exec_result, eip7702_gas_refund);
+        // Check if gas floor is met and spent at least a floor gas.
+        self.eip7623_check_gas_floor(context, &mut exec_result, init_and_floor_gas);
         // Reimburse the caller
         self.reimburse_caller(context, &mut exec_result)?;
         // Reward beneficiary

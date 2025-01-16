@@ -53,16 +53,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5b600260105d5a6000525a60005260105c5a60205260205160005103600155600b600154036001555a60005260055c5a60205260205160005103600255600b600254036002556001600355",
+                            "storage": {
+                                "0x01": "0x64",
+                                "0x02": "0x64",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b3c58e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0277ef",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x25c7427d05323eab3eb7ace72ee30c37ec6b1c64f1ee9219fb36ec51883e2368",
+            "hash": "0x974539d594f3f8191c54b8285a265213987b79d5c39f0954a4e1d108ab89571d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (16_tloadGasFiller.yml)\n    tload costs 100 gas same as a warm sload",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_basic_tload.py#L164",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (16_tloadGasFiller.yml)\n    tload costs 100 gas same as a warm sload",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_basic_tload.py#L164",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

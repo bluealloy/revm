@@ -50,16 +50,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x0491ac1a0656762c29db327c91a3369ccd975d15fe5bc6571f34054d1f26a247"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b54010",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052cc8",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcb2ba260b127235895f11db6a1436ea2ad21c225c3be2b49def3f64d6c4db461",
+            "hash": "0xd387f7cced7e6011a0541a3331d30ce40077cc22e3e925b40cae40e693bd4af6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -116,16 +140,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0xb2d543477ecc9ee6cfd163af9c19270183a07ef9e46ef1a3ab8f7b10c135b341"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b53f98",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052cec",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4218099c46ef110137839f6d09694ba473fa37c8b9009865e649e09d66d738ad",
+            "hash": "0x9c39117bf33e1be38b0ff8541b46a753531da46902eba0064572124b56fff2ff",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -182,16 +230,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x0a4db2b810a051198cfcab06505c064a292a2d83815d2e4dcd395c336f743361"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b53f98",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052cec",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc897ff0402d15c8711fcb99846ad018771bf12eb799e844f2d6f1fe87bb11f13",
+            "hash": "0xcfb3ab7b8d896d5d4ad717dc2183ccbb4ecb6b2c2c4aa91686a8443b51285641",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -248,16 +320,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x6cc50c6adb311308951c9d80678b1e949a488b31e13798c0fe0a009545775c05"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b54010",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052cc8",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xab31c74ff49880cf406a1d2899108a7cf81f9e37484661a13d057e9d1bd145aa",
+            "hash": "0x98898cdb54119e24827043b38e086d2fa080a5a6ca2fb97200b5e2844d33f459",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -314,16 +410,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x24a008ade140fd87e5faf1eab6c6c8669dcd60ed64ce1c0f7441515110ac7b8d"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b54088",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052ca4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9fe6176d29d8017c4597d5a82983503736fdb520e53ff6a16534d9f4a694774b",
+            "hash": "0x6996b06f6ddf4652acc310656b27d4657d11bc5b25dbcf5a32146c0b0aff04d9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -380,16 +500,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x8b4fe500cdc83e0b47a5d229a695df12a5361740d2c203abeb079929d0175ab8"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b56c98",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x051f6c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x77c9ab8a04323530431d77b222c0c822cb8e728d96f19a039ce1a3ccb9192289",
+            "hash": "0xa49bd0521bf0d68410068ad04c56ba5dc5ffe2277136f43c287e526081969a1c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -446,16 +590,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376000600036600060006011615cf8f16000553d6001553d600060003e3d600020600255",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x0100",
+                                "0x02": "0x654ed3509c53fa54dc328853d62c0cf2d8602e4f9e21ad49a458f0481e1c057d"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b53f98",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052cec",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x95f1ce4a3dc7e19cf56390fb27a6f1c9755fcba6aa34227228acc2a14456f627",
+            "hash": "0xd9ba4d1945f5d291218e1e56119dfd388dd845e8a56bbdaf6c48e046a830cfc0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the BLS12_MAP_FP2_TO_G2 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L36",
+            "description": "Test function documentation:\nTest the BLS12_MAP_FP2_TO_G2 precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L34",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

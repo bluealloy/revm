@@ -50,16 +50,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60006000600060006000600f6201129cf1600055",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea4b836d0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x044928",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xdae8c9eab106c0088d11e44ef4d0f1bf59c78fbc5324cfceee8d1296b581191f",
+            "hash": "0xcbf66b2f203c94415c5868ae4db54df8b2191002225abe7ddd0d7b8a5b67ff81",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to fail for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST) because the incorrect input length was used.\n\n    If any of the calls succeeds, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -116,16 +136,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600061017f60006000600f6201129cf1600055600060006102ff60006000600f620191f4f16001556000600061047f60006000600f6202114cf1600255600060006105ff60006000600f620290a4f16003556000600061077f60006000600f62030ffcf1600455600060006108ff60006000600f62038f54f160055560006000610a7f60006000600f62040eacf160065560006000610bff60006000600f62048e04f160075560006000610d7f60006000600f62050d5cf160085560006000610eff60006000600f62058cb4f16009556000600061107f60006000600f62060c0cf1600a55600060006111ff60006000600f62068b64f1600b556000600061137f60006000600f62070abcf1600c55600060006114ff60006000600f62078a14f1600d556000600061167f60006000600f6208096cf1600e55600060006117ff60006000600f620888c4f1600f556000600061197f60006000600f6209081cf160105560006000611aff60006000600f62098774f160115560006000611c7f60006000600f620a06ccf160125560006000611dff60006000600f620a8624f1601355",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea0346890",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x015f0708",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4a78f8a2bff04d2830eb4a92483435f80bb212459e5400f3ddab84ce1dfbecc1",
+            "hash": "0xb01c86d749acb14fb39bf941e61426eaabe506f02d2fca4670e048765d919748",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to fail for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST) because the incorrect input length was used.\n\n    If any of the calls succeeds, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -182,16 +222,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600061018160006000600f6201129cf16000556000600061030160006000600f620191f4f16001556000600061048160006000600f6202114cf16002556000600061060160006000600f620290a4f16003556000600061078160006000600f62030ffcf16004556000600061090160006000600f62038f54f160055560006000610a8160006000600f62040eacf160065560006000610c0160006000600f62048e04f160075560006000610d8160006000600f62050d5cf160085560006000610f0160006000600f62058cb4f16009556000600061108160006000600f62060c0cf1600a556000600061120160006000600f62068b64f1600b556000600061138160006000600f62070abcf1600c556000600061150160006000600f62078a14f1600d556000600061168160006000600f6208096cf1600e556000600061180160006000600f620888c4f1600f556000600061198160006000600f6209081cf160105560006000611b0160006000600f62098774f160115560006000611c8160006000600f620a06ccf160125560006000611e0160006000600f620a8624f1601355",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7ea0346868",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x015f0714",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe555adffb4e5965cc19c5ed437a01148d784ae83ace9fd4a27ebec816b520638",
+            "hash": "0x0c95a1ac33fa2b99e2f4bcd8008fc52181de3169f297ecc5c47c2fc0e3c7724e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to fail for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST) because the incorrect input length was used.\n\n    If any of the calls succeeds, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L426",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

@@ -56,16 +56,60 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x056bc75e2d62ec58ee",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x000000000000000000000000000000000000abcd": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000deadbeef": {
+                            "nonce": "0x00",
+                            "balance": "0x02",
+                            "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6"
+                            }
+                        },
+                        "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x5f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0ab21f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6e4cdaab486adb3f6b0137e5890eba75dcca14c9b3c31ae0a11715c755f50eb0",
+            "hash": "0x90564f468668a0ce862d33caa5353154f66f466d26604f702769697ad45fac11",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L202",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L200",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -128,16 +172,58 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x056bc75e2d62ea80aa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x000000000000000000000000000000000000abcd": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000deadbeef": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001234": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b3fcd",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1f2de46a2eb97210114fa91daa2d9cb6a9021e848ff5c9399c597c4db466527f",
+            "hash": "0xa9d2e8c2e006cd759446b65fa409d453d8d2c2eacabe0036890712943accd5af",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L202",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L200",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -200,16 +286,58 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x056bc75e2d62e2f326",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x000000000000000000000000000000000000abcd": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000deadbeef": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba63160015560015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80f3",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001234": {
+                            "nonce": "0x00",
+                            "balance": "0x02",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0d83db",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3270e6323d1f1e497a908d2b6bffedc5da0019e8898fa586094d341a89a0d12c",
+            "hash": "0x30f6499ec884aea0afaaeaddb51325c58a7ea0173d4204b02d5a5bca7724cdb7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L202",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L200",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

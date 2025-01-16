@@ -63,16 +63,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6104d260015d6104d260045d6104d27001000000000000000000000000000000005d6104d27ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe5d60005c60005560035c6003556fffffffffffffffffffffffffffffffff5c6fffffffffffffffffffffffffffffffff557ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5c7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5560025c60025560055c6005557001000000000000000000000000000000015c700100000000000000000000000000000001557fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5c7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff55",
+                            "storage": {
+                                "0x01": "0xffff",
+                                "0x04": "0xffff",
+                                "0x0100000000000000000000000000000000": "0xffff",
+                                "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe": "0xffff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9865fc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0247ce",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x496e2486910d036b15066e1802c9a74627a26dcdb9f086830826cb61809e8523",
+            "hash": "0x1fc1fe085ff86288c9bfe598b2638ab61abcab5c5ae2d2ca7e4cf35c36286a88",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test that tload returns zero after tstore is called with zero.\n\n    Based on [ethereum/tests/.../03_tloadAfterStoreIs0Filler.yml](https://github.com/ethereum/tests/blob/9b00b68593f5869eb51a6659e1cc983e875e616b/src/EIPTestsFiller/StateTests/stEIP1153-transientStorage/03_tloadAfterStoreIs0Filler.yml)\",  # noqa: E501",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage.py#L135",
+            "description": "Test function documentation:\n\n    Test that tload returns zero after tstore is called with zero.\n\n    Based on [ethereum/tests/.../03_tloadAfterStoreIs0Filler.yml](https://github.com/ethereum/tests/blob/9b00b68593f5869eb51a6659e1cc983e875e616b/src/EIPTestsFiller/StateTests/stEIP1153-transientStorage/03_tloadAfterStoreIs0Filler.yml)\",",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage.py#L142",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

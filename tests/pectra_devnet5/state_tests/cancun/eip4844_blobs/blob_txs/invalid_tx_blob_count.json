@@ -51,16 +51,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x023e39",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.TYPE_3_TX_ZERO_BLOBS"
                 }
             ]
         },
         "_info": {
-            "hash": "0xa43cd5655c7f8b441a4a57d33260533cf31731358d45f257456a86ea6ff43833",
+            "hash": "0x81b46b82105a26ea43d117d94bfab2d587068bd5161b4a5d5fec42e610a3a181",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Reject blocks that include blob transactions with invalid blob counts:\n\n    - `blob count == 0` in type 3 transaction\n    - `blob count > MAX_BLOBS_PER_BLOCK` in type 3 transaction",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L888",
+            "description": "Test function documentation:\n\n    Reject blocks that include blob transactions with invalid blob counts.\n\n    - `blob count == 0` in type 3 transaction\n    - `blob count > MAX_BLOBS_PER_BLOCK` in type 3 transaction",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L865",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -129,16 +137,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x163e39",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.TYPE_3_TX_BLOB_COUNT_EXCEEDED"
                 }
             ]
         },
         "_info": {
-            "hash": "0xe67cdc4690f3137c7b19e737c731b6f6008a6bd5e831bd59c46aa688f48eae69",
+            "hash": "0x8bb6a5449dfe2f634e633207c608b0b11bc824eaa648eb935230c77c59ab873a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Reject blocks that include blob transactions with invalid blob counts:\n\n    - `blob count == 0` in type 3 transaction\n    - `blob count > MAX_BLOBS_PER_BLOCK` in type 3 transaction",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L888",
+            "description": "Test function documentation:\n\n    Reject blocks that include blob transactions with invalid blob counts.\n\n    - `blob count == 0` in type 3 transaction\n    - `blob count > MAX_BLOBS_PER_BLOCK` in type 3 transaction",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L865",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

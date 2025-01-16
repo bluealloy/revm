@@ -50,16 +50,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x4660015500",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de996c36",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f923",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6acb23c4b6a0a73baacaf2f1fe193786ca75007eac8501cd77e99f43bc58dbd6",
+            "hash": "0x3e033746b953a1c369b3eff03a6764962a4186fb89c30665acf0c95b9c547283",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "description": "Test function documentation:\nTest CHAINID opcode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"

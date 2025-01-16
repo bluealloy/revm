@@ -50,16 +50,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155",
+                            "storage": {
+                                "0x01": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9904f8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02181c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc315e5a585293aabdee458e1bc9ef870f1094de8bdd46fdddaccabf639018252",
+            "hash": "0xa5c6d4118c83e078a772379a4e51db206edbaa32a4d94165c4594658b8661936",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -116,16 +138,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155",
+                            "storage": {
+                                "0x01": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990480",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021840",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x136e8fefb8d27d580cc8df8ef6aac58ba32b947378cce947a2fd5c4015997166",
+            "hash": "0x8835f6b397d7f9474a55d6b4266f3c726e82cd77e90140b784e7eeda4290623b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -182,16 +226,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155",
+                            "storage": {
+                                "0x01": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990480",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021840",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9b30779c6c7b749dff76e70224ec9dfa13a9ae5120f60311079b2234fcd2171b",
+            "hash": "0x910854c3aa15ef7e2467e396b227bcb10db5fbfa2265423552ba1f0d563056c3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -248,16 +314,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155",
+                            "storage": {
+                                "0x01": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de990408",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x021864",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc13a15f0399350214bc3c9160ba23cc1f9efb9b345d5a0bbbdfb8a1fc30e44d7",
+            "hash": "0x91162b31d470cff8a70642737667fb6f0495d21cd40a3aa61a1c44dd211e8235",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -314,16 +402,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155600051600255",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95a466",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031b7b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa3739a2d3e867410d50d79b2f3b5e38422be2fd98d85337cf197123f9371f768",
+            "hash": "0x900ea37d0068f9299715348c788b1ecec54f29a24d9d2443409d3df2e79ebd00",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -380,16 +491,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155602051600255",
+                            "storage": {
+                                "0x00": "0x40",
+                                "0x01": "0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95a394",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031bba",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb87bee45a587ce8d552dd2c731cd16563f787ef47014d7c92798b049e64f5e0d",
+            "hash": "0xe2465435eeb45dd6c7e07e3c5cbb407724902f700ab5426bc744c6c931cbc8f7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -446,16 +580,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155602051600255",
+                            "storage": {
+                                "0x00": "0x40",
+                                "0x01": "0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95a394",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031bba",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6d67c35c5c04cf9c801e8eeef4478376c20093c054545e874883e8a92924a0e3",
+            "hash": "0x7e7f867ce3dc216bd07a4d9dd04917cd848cee383518f2a1f35c667165e359c4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -512,16 +669,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6040356020356000355e5960005559600020600155602051600255",
+                            "storage": {
+                                "0x00": "0x40",
+                                "0x01": "0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95a31c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031bde",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa91675358660629bcc98cd7be6b19e8204018120c801c2bf224e64d41f505722",
+            "hash": "0x471db550066208af88b07406b60fc58c7b51e52a3aae8fc6911399e4767be81d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations on an empty memory, using different offsets and lengths.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L202",
+            "description": "Test function documentation:\nPerform MCOPY operations on an empty memory, using different offsets and lengths.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L205",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"

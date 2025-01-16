@@ -15,8 +15,13 @@ pub fn eip7623_check_gas_floor(
     gas: &mut Gas,
     init_and_floor_gas: handler_interface::InitialAndFloorGas,
 ) {
-    if gas.spent() < init_and_floor_gas.floor_gas {
-        let _ = gas.record_cost(init_and_floor_gas.floor_gas - gas.spent());
+    let gas = exec_result.gas_mut();
+    // EIP-7623: Increase calldata cost
+    // spend at least a gas_floor amount of gas.
+    if gas.spent_sub_refunded() < init_and_floor_gas.floor_gas {
+        gas.set_spent(init_and_floor_gas.floor_gas);
+        // clear refund
+        gas.set_refund(0);
     }
 }
 

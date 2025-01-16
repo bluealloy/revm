@@ -65,16 +65,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f0600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a42",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x497b1ecb615a2d79db79f70730379e841eb492e19ed104d082f8e51046382828",
+            "hash": "0x6f9d120411025193b846ff619af4e3d408ec6ee0fff165a686a78732edc82a6c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -146,16 +172,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f0600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de89d32a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7045faccf628b10f4ed47c22e0803de36ba400cd1aba777f8ca8bc639c46df03",
+            "hash": "0x3d598c63cce6e8866371b49059b00c55dfef75176bc22a69300394519faae350",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -233,16 +285,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f0600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b700e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1f517be8a20548919100132a6f5c785666706e8d5f64a546760e222a55feef52",
+            "hash": "0x6e2902fdffb7c61cea11806e573f9a6d0d7f96ad4bbb14f7aabb646f6171ef8a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -320,16 +398,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f0600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de887d5e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0de3349d957ac3bccc23191dc13beb60223f746178a3496352caa9c438f03f9f",
+            "hash": "0xcd8aa459ef5a9d8d3252bbd92fa342fdd5dd4fea00f6887a36da08e3e9e29f29",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -401,16 +511,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a42",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x54316b67c25fc7fae014d12fc77ccaab582450d3b1b417d8ea89af4774e1cc67",
+            "hash": "0xedb312b660161876d02ba17b49ccdc7936839b98ba5c14f3a3ae4c03c7034faf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -482,16 +618,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de89d32a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7a6ad86b02c53415e14523b965566cd3a21024084053f139c239ea01267997b1",
+            "hash": "0x86a8c0d395099041bb5eade65b4c51b008e69e71d34a81b929a2fbeed285b275",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -569,16 +731,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b700e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa943b69064416aebf1dfef611f6c8682a7857ea8cecce74166a2c593edf461d2",
+            "hash": "0xb985a66c557e375b47250603c926e5e3b5c882485fdf1d6ef2c5f557814cb081",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -656,16 +844,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01005bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de887d5e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x314bbc66afc9c9dbe133ba204524eb8780c313ecffe9d54bf0bccbf4a0bac70b",
+            "hash": "0x5d01decb94ef3a73a160c277c488331a9dbb199d64ffa84c1887e0daaf740682",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -737,16 +957,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f5600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x52c7f941bca5587ae264310172bc3f55c21312c4",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a19d9",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010052c7f941bca5587ae264310172bc3f55c21312c4",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9ce3287ccc2924f94bccecb40ace28f600bd417a48517f60160af7fe5148ba2c",
+            "hash": "0xd41433cd73d250243bc76dfe2e33c81d062bbf7a3ec581d78498e290e6e167bd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -818,16 +1064,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f5600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x12f19df8c3bfc160578e9b14206dfc510a5d3614",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de89d2c1",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010012f19df8c3bfc160578e9b14206dfc510a5d3614",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4451f361047d302b29713f5ab30607d01843fcc9be9720ed9e4de96f36a5f6fe",
+            "hash": "0x42f941c3f3b7883e01663e75127e57af93f538916dc7eb9d9b82902b91a851ca",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -905,16 +1177,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0xef010052c7f941bca5587ae264310172bc3f55c21312c4",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f5600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x52c7f941bca5587ae264310172bc3f55c21312c4",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b6fa5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf9caaa3449e62041bb1aaeff550558283dd6469221343d4b16a9d348a4a73d64",
+            "hash": "0x81bf7991629d6e893f9346de7a36907813becc6dbc25f7067864a0190ee5b402",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -992,16 +1290,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010012f19df8c3bfc160578e9b14206dfc510a5d3614",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f5600155600060006000600060006001545af16003556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160025500",
+                            "storage": {
+                                "0x01": "0x12f19df8c3bfc160578e9b14206dfc510a5d3614",
+                                "0x03": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de887cf5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x67d41fc3b3b45bab411ec069002d91e603a1532d952828f8b911e345e6a06595",
+            "hash": "0xe795e6b432ec56fe09ef6be1019b5824c93037eb62031a59881f5ff73385b48a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1073,16 +1403,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f56001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x52c7f941bca5587ae264310172bc3f55c21312c4",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a19d9",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010052c7f941bca5587ae264310172bc3f55c21312c4",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x505e5a3c800abd7ee336438d2961a0133d83d56c5db5604b680af7e39dcd769c",
+            "hash": "0x219e98e7cd42327d38a350015646176f59fb8cc3560437e74d69d3b7e228583f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1154,16 +1510,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f56001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x12f19df8c3bfc160578e9b14206dfc510a5d3614",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de89d2c1",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010012f19df8c3bfc160578e9b14206dfc510a5d3614",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x11ae515255084670833765413cd2a5afeaeb6078e10b53cd2e5de4ec86edc11b",
+            "hash": "0xc9d8e85ec05793c9b42cf46f1e1559fb6f08a735e966375620d9182b0aa469a7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1241,16 +1623,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0xef010052c7f941bca5587ae264310172bc3f55c21312c4",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f56001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x52c7f941bca5587ae264310172bc3f55c21312c4",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b6fa5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x21a3e06aaf30bb15c4adc108226c2cc69fb6dcba6213c068aea44aed3c378f15",
+            "hash": "0xf3bba2fc96f3d3754f316ad0f99c891588bc653a27b692d01acffe1b7aa7af7f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1328,16 +1736,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef010012f19df8c3bfc160578e9b14206dfc510a5d3614",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760003660006000f56001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af1600255600060006000600060006001545af160035500",
+                            "storage": {
+                                "0x01": "0x12f19df8c3bfc160578e9b14206dfc510a5d3614",
+                                "0x02": "0x01",
+                                "0x03": "0x01"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de887cf5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4e91d25be9dc07ae96cd5aea7c44a63d110b647c529a84f7041e385f3994eced",
+            "hash": "0xa28d9346abdce9a64f05e28b4d673a2f1e00c4ecd68767140bbd18a6a035b857",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an account that contains the SELFDESTRUCT opcode and\n    was deployed in the same transaction, and test calling the set-code address and the deployed\n    in both sequence orders.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1699",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1665",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
