@@ -10,7 +10,7 @@ use revm::{
     },
     database_interface::Database,
     handler::{
-        eth_handler::{EthContext, EthError, EthHandler as EthHandlerNew, EthHandlerImpl},
+        handler::{EthContext, EthError, EthHandler as EthHandlerNew, EthHandlerImpl},
         EthFrame, EthPrecompileProvider, FrameContext, FrameResult,
     },
     handler_interface::{Frame, FrameOrResult, PrecompileProvider},

@@ -5,7 +5,7 @@ use revm::{
         PerformantContextAccess, TransactionGetter,
     },
     database_interface::Database,
-    handler::{eth_handler::EthContext, FrameResult},
+    handler::{handler::EthContext, FrameResult},
     interpreter::{
         interpreter::EthInterpreter, FrameInput, Host, Interpreter, SStoreResult,
         SelfDestructResult, StateLoad,

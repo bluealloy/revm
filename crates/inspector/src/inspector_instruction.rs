@@ -178,3 +178,13 @@ where
         self.instruction_table.as_ref()
     }
 }
+
+impl<WIRE, HOST> Default for InspectorInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}

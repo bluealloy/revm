@@ -7,10 +7,10 @@ extern crate alloc as std;
 
 // Mainnet related handlers.
 
-pub mod eth_handler;
 pub mod execution;
 mod frame;
 mod frame_data;
+pub mod handler;
 pub mod post_execution;
 pub mod pre_execution;
 mod precompile_provider;

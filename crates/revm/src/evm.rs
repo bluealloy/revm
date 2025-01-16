@@ -4,7 +4,7 @@ use context_interface::{
 };
 use database_interface::{Database, DatabaseCommit};
 use handler::{
-    eth_handler::{EthContext, EthHandler, EthHandlerImpl},
+    handler::{EthContext, EthHandler, EthHandlerImpl},
     EthFrame,
 };
 

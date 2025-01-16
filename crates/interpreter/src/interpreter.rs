@@ -254,21 +254,15 @@ impl InterpreterResult {
     }
 }
 
-// /// Resize the memory to the new size. Returns whether the gas was enough to resize the memory.
-// #[inline(never)]
-// #[cold]
-// #[must_use]
-// pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) -> bool {
-//     let new_words = num_words(new_size as u64);
-//     let new_cost = gas::memory_gas(new_words);
-//     let current_cost = memory.current_expansion_cost();
-//     let cost = new_cost - current_cost;
-//     let success = gas.record_cost(cost);
-//     if success {
-//         memory.resize((new_words as usize) * 32);
-//     }
-//     success
-// }
+impl<WIRE, HOST> Default for EthInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {

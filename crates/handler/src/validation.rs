@@ -124,40 +124,40 @@ pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
             // EIP-155: Simple replay attack protection
             if let Some(chain_id) = tx.chain_id() {
                 if chain_id != context.cfg().chain_id() {
-                    return Err(InvalidTransaction::InvalidChainId.into());
+                    return Err(InvalidTransaction::InvalidChainId);
                 }
             }
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
                 }
             }
         }
         TransactionType::Eip2930 => {
             // Enabled in BERLIN hardfork
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
-                return Err(InvalidTransaction::Eip2930NotSupported.into());
+                return Err(InvalidTransaction::Eip2930NotSupported);
             }
 
             if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId.into());
+                return Err(InvalidTransaction::InvalidChainId);
             }
 
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
                 }
             }
         }
         TransactionType::Eip1559 => {
             if !spec_id.is_enabled_in(SpecId::LONDON) {
-                return Err(InvalidTransaction::Eip1559NotSupported.into());
+                return Err(InvalidTransaction::Eip1559NotSupported);
             }
 
             if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId.into());
+                return Err(InvalidTransaction::InvalidChainId);
             }
 
             validate_priority_fee_tx(
@@ -168,11 +168,11 @@ pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
         }
         TransactionType::Eip4844 => {
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
-                return Err(InvalidTransaction::Eip4844NotSupported.into());
+                return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
             if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId.into());
+                return Err(InvalidTransaction::InvalidChainId);
             }
 
             validate_priority_fee_tx(
@@ -191,11 +191,11 @@ pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
         TransactionType::Eip7702 => {
             // Check if EIP-7702 transaction is enabled.
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
-                return Err(InvalidTransaction::Eip7702NotSupported.into());
+                return Err(InvalidTransaction::Eip7702NotSupported);
             }
 
             if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId.into());
+                return Err(InvalidTransaction::InvalidChainId);
             }
 
             validate_priority_fee_tx(
@@ -207,7 +207,7 @@ pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
             let auth_list_len = tx.authorization_list_len();
             // The transaction is considered invalid if the length of authorization_list is zero.
             if auth_list_len == 0 {
-                return Err(InvalidTransaction::EmptyAuthorizationList.into());
+                return Err(InvalidTransaction::EmptyAuthorizationList);
             }
         }
         TransactionType::Custom => {
@@ -218,14 +218,14 @@ pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
     // Check if gas_limit is more than block_gas_limit
     if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
     {
-        return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
+        return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 
     // EIP-3860: Limit and meter initcode
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx.kind().is_create() {
         let max_initcode_size = context.cfg().max_code_size().saturating_mul(2);
         if context.tx().input().len() > max_initcode_size {
-            return Err(InvalidTransaction::CreateInitCodeSizeLimit.into());
+            return Err(InvalidTransaction::CreateInitCodeSizeLimit);
         }
     }
 
@@ -248,7 +248,7 @@ pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter>(
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode.into());
+            return Err(InvalidTransaction::RejectCallerWithCode);
         }
     }
 
@@ -258,10 +258,10 @@ pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter>(
         let state = account.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
-                return Err(InvalidTransaction::NonceTooHigh { tx, state }.into());
+                return Err(InvalidTransaction::NonceTooHigh { tx, state });
             }
             Ordering::Less => {
-                return Err(InvalidTransaction::NonceTooLow { tx, state }.into());
+                return Err(InvalidTransaction::NonceTooLow { tx, state });
             }
             _ => {}
         }
@@ -286,8 +286,7 @@ pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter>(
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(balance_check),
             balance: Box::new(account.balance),
-        }
-        .into());
+        });
     }
 
     Ok(())
@@ -313,13 +312,13 @@ where
 
     // Additional check to see if limit is big enough to cover initial gas.
     if gas.initial_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit);
     }
 
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
     if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit);
     };
 
     Ok(gas)
