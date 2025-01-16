@@ -217,7 +217,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
         self.create_account_checkpoint(caller, address, balance, spec_id)
     }
 
-    fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error> {
+    fn finalize(&mut self) -> Self::FinalOutput {
         let Self {
             state,
             transient_storage,
@@ -237,7 +237,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
         let state = mem::take(state);
         let logs = mem::take(logs);
 
-        Ok((state, logs))
+        (state, logs)
     }
 }
 

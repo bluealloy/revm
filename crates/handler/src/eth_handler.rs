@@ -1,7 +1,6 @@
 use crate::{
-    first_init_frame, EthExecution, EthExecutionContext, EthFrameContext, EthPostExecution,
-    EthPostExecutionContext, EthPreExecution, EthPreExecutionContext, EthPrecompileProvider,
-    EthValidation, EthValidationContext, FrameContext, FrameResult,
+    execution, post_execution, pre_execution, validation, EthPrecompileProvider, FrameContext,
+    FrameResult,
 };
 use context::Context;
 use context_interface::{
@@ -10,8 +9,7 @@ use context_interface::{
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
 use handler_interface::{
-    util::FrameOrFrameResult, ExecutionHandler, Frame, FrameOrResultGen, InitialAndFloorGas,
-    PostExecutionHandler, PreExecutionHandler, PrecompileProvider, ValidationHandler,
+    util::FrameOrFrameResult, Frame, FrameOrResult, InitialAndFloorGas, PrecompileProvider,
 };
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
@@ -66,32 +64,10 @@ pub trait EthContext:
     + BlockGetter
     + DatabaseGetter
     + CfgGetter
-    + PerformantContextAccess<Error = <<Self as DatabaseGetter>::Database as Database>::Error>
+    + PerformantContextAccess<Error = JournalDBError<Self>>
     + ErrorGetter<Error = JournalDBError<Self>>
     + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
     + Host
-{
-}
-
-impl<
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-        CHAIN,
-    > EthContext for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-{
-}
-
-impl<
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-        CHAIN,
-    > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
 }
 
@@ -99,7 +75,6 @@ pub trait EthError<CTX: JournalGetter, FRAME: Frame>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<JournalDBError<CTX>>
-    + From<InvalidTransaction>
     + From<<FRAME as Frame>::Error>
     + From<PrecompileErrors>
 {
@@ -111,7 +86,6 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<JournalDBError<CTX>>
-            + From<InvalidTransaction>
             + From<<FRAME as Frame>::Error>
             + From<PrecompileErrors>,
     > EthError<CTX, FRAME> for T
@@ -151,11 +125,7 @@ where
 }
 
 pub trait EthHandler {
-    type Context: EthValidationContext
-        + EthPreExecutionContext
-        + EthExecutionContext
-        + EthPostExecutionContext
-        + EthFrameContext;
+    type Context: EthContext;
     type Error: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<Self::Context>>
@@ -215,14 +185,15 @@ pub trait EthHandler {
         let mut frame_context = self.frame_context(context);
         // Create first frame action
         let first_frame = self.create_first_frame(context, &mut frame_context, gas_limit)?;
-        let frame_result = match first_frame {
-            FrameOrResultGen::Frame(frame) => {
+        let mut frame_result = match first_frame {
+            FrameOrResult::Frame(frame) => {
                 self.run_exec_loop(context, &mut frame_context, frame)?
             }
-            FrameOrResultGen::Result(result) => result,
+            FrameOrResult::Result(result) => result,
         };
 
-        self.last_frame_result(context, &mut frame_context, frame_result)
+        self.last_frame_result(context, &mut frame_context, &mut frame_result)?;
+        Ok(frame_result)
     }
 
     fn post_execution(
@@ -245,14 +216,16 @@ pub trait EthHandler {
         self.output(context, exec_result)
     }
 
+    /* VALIDATION */
+
     /// Validate env.
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
-        EthValidation::new().validate_env(context)
+        validation::validate_env(context)
     }
 
     /// Validate transactions against state.
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        EthValidation::new().validate_tx_against_state(context)
+        validation::validate_tx_against_state(context)
     }
 
     /// Validate initial gas.
@@ -260,19 +233,21 @@ pub trait EthHandler {
         &self,
         context: &Self::Context,
     ) -> Result<InitialAndFloorGas, Self::Error> {
-        EthValidation::new().validate_initial_tx_gas(context)
+        validation::validate_initial_tx_gas(context).map_err(From::from)
     }
 
+    /* PRE EXECUTION */
+
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        EthPreExecution::new().load_accounts(context)
+        pre_execution::load_accounts(context)
     }
 
     fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        EthPreExecution::new().apply_eip7702_auth_list(context)
+        pre_execution::apply_eip7702_auth_list(context)
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        EthPreExecution::new().deduct_caller(context)
+        pre_execution::deduct_caller(context).map_err(From::from)
     }
 
     /* EXECUTION */
@@ -282,9 +257,22 @@ pub trait EthHandler {
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
         gas_limit: u64,
     ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
-        let init_frame = first_init_frame(context.tx(), context.cfg().spec().into(), gas_limit);
+        let init_frame =
+            execution::create_init_frame(context.tx(), context.cfg().spec().into(), gas_limit);
         self.frame_init_first(context, frame_context, init_frame)
     }
+
+    fn last_frame_result(
+        &self,
+        context: &mut Self::Context,
+        _frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        frame_result: &mut <Self::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        execution::last_frame_result(context, frame_result);
+        Ok(())
+    }
+
+    /* FRAMES */
 
     fn frame_init_first(
         &mut self,
@@ -292,7 +280,7 @@ pub trait EthHandler {
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
         frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
     ) -> Result<
-        FrameOrResultGen<
+        FrameOrResult<
             <Self as EthHandler>::Frame,
             <<Self as EthHandler>::Frame as Frame>::FrameResult,
         >,
@@ -308,7 +296,7 @@ pub trait EthHandler {
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
         frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
     ) -> Result<
-        FrameOrResultGen<
+        FrameOrResult<
             <Self as EthHandler>::Frame,
             <<Self as EthHandler>::Frame as Frame>::FrameResult,
         >,
@@ -323,7 +311,7 @@ pub trait EthHandler {
         context: &mut Self::Context,
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
     ) -> Result<
-        FrameOrResultGen<
+        FrameOrResult<
             <<Self as EthHandler>::Frame as Frame>::FrameInit,
             <<Self as EthHandler>::Frame as Frame>::FrameResult,
         >,
@@ -363,15 +351,15 @@ pub trait EthHandler {
             let call_or_result = frame.run(context, frame_context)?;
 
             let mut result = match call_or_result {
-                FrameOrResultGen::Frame(init) => match frame.init(context, frame_context, init)? {
-                    FrameOrResultGen::Frame(new_frame) => {
+                FrameOrResult::Frame(init) => match frame.init(context, frame_context, init)? {
+                    FrameOrResult::Frame(new_frame) => {
                         frame_stack.push(new_frame);
                         continue;
                     }
                     // Dont pop the frame as new frame was not created.
-                    FrameOrResultGen::Result(result) => result,
+                    FrameOrResult::Result(result) => result,
                 },
-                FrameOrResultGen::Result(result) => {
+                FrameOrResult::Result(result) => {
                     // Pop frame that returned result
                     frame_stack.pop();
                     result
@@ -380,24 +368,10 @@ pub trait EthHandler {
 
             let Some(frame) = frame_stack.last_mut() else {
                 Self::Frame::final_return(context, frame_context, &mut result)?;
-                return self.last_frame_result(context, frame_context, result);
+                return Ok(result);
             };
             frame.return_result(context, frame_context, result)?;
         }
-    }
-
-    fn last_frame_result(
-        &self,
-        context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        frame_result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<<Self::Frame as Frame>::FrameResult, Self::Error> {
-        EthExecution::<
-            <Self as EthHandler>::Context,
-            <Self as EthHandler>::Error,
-            <Self as EthHandler>::Frame,
-        >::new()
-        .last_frame_result(context, frame_context, frame_result)
     }
 
     /* POST EXECUTION */
@@ -405,15 +379,11 @@ pub trait EthHandler {
     /// Calculate final refund.
     fn eip7623_check_gas_floor(
         &self,
-        context: &mut Self::Context,
+        _context: &mut Self::Context,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
     ) {
-        EthPostExecution::<_, Self::Error, HaltReason>::new().eip7623_check_gas_floor(
-            context,
-            exec_result,
-            init_and_floor_gas,
-        )
+        post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
     }
 
     /// Calculate final refund.
@@ -423,11 +393,8 @@ pub trait EthHandler {
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
         eip7702_refund: i64,
     ) {
-        EthPostExecution::<_, Self::Error, HaltReason>::new().refund(
-            context,
-            exec_result,
-            eip7702_refund,
-        )
+        let spec = context.cfg().spec().into();
+        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
     }
 
     /// Reimburse the caller with balance it didn't spent.
@@ -436,7 +403,7 @@ pub trait EthHandler {
         context: &mut Self::Context,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        EthPostExecution::<_, Self::Error, HaltReason>::new().reimburse_caller(context, exec_result)
+        post_execution::reimburse_caller(context, exec_result.gas_mut()).map_err(From::from)
     }
 
     /// Reward beneficiary with transaction rewards.
@@ -445,8 +412,7 @@ pub trait EthHandler {
         context: &mut Self::Context,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        EthPostExecution::<_, Self::Error, HaltReason>::new()
-            .reward_beneficiary(context, exec_result)
+        post_execution::reward_beneficiary(context, exec_result.gas_mut()).map_err(From::from)
     }
 
     /// Main return handle, takes state from journal and transforms internal result to [`Output`][PostExecutionHandler::Output].
@@ -455,7 +421,8 @@ pub trait EthHandler {
         context: &mut Self::Context,
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<ResultAndState<HaltReason>, Self::Error> {
-        EthPostExecution::<_, Self::Error, HaltReason>::new().output(context, result)
+        context.take_error()?;
+        Ok(post_execution::output(context, result))
     }
 
     /// Called when execution ends.
@@ -471,10 +438,32 @@ pub trait EthHandler {
         end_output
     }
 
-    /// Clean handler.
+    /// Clean handler. It resets internal Journal state to default one.
     ///
     /// This handle is called every time regardless of the result of the transaction.
     fn clear(&self, context: &mut Self::Context) {
-        EthPostExecution::<_, Self::Error, HaltReason>::new().clear(context)
+        context.journal().clear();
     }
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        CFG: Cfg,
+        DB: Database,
+        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+        CHAIN,
+    > EthContext for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        CFG: Cfg,
+        DB: Database,
+        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+        CHAIN,
+    > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
 }

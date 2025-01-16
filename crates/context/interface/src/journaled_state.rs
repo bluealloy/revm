@@ -133,7 +133,7 @@ pub trait Journal {
     /// Does cleanup and returns modified state.
     ///
     /// This resets the [Journal] to its initial state.
-    fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
+    fn finalize(&mut self) -> Self::FinalOutput;
 }
 
 /// Transfer and creation result

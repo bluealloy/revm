@@ -5,78 +5,45 @@ use context_interface::{
     Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use core::cmp::{self, Ordering};
-use handler_interface::{InitialAndFloorGas, ValidationHandler};
+use handler_interface::InitialAndFloorGas;
 use interpreter::gas::{self};
 use primitives::{B256, U256};
 use specification::{eip4844, hardfork::SpecId};
-use state::Account;
+use state::AccountInfo;
 use std::boxed::Box;
 
-pub struct EthValidation<CTX, ERROR> {
-    pub _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
+pub fn validate_env<
+    CTX: CfgGetter + BlockGetter + TransactionGetter,
+    ERROR: From<InvalidHeader> + From<InvalidTransaction>,
+>(
+    context: CTX,
+) -> Result<(), ERROR> {
+    let spec = context.cfg().spec().into();
+    // `prevrandao` is required for the merge
+    if spec.is_enabled_in(SpecId::MERGE) && context.block().prevrandao().is_none() {
+        return Err(InvalidHeader::PrevrandaoNotSet.into());
+    }
+    // `excess_blob_gas` is required for Cancun
+    if spec.is_enabled_in(SpecId::CANCUN) && context.block().blob_excess_gas_and_price().is_none() {
+        return Err(InvalidHeader::ExcessBlobGasNotSet.into());
+    }
+    validate_tx_env::<CTX, InvalidTransaction>(context, spec).map_err(Into::into)
 }
 
-impl<CTX, ERROR> Default for EthValidation<CTX, ERROR> {
-    fn default() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
-}
+pub fn validate_tx_against_state<
+    CTX: TransactionGetter + JournalGetter + CfgGetter,
+    ERROR: From<InvalidTransaction> + From<JournalDBError<CTX>>,
+>(
+    mut context: CTX,
+) -> Result<(), ERROR> {
+    let tx_caller = context.tx().caller();
 
-impl<CTX, ERROR> EthValidation<CTX, ERROR> {
-    pub fn new() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
+    // Load acc
+    let account = context.journal().load_account_code(tx_caller)?;
+    let account = account.data.info.clone();
 
-    pub fn new_boxed() -> Box<Self> {
-        Box::new(Self::new())
-    }
-}
-
-impl<CTX, ERROR> ValidationHandler for EthValidation<CTX, ERROR>
-where
-    CTX: EthValidationContext,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-
-    fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
-        let spec = context.cfg().spec().into();
-        // `prevrandao` is required for the merge
-        if spec.is_enabled_in(SpecId::MERGE) && context.block().prevrandao().is_none() {
-            return Err(InvalidHeader::PrevrandaoNotSet.into());
-        }
-        // `excess_blob_gas` is required for Cancun
-        if spec.is_enabled_in(SpecId::CANCUN)
-            && context.block().blob_excess_gas_and_price().is_none()
-        {
-            return Err(InvalidHeader::ExcessBlobGasNotSet.into());
-        }
-        validate_tx_env::<&Self::Context, InvalidTransaction>(context, spec).map_err(Into::into)
-    }
-
-    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let tx_caller = context.tx().caller();
-
-        // Load acc
-        let account = &mut context.journal().load_account_code(tx_caller)?;
-        let account = account.data.clone();
-
-        validate_tx_against_account::<CTX, ERROR>(&account, context)
-    }
-
-    fn validate_initial_tx_gas(
-        &self,
-        context: &Self::Context,
-    ) -> Result<InitialAndFloorGas, Self::Error> {
-        let spec = context.cfg().spec().into();
-        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(context, spec)
-            .map_err(Into::into)
-    }
+    validate_tx_against_account::<CTX>(&account, context)?;
+    Ok(())
 }
 
 /// Validate transaction that has EIP-1559 priority fee
@@ -140,10 +107,7 @@ pub fn validate_eip4844_tx(
 pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
     context: CTX,
     spec_id: SpecId,
-) -> Result<(), Error>
-where
-    Error: From<InvalidTransaction>,
-{
+) -> Result<(), InvalidTransaction> {
     // Check if the transaction's chain id is correct
     let tx_type = context.tx().tx_type();
     let tx = context.tx();
@@ -270,20 +234,17 @@ where
 
 /// Validate account against the transaction.
 #[inline]
-pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter, ERROR>(
-    account: &Account,
-    context: &CTX,
-) -> Result<(), ERROR>
-where
-    ERROR: From<InvalidTransaction>,
-{
+pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter>(
+    account: &AccountInfo,
+    context: CTX,
+) -> Result<(), InvalidTransaction> {
     let tx = context.tx();
     let tx_type = context.tx().tx_type();
     // EIP-3607: Reject transactions from senders with deployed code
     // This EIP is introduced after london but there was no collision in past
     // so we can leave it enabled always
     if !context.cfg().is_eip3607_disabled() {
-        let bytecode = &account.info.code.as_ref().unwrap();
+        let bytecode = &account.code.as_ref().unwrap();
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
@@ -294,7 +255,7 @@ where
     // Check that the transaction's nonce is correct
     if !context.cfg().is_nonce_check_disabled() {
         let tx = tx.nonce();
-        let state = account.info.nonce;
+        let state = account.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
                 return Err(InvalidTransaction::NonceTooHigh { tx, state }.into());
@@ -321,10 +282,10 @@ where
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.info.balance && !context.cfg().is_balance_check_disabled() {
+    if balance_check > account.balance && !context.cfg().is_balance_check_disabled() {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(balance_check),
-            balance: Box::new(account.info.balance),
+            balance: Box::new(account.balance),
         }
         .into());
     }
@@ -333,20 +294,16 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<CTX, Error>(
-    context: CTX,
-    spec_id: SpecId,
-) -> Result<InitialAndFloorGas, Error>
+pub fn validate_initial_tx_gas<CTX>(context: CTX) -> Result<InitialAndFloorGas, InvalidTransaction>
 where
     CTX: TransactionGetter + CfgGetter,
-    Error: From<InvalidTransaction>,
 {
     let spec = context.cfg().spec().into();
     let tx = context.tx();
     let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(
-        spec_id,
+        spec,
         tx.input(),
         tx.kind().is_create(),
         accounts as u64,
