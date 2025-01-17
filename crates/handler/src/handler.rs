@@ -9,7 +9,8 @@ use context_interface::{
     TransactionGetter,
 };
 use handler_interface::{
-    util::FrameOrFrameResult, Frame, FrameOrResult, InitialAndFloorGas, PrecompileProvider,
+    util::{FrameInitOrResult, FrameOrResult},
+    Frame, InitialAndFloorGas, ItemOrResult, PrecompileProvider,
 };
 use interpreter::{interpreter::InstructionProvider, FrameInput};
 use std::{vec, vec::Vec};
@@ -76,10 +77,8 @@ pub trait EthHandler {
         // Create first frame action
         let first_frame = self.create_first_frame(context, &mut frame_context, gas_limit)?;
         let mut frame_result = match first_frame {
-            FrameOrResult::Frame(frame) => {
-                self.run_exec_loop(context, &mut frame_context, frame)?
-            }
-            FrameOrResult::Result(result) => result,
+            ItemOrResult::Item(frame) => self.run_exec_loop(context, &mut frame_context, frame)?,
+            ItemOrResult::Result(result) => result,
         };
 
         self.last_frame_result(context, &mut frame_context, &mut frame_result)?;
@@ -145,9 +144,9 @@ pub trait EthHandler {
     fn create_first_frame(
         &mut self,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
         gas_limit: u64,
-    ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
+    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
         let init_frame =
             execution::create_init_frame(context.tx(), context.cfg().spec().into(), gas_limit);
         self.frame_init_first(context, frame_context, init_frame)
@@ -156,7 +155,7 @@ pub trait EthHandler {
     fn last_frame_result(
         &self,
         context: &mut Self::Context,
-        _frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        _frame_context: &mut <Self::Frame as Frame>::FrameContext,
         frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         execution::last_frame_result(context, frame_result);
@@ -168,15 +167,9 @@ pub trait EthHandler {
     fn frame_init_first(
         &mut self,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
-    ) -> Result<
-        FrameOrResult<
-            <Self as EthHandler>::Frame,
-            <<Self as EthHandler>::Frame as Frame>::FrameResult,
-        >,
-        Self::Error,
-    > {
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        frame_input: <Self::Frame as Frame>::FrameInit,
+    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
         Self::Frame::init_first(context, frame_context, frame_input)
     }
 
@@ -184,15 +177,9 @@ pub trait EthHandler {
         &self,
         frame: &Self::Frame,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
-    ) -> Result<
-        FrameOrResult<
-            <Self as EthHandler>::Frame,
-            <<Self as EthHandler>::Frame as Frame>::FrameResult,
-        >,
-        Self::Error,
-    > {
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        frame_input: <Self::Frame as Frame>::FrameInit,
+    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
         Frame::init(frame, context, frame_context, frame_input)
     }
 
@@ -200,14 +187,8 @@ pub trait EthHandler {
         &mut self,
         frame: &mut Self::Frame,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-    ) -> Result<
-        FrameOrResult<
-            <<Self as EthHandler>::Frame as Frame>::FrameInit,
-            <<Self as EthHandler>::Frame as Frame>::FrameResult,
-        >,
-        Self::Error,
-    > {
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+    ) -> Result<FrameInitOrResult<Self::Frame>, Self::Error> {
         Frame::run(frame, context, frame_context)
     }
 
@@ -215,16 +196,16 @@ pub trait EthHandler {
         &mut self,
         frame: &mut Self::Frame,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        result: <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         Self::Frame::return_result(frame, context, frame_context, result)
     }
 
     fn frame_final_return(
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        result: &mut <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         Self::Frame::final_return(context, frame_context, result)?;
         Ok(())
@@ -233,7 +214,7 @@ pub trait EthHandler {
     fn run_exec_loop(
         &self,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
         frame: Self::Frame,
     ) -> Result<FrameResult, Self::Error> {
         let mut frame_stack: Vec<Self::Frame> = vec![frame];
@@ -242,15 +223,15 @@ pub trait EthHandler {
             let call_or_result = frame.run(context, frame_context)?;
 
             let mut result = match call_or_result {
-                FrameOrResult::Frame(init) => match frame.init(context, frame_context, init)? {
-                    FrameOrResult::Frame(new_frame) => {
+                ItemOrResult::Item(init) => match frame.init(context, frame_context, init)? {
+                    ItemOrResult::Item(new_frame) => {
                         frame_stack.push(new_frame);
                         continue;
                     }
                     // Dont pop the frame as new frame was not created.
-                    FrameOrResult::Result(result) => result,
+                    ItemOrResult::Result(result) => result,
                 },
-                FrameOrResult::Result(result) => {
+                ItemOrResult::Result(result) => {
                     // Pop frame that returned result
                     frame_stack.pop();
                     result

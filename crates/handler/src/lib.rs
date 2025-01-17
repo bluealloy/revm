@@ -17,9 +17,9 @@ mod precompile_provider;
 pub mod validation;
 
 // Public exports
-//pub use eth_handler::{EthContext, EthError, EthHandler, EthHandlerImpl};;
 pub use frame::{
     return_create, return_eofcreate, EthFrame, EthFrameContext, EthFrameError, FrameContext,
 };
 pub use frame_data::{FrameData, FrameResult};
+pub use handler::{EthContext, EthError, EthHandler, EthHandlerImpl};
 pub use precompile_provider::EthPrecompileProvider;

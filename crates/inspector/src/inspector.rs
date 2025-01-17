@@ -13,7 +13,7 @@ use revm::{
         handler::{EthContext, EthError, EthHandler as EthHandlerNew, EthHandlerImpl},
         EthFrame, EthPrecompileProvider, FrameContext, FrameResult,
     },
-    handler_interface::{Frame, FrameOrResult, PrecompileProvider},
+    handler_interface::{Frame, ItemOrResult, PrecompileProvider},
     interpreter::{
         interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
         EOFCreateInputs, FrameInput, Interpreter, InterpreterTypes,
@@ -260,24 +260,24 @@ where
         frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
         mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
     ) -> Result<
-        FrameOrResult<
+        ItemOrResult<
             <Self as EthHandlerNew>::Frame,
             <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
         >,
         Self::Error,
     > {
         if let Some(output) = context.frame_start(&mut frame_input) {
-            return Ok(FrameOrResult::Result(output));
+            return Ok(ItemOrResult::Result(output));
         }
         let mut ret = self
             .handler
             .frame_init_first(context, frame_context, frame_input);
 
         match &mut ret {
-            Ok(FrameOrResult::Result(res)) => {
+            Ok(ItemOrResult::Result(res)) => {
                 context.frame_end(res);
             }
-            Ok(FrameOrResult::Frame(frame)) => {
+            Ok(ItemOrResult::Item(frame)) => {
                 context.initialize_interp(frame.interpreter());
             }
             _ => (),
@@ -292,23 +292,23 @@ where
         frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
         mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
     ) -> Result<
-        FrameOrResult<
+        ItemOrResult<
             <Self as EthHandlerNew>::Frame,
             <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
         >,
         Self::Error,
     > {
         if let Some(output) = context.frame_start(&mut frame_input) {
-            return Ok(FrameOrResult::Result(output));
+            return Ok(ItemOrResult::Result(output));
         }
         let mut ret = self
             .handler
             .frame_init(frame, context, frame_context, frame_input);
         match &mut ret {
-            Ok(FrameOrResult::Result(res)) => {
+            Ok(ItemOrResult::Result(res)) => {
                 context.frame_end(res);
             }
-            Ok(FrameOrResult::Frame(frame)) => {
+            Ok(ItemOrResult::Item(frame)) => {
                 context.initialize_interp(frame.interpreter());
             }
             _ => (),

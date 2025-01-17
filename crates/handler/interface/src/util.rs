@@ -1,24 +1,25 @@
 use crate::Frame;
 
-pub enum FrameOrResult<Frame, Result> {
-    Frame(Frame),
-    Result(Result),
+pub enum ItemOrResult<ITEM, RES> {
+    Item(ITEM),
+    Result(RES),
 }
 
-impl<F, R> FrameOrResult<F, R> {
-    pub fn map_frame<F2>(self, f: impl FnOnce(F) -> F2) -> FrameOrResult<F2, R> {
+impl<ITEM, RES> ItemOrResult<ITEM, RES> {
+    pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         match self {
-            FrameOrResult::Frame(frame) => FrameOrResult::Frame(f(frame)),
-            FrameOrResult::Result(result) => FrameOrResult::Result(result),
+            ItemOrResult::Item(item) => ItemOrResult::Item(f(item)),
+            ItemOrResult::Result(result) => ItemOrResult::Result(result),
         }
     }
 
-    pub fn map_result<R2>(self, f: impl FnOnce(R) -> R2) -> FrameOrResult<F, R2> {
+    pub fn map_result<ORES>(self, f: impl FnOnce(RES) -> ORES) -> ItemOrResult<ITEM, ORES> {
         match self {
-            FrameOrResult::Frame(frame) => FrameOrResult::Frame(frame),
-            FrameOrResult::Result(result) => FrameOrResult::Result(f(result)),
+            ItemOrResult::Item(item) => ItemOrResult::Item(item),
+            ItemOrResult::Result(result) => ItemOrResult::Result(f(result)),
         }
     }
 }
 
-pub type FrameOrFrameResult<FRAME> = FrameOrResult<FRAME, <FRAME as Frame>::FrameResult>;
+pub type FrameOrResult<FRAME> = ItemOrResult<FRAME, <FRAME as Frame>::FrameResult>;
+pub type FrameInitOrResult<FRAME> = ItemOrResult<<FRAME as Frame>::FrameInit, <FRAME as Frame>::FrameResult>;

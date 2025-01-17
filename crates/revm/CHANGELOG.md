@@ -134,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add uniswap V2 WETH-USDC swap example ([#1353](https://github.com/bluealloy/revm/pull/1353))
 - *(interpreter)* add helpers for spending all gas ([#1360](https://github.com/bluealloy/revm/pull/1360))
 - add helper methods to CallInputs ([#1345](https://github.com/bluealloy/revm/pull/1345))
-- *(revm)* make `FrameOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
+- *(revm)* make `ItemOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
 - add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
 - EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
 - *(`db`)* Introduce `alloydb` ([#1257](https://github.com/bluealloy/revm/pull/1257))

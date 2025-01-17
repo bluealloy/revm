@@ -11,7 +11,7 @@ pub mod util;
 
 pub use frame::Frame;
 pub use precompile_provider::{PrecompileProvider, PrecompileProviderGetter};
-pub use util::FrameOrResult;
+pub use util::ItemOrResult;
 
 /// Init and floor gas from transaction
 #[derive(Clone, Copy, Debug, Default)]

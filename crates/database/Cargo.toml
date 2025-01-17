@@ -25,7 +25,6 @@ all = "warn"
 state.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
-context-interface.workspace = true
 bytecode.workspace = true
 
 auto_impl = "1.2"

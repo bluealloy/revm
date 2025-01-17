@@ -6,7 +6,7 @@ use context_interface::{
     TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
-use handler_interface::{Frame, FrameOrResult, PrecompileProvider, PrecompileProviderGetter};
+use handler_interface::{Frame, ItemOrResult, PrecompileProvider, PrecompileProviderGetter};
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode, InstructionProvider, InstructionProviderGetter},
@@ -78,11 +78,11 @@ where
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
-    ) -> Result<FrameOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            Ok(FrameOrResult::Result(FrameResult::Call(CallOutcome {
+            Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
                     result: instruction_result,
                     gas,
@@ -131,7 +131,7 @@ where
                 } else {
                     context.journal().checkpoint_revert(checkpoint);
                 }
-                return Ok(FrameOrResult::Result(FrameResult::Call(CallOutcome {
+                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                     result,
                     memory_offset: inputs.return_memory_offset.clone(),
                 })));
@@ -172,7 +172,7 @@ where
             call_value: inputs.value.get(),
         };
 
-        Ok(FrameOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Frame(Self::new(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -198,10 +198,10 @@ where
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
-            Ok(FrameOrResult::Result(FrameResult::Create(CreateOutcome {
+            Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
                     result: e,
                     gas: Gas::new(inputs.gas_limit),
@@ -274,7 +274,7 @@ where
             call_value: inputs.value,
         };
 
-        Ok(FrameOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Frame(Self::new(
             FrameData::Create(CreateFrame { created_address }),
             depth,
             Interpreter::new(
@@ -298,10 +298,10 @@ where
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
-            Ok(FrameOrResult::Result(FrameResult::EOFCreate(
+            Ok(ItemOrResult::Result(FrameResult::EOFCreate(
                 CreateOutcome {
                     result: InterpreterResult {
                         result: e,
@@ -387,7 +387,7 @@ where
             call_value: inputs.value,
         };
 
-        Ok(FrameOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Frame(Self::new(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             depth,
             Interpreter::new(
@@ -410,7 +410,7 @@ where
         memory: Rc<RefCell<SharedMemory>>,
         context: &mut CTX,
         frame_context: &mut FrameContext<PRECOMPILES, INSTRUCTIONS>,
-    ) -> Result<FrameOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         match frame_init {
             FrameInput::Call(inputs) => {
                 Self::make_call_frame(context, frame_context, depth, memory, &inputs)
@@ -477,7 +477,7 @@ where
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
         frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self, Self::FrameResult>, Self::Error> {
+    ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
 
         // Load precompiles addresses as warm.
@@ -502,7 +502,7 @@ where
         context: &mut CTX,
         frame_context: &mut Self::FrameContext,
         frame_init: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self, Self::FrameResult>, Self::Error> {
+    ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
         self.memory.borrow_mut().new_context();
         Self::init_with_context(
             self.depth + 1,
@@ -517,7 +517,7 @@ where
         &mut self,
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
-    ) -> Result<FrameOrResult<Self::FrameInit, Self::FrameResult>, Self::Error> {
+    ) -> Result<ItemOrResult<Self::FrameInit, Self::FrameResult>, Self::Error> {
         let spec = context.cfg().spec().into();
 
         // Run interpreter
@@ -526,7 +526,7 @@ where
             .run(frame_context.instructions().table(), context);
 
         let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(new_frame) => return Ok(FrameOrResult::Frame(new_frame)),
+            InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Frame(new_frame)),
             InterpreterAction::Return { result } => result,
             InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
         };
@@ -541,7 +541,7 @@ where
                 } else {
                     context.journal().checkpoint_revert(self.checkpoint);
                 }
-                FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
+                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
                     frame.return_memory_range.clone(),
                 )))
@@ -557,7 +557,7 @@ where
                     spec,
                 );
 
-                FrameOrResult::Result(FrameResult::Create(CreateOutcome::new(
+                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
                     interpreter_result,
                     Some(frame.created_address),
                 )))
@@ -572,7 +572,7 @@ where
                     max_code_size,
                 );
 
-                FrameOrResult::Result(FrameResult::EOFCreate(CreateOutcome::new(
+                ItemOrResult::Result(FrameResult::EOFCreate(CreateOutcome::new(
                     interpreter_result,
                     Some(frame.created_address),
                 )))

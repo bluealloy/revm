@@ -3228,7 +3228,6 @@ dependencies = [
  "auto_impl",
  "indicatif",
  "revm-bytecode",
- "revm-context-interface",
  "revm-database-interface",
  "revm-primitives",
  "revm-state",

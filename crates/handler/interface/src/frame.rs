@@ -1,4 +1,4 @@
-use crate::FrameOrResult;
+use crate::util::{FrameInitOrResult, FrameOrResult};
 
 /// Call frame trait
 pub trait Frame: Sized {
@@ -12,7 +12,7 @@ pub trait Frame: Sized {
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
         frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self, Self::FrameResult>, Self::Error>;
+    ) -> Result<FrameOrResult<Self>, Self::Error>;
 
     fn final_return(
         context: &mut Self::Context,
@@ -25,13 +25,13 @@ pub trait Frame: Sized {
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
         frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self, Self::FrameResult>, Self::Error>;
+    ) -> Result<FrameOrResult<Self>, Self::Error>;
 
     fn run(
         &mut self,
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
-    ) -> Result<FrameOrResult<Self::FrameInit, Self::FrameResult>, Self::Error>;
+    ) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
     fn return_result(
         &mut self,
