@@ -1,3 +1,4 @@
+use context::Cfg;
 use context_interface::CfgGetter;
 use handler_interface::PrecompileProvider;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
@@ -21,7 +22,7 @@ impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
     }
 }
 
-impl<CTX, ERROR> EthPrecompileProvider<CTX, ERROR> {
+impl<CTX: CfgGetter, ERROR> EthPrecompileProvider<CTX, ERROR> {
     pub fn new(spec: SpecId) -> Self {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
@@ -38,9 +39,10 @@ where
     type Context = CTX;
     type Error = ERROR;
     type Output = InterpreterResult;
+    type Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec;
 
-    fn set_spec(&mut self, spec: SpecId) {
-        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec));
+    fn set_spec(&mut self, spec: Self::Spec) {
+        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec.into()));
     }
 
     fn run(

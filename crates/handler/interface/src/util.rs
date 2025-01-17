@@ -22,4 +22,5 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
 }
 
 pub type FrameOrResult<FRAME> = ItemOrResult<FRAME, <FRAME as Frame>::FrameResult>;
-pub type FrameInitOrResult<FRAME> = ItemOrResult<<FRAME as Frame>::FrameInit, <FRAME as Frame>::FrameResult>;
+pub type FrameInitOrResult<FRAME> =
+    ItemOrResult<<FRAME as Frame>::FrameInit, <FRAME as Frame>::FrameResult>;

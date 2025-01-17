@@ -21,6 +21,19 @@ pub struct ResultAndState<HaltReasonT: HaltReasonTrait> {
     pub state: EvmState,
 }
 
+impl<HaltReasonT: HaltReasonTrait> ResultAndState<HaltReasonT> {
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    pub fn map_haltreason<F, OHR: HaltReasonTrait>(self, op: F) -> ResultAndState<OHR>
+    where
+        F: FnOnce(HaltReasonT) -> OHR,
+    {
+        ResultAndState {
+            result: self.result.map_haltreason(op),
+            state: self.state,
+        }
+    }
+}
+
 /// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -51,6 +64,33 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     /// <https://eips.ethereum.org/EIPS/eip-658>
     pub fn is_success(&self) -> bool {
         matches!(self, Self::Success { .. })
+    }
+
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    pub fn map_haltreason<F, OHR: HaltReasonTrait>(self, op: F) -> ExecutionResult<OHR>
+    where
+        F: FnOnce(HaltReasonT) -> OHR,
+    {
+        match self {
+            Self::Success {
+                reason,
+                gas_used,
+                gas_refunded,
+                logs,
+                output,
+            } => ExecutionResult::Success {
+                reason,
+                gas_used,
+                gas_refunded,
+                logs,
+                output,
+            },
+            Self::Revert { gas_used, output } => ExecutionResult::Revert { gas_used, output },
+            Self::Halt { reason, gas_used } => ExecutionResult::Halt {
+                reason: op(reason),
+                gas_used,
+            },
+        }
     }
 
     /// Returns created address if execution is Create transaction

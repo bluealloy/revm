@@ -1,6 +1,6 @@
 use context::Context;
 use context_interface::{
-    result::{InvalidHeader, InvalidTransaction},
+    result::{HaltReason, InvalidHeader, InvalidTransaction},
     Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, ErrorGetter, Journal,
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
@@ -13,6 +13,7 @@ use precompile::PrecompileErrors;
 use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;
+use std::vec::Vec;
 
 use crate::{EthPrecompileProvider, FrameContext, FrameResult};
 
@@ -42,8 +43,12 @@ impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
     for EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
 where
     CTX: EthContext,
-    ERROR: EthError<CTX, FRAME>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
+    ERROR: EthError<CTX>,
+    PRECOMPILES: PrecompileProvider<
+        Context = CTX,
+        Error = ERROR,
+        Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
+    >,
     INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
@@ -60,17 +65,18 @@ where
     type Frame = FRAME;
     type Precompiles = PRECOMPILES;
     type Instructions = INSTRUCTIONS;
+    type HaltReason = HaltReason;
 
     fn frame_context(
         &mut self,
         context: &mut Self::Context,
     ) -> <Self::Frame as Frame>::FrameContext {
-        self.precompiles.set_spec(context.cfg().spec().into());
+        self.precompiles.set_spec(context.cfg().spec());
         self.crete_frame_context()
     }
 }
 
-impl<CTX: Host, ERROR, FRAME> Default
+impl<CTX: Host + CfgGetter, ERROR, FRAME> Default
     for EthHandlerImpl<
         CTX,
         ERROR,
@@ -100,24 +106,18 @@ pub trait EthContext:
 {
 }
 
-pub trait EthError<CTX: JournalGetter, FRAME: Frame>:
-    From<InvalidTransaction>
-    + From<InvalidHeader>
-    + From<JournalDBError<CTX>>
-    + From<<FRAME as Frame>::Error>
-    + From<PrecompileErrors>
+pub trait EthError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>> + From<PrecompileErrors>
 {
 }
 
 impl<
         CTX: JournalGetter,
-        FRAME: Frame,
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<JournalDBError<CTX>>
-            + From<<FRAME as Frame>::Error>
             + From<PrecompileErrors>,
-    > EthError<CTX, FRAME> for T
+    > EthError<CTX> for T
 {
 }
 

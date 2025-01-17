@@ -26,8 +26,8 @@ use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{rc::Rc, sync::Arc};
 
-pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILES, INSTRUCTIONS> {
-    _phantom: core::marker::PhantomData<fn() -> (PRECOMPILES, INSTRUCTIONS, CTX, ERROR)>,
+pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> {
+    _phantom: core::marker::PhantomData<(FRAMECTX, CTX, ERROR)>,
     data: FrameData,
     // TODO : Include this
     depth: usize,
@@ -39,7 +39,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILES, INSTRUCTIONS>
     pub memory: Rc<RefCell<SharedMemory>>,
 }
 
-impl<CTX, IW, ERROR, PRECOMPILES, INSTRUCTIONS> EthFrame<CTX, ERROR, IW, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, IW, ERROR, FRAMECTX> EthFrame<CTX, ERROR, IW, FRAMECTX>
 where
     CTX: JournalGetter,
     IW: InterpreterTypes,
@@ -62,19 +62,25 @@ where
     }
 }
 
-impl<CTX, ERROR, PRECOMPILES, INSTRUCTIONS>
-    EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, FRAMECTX> EthFrame<CTX, ERROR, EthInterpreter<()>, FRAMECTX>
 where
     CTX: EthFrameContext,
-    ERROR: EthFrameError<CTX>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
+    FRAMECTX: PrecompileProviderGetter<
+            PrecompileProvider: PrecompileProvider<
+                Context = CTX,
+                Error = ERROR,
+                Output = InterpreterResult,
+            >,
+        > + InstructionProviderGetter<
+            InstructionProvider: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+        >,
 {
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
         context: &mut CTX,
-        frame_context: &mut FrameContext<PRECOMPILES, INSTRUCTIONS>,
+        frame_context: &mut FRAMECTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
@@ -172,7 +178,7 @@ where
             call_value: inputs.value.get(),
         };
 
-        Ok(ItemOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -274,7 +280,7 @@ where
             call_value: inputs.value,
         };
 
-        Ok(ItemOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Item(Self::new(
             FrameData::Create(CreateFrame { created_address }),
             depth,
             Interpreter::new(
@@ -387,7 +393,7 @@ where
             call_value: inputs.value,
         };
 
-        Ok(ItemOrResult::Frame(Self::new(
+        Ok(ItemOrResult::Item(Self::new(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             depth,
             Interpreter::new(
@@ -409,7 +415,7 @@ where
         frame_init: FrameInput,
         memory: Rc<RefCell<SharedMemory>>,
         context: &mut CTX,
-        frame_context: &mut FrameContext<PRECOMPILES, INSTRUCTIONS>,
+        frame_context: &mut FRAMECTX,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         match frame_init {
             FrameInput::Call(inputs) => {
@@ -459,18 +465,24 @@ impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> Instruc
     }
 }
 
-impl<CTX, ERROR, PRECOMPILES, INSTRUCTIONS> Frame
-    for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, FRAMECTX> Frame for EthFrame<CTX, ERROR, EthInterpreter<()>, FRAMECTX>
 where
     CTX: EthFrameContext,
-    ERROR: EthFrameError<CTX>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
+    FRAMECTX: PrecompileProviderGetter<
+            PrecompileProvider: PrecompileProvider<
+                Context = CTX,
+                Error = ERROR,
+                Output = InterpreterResult,
+            >,
+        > + InstructionProviderGetter<
+            InstructionProvider: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+        >,
 {
     type Context = CTX;
     type Error = ERROR;
     type FrameInit = FrameInput;
-    type FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>;
+    type FrameContext = FRAMECTX;
     type FrameResult = FrameResult;
 
     fn init_first(
@@ -526,7 +538,7 @@ where
             .run(frame_context.instructions().table(), context);
 
         let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Frame(new_frame)),
+            InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
             InterpreterAction::Return { result } => result,
             InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
         };
@@ -825,15 +837,5 @@ impl<
             + CfgGetter
             + Host,
     > EthFrameContext for CTX
-{
-}
-
-pub trait EthFrameError<CTX: JournalGetter>:
-    From<JournalDBError<CTX>> + From<PrecompileErrors>
-{
-}
-
-impl<CTX: JournalGetter, T: From<JournalDBError<CTX>> + From<PrecompileErrors>> EthFrameError<CTX>
-    for T
 {
 }

@@ -8,8 +8,9 @@ pub trait PrecompileProvider: Clone {
     type Context;
     type Output;
     type Error;
+    type Spec: Into<SpecId>;
 
-    fn set_spec(&mut self, spec: SpecId);
+    fn set_spec(&mut self, spec: Self::Spec);
 
     /// Run the precompile.
     fn run(

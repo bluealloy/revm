@@ -4,9 +4,8 @@ pub use types::{EthContext, EthError, EthHandlerImpl};
 
 use crate::{execution, post_execution, pre_execution, validation, FrameContext, FrameResult};
 use context_interface::{
-    result::{HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
-    Cfg, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter, Transaction,
-    TransactionGetter,
+    result::{HaltReasonTrait, ResultAndState},
+    Cfg, CfgGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
 };
 use handler_interface::{
     util::{FrameInitOrResult, FrameOrResult},
@@ -17,11 +16,7 @@ use std::{vec, vec::Vec};
 
 pub trait EthHandler {
     type Context: EthContext;
-    type Error: From<InvalidTransaction>
-        + From<InvalidHeader>
-        + From<JournalDBError<Self::Context>>
-        + From<InvalidTransaction>
-        + From<<Self::Frame as Frame>::Error>;
+    type Error: EthError<Self::Context>;
     type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
     type Instructions: InstructionProvider<Host = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
@@ -33,11 +28,12 @@ pub trait EthHandler {
         FrameInit = FrameInput,
         FrameContext = FrameContext<Self::Precompiles, Self::Instructions>,
     >;
+    type HaltReason: HaltReasonTrait;
 
     fn run(
         &mut self,
         context: &mut Self::Context,
-    ) -> Result<ResultAndState<HaltReason>, Self::Error> {
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(context)?;
         let eip7702_refund = self.pre_execution(context)? as i64;
         let exec_result = self.execution(context, &init_and_floor_gas)?;
@@ -90,7 +86,7 @@ pub trait EthHandler {
         context: &mut Self::Context,
         mut exec_result: FrameResult,
         post_execution_gas: (InitialAndFloorGas, i64),
-    ) -> Result<ResultAndState<HaltReason>, Self::Error> {
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = post_execution_gas.0;
         let eip7702_gas_refund = post_execution_gas.1;
 
@@ -292,7 +288,7 @@ pub trait EthHandler {
         &self,
         context: &mut Self::Context,
         result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<ResultAndState<HaltReason>, Self::Error> {
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         context.take_error()?;
         Ok(post_execution::output(context, result))
     }
@@ -305,8 +301,8 @@ pub trait EthHandler {
     fn end(
         &self,
         _context: &mut Self::Context,
-        end_output: Result<ResultAndState<HaltReason>, Self::Error>,
-    ) -> Result<ResultAndState<HaltReason>, Self::Error> {
+        end_output: Result<ResultAndState<Self::HaltReason>, Self::Error>,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         end_output
     }
 

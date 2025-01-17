@@ -9,6 +9,7 @@ use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
 use database::{AlloyDB, BlockId, CacheDB};
+use exec::{transact_erc20evm, transact_erc20evm_commit};
 use reqwest::{Client, Url};
 use revm::{
     context_interface::{
@@ -16,21 +17,20 @@ use revm::{
         Journal, JournalDBError, JournalGetter,
     },
     database_interface::WrapDatabaseAsync,
-    handler::EthExecution,
     precompile::PrecompileErrors,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::{AccountInfo, EvmStorageSlot},
-    Context, EvmCommit, MainEvm,
+    Context,
 };
 
-pub mod handlers;
-use handlers::{CustomEvm, CustomHandler, Erc20PostExecution, Erc20PreExecution, Erc20Validation};
+pub mod exec;
+pub mod handler;
 
 type AlloyCacheDB =
     CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
 
 // Constants
-pub const TOKEN: Address = address!("1234567890123456789012345678901234567890");
+pub const TOKEN: Address = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
 pub const TREASURY: Address = address!("0000000000000000000000000000000000000001");
 
 #[tokio::main]
@@ -54,29 +54,29 @@ async fn main() -> Result<()> {
     let hundred_tokens = U256::from(100_000_000_000_000_000u128);
 
     let balance_slot = keccak256((account, U256::from(3)).abi_encode()).into();
-
+    println!("Balance slot: {balance_slot}");
     cache_db
-        .insert_account_storage(usdc, balance_slot, hundred_tokens)
+        .insert_account_storage(usdc, balance_slot, hundred_tokens * U256::from(2))
         .unwrap();
     cache_db.insert_account_info(
         account,
         AccountInfo {
             nonce: 0,
-            balance: hundred_tokens,
+            balance: hundred_tokens * U256::from(2),
             code_hash: keccak256(Bytes::new()),
             code: None,
         },
     );
 
     let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
+    println!("Balance before: {balance_before}");
 
     // Transfer 100 tokens from account to account_to
     // Magic happens here with custom handlers
-    transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
+    transfer(account, account_to, hundred_tokens, &mut cache_db)?;
 
     let balance_after = balance_of(usdc, account, &mut cache_db)?;
 
-    println!("Balance before: {balance_before}");
     println!("Balance after: {balance_after}");
 
     Ok(())
@@ -102,8 +102,8 @@ where
     let sender_balance = token_account
         .storage
         .get(&sender_balance_slot)
-        .expect("Balance slot not found")
-        .present_value();
+        .map(|slot| slot.present_value())
+        .unwrap_or_default();
 
     if sender_balance < amount {
         return Err(ERROR::from(
@@ -122,8 +122,9 @@ where
     let recipient_balance = token_account
         .storage
         .get(&recipient_balance_slot)
-        .expect("To balance slot not found")
-        .present_value();
+        .map(|slot| slot.present_value())
+        .unwrap_or_default();
+
     let recipient_new_balance = recipient_balance.saturating_add(amount);
     token_account.storage.insert(
         recipient_balance_slot,
@@ -140,21 +141,18 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(alloy_db)
-            .modify_tx_chained(|tx| {
-                // 0x1 because calling USDC proxy from zero address fails
-                tx.caller = address!("0000000000000000000000000000000000000001");
-                tx.kind = TxKind::Call(token);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        CustomHandler::default(),
-    );
+    let mut ctx = Context::builder()
+        .with_db(alloy_db)
+        .modify_tx_chained(|tx| {
+            // 0x1 because calling USDC proxy from zero address fails
+            tx.caller = TREASURY;
+            tx.kind = TxKind::Call(token);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+        });
 
-    let ref_tx = evm.exec_commit().unwrap();
-    let value = match ref_tx {
+    let ref_tx = transact_erc20evm(&mut ctx).unwrap();
+    let value = match ref_tx.result {
         ExecutionResult::Success {
             output: Output::Call(value),
             ..
@@ -167,47 +165,19 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
     Ok(balance)
 }
 
-fn transfer(
-    from: Address,
-    to: Address,
-    amount: U256,
-    token: Address,
-    cache_db: &mut AlloyCacheDB,
-) -> Result<()> {
-    sol! {
-        function transfer(address to, uint amount) external returns (bool);
-    }
-
-    let encoded = transferCall { to, amount }.abi_encode();
-
-    let mut evm = CustomEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                tx.caller = from;
-                tx.kind = TxKind::Call(token);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        CustomHandler::new(
-            Erc20Validation::new(),
-            Erc20PreExecution::new(),
-            EthExecution::new(),
-            Erc20PostExecution::new(),
-        ),
-    );
-    let ref_tx = evm.exec_commit().unwrap();
+fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheDB) -> Result<()> {
+    let mut ctx = Context::builder()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            tx.caller = from;
+            tx.kind = TxKind::Call(to);
+            tx.value = amount;
+        });
+    let ref_tx = transact_erc20evm_commit(&mut ctx).unwrap();
     let success: bool = match ref_tx {
-        ExecutionResult::Success {
-            output: Output::Call(value),
-            ..
-        } => <bool>::abi_decode(&value, false)?,
+        ExecutionResult::Success { .. } => true, //<bool>::abi_decode(&value, false)?,
         result => return Err(anyhow!("'transfer' execution failed: {result:?}")),
     };
-
-    if !success {
-        return Err(anyhow!("'transfer' failed"));
-    }
 
     Ok(())
 }

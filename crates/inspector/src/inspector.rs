@@ -210,8 +210,8 @@ pub trait FrameInterpreterGetter {
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT>;
 }
 
-impl<CTX, ERROR, IW: InterpreterTypes, PRECOMPILES, INSTRUCTIONS> FrameInterpreterGetter
-    for EthFrame<CTX, ERROR, IW, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> FrameInterpreterGetter
+    for EthFrame<CTX, ERROR, IW, FRAMECTX>
 {
     type IT = IW;
 
@@ -225,7 +225,7 @@ impl<CTX, ERROR, FRAME, HANDLER, INTR, PRECOMPILES, INSTRUCTIONS> EthHandlerNew
 where
     CTX: EthContext + InspectorCtx<IT = INTR> + JournalExtGetter,
     INTR: InterpreterTypes,
-    ERROR: EthError<CTX, FRAME>,
+    ERROR: EthError<CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<
@@ -243,6 +243,7 @@ where
     type Frame = FRAME;
     type Precompiles = PRECOMPILES;
     type Instructions = InspectorInstructionProvider<INTR, CTX>;
+    type HaltReason = <HANDLER as EthHandlerNew>::HaltReason;
 
     fn frame_context(
         &mut self,
@@ -348,17 +349,11 @@ pub fn inspect_main<
     ctx: &mut CTX,
 ) -> Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
     InspectorHandlerImpl::<
-        _, //CTX,
-        _, //EVMError<<DB as Database>::Error, InvalidTransaction>,
-        EthFrame<
-            _, // CTX,
-            _, //EVMError<<DB as Database>::Error, InvalidTransaction>,
-            _, //EthInterpreter,
-            _, //EthPrecompileProvider<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>>,
-            _, //InspectorInstructionProvider<EthInterpreter, CTX>,
-        >,
-        _, //EthHandlerImpl<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>, _, _, _>,
-        _, //EthPrecompileProvider<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>>,
+        _,
+        _,
+        EthFrame<_, _, _, _>,
+        _,
+        _,
         InspectorInstructionProvider<EthInterpreter, CTX>,
     >::new(EthHandlerImpl {
         precompiles: EthPrecompileProvider::new(SpecId::LATEST),

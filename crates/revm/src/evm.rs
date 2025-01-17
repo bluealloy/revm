@@ -5,13 +5,14 @@ use context_interface::{
 use database_interface::{Database, DatabaseCommit};
 use handler::{
     handler::{EthContext, EthHandler, EthHandlerImpl},
-    EthFrame,
+    EthFrame, EthPrecompileProvider,
 };
 
 pub fn transact_main<DB: Database, CTX: EthContext + DatabaseGetter<Database = DB>>(
     ctx: &mut CTX,
 ) -> Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
-    EthHandlerImpl::<CTX, _, EthFrame<CTX, _, _, _, _>, _, _>::default().run(ctx)
+    EthHandlerImpl::<CTX, _, EthFrame<CTX, _, _, _>, EthPrecompileProvider<CTX, _>, _>::default()
+        .run(ctx)
 }
 
 pub fn transact_main_commit<
