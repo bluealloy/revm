@@ -1,4 +1,3 @@
-use alloy_sol_types::SolValue;
 use revm::{
     context::Cfg,
     context_interface::{
@@ -12,12 +11,12 @@ use revm::{
         Host,
     },
     precompile::PrecompileErrors,
-    primitives::{keccak256, U256},
+    primitives::U256,
     specification::hardfork::SpecId,
 };
 use std::cmp::Ordering;
 
-use crate::{token_operation, TOKEN, TREASURY};
+use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
 pub struct Erc20MainetHandler<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> {
     frame_context: FrameContext<
@@ -34,6 +33,14 @@ impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Erc20MainetHandler<CT
                 EthInstructionProvider::default(),
             ),
         }
+    }
+}
+
+impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Default
+    for Erc20MainetHandler<CTX, ERROR>
+{
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -61,11 +68,9 @@ where
     }
 
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller_u256: U256 = context.tx().caller().into_word().into();
-        println!("Validate TX: {:?}", caller_u256);
         let caller = context.tx().caller();
         let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
-        let token_account = context.journal().load_account(TOKEN)?.data.clone();
+        let _ = context.journal().load_account(TOKEN)?.data.clone();
 
         if !context.cfg().is_nonce_check_disabled() {
             let tx_nonce = context.tx().nonce();
@@ -100,7 +105,7 @@ where
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
         }
 
-        let account_balance_slot = keccak256((caller, U256::from(3)).abi_encode()).into();
+        let account_balance_slot = erc_address_storage(caller);
         let account_balance = context
             .journal()
             .sload(TOKEN, account_balance_slot)
@@ -119,6 +124,10 @@ where
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+        // load and touch token account
+        let _ = context.journal().load_account(TOKEN)?.data;
+        context.journal().touch_account(TOKEN);
+
         let basefee = context.block().basefee() as u128;
         let blob_price = context.block().blob_gasprice().unwrap_or_default();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
@@ -131,6 +140,7 @@ where
         }
 
         let caller = context.tx().caller();
+        println!("Deduct caller: {:?} for amount: {gas_cost:?}", caller);
         token_operation::<CTX, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
 
         Ok(())
