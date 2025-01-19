@@ -58,7 +58,7 @@
             "hash": "0xa0d2c243c557801639839a02147a45bebdfb7367d7dfce33bd852ec34e5beb4f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "Hyperledger Besu evm 24.10-develop-e720d8f",
-            "description": "Test function documentation:\n\n    Verifies an EOFCREATE occuring within initcode creates that contract",
+            "description": "Test function documentation:\n\n    Verifies an EOFCREATE occurring within initcode creates that contract",
             "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692@v2.0.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L281",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

@@ -61,7 +61,7 @@
             "hash": "0x331fed19cc0d3879db8673c7ff4994b28273c9765605932f39d4cd6696ba06c2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "Hyperledger Besu evm 24.10-develop-e720d8f",
-            "description": "Test function documentation:\n\n    Excercises an EOFCREATE when there is not enough gas for the initcode charge",
+            "description": "Test function documentation:\n\n    Exercises an EOFCREATE when there is not enough gas for the initcode charge",
             "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692@v2.0.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L397",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

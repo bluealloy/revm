@@ -61,7 +61,7 @@
             "hash": "0x07b2d16a708a10a795b8328f4f5d318fda9948873e6304b39bd7d56eb918bd58",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "Hyperledger Besu evm 24.10-develop-e720d8f",
-            "description": "Test function documentation:\n\n    Excercises an EOFCREATE when the memory for auxdata has not been expanded but is requested",
+            "description": "Test function documentation:\n\n    Exercises an EOFCREATE when the memory for auxdata has not been expanded but is requested",
             "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692@v2.0.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L459",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
