@@ -201,10 +201,13 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
         )
     );
 
-    interpreter.control.gas().record_refund(gas::sstore_refund(
-        interpreter.runtime_flag.spec_id(),
-        &state_load.data,
-    ));
+    interpreter
+        .control
+        .gas_mut()
+        .record_refund(gas::sstore_refund(
+            interpreter.runtime_flag.spec_id(),
+            &state_load.data,
+        ));
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -290,7 +293,10 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     // EIP-3529: Reduction in refunds
     if !interpreter.runtime_flag.spec_id().is_enabled_in(LONDON) && !res.previously_destroyed {
-        interpreter.control.gas().record_refund(gas::SELFDESTRUCT)
+        interpreter
+            .control
+            .gas_mut()
+            .record_refund(gas::SELFDESTRUCT)
     }
 
     gas!(

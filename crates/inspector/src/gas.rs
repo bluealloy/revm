@@ -98,7 +98,7 @@ mod tests {
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            self.gas_inspector.step_end(interp.control.gas());
+            self.gas_inspector.step_end(interp.control.gas_mut());
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
         }
