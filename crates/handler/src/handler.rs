@@ -280,7 +280,7 @@ pub trait EthHandler {
         post_execution::reward_beneficiary(context, exec_result.gas_mut()).map_err(From::from)
     }
 
-    /// Main return handle, takes state from journal and transforms internal result to [`Output`][PostExecutionHandler::Output].
+    /// Main return handle, takes state from journal and transforms internal result to output.
     fn output(
         &self,
         context: &mut Self::Context,
@@ -294,7 +294,7 @@ pub trait EthHandler {
     ///
     /// End handle in comparison to output handle will be called every time after execution.
     ///
-    /// While [`output`][PostExecutionHandler::output] will be omitted in case of the error.
+    /// While output will be omitted in case of the error.
     fn end(
         &self,
         _context: &mut Self::Context,
