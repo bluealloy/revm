@@ -74,10 +74,7 @@ where
         context: &Self::Context,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let spec = context.cfg().spec().into();
-        let initial_and_floor_gas =
-            validate_initial_tx_gas(context.tx(), spec).map_err(InvalidTransaction::from)?;
-
-        Ok(initial_and_floor_gas)
+        validate_initial_tx_gas(context.tx(), spec).map_err(From::from)
     }
 }
 
