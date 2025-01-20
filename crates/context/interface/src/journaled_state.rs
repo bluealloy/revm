@@ -71,7 +71,6 @@ pub trait Journal {
 
     fn touch_account(&mut self, address: Address);
 
-    // TODO : Instruction result is not known
     fn transfer(
         &mut self,
         from: &Address,

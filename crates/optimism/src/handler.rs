@@ -19,7 +19,7 @@ use revm::{
     handler_interface::{Frame, PrecompileProvider},
     interpreter::{
         interpreter::{EthInterpreter, InstructionProvider},
-        FrameInput, Host,
+        FrameInput, Gas, Host,
     },
     primitives::{hash_map::HashMap, U256},
     specification::hardfork::SpecId,
@@ -158,6 +158,72 @@ where
                 .into());
             }
             caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+        }
+        Ok(())
+    }
+
+    fn last_frame_result(
+        &self,
+        context: &mut Self::Context,
+        _frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        frame_result: &mut <Self::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        let tx = context.tx();
+        let is_deposit = tx.tx_type() == DEPOSIT_TRANSACTION_TYPE;
+        let tx_gas_limit = tx.gas_limit();
+        let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
+
+        let instruction_result = frame_result.interpreter_result().result;
+        let gas = frame_result.gas_mut();
+        let remaining = gas.remaining();
+        let refunded = gas.refunded();
+
+        // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
+        *gas = Gas::new_spent(tx_gas_limit);
+
+        if instruction_result.is_ok() {
+            // On Optimism, deposit transactions report gas usage uniquely to other
+            // transactions due to them being pre-paid on L1.
+            //
+            // Hardfork Behavior:
+            // - Bedrock (success path):
+            //   - Deposit transactions (non-system) report their gas limit as the usage.
+            //     No refunds.
+            //   - Deposit transactions (system) report 0 gas used. No refunds.
+            //   - Regular transactions report gas usage as normal.
+            // - Regolith (success path):
+            //   - Deposit transactions (all) report their gas used as normal. Refunds
+            //     enabled.
+            //   - Regular transactions report their gas used as normal.
+            if !is_deposit || is_regolith {
+                // For regular transactions prior to Regolith and all transactions after
+                // Regolith, gas is reported as normal.
+                gas.erase_cost(remaining);
+                gas.record_refund(refunded);
+            } else if is_deposit {
+                let tx = context.op_tx();
+                if tx.is_system_transaction() {
+                    // System transactions were a special type of deposit transaction in
+                    // the Bedrock hardfork that did not incur any gas costs.
+                    gas.erase_cost(tx_gas_limit);
+                }
+            }
+        } else if instruction_result.is_revert() {
+            // On Optimism, deposit transactions report gas usage uniquely to other
+            // transactions due to them being pre-paid on L1.
+            //
+            // Hardfork Behavior:
+            // - Bedrock (revert path):
+            //   - Deposit transactions (all) report the gas limit as the amount of gas
+            //     used on failure. No refunds.
+            //   - Regular transactions receive a refund on remaining gas as normal.
+            // - Regolith (revert path):
+            //   - Deposit transactions (all) report the actual gas used as the amount of
+            //     gas used on failure. Refunds on remaining gas enabled.
+            //   - Regular transactions receive a refund on remaining gas as normal.
+            if !is_deposit || is_regolith {
+                gas.erase_cost(remaining);
+            }
         }
         Ok(())
     }
@@ -308,82 +374,6 @@ where
         })
     }
 }
-
-// // TODO Integrate this inside ethhandler impl, check where this needs to go.
-// fn last_frame_result(
-//     &self,
-//     context: &mut Self::Context,
-//     mut frame_result: <Self::Frame as Frame>::FrameResult,
-// ) -> Result<Self::ExecResult, Self::Error> {
-//     let tx = context.tx();
-//     let is_deposit = tx.tx_type() == DEPOSIT_TRANSACTION_TYPE;
-//     let tx_gas_limit = tx.gas_limit();
-//     let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
-
-//     let instruction_result = frame_result.interpreter_result().result;
-//     let gas = frame_result.gas_mut();
-//     let remaining = gas.remaining();
-//     let refunded = gas.refunded();
-
-//     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-//     *gas = Gas::new_spent(tx_gas_limit);
-
-//     if instruction_result.is_ok() {
-//         // On Optimism, deposit transactions report gas usage uniquely to other
-//         // transactions due to them being pre-paid on L1.
-//         //
-//         // Hardfork Behavior:
-//         // - Bedrock (success path):
-//         //   - Deposit transactions (non-system) report their gas limit as the usage.
-//         //     No refunds.
-//         //   - Deposit transactions (system) report 0 gas used. No refunds.
-//         //   - Regular transactions report gas usage as normal.
-//         // - Regolith (success path):
-//         //   - Deposit transactions (all) report their gas used as normal. Refunds
-//         //     enabled.
-//         //   - Regular transactions report their gas used as normal.
-//         if !is_deposit || is_regolith {
-//             // For regular transactions prior to Regolith and all transactions after
-//             // Regolith, gas is reported as normal.
-//             gas.erase_cost(remaining);
-//             gas.record_refund(refunded);
-//         } else if is_deposit {
-//             let tx = context.op_tx();
-//             if tx.is_system_transaction() {
-//                 // System transactions were a special type of deposit transaction in
-//                 // the Bedrock hardfork that did not incur any gas costs.
-//                 gas.erase_cost(tx_gas_limit);
-//             }
-//         }
-//     } else if instruction_result.is_revert() {
-//         // On Optimism, deposit transactions report gas usage uniquely to other
-//         // transactions due to them being pre-paid on L1.
-//         //
-//         // Hardfork Behavior:
-//         // - Bedrock (revert path):
-//         //   - Deposit transactions (all) report the gas limit as the amount of gas
-//         //     used on failure. No refunds.
-//         //   - Regular transactions receive a refund on remaining gas as normal.
-//         // - Regolith (revert path):
-//         //   - Deposit transactions (all) report the actual gas used as the amount of
-//         //     gas used on failure. Refunds on remaining gas enabled.
-//         //   - Regular transactions receive a refund on remaining gas as normal.
-//         if !is_deposit || is_regolith {
-//             gas.erase_cost(remaining);
-//         }
-//     }
-//     Ok(frame_result)
-// }
-
-// /// Optimism end handle changes output if the transaction is a deposit transaction.
-// /// Deposit transaction can't be reverted and is always successful.
-// #[inline]
-// pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
-//     context: &mut Context<EvmWiringT>,
-//     evm_output: EVMResult<EvmWiringT>,
-// ) -> EVMResult<EvmWiringT> {
-
-// }
 
 // #[cfg(test)]
 // mod tests {

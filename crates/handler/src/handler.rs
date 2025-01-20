@@ -8,10 +8,9 @@ use context_interface::{
     Cfg, CfgGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
 };
 use handler_interface::{
-    util::{FrameInitOrResult, FrameOrResult},
-    Frame, InitialAndFloorGas, ItemOrResult, PrecompileProvider,
+    Frame, FrameInitOrResult, FrameOrResult, ItemOrResult, PrecompileProvider,
 };
-use interpreter::{interpreter::InstructionProvider, FrameInput};
+use interpreter::{interpreter::InstructionProvider, FrameInput, InitialAndFloorGas};
 use std::{vec, vec::Vec};
 
 pub trait EthHandler {
@@ -28,6 +27,7 @@ pub trait EthHandler {
         FrameInit = FrameInput,
         FrameContext = FrameContext<Self::Precompiles, Self::Instructions>,
     >;
+    // TODO `HaltReason` should be a ExecResult trait, returned by the handler.
     type HaltReason: HaltReasonTrait;
 
     fn run(
@@ -37,8 +37,7 @@ pub trait EthHandler {
         let init_and_floor_gas = self.validate(context)?;
         let eip7702_refund = self.pre_execution(context)? as i64;
         let exec_result = self.execution(context, &init_and_floor_gas)?;
-        let post_execution_gas = (init_and_floor_gas, eip7702_refund);
-        self.post_execution(context, exec_result, post_execution_gas)
+        self.post_execution(context, exec_result, init_and_floor_gas, eip7702_refund)
     }
 
     fn frame_context(
@@ -85,11 +84,9 @@ pub trait EthHandler {
         &self,
         context: &mut Self::Context,
         mut exec_result: FrameResult,
-        post_execution_gas: (InitialAndFloorGas, i64),
+        init_and_floor_gas: InitialAndFloorGas,
+        eip7702_gas_refund: i64,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let init_and_floor_gas = post_execution_gas.0;
-        let eip7702_gas_refund = post_execution_gas.1;
-
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(context, &mut exec_result, eip7702_gas_refund);
         // Check if gas floor is met and spent at least a floor gas.

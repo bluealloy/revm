@@ -1,4 +1,4 @@
-use crate::util::{FrameInitOrResult, FrameOrResult};
+use crate::{FrameInitOrResult, FrameOrResult};
 
 /// Call frame trait
 pub trait Frame: Sized {

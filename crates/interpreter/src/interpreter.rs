@@ -136,8 +136,7 @@ where
     type WIRE = WIRE;
     type Host = HOST;
 
-    // TODO : Make impl a associate type. With this associate type we can implement.
-    // InspectorInstructionProvider over generic type.
+    /// Returns the instruction table.
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
     }

@@ -29,7 +29,7 @@ use std::{rc::Rc, sync::Arc};
 pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> {
     _phantom: core::marker::PhantomData<(FRAMECTX, CTX, ERROR)>,
     data: FrameData,
-    // TODO : Include this
+    /// Depth of the call frame.
     depth: usize,
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
@@ -247,13 +247,12 @@ where
         }
 
         // Create address
-        // TODO : Incorporating code hash inside interpreter. It was a request by foundry.
-        let mut _init_code_hash = B256::ZERO;
+        let mut init_code_hash = B256::ZERO;
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                _init_code_hash = keccak256(&inputs.init_code);
-                inputs.caller.create2(salt.to_be_bytes(), _init_code_hash)
+                init_code_hash = keccak256(&inputs.init_code);
+                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
             }
         };
 
@@ -271,7 +270,10 @@ where
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = ExtBytecode::new(Bytecode::new_legacy(inputs.init_code.clone()));
+        let bytecode = ExtBytecode::new_with_hash(
+            Bytecode::new_legacy(inputs.init_code.clone()),
+            init_code_hash,
+        );
 
         let interpreter_input = InputsImpl {
             target_address: created_address,

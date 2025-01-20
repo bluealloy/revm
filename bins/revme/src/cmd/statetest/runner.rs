@@ -359,7 +359,6 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                // TODO : TX TYPE needs to be set
                 let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
                     if test.expect_exception.is_some() {
                         continue;

@@ -5,16 +5,13 @@ use context_interface::{
     Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, Transaction,
     TransactionGetter,
 };
-use interpreter::{Gas, SuccessOrHalt};
+use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{Log, U256};
 use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
-pub fn eip7623_check_gas_floor(
-    gas: &mut Gas,
-    init_and_floor_gas: handler_interface::InitialAndFloorGas,
-) {
+pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
     // spend at least a gas_floor amount of gas.
     if gas.spent_sub_refunded() < init_and_floor_gas.floor_gas {

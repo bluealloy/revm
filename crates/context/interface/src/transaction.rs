@@ -95,8 +95,6 @@ pub trait Transaction {
 
     /// Total gas for all blobs. Max number of blocks is already checked
     /// so we dont need to check for overflow.
-    ///
-    /// TODO remove this
     fn total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_versioned_hashes().len() as u64
     }
@@ -108,8 +106,6 @@ pub trait Transaction {
     ///
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
-    ///
-    /// TODO remove it, make a utility trait.
     fn calc_max_data_fee(&self) -> U256 {
         let blob_gas = U256::from(self.total_blob_gas());
         let max_blob_fee = U256::from(self.max_fee_per_blob_gas());

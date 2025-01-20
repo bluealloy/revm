@@ -35,7 +35,6 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    // TODO : Check performance degradation.
     push!(interpreter, U256::ZERO);
     popn_top!([], top, interpreter);
 

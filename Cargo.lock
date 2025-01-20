@@ -3312,7 +3312,6 @@ dependencies = [
  "revm-bytecode",
  "revm-context-interface",
  "revm-database-interface",
- "revm-handler-interface",
  "revm-primitives",
  "revm-specification",
  "serde",

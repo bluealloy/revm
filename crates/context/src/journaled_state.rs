@@ -150,7 +150,6 @@ impl<DB: Database> Journal for JournaledState<DB> {
         to: &Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        // TODO : Handle instruction result
         self.transfer(from, to, balance)
     }
 

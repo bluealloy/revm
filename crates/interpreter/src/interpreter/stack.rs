@@ -269,7 +269,7 @@ impl Stack {
         unsafe {
             // Note: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
             // because it operates under the assumption that the pointers do not overlap,
-            // eliminating an intemediate copy,
+            // eliminating an intermediate copy,
             // which is a condition we know to be true in this context.
             let top = self.data.as_mut_ptr().add(len - 1);
             core::ptr::swap_nonoverlapping(top.sub(n), top.sub(n_m_index), 1);

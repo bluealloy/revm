@@ -8,7 +8,6 @@ use auto_impl::auto_impl;
 use primitives::{Address, Bytes, Log, B256, U256};
 
 /// EVM context host.
-// TODO : Move to context-interface
 #[auto_impl(&mut, Box)]
 pub trait Host: TransactionGetter + BlockGetter + CfgGetter {
     /// Load an account code.

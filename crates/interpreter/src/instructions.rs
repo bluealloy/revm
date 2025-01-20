@@ -226,7 +226,6 @@ mod tests {
     // use crate::DummyHost;
     // use bytecode::opcode::*;
 
-    // TODO : Define EthEthereumWire
     // #[test]
     // fn all_instructions_and_opcodes_used() {
     //     // known unknown instruction we compare it with other instructions from table.
