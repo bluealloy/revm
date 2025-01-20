@@ -99,6 +99,8 @@ pub fn apply_eip7702_auth_list<
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
+
+    #[derive(Debug)]
     struct Authorization {
         authority: Option<Address>,
         address: Address,

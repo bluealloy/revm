@@ -55,8 +55,8 @@ pub trait EthHandler {
     /// Call all Pre execution functions.
     fn pre_execution(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
         self.load_accounts(context)?;
-        let gas = self.apply_eip7702_auth_list(context)?;
         self.deduct_caller(context)?;
+        let gas = self.apply_eip7702_auth_list(context)?;
         Ok(gas)
     }
 
