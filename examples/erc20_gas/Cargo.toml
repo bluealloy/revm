@@ -33,7 +33,7 @@ tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
 alloy-sol-types = { version = "0.8.2", default-features = false, features = [
     "std",
 ] }
-alloy-transport-http = "0.6"
-alloy-provider = "0.6"
+alloy-transport-http = "0.9.2"
+alloy-provider = "0.9.2"
 reqwest = { version = "0.12" }
 anyhow = "1.0.89"

@@ -1,5 +1,5 @@
 [package]
-name = "example-uniswap-v2-usdc-swap"
+name = "example-cheatcode-inspector"
 version = "0.0.0"
 publish = false
 authors.workspace = true
@@ -22,18 +22,9 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm.workspace = true
-database = { workspace = true, features = ["std", "alloydb"] }
+revm = {workspace = true, features = ["std"] }
+database = { workspace = true, features = ["std"] }
+inspector = { workspace = true, features = ["std", "serde-json"] }
 
-# tokio
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
-
-# alloy
-alloy-sol-types = { version = "0.8.2", default-features = false, features = [
-    "std",
-] }
-alloy-eips = "0.9.2"
-alloy-transport-http = "0.9.2"
-alloy-provider = "0.9.2"
-reqwest = { version = "0.12" }
+# misc
 anyhow = "1.0.89"
