@@ -292,12 +292,10 @@ pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter>(
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<CTX>(context: CTX) -> Result<InitialAndFloorGas, InvalidTransaction>
-where
-    CTX: TransactionGetter + CfgGetter,
-{
-    let spec = context.cfg().spec().into();
-    let tx = context.tx();
+pub fn validate_initial_tx_gas(
+    tx: impl Transaction,
+    spec: SpecId,
+) -> Result<InitialAndFloorGas, InvalidTransaction> {
     let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(

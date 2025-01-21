@@ -116,7 +116,8 @@ pub trait EthHandler {
         &self,
         context: &Self::Context,
     ) -> Result<InitialAndFloorGas, Self::Error> {
-        validation::validate_initial_tx_gas(context).map_err(From::from)
+        validation::validate_initial_tx_gas(context.tx(), context.cfg().spec().into())
+            .map_err(From::from)
     }
 
     /* PRE EXECUTION */
