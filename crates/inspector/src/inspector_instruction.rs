@@ -5,7 +5,7 @@ use revm::{
     interpreter::{
         instructions::host::{log, selfdestruct},
         interpreter::InstructionProvider,
-        interpreter_types::LoopControl,
+        interpreter_types::{Jumps, LoopControl},
         table::{self, CustomInstruction},
         Host, Instruction, InstructionResult, Interpreter, InterpreterTypes,
     },
@@ -15,8 +15,46 @@ use std::rc::Rc;
 
 use crate::{
     journal::{JournalExt, JournalExtGetter},
-    InspectorCtx, InspectorInstruction,
+    InspectorCtx,
 };
+
+#[derive(Clone)]
+pub struct InspectorInstruction<IT: InterpreterTypes, HOST> {
+    pub instruction: fn(&mut Interpreter<IT>, &mut HOST),
+}
+
+impl<IT: InterpreterTypes, HOST> CustomInstruction for InspectorInstruction<IT, HOST>
+where
+    HOST: InspectorCtx<IT = IT>,
+{
+    type Wire = IT;
+    type Host = HOST;
+
+    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
+        // SAFETY: As the PC was already incremented we need to subtract 1 to preserve the
+        // old Inspector behavior.
+        interpreter.bytecode.relative_jump(-1);
+
+        // Call step.
+        host.step(interpreter);
+        if interpreter.control.instruction_result() != InstructionResult::Continue {
+            return;
+        }
+
+        // Reset PC to previous value.
+        interpreter.bytecode.relative_jump(1);
+
+        // Execute instruction.
+        (self.instruction)(interpreter, host);
+
+        // Call step_end.
+        host.step_end(interpreter);
+    }
+
+    fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
+        Self { instruction }
+    }
+}
 
 pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
@@ -33,15 +71,12 @@ where
     }
 }
 
-impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
+impl<WIRE, HOST> InspectorInstructionProvider<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
 {
-    type WIRE = WIRE;
-    type Host = HOST;
-
-    fn new(_context: &mut Self::Host) -> Self {
+    pub fn new() -> Self {
         let main_table = table::make_instruction_table::<WIRE, HOST>();
         let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
             unsafe { MaybeUninit::uninit().assume_init() };
@@ -103,7 +138,7 @@ where
 
         table[OpCode::SELFDESTRUCT.as_usize()] = InspectorInstruction {
             instruction: |interp, context| {
-                selfdestruct::<Self::WIRE, HOST>(interp, context);
+                selfdestruct::<WIRE, HOST>(interp, context);
                 if interp.control.instruction_result() == InstructionResult::SelfDestruct {
                     match context.journal_ext().last_journal().last() {
                         Some(JournalEntry::AccountDestroyed {
@@ -129,8 +164,27 @@ where
             instruction_table: Rc::new(table),
         }
     }
+}
+
+impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
+{
+    type WIRE = WIRE;
+    type Host = HOST;
 
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
+    }
+}
+
+impl<WIRE, HOST> Default for InspectorInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
+{
+    fn default() -> Self {
+        Self::new()
     }
 }

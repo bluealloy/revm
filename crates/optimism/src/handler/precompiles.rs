@@ -29,43 +29,9 @@ impl<CTX, ERROR> OpPrecompileProvider<CTX, ERROR> {
             },
         }
     }
-}
-
-/// Returns precompiles for Fjor spec.
-pub fn fjord() -> &'static Precompiles {
-    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
-    INSTANCE.get_or_init(|| {
-        let mut precompiles = Precompiles::cancun().clone();
-        // EIP-7212: secp256r1 P256verify
-        precompiles.extend([crate::bn128::pair::GRANITE]);
-        Box::new(precompiles)
-    })
-}
-
-/// Returns precompiles for Granite spec.
-pub fn granite() -> &'static Precompiles {
-    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
-    INSTANCE.get_or_init(|| {
-        let mut precompiles = Precompiles::cancun().clone();
-        // Restrict bn256Pairing input size
-        precompiles.extend([secp256r1::P256VERIFY]);
-        Box::new(precompiles)
-    })
-}
-
-impl<CTX, ERROR> PrecompileProvider for OpPrecompileProvider<CTX, ERROR>
-where
-    CTX: CfgGetter,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    ERROR: From<PrecompileErrors>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-    type Output = InterpreterResult;
 
     #[inline]
-    fn new(context: &mut Self::Context) -> Self {
-        let spec = context.cfg().spec();
+    pub fn new_with_spec(spec: OpSpec) -> Self {
         match spec {
             // No changes
             spec @ (OpSpec::Eth(
@@ -101,6 +67,45 @@ where
             | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(granite()),
         }
     }
+}
+
+/// Returns precompiles for Fjor spec.
+pub fn fjord() -> &'static Precompiles {
+    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    INSTANCE.get_or_init(|| {
+        let mut precompiles = Precompiles::cancun().clone();
+        // EIP-7212: secp256r1 P256verify
+        precompiles.extend([crate::bn128::pair::GRANITE]);
+        Box::new(precompiles)
+    })
+}
+
+/// Returns precompiles for Granite spec.
+pub fn granite() -> &'static Precompiles {
+    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    INSTANCE.get_or_init(|| {
+        let mut precompiles = Precompiles::cancun().clone();
+        // Restrict bn256Pairing input size
+        precompiles.extend([secp256r1::P256VERIFY]);
+        Box::new(precompiles)
+    })
+}
+
+impl<CTX, ERROR> PrecompileProvider for OpPrecompileProvider<CTX, ERROR>
+where
+    CTX: CfgGetter,
+    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
+    ERROR: From<PrecompileErrors>,
+{
+    type Context = CTX;
+    type Error = ERROR;
+    type Output = InterpreterResult;
+    type Spec = OpSpec;
+
+    #[inline]
+    fn set_spec(&mut self, spec: Self::Spec) {
+        *self = Self::new_with_spec(spec);
+    }
 
     #[inline]
     fn run(
@@ -115,7 +120,7 @@ where
     }
 
     #[inline]
-    fn warm_addresses(&self) -> impl Iterator<Item = precompile::Address> {
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = precompile::Address> + '_> {
         self.precompile_provider.warm_addresses()
     }
 

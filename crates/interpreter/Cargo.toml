@@ -27,7 +27,6 @@ bytecode.workspace = true
 primitives.workspace = true
 specification.workspace = true
 context-interface.workspace = true
-handler-interface.workspace = true
 
 # optional
 serde = { version = "1.0", default-features = false, features = [

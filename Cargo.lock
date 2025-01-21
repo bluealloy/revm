@@ -3457,7 +3457,6 @@ dependencies = [
  "auto_impl",
  "indicatif",
  "revm-bytecode",
- "revm-context-interface",
  "revm-database-interface",
  "revm-primitives",
  "revm-state",
@@ -3487,6 +3486,7 @@ name = "revm-handler"
 version = "1.0.0"
 dependencies = [
  "revm-bytecode",
+ "revm-context",
  "revm-context-interface",
  "revm-database",
  "revm-handler-interface",
@@ -3502,8 +3502,10 @@ dependencies = [
 name = "revm-handler-interface"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "revm-database",
  "revm-primitives",
+ "revm-specification",
 ]
 
 [[package]]
@@ -3525,7 +3527,6 @@ dependencies = [
  "revm-bytecode",
  "revm-context-interface",
  "revm-database-interface",
- "revm-handler-interface",
  "revm-primitives",
  "revm-specification",
  "serde",
@@ -3543,7 +3544,6 @@ dependencies = [
  "once_cell",
  "revm",
  "revm-database",
- "revm-inspector",
  "revm-precompile",
  "rstest 0.23.0",
  "serde",

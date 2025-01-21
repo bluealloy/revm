@@ -1,13 +1,12 @@
 use database::BenchmarkDB;
 use revm::{
     bytecode::Bytecode,
-    handler::EthHandler,
     primitives::{address, bytes, hex, Bytes, TxKind},
-    Context, MainEvm,
+    transact_main, Context,
 };
 
 pub fn simple_example(bytecode: Bytecode) {
-    let context = Context::builder()
+    let mut context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
@@ -16,8 +15,7 @@ pub fn simple_example(bytecode: Bytecode) {
             tx.data = bytes!("30627b7c");
             tx.gas_limit = 1_000_000_000;
         });
-    let mut evm = MainEvm::new(context, EthHandler::default());
-    let _ = evm.transact().unwrap();
+    let _ = transact_main(&mut context).unwrap();
 }
 
 pub fn run() {

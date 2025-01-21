@@ -51,6 +51,14 @@ impl From<SpecId> for OpSpec {
         OpSpec::Eth(spec)
     }
 }
+impl From<OpSpec> for SpecId {
+    fn from(spec: OpSpec) -> Self {
+        match spec {
+            OpSpec::Eth(spec) => spec,
+            OpSpec::Op(spec) => spec.into_eth_spec(),
+        }
+    }
+}
 
 impl TryFrom<&str> for OpSpecId {
     type Error = ();

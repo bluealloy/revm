@@ -1,9 +1,12 @@
-use context_interface::{Cfg, CfgGetter};
+use context::Cfg;
+use context_interface::CfgGetter;
 use handler_interface::PrecompileProvider;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{Address, Bytes};
+use specification::hardfork::SpecId;
+use std::boxed::Box;
 
 pub struct EthPrecompileProvider<CTX, ERROR> {
     pub precompiles: &'static Precompiles,
@@ -19,6 +22,15 @@ impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
     }
 }
 
+impl<CTX: CfgGetter, ERROR> EthPrecompileProvider<CTX, ERROR> {
+    pub fn new(spec: SpecId) -> Self {
+        Self {
+            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
 impl<CTX, ERROR> PrecompileProvider for EthPrecompileProvider<CTX, ERROR>
 where
     CTX: CfgGetter,
@@ -27,13 +39,10 @@ where
     type Context = CTX;
     type Error = ERROR;
     type Output = InterpreterResult;
+    type Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec;
 
-    fn new(context: &mut Self::Context) -> Self {
-        let spec = context.cfg().spec().into();
-        Self {
-            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
-            _phantom: core::marker::PhantomData,
-        }
+    fn set_spec(&mut self, spec: Self::Spec) {
+        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec.into()));
     }
 
     fn run(
@@ -72,8 +81,8 @@ where
         Ok(Some(result))
     }
 
-    fn warm_addresses(&self) -> impl Iterator<Item = Address> {
-        self.precompiles.addresses().cloned()
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
+        Box::new(self.precompiles.addresses().cloned())
     }
 
     fn contains(&self, address: &Address) -> bool {

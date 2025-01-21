@@ -1,7 +1,6 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::journaled_state::AccountLoad;
-use handler_interface::InitialAndFloorGas;
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
 
@@ -345,6 +344,16 @@ pub const fn memory_gas(num_words: usize) -> u64 {
     MEMORY
         .saturating_mul(num_words)
         .saturating_add(num_words.saturating_mul(num_words) / 512)
+}
+
+/// Init and floor gas from transaction
+#[derive(Clone, Copy, Debug, Default)]
+pub struct InitialAndFloorGas {
+    /// Initial gas for transaction.
+    pub initial_gas: u64,
+    /// If transaction is a Call and Prague is enabled
+    /// floor_gas is at least amount of gas that is going to be spent.
+    pub floor_gas: u64,
 }
 
 /// Initial gas that is deducted for transaction to be included.

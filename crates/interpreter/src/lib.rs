@@ -30,7 +30,7 @@ pub use context_interface::{
     host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad},
     CreateScheme,
 };
-pub use gas::Gas;
+pub use gas::{Gas, InitialAndFloorGas};
 pub use instruction_result::*;
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,

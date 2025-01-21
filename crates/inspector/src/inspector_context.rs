@@ -5,7 +5,7 @@ use revm::{
         PerformantContextAccess, TransactionGetter,
     },
     database_interface::Database,
-    handler::FrameResult,
+    handler::{handler::EthContext, FrameResult},
     interpreter::{
         interpreter::EthInterpreter, FrameInput, Host, Interpreter, SStoreResult,
         SelfDestructResult, StateLoad,
@@ -25,6 +25,22 @@ where
     pub inspector: INSP,
     pub inner: CTX,
     pub frame_input_stack: Vec<FrameInput>,
+}
+
+impl<
+        INSP: Inspector<CTX, EthInterpreter>,
+        DB: Database,
+        CTX: EthContext + DatabaseGetter<Database = DB>,
+    > EthContext for InspectorContext<INSP, DB, CTX>
+{
+}
+
+impl<
+        INSP: Inspector<CTX, EthInterpreter>,
+        DB: Database,
+        CTX: EthContext + DatabaseGetter<Database = DB>,
+    > EthContext for &mut InspectorContext<INSP, DB, CTX>
+{
 }
 
 impl<INSP, DB, CTX> InspectorContext<INSP, DB, CTX>
@@ -109,7 +125,7 @@ where
     INSP: GetInspector<CTX, EthInterpreter>,
     CTX: DatabaseGetter<Database = DB>,
 {
-    type IT = EthInterpreter<()>;
+    type IT = EthInterpreter;
 
     fn step(&mut self, interp: &mut Interpreter<Self::IT>) {
         self.inspector.get_inspector().step(interp, &mut self.inner);

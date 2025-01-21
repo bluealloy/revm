@@ -10,25 +10,16 @@ use crate::{
     },
     L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
-use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
         result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
-        Block, Cfg, CfgGetter, DatabaseGetter, Journal, Transaction, TransactionGetter,
+        Block, Cfg, CfgGetter, Journal, Transaction, TransactionGetter,
     },
-    handler::{
-        EthExecution, EthExecutionContext, EthExecutionError, EthFrame, EthFrameContext,
-        EthFrameError, EthHandler, EthPostExecution, EthPostExecutionContext,
-        EthPostExecutionError, EthPreExecution, EthPreExecutionContext, EthPreExecutionError,
-        EthValidation, EthValidationContext, EthValidationError, FrameResult,
-    },
-    handler_interface::{
-        util::FrameOrFrameResult, ExecutionHandler, Frame, InitialAndFloorGas,
-        PostExecutionHandler, PreExecutionHandler, ValidationHandler,
-    },
+    handler::{EthContext, EthError, EthHandler, EthHandlerImpl, FrameContext, FrameResult},
+    handler_interface::{Frame, PrecompileProvider},
     interpreter::{
-        interpreter::{EthInstructionProvider, EthInterpreter},
-        FrameInput, Gas,
+        interpreter::{EthInterpreter, InstructionProvider},
+        FrameInput, Gas, Host,
     },
     primitives::{hash_map::HashMap, U256},
     specification::hardfork::SpecId,
@@ -36,33 +27,59 @@ use revm::{
     Database,
 };
 
-pub type OpHandler<
-    CTX,
-    ERROR,
-    VAL = OpValidation<CTX, ERROR>,
-    PREEXEC = OpPreExecution<CTX, ERROR>,
-    EXEC = OpExecution<CTX, ERROR>,
-    POSTEXEC = OpPostExecution<CTX, ERROR>,
-> = EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>;
-
-pub struct OpValidation<CTX, ERROR> {
-    pub eth: EthValidation<CTX, ERROR>,
+pub struct OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
+    pub eth: EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>,
 }
 
-impl<CTX, ERROR> ValidationHandler for OpValidation<CTX, ERROR>
+impl<CTX: Host, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+    OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
 where
-    CTX: EthValidationContext + OpTxGetter,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+{
+    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
+        self.eth.crete_frame_context()
+    }
+}
+
+pub trait IsTxError {
+    fn is_tx_error(&self) -> bool;
+}
+
+impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
+    for OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+where
+    CTX: EthContext + OpTxGetter + L1BlockInfoGetter,
     // Have Cfg with OpSpec
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    // Have transaction with OpTransactionType
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-    // Add additional error type.
-    ERROR: EthValidationError<CTX> + From<OpTransactionError>,
+    ERROR: EthError<CTX> + From<OpTransactionError> + IsTxError + FromStringError,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Spec = OpSpec>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+    // TODO `FrameResult` should be a generic trait.
+    // TODO `FrameInit` should be a generic.
+    FRAME: Frame<
+        Context = CTX,
+        Error = ERROR,
+        FrameResult = FrameResult,
+        FrameInit = FrameInput,
+        FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>,
+    >,
 {
     type Context = CTX;
     type Error = ERROR;
+    type Frame = FRAME;
+    type Precompiles = PRECOMPILES;
+    type Instructions = INSTRUCTIONS;
+    type HaltReason = OptimismHaltReason;
 
-    /// Validate env.
+    fn frame_context(
+        &mut self,
+        context: &mut Self::Context,
+    ) -> <Self::Frame as Frame>::FrameContext {
+        self.eth.precompiles.set_spec(context.cfg().spec());
+        self.crete_frame_context()
+    }
+
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
         // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
         let tx_type = context.tx().tx_type();
@@ -78,35 +95,12 @@ where
         self.eth.validate_env(context)
     }
 
-    /// Validate transactions against state.
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         }
         self.eth.validate_tx_against_state(context)
     }
-
-    /// Validate initial gas.
-    fn validate_initial_tx_gas(
-        &self,
-        context: &Self::Context,
-    ) -> Result<InitialAndFloorGas, Self::Error> {
-        self.eth.validate_initial_tx_gas(context)
-    }
-}
-
-pub struct OpPreExecution<CTX, ERROR> {
-    pub eth: EthPreExecution<CTX, ERROR>,
-}
-
-impl<CTX, ERROR> PreExecutionHandler for OpPreExecution<CTX, ERROR>
-where
-    CTX: EthPreExecutionContext + DatabaseGetter + OpTxGetter + L1BlockInfoGetter,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    ERROR: EthPreExecutionError<CTX> + From<<<CTX as DatabaseGetter>::Database as Database>::Error>,
-{
-    type Context = CTX;
-    type Error = ERROR;
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         // The L1-cost fee is only computed for Optimism non-deposit transactions.
@@ -120,10 +114,6 @@ where
         }
 
         self.eth.load_accounts(context)
-    }
-
-    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        self.eth.apply_eip7702_auth_list(context)
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
@@ -171,48 +161,13 @@ where
         }
         Ok(())
     }
-}
-
-pub struct OpExecution<
-    CTX,
-    ERROR,
-    FRAME = EthFrame<
-        CTX,
-        ERROR,
-        EthInterpreter<()>,
-        OpPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter<()>, CTX>,
-    >,
-> {
-    pub eth: EthExecution<CTX, ERROR, FRAME>,
-}
-
-impl<CTX, ERROR, FRAME> ExecutionHandler for OpExecution<CTX, ERROR, FRAME>
-where
-    CTX: EthExecutionContext<ERROR> + EthFrameContext + OpTxGetter,
-    ERROR: EthExecutionError<CTX> + EthFrameError<CTX>,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-    FRAME: Frame<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-    type Frame = FRAME;
-    type ExecResult = FrameResult;
-
-    fn init_first_frame(
-        &mut self,
-        context: &mut Self::Context,
-        gas_limit: u64,
-    ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
-        self.eth.init_first_frame(context, gas_limit)
-    }
 
     fn last_frame_result(
         &self,
         context: &mut Self::Context,
-        mut frame_result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<Self::ExecResult, Self::Error> {
+        _frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        frame_result: &mut <Self::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
         let tx = context.tx();
         let is_deposit = tx.tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let tx_gas_limit = tx.gas_limit();
@@ -270,48 +225,13 @@ where
                 gas.erase_cost(remaining);
             }
         }
-        Ok(frame_result)
-    }
-}
-
-pub struct OpPostExecution<CTX, ERROR> {
-    pub eth: EthPostExecution<CTX, ERROR, OptimismHaltReason>,
-}
-
-pub trait IsTxError {
-    fn is_tx_error(&self) -> bool;
-}
-
-impl<CTX, ERROR> PostExecutionHandler for OpPostExecution<CTX, ERROR>
-where
-    CTX: EthPostExecutionContext + OpTxGetter + L1BlockInfoGetter + DatabaseGetter,
-    ERROR: EthPostExecutionError<CTX>
-        + EthFrameError<CTX>
-        + From<OpTransactionError>
-        + FromStringError
-        + IsTxError,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-    type ExecResult = FrameResult;
-    type Output = ResultAndState<OptimismHaltReason>;
-
-    fn eip7623_check_gas_floor(
-        &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
-        init_and_floor_gas: InitialAndFloorGas,
-    ) {
-        self.eth
-            .eip7623_check_gas_floor(context, exec_result, init_and_floor_gas);
+        Ok(())
     }
 
     fn refund(
         &self,
         context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
         eip7702_refund: i64,
     ) {
         exec_result.gas_mut().record_refund(eip7702_refund);
@@ -328,18 +248,10 @@ where
         }
     }
 
-    fn reimburse_caller(
-        &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
-    ) -> Result<(), Self::Error> {
-        self.eth.reimburse_caller(context, exec_result)
-    }
-
     fn reward_beneficiary(
         &self,
         context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         self.eth.reward_beneficiary(context, exec_result)?;
 
@@ -380,9 +292,10 @@ where
     fn output(
         &self,
         context: &mut Self::Context,
-        result: Self::ExecResult,
-    ) -> Result<Self::Output, Self::Error> {
+        result: <Self::Frame as Frame>::FrameResult,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let result = self.eth.output(context, result)?;
+        let result = result.map_haltreason(OptimismHaltReason::Base);
         if result.result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
@@ -395,15 +308,11 @@ where
         Ok(result)
     }
 
-    fn clear(&self, context: &mut Self::Context) {
-        self.eth.clear(context);
-    }
-
     fn end(
         &self,
         context: &mut Self::Context,
-        end_output: Result<Self::Output, Self::Error>,
-    ) -> Result<Self::Output, Self::Error> {
+        end_output: Result<ResultAndState<Self::HaltReason>, Self::Error>,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         //end_output
 
         let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
@@ -465,16 +374,6 @@ where
         })
     }
 }
-
-// /// Optimism end handle changes output if the transaction is a deposit transaction.
-// /// Deposit transaction can't be reverted and is always successful.
-// #[inline]
-// pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
-//     context: &mut Context<EvmWiringT>,
-//     evm_output: EVMResult<EvmWiringT>,
-// ) -> EVMResult<EvmWiringT> {
-
-// }
 
 // #[cfg(test)]
 // mod tests {

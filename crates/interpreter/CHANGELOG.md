@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parse opcodes from strings ([#1358](https://github.com/bluealloy/revm/pull/1358))
 - *(interpreter)* add helpers for spending all gas ([#1360](https://github.com/bluealloy/revm/pull/1360))
 - add helper methods to CallInputs ([#1345](https://github.com/bluealloy/revm/pull/1345))
-- *(revm)* make `FrameOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
+- *(revm)* make `ItemOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
 - add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
 - EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
 - *(interpreter)* derive Eq for InterpreterAction ([#1262](https://github.com/bluealloy/revm/pull/1262))

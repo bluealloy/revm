@@ -35,13 +35,6 @@ context-interface.workspace = true
 handler.workspace = true
 handler-interface.workspace = true
 
-# Optional
-# TODO : Check if needed.
-# serde = { version = "1.0", default-features = false, features = [
-#     "derive",
-#     "rc",
-# ], optional = true }
-
 [dev-dependencies]
 database.workspace = true
 alloy-sol-types = { version = "0.8.2", default-features = false, features = [

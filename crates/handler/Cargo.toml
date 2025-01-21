@@ -26,6 +26,7 @@ all = "warn"
 interpreter.workspace = true
 precompile.workspace = true
 context-interface.workspace = true
+context.workspace = true
 primitives.workspace = true
 state.workspace = true
 specification.workspace = true

@@ -19,7 +19,6 @@ pub struct CacheState {
     /// Block state account with account state
     pub accounts: HashMap<Address, CacheAccount>,
     /// Created contracts
-    // TODO : Add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork)
     pub has_state_clear: bool,

@@ -12,10 +12,9 @@ use database::CacheDB;
 use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
-    handler::EthHandler,
     primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    Context, MainEvm,
+    transact_main, Context,
 };
 
 use std::fs::File;
@@ -37,16 +36,15 @@ pub fn run() {
 
     let db = init_db();
 
-    let context = Context::builder().with_db(db).modify_tx_chained(|tx| {
+    let mut context = Context::builder().with_db(db).modify_tx_chained(|tx| {
         tx.caller = address!("1000000000000000000000000000000000000000");
         tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
         tx.data = run_call_data.clone().into();
         tx.gas_limit = u64::MAX;
     });
-    let mut evm = MainEvm::new(context, EthHandler::default());
 
     let started = Instant::now();
-    let tx_result = evm.transact().unwrap().result;
+    let tx_result = transact_main(&mut context).unwrap().result;
     let return_data = match tx_result {
         ExecutionResult::Success {
             output, gas_used, ..

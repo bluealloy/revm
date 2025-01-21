@@ -92,9 +92,13 @@ pub trait InstructionProvider: Clone {
     type WIRE: InterpreterTypes;
     type Host;
 
-    fn new(context: &mut Self::Host) -> Self;
-
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
+}
+
+pub trait InstructionProviderGetter {
+    type InstructionProvider: InstructionProvider;
+
+    fn instructions(&mut self) -> &mut Self::InstructionProvider;
 }
 
 pub struct EthInstructionProvider<WIRE: InterpreterTypes, HOST> {
@@ -112,6 +116,18 @@ where
     }
 }
 
+impl<WIRE, HOST> EthInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host,
+{
+    pub fn new() -> Self {
+        Self {
+            instruction_table: Rc::new(crate::table::make_instruction_table::<WIRE, HOST>()),
+        }
+    }
+}
+
 impl<WIRE, HOST> InstructionProvider for EthInstructionProvider<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
@@ -120,14 +136,7 @@ where
     type WIRE = WIRE;
     type Host = HOST;
 
-    fn new(_context: &mut Self::Host) -> Self {
-        Self {
-            instruction_table: Rc::new(crate::table::make_instruction_table::<WIRE, HOST>()),
-        }
-    }
-
-    // TODO : Make impl a associate type. With this associate type we can implement.
-    // InspectorInstructionProvider over generic type.
+    /// Returns the instruction table.
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
     }
@@ -244,21 +253,15 @@ impl InterpreterResult {
     }
 }
 
-// /// Resize the memory to the new size. Returns whether the gas was enough to resize the memory.
-// #[inline(never)]
-// #[cold]
-// #[must_use]
-// pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) -> bool {
-//     let new_words = num_words(new_size as u64);
-//     let new_cost = gas::memory_gas(new_words);
-//     let current_cost = memory.current_expansion_cost();
-//     let cost = new_cost - current_cost;
-//     let success = gas.record_cost(cost);
-//     if success {
-//         memory.resize((new_words as usize) * 32);
-//     }
-//     success
-// }
+impl<WIRE, HOST> Default for EthInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
