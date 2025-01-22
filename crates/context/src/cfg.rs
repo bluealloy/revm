@@ -76,28 +76,23 @@ impl CfgEnv {
 }
 
 impl<SPEC> CfgEnv<SPEC> {
-    pub fn with_chain_id(mut self, chain_id: u64) -> Self {
-        self.chain_id = chain_id;
-        self
-    }
-
-    pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
-        CfgEnv {
-            chain_id: self.chain_id,
-            limit_contract_code_size: self.limit_contract_code_size,
+    pub fn with_spec(spec: SPEC) -> Self {
+        Self {
+            chain_id: 1,
+            limit_contract_code_size: None,
             spec,
-            disable_nonce_check: self.disable_nonce_check,
-            blob_target_and_max_count: self.blob_target_and_max_count,
+            disable_nonce_check: false,
+            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(feature = "memory_limit")]
-            memory_limit: self.memory_limit,
+            memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
-            disable_balance_check: self.disable_balance_check,
+            disable_balance_check: false,
             #[cfg(feature = "optional_block_gas_limit")]
-            disable_block_gas_limit: self.disable_block_gas_limit,
+            disable_block_gas_limit: false,
             #[cfg(feature = "optional_eip3607")]
-            disable_eip3607: self.disable_eip3607,
+            disable_eip3607: false,
             #[cfg(feature = "optional_no_base_fee")]
-            disable_base_fee: self.disable_base_fee,
+            disable_base_fee: false,
         }
     }
 
@@ -184,23 +179,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
 impl<SPEC: Default> Default for CfgEnv<SPEC> {
     fn default() -> Self {
-        Self {
-            chain_id: 1,
-            limit_contract_code_size: None,
-            spec: Default::default(),
-            disable_nonce_check: false,
-            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
-            #[cfg(feature = "memory_limit")]
-            memory_limit: (1 << 32) - 1,
-            #[cfg(feature = "optional_balance_check")]
-            disable_balance_check: false,
-            #[cfg(feature = "optional_block_gas_limit")]
-            disable_block_gas_limit: false,
-            #[cfg(feature = "optional_eip3607")]
-            disable_eip3607: false,
-            #[cfg(feature = "optional_no_base_fee")]
-            disable_base_fee: false,
-        }
+        Self::with_spec(SPEC::default())
     }
 }
 
