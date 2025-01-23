@@ -91,14 +91,14 @@ impl CacheAccount {
         )
     }
 
-    /// Returns storage slot if it exist.
+    /// Returns storage slot if it exists.
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
         self.account
             .as_ref()
             .and_then(|a| a.storage.get(&slot).cloned())
     }
 
-    /// Fetches account info if it exist.
+    /// Fetches account info if it exists.
     pub fn account_info(&self) -> Option<AccountInfo> {
         self.account.as_ref().map(|a| a.info.clone())
     }
@@ -276,6 +276,9 @@ impl CacheAccount {
         })
     }
 
+    // Updates the account with new information and storage changes.
+    //
+    // Merges the provided storage values with the existing storage and updates the account status.
     pub fn change(
         &mut self,
         new: AccountInfo,
