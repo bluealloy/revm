@@ -2,7 +2,7 @@ pub mod performant_access;
 
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
 use bytecode::{
-    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH},
+    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EIP7702_VERSION},
     EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
 };
 use context_interface::{
@@ -292,7 +292,13 @@ where
         let code = if code.is_eof() {
             EOF_MAGIC_BYTES.clone()
         } else if code.is_eip7702() {
-            EIP7702_MAGIC_BYTES.clone()
+            // Reserves capacity for the size of EIP7702_MAGIC_BYTES (2 bytes) + EIP7702_VERSION (1 byte)
+            // + address (20 bytes)
+            let mut bytes = Vec::with_capacity(23);
+            bytes.extend_from_slice(&EIP7702_MAGIC_BYTES);
+            bytes.push(EIP7702_VERSION);
+            bytes.extend_from_slice(address.as_slice());
+            bytes.into()
         } else {
             code.original_bytes()
         };

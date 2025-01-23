@@ -59,7 +59,7 @@ pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    _host: &mut H,
 ) {
     popn!([memory_offset, code_offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
@@ -73,9 +73,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         memory_offset,
         code_offset,
         len,
-        &host
-            .code(interpreter.input.target_address())
-            .unwrap_or_default(),
+        interpreter.bytecode.bytecode_slice(),
     );
 }
 
