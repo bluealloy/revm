@@ -9,7 +9,8 @@ use crate::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
+        B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EIP7702_VERSION, EOF_MAGIC_BYTES,
+        EOF_MAGIC_HASH, U256,
     },
     JournalCheckpoint,
 };
@@ -183,7 +184,13 @@ impl<DB: Database> InnerEvmContext<DB> {
         let code = if code.is_eof() {
             EOF_MAGIC_BYTES.clone()
         } else if code.is_eip7702() {
-            EIP7702_MAGIC_BYTES.clone()
+            // Reserve 23 bytes for EIP7702_MAGIC_BYTES (2 bytes) + EIP7702_VERSION (1 byte)
+            // + address (20 bytes)
+            let mut bytes = Vec::with_capacity(23);
+            bytes.extend_from_slice(&EIP7702_MAGIC_BYTES);
+            bytes.push(EIP7702_VERSION);
+            bytes.extend_from_slice(address.as_slice());
+            bytes.into()
         } else {
             code.original_bytes()
         };
