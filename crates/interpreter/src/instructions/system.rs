@@ -2,8 +2,7 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        InputsTrait, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTrait, ReturnData,
-        RuntimeFlag, StackTrait,
+        EofData, InputsTrait, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTrait, ReturnData, RuntimeFlag, StackTrait
     },
     Host, InstructionResult,
 };
@@ -59,7 +58,7 @@ pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    host: &mut H,
 ) {
     popn!([memory_offset, code_offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
@@ -73,7 +72,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         memory_offset,
         code_offset,
         len,
-        interpreter.bytecode.bytecode_slice(),
+        &host.code(interpreter.input.target_address()).unwrap_or_default(),
     );
 }
 
