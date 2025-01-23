@@ -20,6 +20,7 @@ use revm::{
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
+use std::vec::Vec;
 
 pub trait InspectEvm<CTX, INTR: InterpreterTypes>: ExecuteEvm {
     fn inspect<'a, 'b, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output

@@ -1,3 +1,9 @@
+use crate::{
+    context::OpContext,
+    handler::{precompiles::OpPrecompileProvider, OpHandler},
+    transaction::{abstraction::OpTxGetter, OpTxTrait},
+    L1BlockInfoGetter, OpSpec, OpTransactionError, OptimismHaltReason,
+};
 use inspector::{
     exec::InspectEvm,
     inspector_context::InspectorContext,
@@ -18,13 +24,7 @@ use revm::{
     state::EvmState,
     DatabaseCommit, ExecuteCommitEvm,
 };
-
-use crate::{
-    context::OpContext,
-    handler::{precompiles::OpPrecompileProvider, OpHandler},
-    transaction::{abstraction::OpTxGetter, OpTxTrait},
-    L1BlockInfoGetter, OpSpec, OpTransactionError, OptimismHaltReason,
-};
+use std::vec::Vec;
 
 // pub trait InspectOpEvm<CTX, INTR: InterpreterTypes>: ExecuteOpEvm {
 //     fn inspect<'a, 'b, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output

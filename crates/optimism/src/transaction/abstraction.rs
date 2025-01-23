@@ -10,6 +10,7 @@ use revm::{
     primitives::{Address, Bytes, TxKind, B256, U256},
     Context, Database,
 };
+use std::vec;
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait OpTxTrait: Transaction + DepositTransaction {

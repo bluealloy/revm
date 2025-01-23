@@ -22,6 +22,7 @@ use revm::{
     state::EvmState,
     Context, Database, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm, JournaledState,
 };
+use std::vec::Vec;
 
 #[derive(AsRef, AsMut, Deref, DerefMut)]
 pub struct OpContext<
