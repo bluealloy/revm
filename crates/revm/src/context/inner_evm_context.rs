@@ -14,7 +14,7 @@ use crate::{
     },
     JournalCheckpoint,
 };
-use std::{boxed::Box, sync::Arc};
+use std::{boxed::Box, sync::Arc, vec::Vec};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
