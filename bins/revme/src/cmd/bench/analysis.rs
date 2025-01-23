@@ -1,8 +1,10 @@
+use std::time::Instant;
+
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
     primitives::{bytes, hex, Bytes, TxKind},
-    transact_main, Context,
+    Context, ExecuteEvm,
 };
 
 const BYTES: &str = include_str!("analysis.hex");
@@ -20,5 +22,12 @@ pub fn run() {
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
         });
-    let _ = transact_main(&mut context);
+
+    let time = Instant::now();
+    let _ = context.exec_previous();
+    println!("First init: {:?}", time.elapsed());
+
+    let time = Instant::now();
+    let _ = context.exec_previous();
+    println!("Run: {:?}", time.elapsed());
 }
