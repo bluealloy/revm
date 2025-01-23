@@ -2,8 +2,8 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//#[cfg(not(feature = "std"))]
-//extern crate alloc as std;
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
 // reexport dependencies
 pub use bytecode;
@@ -29,4 +29,4 @@ pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
 pub use exec::{ExecuteCommitEvm, ExecuteEvm};
-pub use exec_eth::{transact_main, transact_main_commit};
+pub use exec_eth::transact_main;

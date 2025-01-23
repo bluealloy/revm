@@ -4,12 +4,12 @@ use revm::{
         result::{HaltReason, InvalidTransaction},
         Block, CfgGetter, Journal, Transaction, TransactionType,
     },
-    handler::{EthContext, EthError, EthFrame, EthHandler, EthPrecompileProvider, FrameContext},
-    handler_interface::Frame,
-    interpreter::{
-        interpreter::{EthInstructionProvider, EthInterpreter},
-        Host,
+    handler::{
+        instructions::EthInstructionExecutor, EthContext, EthError, EthFrame, EthHandler,
+        EthPrecompileProvider, FrameContext,
     },
+    handler_interface::Frame,
+    interpreter::{interpreter::EthInterpreter, Host},
     precompile::PrecompileErrors,
     primitives::U256,
     specification::hardfork::SpecId,
@@ -18,20 +18,14 @@ use std::cmp::Ordering;
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
-pub struct Erc20MainetHandler<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> {
-    frame_context: FrameContext<
-        EthPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter, CTX>,
-    >,
+pub struct Erc20MainetHandler<CTX, ERROR> {
+    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
-impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Erc20MainetHandler<CTX, ERROR> {
+impl<CTX, ERROR> Erc20MainetHandler<CTX, ERROR> {
     pub fn new() -> Self {
         Self {
-            frame_context: FrameContext::new(
-                EthPrecompileProvider::new(SpecId::LATEST),
-                EthInstructionProvider::default(),
-            ),
+            _phantom: std::marker::PhantomData,
         }
     }
 }
@@ -52,20 +46,10 @@ where
     type Context = CTX;
     type Error = ERROR;
     type Precompiles = EthPrecompileProvider<CTX, Self::Error>;
-    type Instructions = EthInstructionProvider<EthInterpreter, Self::Context>;
+    type Instructions = EthInstructionExecutor<EthInterpreter, Self::Context>;
     type Frame =
         EthFrame<CTX, ERROR, EthInterpreter, FrameContext<Self::Precompiles, Self::Instructions>>;
     type HaltReason = HaltReason;
-
-    fn frame_context(
-        &mut self,
-        _context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext {
-        FrameContext {
-            precompiles: self.frame_context.precompiles.clone(),
-            instructions: self.frame_context.instructions.clone(),
-        }
-    }
 
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         let caller = context.tx().caller();

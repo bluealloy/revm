@@ -10,35 +10,49 @@ use crate::{
     },
     L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
+use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
-        result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
+        result::{EVMError, ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
         Block, Cfg, CfgGetter, Journal, Transaction, TransactionGetter,
     },
-    handler::{EthContext, EthError, EthHandler, EthHandlerImpl, FrameContext, FrameResult},
-    handler_interface::{Frame, PrecompileProvider},
-    interpreter::{
-        interpreter::{EthInterpreter, InstructionProvider},
-        FrameInput, Gas, Host,
+    handler::{
+        instructions::InstructionExecutor, EthContext, EthError, EthHandler, FrameContext,
+        FrameResult, MainnetHandler,
     },
+    handler_interface::Frame,
+    interpreter::{interpreter::EthInterpreter, FrameInput, Gas, Host},
     primitives::{hash_map::HashMap, U256},
     specification::hardfork::SpecId,
     state::Account,
     Database,
 };
 
-pub struct OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
-    pub eth: EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>,
+pub struct OpHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
+    pub main: MainnetHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>,
 }
 
-impl<CTX: Host, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
-    OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+impl<CTX: Host, ERROR, FRAME, INSTRUCTIONS>
+    OpHandler<CTX, ERROR, FRAME, OpPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>
 where
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+    INSTRUCTIONS: InstructionExecutor<InterpreterTypes = EthInterpreter, CTX = CTX>,
 {
-    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
-        self.eth.crete_frame_context()
+    pub fn new() -> Self {
+        Self {
+            main: MainnetHandler {
+                _phantom: Default::default(),
+            },
+        }
+    }
+}
+
+impl<CTX: Host, ERROR, FRAME, INSTRUCTIONS> Default
+    for OpHandler<CTX, ERROR, FRAME, OpPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>
+where
+    INSTRUCTIONS: InstructionExecutor<InterpreterTypes = EthInterpreter, CTX = CTX>,
+{
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -46,15 +60,20 @@ pub trait IsTxError {
     fn is_tx_error(&self) -> bool;
 }
 
-impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
-    for OpHandlerNew<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+impl<DB, TX> IsTxError for EVMError<DB, TX> {
+    fn is_tx_error(&self) -> bool {
+        matches!(self, EVMError::Transaction(_))
+    }
+}
+
+impl<CTX, ERROR, FRAME, INSTRUCTIONS> EthHandler
+    for OpHandler<CTX, ERROR, FRAME, OpPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>
 where
     CTX: EthContext + OpTxGetter + L1BlockInfoGetter,
     // Have Cfg with OpSpec
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
     ERROR: EthError<CTX> + From<OpTransactionError> + IsTxError + FromStringError,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Spec = OpSpec>,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+    INSTRUCTIONS: InstructionExecutor<InterpreterTypes = EthInterpreter, CTX = CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<
@@ -62,22 +81,18 @@ where
         Error = ERROR,
         FrameResult = FrameResult,
         FrameInit = FrameInput,
-        FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>,
+        FrameContext = FrameContext<OpPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>,
     >,
 {
     type Context = CTX;
     type Error = ERROR;
     type Frame = FRAME;
-    type Precompiles = PRECOMPILES;
+    type Precompiles = OpPrecompileProvider<CTX, ERROR>;
     type Instructions = INSTRUCTIONS;
     type HaltReason = OptimismHaltReason;
 
-    fn frame_context(
-        &mut self,
-        context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext {
-        self.eth.precompiles.set_spec(context.cfg().spec());
-        self.crete_frame_context()
+    fn precompile(&self, _context: &mut Self::Context) -> Self::Precompiles {
+        OpPrecompileProvider::default()
     }
 
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
@@ -92,14 +107,14 @@ where
             }
             return Ok(());
         }
-        self.eth.validate_env(context)
+        self.main.validate_env(context)
     }
 
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         }
-        self.eth.validate_tx_against_state(context)
+        self.main.validate_tx_against_state(context)
     }
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
@@ -113,7 +128,7 @@ where
             *context.l1_block_info_mut() = l1_block_info;
         }
 
-        self.eth.load_accounts(context)
+        self.main.load_accounts(context)
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
@@ -143,7 +158,7 @@ where
 
         // We deduct caller max balance after minting and before deducing the
         // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
-        self.eth.deduct_caller(context)?;
+        self.main.deduct_caller(context)?;
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
@@ -253,13 +268,13 @@ where
         context: &mut Self::Context,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.eth.reward_beneficiary(context, exec_result)?;
+        self.main.reward_beneficiary(context, exec_result)?;
 
         let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // Transfer fee to coinbase/beneficiary.
         if !is_deposit {
-            self.eth.reward_beneficiary(context, exec_result)?;
+            self.main.reward_beneficiary(context, exec_result)?;
             let basefee = context.block().basefee() as u128;
 
             // If the transaction is not a deposit transaction, fees are paid out
@@ -294,7 +309,7 @@ where
         context: &mut Self::Context,
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let result = self.eth.output(context, result)?;
+        let result = self.main.output(context, result)?;
         let result = result.map_haltreason(OptimismHaltReason::Base);
         if result.result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,

@@ -2,12 +2,12 @@ use core::mem::MaybeUninit;
 use revm::{
     bytecode::opcode::OpCode,
     context_interface::JournalGetter,
+    handler::instructions::InstructionExecutor,
     interpreter::{
         instructions::host::{log, selfdestruct},
-        interpreter::InstructionProvider,
         interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
-        Host, Instruction, InstructionResult, Interpreter, InterpreterTypes,
+        table::{make_instruction_table, CustomInstruction, InstructionTable},
+        Host, Instruction, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
     },
     JournalEntry,
 };
@@ -31,24 +31,7 @@ where
     type Host = HOST;
 
     fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
-        // SAFETY: As the PC was already incremented we need to subtract 1 to preserve the
-        // old Inspector behavior.
-        interpreter.bytecode.relative_jump(-1);
-
-        // Call step.
-        host.step(interpreter);
-        if interpreter.control.instruction_result() != InstructionResult::Continue {
-            return;
-        }
-
-        // Reset PC to previous value.
-        interpreter.bytecode.relative_jump(1);
-
-        // Execute instruction.
         (self.instruction)(interpreter, host);
-
-        // Call step_end.
-        host.step_end(interpreter);
     }
 
     fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
@@ -56,11 +39,11 @@ where
     }
 }
 
-pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
+pub struct InspectorInstructionExecutor<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
 }
 
-impl<WIRE, HOST> Clone for InspectorInstructionProvider<WIRE, HOST>
+impl<WIRE, HOST> Clone for InspectorInstructionExecutor<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
 {
@@ -71,19 +54,18 @@ where
     }
 }
 
-impl<WIRE, HOST> InspectorInstructionProvider<WIRE, HOST>
+impl<WIRE, HOST> InspectorInstructionExecutor<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
 {
-    pub fn new() -> Self {
-        let main_table = table::make_instruction_table::<WIRE, HOST>();
+    pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
             unsafe { MaybeUninit::uninit().assume_init() };
 
         for (i, element) in table.iter_mut().enumerate() {
-            let function = InspectorInstruction {
-                instruction: main_table[i],
+            let function: InspectorInstruction<WIRE, HOST> = InspectorInstruction {
+                instruction: base_table[i],
             };
             *element = MaybeUninit::new(function);
         }
@@ -166,25 +148,55 @@ where
     }
 }
 
-impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
+impl<IT, CTX> InstructionExecutor for InspectorInstructionExecutor<IT, CTX>
 where
-    WIRE: InterpreterTypes,
-    HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
+    IT: InterpreterTypes,
+    CTX: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = IT>,
 {
-    type WIRE = WIRE;
-    type Host = HOST;
+    type InterpreterTypes = IT;
+    type CTX = CTX;
+    type Output = InterpreterAction;
 
-    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
-        self.instruction_table.as_ref()
+    fn run(
+        &mut self,
+        context: &mut Self::CTX,
+        interpreter: &mut Interpreter<Self::InterpreterTypes>,
+    ) -> Self::Output {
+        interpreter.reset_control();
+
+        // Main loop
+        while interpreter.control.instruction_result().is_continue() {
+            // Get current opcode.
+            let opcode = interpreter.bytecode.opcode();
+
+            // Call Inspector step.
+            context.step(interpreter);
+            if interpreter.control.instruction_result() != InstructionResult::Continue {
+                break;
+            }
+
+            // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+            // it will do noop and just stop execution of this contract
+            interpreter.bytecode.relative_jump(1);
+
+            // Execute instruction.
+            self.instruction_table[opcode as usize].exec(interpreter, context);
+
+            // Call step_end.
+            context.step_end(interpreter);
+        }
+
+        interpreter.take_next_action()
     }
 }
 
-impl<WIRE, HOST> Default for InspectorInstructionProvider<WIRE, HOST>
+impl<WIRE, HOST> Default for InspectorInstructionExecutor<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
 {
     fn default() -> Self {
-        Self::new()
+        Self::new(make_instruction_table())
     }
 }

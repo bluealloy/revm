@@ -1,18 +1,22 @@
 use super::deposit::{DepositTransaction, DepositTransactionParts};
+use auto_impl::auto_impl;
+use inspector::inspector_context::InspectorContext;
 use revm::{
     context::TxEnv,
     context_interface::{
         transaction::{AuthorizationItem, Transaction},
-        Journal, TransactionGetter,
+        DatabaseGetter, Journal, TransactionGetter,
     },
     primitives::{Address, Bytes, TxKind, B256, U256},
     Context, Database,
 };
 
+#[auto_impl(&, &mut, Box, Arc)]
 pub trait OpTxTrait: Transaction + DepositTransaction {
     fn enveloped_tx(&self) -> Option<&Bytes>;
 }
 
+#[auto_impl(&, &mut, Box, Arc)]
 pub trait OpTxGetter: TransactionGetter {
     type OpTransaction: OpTxTrait;
 
@@ -29,24 +33,44 @@ impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>,
     }
 }
 
+impl<INSP, DB, CTX: DatabaseGetter<Database = DB> + OpTxGetter + TransactionGetter> OpTxGetter
+    for InspectorContext<INSP, DB, CTX>
+{
+    type OpTransaction = <CTX as OpTxGetter>::OpTransaction;
+
+    fn op_tx(&self) -> &Self::OpTransaction {
+        self.inner.op_tx()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OpTransaction<T: Transaction> {
-    tx: T,
+    pub base: T,
     /// An enveloped EIP-2718 typed transaction
     ///
     /// This is used to compute the L1 tx cost using the L1 block info, as
     /// opposed to requiring downstream apps to compute the cost
     /// externally.
-    enveloped_tx: Option<Bytes>,
-    deposit: DepositTransactionParts,
+    pub enveloped_tx: Option<Bytes>,
+    pub deposit: DepositTransactionParts,
+}
+
+impl<T: Transaction> OpTransaction<T> {
+    pub fn new(base: T) -> Self {
+        Self {
+            base,
+            enveloped_tx: None,
+            deposit: DepositTransactionParts::default(),
+        }
+    }
 }
 
 impl Default for OpTransaction<TxEnv> {
     fn default() -> Self {
         Self {
-            tx: TxEnv::default(),
-            enveloped_tx: None,
+            base: TxEnv::default(),
+            enveloped_tx: Some(vec![0x00].into()),
             deposit: DepositTransactionParts::default(),
         }
     }
@@ -54,71 +78,71 @@ impl Default for OpTransaction<TxEnv> {
 
 impl<T: Transaction> Transaction for OpTransaction<T> {
     fn tx_type(&self) -> u8 {
-        self.tx.tx_type()
+        self.base.tx_type()
     }
 
     fn caller(&self) -> Address {
-        self.tx.caller()
+        self.base.caller()
     }
 
     fn gas_limit(&self) -> u64 {
-        self.tx.gas_limit()
+        self.base.gas_limit()
     }
 
     fn value(&self) -> U256 {
-        self.tx.value()
+        self.base.value()
     }
 
     fn input(&self) -> &Bytes {
-        self.tx.input()
+        self.base.input()
     }
 
     fn nonce(&self) -> u64 {
-        self.tx.nonce()
+        self.base.nonce()
     }
 
     fn kind(&self) -> TxKind {
-        self.tx.kind()
+        self.base.kind()
     }
 
     fn chain_id(&self) -> Option<u64> {
-        self.tx.chain_id()
+        self.base.chain_id()
     }
 
     fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>> {
-        self.tx.access_list()
+        self.base.access_list()
     }
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
-        self.tx.max_priority_fee_per_gas()
+        self.base.max_priority_fee_per_gas()
     }
 
     fn max_fee_per_gas(&self) -> u128 {
-        self.tx.max_fee_per_gas()
+        self.base.max_fee_per_gas()
     }
 
     fn gas_price(&self) -> u128 {
-        self.tx.gas_price()
+        self.base.gas_price()
     }
 
     fn blob_versioned_hashes(&self) -> &[B256] {
-        self.tx.blob_versioned_hashes()
+        self.base.blob_versioned_hashes()
     }
 
     fn max_fee_per_blob_gas(&self) -> u128 {
-        self.tx.max_fee_per_blob_gas()
+        self.base.max_fee_per_blob_gas()
     }
 
     fn effective_gas_price(&self, base_fee: u128) -> u128 {
-        self.tx.effective_gas_price(base_fee)
+        self.base.effective_gas_price(base_fee)
     }
 
     fn authorization_list_len(&self) -> usize {
-        self.tx.authorization_list_len()
+        self.base.authorization_list_len()
     }
 
     fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem> {
-        self.tx.authorization_list()
+        self.base.authorization_list()
     }
 }
 
@@ -152,7 +176,7 @@ mod tests {
     #[test]
     fn test_deposit_transaction_fields() {
         let op_tx = OpTransaction {
-            tx: TxEnv {
+            base: TxEnv {
                 tx_type: DEPOSIT_TRANSACTION_TYPE,
                 gas_limit: 10,
                 gas_price: 100,

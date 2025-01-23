@@ -1,10 +1,10 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155};
+use inspector::{exec::InspectEvm, inspectors::TracerEip3155};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
-    transact_main, Context, Database,
+    transact_main, Context, Database, ExecuteEvm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -94,18 +94,16 @@ impl Cmd {
             let bench_options = microbench::Options::default().time(Duration::from_secs(3));
 
             microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = transact_main(&mut ctx).unwrap();
+                let _ = ctx.exec_previous().unwrap();
             });
 
             return Ok(());
         }
 
         let out = if self.trace {
-            inspect_main(&mut InspectorContext::new(
-                &mut ctx,
-                TracerEip3155::new(Box::new(std::io::stdout())),
-            ))
-            .map_err(|_| Errors::EVMError)?
+            let inspector = TracerEip3155::new(Box::new(std::io::stdout()));
+            ctx.inspect_previous(inspector)
+                .map_err(|_| Errors::EVMError)?
         } else {
             let out = transact_main(&mut ctx).map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

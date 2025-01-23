@@ -9,7 +9,7 @@ use std::{convert::Infallible, fmt::Debug};
 
 use database::InMemoryDB;
 use inspector::{
-    inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155,
+    exec::inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155,
     journal::JournalExt, GetInspector, Inspector,
 };
 use revm::{
@@ -135,6 +135,20 @@ impl Journal for Backend {
 
     fn touch_account(&mut self, address: Address) {
         self.journaled_state.touch(&address);
+    }
+
+    fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
+        self.journaled_state.code(address)
+    }
+
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+        self.journaled_state.code_hash(address)
     }
 
     fn transfer(

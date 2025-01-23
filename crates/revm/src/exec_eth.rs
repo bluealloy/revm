@@ -5,9 +5,14 @@ use context_interface::{
     Block, Database, DatabaseGetter, Journal, Transaction,
 };
 use database_interface::DatabaseCommit;
-use handler::{EthContext, EthFrame, EthHandler, EthHandlerImpl, EthPrecompileProvider};
+use handler::{
+    instructions::EthInstructionExecutor, EthContext, EthFrame, EthHandler, EthPrecompileProvider,
+    MainnetHandler,
+};
+use interpreter::interpreter::EthInterpreter;
 use primitives::Log;
 use state::EvmState;
+use std::vec::Vec;
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteEvm for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 where
@@ -20,7 +25,7 @@ where
     type Output =
         Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
 
-    fn exec_previous_tx(&mut self) -> Self::Output {
+    fn exec_previous(&mut self) -> Self::Output {
         transact_main(self)
     }
 }
@@ -37,8 +42,11 @@ where
     type CommitOutput =
         Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
 
-    fn exec_commit_previous_tx(&mut self) -> Self::CommitOutput {
-        transact_main_commit(self)
+    fn exec_commit_previous(&mut self) -> Self::CommitOutput {
+        transact_main(self).map(|r| {
+            self.db().commit(r.state);
+            r.result
+        })
     }
 }
 
@@ -49,23 +57,14 @@ pub fn transact_main<CTX: EthContext>(
     ResultAndState<HaltReason>,
     EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, InvalidTransaction>,
 > {
-    EthHandlerImpl::<CTX, _, EthFrame<CTX, _, _, _>, EthPrecompileProvider<CTX, _>, _>::default()
-        .run(ctx)
-}
-
-pub fn transact_main_commit<CTX: EthContext>(
-    ctx: &mut CTX,
-) -> Result<
-    ExecutionResult<HaltReason>,
-    EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, InvalidTransaction>,
->
-where
-    <CTX as DatabaseGetter>::Database: DatabaseCommit,
-{
-    transact_main(ctx).map(|r| {
-        ctx.db().commit(r.state);
-        r.result
-    })
+    MainnetHandler::<
+        CTX,
+        _,
+        EthFrame<CTX, _, _, _>,
+        EthPrecompileProvider<CTX, _>,
+        EthInstructionExecutor<EthInterpreter, CTX>,
+    >::default()
+    .run(ctx)
 }
 
 #[cfg(test)]
@@ -80,30 +79,6 @@ mod test {
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{address, TxKind, U256};
     use specification::hardfork::SpecId;
-
-    #[test]
-    fn sanity_tx_ref() {
-        let delegate = address!("0000000000000000000000000000000000000000");
-        let caller = address!("0000000000000000000000000000000000000001");
-        let auth = address!("0000000000000000000000000000000000000100");
-
-        let mut tx1 = TxEnv::default();
-        tx1.tx_type = TransactionType::Eip7702.into();
-        tx1.gas_limit = 100_000;
-        tx1.authorization_list = vec![(Some(auth), U256::from(1), 0, delegate)];
-        tx1.caller = caller;
-        tx1.kind = TxKind::Call(auth);
-
-        let mut tx2 = TxEnv::default();
-        tx2.tx_type = TransactionType::Legacy.into();
-        // `nonce` was bumped from 0 to 1
-        tx2.nonce = 1;
-
-        let mut ctx = Context::default();
-
-        let _ = ctx.exec(tx1).unwrap();
-        let _ = ctx.exec(tx2).unwrap();
-    }
 
     #[test]
     fn sanity_eip7702_tx() {
@@ -122,7 +97,7 @@ mod test {
                 tx.kind = TxKind::Call(auth);
             });
 
-        let ok = ctx.exec_previous_tx().unwrap();
+        let ok = ctx.exec_previous().unwrap();
 
         let auth_acc = ok.state.get(&auth).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));

@@ -9,7 +9,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
     primitives::{hex, Bytes, TxKind, U256},
-    transact_main, transact_main_commit,
+    transact_main, ExecuteCommitEvm,
 };
 
 /// Load number parameter and set to storage with slot 0
@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
         .with_db(CacheDB::<EmptyDB>::default());
 
     println!("bytecode: {}", hex::encode(bytecode));
-    let ref_tx = transact_main_commit(&mut ctx)?;
+    let ref_tx = ctx.exec_commit_previous()?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..

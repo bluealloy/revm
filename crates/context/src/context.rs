@@ -1,19 +1,13 @@
 pub mod performant_access;
 
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
-use bytecode::{
-    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH},
-    EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
-};
 use context_interface::{
-    block::BlockSetter, journaled_state::AccountLoad, transaction::TransactionSetter, Block,
-    BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalGetter, Transaction,
-    TransactionGetter,
+    block::BlockSetter, transaction::TransactionSetter, Block, BlockGetter, Cfg, CfgGetter,
+    DatabaseGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::{Host, SStoreResult, SelfDestructResult, StateLoad};
-use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
+use interpreter::Host;
 use specification::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
@@ -277,57 +271,6 @@ where
     {
         f(&mut self.journaled_state);
     }
-
-    /// Returns account code bytes and if address is cold loaded.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
-    ///
-    // TODO : Move this in Journaled state
-    #[inline]
-    pub fn code(&mut self, address: Address) -> Result<StateLoad<Bytes>, <DB as Database>::Error> {
-        let a = self.journaled_state.load_account_code(address)?;
-        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let code = a.info.code.as_ref().unwrap();
-
-        let code = if code.is_eof() {
-            EOF_MAGIC_BYTES.clone()
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_BYTES.clone()
-        } else {
-            code.original_bytes()
-        };
-
-        Ok(StateLoad::new(code, a.is_cold))
-    }
-
-    /// Gets code hash of address.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC_HASH`
-    /// (the hash of `0xEF00`).
-    ///
-    // TODO : Move this in Journaled state
-    #[inline]
-    pub fn code_hash(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<B256>, <DB as Database>::Error> {
-        let acc = self.journaled_state.load_account_code(address)?;
-        if acc.is_empty() {
-            return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
-        }
-        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let code = acc.info.code.as_ref().unwrap();
-
-        let hash = if code.is_eof() {
-            EOF_MAGIC_HASH
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_HASH
-        } else {
-            acc.info.code_hash
-        };
-
-        Ok(StateLoad::new(hash, acc.is_cold))
-    }
 }
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> Host for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
@@ -338,95 +281,11 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB>,
 {
-    fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = self.block().number();
-
-        let Some(diff) = block_number.checked_sub(requested_number) else {
-            return Some(B256::ZERO);
-        };
-
-        // blockhash should push zero if number is same as current block number.
-        if diff == 0 {
-            return Some(B256::ZERO);
-        }
-
-        if diff <= BLOCK_HASH_HISTORY {
-            return self
-                .journaled_state
-                .db()
-                .block_hash(requested_number)
-                .map_err(|e| self.error = Err(e))
-                .ok();
-        }
-
-        Some(B256::ZERO)
-    }
-
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.journaled_state
-            .load_account_delegated(address)
-            .map_err(|e| self.error = Err(e))
-            .ok()
-    }
-
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.journaled_state
-            .load_account(address)
-            .map_err(|e| self.error = Err(e))
-            .map(|acc| acc.map(|a| a.info.balance))
-            .ok()
-    }
-
-    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.code(address).map_err(|e| self.error = Err(e)).ok()
-    }
-
-    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.code_hash(address)
-            .map_err(|e| self.error = Err(e))
-            .ok()
-    }
-
-    fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
-        self.journaled_state
-            .sload(address, index)
-            .map_err(|e| self.error = Err(e))
-            .ok()
-    }
-
-    fn sstore(
+    fn set_error(
         &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.journaled_state
-            .sstore(address, index, value)
-            .map_err(|e| self.error = Err(e))
-            .ok()
-    }
-
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.journaled_state.tload(address, index)
-    }
-
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.journaled_state.tstore(address, index, value)
-    }
-
-    fn log(&mut self, log: Log) {
-        self.journaled_state.log(log);
-    }
-
-    fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        self.journaled_state
-            .selfdestruct(address, target)
-            .map_err(|e| self.error = Err(e))
-            .ok()
+        error: <<<Self as JournalGetter>::Journal as Journal>::Database as Database>::Error,
+    ) {
+        self.error = Err(error);
     }
 }
 

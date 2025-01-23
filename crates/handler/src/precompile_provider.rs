@@ -22,6 +22,12 @@ impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
     }
 }
 
+impl<CTX: CfgGetter, ERROR> Default for EthPrecompileProvider<CTX, ERROR> {
+    fn default() -> Self {
+        Self::new(SpecId::LATEST)
+    }
+}
+
 impl<CTX: CfgGetter, ERROR> EthPrecompileProvider<CTX, ERROR> {
     pub fn new(spec: SpecId) -> Self {
         Self {

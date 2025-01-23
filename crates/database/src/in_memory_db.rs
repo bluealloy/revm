@@ -402,7 +402,9 @@ impl BenchmarkDB {
     }
 }
 
+/// BYTECODE address
 pub const FFADDRESS: Address = address!("ffffffffffffffffffffffffffffffffffffffff");
+/// CALLER address
 pub const EEADDRESS: Address = address!("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 
 impl Database for BenchmarkDB {

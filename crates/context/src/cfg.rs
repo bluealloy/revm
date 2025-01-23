@@ -77,10 +77,32 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     pub disable_base_fee: bool,
 }
 
-impl CfgEnv {
+impl<SPEC: Into<SpecId>> CfgEnv<SPEC> {
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
+    }
+
+    pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
+        CfgEnv {
+            chain_id: self.chain_id,
+            limit_contract_code_size: self.limit_contract_code_size,
+            spec,
+            disable_nonce_check: self.disable_nonce_check,
+            blob_target_and_max_count: self.blob_target_and_max_count,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: self.memory_limit,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: self.disable_balance_check,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: self.disable_block_gas_limit,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: self.disable_eip3607,
+            #[cfg(feature = "optional_gas_refund")]
+            disable_gas_refund: self.disable_gas_refund,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: self.disable_base_fee,
+        }
     }
 
     /// Sets the blob target and max count over hardforks.

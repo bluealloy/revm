@@ -4,11 +4,11 @@ use context_interface::{block::BlockSetter, transaction::TransactionSetter};
 pub trait ExecuteEvm: BlockSetter + TransactionSetter {
     type Output;
 
-    fn exec_previous_tx(&mut self) -> Self::Output;
+    fn exec_previous(&mut self) -> Self::Output;
 
     fn exec(&mut self, tx: Self::Transaction) -> Self::Output {
         self.set_tx(tx);
-        self.exec_previous_tx()
+        self.exec_previous()
     }
 }
 
@@ -16,10 +16,10 @@ pub trait ExecuteEvm: BlockSetter + TransactionSetter {
 pub trait ExecuteCommitEvm: ExecuteEvm {
     type CommitOutput;
 
-    fn exec_commit_previous_tx(&mut self) -> Self::CommitOutput;
+    fn exec_commit_previous(&mut self) -> Self::CommitOutput;
 
     fn exec_commit(&mut self, tx: Self::Transaction) -> Self::CommitOutput {
         self.set_tx(tx);
-        self.exec_commit_previous_tx()
+        self.exec_commit_previous()
     }
 }

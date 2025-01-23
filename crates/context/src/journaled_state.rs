@@ -1,9 +1,12 @@
-use bytecode::Bytecode;
+use bytecode::{
+    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH},
+    Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
+};
 use context_interface::journaled_state::{AccountLoad, Journal, JournalCheckpoint, TransferError};
 use database_interface::Database;
 use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
-    hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
+    hash_map::Entry, Address, Bytes, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use specification::hardfork::{SpecId, SpecId::*};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
@@ -142,6 +145,20 @@ impl<DB: Database> Journal for JournaledState<DB> {
 
     fn set_spec_id(&mut self, spec_id: SpecId) {
         self.spec = spec_id;
+    }
+
+    fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<primitives::Bytes>, <Self::Database as Database>::Error> {
+        self.code(address)
+    }
+
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+        self.code_hash(address)
     }
 
     fn transfer(
@@ -401,6 +418,55 @@ impl<DB: Database> JournaledState<DB> {
             });
 
         Ok(None)
+    }
+
+    /// Returns account code bytes and if address is cold loaded.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
+    ///
+    // TODO : Move this in Journaled state
+    #[inline]
+    pub fn code(&mut self, address: Address) -> Result<StateLoad<Bytes>, <DB as Database>::Error> {
+        let a = self.load_account_code(address)?;
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+        let code = a.info.code.as_ref().unwrap();
+
+        let code = if code.is_eof() {
+            EOF_MAGIC_BYTES.clone()
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_BYTES.clone()
+        } else {
+            code.original_bytes()
+        };
+
+        Ok(StateLoad::new(code, a.is_cold))
+    }
+
+    /// Gets code hash of address.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC_HASH`
+    /// (the hash of `0xEF00`).
+    #[inline]
+    pub fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <DB as Database>::Error> {
+        let acc = self.load_account_code(address)?;
+        if acc.is_empty() {
+            return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
+        }
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+        let code = acc.info.code.as_ref().unwrap();
+
+        let hash = if code.is_eof() {
+            EOF_MAGIC_HASH
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_HASH
+        } else {
+            acc.info.code_hash
+        };
+
+        Ok(StateLoad::new(hash, acc.is_cold))
     }
 
     /// Creates account or returns false if collision is detected.

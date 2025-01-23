@@ -10,8 +10,9 @@ mod stack;
 mod subroutine_stack;
 
 use crate::{
-    interpreter_types::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
-    InterpreterAction,
+    interpreter_types::*,
+    table::{CustomInstruction, InstructionTable},
+    Gas, Host, Instruction, InstructionResult, InterpreterAction,
 };
 use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
@@ -88,60 +89,6 @@ impl<EXT, MG: MemoryGetter> InterpreterTypes for EthInterpreter<EXT, MG> {
     type Extend = EXT;
 }
 
-pub trait InstructionProvider: Clone {
-    type WIRE: InterpreterTypes;
-    type Host;
-
-    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
-}
-
-pub trait InstructionProviderGetter {
-    type InstructionProvider: InstructionProvider;
-
-    fn instructions(&mut self) -> &mut Self::InstructionProvider;
-}
-
-pub struct EthInstructionProvider<WIRE: InterpreterTypes, HOST> {
-    instruction_table: Rc<[Instruction<WIRE, HOST>; 256]>,
-}
-
-impl<WIRE, HOST> Clone for EthInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-{
-    fn clone(&self) -> Self {
-        Self {
-            instruction_table: self.instruction_table.clone(),
-        }
-    }
-}
-
-impl<WIRE, HOST> EthInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    pub fn new() -> Self {
-        Self {
-            instruction_table: Rc::new(crate::table::make_instruction_table::<WIRE, HOST>()),
-        }
-    }
-}
-
-impl<WIRE, HOST> InstructionProvider for EthInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    type WIRE = WIRE;
-    type Host = HOST;
-
-    /// Returns the instruction table.
-    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
-        self.instruction_table.as_ref()
-    }
-}
-
 impl<IW: InterpreterTypes, H: Host> CustomInstruction for Instruction<IW, H> {
     type Wire = IW;
     type Host = H;
@@ -162,10 +109,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
-    where
-        FN: CustomInstruction<Wire = IW, Host = H>,
-    {
+    pub(crate) fn step<H: Host>(
+        &mut self,
+        instruction_table: &[Instruction<IW, H>; 256],
+        host: &mut H,
+    ) {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
@@ -178,23 +126,13 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table[opcode as usize].exec(self, host)
     }
 
-    /// Executes the interpreter until it returns or stops.
-    pub fn run<FN, H: Host>(
-        &mut self,
-        instruction_table: &[FN; 256],
-        host: &mut H,
-    ) -> InterpreterAction
-    where
-        FN: CustomInstruction<Wire = IW, Host = H>,
-    {
+    #[inline]
+    pub fn reset_control(&mut self) {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
+    }
 
-        // Main loop
-        while self.control.instruction_result().is_continue() {
-            self.step(instruction_table, host);
-        }
-
+    pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
         let action = self.control.take_next_action();
         if action.is_some() {
@@ -209,6 +147,22 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
                 gas: *self.control.gas(),
             },
         }
+    }
+
+    /// Executes the interpreter until it returns or stops.
+    pub fn run_plain<H: Host>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) -> InterpreterAction {
+        self.reset_control();
+
+        // Main loop
+        while self.control.instruction_result().is_continue() {
+            self.step(instruction_table, host);
+        }
+
+        self.take_next_action()
     }
 }
 
@@ -250,16 +204,6 @@ impl InterpreterResult {
     #[inline]
     pub const fn is_error(&self) -> bool {
         self.result.is_error()
-    }
-}
-
-impl<WIRE, HOST> Default for EthInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    fn default() -> Self {
-        Self::new()
     }
 }
 

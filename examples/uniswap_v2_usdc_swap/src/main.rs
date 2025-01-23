@@ -13,7 +13,7 @@ use revm::{
     database_interface::WrapDatabaseAsync,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
-    transact_main, transact_main_commit, Context,
+    transact_main, Context, ExecuteCommitEvm, ExecuteEvm,
 };
 use std::ops::Div;
 
@@ -106,7 +106,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
             tx.value = U256::from(0);
         });
 
-    let ref_tx = transact_main(&mut ctx).unwrap();
+    let ref_tx = ctx.exec_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -230,7 +230,7 @@ fn swap(
             tx.nonce = 1;
         });
 
-    let ref_tx = transact_main_commit(&mut ctx).unwrap();
+    let ref_tx = ctx.exec_commit_previous().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -262,7 +262,7 @@ fn transfer(
             tx.value = U256::from(0);
         });
 
-    let ref_tx = transact_main_commit(&mut ctx).unwrap();
+    let ref_tx = ctx.exec_commit_previous().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

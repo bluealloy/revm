@@ -9,14 +9,14 @@ use alloy_provider::{
 };
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::{inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155};
+use inspector::{exec::InspectCommitEvm, inspectors::TracerEip3155};
 use revm::{database_interface::WrapDatabaseAsync, primitives::TxKind, Context};
+use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Instant;
-use std::{fs::OpenOptions, io::stdout};
 
 struct FlushWriter {
     writer: Arc<Mutex<BufWriter<std::fs::File>>>,
@@ -37,8 +37,6 @@ impl Write for FlushWriter {
         self.writer.lock().unwrap().flush()
     }
 }
-
-pub fn inspect_ctx_insp() {}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -88,8 +86,6 @@ async fn main() -> anyhow::Result<()> {
         .modify_cfg_chained(|c| {
             c.chain_id = chain_id;
         });
-    let mut inspector = TracerEip3155::new(Box::new(stdout()));
-    let mut ctx = InspectorContext::new(&mut ctx, &mut inspector);
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
@@ -106,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     for tx in transactions {
-        ctx.inner.modify_tx(|etx| {
+        ctx.modify_tx(|etx| {
             etx.caller = tx.from;
             etx.gas_limit = tx.gas_limit();
             etx.gas_price = tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas());
@@ -142,9 +138,8 @@ async fn main() -> anyhow::Result<()> {
         let writer = FlushWriter::new(Arc::clone(&inner));
 
         // Inspect and commit the transaction to the EVM
-        ctx.inspector.set_writer(Box::new(writer));
 
-        let res = inspect_main(&mut ctx);
+        let res = ctx.inspect_commit_previous(TracerEip3155::new(Box::new(writer)));
 
         if let Err(error) = res {
             println!("Got error: {:?}", error);
