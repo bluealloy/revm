@@ -2,7 +2,8 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        EofData, InputsTrait, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTrait, ReturnData, RuntimeFlag, StackTrait
+        InputsTrait, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTrait, ReturnData,
+        RuntimeFlag, StackTrait,
     },
     Host, InstructionResult,
 };
@@ -72,7 +73,9 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         memory_offset,
         code_offset,
         len,
-        &host.code(interpreter.input.target_address()).unwrap_or_default(),
+        &host
+            .code(interpreter.input.target_address())
+            .unwrap_or_default(),
     );
 }
 
