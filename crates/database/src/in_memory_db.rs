@@ -404,8 +404,10 @@ impl BenchmarkDB {
 
 /// BYTECODE address
 pub const FFADDRESS: Address = address!("ffffffffffffffffffffffffffffffffffffffff");
+pub const BENCH_TARGET: Address = FFADDRESS;
 /// CALLER address
 pub const EEADDRESS: Address = address!("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+pub const BENCH_CALLER: Address = EEADDRESS;
 
 impl Database for BenchmarkDB {
     type Error = Infallible;

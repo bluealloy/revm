@@ -1,7 +1,7 @@
-use database::BenchmarkDB;
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
-    primitives::{address, bytes, hex, Bytes, TxKind},
+    primitives::{bytes, hex, Bytes, TxKind},
     transact_main, Context,
 };
 
@@ -10,8 +10,8 @@ pub fn simple_example(bytecode: Bytecode) {
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
-            tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+            tx.caller = BENCH_CALLER;
+            tx.kind = TxKind::Call(BENCH_TARGET);
             tx.data = bytes!("30627b7c");
             tx.gas_limit = 1_000_000_000;
         });

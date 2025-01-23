@@ -8,11 +8,11 @@ use static_data::{
 
 use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
-use database::CacheDB;
+use database::{CacheDB, BENCH_CALLER};
 use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
-    primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
+    primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
     transact_main, Context,
 };
@@ -37,7 +37,7 @@ pub fn run() {
     let db = init_db();
 
     let mut context = Context::builder().with_db(db).modify_tx_chained(|tx| {
-        tx.caller = address!("1000000000000000000000000000000000000000");
+        tx.caller = BENCH_CALLER;
         tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
         tx.data = run_call_data.clone().into();
         tx.gas_limit = u64::MAX;
