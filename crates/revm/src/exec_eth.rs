@@ -74,7 +74,6 @@ mod test {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
-    use context::TxEnv;
     use context_interface::TransactionType;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{address, TxKind, U256};
