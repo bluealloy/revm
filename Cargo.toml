@@ -60,6 +60,7 @@ handler-interface = { path = "crates/handler/interface", package = "revm-handler
 cfg-if = { version = "1.0", default-features = false }
 auto_impl = { version = "1.2.0" }
 derive-where = { version = "1.2.7", default-features = false }
+derive_more = { version = "1.0.0", default-features = false }
 criterion = { package = "codspeed-criterion-compat", version = "2.7" }
 
 [workspace.package]
