@@ -26,7 +26,7 @@ all = "warn"
 revm.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
 inspector.workspace = true
-derive_more = "1.0"
+derive_more.workspace = true
 auto_impl.workspace = true
 
 # static precompile sets.
