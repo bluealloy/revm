@@ -484,6 +484,7 @@ where
                 Context = CTX,
                 Error = ERROR,
                 Output = InterpreterResult,
+                Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
             >,
         > + InstructionExecutorGetter<
             InstructionExecutor: InstructionExecutor<
@@ -506,10 +507,10 @@ where
     ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
 
-        // Load precompiles addresses as warm.
-        for address in frame_context.precompiles().warm_addresses() {
-            context.journal().warm_account(address);
-        }
+        frame_context.precompiles().set_spec(context.cfg().spec());
+        context
+            .journal()
+            .warm_precompiles(frame_context.precompiles().warm_addresses().collect());
 
         memory.borrow_mut().new_context();
         Self::init_with_context(0, frame_input, memory, context, frame_context)

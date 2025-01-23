@@ -294,6 +294,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if !interpreter.runtime_flag.spec_id().is_enabled_in(LONDON) && !res.previously_destroyed {
         interpreter.control.gas().record_refund(gas::SELFDESTRUCT)
     }
+
     gas!(
         interpreter,
         gas::selfdestruct_cost(interpreter.runtime_flag.spec_id(), res)
