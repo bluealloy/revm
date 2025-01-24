@@ -26,22 +26,6 @@ use revm::{
 };
 use std::vec::Vec;
 
-// pub trait InspectOpEvm<CTX, INTR: InterpreterTypes>: ExecuteOpEvm {
-//     fn inspect<'a, 'b, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output
-//     where
-//         INSP: Inspector<&'a mut Self, INTR> + 'b,
-//     {
-//         self.set_tx(tx);
-//         self.inspect_previous(inspector)
-//     }
-
-//     /// Drawback if inspector overlives the context it will take the mutable reference
-//     /// of it and inspector needs to be dropped to release the mutable reference.
-//     fn inspect_previous<'a, 'b, INSP>(&'a mut self, inspector: INSP) -> Self::Output
-//     where
-//         INSP: Inspector<&'a mut Self, INTR> + 'b;
-// }
-
 impl<
         BLOCK: Block,
         TX: OpTxTrait,
@@ -134,45 +118,6 @@ where
     )
     .run(ctx)
 }
-
-// pub fn inspect_op<
-//     CTX: EthContext + InspectorCtx<IT = EthInterpreter> + JournalExtGetter,
-//     ERROR: EthError<CTX> + From<OpTransactionError> + IsTxError + FromStringError,
-//     FRAME: Frame<
-//             Context = CTX,
-//             Error = ERROR,
-//             FrameResult = FrameResult,
-//             FrameInit = FrameInput,
-//             FrameContext = FrameContext<
-//                 OpPrecompileProvider<CTX, ERROR>,
-//                 InspectorInstructionExecutor<EthInterpreter, CTX>,
-//             >,
-//         > + FrameInterpreterGetter<IT = EthInterpreter>,
-//     HANDLER: EthHandler<
-//             Context = CTX,
-//             Error = ERROR,
-//             Frame = FRAME,
-//             Precompiles = OpPrecompileProvider<CTX, ERROR>,
-//             HaltReason = OptimismHaltReason,
-//         > + Default,
-// >(
-//     ctx: &mut CTX,
-// ) -> Result<ResultAndState<OptimismHaltReason>, ERROR>
-// where
-//     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-// {
-//     //todo!();
-//     let mut evm = InspectorHandlerImpl::<
-//         CTX,
-//         ERROR,
-//         _,
-//         _,
-//         OpPrecompileProvider<CTX, ERROR>,
-//         EthInterpreter,
-//     >::new(HANDLER::default(), make_instruction_table());
-
-//     evm.run(ctx)
-// }
 
 pub fn inspect_op_commit<DB: Database + DatabaseCommit, CTX>(
     ctx: &mut CTX,

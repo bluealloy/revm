@@ -146,16 +146,6 @@ impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB> 
     }
 }
 
-// impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt>
-// InspectorContext for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
-// {
-//     type JournalExt = JOURNAL;
-
-//     fn journal_ext(&self) -> &Self::JournalExt {
-//         self.0.journal_ref()
-//     }
-// }
-
 impl<BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>> CfgGetter
     for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
 {
