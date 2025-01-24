@@ -5,7 +5,9 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub mod api;
 pub mod bn128;
+pub mod context;
 pub mod fast_lz;
 pub mod handler;
 pub mod l1block;

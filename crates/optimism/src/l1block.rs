@@ -1,7 +1,9 @@
 use crate::{transaction::estimate_tx_compressed_size, OpSpecId};
+use auto_impl::auto_impl;
 use core::ops::Mul;
+use inspector::inspector_context::InspectorContext;
 use revm::{
-    context_interface::Journal,
+    context_interface::{DatabaseGetter, Journal},
     database_interface::Database,
     primitives::{address, Address, U256},
     specification::hardfork::SpecId,
@@ -244,6 +246,7 @@ impl L1BlockInfo {
     }
 }
 
+#[auto_impl(&mut, Box)]
 pub trait L1BlockInfoGetter {
     fn l1_block_info(&self) -> &L1BlockInfo;
     fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo;
@@ -258,6 +261,18 @@ impl<BLOCK, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>> L1BlockInfo
 
     fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo {
         &mut self.chain
+    }
+}
+
+impl<INSP, DB, CTX: DatabaseGetter<Database = DB> + L1BlockInfoGetter> L1BlockInfoGetter
+    for InspectorContext<INSP, DB, CTX>
+{
+    fn l1_block_info(&self) -> &L1BlockInfo {
+        self.inner.l1_block_info()
+    }
+
+    fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo {
+        self.inner.l1_block_info_mut()
     }
 }
 

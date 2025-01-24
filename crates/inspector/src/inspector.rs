@@ -1,26 +1,22 @@
 use crate::{
-    inspector_instruction::InspectorInstructionProvider,
+    inspector_instruction::InspectorInstructionExecutor,
     journal::{JournalExt, JournalExtGetter},
 };
 use auto_impl::auto_impl;
 use revm::{
-    context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-        DatabaseGetter, Journal,
-    },
+    context_interface::Journal,
     database_interface::Database,
     handler::{
-        handler::{EthContext, EthError, EthHandler as EthHandlerNew, EthHandlerImpl},
-        EthFrame, EthPrecompileProvider, FrameContext, FrameResult,
+        handler::{EthContext, EthError, EthHandler},
+        EthFrame, FrameContext, FrameResult,
     },
     handler_interface::{Frame, ItemOrResult, PrecompileProvider},
     interpreter::{
-        interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
+        table::InstructionTable, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
         EOFCreateInputs, FrameInput, Interpreter, InterpreterTypes,
     },
     primitives::{Address, Log, U256},
-    specification::hardfork::SpecId,
-    Context, DatabaseCommit,
+    Context,
 };
 
 /// EVM [Interpreter] callbacks.
@@ -188,17 +184,19 @@ impl<BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt,
     }
 }
 
-pub struct InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS> {
+pub struct InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR: InterpreterTypes> {
     pub handler: HANDLER,
-    _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS)>,
+    pub base_instructions: InstructionTable<INTR, CTX>,
+    _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES)>,
 }
 
-impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
-    InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR: InterpreterTypes>
+    InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR>
 {
-    pub fn new(handler: HANDLER) -> Self {
+    pub fn new(handler: HANDLER, base_instructions: InstructionTable<INTR, CTX>) -> Self {
         Self {
             handler,
+            base_instructions,
             _phantom: core::marker::PhantomData,
         }
     }
@@ -220,8 +218,8 @@ impl<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> FrameInterpreterGetter
     }
 }
 
-impl<CTX, ERROR, FRAME, HANDLER, INTR, PRECOMPILES, INSTRUCTIONS> EthHandlerNew
-    for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR> EthHandler
+    for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR>
 where
     CTX: EthContext + InspectorCtx<IT = INTR> + JournalExtGetter,
     INTR: InterpreterTypes,
@@ -233,37 +231,31 @@ where
             Error = ERROR,
             FrameResult = FrameResult,
             FrameInit = FrameInput,
-            FrameContext = FrameContext<PRECOMPILES, InspectorInstructionProvider<INTR, CTX>>,
+            FrameContext = FrameContext<PRECOMPILES, InspectorInstructionExecutor<INTR, CTX>>,
         > + FrameInterpreterGetter<IT = INTR>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
-    HANDLER: EthHandlerNew<Context = CTX, Error = ERROR, Frame = FRAME, Precompiles = PRECOMPILES>,
+    HANDLER: EthHandler<Context = CTX, Error = ERROR, Frame = FRAME, Precompiles = PRECOMPILES>,
 {
     type Context = CTX;
     type Error = ERROR;
     type Frame = FRAME;
     type Precompiles = PRECOMPILES;
-    type Instructions = InspectorInstructionProvider<INTR, CTX>;
-    type HaltReason = <HANDLER as EthHandlerNew>::HaltReason;
+    type Instructions = InspectorInstructionExecutor<INTR, CTX>;
+    type HaltReason = <HANDLER as EthHandler>::HaltReason;
 
-    fn frame_context(
-        &mut self,
-        context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext {
-        FrameContext::new(
-            self.handler.frame_context(context).precompiles,
-            InspectorInstructionProvider::new(),
-        )
+    fn instructions(&self, _context: &mut Self::Context) -> Self::Instructions {
+        InspectorInstructionExecutor::new(self.base_instructions)
     }
 
     fn frame_init_first(
         &mut self,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
-        mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
+        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        mut frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
     ) -> Result<
         ItemOrResult<
-            <Self as EthHandlerNew>::Frame,
-            <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+            <Self as EthHandler>::Frame,
+            <<Self as EthHandler>::Frame as Frame>::FrameResult,
         >,
         Self::Error,
     > {
@@ -290,12 +282,12 @@ where
         &self,
         frame: &Self::Frame,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
-        mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
+        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        mut frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
     ) -> Result<
         ItemOrResult<
-            <Self as EthHandlerNew>::Frame,
-            <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+            <Self as EthHandler>::Frame,
+            <<Self as EthHandler>::Frame as Frame>::FrameResult,
         >,
         Self::Error,
     > {
@@ -321,8 +313,8 @@ where
         &mut self,
         frame: &mut Self::Frame,
         context: &mut Self::Context,
-        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
-        mut result: <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        mut result: <<Self as EthHandler>::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(&mut result);
         self.handler
@@ -331,49 +323,10 @@ where
 
     fn frame_final_return(
         context: &mut Self::Context,
-        _frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
-        result: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+        _frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        result: &mut <<Self as EthHandler>::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(result);
         Ok(())
     }
-}
-
-pub fn inspect_main<
-    DB: Database,
-    CTX: EthContext
-        + JournalExtGetter
-        + DatabaseGetter<Database = DB>
-        + InspectorCtx<IT = EthInterpreter>,
->(
-    ctx: &mut CTX,
-) -> Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
-    InspectorHandlerImpl::<
-        _,
-        _,
-        EthFrame<_, _, _, _>,
-        _,
-        _,
-        InspectorInstructionProvider<EthInterpreter, CTX>,
-    >::new(EthHandlerImpl {
-        precompiles: EthPrecompileProvider::new(SpecId::LATEST),
-        instructions: InspectorInstructionProvider::new(),
-        _phantom: core::marker::PhantomData,
-    })
-    .run(ctx)
-}
-
-pub fn inspect_main_commit<
-    DB: Database + DatabaseCommit,
-    CTX: EthContext
-        + JournalExtGetter
-        + DatabaseGetter<Database = DB>
-        + InspectorCtx<IT = EthInterpreter>,
->(
-    ctx: &mut CTX,
-) -> Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
-    inspect_main(ctx).map(|res| {
-        ctx.db().commit(res.state);
-        res.result
-    })
 }

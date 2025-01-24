@@ -1,31 +1,30 @@
-use super::{Host, SStoreResult, SelfDestructResult};
-use crate::{Block, BlockGetter, Cfg, CfgGetter, Transaction, TransactionGetter};
-use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
-use std::vec::Vec;
-
-use super::{AccountLoad, StateLoad};
+use super::Host;
+use crate::{
+    Block, BlockGetter, Cfg, CfgGetter, Journal, JournalGetter, Transaction, TransactionGetter,
+};
+use database_interface::DatabaseGetter;
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default)]
-pub struct DummyHost<BLOCK, TX, CFG>
+pub struct DummyHost<BLOCK, TX, CFG, JOURNAL>
 where
     BLOCK: Block,
     TX: Transaction,
     CFG: Cfg,
+    JOURNAL: Journal,
 {
     pub tx: TX,
     pub block: BLOCK,
     pub cfg: CFG,
-    pub storage: HashMap<U256, U256>,
-    pub transient_storage: HashMap<U256, U256>,
-    pub log: Vec<Log>,
+    pub journal: JOURNAL,
 }
 
-impl<BLOCK, TX, CFG> DummyHost<BLOCK, TX, CFG>
+impl<BLOCK, TX, CFG, JOURNAL> DummyHost<BLOCK, TX, CFG, JOURNAL>
 where
     BLOCK: Block,
     TX: Transaction,
     CFG: Cfg + Default,
+    JOURNAL: Journal + Default,
 {
     /// Create a new dummy host with the given [`Transaction`] and [`Block`].
     #[inline]
@@ -34,21 +33,20 @@ where
             tx,
             block,
             cfg: CFG::default(),
-            storage: HashMap::default(),
-            transient_storage: HashMap::default(),
-            log: Vec::new(),
+            journal: JOURNAL::default(),
         }
     }
 
     /// Clears the storage and logs of the dummy host.
     #[inline]
     pub fn clear(&mut self) {
-        self.storage.clear();
-        self.log.clear();
+        self.journal.clear();
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, CFG: Cfg> BlockGetter for DummyHost<BLOCK, TX, CFG> {
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> BlockGetter
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
     type Block = BLOCK;
 
     fn block(&self) -> &Self::Block {
@@ -56,7 +54,9 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg> BlockGetter for DummyHost<BLOCK, T
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, CFG: Cfg> TransactionGetter for DummyHost<BLOCK, TX, CFG> {
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> TransactionGetter
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
     type Transaction = TX;
 
     fn tx(&self) -> &Self::Transaction {
@@ -64,7 +64,9 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg> TransactionGetter for DummyHost<BL
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, CFG: Cfg> CfgGetter for DummyHost<BLOCK, TX, CFG> {
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> CfgGetter
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
     type Cfg = CFG;
 
     fn cfg(&self) -> &Self::Cfg {
@@ -72,85 +74,42 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg> CfgGetter for DummyHost<BLOCK, TX,
     }
 }
 
-impl<TX: Transaction, BLOCK: Block, CFG: Cfg> Host for DummyHost<BLOCK, TX, CFG> {
-    #[inline]
-    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
-        Some(StateLoad::new(AccountLoad::default(), false))
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> DatabaseGetter
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
+    type Database = <JOURNAL as Journal>::Database;
+
+    fn db(&mut self) -> &mut Self::Database {
+        self.journal.db()
     }
 
-    #[inline]
-    fn block_hash(&mut self, _number: u64) -> Option<B256> {
-        Some(B256::ZERO)
+    fn db_ref(&self) -> &Self::Database {
+        self.journal.db_ref()
+    }
+}
+
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> JournalGetter
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
+    type Journal = JOURNAL;
+
+    fn journal(&mut self) -> &mut Self::Journal {
+        &mut self.journal
     }
 
-    #[inline]
-    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
-        Some(Default::default())
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.journal
     }
+}
 
+impl<TX: Transaction, BLOCK: Block, CFG: Cfg, JOURNAL: Journal> Host
+    for DummyHost<BLOCK, TX, CFG, JOURNAL>
+{
     #[inline]
-    fn code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
-        Some(Default::default())
-    }
-
-    #[inline]
-    fn code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
-        Some(StateLoad::new(KECCAK_EMPTY, false))
-    }
-
-    #[inline]
-    fn sload(&mut self, _address: Address, index: U256) -> Option<StateLoad<U256>> {
-        match self.storage.entry(index) {
-            Entry::Occupied(entry) => Some(StateLoad::new(*entry.get(), false)),
-            Entry::Vacant(entry) => {
-                entry.insert(U256::ZERO);
-                Some(StateLoad::new(U256::ZERO, true))
-            }
-        }
-    }
-
-    #[inline]
-    fn sstore(
+    fn set_error(
         &mut self,
-        _address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<StateLoad<SStoreResult>> {
-        let present = self.storage.insert(index, value);
-        Some(StateLoad {
-            data: SStoreResult {
-                original_value: U256::ZERO,
-                present_value: present.unwrap_or(U256::ZERO),
-                new_value: value,
-            },
-            is_cold: present.is_none(),
-        })
-    }
-
-    #[inline]
-    fn tload(&mut self, _address: Address, index: U256) -> U256 {
-        self.transient_storage
-            .get(&index)
-            .copied()
-            .unwrap_or_default()
-    }
-
-    #[inline]
-    fn tstore(&mut self, _address: Address, index: U256, value: U256) {
-        self.transient_storage.insert(index, value);
-    }
-
-    #[inline]
-    fn log(&mut self, log: Log) {
-        self.log.push(log)
-    }
-
-    #[inline]
-    fn selfdestruct(
-        &mut self,
-        _address: Address,
-        _target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        Some(StateLoad::default())
+        error: <<<Self as crate::JournalGetter>::Journal as crate::Journal>::Database as database_interface::Database>::Error,
+    ) {
+        panic!("Error: {:?}", error);
     }
 }

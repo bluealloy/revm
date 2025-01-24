@@ -1,3 +1,5 @@
+use super::EthHandler;
+use crate::{instructions::InstructionExecutor, EthPrecompileProvider, FrameContext, FrameResult};
 use context::Context;
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
@@ -5,42 +7,18 @@ use context_interface::{
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
 use handler_interface::{Frame, PrecompileProvider};
-use interpreter::{
-    interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
-    FrameInput, Host,
-};
+use interpreter::{interpreter::EthInterpreter, FrameInput, Host};
 use precompile::PrecompileErrors;
 use primitives::Log;
-use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
-use crate::{EthPrecompileProvider, FrameContext, FrameResult};
-
-use super::EthHandler;
-
-pub struct EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
-    pub precompiles: PRECOMPILES,
-    pub instructions: INSTRUCTIONS,
+pub struct MainnetHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
     pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS)>,
 }
 
-impl<CTX: Host, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
-    EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
-where
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
-{
-    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
-        FrameContext {
-            precompiles: self.precompiles.clone(),
-            instructions: self.instructions.clone(),
-        }
-    }
-}
-
 impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
-    for EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+    for MainnetHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
 where
     CTX: EthContext,
     ERROR: EthError<CTX>,
@@ -49,7 +27,7 @@ where
         Error = ERROR,
         Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
     >,
-    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+    INSTRUCTIONS: InstructionExecutor<InterpreterTypes = EthInterpreter, CTX = CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<
@@ -66,29 +44,13 @@ where
     type Precompiles = PRECOMPILES;
     type Instructions = INSTRUCTIONS;
     type HaltReason = HaltReason;
-
-    fn frame_context(
-        &mut self,
-        context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext {
-        self.precompiles.set_spec(context.cfg().spec());
-        self.crete_frame_context()
-    }
 }
 
-impl<CTX: Host + CfgGetter, ERROR, FRAME> Default
-    for EthHandlerImpl<
-        CTX,
-        ERROR,
-        FRAME,
-        EthPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter, CTX>,
-    >
+impl<CTX: Host + CfgGetter, ERROR, FRAME, INSTRUCTIONS: Default> Default
+    for MainnetHandler<CTX, ERROR, FRAME, EthPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>
 {
     fn default() -> Self {
         Self {
-            precompiles: EthPrecompileProvider::new(SpecId::LATEST),
-            instructions: EthInstructionProvider::new(),
             _phantom: core::marker::PhantomData,
         }
     }

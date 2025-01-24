@@ -1,6 +1,6 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, HashSet, Log, B256, U256};
+use primitives::{Address, Bytes, HashSet, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
 use std::boxed::Box;
@@ -109,6 +109,16 @@ pub trait Journal {
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash);
     }
+
+    fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error>;
+
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error>;
 
     /// Called at the end of the transaction to clean all residue data from journal.
     fn clear(&mut self);

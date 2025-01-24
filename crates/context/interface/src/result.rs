@@ -223,9 +223,9 @@ impl<DB, TX> FromStringError for EVMError<DB, TX> {
     }
 }
 
-impl<DB> From<InvalidTransaction> for EVMError<DB, InvalidTransaction> {
+impl<DB, TXE: From<InvalidTransaction>> From<InvalidTransaction> for EVMError<DB, TXE> {
     fn from(value: InvalidTransaction) -> Self {
-        Self::Transaction(value)
+        Self::Transaction(TXE::from(value))
     }
 }
 

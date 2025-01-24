@@ -4,6 +4,7 @@ use revm::{
     JournalEntry,
 };
 
+#[auto_impl(&mut, Box)]
 pub trait JournalExt {
     fn logs(&self) -> &[Log];
 

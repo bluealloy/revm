@@ -1,16 +1,12 @@
 use revm::{
     context_interface::{
-        block::BlockSetter, journaled_state::AccountLoad, transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter,
-        PerformantContextAccess, TransactionGetter,
+        block::BlockSetter, transaction::TransactionSetter, BlockGetter, CfgGetter, DatabaseGetter,
+        ErrorGetter, JournalGetter, PerformantContextAccess, TransactionGetter,
     },
     database_interface::Database,
     handler::{handler::EthContext, FrameResult},
-    interpreter::{
-        interpreter::EthInterpreter, FrameInput, Host, Interpreter, SStoreResult,
-        SelfDestructResult, StateLoad,
-    },
-    primitives::{Address, Bytes, Log, B256, U256},
+    interpreter::{interpreter::EthInterpreter, FrameInput, Host, Interpreter},
+    primitives::{Address, Log, U256},
 };
 use std::vec::Vec;
 
@@ -59,64 +55,6 @@ where
             inspector,
             frame_input_stack: Vec::new(),
         }
-    }
-}
-
-impl<INSP: GetInspector<CTX, EthInterpreter>, DB, CTX> Host for InspectorContext<INSP, DB, CTX>
-where
-    CTX: Host + DatabaseGetter<Database = DB>,
-{
-    fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        self.inner.block_hash(requested_number)
-    }
-
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.inner.load_account_delegated(address)
-    }
-
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.inner.balance(address)
-    }
-
-    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.inner.code(address)
-    }
-
-    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.inner.code_hash(address)
-    }
-
-    fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
-        self.inner.sload(address, index)
-    }
-
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.inner.sstore(address, index, value)
-    }
-
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.inner.tload(address, index)
-    }
-
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.inner.tstore(address, index, value)
-    }
-
-    fn log(&mut self, log: Log) {
-        self.inner.log(log);
-    }
-
-    fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        self.inner.selfdestruct(address, target)
     }
 }
 
@@ -229,6 +167,16 @@ where
 
     fn journal_ref(&self) -> &Self::Journal {
         self.inner.journal_ref()
+    }
+}
+
+impl<INSP: GetInspector<CTX, EthInterpreter>, DB: Database, CTX> Host
+    for InspectorContext<INSP, DB, CTX>
+where
+    CTX: Host + DatabaseGetter<Database = DB>,
+{
+    fn set_error(&mut self, error: <DB as Database>::Error) {
+        self.inner.set_error(error);
     }
 }
 

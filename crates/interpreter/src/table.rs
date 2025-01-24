@@ -115,15 +115,13 @@ where
 #[inline]
 pub const fn make_instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionTable<WIRE, H> {
-    const {
-        let mut tables: InstructionTable<WIRE, H> = [control::unknown; 256];
-        let mut i = 0;
-        while i < 256 {
-            tables[i] = instruction::<WIRE, H>(i as u8);
-            i += 1;
-        }
-        tables
+    let mut table: InstructionTable<WIRE, H> = [control::unknown; 256];
+    let mut i = 0;
+    while i < 256 {
+        table[i] = instruction::<WIRE, H>(i as u8);
+        i += 1;
     }
+    table
 }
 
 /// Make boxed instruction table that calls `f` closure for every instruction.

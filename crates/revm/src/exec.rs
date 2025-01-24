@@ -1,29 +1,25 @@
-use context_interface::{Block, Transaction};
+use context_interface::{block::BlockSetter, transaction::TransactionSetter};
 
-pub trait EvmExec {
-    type Transaction: Transaction;
-    type Block: Block;
+/// Execute EVM transactions.
+pub trait ExecuteEvm: BlockSetter + TransactionSetter {
     type Output;
 
-    fn set_block(&mut self, block: Self::Block);
+    fn exec_previous(&mut self) -> Self::Output;
 
-    fn set_tx(&mut self, tx: Self::Transaction);
-
-    fn exec(&mut self) -> Self::Output;
-
-    fn exec_with_tx(&mut self, tx: Self::Transaction) -> Self::Output {
+    fn exec(&mut self, tx: Self::Transaction) -> Self::Output {
         self.set_tx(tx);
-        self.exec()
+        self.exec_previous()
     }
 }
 
-pub trait EvmCommit: EvmExec {
+/// Execute EVM transactions and commit to the state.
+pub trait ExecuteCommitEvm: ExecuteEvm {
     type CommitOutput;
 
-    fn exec_commit(&mut self) -> Self::CommitOutput;
+    fn exec_commit_previous(&mut self) -> Self::CommitOutput;
 
-    fn exec_commit_with_tx(&mut self, tx: Self::Transaction) -> Self::CommitOutput {
+    fn exec_commit(&mut self, tx: Self::Transaction) -> Self::CommitOutput {
         self.set_tx(tx);
-        self.exec_commit()
+        self.exec_commit_previous()
     }
 }

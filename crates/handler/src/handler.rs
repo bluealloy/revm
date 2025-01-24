@@ -1,8 +1,11 @@
 pub mod types;
 
-pub use types::{EthContext, EthError, EthHandlerImpl};
+pub use types::{EthContext, EthError, MainnetHandler};
 
-use crate::{execution, post_execution, pre_execution, validation, FrameContext, FrameResult};
+use crate::{
+    execution, instructions::InstructionExecutor, post_execution, pre_execution, validation,
+    FrameContext, FrameResult,
+};
 use context_interface::{
     result::{HaltReasonTrait, ResultAndState},
     Cfg, CfgGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
@@ -10,14 +13,14 @@ use context_interface::{
 use handler_interface::{
     Frame, FrameInitOrResult, FrameOrResult, ItemOrResult, PrecompileProvider,
 };
-use interpreter::{interpreter::InstructionProvider, FrameInput, InitialAndFloorGas};
+use interpreter::{FrameInput, InitialAndFloorGas};
 use std::{vec, vec::Vec};
 
 pub trait EthHandler {
     type Context: EthContext;
     type Error: EthError<Self::Context>;
     type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
-    type Instructions: InstructionProvider<Host = Self::Context>;
+    type Instructions: InstructionExecutor<CTX = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -40,10 +43,20 @@ pub trait EthHandler {
         self.post_execution(context, exec_result, init_and_floor_gas, eip7702_refund)
     }
 
+    fn precompile(&self, _context: &mut Self::Context) -> Self::Precompiles {
+        Self::Precompiles::default()
+    }
+
+    fn instructions(&self, _context: &mut Self::Context) -> Self::Instructions {
+        Self::Instructions::default()
+    }
+
     fn frame_context(
         &mut self,
         context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext;
+    ) -> <Self::Frame as Frame>::FrameContext {
+        FrameContext::new(self.precompile(context), self.instructions(context))
+    }
 
     /// Call all validation functions
     fn validate(&self, context: &mut Self::Context) -> Result<InitialAndFloorGas, Self::Error> {

@@ -1,3 +1,5 @@
+use crate::instructions::{InstructionExecutor, InstructionExecutorGetter};
+
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
@@ -6,10 +8,12 @@ use context_interface::{
     TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
-use handler_interface::{Frame, ItemOrResult, PrecompileProvider, PrecompileProviderGetter};
+use handler_interface::{
+    Frame, FrameInitOrResult, ItemOrResult, PrecompileProvider, PrecompileProviderGetter,
+};
 use interpreter::{
     gas,
-    interpreter::{EthInterpreter, ExtBytecode, InstructionProvider, InstructionProviderGetter},
+    interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
@@ -62,7 +66,7 @@ where
     }
 }
 
-impl<CTX, ERROR, FRAMECTX> EthFrame<CTX, ERROR, EthInterpreter<()>, FRAMECTX>
+impl<CTX, ERROR, FRAMECTX> EthFrame<CTX, ERROR, EthInterpreter, FRAMECTX>
 where
     CTX: EthFrameContext,
     ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
@@ -72,8 +76,12 @@ where
                 Error = ERROR,
                 Output = InterpreterResult,
             >,
-        > + InstructionProviderGetter<
-            InstructionProvider: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+        > + InstructionExecutorGetter<
+            InstructionExecutor: InstructionExecutor<
+                InterpreterTypes = EthInterpreter,
+                CTX = CTX,
+                Output = InterpreterAction,
+            >,
         >,
 {
     /// Make call frame
@@ -431,12 +439,12 @@ where
     }
 }
 
-pub struct FrameContext<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionProvider> {
+pub struct FrameContext<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionExecutor> {
     pub precompiles: PRECOMPILE,
     pub instructions: INSTRUCTION,
 }
 
-impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionProvider>
+impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionExecutor>
     FrameContext<PRECOMPILE, INSTRUCTION>
 {
     pub fn new(precompiles: PRECOMPILE, instructions: INSTRUCTION) -> Self {
@@ -447,7 +455,7 @@ impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionProvider>
     }
 }
 
-impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> PrecompileProviderGetter
+impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionExecutor> PrecompileProviderGetter
     for FrameContext<PRECOMPILES, INSTRUCTIONS>
 {
     type PrecompileProvider = PRECOMPILES;
@@ -457,12 +465,12 @@ impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> Precomp
     }
 }
 
-impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> InstructionProviderGetter
+impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionExecutor> InstructionExecutorGetter
     for FrameContext<PRECOMPILES, INSTRUCTIONS>
 {
-    type InstructionProvider = INSTRUCTIONS;
+    type InstructionExecutor = INSTRUCTIONS;
 
-    fn instructions(&mut self) -> &mut Self::InstructionProvider {
+    fn executor(&mut self) -> &mut Self::InstructionExecutor {
         &mut self.instructions
     }
 }
@@ -476,9 +484,14 @@ where
                 Context = CTX,
                 Error = ERROR,
                 Output = InterpreterResult,
+                Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
             >,
-        > + InstructionProviderGetter<
-            InstructionProvider: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
+        > + InstructionExecutorGetter<
+            InstructionExecutor: InstructionExecutor<
+                InterpreterTypes = EthInterpreter<()>,
+                CTX = CTX,
+                Output = InterpreterAction,
+            >,
         >,
 {
     type Context = CTX;
@@ -494,10 +507,10 @@ where
     ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
 
-        // Load precompiles addresses as warm.
-        for address in frame_context.precompiles().warm_addresses() {
-            context.journal().warm_account(address);
-        }
+        frame_context.precompiles().set_spec(context.cfg().spec());
+        context
+            .journal()
+            .warm_precompiles(frame_context.precompiles().warm_addresses().collect());
 
         memory.borrow_mut().new_context();
         Self::init_with_context(0, frame_input, memory, context, frame_context)
@@ -531,13 +544,11 @@ where
         &mut self,
         context: &mut Self::Context,
         frame_context: &mut Self::FrameContext,
-    ) -> Result<ItemOrResult<Self::FrameInit, Self::FrameResult>, Self::Error> {
+    ) -> Result<FrameInitOrResult<Self>, Self::Error> {
         let spec = context.cfg().spec().into();
 
         // Run interpreter
-        let next_action = self
-            .interpreter
-            .run(frame_context.instructions().table(), context);
+        let next_action = frame_context.executor().run(context, &mut self.interpreter);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),

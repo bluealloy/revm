@@ -1,6 +1,6 @@
 use core::convert::Infallible;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
-use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
+use primitives::{address, hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
@@ -402,11 +402,18 @@ impl BenchmarkDB {
     }
 }
 
+/// BYTECODE address
+pub const FFADDRESS: Address = address!("ffffffffffffffffffffffffffffffffffffffff");
+pub const BENCH_TARGET: Address = FFADDRESS;
+/// CALLER address
+pub const EEADDRESS: Address = address!("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+pub const BENCH_CALLER: Address = EEADDRESS;
+
 impl Database for BenchmarkDB {
     type Error = Infallible;
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        if address == Address::ZERO {
+        if address == FFADDRESS {
             return Ok(Some(AccountInfo {
                 nonce: 1,
                 balance: U256::from(10000000),
@@ -414,7 +421,7 @@ impl Database for BenchmarkDB {
                 code_hash: self.1,
             }));
         }
-        if address == Address::with_last_byte(1) {
+        if address == EEADDRESS {
             return Ok(Some(AccountInfo {
                 nonce: 0,
                 balance: U256::from(10000000),

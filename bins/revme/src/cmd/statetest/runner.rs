@@ -4,9 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{
-    inspect_main_commit, inspector_context::InspectorContext, inspectors::TracerEip3155,
-};
+use inspector::{exec::InspectCommitEvm, inspectors::TracerEip3155};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -18,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    transact_main_commit, Context,
+    Context, ExecuteCommitEvm,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -421,21 +419,20 @@ pub fn execute_test_suite(
 
                 // Do the deed
                 let (e, exec_result) = if trace {
-                    let mut ctx = &mut InspectorContext::new(
-                        Context::builder()
-                            .with_block(&block)
-                            .with_tx(&tx)
-                            .with_cfg(&cfg)
-                            .with_db(&mut state),
-                        TracerEip3155::new(Box::new(stderr())).without_summary(),
-                    );
+                    let mut ctx = Context::builder()
+                        .with_block(&block)
+                        .with_tx(&tx)
+                        .with_cfg(&cfg)
+                        .with_db(&mut state);
 
                     let timer = Instant::now();
-                    let res = inspect_main_commit(&mut ctx);
+                    let res = ctx.inspect_commit_previous(
+                        TracerEip3155::new(Box::new(stderr())).without_summary(),
+                    );
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = &mut ctx.inner.journaled_state.database;
+                    let db = &mut ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -452,7 +449,7 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = transact_main_commit(&mut ctx);
+                    let res = ctx.exec_commit_previous();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
@@ -494,24 +491,20 @@ pub fn execute_test_suite(
 
                 println!("\nTraces:");
 
-                let mut ctx = InspectorContext::new(
-                    Context::builder()
-                        .with_db(&mut state)
-                        .with_block(&block)
-                        .with_tx(&tx)
-                        .with_cfg(&cfg),
+                let mut ctx = Context::builder()
+                    .with_db(&mut state)
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg);
+
+                let _ = ctx.inspect_commit_previous(
                     TracerEip3155::new(Box::new(stderr())).without_summary(),
                 );
-
-                let _ = inspect_main_commit(&mut ctx);
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!(
-                    "\nState after: {:#?}",
-                    ctx.inner.journaled_state.database.cache
-                );
+                println!("\nState after: {:#?}", ctx.journaled_state.database.cache);
                 println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");
                 println!("Block: {block:#?}");

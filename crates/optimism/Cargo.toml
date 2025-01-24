@@ -25,7 +25,9 @@ all = "warn"
 # revm
 revm.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
-#inspector.workspace = true
+inspector.workspace = true
+derive_more.workspace = true
+auto_impl.workspace = true
 
 # static precompile sets.
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }

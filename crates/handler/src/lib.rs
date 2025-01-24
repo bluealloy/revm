@@ -11,6 +11,7 @@ pub mod execution;
 mod frame;
 mod frame_data;
 pub mod handler;
+pub mod instructions;
 pub mod post_execution;
 pub mod pre_execution;
 mod precompile_provider;
@@ -19,5 +20,5 @@ pub mod validation;
 // Public exports
 pub use frame::{return_create, return_eofcreate, EthFrame, EthFrameContext, FrameContext};
 pub use frame_data::{FrameData, FrameResult};
-pub use handler::{EthContext, EthError, EthHandler, EthHandlerImpl};
+pub use handler::{EthContext, EthError, EthHandler, MainnetHandler};
 pub use precompile_provider::EthPrecompileProvider;

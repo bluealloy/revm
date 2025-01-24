@@ -4,7 +4,7 @@ use specification::hardfork::SpecId;
 use std::boxed::Box;
 
 #[auto_impl(&mut, Box)]
-pub trait PrecompileProvider: Clone {
+pub trait PrecompileProvider: Clone + Default {
     type Context;
     type Output;
     type Error;

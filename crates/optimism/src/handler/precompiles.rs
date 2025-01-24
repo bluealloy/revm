@@ -129,3 +129,9 @@ where
         self.precompile_provider.contains(address)
     }
 }
+
+impl<CTX, ERROR> Default for OpPrecompileProvider<CTX, ERROR> {
+    fn default() -> Self {
+        Self::new_with_spec(OpSpec::Op(OpSpecId::ISTHMUS))
+    }
+}

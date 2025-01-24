@@ -1,8 +1,10 @@
-use database::BenchmarkDB;
+use std::time::Instant;
+
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
     primitives::{TxKind, U256},
-    transact_main, Context,
+    Context, ExecuteEvm,
 };
 
 pub fn run() {
@@ -10,15 +12,15 @@ pub fn run() {
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
-            tx.caller = "0x0000000000000000000000000000000000000001"
-                .parse()
-                .unwrap();
+            tx.caller = BENCH_CALLER;
+            tx.kind = TxKind::Call(BENCH_TARGET);
             tx.value = U256::from(10);
-            tx.kind = TxKind::Call(
-                "0x0000000000000000000000000000000000000000"
-                    .parse()
-                    .unwrap(),
-            );
         });
-    let _ = transact_main(&mut context);
+    let time = Instant::now();
+    let _ = context.exec_previous();
+    println!("First init: {:?}", time.elapsed());
+
+    let time = Instant::now();
+    let _ = context.exec_previous();
+    println!("Run: {:?}", time.elapsed());
 }
