@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x2dc1a4e0393d846250eb01b757d6428391c927572f05af7278a0e7d40d80fc06",
+                    "hash": "0x6b5924ca175e529faccc0fb83b8ed8976431c8e3169bf36eabe491eb511eb594",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e100000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a2126a05877c0d2398b57e511ab0fe6fa8fccf5c96197cca733ee059032efceab6cef46a042a5882dce3cf001aebef4289dee7be05aad42e24c56abb0bbe29677e0c29332",
                     "indexes": {
@@ -64,7 +64,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8930a",
+                            "balance": "0x0de0b6b3a756130a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -78,12 +78,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x0470f1005e1aae19c6b9fe3a88c40d2b6b977195e864e8a9883f2937078dbcc1",
+            "hash": "0x6b0017be63d8875e4ae68038f1b19253e1a3302eed367d0bb11ae0d95672025a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -109,7 +123,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -133,7 +147,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x2dc1a4e0393d846250eb01b757d6428391c927572f05af7278a0e7d40d80fc06",
+                    "hash": "0x6b5924ca175e529faccc0fb83b8ed8976431c8e3169bf36eabe491eb511eb594",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b9010000000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a210000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e125a05cfe62032cae0bdfae9d257a91023c35f7afb01216a4b10b61c67e3166e8c3d2a05db642b7d0c9fb709596d0ddbd4e0659be9072296dee75e48633b72f5003b85a",
                     "indexes": {
@@ -154,7 +168,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8930a",
+                            "balance": "0x0de0b6b3a756130a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -168,12 +182,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xeb9528e6ccd56ada683467be65bffadb837ef20e22eead5be87b21fae1337e0a",
+            "hash": "0x9f71aeafe6e995945e63ae70600e708b018740bf1a4f2d72236880cb7b1388f6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -199,7 +227,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -223,7 +251,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x42b2810cef8b52371bb1a06c87de5585a71881eee092ef91dbc5e6f977a857f7",
+                    "hash": "0x389bc39fbf8765bf6bca67ad913ecf598f87c20af1e4393ee67d38dd4f561a02",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b90100000000000000000000000000000000000123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef00000000000000000000000000000000193fb7cedb32b2c3adc06ec11a96bc0d661869316f5e4a577a9f7c179593987beb4fb2ee424dbb2f5dd891e228b46c4a0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e126a0b19d6f9e9933c19340135b5d9c6c979d189b8b1a069ee5781ee2521e224d1f2ca051ae858a019a82e0e2e6e054cc5e1c6ab0869f122db82ee049e544d00d070628",
                     "indexes": {
@@ -244,7 +272,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8930a",
+                            "balance": "0x0de0b6b3a756130a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -258,12 +286,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x0e9a8a86ce687d2eadfb4e9e6c290618c7f3e1e7e4f15abb5164897b1513cc2a",
+            "hash": "0xba36630c816fb01469a4fa3ff4ce9b1292333df291d22247dfb12f790772faf8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -289,7 +331,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -313,7 +355,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf4b411a04f706ef244352b320d7b7b45792d2d3086ed445bcb33ea2a4e74fdaf",
+                    "hash": "0xa16a46e27687a2a6a0c8d52bf9df3373b95d2cc09b1a6c741d0228c9154b8382",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a051e1994ab27147367799874a8277053ebf224679bf43cdfbebda9868bf0f3780a057271269ba65293ff939d4e256944cd35155c173195ee3648faeaf17ebc03d47",
                     "indexes": {
@@ -334,7 +376,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8c00a",
+                            "balance": "0x0de0b6b3a756400a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -348,12 +390,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xa8b0af86ca33b9a0a295dd36cd8d5f8fc3653b0275dd14bf2009ee7c3ab2bb63",
+            "hash": "0x6906cceb2c74c73169fba7e783eb07ec103fdf22d967fcd87a8077c45072a969",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -379,7 +435,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -403,7 +459,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x5754cb1573ab9d9415a5e4af816198830170287fd92a3e6fe9a54c70453331d7",
+                    "hash": "0x4bbacab7911e5360744b81daf32786c34812dd33b6ee9cc683f22a1ccd289123",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b9010000000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a21000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a0c092d116de23f5e066799e493db42e38fba187435f4208d4d3de81b3092cda33a02121bfc401fc85acfd52ea5e4d8d8e729848592a7184afabb12554279877c9e8",
                     "indexes": {
@@ -424,7 +480,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8bf92",
+                            "balance": "0x0de0b6b3a7563f92",
                             "code": "0x",
                             "storage": {}
                         },
@@ -438,12 +494,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x2e5a6fee50524e3ad97565ccb7c4c95d5f103d57294743d9c0a606341b49ca1e",
+            "hash": "0xe5334f7ecb7cac936ea3c6c7c4bf54444cc27e1e188600bbe54d030abfd480c3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -469,7 +539,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -493,7 +563,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xda060c5536a6a9eca00fa493bb3b39441624f817e92a0193a676034e447b7110",
+                    "hash": "0x62dcf168079c4e9c01bf8e0266382ffe0a2076de80de473b6d317e05ca3b97cd",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e10000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb00000000000000000000000000000000114d1d6855d545a8aa7d76c8cf2e21f267816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca26a0640f02fe06f10070390dd433228b74e12d30446d10c721709dc672c327a48b4ea045a7984b4dfd5e1ed70def4419b62cc0c22b0edc7a6a63864d36fba3025cb226",
                     "indexes": {
@@ -514,7 +584,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8930a",
+                            "balance": "0x0de0b6b3a756130a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -528,12 +598,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x52b07df5fe6b491dafc4dbdeba6ece9c968ff8972ddf8fd081355d6df32f43cd",
+            "hash": "0xfc47b75d7e4cccbf9af1c6bb46fdd5df14e1bc3cacbe3a6dace58684d2ce985c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -559,7 +643,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -583,7 +667,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x9b665e1083134065851a3a138a6037f588a281dd6bb58714de57176b24ff9123",
+                    "hash": "0x982012f5f9ef5ed059ffb0f0b0599abeee60ef8035620b97c788dcb2efdd4091",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b9010000000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a2100000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca9426000000000000000000000000000000000195e911162921ba5ed055b496420f197693d36569ec34c63d7c0529a097d49e543070afba4b707e878e53c2b779208a26a0b503f7a1c68acbe8edd954310c30e61423d3aa3ddd09c844b16a6b7d0b87b613a03552208a303d53725d02a71b254eb53f1b0d33038e1b3d340d43f7a9eee33c0c",
                     "indexes": {
@@ -604,7 +688,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b89292",
+                            "balance": "0x0de0b6b3a7561292",
                             "code": "0x",
                             "storage": {}
                         },
@@ -618,12 +702,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xa3fb403acce0e1cf3a44acb30ca9cb3bff87d6798acf7258dd3f20ce66774a7b",
+            "hash": "0x0afbe2241492c5733fff9982c43ddf5056a14dd4ed95545bf39edce1230835d0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -649,7 +747,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -673,7 +771,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x2a93c28b23f926f33ca3edd04619bc1aafe6088e1f5df2e5fc9cb9ee494cb621",
+                    "hash": "0x181a83d313d20e09d61f34d365a6366a4614940625ad5d1d4a9d612b792d35a5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e10000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e126a053f3a47cd4305a041890965f4907047a28234ebfa81d4546f721196ae07116e4a062992750419492f3d35aac62692b6449a34b8f5e5e491e3dc81f76c3076ef26e",
                     "indexes": {
@@ -694,7 +792,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b89382",
+                            "balance": "0x0de0b6b3a7561382",
                             "code": "0x",
                             "storage": {}
                         },
@@ -708,12 +806,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x01d48331470255145216fca31493f95c08da98501c3ce48118199a108f76e943",
+            "hash": "0x4a6005449882536defa1feaec965b4a0c4285df0bffac49e692c34786d4b6f04",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -739,7 +851,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -763,7 +875,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x86f418e94583b1a71b4cc22c75c7f2583fc1add1861187a8ee59f95cd7b22382",
+                    "hash": "0x17251c7a559ea22ba09e9ddc7ff4477e9e420c8c83605950a676663f6439e0b2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b9010000000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a2100000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a2126a054dbf5c147b31b0ec7c09b81995fb36f7ad90713bbe569e68f2342513b8d2c67a00901d6a441aca50ad00f362cf28be899bb039d5980f21a94de8e4ccfef7be309",
                     "indexes": {
@@ -784,7 +896,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b89292",
+                            "balance": "0x0de0b6b3a7561292",
                             "code": "0x",
                             "storage": {}
                         },
@@ -798,12 +910,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xcf3273298ed916e3bce302a43599539ee84cc40358da564cd2b6fb02c64b6940",
+            "hash": "0x34acbffe754b3eb18b381fd94c3e82c4ca0fc84f60a54a9157d59334c42203cf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -829,7 +955,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -853,7 +979,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x124d9d7e3cb0b213cfe830a49658dc8ff025f2f3f65e9354ad5efe53bcc3df15",
+                    "hash": "0x0cc4198f4bc90fde8344bc64c6420f358f9a1bb90957a74b55d6e2a1ae98baa4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0a3ce34fee9f8402e9df4c5879044529c158b748a14b14321dae21ff7e0c7a330a0293d06bee05d529ed54f07c0dc19753b82caefd8e4d4523011b81e2e3cb29da3",
                     "indexes": {
@@ -874,7 +1000,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8ec92",
+                            "balance": "0x0de0b6b3a7566c92",
                             "code": "0x",
                             "storage": {}
                         },
@@ -888,12 +1014,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x4495d8b3463cc8f8b0aa704177d7f67a8b3b40ef0069558be8f1b44ef5417617",
+            "hash": "0x27f145f9b5ed01fd9474d48b0186037c81f88656b6f0442f9a2a665651830bd4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -919,7 +1059,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -943,7 +1083,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xeef0c5aedf9eb9a9e98c3e7bfe02478174d62086e3ccb928876ab974ec29c9d8",
+                    "hash": "0x00b4274b289188b0d1a5acfb40c579bf7b12ce9dfdfff006534eeec910225c16",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000225a079f356da1a270f07371b849ffec6e6e9b82938626c35161e26b87972e9e8f245a048cf41cddec5290fc4dd39f85a6c7716ed1c69065dddcbdaac7aba9ffa41c702",
                     "indexes": {
@@ -964,7 +1104,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8eba2",
+                            "balance": "0x0de0b6b3a7566ba2",
                             "code": "0x",
                             "storage": {}
                         },
@@ -978,12 +1118,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x39493c4ff579269188f11238012dd568e7759ea21f5ce21201a17966a1c125cb",
+            "hash": "0x9b240836c772f64ffb487d29403e86f0aa6c1510f582c3d12e4212d733dfd823",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -1009,7 +1163,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -1033,7 +1187,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf79118613e2aa86f4e765926a9c82a11dd8f46af85f3b25817006d1e6851feb4",
+                    "hash": "0x5250406852fd3c8b84b9c4beb8239177c1ef150bd675787d7b59f7fb8a9796d0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaa925a0841c8f07385ee3937705fd58946d8cba8cfb1da86df5e3cc7ec11f0ff924dcf3a00a7ea951ff52488d9b769886ab3b7960d966069639b4bdaad519cc9ce794bf34",
                     "indexes": {
@@ -1054,7 +1208,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8d59a",
+                            "balance": "0x0de0b6b3a756559a",
                             "code": "0x",
                             "storage": {}
                         },
@@ -1068,12 +1222,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x0ba0725199210e15e80117cd82bb1a3ae811c1a358a37bb125d4a845de045eb9",
+            "hash": "0xce6b50ac9becbad6144ed76d54ba9cdac58f16a461d0fd8d836ec46544b07247",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_G1ADD precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1add.py#L23",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

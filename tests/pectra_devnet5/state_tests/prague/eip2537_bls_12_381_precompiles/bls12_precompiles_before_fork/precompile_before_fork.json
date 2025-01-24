@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0x4456a3dd7babdba4c9deae873f3058dd797cf6c7eb68d78024be90cbe4b4cc33",
+                    "hash": "0xaef7b129b4eaf03b3611f69f73fb048bfea9bbc0ae258dc026ea40ac0ac351c8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90162800a839897f794000000000000000000000000000000000000100080b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0a3ce34fee9f8402e9df4c5879044529c158b748a14b14321dae21ff7e0c7a330a0293d06bee05d529ed54f07c0dc19753b82caefd8e4d4523011b81e2e3cb29da3",
                     "indexes": {
@@ -63,7 +63,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bba450",
+                            "balance": "0x0de0b6b3a7592450",
                             "code": "0x",
                             "storage": {}
                         },
@@ -77,12 +77,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x0d44f08a1546fce0a2f91ffb88bf995aa229adeed554819e2ce096f9911ab998",
+            "hash": "0xfab7ff23d36792c530e45f4d5a920867ea99d5d76568641e23ec2eb29678769c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -108,7 +117,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -132,7 +141,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0x306f6c265c3e041ce25fdb56b5c32f2526ca71ed5d24b4b4fcf95c3a4fb5aaf3",
+                    "hash": "0x4ac177b51b7152230d55f06517b6dbbed8f038975d70e06cf3d7367f3afa1f4f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90101800a8398c56094000000000000000000000000000000000000100080b8a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a07bcd4051f3b1ffedc6d4aeb61425b33b4dc34169f026df24f73183da795dfe78a00210189a028f6697c9ce8e76ad4f3f4f983546426d2c5c58a896d214e7a3a01b",
                     "indexes": {
@@ -152,7 +161,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bbb404",
+                            "balance": "0x0de0b6b3a7593404",
                             "code": "0x",
                             "storage": {}
                         },
@@ -166,12 +175,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x115dcd6d293ad0c8e846df1e6ed0cb83cdbf6488f6b2a8b650025e66c077bcfe",
+            "hash": "0x8200166048c711bb3508577c83639de95f058bfb18ebe5c9a859711b9ab440a1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -197,7 +215,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -221,7 +239,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0xd3d773382299a5677fd3d47913e4c9e01bfec532d0cb773e15ac5be090f826ce",
+                    "hash": "0xc3a7c9e1a2527b75c763a1df63f9fee79366f825517f42d4ffbc85188092595e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90262800a839898d894000000000000000000000000000000000000100080b90200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a0ac07bb2e617f502470851c343ad363a462d4e80f398cf5376edc6252e84b8deaa033863391ba29b024d98ebe25f2837430d76cbb838346bac2da73ab2d4a89aff2",
                     "indexes": {
@@ -241,7 +259,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bb7a70",
+                            "balance": "0x0de0b6b3a758fa70",
                             "code": "0x",
                             "storage": {}
                         },
@@ -255,12 +273,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x11693a86370afae1ddbf35c41bfabbfa609ace9b2bdec12de08056531c32b7be",
+            "hash": "0xfa1c91375b963e7ad86302890078500606a1b86cb742aa2347425aaabb896b25",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -286,7 +313,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -310,7 +337,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0xbd623f15c480e7ce2c7eb6e90a3538badbb479db51a0f3fffbcb791d57301f86",
+                    "hash": "0xbfeb2c1d3418f21bff70689a4d54a73f5312107653483c94da52a2edb6986e6b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf90182800a8398ee6494000000000000000000000000000000000000100080b9012000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0d6d83aa3dbaf743bd1733552a58cdb50ec311a14e8c075ea179e8927443fad92a0354ea52cdc65f0edf89b59d33000c047ad23866039f2e082826849c25c71f25d",
                     "indexes": {
@@ -330,7 +357,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bb9f14",
+                            "balance": "0x0de0b6b3a7591f14",
                             "code": "0x",
                             "storage": {}
                         },
@@ -344,12 +371,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x8c5fc93613e8ee4f3059fad110243c99fe4421532050424417bdd1e5219ce13e",
+            "hash": "0xa2c920fd5ceee160e9a38e53b7f2174e70a2b3992aa891900dfcf783b81fda58",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -375,7 +411,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -399,7 +435,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0xa5028ea174173d942677b57d0e55df4df5d4385414f0a9967722aca1c63a316b",
+                    "hash": "0x4e717f8202339c57ee50b7c6b46e7a320f3bfd06e803b827f6569727d338e661",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf901e2800a8399a91c94000000000000000000000000000000000000100080b9018000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0773329f72e1c5a70b462646d78960f7765dc0d5d422b58a84403193c14529d4ba03217599ae00525f9d3825d2e543baeac31db06218511158b3a32d28783ea0b98",
                     "indexes": {
@@ -419,7 +455,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bb8f60",
+                            "balance": "0x0de0b6b3a7590f60",
                             "code": "0x",
                             "storage": {}
                         },
@@ -433,12 +469,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x82e89bd26e0a67348d11f44633c2123caf1c5f4f82bde282afa80e73f1ab8243",
+            "hash": "0x17243345b36fb3e7cff514c8163320dadc463257a27aab21ba18b36b40e5e39a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -464,7 +509,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -488,7 +533,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0x91e4d24cde1fb16d91ef6ec3f9647361e3ff218357c4e450b44133d3ab916bd0",
+                    "hash": "0x68f3611d3765b9056cb6b75d2696ab2d3579f7ffc6ae28512af77a694a8bb153",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b8400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0807adbd2954fba3657079a76ae307843262a8101918d3c3be638378a403c7b98a04b4dc294989dddff565ccbe2db44aee6c29aa7102f4ada0f6c0905eafeda3d70",
                     "indexes": {
@@ -508,7 +553,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bbc3b8",
+                            "balance": "0x0de0b6b3a75943b8",
                             "code": "0x",
                             "storage": {}
                         },
@@ -522,12 +567,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x15d94ad0535fbd961088b68c6a558b1f756e0ffaf6787c1c64ee327c0619798d",
+            "hash": "0xc7f97737b5699b6b436f148faa77562e880ccba7ce7df95f9cb7ee880fac7df2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -553,7 +607,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -577,7 +631,7 @@
         "post": {
             "Cancun": [
                 {
-                    "hash": "0x5dbde650aa6ba58d6fcbb3887fae9a2829ad8762da31b0d7630b5a90dfc70fa1",
+                    "hash": "0x177610da752e1a575e453b42abf9c47c7599cde35d0eda204bc6c6afa81c43a0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8e1800a8398f37894000000000000000000000000000000000000100080b880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a09dff9d280947b49486aad31c930347402a81668dc1fb9eea357c61f535743c04a05e42f8f1817232341771839b13ab8c3c1566a75702d3810cad65ca3291e7337e",
                     "indexes": {
@@ -597,7 +651,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4bbb940",
+                            "balance": "0x0de0b6b3a7593940",
                             "code": "0x",
                             "storage": {}
                         },
@@ -611,12 +665,21 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x952e815a16c0a49069b8f139cbd6e51f59940bdd436d4b3c7302cde7a5059bff",
+            "hash": "0x5f7e6ed9e492db5ebc91958fcbf9fab11906a1d819d7ce1408b15e5d5c9fc378",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test all BLS12 precompiles before the Prague hard fork is active.\n\n    The call must succeed but the output must be empty.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_precompiles_before_fork.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

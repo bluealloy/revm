@@ -110,12 +110,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x0d2cafcdceb7fa796ae61342d89020c5eb90d5c5758e49c10704905f07225ba6",
+            "hash": "0xd92878f8ccc5bfb649c31c5f8f593e027f2706e0edc2180d732e6ad4d4864fd8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test clearing the delegation of an account under a variety of circumstances.\n\n    - pre_set_delegation_code: The code to set on the account before clearing delegation, or None\n        if the account should not have any code set.\n    - self_sponsored: Whether the delegation clearing transaction is self-sponsored.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -220,12 +234,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x55b1d36c07f2c86447450999fb6fd50666c5edaeb85a144a32cd340b841e8589",
+            "hash": "0x05b31c37e3f5f727c3903aa0b82138f55139edd4bc729a3da6e8900e27244643",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test clearing the delegation of an account under a variety of circumstances.\n\n    - pre_set_delegation_code: The code to set on the account before clearing delegation, or None\n        if the account should not have any code set.\n    - self_sponsored: Whether the delegation clearing transaction is self-sponsored.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -324,12 +352,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x8ced95ec483a7ca6876affad92b66a2d6f1b620635328f09c7bb6fa6c449c7c3",
+            "hash": "0xef390b808f49f372e586ed3529ecb549d4f7da3c93a213e28b3f544c92089056",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test clearing the delegation of an account under a variety of circumstances.\n\n    - pre_set_delegation_code: The code to set on the account before clearing delegation, or None\n        if the account should not have any code set.\n    - self_sponsored: Whether the delegation clearing transaction is self-sponsored.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -422,12 +464,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xe1373a6a8f099f148d4cc823f888e02c091635eb90dc2b0e101ede17845bb6ad",
+            "hash": "0x87cc307fd3e554c44eb76190f811298e1804d1537323a4f8bfd46039301cc59e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test clearing the delegation of an account under a variety of circumstances.\n\n    - pre_set_delegation_code: The code to set on the account before clearing delegation, or None\n        if the account should not have any code set.\n    - self_sponsored: Whether the delegation clearing transaction is self-sponsored.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2932",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

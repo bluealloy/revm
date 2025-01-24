@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xe28ae4c7263be16da2ca5187002e5d16a7a0fa5651fca08f184394ff1e7e7907",
+                    "hash": "0xbc95ae1a6c1852cd5088b37fe1ce2eb8f1179e436be989de94703846bf498752",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8405f5e100940000000000000000000000000000000000001000808026a00c80636d627692750a38994c80e17de29770a0e34498f5e6eccd4f233ec21b5fa04c33c43ced36fe3329a16f21f2704902ac998ae26f175265e7b14a6229b1feb1",
                     "indexes": {
@@ -60,7 +60,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4c2ef80",
+                            "balance": "0x0de0b6b3a7606f80",
                             "code": "0x",
                             "storage": {}
                         },
@@ -74,12 +74,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xb55ebaa131b6af917c8ebd60fb0448ae7fdb897e2a1890a6b88139f7cb5bffbf",
+            "hash": "0x4882d716a5df16f7c30a010e72594e72d9cc0b9b3e8a7ff38846e19bbb702f61",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to fail for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST) because the appropriate amount of gas is not provided.\n\n    If any of the calls succeeds, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L388",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L388",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -105,7 +119,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -129,7 +143,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x36b823734642dd0142d3bacc5a8d019f93ece597d118687df4b10c6f721b966e",
+                    "hash": "0xecbf374af44e20ee814d3c021fc9a6008a5f760da61806aaddaf80f73343c658",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8405f5e100940000000000000000000000000000000000001000808026a00c80636d627692750a38994c80e17de29770a0e34498f5e6eccd4f233ec21b5fa04c33c43ced36fe3329a16f21f2704902ac998ae26f175265e7b14a6229b1feb1",
                     "indexes": {
@@ -146,7 +160,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea0346958",
+                            "balance": "0x0de0b6b3a2d1e958",
                             "code": "0x",
                             "storage": {}
                         },
@@ -160,12 +174,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x6b76a19c19a438906c568fee354efecab0b82a05ce9169815dacd845318d584c",
+            "hash": "0x18a6f8ee809676827ddc8bc2c94d1ee92f496c92ee8e181987522caeb99c3c05",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to fail for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST) because the appropriate amount of gas is not provided.\n\n    If any of the calls succeeds, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L388",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L388",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
