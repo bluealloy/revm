@@ -6,6 +6,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/bluealloy/revm/compare/revme-v2.3.0...revme-v3.0.0) - 2025-01-24
+
+### Added
+
+- EthHandler trait (#2001)
+- *(EIP-7840)* Add blob schedule to execution client cfg (#1980)
+- bump eof validation tests (#1963)
+- simplify Transaction trait (#1959)
+- Split inspector.rs (#1958)
+- align Block trait (#1957)
+- integrate codspeed (#1935)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- extract statetest models/structs to standalone crate (#1808)
+- Merge validation/analyzis with Bytecode (#1793)
+- restructure part3 fix examples  (#1792)
+- Restructuring Part3 inspector crate (#1788)
+- restructure Part2 database crate (#1784)
+- use TestAuthorization and skip decoding of eip7702 tx (#1785)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- *(revme)* Statetest stop exec when print output is true (#1995)
+- *(revme)* statetest remove redundant json output (#1994)
+- *(eof)* dont run precompile on ext delegate call (#1964)
+- *(revme)* Burntpix bench (#1937)
+- *(revme)* include correct bytecode for snailtracer  (#1917)
+- statetest json set spec_id (#1766)
+
+### Other
+
+- align crates versions (#1983)
+- remove analysis bench inner loops (#1936)
+- fix comments and docs into more sensible (#1920)
+- tie journal database with database getter (#1923)
+- use stderr for revme tracer. not panic on bytecode (#1916)
+- put snailtracer and analysis contracts in files (#1911)
+- Move CfgEnv from context-interface to context crate (#1910)
+- Rename PRAGUE_EOF to OSAKA (#1903)
+- bump EOF evmone tests to v0.13.0 (#1816)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+- *(revme)* replace `structopt` with `clap` (#1754)
+
 ## [0.10.1](https://github.com/bluealloy/revm/compare/revme-v0.10.0...revme-v0.10.1) - 2024-08-30
 
 ### Other
