@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x4e071fbf3e7b4eb12ef35f292c3fad240e6aa670c0b1d3e8ed5afb5c21538a00",
+                    "hash": "0xab6f339628db6a8340995c34413c6192025b797abc46e0d605a99285035cd834",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b84000000000000000000000000000000000156c8a6a2c184569d69a76be144b5cdc5141d2d2ca4fe341f011e25e3969c55ad9e9b9ce2eb833c81a908e5fa4ac5f0325a0ef49da3f8e8049a463cbe6564f308dbcae895bce1f82227d42fad8f8ee01f0f2a047996dab898e7d6d0008a4494b04bd2312a7790e21d8a1a95a8e31bbf6b6f273",
                     "indexes": {
@@ -64,7 +64,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -78,12 +78,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x61db5333b6e03766933ab24cb121cc239f1bddbd7af41255b71f46feee6715ab",
+            "hash": "0x0790003a555dd5edfd1712ef194b67580b9f972c8ae8ace7baf455422e5ffd9a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -109,7 +123,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -133,7 +147,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xeb7c45608b308be900ffc221ac4d238019c6e2af675f84f9447d15430fce025e",
+                    "hash": "0x055b0647893f12ae671cff429d10ac606d03850818610222206f1175167bdf3a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b84000000000000000000000000000000000147e1ed29f06e4c5079b9d14fc89d2820d32419b990c1c7bb7dbea2a36a045124b31ffbde7c99329c05c559af1c6cc8225a02518fef372179c7e9e6efdd3909eb85ef731088968fc31724a5fb9be8a6381efa077ce6b945b5ca4d3cd5cc51b182e84d4bf86e421c63714eb03d99c0210e2e5d9",
                     "indexes": {
@@ -154,7 +168,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -168,12 +182,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xa7474df7659d83ca51f1c067b94da6aefb35d1d0c5dadffb06e1e2020e69798e",
+            "hash": "0x8d8c159d9ee1b80ea03d6c8bf7b350e7235b0b4188ec7635e13dd62db059ec80",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -199,7 +227,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -223,7 +251,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x934ab0233c3fc614fbfc2bd64a7029304a73596f52e7874189ac701f9f617e82",
+                    "hash": "0x9aba53f9f931a25a2cbed8e453a02ad86aec1a91a116346707ca7db6c7a08699",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b8400000000000000000000000000000000004090815ad598a06897dd89bcda860f25837d54e897298ce31e6947378134d3761dc59a572154963e8c954919ecfa82d26a035b9d45836234fa585d2d6a20de7f5335d0d0a22fa4c1ea7f60b78ba20c8f9a7a07b845cc1e218980c7d696dd70610fcd9ffeb604fa2066f8c079cb536cca8bc60",
                     "indexes": {
@@ -244,7 +272,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -258,12 +286,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x509849686b688bafac3e9ef9a131f8f6f65caeb1795f896f09e21e52daf8d188",
+            "hash": "0x111c6d20542e95430f3e6dc0da2006f36e58b6c5ded19f6966831efb4c2c6cc2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -289,7 +331,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -313,7 +355,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xa3f4abb0f359966f478d4b5389913fe62dc7812dd3a9657a1b26b7f8d1aa5e44",
+                    "hash": "0xc6fd055590f6f3e979ec2fd75f00642f564c927041862444ce4032b5629d45c0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b8400000000000000000000000000000000008dccd088ca55b8bfbc96fb50bb25c592faa867a8bb78d4e94a8cc2c92306190244532e91feba2b7fed977e3c3bb5a1f25a0a7252f999a68ba90f9dd119b4ef1a4c91a929acc58087817a4206991ea204605a073f65beae4207665531e352bdd10fa73ccd987738c06ae0a1a8df4441bbecfc8",
                     "indexes": {
@@ -334,7 +376,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -348,12 +390,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xfa43e5b4cb30b1658007eca1aeab93d0d9df2cb94670652e427381d1e08cfe8a",
+            "hash": "0x9556aa60d55eafb152bf415872a40dc480e535d5510c1e6333601b17cf9e4fc9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -379,7 +435,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -403,7 +459,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf1e4970bd93b9e0cdb7f540109ecc7d15d6659068469bd6894298f0c58d940c0",
+                    "hash": "0x995dc190cd60c5753f0ca279fd33f7ca58c806acf403a6376e313988863b5207",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b840000000000000000000000000000000000dd824886d2123a96447f6c56e3a3fa992fbfefdba17b6673f9f630ff19e4d326529db37e1c1be43f905bf9202e0278d25a0f67720e0388c35a38ffdd12f13ec09432878391d5e08fea97d5016427121a60ba027b08ea850aac826b21e3be0213f14f6f68804b85de2b9e1dfba772fd44e57a4",
                     "indexes": {
@@ -424,7 +480,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -438,12 +494,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x8b6abe58f37fdbe492e1b5962b7ed46d9d8e4abe7e13ba9670db13baca71898f",
+            "hash": "0x5e21c55035a46bfa5b55a3454e73ce333a1ffc1e87d1ced5c3186a66da34dd72",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -469,7 +539,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -493,7 +563,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xa3acecc31f9fbf1d8f6e88ce352affa2bb132dd7d881b19d56407a998203bdbe",
+                    "hash": "0x63bc460c484b9666ae2e064083a42cc1178376c20810b5761177e4ecc0f8de7a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b8400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a0807adbd2954fba3657079a76ae307843262a8101918d3c3be638378a403c7b98a04b4dc294989dddff565ccbe2db44aee6c29aa7102f4ada0f6c0905eafeda3d70",
                     "indexes": {
@@ -514,7 +584,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b8438c",
+                            "balance": "0x0de0b6b3a755c38c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -528,12 +598,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xcbc15203d4d1cfcd52618ffa37496582a1a88cabaf6a97df668002abe92dad83",
+            "hash": "0x195785de295ab1e589f6013c38cf5e53108a5fcb76ef396b177092eb8d128b82",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -559,7 +643,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -583,7 +667,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x60b90c777f3969cb04e20cb6d05563f623b4347517c1bbbe15902b82a4a0c0a0",
+                    "hash": "0xf3b76d8dfa052f2efb3610a8643bc2a53e362eb98c1f2d409c58e8f4368c199f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8a1800a8398abfc94000000000000000000000000000000000000100080b840000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaa26a0ea5386628d5294a865ea85a0b753c970ffd0b91e9f5db518d026661ae873f5eba07fe80778b456814274df6545c145f5b18873ff69a5cb77bfb775692b79697c37",
                     "indexes": {
@@ -604,7 +688,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b82d0c",
+                            "balance": "0x0de0b6b3a755ad0c",
                             "code": "0x",
                             "storage": {}
                         },
@@ -618,12 +702,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xcc7135b44824c2e7b7e4dcfcf2c5ccfa4fa1501c793d7e46230fdebfd5debff2",
+            "hash": "0x59c53eb64922e0b0dc851d6e51911661a0e37bd2c6f0f2896d4092fb1ca82683",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G1 precompile.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp_to_g1.py#L28",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

@@ -14,7 +14,8 @@ use std::collections::BTreeMap;
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
+// config field is added
 pub struct TestUnit {
     /// Test info is optional
     #[serde(default, rename = "_info")]

@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x516cf0013e583347c30857cf2f6c421f09d45f8e8e0574fb8ce177aa652e99f6",
+                    "hash": "0x0241216b76e2c982ebf384cc1159534bb6e249a9fa494811a1eb9cfc1cc4cd40",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8e1800a8398f37894000000000000000000000000000000000000100080b880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a09dff9d280947b49486aad31c930347402a81668dc1fb9eea357c61f535743c04a05e42f8f1817232341771839b13ab8c3c1566a75702d3810cad65ca3291e7337e",
                     "indexes": {
@@ -64,7 +64,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b56cb6",
+                            "balance": "0x0de0b6b3a752ecb6",
                             "code": "0x",
                             "storage": {}
                         },
@@ -78,12 +78,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xdc7391831cfa93ab9e90f1f663c4306747e702799bf26e5cacc78b0bcd98032e",
+            "hash": "0x9f2589537318403625eb6a4ed2d5e07be58a6111a16ca17737e3167228d7a271",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G2 precompile using different call types.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L137",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L139",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -109,7 +123,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -133,7 +147,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xe134188dee7e0bae19113bfecbb75030100c6189e8c00e0a948694a0c924e7a7",
+                    "hash": "0xb36be152c3b85ad73306b9c5a0e6bdc4b82cbd9ff233a2d4e8f3310a6dd64433",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8e1800a8398f37894000000000000000000000000000000000000100080b880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a09dff9d280947b49486aad31c930347402a81668dc1fb9eea357c61f535743c04a05e42f8f1817232341771839b13ab8c3c1566a75702d3810cad65ca3291e7337e",
                     "indexes": {
@@ -154,7 +168,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b56cb6",
+                            "balance": "0x0de0b6b3a752ecb6",
                             "code": "0x",
                             "storage": {}
                         },
@@ -168,12 +182,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xbfed978f54f47212e348643c5bbb311444368d75c06140671e5c1229267743ca",
+            "hash": "0xb7bbfbbeb135ea5c74bf28115afe88d5c9788e63d83963d6620b3bf85e01e17f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G2 precompile using different call types.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L137",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L139",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -199,7 +227,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -223,7 +251,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf7ebbf22d106f82f15e06bac3b89a6ebefa208a769e06dee41079db0a5694c19",
+                    "hash": "0xc795ac73f86e9d43ce6606e432fe8cced25692b14f760327be898e28f4274e2d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf8e1800a8398f37894000000000000000000000000000000000000100080b880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a09dff9d280947b49486aad31c930347402a81668dc1fb9eea357c61f535743c04a05e42f8f1817232341771839b13ab8c3c1566a75702d3810cad65ca3291e7337e",
                     "indexes": {
@@ -244,7 +272,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7ea4b56c98",
+                            "balance": "0x0de0b6b3a752ec98",
                             "code": "0x",
                             "storage": {}
                         },
@@ -258,12 +286,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x4a1a26b98f37860f0c9a8cfdcd743e125071c88a8477554d676189d6cc82aae6",
+            "hash": "0x040c88cb5ce13be1f2299a1cc6f6e679bce3189568a8c4712178ca444964ca0e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest the BLS12_MAP_FP_TO_G2 precompile using different call types.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L137",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_map_fp2_to_g2.py#L139",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
