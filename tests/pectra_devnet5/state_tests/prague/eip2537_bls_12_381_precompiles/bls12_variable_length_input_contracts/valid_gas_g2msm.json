@@ -19,7 +19,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -43,7 +43,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xb09da5e995efd4ec3c6d6b4c8373ff64e2acd13063e93f791dcf85b2e9cc8b13",
+                    "hash": "0x80db3dd5e7238055995a4f64e7893b5d568473e0344378db9a866eac7751cf98",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a84068e7780940000000000000000000000000000000000001000808026a0f048636336cd496f0b96e1b4501aa622ef582dfc6aeb8a0c5d761338506a6946a06ec31b268fbb2be6ffd8aa23bdd9ce0822c92ece36bdf30595546e11e0268231",
                     "indexes": {
@@ -189,7 +189,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7e645e8ec2",
+                            "balance": "0x0de0b6b366fc0ec2",
                             "code": "0x",
                             "storage": {}
                         },
@@ -203,12 +203,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xcc2530fc89555c2f103a8622274356ccf1475f71f3e71f72c77405df9d0d8f77",
+            "hash": "0x18326342daa4a7fa480297b1cfea71cda97562d527d33c32566fd451c5cb5cb3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_G2MSM discount gas table in full, by expecting the call to succeed for\n    all possible input lengths because the appropriate amount of gas is provided.\n\n    If any of the calls fail, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L225",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L225",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -234,7 +248,7 @@
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                 "nonce": "0x00",
-                "balance": "0x038d7ea4c68000",
+                "balance": "0x0de0b6b3a7640000",
                 "code": "0x",
                 "storage": {}
             }
@@ -258,7 +272,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x82370a4756e030b7aa4e0ebe65e5b3faa59923e038f6309e63cb5ae49bb80b2f",
+                    "hash": "0x52464bd4b40a3208d29aee74cda2d004e964fa1a84cffe280766c7346e4cded7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a84068e7780940000000000000000000000000000000000001000808026a0f048636336cd496f0b96e1b4501aa622ef582dfc6aeb8a0c5d761338506a6946a06ec31b268fbb2be6ffd8aa23bdd9ce0822c92ece36bdf30595546e11e0268231",
                     "indexes": {
@@ -404,7 +418,7 @@
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x038d7e645e8ec2",
+                            "balance": "0x0de0b6b366fc0ec2",
                             "code": "0x",
                             "storage": {}
                         },
@@ -418,12 +432,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xa14f5521b2d39dc515abb7e13034f8029d346e1015d1c37b33fb04ddf260279d",
+            "hash": "0xe8418de894cc83d234a3469da703c0c048c84d5fe12f32ae69b64bffcdde5f63",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_G2MSM discount gas table in full, by expecting the call to succeed for\n    all possible input lengths because the appropriate amount of gas is provided.\n\n    If any of the calls fail, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L225",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L225",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

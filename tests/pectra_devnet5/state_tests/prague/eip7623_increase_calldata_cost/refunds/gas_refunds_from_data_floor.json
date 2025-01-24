@@ -74,12 +74,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xdaa8e465bad45e7762b645809352b54b8a775aa47737874ae6e4144a0ff7292b",
+            "hash": "0xc26ab19d8fc59aec568a4ed94306aed15d30618f5b7d80cbd59ffb3f7a76364e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -160,12 +174,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x4d40e24f96f374689503774eeff64954e70d78bbe4483fae697286bf306cfdf2",
+            "hash": "0xc0076961eff876e1f7d00d0644e6fb5d6a13c68275caeea2251134160e613d0d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -246,12 +274,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xcdd329ce50a054e3057cda7058ca18afbf9384df484bec6196994f39ff72809b",
+            "hash": "0x54ae50385e48a15e783cc5687c57bc313056d32413e020c263e2308535c405f9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -355,12 +397,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x59636b3f93c5ef25db9927fdfbceee99b7991780a83bba52c69e29cfb30b5225",
+            "hash": "0x5d0481a0f09f224c5f156ddda9be67f2b31e03f21b22505d29e781ce61aea2c2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -464,12 +520,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xfb826d48c717c137b2d1bbbaea702fbf8c9c37fe65877bb4e1554fd6dd2de0ef",
+            "hash": "0xfa55702a6e07de0d5f026c6b0dc1be971fd337d0f2b45c08986a9ac569f2c350",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -573,12 +643,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xa187d161f8689ea8bcf2ccab20fdd89ccc4724d741c6f63bae155d1d9922f5dc",
+            "hash": "0xb00f68fbe02399e256cf1eea7e3f0e800e33bdb61c3448dc8f02ba35c9cba406",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -680,12 +764,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xf9e9437dc8916f4da70f61983c81498550bb0754c537636fc471e717675e1cdc",
+            "hash": "0x81a054dd50e50ee2f343a9e3ed107125f9353009b02f804a4b9cbf75bde24f40",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -787,12 +885,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x47d53f3d85868bc4a10f647a9b231d4400f80f1129a65e78e36469627dac45db",
+            "hash": "0xc933353b4677a012c581ee40479a5013a74c8e01902f119783a3fe9664988579",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -894,12 +1006,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x320c0c48aebe13c80b90e40fda8251bcc4f10b850b82733f7e6b808f9e49e92a",
+            "hash": "0x3b18ac04e93d3ea4c0c82c8b6d89f2d163f0ce2bc535d9d75599712daac727a1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\nTest gas refunds deducted from the execution gas cost and not the data floor.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_refunds.py#L242",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"

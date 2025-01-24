@@ -74,12 +74,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x55c50fee1aa1c79b56a58ffb7bd9d1e5dca042c1dc8e5f7ca436eac013f7e7b6",
+            "hash": "0x5b265d89950f65a203f3253e1685daa0b82ac08f9f306ab5106436cc16bd9bb4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -160,12 +174,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x5b13a9e3ec91ef4b4652cf99fe897631ba3744bacf3c16f927108ff75e0fb70a",
+            "hash": "0xf5ca247f2fae30aafa9043700704f34a34bfe8097ccef7f8aea4a6bb33fdcea6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -249,12 +277,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xf4f765604219d0a09b38629aed43aef463a85df838bf23651d1abcd54fe71a93",
+            "hash": "0x72619f1b4cbc8ac88c2c09edec753e1a9869ec92b6f9ed78374a8ee6a7e8a670",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -333,12 +375,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x5449188c0c951b0eb5fca1d1cabf142691bfd92741a7bad25d928e9f77c04ae6",
+            "hash": "0x162341c01a2e9da4645c2959c8d37a2d16422b356125cc06f599942e4dd79e5b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -421,12 +477,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0x83fe8f7619c94a6ccfd7a587e02a9610faac0cf97c1bd4ca04403be4c442f008",
+            "hash": "0xdb7034f2a0515dc71113fd10c3d4c50627481ac7401e5c9413acbe5345677b21",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -522,12 +592,26 @@
                 }
             ]
         },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
         "_info": {
-            "hash": "0xfd7acd332ba903b4b8fbb65389f30d6de112f34bafeebd7eeebb1e3ed744948d",
+            "hash": "0xbf39cab13abb4279f303947edb3d9babbb9e8a26df88b418379f7281631335f2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\nTest gas consumption barely below the floor data cost (1 gas below).\n\nTest function documentation:\nTest executing a transaction that almost consumes the floor data cost.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/d9add545219932e7fa1394bc9bc57a3ab6cb425e/tests/prague/eip7623_increase_calldata_cost/test_execution_gas.py#L130",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"

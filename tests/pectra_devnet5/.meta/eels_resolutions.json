@@ -25,7 +25,7 @@
     "London": {
         "same_as": "EELSMaster"
     },
-    "Paris": {
+    "Merge": {
         "same_as": "EELSMaster"
     },
     "Shanghai": {
@@ -35,7 +35,7 @@
         "same_as": "EELSMaster"
     },
     "Prague": {
-        "git_url": "https://github.com/marioevz/execution-specs.git",
-        "branch": "update-eip-7251-2935-contracts"
+        "git_url": "https://github.com/ethereum/execution-specs.git",
+        "branch": "devnets/prague/5"
     }
 }
