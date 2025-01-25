@@ -21,7 +21,7 @@ Here is a list of guiding principles that Revm follows.
 
 * **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In the blockchain industry, stability is the most desired attribute of any system.
 * **Speed** - is one of the most important things and most decisions are made to complement this.
-* **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other projects.
+* **Simplicity** - simplification of internals so that they can be easily understood and extended, and interface that can be easily used or integrated into other projects.
 * **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
 # Project
@@ -152,6 +152,6 @@ mdbook serve documentation
 
 # Contact
 
-There is public telegram group: https://t.me/+Ig4WDWOzikA3MzA0
+There is a public telegram group: https://t.me/+Ig4WDWOzikA3MzA0
 
 Or if you want to contact me directly, here is my email: dragan0rakita@gmail.com and telegram: https://t.me/draganrakita
