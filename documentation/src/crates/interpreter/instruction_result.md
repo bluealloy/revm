@@ -8,7 +8,7 @@ The `instruction_result.rs` module of this Rust EVM implementation includes the 
 
 - `SuccessOrHalt` Enum
 
-    The `SuccessOrHalt` enum represents the outcome of a transaction execution, distinguishing successful operations, reversion, halting conditions, fatal external errors, and internal continuation. It also provides several methods to check the kind of result and to extract the value of the successful evaluation or halt.
+    The `SuccessOrHalt` enum represents the outcome of transaction execution, distinguishing successful operations, reversion, halting conditions, fatal external errors, and internal continuation. It also provides several methods to check the kind of result and to extract the value of the successful evaluation or halt.
 
 - `From<InstructionResult> for SuccessOrHalt` Implementation
 
