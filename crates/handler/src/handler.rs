@@ -209,15 +209,6 @@ pub trait EthHandler {
         Self::Frame::return_result(frame, context, frame_context, result)
     }
 
-    fn frame_final_return(
-        context: &mut Self::Context,
-        frame_context: &mut <Self::Frame as Frame>::FrameContext,
-        result: &mut <Self::Frame as Frame>::FrameResult,
-    ) -> Result<(), Self::Error> {
-        Self::Frame::final_return(context, frame_context, result)?;
-        Ok(())
-    }
-
     fn run_exec_loop(
         &mut self,
         context: &mut Self::Context,
@@ -229,7 +220,7 @@ pub trait EthHandler {
             let frame = frame_stack.last_mut().unwrap();
             let call_or_result = self.frame_call(frame, context, frame_context)?;
 
-            let mut result = match call_or_result {
+            let result = match call_or_result {
                 ItemOrResult::Item(init) => {
                     match self.frame_init(frame, context, frame_context, init)? {
                         ItemOrResult::Item(new_frame) => {
@@ -248,7 +239,6 @@ pub trait EthHandler {
             };
 
             let Some(frame) = frame_stack.last_mut() else {
-                Self::Frame::final_return(context, frame_context, &mut result)?;
                 return Ok(result);
             };
             self.frame_return_result(frame, context, frame_context, result)?;

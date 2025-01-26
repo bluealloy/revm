@@ -113,7 +113,10 @@ where
     fn frame_end(&mut self, frame_output: &mut FrameResult) {
         let insp = self.inspector.get_inspector();
         let context = &mut self.inner;
-        let frame_input = self.frame_input_stack.pop().expect("Frame pushed");
+        let Some(frame_input) = self.frame_input_stack.pop() else {
+            // case where call returns immediately will not push to call stack.
+            return;
+        };
         match frame_output {
             FrameResult::Call(outcome) => {
                 let FrameInput::Call(i) = frame_input else {
