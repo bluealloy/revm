@@ -9,12 +9,11 @@ use crate::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EIP7702_VERSION, EOF_MAGIC_BYTES,
-        EOF_MAGIC_HASH, U256,
+        B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
     JournalCheckpoint,
 };
-use std::{boxed::Box, sync::Arc, vec::Vec};
+use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
