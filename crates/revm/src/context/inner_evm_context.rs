@@ -183,14 +183,6 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         let code = if code.is_eof() {
             EOF_MAGIC_BYTES.clone()
-        } else if code.is_eip7702() {
-            // Reserve 23 bytes for EIP7702_MAGIC_BYTES (2 bytes) + EIP7702_VERSION (1 byte)
-            // + address (20 bytes)
-            let mut bytes = Vec::with_capacity(23);
-            bytes.extend_from_slice(&EIP7702_MAGIC_BYTES);
-            bytes.push(EIP7702_VERSION);
-            bytes.extend_from_slice(address.as_slice());
-            bytes.into()
         } else {
             code.original_bytes()
         };
@@ -213,8 +205,6 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         let hash = if code.is_eof() {
             EOF_MAGIC_HASH
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_HASH
         } else {
             acc.info.code_hash
         };
