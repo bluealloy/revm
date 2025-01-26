@@ -279,7 +279,7 @@ where
     }
 
     fn frame_init(
-        &self,
+        &mut self,
         frame: &Self::Frame,
         context: &mut Self::Context,
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,

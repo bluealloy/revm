@@ -181,7 +181,7 @@ pub trait EthHandler {
     }
 
     fn frame_init(
-        &self,
+        &mut self,
         frame: &Self::Frame,
         context: &mut Self::Context,
         frame_context: &mut <Self::Frame as Frame>::FrameContext,
@@ -219,7 +219,7 @@ pub trait EthHandler {
     }
 
     fn run_exec_loop(
-        &self,
+        &mut self,
         context: &mut Self::Context,
         frame_context: &mut <Self::Frame as Frame>::FrameContext,
         frame: Self::Frame,
@@ -227,17 +227,19 @@ pub trait EthHandler {
         let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = frame.run(context, frame_context)?;
+            let call_or_result = self.frame_call(frame, context, frame_context)?;
 
             let mut result = match call_or_result {
-                ItemOrResult::Item(init) => match frame.init(context, frame_context, init)? {
-                    ItemOrResult::Item(new_frame) => {
-                        frame_stack.push(new_frame);
-                        continue;
+                ItemOrResult::Item(init) => {
+                    match self.frame_init(frame, context, frame_context, init)? {
+                        ItemOrResult::Item(new_frame) => {
+                            frame_stack.push(new_frame);
+                            continue;
+                        }
+                        // Dont pop the frame as new frame was not created.
+                        ItemOrResult::Result(result) => result,
                     }
-                    // Dont pop the frame as new frame was not created.
-                    ItemOrResult::Result(result) => result,
-                },
+                }
                 ItemOrResult::Result(result) => {
                     // Pop frame that returned result
                     frame_stack.pop();
@@ -249,7 +251,7 @@ pub trait EthHandler {
                 Self::Frame::final_return(context, frame_context, &mut result)?;
                 return Ok(result);
             };
-            frame.return_result(context, frame_context, result)?;
+            self.frame_return_result(frame, context, frame_context, result)?;
         }
     }
 
