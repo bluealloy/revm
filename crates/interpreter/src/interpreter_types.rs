@@ -42,8 +42,6 @@ pub trait Jumps {
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
     /// Returns current program counter.
     fn pc(&self) -> usize;
-    /// Returns the pc offset for tracing
-    fn trace_pc(&self) -> usize;
     /// Returns instruction opcode.
     fn opcode(&self) -> u8;
 }
