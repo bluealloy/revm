@@ -21,7 +21,7 @@ pub struct TracerEip3155<CTX, INTR> {
     /// Print summary of the execution.
     print_summary: bool,
     stack: Vec<U256>,
-    pc: usize,
+    pc: u64,
     section: Option<u64>,
     function_depth: Option<u64>,
     opcode: u8,
@@ -224,7 +224,7 @@ where
         } else {
             None
         };
-        self.pc = interp.bytecode.trace_pc();
+        self.pc = interp.bytecode.pc() as u64;
         self.section = if interp.runtime_flag.is_eof() {
             Some(interp.sub_routine.routine_idx() as u64)
         } else {
@@ -249,7 +249,7 @@ where
         }
 
         let value = Output {
-            pc: self.pc as u64,
+            pc: self.pc,
             section: self.section,
             op: self.opcode,
             gas: hex_number(self.gas),

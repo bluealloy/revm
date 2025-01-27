@@ -30,7 +30,7 @@ impl Deref for ExtBytecode {
 impl ExtBytecode {
     /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
     pub fn new(base: Bytecode) -> Self {
-        let instruction_pointer = base.bytecode().as_ptr();
+        let instruction_pointer = base.bytecode_ptr();
         Self {
             base,
             instruction_pointer,
@@ -40,7 +40,7 @@ impl ExtBytecode {
 
     /// Creates new `ExtBytecode` with the given hash.
     pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
-        let instruction_pointer = base.bytecode().as_ptr();
+        let instruction_pointer = base.bytecode_ptr();
         Self {
             base,
             instruction_pointer,
@@ -66,10 +66,12 @@ impl Jumps for ExtBytecode {
     fn relative_jump(&mut self, offset: isize) {
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
     }
+
     #[inline]
     fn absolute_jump(&mut self, offset: usize) {
-        self.instruction_pointer = unsafe { self.base.bytecode().as_ptr().add(offset) };
+        self.instruction_pointer = unsafe { self.base.bytes_ref().as_ptr().add(offset) };
     }
+
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
         self.base
