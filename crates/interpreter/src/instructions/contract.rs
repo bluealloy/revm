@@ -8,8 +8,9 @@ use crate::{
     primitives::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
+    primitives::rwasm::RWASM_MAGIC_BYTES,
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
+    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE,
 };
 use core::cmp::max;
 use std::boxed::Box;
@@ -341,6 +342,7 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
 
     let mut code = Bytes::new();
     if len != 0 {
+        let code_offset = as_usize_or_fail!(interpreter, code_offset);
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
             // Limit is set as double of max contract bytecode size
@@ -349,7 +351,17 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
-                .unwrap_or(MAX_INITCODE_SIZE);
+                .unwrap_or_else(|| {
+                    if len >= RWASM_MAGIC_BYTES.len()
+                        && interpreter
+                        .shared_memory
+                        .slice(code_offset, RWASM_MAGIC_BYTES.len()) == RWASM_MAGIC_BYTES.as_ref()
+                    {
+                        WASM_MAX_CODE_SIZE
+                    } else {
+                        MAX_INITCODE_SIZE
+                    }
+                });
             if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitCodeSizeLimit;
                 return;
@@ -357,7 +369,6 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
             gas!(interpreter, gas::initcode_cost(len as u64));
         }
 
-        let code_offset = as_usize_or_fail!(interpreter, code_offset);
         resize_memory!(interpreter, code_offset, len);
         code = Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len));
     }
