@@ -16,7 +16,7 @@ use core::fmt::Debug;
 use eof::EofDecodeError;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
-pub use rwasm::{RWASM_MAGIC_BYTES};
+pub use rwasm::RWASM_MAGIC_BYTES;
 use std::{fmt, sync::Arc};
 
 /// State of the [`Bytecode`] analysis.

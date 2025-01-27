@@ -8,7 +8,7 @@ use crate::{
     primitives::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
-    primitives::rwasm::{RWASM_MAGIC_BYTES},
+    primitives::rwasm::RWASM_MAGIC_BYTES,
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE,
 };
