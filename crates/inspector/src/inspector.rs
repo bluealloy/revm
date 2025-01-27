@@ -279,7 +279,7 @@ where
     }
 
     fn frame_init(
-        &self,
+        &mut self,
         frame: &Self::Frame,
         context: &mut Self::Context,
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
@@ -321,12 +321,14 @@ where
             .frame_return_result(frame, context, frame_context, result)
     }
 
-    fn frame_final_return(
+    fn last_frame_result(
+        &self,
         context: &mut Self::Context,
-        _frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
-        result: &mut <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        frame_context: &mut <Self::Frame as Frame>::FrameContext,
+        frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        context.frame_end(result);
-        Ok(())
+        context.frame_end(frame_result);
+        self.handler
+            .last_frame_result(context, frame_context, frame_result)
     }
 }
