@@ -33,9 +33,6 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     table[STOP as usize] = control::stop;
     table[ADD as usize] = arithmetic::add;
-    table[STOP as usize] = control::stop;
-
-    table[ADD as usize] = arithmetic::add;
     table[MUL as usize] = arithmetic::mul;
     table[SUB as usize] = arithmetic::sub;
     table[DIV as usize] = arithmetic::div;
