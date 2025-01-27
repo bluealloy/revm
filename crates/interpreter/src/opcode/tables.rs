@@ -27,7 +27,7 @@ pub enum InstructionTables<'a, H: ?Sized> {
     Boxed(BoxedInstructionTable<'a, H>),
 }
 
-impl<'a, H: Host + ?Sized> InstructionTables<'a, H> {
+impl<H: Host + ?Sized> InstructionTables<'_, H> {
     /// Creates a plain instruction table for the given spec. See [`make_instruction_table`].
     #[inline]
     pub const fn new_plain<SPEC: Spec>() -> Self {

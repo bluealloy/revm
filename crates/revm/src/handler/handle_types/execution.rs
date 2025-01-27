@@ -162,7 +162,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> ExecutionHandler<'_, EXT, DB> {
     /// Executes single frame.
     #[inline]
     pub fn execute_frame(

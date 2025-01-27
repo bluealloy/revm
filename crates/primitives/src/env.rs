@@ -1,30 +1,17 @@
 pub mod handler_cfg;
 
+pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
+
 use crate::{
-    calc_blob_gasprice,
-    AccessListItem,
-    Account,
-    Address,
-    AuthorizationList,
-    Bytes,
-    InvalidHeader,
-    InvalidTransaction,
-    Spec,
-    SpecId,
-    B256,
-    GAS_PER_BLOB,
-    MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_CODE_SIZE,
-    U256,
-    VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
+    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
-use core::{
-    cmp::{min, Ordering},
-    hash::Hash,
-};
-pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
-use std::{boxed::Box, vec::Vec};
+use core::cmp::{min, Ordering};
+use core::hash::Hash;
+use std::boxed::Box;
+use std::{vec, vec::Vec};
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -155,8 +142,7 @@ impl Env {
             }
         }
 
-        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not
-        //   set
+        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
         if !SPEC::enabled(SpecId::CANCUN)
             && (self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty())
         {
@@ -193,12 +179,11 @@ impl Env {
 
             // ensure the total blob gas spent is at most equal to the limit
             // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-            let num_blobs = self.tx.blob_hashes.len();
-            if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
-                return Err(InvalidTransaction::TooManyBlobs {
-                    have: num_blobs,
-                    max: MAX_BLOB_NUMBER_PER_BLOCK as usize,
-                });
+            if SPEC::enabled(SpecId::CANCUN) {
+                let num_blobs = self.tx.blob_hashes.len();
+                if num_blobs > self.cfg.blob_max_count(SPEC::SPEC_ID) as usize {
+                    return Err(InvalidTransaction::TooManyBlobs { have: num_blobs });
+                }
             }
         } else {
             // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
@@ -217,9 +202,6 @@ impl Env {
             if auth_list.is_empty() {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
-
-            // Check validity of authorization_list
-            auth_list.is_valid(self.cfg.chain_id)?;
 
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
@@ -320,6 +302,10 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because
     /// of tests. By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Blob target count. EIP-7840 Add blob schedule to EL config files.
+    ///
+    /// Note : Items must be sorted by `SpecId`.
+    pub blob_target_and_max_count: Vec<(SpecId, u8, u8)>,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be
     /// resized.
     ///
@@ -368,6 +354,27 @@ impl CfgEnv {
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
+    }
+
+    /// Sets the blob target and max count over hardforks.
+    pub fn set_blob_max_and_target_count(&mut self, mut vec: Vec<(SpecId, u8, u8)>) {
+        vec.sort_by_key(|(id, _, _)| *id);
+        self.blob_target_and_max_count = vec;
+    }
+
+    /// Returns the blob target and max count for the given spec id.
+    #[inline]
+    pub fn blob_max_count(&self, spec_id: SpecId) -> u8 {
+        self.blob_target_and_max_count
+            .iter()
+            .rev()
+            .find_map(|(id, _, max)| {
+                if spec_id as u8 >= *id as u8 {
+                    return Some(*max);
+                }
+                None
+            })
+            .unwrap_or(6)
     }
 
     #[cfg(feature = "optional_eip3607")]
@@ -437,6 +444,7 @@ impl Default for CfgEnv {
             chain_id: 1,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
+            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
@@ -501,9 +509,11 @@ pub struct BlockEnv {
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobExcessGasAndPrice`].
-    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
-        self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
+    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64, is_prague: bool) {
+        self.blob_excess_gas_and_price =
+            Some(BlobExcessGasAndPrice::new(excess_blob_gas, is_prague));
     }
+
     /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
@@ -545,7 +555,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::ZERO),
-            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0, true)),
         }
     }
 }
@@ -684,12 +694,32 @@ pub struct BlobExcessGasAndPrice {
 
 impl BlobExcessGasAndPrice {
     /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
-    pub fn new(excess_blob_gas: u64) -> Self {
-        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
+    pub fn new(excess_blob_gas: u64, is_prague: bool) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas, is_prague);
         Self {
             excess_blob_gas,
             blob_gasprice,
         }
+    }
+
+    /// Calculate this block excess gas and price from the parent excess gas and gas used
+    /// and the target blob gas per block.
+    ///
+    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
+    pub fn from_parent_and_target(
+        parent_excess_blob_gas: u64,
+        parent_blob_gas_used: u64,
+        parent_target_blob_gas_per_block: u64,
+        is_prague: bool,
+    ) -> Self {
+        Self::new(
+            calc_excess_blob_gas(
+                parent_excess_blob_gas,
+                parent_blob_gas_used,
+                parent_target_blob_gas_per_block,
+            ),
+            is_prague,
+        )
     }
 }
 
@@ -780,5 +810,14 @@ mod tests {
             env.validate_tx::<crate::FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)
         );
+    }
+
+    #[test]
+    fn blob_max_and_target_count() {
+        let cfg = CfgEnv::default();
+        assert_eq!(cfg.blob_max_count(SpecId::BERLIN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::CANCUN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::PRAGUE), (9));
+        assert_eq!(cfg.blob_max_count(SpecId::OSAKA), (9));
     }
 }

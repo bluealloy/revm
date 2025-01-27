@@ -1,0 +1,2786 @@
+{
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1a54d0aadbb9b80691bc431ecfd441e55eba81069b43704b719e5061b96054a6",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x8596bbefb0511deb1c0686863b17faa2ee5eff84c7c4291193310b16bcfab073",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x7904960098b13c08145c03567c98e057c4b5116e5cdd757111728166e6b85eec",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee14e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522cf",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x401e203308fd5b79b9f8aa798602dab2de410594bcdc54381fced0dd73e6c55e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xc071ed3cb99c87282aac1e6c5438153a64499de5a5ac5a6d8be69fbeb94e7e81",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de911428",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0479f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x379243c1139c34b5fba012164f73e392fd6ced860e8909c1293fdbeaecff6164",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xd929ba68cbcab563d0338d028bd34a31a861ced3d6bce70ffd34fb270264039f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee09a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052305",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x6d16a009d5be2f896bfe5325f53c0a01be2959ebbf36f9dcf90aa5f6ef39af65",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x42985d5e358c2bfa6e606f1495155d66b343a3e1a377b3edaf24d68ad3ae020e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0ef4d2a4acaca4619d1de89f4ba13e2256dfe06c61d55506f69b185a36bd8738",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x397f5d17194b9e712f0e75bf788441210ec3a97dc8200815255e59125784df75",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9113ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x7921f8501dfcd365b2ecce2645d68e6759275c9960a350984b5c552ea02c83b5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x35426b082d0874bccc127139c7ff689131db13c71c150655bb589eaf03ba8c4d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x9ce19d6cc4a269952b4a9237fc2c68963a5a1420fb2922dc6a85ec191aa183e0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xf8bad7f5bad4a75eacef4a66e6223e012db948c03d1ddecaef62e0f45ba74dd3",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee14e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522cf",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa9e55ee56d992a518d768120507ed33956d636572a3be9d0454ee8f7ab2d3f6f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x02f8894b50e6086419d94459cbc433c971c059c802f2f9f13bcd80bc3ad0594c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de911428",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0479f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x1df5f81031029bcd5a0536b32ceb3f50144577dfda61ba60f50cea30b28fc83e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xe7abd14645dc3d664a8ae42383c673fe976ca5f5a78146a618d1f0317fc2a300",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee09a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052305",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x99b8b3ebb3c1b644f285bf57a5b3f26e36447796e877c676f3502b8a0b9a180a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x5cd7928ed5841d66546067c995deae72d948f5b5855514a21073c279a52416fc",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xd49d0a6b239b1867df0d5a63d978588e11659be5a757b2a5e63fedf3257bbdeb",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1902c6e5d863a121826edbb440e30c088625dbddeddca1a53c84d0725ab35be1",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9113ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0dda78f2f24aef33a30cdfc25c6af5aa0a17b13a9643fcde5d020b06cf14a55f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xef6c5265f258eb7b2e88130d9c3bd496ba0f6b181cc567499f15f813eb73b16b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0aa6196a28e06cd6d25d224f79921d9043ea41548e8e43f675e1af6888ff9217",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x63cca0edf65a844582a68df1ec8459425335c69884b6dc7bca80e467a1dc8280",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c161c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f95e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x4f5bfb334b1dd9d46de19e9cb852461154fa62b9e0774223a40a8f522fc40d57",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xab1af80c85f18a5302726aa2eacd03fd5f36dee9af3c2f79842df43a77336e97",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e48f6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x055083",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0f7d8b7e8f1e625ceda05e5ade2acbfe9103ac51df88001fb397ee15c70f95e0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x28bc620c6d972d4aa59fc4eb388093d10d0b0abd1e482885aa3c63b2869ddcc5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c1568",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f994",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x05e80f3ce445127ebb8d35813d1f630935d6d1dba9c24f3c8fc9d033d57e8317",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xecc0487d0176b8b56955268ce33c8e1694850b2bee31e4cf7d361000b6d1177f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x6eb7271ba268f0c5ea06acd615d93bd2f1cf3dd4ecc99f86122e125672b794b4",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa361d02d1e94fd7ac99f830a86ec4c5324b57d1f88874d3950a81137793c0782",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e489c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05509e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x828e96b8487c20e7ae4d5a6a1fc4ba7f807e230a2ff82114e5b11b4c98079649",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa354552e0b7b86e0a7c752c1c38750d97f488b6d89a8070a66e2605ecd5ea8ec",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xc409f578d1b2deeddcbebd40758ce9c66ae4be007932eaae1a7c934d7b3eea9a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xf3122d0771445bc41ac1c033e1efb27281d15488c9459a4443bdf4dd85c2db70",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c161c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f95e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0e1ff9b08943bc1dcec71cdefaffa0afde5e76b4c531f27666490f4c522f1da9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1579f556acb4c8199dfed97b99425694be4c5de9baeab7932f716af651b5cbfd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e48f6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x055083",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x5f4865b849f13bc6cacb48c4b1561bf6104b68f6aea685a4f35a362928c5e050",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xaf386e46f26fa9b82500ce5df39b3c99a807fbc281cdb2d9f091731521a325af",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c1568",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f994",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x83889322d3bc766c1c61d59942ffbdcb35e883e0f96a3d58bcf99a6cae82c42f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x93c7d402cca9706106bb37a36586b08ff066ab24646e79425392af45ff0ee76f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2c16cf479b3cf8fac885df7858938fb317e3697e09925ac360c5ebd27e32d2f0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x2b5a839f4b24576e7d7480b554b6b8e428174bac60949da98ee7062ddf9dcf15",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e489c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05509e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x14a0fb4cefdc60e5c7108d3baa355d5407789355309fe3a97f7b744fa11133e7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    }
+}

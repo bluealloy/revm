@@ -4,7 +4,7 @@ use crate::{
 };
 use alloy_eips::BlockId;
 use alloy_provider::{
-    network::{BlockResponse, HeaderResponse},
+    network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
 };
 use alloy_transport::{Transport, TransportError};
@@ -129,7 +129,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
         let block = self.block_on(
             self.provider
                 // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
-                .get_block_by_number(number.into(), false),
+                .get_block_by_number(number.into(), false.into()),
         )?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
         Ok(B256::new(*block.unwrap().header().hash()))
