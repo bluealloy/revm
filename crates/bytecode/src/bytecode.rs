@@ -142,22 +142,34 @@ impl Bytecode {
         }
     }
 
+    /// Pointer to the executable bytecode.
+    ///
+    /// Note: EOF will return the pointer to the start of the code section.
+    /// while legacy bytecode will point to the start of the bytes.
+    pub fn bytecode_ptr(&self) -> *const u8 {
+        self.bytecode().as_ptr()
+    }
+
     /// Returns bytes.
     #[inline]
     pub fn bytes(&self) -> Bytes {
+        self.bytes_ref().clone()
+    }
+
+    /// Returns bytes.
+    #[inline]
+    pub fn bytes_ref(&self) -> &Bytes {
         match self {
-            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode().clone(),
-            _ => self.original_bytes(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
+            Self::Eof(eof) => &eof.raw,
+            Self::Eip7702(code) => code.raw(),
         }
     }
 
     /// Returns bytes slice.
     #[inline]
     pub fn bytes_slice(&self) -> &[u8] {
-        match self {
-            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            _ => self.original_byte_slice(),
-        }
+        self.bytes_ref()
     }
 
     /// Returns a reference to the original bytecode.

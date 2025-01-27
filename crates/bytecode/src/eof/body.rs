@@ -15,6 +15,7 @@ pub struct EofBody {
     /// Index of the last byte of each code section
     pub code_section: Vec<usize>,
     pub code: Bytes,
+    pub code_offset: usize,
     pub container_section: Vec<Bytes>,
     pub data_section: Bytes,
     pub is_data_filled: bool,
@@ -34,7 +35,6 @@ impl EofBody {
 
     /// Creates an EOF container from this body.
     pub fn into_eof(self) -> Eof {
-        // TODO : Add bounds checks.
         let mut prev_value = 0;
         let header = EofHeader {
             types_size: self.types_section.len() as u16 * 4,
@@ -59,11 +59,7 @@ impl EofBody {
         let mut buffer = Vec::new();
         header.encode(&mut buffer);
         self.encode(&mut buffer);
-        Eof {
-            header,
-            body: self,
-            raw: buffer.into(),
-        }
+        Eof::decode(buffer.into()).expect("Failed to encode EOF")
     }
 
     /// Returns offset of the start of indexed code section.
@@ -71,10 +67,11 @@ impl EofBody {
     /// First code section starts at 0.
     pub fn eof_code_section_start(&self, idx: usize) -> Option<usize> {
         // Starting code section start with 0.
+        let code_offset = self.code_offset;
         if idx == 0 {
-            return Some(0);
+            return Some(code_offset);
         }
-        self.code_section.get(idx - 1).cloned()
+        self.code_section.get(idx - 1).map(|i| i + code_offset)
     }
 
     /// Encodes this body into the given buffer.
@@ -118,6 +115,7 @@ impl EofBody {
 
         // Extract code section
         let start = header_len + header.types_size as usize;
+        body.code_offset = start;
         let mut code_end = 0;
         for size in header.code_sizes.iter().map(|x| *x as usize) {
             code_end += size;

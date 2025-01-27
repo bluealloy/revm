@@ -43,6 +43,7 @@ impl Default for Eof {
             code_section: vec![1],
             // One code section with a STOP byte.
             code: Bytes::from_static(&[0x00]),
+            code_offset: 0,
             container_section: vec![],
             data_section: Bytes::new(),
             is_data_filled: true,

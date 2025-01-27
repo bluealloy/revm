@@ -1,4 +1,5 @@
 use crate::{inspectors::GasInspector, Inspector};
+use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
@@ -20,7 +21,9 @@ pub struct TracerEip3155<CTX, INTR> {
     /// Print summary of the execution.
     print_summary: bool,
     stack: Vec<U256>,
-    pc: usize,
+    pc: u64,
+    section: Option<u64>,
+    function_depth: Option<u64>,
     opcode: u8,
     gas: u64,
     refunded: i64,
@@ -39,6 +42,9 @@ struct Output {
     // Required fields:
     /// Program counter
     pc: u64,
+    /// EOF code section
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    section: Option<u64>,
     /// OpCode
     op: u8,
     /// Gas left before executing this operation
@@ -49,6 +55,9 @@ struct Output {
     stack: Vec<String>,
     /// Depth of the call stack
     depth: u64,
+    /// Depth of the EOF function call stack
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    function_depth: Option<u64>,
     /// Data returned by the function call
     return_data: String,
     /// Amount of **global** gas refunded
@@ -140,6 +149,8 @@ where
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
+            section: None,
+            function_depth: None,
             opcode: 0,
             gas: 0,
             refunded: 0,
@@ -213,7 +224,17 @@ where
         } else {
             None
         };
-        self.pc = interp.bytecode.pc();
+        self.pc = interp.bytecode.pc() as u64;
+        self.section = if interp.runtime_flag.is_eof() {
+            Some(interp.sub_routine.routine_idx() as u64)
+        } else {
+            None
+        };
+        self.function_depth = if interp.runtime_flag.is_eof() {
+            Some(interp.sub_routine.len() as u64 + 1)
+        } else {
+            None
+        };
         self.opcode = interp.bytecode.opcode();
         self.mem_size = interp.memory.size();
         self.gas = interp.control.gas().remaining();
@@ -228,12 +249,14 @@ where
         }
 
         let value = Output {
-            pc: self.pc as u64,
+            pc: self.pc,
+            section: self.section,
             op: self.opcode,
             gas: hex_number(self.gas),
             gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
             stack: self.stack.iter().map(hex_number_u256).collect(),
             depth: context.journal().depth() as u64,
+            function_depth: self.function_depth,
             return_data: "0x".to_string(),
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
