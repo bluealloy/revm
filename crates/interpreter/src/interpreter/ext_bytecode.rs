@@ -88,16 +88,12 @@ impl Jumps for ExtBytecode {
 
     #[inline]
     fn pc(&self) -> usize {
-        let bytecode = match &self.base {
-            Bytecode::LegacyAnalyzed(ref analyzed) => analyzed.bytecode(),
-            Bytecode::Eof(ref eof) => &eof.raw,
-            Bytecode::Eip7702(eip7702) => eip7702.raw(),
-        };
-        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
+        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
-        //
-        // For EOF bytecode, code bytes should be part of the raw bytes.
-        unsafe { self.instruction_pointer.offset_from(bytecode.as_ptr()) as usize }
+        unsafe {
+            self.instruction_pointer
+                .offset_from(self.base.bytes_ref().as_ptr()) as usize
+        }
     }
 }
 
