@@ -8,7 +8,7 @@ use crate::{
     primitives::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
-    primitives::rwasm::{WASM_MAGIC_BYTES, RWASM_MAGIC_BYTES},
+    primitives::rwasm::{RWASM_MAGIC_BYTES},
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE,
 };
@@ -352,13 +352,7 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or_else(|| {
-                    if len >= WASM_MAGIC_BYTES.len()
-                        && interpreter
-                        .shared_memory
-                        .slice(code_offset, WASM_MAGIC_BYTES.len()) == WASM_MAGIC_BYTES.as_ref()
-                    {
-                        WASM_MAX_CODE_SIZE
-                    } else if len >= RWASM_MAGIC_BYTES.len()
+                    if len >= RWASM_MAGIC_BYTES.len()
                         && interpreter
                         .shared_memory
                         .slice(code_offset, RWASM_MAGIC_BYTES.len()) == RWASM_MAGIC_BYTES.as_ref()
