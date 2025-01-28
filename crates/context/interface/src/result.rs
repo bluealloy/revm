@@ -14,7 +14,7 @@ impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<HaltReasonT: HaltReasonTrait> {
+pub struct ResultAndState<HaltReasonT: HaltReasonTrait = HaltReason> {
     /// Status of execution
     pub result: ExecutionResult<HaltReasonT>,
     /// State that got updated
@@ -37,7 +37,7 @@ impl<HaltReasonT: HaltReasonTrait> ResultAndState<HaltReasonT> {
 /// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
+pub enum ExecutionResult<HaltReasonT: HaltReasonTrait = HaltReason> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -192,7 +192,7 @@ impl Output {
 /// Main EVM error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError, TransactionError> {
+pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     /// Transaction validation error
     Transaction(TransactionError),
     /// Header validation error
