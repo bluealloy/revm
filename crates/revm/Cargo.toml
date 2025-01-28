@@ -27,8 +27,10 @@ revm-interpreter = { path = "../interpreter", version = "15.1.0", default-featur
 revm-precompile = { path = "../precompile", version = "16.0.0", default-features = false }
 
 # fluentbase
-fluentbase-sdk = { workspace = true }
 fluentbase-core = { workspace = true }
+fluentbase-sdk = { workspace = true }
+fluentbase-runtime = { workspace = true }
+fluentbase-rwasm = { workspace = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }

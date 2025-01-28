@@ -4,13 +4,13 @@ mod create_inputs;
 mod create_outcome;
 mod eof_create_inputs;
 
+use crate::InterpreterResult;
 pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
-
-use crate::InterpreterResult;
+use revm_primitives::{Address, Bytes, B256};
 use std::boxed::Box;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -25,6 +25,21 @@ pub enum InterpreterAction {
     EOFCreate { inputs: Box<EOFCreateInputs> },
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
+    /// A system interruption indicating system resource access.
+    InterruptRwasm {
+        caller: Address,
+        call_id: u32,
+        code_hash: B256,
+        input: Bytes,
+        gas_limit: u64,
+        state: u32,
+    },
+    /// Resume Rwasm call after system interruption.
+    ResumeRwasm {
+        call_id: u32,
+        result: InterpreterResult,
+        caller: Address,
+    },
     /// No action
     #[default]
     None,

@@ -2,11 +2,20 @@ use crate::{
     frame::EOFCreateFrame,
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, EVMError, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    primitives::{db::Database, Address, EVMError, Spec},
+    CallFrame,
+    Context,
+    CreateFrame,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInputs, InterpreterAction,
+    opcode::InstructionTables,
+    CallOutcome,
+    CreateOutcome,
+    EOFCreateInputs,
+    InterpreterAction,
     InterpreterResult,
 };
 use std::{boxed::Box, sync::Arc};
@@ -24,6 +33,17 @@ pub type ExecuteFrameHandle<'a, EXT, DB> = Arc<
             &mut SharedMemory,
             &InstructionTables<'_, Context<EXT, DB>>,
             &mut Context<EXT, DB>,
+        ) -> Result<InterpreterAction, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
+
+/// Executes a single frame. Errors can be returned in the EVM context.
+pub type ResumeRwasmFrameHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            u32,
+            InterpreterResult,
+            Address,
         ) -> Result<InterpreterAction, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
@@ -123,6 +143,7 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
     /// Executes a single frame.
     pub execute_frame: ExecuteFrameHandle<'a, EXT, DB>,
+    pub resume_rwasm_frame: ResumeRwasmFrameHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
     /// Call return
@@ -149,6 +170,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
         Self {
             last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
             execute_frame: Arc::new(mainnet::execute_frame::<SPEC, EXT, DB>),
+            resume_rwasm_frame: Arc::new(mainnet::resume_rwasm_frame::<SPEC, EXT, DB>),
             call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
             call_return: Arc::new(mainnet::call_return::<EXT, DB>),
             insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
@@ -173,6 +195,18 @@ impl<EXT, DB: Database> ExecutionHandler<'_, EXT, DB> {
         context: &mut Context<EXT, DB>,
     ) -> Result<InterpreterAction, EVMError<DB::Error>> {
         (self.execute_frame)(frame, shared_memory, instruction_tables, context)
+    }
+
+    /// Executes single frame.
+    #[inline]
+    pub fn resume_rwasm_frame(
+        &self,
+        context: &mut Context<EXT, DB>,
+        call_id: u32,
+        result: InterpreterResult,
+        caller: Address,
+    ) -> Result<InterpreterAction, EVMError<DB::Error>> {
+        (self.resume_rwasm_frame)(context, call_id, result, caller)
     }
 
     /// Handle call return, depending on instruction result gas will be reimbursed or not.

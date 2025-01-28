@@ -1,19 +1,38 @@
-use revm_interpreter::gas::InitialAndFloorGas;
-
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
+    frame::SystemInterruptionFrame,
     handler::Handler,
     interpreter::{
-        CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
+        CallInputs,
+        CreateInputs,
+        EOFCreateInputs,
+        Host,
+        InterpreterAction,
+        SharedMemory,
     },
     primitives::{
-        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
+        specification::SpecId,
+        BlockEnv,
+        CfgEnv,
+        EVMError,
+        EVMResult,
+        EnvWithHandlerCfg,
+        ExecutionResult,
+        HandlerCfg,
+        ResultAndState,
+        TxEnv,
+        TxKind,
+        EOF_MAGIC_BYTES,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context,
+    ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use core::fmt;
+use revm_interpreter::gas::InitialAndFloorGas;
 use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
@@ -24,8 +43,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
-    /// and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains
+    /// specification id and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -112,7 +131,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     // free memory context.
                     shared_memory.free_context();
 
-                    // pop last frame from the stack and consume it to create FrameResult.
+                    // pop the last frame from the stack and consume it to create FrameResult.
                     let returned_frame = call_stack
                         .pop()
                         .expect("We just returned from Interpreter frame");
@@ -131,8 +150,33 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                             // return_eofcreate
                             FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
                         }
+                        Frame::SystemInterruption(_) => unreachable!("todo"),
+                        Frame::Resume(_, _, _) => unreachable!("todo"),
                     })
                 }
+                InterpreterAction::InterruptRwasm {
+                    call_id,
+                    code_hash,
+                    input,
+                    gas_limit,
+                    state,
+                    caller,
+                } => FrameOrResult::Frame(Frame::SystemInterruption(Box::new(
+                    SystemInterruptionFrame {
+                        call_id,
+                        code_hash,
+                        input,
+                        gas_limit,
+                        state,
+                        caller,
+                        is_static: false,
+                    },
+                ))),
+                InterpreterAction::ResumeRwasm {
+                    call_id,
+                    result,
+                    caller,
+                } => FrameOrResult::Frame(Frame::Resume(call_id, result, caller)),
                 InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
             };
             // handle result
@@ -410,7 +454,12 @@ mod tests {
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
         primitives::{
-            address, Authorization, Bytecode, RecoveredAuthority, RecoveredAuthorization, U256,
+            address,
+            Authorization,
+            Bytecode,
+            RecoveredAuthority,
+            RecoveredAuthorization,
+            U256,
         },
     };
 

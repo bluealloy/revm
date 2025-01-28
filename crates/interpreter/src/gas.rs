@@ -133,29 +133,7 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        // #[cfg(target_arch = "wasm32")]
-        // unsafe {
-        //     #[link(wasm_import_module = "fluentbase_v1preview")]
-        //     extern "C" {
-        //         pub fn _charge_fuel(delta: u64) -> u64;
-        //     }
-        //     _charge_fuel(cost);
-        // }
         let (remaining, overflow) = self.remaining.overflowing_sub(cost);
-        // #[cfg(feature = "std")]
-        // {
-        //     if !overflow {
-        //         println!(
-        //             "gas_record_cost(ok): remaining={} delta={}",
-        //             remaining, cost
-        //         );
-        //     } else {
-        //         println!(
-        //             "gas_record_cost(err): remaining={} delta={}",
-        //             remaining, cost
-        //         );
-        //     }
-        // }
         let success = !overflow;
         if success {
             self.remaining = remaining;

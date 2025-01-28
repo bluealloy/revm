@@ -1,16 +1,32 @@
 use crate::{
     db::Database,
     frame::EOFCreateFrame,
+    handler::mainnet::rwasm::{execute_rwasm_frame, execute_system_interruption},
     interpreter::{
-        return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
+        return_ok,
+        return_revert,
+        CallInputs,
+        CreateInputs,
+        CreateOutcome,
+        Gas,
+        InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    primitives::{Bytecode, EVMError, Spec},
+    CallFrame,
+    Context,
+    CreateFrame,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use core::mem;
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInputs, InterpreterAction, InterpreterResult,
+    opcode::InstructionTables,
+    CallOutcome,
+    EOFCreateInputs,
+    InterpreterAction,
+    InterpreterResult,
     EMPTY_SHARED_MEMORY,
 };
 use std::boxed::Box;
@@ -23,8 +39,18 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
+    if let Frame::SystemInterruption(system_interruption) = frame {
+        return execute_system_interruption::<SPEC, EXT, DB>(context, system_interruption);
+    }
+
     let interpreter = frame.interpreter_mut();
+
+    if let Bytecode::Rwasm(_instance, rwasm_bytecode) = &interpreter.contract.bytecode {
+        return execute_rwasm_frame::<SPEC, EXT, DB>(interpreter, rwasm_bytecode.clone(), context);
+    }
+
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
+
     let next_action = match instruction_tables {
         InstructionTables::Plain(table) => interpreter.run(memory, table, context),
         InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
@@ -184,8 +210,10 @@ pub fn insert_eofcreate_outcome<EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::handler::mainnet::refund;
-    use crate::primitives::{CancunSpec, Env};
+    use crate::{
+        handler::mainnet::refund,
+        primitives::{CancunSpec, Env},
+    };
     use revm_precompile::Bytes;
 
     /// Creates frame result.

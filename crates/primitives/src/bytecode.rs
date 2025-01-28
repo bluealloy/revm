@@ -15,6 +15,7 @@ use alloy_primitives::Address;
 use core::fmt::Debug;
 use eof::EofDecodeError;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+use fluentbase_rwasm::{RwasmModule, RwasmModuleInstance};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 pub use rwasm::RWASM_MAGIC_BYTES;
 use std::{fmt, sync::Arc};
@@ -32,7 +33,7 @@ pub enum Bytecode {
     /// EIP-7702 delegated bytecode
     Eip7702(Eip7702Bytecode),
     /// An Rwasm bytecode
-    Rwasm(Bytes),
+    Rwasm(RwasmModuleInstance, Bytes),
 }
 
 impl Default for Bytecode {
@@ -125,7 +126,11 @@ impl Bytecode {
                 let eip7702 = Eip7702Bytecode::new_raw(bytecode)?;
                 Ok(Self::Eip7702(eip7702))
             }
-            Some(prefix) if prefix == &RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytecode)),
+            Some(prefix) if prefix == &RWASM_MAGIC_BYTES => {
+                let rwasm_module = RwasmModule::new_or_empty(&bytecode)
+                    .map_err(|_| BytecodeDecodeError::RwasmDecodeFailure)?;
+                Ok(Self::Rwasm(rwasm_module.instantiate(), bytecode))
+            }
             _ => Ok(Self::LegacyRaw(bytecode)),
         }
     }
@@ -161,7 +166,7 @@ impl Bytecode {
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
             Self::Eip7702(code) => code.raw(),
-            Self::Rwasm(bytecode) => bytecode,
+            Self::Rwasm(_, bytecode) => bytecode,
         }
     }
 
@@ -196,7 +201,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
-            Self::Rwasm(bytecode) => bytecode.clone(),
+            Self::Rwasm(_, bytecode) => bytecode.clone(),
         }
     }
 
@@ -208,7 +213,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
-            Self::Rwasm(bytecode) => bytecode,
+            Self::Rwasm(_, bytecode) => bytecode.as_ref(),
         }
     }
 
@@ -233,6 +238,8 @@ pub enum BytecodeDecodeError {
     Eof(EofDecodeError),
     /// EIP-7702 decode error
     Eip7702(Eip7702DecodeError),
+    /// Rwasm decode failure error
+    RwasmDecodeFailure,
 }
 
 impl From<EofDecodeError> for BytecodeDecodeError {
@@ -255,6 +262,7 @@ impl fmt::Display for BytecodeDecodeError {
         match self {
             Self::Eof(e) => fmt::Display::fmt(e, f),
             Self::Eip7702(e) => fmt::Display::fmt(e, f),
+            Self::RwasmDecodeFailure => write!(f, "failed to decode wasm module"),
         }
     }
 }

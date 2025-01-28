@@ -1,6 +1,6 @@
 use crate::{
     interpreter::Interpreter,
-    primitives::{Address, Output},
+    primitives::{Address, Bytes, Output, B256},
     JournalCheckpoint,
 };
 use core::ops::Range;
@@ -15,6 +15,26 @@ pub struct CallFrame {
     pub return_memory_range: Range<usize>,
     /// Frame data.
     pub frame_data: FrameData,
+}
+
+/// Call SystemInterruptionFrame.
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SystemInterruptionFrame {
+    /// An address of an interruption caller
+    pub caller: Address,
+    /// Caller's execution context is static?
+    pub is_static: bool,
+    /// Saved information about resumable call
+    pub call_id: u32,
+    /// A code hash (system call id)
+    pub code_hash: B256,
+    /// An input for the system call
+    pub input: Bytes,
+    /// A gas limit for call execution
+    pub gas_limit: u64,
+    /// State of execution (STATE_MAIN or STATE_DEPLOY)
+    pub state: u32,
 }
 
 #[derive(Debug)]
@@ -48,8 +68,10 @@ pub struct FrameData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Frame {
     Call(Box<CallFrame>),
+    SystemInterruption(Box<SystemInterruptionFrame>),
     Create(Box<CreateFrame>),
     EOFCreate(Box<EOFCreateFrame>),
+    Resume(u32, InterpreterResult, Address),
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -195,6 +217,7 @@ impl Frame {
             Frame::Call(call_frame) => call_frame.frame_data,
             Frame::Create(create_frame) => create_frame.frame_data,
             Frame::EOFCreate(eof_create_frame) => eof_create_frame.frame_data,
+            _ => unreachable!("revm: frame without frame data"),
         }
     }
 
@@ -204,6 +227,7 @@ impl Frame {
             Self::Call(call_frame) => &call_frame.frame_data,
             Self::Create(create_frame) => &create_frame.frame_data,
             Self::EOFCreate(eof_create_frame) => &eof_create_frame.frame_data,
+            _ => unreachable!("revm: frame without frame data"),
         }
     }
 
@@ -213,6 +237,7 @@ impl Frame {
             Self::Call(call_frame) => &mut call_frame.frame_data,
             Self::Create(create_frame) => &mut create_frame.frame_data,
             Self::EOFCreate(eof_create_frame) => &mut eof_create_frame.frame_data,
+            _ => unreachable!("revm: frame without frame data"),
         }
     }
 

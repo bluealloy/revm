@@ -1,17 +1,31 @@
 pub mod handler_cfg;
 
-pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
-
 use crate::{
-    calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
-    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice,
+    calc_excess_blob_gas,
+    AccessListItem,
+    Account,
+    Address,
+    AuthorizationList,
+    Bytes,
+    InvalidHeader,
+    InvalidTransaction,
+    Spec,
+    SpecId,
+    B256,
+    GAS_PER_BLOB,
+    MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE,
+    U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
-use core::cmp::{min, Ordering};
-use core::hash::Hash;
-use std::boxed::Box;
-use std::{vec, vec::Vec};
+use core::{
+    cmp::{min, Ordering},
+    hash::Hash,
+};
+pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
+use std::{boxed::Box, vec, vec::Vec};
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -129,9 +143,7 @@ impl Env {
         }
 
         // EIP-3860: Limit and meter initcode
-        #[cfg(feature = "e2e")]
         if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
-            use crate::MAX_INITCODE_SIZE;
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
@@ -142,7 +154,8 @@ impl Env {
             }
         }
 
-        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
+        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not
+        //   set
         if !SPEC::enabled(SpecId::CANCUN)
             && (self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty())
         {

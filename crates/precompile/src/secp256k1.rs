@@ -1,5 +1,5 @@
-use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256};
+use crate::{utilities::right_pad, Precompile, PrecompileResult, PrecompileWithAddress};
+use revm_primitives::{Bytes, PrecompileOutput, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),

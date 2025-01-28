@@ -32,6 +32,9 @@ alloy-primitives = { version = "0.8", default-features = false, features = [
     "map",
 ] }
 
+# fluentbase
+fluentbase-rwasm = { workspace = true }
+
 # mics
 auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
