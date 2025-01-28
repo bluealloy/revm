@@ -32,7 +32,7 @@ impl<
         CFG: Cfg<Spec = crate::OpSpec>,
         DB: Database,
         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    > InspectEvm<&mut Self, EthInterpreter> for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
+    > InspectEvm<EthInterpreter> for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
 {
     fn inspect_previous<'a, 'b, INSP>(&'a mut self, inspector: INSP) -> Self::Output
     where
@@ -43,9 +43,7 @@ impl<
     }
 }
 
-pub trait InspectCommitEvm<CTX, INTR: InterpreterTypes>:
-    InspectEvm<CTX, INTR> + ExecuteCommitEvm
-{
+pub trait InspectCommitEvm<INTR: InterpreterTypes>: InspectEvm<INTR> + ExecuteCommitEvm {
     fn inspect_commit<'a, 'b, INSP>(
         &'a mut self,
         tx: Self::Transaction,
@@ -69,7 +67,7 @@ impl<
         CFG: Cfg<Spec = OpSpec>,
         DB: Database + DatabaseCommit,
         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    > InspectCommitEvm<&mut Self, EthInterpreter> for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
+    > InspectCommitEvm<EthInterpreter> for OpContext<BLOCK, TX, CFG, DB, JOURNAL>
 {
     fn inspect_commit_previous<'a, 'b, INSP>(&'a mut self, inspector: INSP) -> Self::CommitOutput
     where
