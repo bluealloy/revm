@@ -34,8 +34,8 @@ impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>,
     }
 }
 
-impl<INSP, DB, CTX: DatabaseGetter<Database = DB> + OpTxGetter + TransactionGetter> OpTxGetter
-    for InspectorContext<INSP, DB, CTX>
+impl<INSP, CTX: DatabaseGetter + OpTxGetter + TransactionGetter> OpTxGetter
+    for InspectorContext<INSP, CTX>
 {
     type OpTransaction = <CTX as OpTxGetter>::OpTransaction;
 

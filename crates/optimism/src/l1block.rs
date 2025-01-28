@@ -264,8 +264,8 @@ impl<BLOCK, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>> L1BlockInfo
     }
 }
 
-impl<INSP, DB, CTX: DatabaseGetter<Database = DB> + L1BlockInfoGetter> L1BlockInfoGetter
-    for InspectorContext<INSP, DB, CTX>
+impl<INSP, CTX: DatabaseGetter + L1BlockInfoGetter> L1BlockInfoGetter
+    for InspectorContext<INSP, CTX>
 {
     fn l1_block_info(&self) -> &L1BlockInfo {
         self.inner.l1_block_info()
