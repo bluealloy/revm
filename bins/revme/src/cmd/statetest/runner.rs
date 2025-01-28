@@ -427,7 +427,7 @@ pub fn execute_test_suite(
 
                     let timer = Instant::now();
                     let res = ctx.inspect_commit_previous(
-                        TracerEip3155::new(Box::new(stderr())).without_summary(),
+                        TracerEip3155::buffered(stderr()).without_summary(),
                     );
                     *elapsed.lock().unwrap() += timer.elapsed();
 
@@ -497,9 +497,8 @@ pub fn execute_test_suite(
                     .with_tx(&tx)
                     .with_cfg(&cfg);
 
-                let _ = ctx.inspect_commit_previous(
-                    TracerEip3155::new(Box::new(stderr())).without_summary(),
-                );
+                let _ = ctx
+                    .inspect_commit_previous(TracerEip3155::buffered(stderr()).without_summary());
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
