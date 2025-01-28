@@ -1550,6 +1550,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-instruction-table-override"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "revm",
+ "revm-database",
+]
+
+[[package]]
 name = "example-uniswap-get-reserves"
 version = "0.0.0"
 dependencies = [

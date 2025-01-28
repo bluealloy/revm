@@ -135,7 +135,7 @@ macro_rules! popn {
         };
     };
 }
-
+#[macro_export]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreterreter:expr $(,$ret:expr)? ) => {
         let Some(([$( $x ),*], $top)) = $interpreterreter.stack.popn_top() else {

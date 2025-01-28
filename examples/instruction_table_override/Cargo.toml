@@ -1,5 +1,5 @@
 [package]
-name = "example-custom-opcodes"
+name = "example-instruction-table-override"
 version = "0.0.0"
 publish = false
 authors.workspace = true
@@ -8,6 +8,7 @@ keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+
 
 [package.metadata.docs.rs]
 all-features = true
@@ -22,5 +23,9 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# Core revm dependencies
 revm.workspace = true
-database.workspace = true
+database = { workspace = true }
+
+# Error handling
+anyhow = "1.0.89"
