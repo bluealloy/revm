@@ -1,5 +1,6 @@
 use crate::Frame;
 
+#[derive(Clone, Debug)]
 pub enum ItemOrResult<ITEM, RES> {
     Item(ITEM),
     Result(RES),

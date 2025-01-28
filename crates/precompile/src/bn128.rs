@@ -283,7 +283,7 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
-        println!("{:?}", res);
+
         assert!(matches!(
             res,
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
