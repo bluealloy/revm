@@ -266,14 +266,9 @@ where
             .handler
             .frame_init_first(context, frame_context, frame_input);
 
-        match &mut ret {
-            Ok(ItemOrResult::Result(res)) => {
-                context.frame_end(res);
-            }
-            Ok(ItemOrResult::Item(frame)) => {
-                context.initialize_interp(frame.interpreter());
-            }
-            _ => (),
+        // only if new frame is created call initialize_interp hook.
+        if let Ok(ItemOrResult::Item(frame)) = &mut ret {
+            context.initialize_interp(frame.interpreter());
         }
         ret
     }
@@ -297,14 +292,10 @@ where
         let mut ret = self
             .handler
             .frame_init(frame, context, frame_context, frame_input);
-        match &mut ret {
-            Ok(ItemOrResult::Result(res)) => {
-                context.frame_end(res);
-            }
-            Ok(ItemOrResult::Item(frame)) => {
-                context.initialize_interp(frame.interpreter());
-            }
-            _ => (),
+
+        // only if new frame is created call initialize_interp hook.
+        if let Ok(ItemOrResult::Item(frame)) = &mut ret {
+            context.initialize_interp(frame.interpreter());
         }
         ret
     }
