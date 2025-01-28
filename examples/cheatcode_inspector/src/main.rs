@@ -287,11 +287,7 @@ trait DatabaseExt: Journal {
         TxT: Transaction,
         CfgT: Cfg,
         PrecompileT: PrecompileProvider<
-            Context = InspectorContext<
-                InspectorT,
-                InMemoryDB,
-                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            >,
+            Context = InspectorContext<InspectorT, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
             Output = InterpreterResult,
             Error = EVMError<Infallible, InvalidTransaction>,
         >;
@@ -387,7 +383,7 @@ where
         context
             .journal()
             .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompileProvider<
-                InspectorContext<&mut Self, InMemoryDB, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
+                InspectorContext<&mut Self, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
                 EVMError<Infallible, InvalidTransaction>,
             >>(
                 Env {
@@ -486,7 +482,6 @@ where
 
     let mut inspector_context = InspectorContext::<
         InspectorT,
-        InMemoryDB,
         Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
     >::new(context, inspector);
 
