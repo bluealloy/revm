@@ -8,7 +8,7 @@ use std::{vec, vec::Vec};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
-pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
+pub struct CfgEnv<SPEC = SpecId> {
     /// Chain ID of the EVM
     ///
     /// `chain_id` will be compared to the transaction's Chain ID.
@@ -77,7 +77,14 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     pub disable_base_fee: bool,
 }
 
-impl<SPEC: Into<SpecId>> CfgEnv<SPEC> {
+impl CfgEnv {
+    /// Creates new `CfgEnv` with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<SPEC> CfgEnv<SPEC> {
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
@@ -196,12 +203,12 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl Default for CfgEnv {
+impl<SPEC: Default> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self {
             chain_id: 1,
             limit_contract_code_size: None,
-            spec: SpecId::PRAGUE,
+            spec: Default::default(),
             disable_nonce_check: false,
             blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(feature = "memory_limit")]
@@ -226,7 +233,7 @@ mod test {
 
     #[test]
     fn blob_max_and_target_count() {
-        let cfg = CfgEnv::default();
+        let cfg: CfgEnv = Default::default();
         assert_eq!(cfg.blob_max_count(SpecId::BERLIN), (6));
         assert_eq!(cfg.blob_max_count(SpecId::CANCUN), (6));
         assert_eq!(cfg.blob_max_count(SpecId::PRAGUE), (9));

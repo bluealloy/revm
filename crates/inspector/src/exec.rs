@@ -22,7 +22,7 @@ use revm::{
 };
 use std::vec::Vec;
 
-pub trait InspectEvm<CTX, INTR: InterpreterTypes>: ExecuteEvm {
+pub trait InspectEvm<INTR: InterpreterTypes>: ExecuteEvm {
     fn inspect<'a, 'b, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output
     where
         INSP: Inspector<&'a mut Self, INTR> + 'b,
@@ -45,7 +45,7 @@ impl<
         DB: Database,
         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
         CHAIN,
-    > InspectEvm<&mut Self, EthInterpreter> for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+    > InspectEvm<EthInterpreter> for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     fn inspect_previous<'a, 'b, INSP>(&'a mut self, inspector: INSP) -> Self::Output
     where
@@ -56,9 +56,7 @@ impl<
     }
 }
 
-pub trait InspectCommitEvm<CTX, INTR: InterpreterTypes>:
-    InspectEvm<CTX, INTR> + ExecuteCommitEvm
-{
+pub trait InspectCommitEvm<INTR: InterpreterTypes>: InspectEvm<INTR> + ExecuteCommitEvm {
     fn inspect_commit<'a, 'b, INSP>(
         &'a mut self,
         tx: Self::Transaction,
@@ -83,7 +81,7 @@ impl<
         DB: Database + DatabaseCommit,
         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
         CHAIN,
-    > InspectCommitEvm<&mut Self, EthInterpreter> for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+    > InspectCommitEvm<EthInterpreter> for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     fn inspect_commit_previous<'a, 'b, INSP>(&'a mut self, inspector: INSP) -> Self::CommitOutput
     where

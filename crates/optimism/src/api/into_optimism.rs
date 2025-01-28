@@ -52,7 +52,7 @@ impl DefaultOp
     fn default_op() -> Self {
         Context::default()
             .with_tx(OpTransaction::default())
-            .with_cfg(CfgEnv::default().with_spec(OpSpec::Op(OpSpecId::BEDROCK)))
+            .with_cfg(CfgEnv::new().with_spec(OpSpec::Op(OpSpecId::BEDROCK)))
             .with_chain(L1BlockInfo::default())
     }
 }
