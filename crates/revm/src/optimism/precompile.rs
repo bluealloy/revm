@@ -1,6 +1,4 @@
 use once_cell::race::OnceBox;
-#[cfg(feature = "blst")]
-use revm_precompile::bls12_381;
 use revm_precompile::{secp256r1, Precompiles};
 use std::boxed::Box;
 
@@ -38,15 +36,12 @@ pub(crate) fn granite() -> &'static Precompiles {
 pub(crate) fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = Precompiles::cancun().clone();
+        let mut precompiles = Precompiles::cancun().clone();
 
-        // Don't include BLS12-381 precompiles in no_std builds.
-        #[cfg(feature = "blst")]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(bls12_381::precompiles());
-            precompiles
-        };
+        precompiles.extend([
+            // Restrict bls12 input size
+            crate::optimism::bls12::pair::ISTHMUS,
+        ]);
 
         Box::new(precompiles)
     })
