@@ -1,16 +1,10 @@
+use crate::instructions::CustomInstructionExecutor;
 use revm::{
-    context_interface::{
-        result::HaltReason,
-        CfgGetter,
-    },
-    handler::{
-         EthContext, EthError, EthFrame, EthHandler,
-        EthPrecompileProvider, FrameContext,
-    },
+    context_interface::{result::HaltReason, CfgGetter},
+    handler::{EthContext, EthError, EthFrame, EthHandler, EthPrecompileProvider, FrameContext},
     interpreter::{interpreter::EthInterpreter, Host},
     precompile::PrecompileErrors,
 };
-use crate::instructions::CustomInstructionExecutor;
 
 // Our custom handler
 pub struct CustomOpcodeHandler<CTX, ERROR> {
@@ -25,7 +19,7 @@ impl<CTX, ERROR> CustomOpcodeHandler<CTX, ERROR> {
     }
 }
 
-impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Default 
+impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Default
     for CustomOpcodeHandler<CTX, ERROR>
 {
     fn default() -> Self {

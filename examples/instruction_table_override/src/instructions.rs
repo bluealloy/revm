@@ -1,7 +1,11 @@
 use revm::{
     handler::instructions::InstructionExecutor,
     interpreter::{
-        gas, interpreter_types::{LoopControl, StackTrait}, popn_top, table::{make_instruction_table, InstructionTable}, Host, Interpreter, InterpreterAction, InterpreterTypes
+        gas,
+        interpreter_types::{LoopControl, StackTrait},
+        popn_top,
+        table::{make_instruction_table, InstructionTable},
+        Host, Interpreter, InterpreterAction, InterpreterTypes,
     },
     primitives::U256,
 };
@@ -24,7 +28,6 @@ where
     }
 }
 
-
 impl<WIRE, HOST> CustomInstructionExecutor<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
@@ -45,7 +48,6 @@ where
         }
     }
 }
-
 
 impl<IT, CTX> InstructionExecutor for CustomInstructionExecutor<IT, CTX>
 where
