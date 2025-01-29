@@ -35,7 +35,6 @@ where
         let mut table = make_instruction_table::<WIRE, HOST>();
         table[CLZ as usize] = |interpreter: &mut Interpreter<WIRE>, _host: &mut HOST| {
             revm::interpreter::gas!(interpreter, gas::VERYLOW);
-            
             popn_top!([], value, interpreter);
             let value: &mut U256 = value;
             let leading_zeros = value.leading_zeros();
