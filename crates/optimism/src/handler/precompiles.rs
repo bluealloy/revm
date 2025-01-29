@@ -59,8 +59,7 @@ impl<CTX, ERROR> OpPrecompileProvider<CTX, ERROR> {
                 | OpSpecId::REGOLITH
                 | OpSpecId::CANYON
                 | OpSpecId::ECOTONE
-                | OpSpecId::HOLOCENE
-
+                | OpSpecId::HOLOCENE,
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
             OpSpec::Op(OpSpecId::GRANITE) => Self::new(granite()),
