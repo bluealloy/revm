@@ -3548,6 +3548,7 @@ dependencies = [
  "revm-database",
  "revm-inspector",
  "revm-precompile",
+ "revm-primitives",
  "rstest 0.23.0",
  "serde",
 ]

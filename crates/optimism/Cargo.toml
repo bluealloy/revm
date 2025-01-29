@@ -24,6 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 revm.workspace = true
+primitives.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
 inspector.workspace = true
 derive_more.workspace = true

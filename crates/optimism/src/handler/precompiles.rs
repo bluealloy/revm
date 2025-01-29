@@ -60,11 +60,12 @@ impl<CTX, ERROR> OpPrecompileProvider<CTX, ERROR> {
                 | OpSpecId::CANYON
                 | OpSpecId::ECOTONE
                 | OpSpecId::HOLOCENE
-                | OpSpecId::ISTHMUS,
+
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
-            OpSpec::Op(OpSpecId::GRANITE)
-            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(granite()),
+            OpSpec::Op(OpSpecId::GRANITE) => Self::new(granite()),
+            OpSpec::Op(OpSpecId::ISTHMUS)
+            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(isthmus()),
         }
     }
 }
@@ -87,6 +88,19 @@ pub fn granite() -> &'static Precompiles {
         let mut precompiles = Precompiles::cancun().clone();
         // Restrict bn256Pairing input size
         precompiles.extend([secp256r1::P256VERIFY]);
+        Box::new(precompiles)
+    })
+}
+
+/// Returns precompiles for Isthmus spec.
+pub fn isthmus() -> &'static Precompiles {
+    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    INSTANCE.get_or_init(|| {
+        let mut precompiles = Precompiles::cancun().clone();
+        // Restrict bn256Pairing input size
+        precompiles.extend([secp256r1::P256VERIFY]);
+        // Restrict bls12Pairing input size
+        precompiles.extend([crate::bls12::pair::ISTHMUS]);
         Box::new(precompiles)
     })
 }
