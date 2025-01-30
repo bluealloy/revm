@@ -1,3 +1,6 @@
+//! Example of a customizing the instruction table.
+//!
+//! Introduces a custom CLZ opcode.
 use crate::exec::transact_custom_opcode;
 use database::{BenchmarkDB, FFADDRESS};
 use revm::{context::Context, primitives::TxKind, state::Bytecode};
@@ -26,5 +29,5 @@ fn main() {
         });
 
     let result = transact_custom_opcode(&mut ctx).expect("execution failed");
-    println!("Should return 0xff (255 in decimal) which is the clz of 256 bit value 0x01. The actual return is: {}", result.result.output().unwrap());
+    println!("Should return 0xff (255 in decimal) which is the clz of 256 bit value 0x01. The actual returned value is: {}", result.result.output().unwrap());
 }
