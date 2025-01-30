@@ -1,10 +1,6 @@
-use database::{BenchmarkDB, FFADDRESS};
-use revm::{
-    context::Context,
-    primitives::TxKind,
-    state::Bytecode,
-};
 use crate::exec::transact_custom_opcode;
+use database::{BenchmarkDB, FFADDRESS};
+use revm::{context::Context, primitives::TxKind, state::Bytecode};
 
 pub mod exec;
 pub mod handler;
@@ -23,11 +19,10 @@ fn main() {
         .into(),
     );
 
-
     let mut ctx = Context::builder()
-        .with_db(BenchmarkDB::new_bytecode(bytecode)) // Store bytecode in DB
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_tx_chained(|tx| {
-            tx.kind = TxKind::Call(FFADDRESS); // Call the address where bytecode is stored
+            tx.kind = TxKind::Call(FFADDRESS);
         });
 
     let result = transact_custom_opcode(&mut ctx).expect("execution failed");
