@@ -8,7 +8,7 @@ use crate::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
         OpTransactionError, OpTxTrait,
     },
-    L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    L1BlockInfoGetter, OpHaltReason, OpSpec, OpSpecId, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
 use precompiles::OpPrecompileProvider;
 use revm::{
@@ -89,7 +89,7 @@ where
     type Frame = FRAME;
     type Precompiles = OpPrecompileProvider<CTX, ERROR>;
     type Instructions = INSTRUCTIONS;
-    type HaltReason = OptimismHaltReason;
+    type HaltReason = OpHaltReason;
 
     fn precompile(&self, _context: &mut Self::Context) -> Self::Precompiles {
         OpPrecompileProvider::default()
@@ -310,7 +310,7 @@ where
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let result = self.main.output(context, result)?;
-        let result = result.map_haltreason(OptimismHaltReason::Base);
+        let result = result.map_haltreason(OpHaltReason::Base);
         if result.result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
@@ -378,7 +378,7 @@ where
 
                 Ok(ResultAndState {
                     result: ExecutionResult::Halt {
-                        reason: OptimismHaltReason::FailedDeposit,
+                        reason: OpHaltReason::FailedDeposit,
                         gas_used,
                     },
                     state,

@@ -11,14 +11,14 @@ use revm::{
 use crate::{
     handler::{precompiles::OpPrecompileProvider, OpHandler},
     transaction::abstraction::OpTxGetter,
-    L1BlockInfoGetter, OpSpec, OpTransactionError, OptimismHaltReason,
+    L1BlockInfoGetter, OpHaltReason, OpSpec, OpTransactionError,
 };
 
 /// Helper function that executed a transaction and commits the state.
 pub fn transact_op<CTX: EthContext + OpTxGetter + L1BlockInfoGetter>(
     ctx: &mut CTX,
 ) -> Result<
-    ResultAndState<OptimismHaltReason>,
+    ResultAndState<OpHaltReason>,
     EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, OpTransactionError>,
 >
 where
@@ -37,7 +37,7 @@ where
 pub fn transact_op_commit<CTX: EthContext + OpTxGetter + L1BlockInfoGetter>(
     ctx: &mut CTX,
 ) -> Result<
-    ExecutionResult<OptimismHaltReason>,
+    ExecutionResult<OpHaltReason>,
     EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, OpTransactionError>,
 >
 where
