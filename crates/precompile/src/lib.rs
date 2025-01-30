@@ -11,6 +11,8 @@ extern crate alloc as std;
 pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
+#[cfg(feature = "bls-no-std")]
+pub mod bls12_381_no_std;
 pub mod bn128;
 pub mod fatal_precompile;
 pub mod hash;
@@ -172,6 +174,14 @@ impl Precompiles {
             let precompiles = {
                 let mut precompiles = precompiles;
                 precompiles.extend(bls12_381::precompiles());
+                precompiles
+            };
+
+            // Only include the `no_std` BLS12-381 precompiles in no_std builds.
+            #[cfg(all(feature = "bls-no-std", not(feature = "blst")))]
+            let precompiles = {
+                let mut precompiles = precompiles;
+                precompiles.extend(bls12_381_no_std::precompiles());
                 precompiles
             };
 

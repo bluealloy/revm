@@ -55,6 +55,9 @@ kzg-rs = { version = "0.2.3", default-features = false, optional = true }
 # BLS12-381 precompiles
 blst = { version = "0.3.13", optional = true }
 
+# no_std BLS12-381 precompiles
+bls12_381 = { version = "0.8.0", optional = true }
+
 # p256verify precompile
 p256 = { version = "0.13.2", optional = true, default-features = false, features = [
     "ecdsa",
@@ -115,6 +118,9 @@ secp256k1 = ["dep:secp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
+
+# Enables no_std support for the BLS12-381 precompiles.
+bls-no-std = ["dep:bls12_381"]
 
 [[bench]]
 name = "bench"
