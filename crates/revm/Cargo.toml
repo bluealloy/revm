@@ -135,6 +135,7 @@ c-kzg = ["revm-precompile/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm-precompile/kzg-rs"]
 blst = ["revm-precompile/blst"]
+bls-no-std = ["revm-precompile/bls-no-std"]
 
 [[example]]
 name = "fork_ref_transact"
