@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v15.1.0...revm-primitives-v16.0.0) - 2025-01-31
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- simplify Transaction trait (#1959)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- to_plain_state (#1778)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Other
+
+- align crates versions (#1983)
+- Update HISTORY_STORAGE_ADDRESS (#1946)
+- fix comments and docs into more sensible (#1920)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+
 ## [9.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v9.0.0...revm-primitives-v9.0.1) - 2024-08-30
 
 ### Other
