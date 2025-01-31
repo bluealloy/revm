@@ -4,9 +4,9 @@ use interpreter::{
 };
 use std::rc::Rc;
 
-pub trait InstructionExecutor: Clone + Default {
-    type InterpreterTypes: InterpreterTypes;
+pub trait InstructionExecutor {
     type CTX;
+    type InterpreterTypes: InterpreterTypes;
     type Output;
 
     fn run(
@@ -17,7 +17,7 @@ pub trait InstructionExecutor: Clone + Default {
 }
 
 pub struct EthInstructionExecutor<WIRE: InterpreterTypes, HOST> {
-    instruction_table: Rc<InstructionTable<WIRE, HOST>>,
+    pub instruction_table: Rc<InstructionTable<WIRE, HOST>>,
 }
 
 pub trait InstructionExecutorGetter {
@@ -42,9 +42,13 @@ where
     WIRE: InterpreterTypes,
     HOST: Host,
 {
-    pub fn new() -> Self {
+    pub fn new_mainnet() -> Self {
+        Self::new(make_instruction_table::<WIRE, HOST>())
+    }
+
+    pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         Self {
-            instruction_table: Rc::new(make_instruction_table::<WIRE, HOST>()),
+            instruction_table: Rc::new(base_table),
         }
     }
 }
@@ -75,6 +79,6 @@ where
     HOST: Host,
 {
     fn default() -> Self {
-        Self::new()
+        Self::new_mainnet()
     }
 }

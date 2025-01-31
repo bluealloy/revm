@@ -1,26 +1,37 @@
 pub mod types;
 
+use context::MEVM;
 pub use types::{EthContext, EthError, MainnetHandler};
 
 use crate::{
-    execution, instructions::InstructionExecutor, post_execution, pre_execution, validation,
-    FrameContext, FrameResult,
+    execution, instructions::InstructionExecutor, post_execution, pre_execution,
+    precompile_provider::PrecompileProvider, validation, FrameResult,
 };
+use auto_impl::auto_impl;
 use context_interface::{
     result::{HaltReasonTrait, ResultAndState},
     Cfg, CfgGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
 };
-use handler_interface::{
-    Frame, FrameInitOrResult, FrameOrResult, ItemOrResult, PrecompileProvider,
-};
+use handler_interface::{Frame, FrameInitOrResult, FrameOrResult, ItemOrResult};
 use interpreter::{FrameInput, InitialAndFloorGas};
 use std::{vec, vec::Vec};
+
+#[auto_impl(&mut, Box)]
+pub trait FrameContextTrait {
+    type Context;
+    type Precompiles: PrecompileProvider<Context = Self::Context>;
+    type Instructions: InstructionExecutor<CTX = Self::Context>;
+
+    fn precompiles(&mut self) -> &mut Self::Precompiles;
+    fn instructions(&mut self) -> &mut Self::Instructions;
+}
 
 pub trait EthHandler {
     type Context: EthContext;
     type Error: EthError<Self::Context>;
-    type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
-    type Instructions: InstructionExecutor<CTX = Self::Context>;
+    type FrameContext: FrameContextTrait<Context = Self::Context>;
+    //type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
+    //type Instructions: InstructionExecutor<CTX = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -28,36 +39,30 @@ pub trait EthHandler {
         Error = Self::Error,
         FrameResult = FrameResult,
         FrameInit = FrameInput,
-        FrameContext = FrameContext<Self::Precompiles, Self::Instructions>,
+        FrameContext = Self::FrameContext,
     >;
     // TODO `HaltReason` should be a ExecResult trait, returned by the handler.
     type HaltReason: HaltReasonTrait;
 
     fn run(
         &mut self,
+        evm: &mut MEVM<Self::Context, Self::FrameContext>,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        let context = &mut evm.ctx;
+        let frame_context = &mut evm.frame_ctx;
+        self.run_split(context, frame_context)
+    }
+
+    fn run_split(
+        &mut self,
         context: &mut Self::Context,
+        frame_context: &mut Self::FrameContext,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(context)?;
         let eip7702_refund = self.pre_execution(context)? as i64;
-        let exec_result = self.execution(context, &init_and_floor_gas)?;
+        let exec_result = self.execution(context, frame_context, &init_and_floor_gas)?;
         self.post_execution(context, exec_result, init_and_floor_gas, eip7702_refund)
     }
-
-    fn precompile(&self, _context: &mut Self::Context) -> Self::Precompiles {
-        Self::Precompiles::default()
-    }
-
-    fn instructions(&self, _context: &mut Self::Context) -> Self::Instructions {
-        Self::Instructions::default()
-    }
-
-    fn frame_context(
-        &mut self,
-        context: &mut Self::Context,
-    ) -> <Self::Frame as Frame>::FrameContext {
-        FrameContext::new(self.precompile(context), self.instructions(context))
-    }
-
     /// Call all validation functions
     fn validate(&self, context: &mut Self::Context) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(context)?;
@@ -76,20 +81,19 @@ pub trait EthHandler {
     fn execution(
         &mut self,
         context: &mut Self::Context,
+        frame_context: &mut Self::FrameContext,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
         let gas_limit = context.tx().gas_limit() - init_and_floor_gas.initial_gas;
 
-        // Make a context!
-        let mut frame_context = self.frame_context(context);
         // Create first frame action
-        let first_frame = self.create_first_frame(context, &mut frame_context, gas_limit)?;
+        let first_frame = self.create_first_frame(context, frame_context, gas_limit)?;
         let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.run_exec_loop(context, &mut frame_context, frame)?,
+            ItemOrResult::Item(frame) => self.run_exec_loop(context, frame_context, frame)?,
             ItemOrResult::Result(result) => result,
         };
 
-        self.last_frame_result(context, &mut frame_context, &mut frame_result)?;
+        self.last_frame_result(context, frame_context, &mut frame_result)?;
         Ok(frame_result)
     }
 

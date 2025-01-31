@@ -1,19 +1,21 @@
 use crate::{
-    inspector_instruction::InspectorInstructionExecutor,
+    exec::{InspectorFrameContext, InstructionGetter},
+    inspector_context::InspectorInnerCtx,
     journal::{JournalExt, JournalExtGetter},
 };
 use auto_impl::auto_impl;
 use revm::{
-    context_interface::Journal,
+    context_interface::{CfgGetter, Journal},
     database_interface::Database,
     handler::{
-        handler::{EthContext, EthError, EthHandler},
-        EthFrame, FrameContext, FrameResult,
+        handler::{EthContext, EthError, EthHandler, FrameContextTrait},
+        instructions::InstructionExecutor,
+        EthFrame, FrameResult,
     },
-    handler_interface::{Frame, ItemOrResult, PrecompileProvider},
+    handler_interface::{Frame, ItemOrResult},
     interpreter::{
-        table::InstructionTable, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-        EOFCreateInputs, FrameInput, Interpreter, InterpreterTypes,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
+        Interpreter, InterpreterTypes,
     },
     primitives::{Address, Log, U256},
     Context,
@@ -184,19 +186,17 @@ impl<BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt,
     }
 }
 
-pub struct InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR: InterpreterTypes> {
+pub struct InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, FRAMECTX> {
     pub handler: HANDLER,
-    pub base_instructions: InstructionTable<INTR, CTX>,
-    _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES)>,
+    _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, FRAMECTX)>,
 }
 
-impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR: InterpreterTypes>
-    InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR>
+impl<CTX, ERROR, FRAME, HANDLER, FRAMECTX>
+    InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, FRAMECTX>
 {
-    pub fn new(handler: HANDLER, base_instructions: InstructionTable<INTR, CTX>) -> Self {
+    pub fn new(handler: HANDLER) -> Self {
         Self {
             handler,
-            base_instructions,
             _phantom: core::marker::PhantomData,
         }
     }
@@ -218,10 +218,14 @@ impl<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> FrameInterpreterGetter
     }
 }
 
-impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR> EthHandler
-    for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INTR>
+impl<CTX, ERROR, FRAME, HANDLER, FRAMECTX, INTR> EthHandler
+    for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, FRAMECTX>
 where
-    CTX: EthContext + InspectorCtx<IT = INTR> + JournalExtGetter,
+    CTX: EthContext
+        + InspectorCtx<IT = INTR>
+        + JournalExtGetter
+        + InspectorInnerCtx<Context: Host>
+        + CfgGetter<Cfg = <FRAMECTX::Context as CfgGetter>::Cfg>,
     INTR: InterpreterTypes,
     ERROR: EthError<CTX>,
     // TODO `FrameResult` should be a generic trait.
@@ -231,21 +235,20 @@ where
             Error = ERROR,
             FrameResult = FrameResult,
             FrameInit = FrameInput,
-            FrameContext = FrameContext<PRECOMPILES, InspectorInstructionExecutor<INTR, CTX>>,
+            FrameContext = InspectorFrameContext<CTX, FRAMECTX>,
         > + FrameInterpreterGetter<IT = INTR>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
-    HANDLER: EthHandler<Context = CTX, Error = ERROR, Frame = FRAME, Precompiles = PRECOMPILES>,
+    FRAMECTX: FrameContextTrait<
+        Context = <CTX as InspectorInnerCtx>::Context,
+        Instructions: InstructionExecutor
+                          + InstructionGetter<Context = <CTX as InspectorInnerCtx>::Context>,
+    >,
+    HANDLER: EthHandler<Context = CTX, Error = ERROR, Frame = FRAME>,
 {
     type Context = CTX;
     type Error = ERROR;
     type Frame = FRAME;
-    type Precompiles = PRECOMPILES;
-    type Instructions = InspectorInstructionExecutor<INTR, CTX>;
+    type FrameContext = InspectorFrameContext<CTX, FRAMECTX>;
     type HaltReason = <HANDLER as EthHandler>::HaltReason;
-
-    fn instructions(&self, _context: &mut Self::Context) -> Self::Instructions {
-        InspectorInstructionExecutor::new(self.base_instructions)
-    }
 
     fn frame_init_first(
         &mut self,

@@ -1,3 +1,5 @@
+use crate::{journal::JournalExtGetter, GetInspector, Inspector, InspectorCtx};
+use auto_impl::auto_impl;
 use revm::{
     context_interface::{
         block::BlockSetter, transaction::TransactionSetter, BlockGetter, CfgGetter, DatabaseGetter,
@@ -10,8 +12,6 @@ use revm::{
 };
 use std::vec::Vec;
 
-use crate::{journal::JournalExtGetter, GetInspector, Inspector, InspectorCtx};
-
 /// EVM context contains data that EVM needs for execution.
 #[derive(Clone, Debug)]
 pub struct InspectorContext<INSP, CTX> {
@@ -20,13 +20,22 @@ pub struct InspectorContext<INSP, CTX> {
     pub frame_input_stack: Vec<FrameInput>,
 }
 
-impl<INSP: Inspector<CTX, EthInterpreter>, CTX: EthContext + DatabaseGetter> EthContext
-    for InspectorContext<INSP, CTX>
-{
+#[auto_impl(&mut, Box)]
+pub trait InspectorInnerCtx {
+    type Context;
+    fn inner_ctx(&mut self) -> &mut Self::Context;
+}
+
+impl<CTX, INSP> InspectorInnerCtx for InspectorContext<INSP, &mut CTX> {
+    type Context = CTX;
+
+    fn inner_ctx(&mut self) -> &mut Self::Context {
+        &mut self.inner
+    }
 }
 
 impl<INSP: Inspector<CTX, EthInterpreter>, CTX: EthContext + DatabaseGetter> EthContext
-    for &mut InspectorContext<INSP, CTX>
+    for InspectorContext<INSP, CTX>
 {
 }
 

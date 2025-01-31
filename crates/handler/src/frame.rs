@@ -1,4 +1,7 @@
-use crate::instructions::{InstructionExecutor, InstructionExecutorGetter};
+use crate::{
+    handler::FrameContextTrait, instructions::InstructionExecutor,
+    precompile_provider::PrecompileProvider,
+};
 
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
@@ -8,9 +11,7 @@ use context_interface::{
     TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
-use handler_interface::{
-    Frame, FrameInitOrResult, ItemOrResult, PrecompileProvider, PrecompileProviderGetter,
-};
+use handler_interface::{Frame, FrameInitOrResult, ItemOrResult};
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
@@ -70,19 +71,11 @@ impl<CTX, ERROR, FRAMECTX> EthFrame<CTX, ERROR, EthInterpreter, FRAMECTX>
 where
     CTX: EthFrameContext,
     ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    FRAMECTX: PrecompileProviderGetter<
-            PrecompileProvider: PrecompileProvider<
-                Context = CTX,
-                Error = ERROR,
-                Output = InterpreterResult,
-            >,
-        > + InstructionExecutorGetter<
-            InstructionExecutor: InstructionExecutor<
-                InterpreterTypes = EthInterpreter,
-                CTX = CTX,
-                Output = InterpreterAction,
-            >,
-        >,
+    FRAMECTX: FrameContextTrait<
+        Context = CTX,
+        Precompiles: PrecompileProvider<Output = InterpreterResult>,
+        Instructions: InstructionExecutor,
+    >,
 {
     /// Make call frame
     #[inline]
@@ -456,22 +449,20 @@ impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionExecutor>
     }
 }
 
-impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionExecutor> PrecompileProviderGetter
-    for FrameContext<PRECOMPILES, INSTRUCTIONS>
+impl<CTX, PRECOMPILE, INSTRUCTION> FrameContextTrait for FrameContext<PRECOMPILE, INSTRUCTION>
+where
+    PRECOMPILE: PrecompileProvider<Context = CTX>,
+    INSTRUCTION: InstructionExecutor<CTX = CTX>,
 {
-    type PrecompileProvider = PRECOMPILES;
+    type Context = CTX;
+    type Precompiles = PRECOMPILE;
+    type Instructions = INSTRUCTION;
 
-    fn precompiles(&mut self) -> &mut Self::PrecompileProvider {
+    fn precompiles(&mut self) -> &mut Self::Precompiles {
         &mut self.precompiles
     }
-}
 
-impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionExecutor> InstructionExecutorGetter
-    for FrameContext<PRECOMPILES, INSTRUCTIONS>
-{
-    type InstructionExecutor = INSTRUCTIONS;
-
-    fn executor(&mut self) -> &mut Self::InstructionExecutor {
+    fn instructions(&mut self) -> &mut Self::Instructions {
         &mut self.instructions
     }
 }
@@ -480,20 +471,14 @@ impl<CTX, ERROR, FRAMECTX> Frame for EthFrame<CTX, ERROR, EthInterpreter<()>, FR
 where
     CTX: EthFrameContext,
     ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    FRAMECTX: PrecompileProviderGetter<
-            PrecompileProvider: PrecompileProvider<
-                Context = CTX,
-                Error = ERROR,
-                Output = InterpreterResult,
-                Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
-            >,
-        > + InstructionExecutorGetter<
-            InstructionExecutor: InstructionExecutor<
-                InterpreterTypes = EthInterpreter<()>,
-                CTX = CTX,
-                Output = InterpreterAction,
-            >,
+    FRAMECTX: FrameContextTrait<
+        Context = CTX,
+        Precompiles: PrecompileProvider<Output = InterpreterResult>,
+        Instructions: InstructionExecutor<
+            InterpreterTypes = EthInterpreter<()>,
+            Output = InterpreterAction,
         >,
+    >,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -541,7 +526,9 @@ where
         let spec = context.cfg().spec().into();
 
         // Run interpreter
-        let next_action = frame_context.executor().run(context, &mut self.interpreter);
+        let next_action = frame_context
+            .instructions()
+            .run(context, &mut self.interpreter);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),

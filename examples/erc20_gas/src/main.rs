@@ -21,7 +21,7 @@ use revm::{
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     specification::hardfork::SpecId,
     state::AccountInfo,
-    Context, Database,
+    Context, Database, MainContext,
 };
 
 pub mod exec;
@@ -126,7 +126,7 @@ fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
 }
 
 fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheDB) -> Result<()> {
-    let mut ctx = Context::builder()
+    let mut ctx = Context::mainnet()
         .with_db(cache_db)
         .modify_cfg_chained(|cfg| {
             cfg.spec = SpecId::CANCUN;

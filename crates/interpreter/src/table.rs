@@ -14,9 +14,6 @@ pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
 
-/// EVM dynamic opcode function signature.
-pub type DynInstruction<W, H> = dyn Fn(&mut Interpreter<W>, &mut H);
-
 /// A table of boxed instructions.
 pub type CustomInstructionTable<IT> = [IT; 256];
 

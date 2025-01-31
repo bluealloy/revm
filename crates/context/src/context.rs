@@ -1,5 +1,7 @@
 pub mod performant_access;
 
+use core::ops::{Deref, DerefMut};
+
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
 use context_interface::{
     block::BlockSetter, transaction::TransactionSetter, Block, BlockGetter, Cfg, CfgGetter,
@@ -9,6 +11,61 @@ use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use interpreter::Host;
 use specification::hardfork::SpecId;
+
+pub struct MEVM<CTX, FRAMECTX> {
+    pub ctx: CTX,
+    pub frame_ctx: FRAMECTX,
+}
+
+impl<CTX, FRAMECTX> MEVM<CTX, FRAMECTX> {
+    pub fn all_mut(&mut self) -> (&mut CTX, &mut FRAMECTX) {
+        (&mut self.ctx, &mut self.frame_ctx)
+    }
+
+    pub fn new(ctx: CTX, frame_ctx: FRAMECTX) -> Self {
+        MEVM { ctx, frame_ctx }
+    }
+
+    pub fn into_compontents(self) -> (CTX, FRAMECTX) {
+        (self.ctx, self.frame_ctx)
+    }
+
+    pub fn into_context(self) -> CTX {
+        self.ctx
+    }
+
+    pub fn ctx(&mut self) -> &mut CTX {
+        &mut self.ctx
+    }
+
+    pub fn frame_ctx(&mut self) -> &mut FRAMECTX {
+        &mut self.frame_ctx
+    }
+
+    pub fn modify_ctx<F, OCTX>(self, f: F) -> MEVM<OCTX, FRAMECTX>
+    where
+        F: FnOnce(CTX) -> OCTX,
+    {
+        MEVM {
+            ctx: f(self.ctx),
+            frame_ctx: self.frame_ctx,
+        }
+    }
+}
+
+impl<CTX, FRAMECTX> Deref for MEVM<CTX, FRAMECTX> {
+    type Target = CTX;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ctx
+    }
+}
+
+impl<CTX, FRAMECTX> DerefMut for MEVM<CTX, FRAMECTX> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ctx
+    }
+}
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
@@ -32,18 +89,6 @@ pub struct Context<
     pub chain: CHAIN,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Self::new(EmptyDB::new(), SpecId::LATEST)
-    }
-}
-
-impl Context {
-    pub fn builder() -> Self {
-        Self::new(EmptyDB::new(), SpecId::LATEST)
-    }
 }
 
 impl<
@@ -376,5 +421,34 @@ impl<BLOCK: Block, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAI
 {
     fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
         self.block = block;
+    }
+}
+/********    MEVEM block/tx setters/getters     *****/
+
+impl<CTX: BlockGetter, FRAMECTX> BlockGetter for MEVM<CTX, FRAMECTX> {
+    type Block = <CTX as BlockGetter>::Block;
+
+    fn block(&self) -> &Self::Block {
+        self.ctx.block()
+    }
+}
+
+impl<CTX: BlockSetter, FRAMECTX> BlockSetter for MEVM<CTX, FRAMECTX> {
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+        self.ctx.set_block(block);
+    }
+}
+
+impl<CTX: TransactionGetter, FRAMECTX> TransactionGetter for MEVM<CTX, FRAMECTX> {
+    type Transaction = <CTX as TransactionGetter>::Transaction;
+
+    fn tx(&self) -> &Self::Transaction {
+        self.ctx.tx()
+    }
+}
+
+impl<CTX: TransactionSetter, FRAMECTX> TransactionSetter for MEVM<CTX, FRAMECTX> {
+    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
+        self.ctx.set_tx(tx);
     }
 }

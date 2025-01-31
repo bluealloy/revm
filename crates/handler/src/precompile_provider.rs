@@ -1,6 +1,6 @@
+use auto_impl::auto_impl;
 use context::Cfg;
 use context_interface::CfgGetter;
-use handler_interface::PrecompileProvider;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};
@@ -8,12 +8,35 @@ use primitives::{Address, Bytes};
 use specification::hardfork::SpecId;
 use std::boxed::Box;
 
-pub struct EthPrecompileProvider<CTX, ERROR> {
-    pub precompiles: &'static Precompiles,
-    pub _phantom: core::marker::PhantomData<(CTX, ERROR)>,
+#[auto_impl(&mut, Box)]
+pub trait PrecompileProvider: Clone {
+    type Context: CfgGetter;
+    type Output;
+
+    fn set_spec(&mut self, spec: <<Self::Context as CfgGetter>::Cfg as Cfg>::Spec);
+
+    /// Run the precompile.
+    fn run(
+        &mut self,
+        context: &mut Self::Context,
+        address: &Address,
+        bytes: &Bytes,
+        gas_limit: u64,
+    ) -> Result<Option<Self::Output>, PrecompileErrors>;
+
+    /// Get the warm addresses.
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address> + '_>;
+
+    /// Check if the address is a precompile.
+    fn contains(&self, address: &Address) -> bool;
 }
 
-impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
+pub struct EthPrecompileProvider<CTX> {
+    pub precompiles: &'static Precompiles,
+    pub _phantom: core::marker::PhantomData<CTX>,
+}
+
+impl<CTX> Clone for EthPrecompileProvider<CTX> {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
@@ -22,13 +45,13 @@ impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
     }
 }
 
-impl<CTX: CfgGetter, ERROR> Default for EthPrecompileProvider<CTX, ERROR> {
+impl<CTX: CfgGetter> Default for EthPrecompileProvider<CTX> {
     fn default() -> Self {
         Self::new(SpecId::LATEST)
     }
 }
 
-impl<CTX: CfgGetter, ERROR> EthPrecompileProvider<CTX, ERROR> {
+impl<CTX: CfgGetter> EthPrecompileProvider<CTX> {
     pub fn new(spec: SpecId) -> Self {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
@@ -37,17 +60,13 @@ impl<CTX: CfgGetter, ERROR> EthPrecompileProvider<CTX, ERROR> {
     }
 }
 
-impl<CTX, ERROR> PrecompileProvider for EthPrecompileProvider<CTX, ERROR>
+impl<CTX> PrecompileProvider for EthPrecompileProvider<CTX>
 where
     CTX: CfgGetter,
-    ERROR: From<PrecompileErrors>,
 {
     type Context = CTX;
-    type Error = ERROR;
     type Output = InterpreterResult;
-    type Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec;
-
-    fn set_spec(&mut self, spec: Self::Spec) {
+    fn set_spec(&mut self, spec: <<Self::Context as CfgGetter>::Cfg as Cfg>::Spec) {
         self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec.into()));
     }
 
@@ -57,7 +76,7 @@ where
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<InterpreterResult>, Self::Error> {
+    ) -> Result<Option<InterpreterResult>, PrecompileErrors> {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };

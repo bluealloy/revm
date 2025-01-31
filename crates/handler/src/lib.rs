@@ -21,4 +21,4 @@ pub mod validation;
 pub use frame::{return_create, return_eofcreate, EthFrame, EthFrameContext, FrameContext};
 pub use frame_data::{FrameData, FrameResult};
 pub use handler::{EthContext, EthError, EthHandler, MainnetHandler};
-pub use precompile_provider::EthPrecompileProvider;
+pub use precompile_provider::{EthPrecompileProvider, PrecompileProvider};
