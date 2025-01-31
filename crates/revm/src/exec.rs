@@ -1,4 +1,15 @@
+use context::MEVM;
 use context_interface::{block::BlockSetter, transaction::TransactionSetter};
+
+pub trait MainBuilder: Sized {
+    type FrameContext;
+
+    fn build_mainnet(self) -> MEVM<Self, Self::FrameContext>;
+}
+
+pub trait MainContext {
+    fn mainnet() -> Self;
+}
 
 /// Execute EVM transactions.
 pub trait ExecuteEvm: BlockSetter + TransactionSetter {

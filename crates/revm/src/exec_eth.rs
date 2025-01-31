@@ -1,20 +1,55 @@
-use crate::{ExecuteCommitEvm, ExecuteEvm};
-use context::{Cfg, Context};
+use crate::{
+    exec::{MainBuilder, MainContext},
+    ExecuteCommitEvm, ExecuteEvm,
+};
+use context::{BlockEnv, Cfg, CfgEnv, Context, JournaledState, TxEnv, MEVM};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
     Block, Database, DatabaseGetter, Journal, Transaction,
 };
-use database_interface::DatabaseCommit;
+use database_interface::{DatabaseCommit, EmptyDB};
 use handler::{
     instructions::EthInstructionExecutor, EthContext, EthFrame, EthHandler, EthPrecompileProvider,
-    MainnetHandler,
+    FrameContext, MainnetHandler,
 };
 use interpreter::interpreter::EthInterpreter;
 use primitives::Log;
+use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteEvm for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+where
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg,
+    DB: Database,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+{
+    type FrameContext = FrameContext<
+        EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+        EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+    >;
+
+    fn build_mainnet(self) -> MEVM<Self, Self::FrameContext> {
+        MEVM {
+            ctx: self,
+            frame_ctx: FrameContext::new(
+                EthPrecompileProvider::default(),
+                EthInstructionExecutor::default(),
+            ),
+        }
+    }
+}
+
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteEvm
+    for MEVM<
+        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
+        FrameContext<
+            EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+            EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+        >,
+    >
 where
     BLOCK: Block,
     TX: Transaction,
@@ -31,7 +66,13 @@ where
 }
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteCommitEvm
-    for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+    for MEVM<
+        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
+        FrameContext<
+            EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+            EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+        >,
+    >
 where
     BLOCK: Block,
     TX: Transaction,
@@ -44,27 +85,28 @@ where
 
     fn exec_commit_previous(&mut self) -> Self::CommitOutput {
         transact_main(self).map(|r| {
-            self.db().commit(r.state);
+            self.ctx.db().commit(r.state);
             r.result
         })
     }
 }
 
-/// Helper function that executed a transaction and commits the state.
 pub fn transact_main<CTX: EthContext>(
-    ctx: &mut CTX,
+    evm: &mut MEVM<
+        CTX,
+        FrameContext<EthPrecompileProvider<CTX>, EthInstructionExecutor<EthInterpreter, CTX>>,
+    >,
 ) -> Result<
     ResultAndState<HaltReason>,
     EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, InvalidTransaction>,
 > {
-    MainnetHandler::<
-        CTX,
-        _,
-        EthFrame<CTX, _, _, _>,
-        EthPrecompileProvider<CTX, _>,
-        EthInstructionExecutor<EthInterpreter, CTX>,
-    >::default()
-    .run(ctx)
+    MainnetHandler::<CTX, _, EthFrame<CTX, _, _, _>, _>::default().run(evm)
+}
+
+impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<EmptyDB>, ()> {
+    fn mainnet() -> Self {
+        Context::new(EmptyDB::new(), SpecId::LATEST)
+    }
 }
 
 #[cfg(test)]
@@ -85,7 +127,7 @@ mod test {
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
-        let mut ctx = Context::default()
+        let ctx = Context::mainnet()
             .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
             .with_db(BenchmarkDB::new_bytecode(bytecode))
             .modify_tx_chained(|tx| {
@@ -96,7 +138,9 @@ mod test {
                 tx.kind = TxKind::Call(auth);
             });
 
-        let ok = ctx.exec_previous().unwrap();
+        let mut evm = ctx.build_mainnet();
+
+        let ok = evm.exec_previous().unwrap();
 
         let auth_acc = ok.state.get(&auth).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));

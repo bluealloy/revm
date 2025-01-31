@@ -9,7 +9,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
     primitives::{address, TxKind, U256},
-    transact_main, Context,
+    transact_main, Context, MainBuilder, MainContext,
 };
 
 #[tokio::main]
@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // Initialise an empty (default) EVM
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(cache_db)
         .modify_tx_chained(|tx| {
             // fill in missing bits of env struct
@@ -77,10 +77,11 @@ async fn main() -> anyhow::Result<()> {
             tx.data = encoded.into();
             // transaction value in wei
             tx.value = U256::from(0);
-        });
+        })
+        .build_mainnet();
 
     // Execute transaction without writing to the DB
-    let ref_tx = transact_main(&mut ctx).unwrap();
+    let ref_tx = transact_main(&mut evm).unwrap();
     // Select ExecutionResult struct
     let result = ref_tx.result;
 

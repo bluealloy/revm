@@ -10,7 +10,9 @@ use alloy_provider::{
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
 use inspector::{exec::InspectCommitEvm, inspectors::TracerEip3155};
-use revm::{database_interface::WrapDatabaseAsync, primitives::TxKind, Context};
+use revm::{
+    database_interface::WrapDatabaseAsync, primitives::TxKind, Context, MainBuilder, MainContext,
+};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
@@ -72,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     let state_db = WrapDatabaseAsync::new(AlloyDB::new(client, prev_id)).unwrap();
     let cache_db: CacheDB<_> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
-    let mut ctx = Context::builder()
+    let mut ctx = Context::mainnet()
         .with_db(&mut state)
         .modify_block_chained(|b| {
             b.number = block.header.number;
@@ -85,7 +87,8 @@ async fn main() -> anyhow::Result<()> {
         })
         .modify_cfg_chained(|c| {
             c.chain_id = chain_id;
-        });
+        })
+        .build_mainnet();
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");

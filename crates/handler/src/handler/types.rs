@@ -1,33 +1,36 @@
-use super::EthHandler;
-use crate::{instructions::InstructionExecutor, EthPrecompileProvider, FrameContext, FrameResult};
+use super::{EthHandler, FrameContextTrait};
+use crate::{
+    instructions::{EthInstructionExecutor, InstructionExecutor},
+    precompile_provider::PrecompileProvider,
+    EthPrecompileProvider, FrameContext, FrameResult,
+};
+use auto_impl::auto_impl;
 use context::Context;
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
     Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, ErrorGetter, Journal,
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
-use handler_interface::{Frame, PrecompileProvider};
+use handler_interface::Frame;
 use interpreter::{interpreter::EthInterpreter, FrameInput, Host};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
 
-pub struct MainnetHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
-    pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS)>,
+pub struct MainnetHandler<CTX, ERROR, FRAME, FRAMECTX> {
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, FRAMECTX)>,
 }
 
-impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
-    for MainnetHandler<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+impl<CTX, ERROR, FRAME, FRAMECTX> EthHandler for MainnetHandler<CTX, ERROR, FRAME, FRAMECTX>
 where
     CTX: EthContext,
     ERROR: EthError<CTX>,
-    PRECOMPILES: PrecompileProvider<
+    FRAMECTX: FrameContextTrait<
         Context = CTX,
-        Error = ERROR,
-        Spec = <<CTX as CfgGetter>::Cfg as Cfg>::Spec,
+        Precompiles: PrecompileProvider,
+        Instructions: InstructionExecutor,
     >,
-    INSTRUCTIONS: InstructionExecutor<InterpreterTypes = EthInterpreter, CTX = CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<
@@ -35,19 +38,23 @@ where
         Error = ERROR,
         FrameResult = FrameResult,
         FrameInit = FrameInput,
-        FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>,
+        FrameContext = FRAMECTX,
     >,
 {
     type Context = CTX;
     type Error = ERROR;
     type Frame = FRAME;
-    type Precompiles = PRECOMPILES;
-    type Instructions = INSTRUCTIONS;
+    type FrameContext = FRAMECTX;
     type HaltReason = HaltReason;
 }
 
-impl<CTX: Host + CfgGetter, ERROR, FRAME, INSTRUCTIONS: Default> Default
-    for MainnetHandler<CTX, ERROR, FRAME, EthPrecompileProvider<CTX, ERROR>, INSTRUCTIONS>
+impl<CTX: Host + CfgGetter, ERROR, FRAME> Default
+    for MainnetHandler<
+        CTX,
+        ERROR,
+        FRAME,
+        FrameContext<EthPrecompileProvider<CTX>, EthInstructionExecutor<EthInterpreter, CTX>>,
+    >
 {
     fn default() -> Self {
         Self {
@@ -56,6 +63,7 @@ impl<CTX: Host + CfgGetter, ERROR, FRAME, INSTRUCTIONS: Default> Default
     }
 }
 
+#[auto_impl(&mut)]
 pub trait EthContext:
     TransactionGetter
     + BlockGetter
@@ -94,13 +102,13 @@ impl<
 {
 }
 
-impl<
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-        CHAIN,
-    > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-{
-}
+// impl<
+//         BLOCK: Block,
+//         TX: Transaction,
+//         CFG: Cfg,
+//         DB: Database,
+//         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+//         CHAIN,
+//     > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+// {
+// }
