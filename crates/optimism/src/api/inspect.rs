@@ -2,7 +2,7 @@ use crate::{
     context::OpContext,
     handler::{precompiles::OpPrecompileProvider, OpHandler},
     transaction::{abstraction::OpTxGetter, OpTxTrait},
-    L1BlockInfoGetter, OpSpec, OpTransactionError, OptimismHaltReason,
+    L1BlockInfoGetter, OpHaltReason, OpSpec, OpTransactionError,
 };
 use inspector::{
     exec::InspectEvm,
@@ -83,7 +83,7 @@ impl<
 
 pub fn inspect_op<DB, CTX>(
     ctx: &mut CTX,
-) -> Result<ResultAndState<OptimismHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>
+) -> Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>
 where
     DB: Database,
     CTX: EthContext
@@ -119,10 +119,7 @@ where
 
 pub fn inspect_op_commit<DB: Database + DatabaseCommit, CTX>(
     ctx: &mut CTX,
-) -> Result<
-    ExecutionResult<OptimismHaltReason>,
-    EVMError<<DB as Database>::Error, OpTransactionError>,
->
+) -> Result<ExecutionResult<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>
 where
     CTX: EthContext
         + OpTxGetter

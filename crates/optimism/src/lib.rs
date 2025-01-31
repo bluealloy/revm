@@ -18,6 +18,6 @@ pub mod transaction;
 pub use l1block::{
     L1BlockInfo, L1BlockInfoGetter, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT,
 };
-pub use result::OptimismHaltReason;
+pub use result::OpHaltReason;
 pub use spec::*;
 pub use transaction::{error::OpTransactionError, estimate_tx_compressed_size, OpTransaction};
