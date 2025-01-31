@@ -14,16 +14,16 @@ impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<HaltReasonT: HaltReasonTrait = HaltReason> {
+pub struct ResultAndState<HaltReasonT = HaltReason> {
     /// Status of execution
     pub result: ExecutionResult<HaltReasonT>,
     /// State that got updated
     pub state: EvmState,
 }
 
-impl<HaltReasonT: HaltReasonTrait> ResultAndState<HaltReasonT> {
+impl<HaltReasonT> ResultAndState<HaltReasonT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_haltreason<F, OHR: HaltReasonTrait>(self, op: F) -> ResultAndState<OHR>
+    pub fn map_haltreason<F, OHR>(self, op: F) -> ResultAndState<OHR>
     where
         F: FnOnce(HaltReasonT) -> OHR,
     {
@@ -37,7 +37,7 @@ impl<HaltReasonT: HaltReasonTrait> ResultAndState<HaltReasonT> {
 /// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult<HaltReasonT: HaltReasonTrait = HaltReason> {
+pub enum ExecutionResult<HaltReasonT = HaltReason> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -56,7 +56,7 @@ pub enum ExecutionResult<HaltReasonT: HaltReasonTrait = HaltReason> {
     },
 }
 
-impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
+impl<HaltReasonT> ExecutionResult<HaltReasonT> {
     /// Returns if transaction execution is successful.
     ///
     /// 1 indicates success, 0 indicates revert.
@@ -67,7 +67,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     }
 
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_haltreason<F, OHR: HaltReasonTrait>(self, op: F) -> ExecutionResult<OHR>
+    pub fn map_haltreason<F, OHR>(self, op: F) -> ExecutionResult<OHR>
     where
         F: FnOnce(HaltReasonT) -> OHR,
     {
