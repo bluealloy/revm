@@ -64,9 +64,11 @@ impl<M: Middleware> EthersDB<M> {
             rt,
         };
 
-        instance.block_number = Some(BlockId::from(
-            instance.block_on(instance.client.get_block_number()).ok()?,
-        ));
+        if block_number.is_none() {
+            instance.block_number = Some(BlockId::from(
+                instance.block_on(instance.client.get_block_number()).ok()?,
+            ));
+        };
         Some(instance)
     }
 
@@ -86,9 +88,11 @@ impl<M: Middleware> EthersDB<M> {
             rt,
         };
 
-        instance.block_number = Some(BlockId::from(
-            instance.block_on(instance.client.get_block_number()).ok()?,
-        ));
+        if block_number.is_none() {
+            instance.block_number = Some(BlockId::from(
+                instance.block_on(instance.client.get_block_number()).ok()?,
+            ));
+        };
         Some(instance)
     }
 
