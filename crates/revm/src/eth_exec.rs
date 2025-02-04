@@ -1,5 +1,5 @@
 use crate::{exec::ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext};
-use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Ctx, Evm, JournaledState, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Evm, EvmData, JournaledState, TxEnv};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
     Block, Database, Journal, Transaction,
@@ -34,7 +34,7 @@ where
         EthPrecompiles<Self::Context>,
     > {
         Evm {
-            ctx: Ctx {
+            data: EvmData {
                 ctx: self,
                 inspector: NoOpInspector {},
             },
@@ -54,7 +54,7 @@ where
         EthPrecompiles<Self::Context>,
     > {
         Evm {
-            ctx: Ctx {
+            data: EvmData {
                 ctx: self,
                 inspector,
             },

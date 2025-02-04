@@ -59,9 +59,9 @@ where
         >,
     ) -> <Self::Instructions as InstructionExecutor>::Output {
         let inspect = self.enabled_inspection;
-        let context = &mut self.ctx.ctx;
+        let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
-        let inspector = &mut self.ctx.inspector;
+        let inspector = &mut self.data.inspector;
         if inspect {
             let instructions = instructions.inspector_instruction_table();
             interpreter.reset_control();
@@ -100,23 +100,23 @@ where
     }
 
     fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.ctx.ctx
+        &mut self.data.ctx
     }
 
     fn ctx_ref(&self) -> &Self::Context {
-        &self.ctx.ctx
+        &self.data.ctx
     }
 
     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.ctx.ctx, &mut self.ctx.inspector)
+        (&mut self.data.ctx, &mut self.data.inspector)
     }
 
     fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.ctx.ctx, &mut self.instruction)
+        (&mut self.data.ctx, &mut self.instruction)
     }
 
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.ctx.ctx, &mut self.precompiles)
+        (&mut self.data.ctx, &mut self.precompiles)
     }
 }
 

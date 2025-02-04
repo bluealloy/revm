@@ -1,7 +1,7 @@
 use crate::{
     exec::ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
-use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Ctx, Evm, JournaledState, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Evm, JournaledState, TxEnv};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
     Block, Database, Journal, Transaction,
@@ -37,7 +37,7 @@ where
     type Inspector = INSP;
 
     fn set_inspector(&mut self, inspector: Self::Inspector) {
-        self.ctx.inspector = inspector;
+        self.data.inspector = inspector;
     }
 
     fn inspect_previous(&mut self) -> Self::Output {

@@ -18,13 +18,13 @@ use primitives::U256;
 use specification::hardfork::SpecId;
 
 pub struct Evm<CTX, INSP, I, P> {
-    pub ctx: Ctx<CTX, INSP>,
+    pub data: EvmData<CTX, INSP>,
     pub enabled_inspection: bool,
     pub instruction: I,
     pub precompiles: P,
 }
 
-pub struct Ctx<CTX, INSP> {
+pub struct EvmData<CTX, INSP> {
     pub ctx: CTX,
     pub inspector: INSP,
 }
@@ -32,7 +32,7 @@ pub struct Ctx<CTX, INSP> {
 impl<CTX> Evm<CTX, (), (), ()> {
     pub fn new(ctx: CTX) -> Self {
         Evm {
-            ctx: Ctx { ctx, inspector: () },
+            data: EvmData { ctx, inspector: () },
             enabled_inspection: false,
             instruction: (),
             precompiles: (),
@@ -79,11 +79,11 @@ impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
     type Block = <CTX as ContextSetters>::Block;
 
     fn set_tx(&mut self, tx: Self::Tx) {
-        self.ctx.ctx.set_tx(tx);
+        self.data.ctx.set_tx(tx);
     }
 
     fn set_block(&mut self, block: Self::Block) {
-        self.ctx.ctx.set_block(block);
+        self.data.ctx.set_block(block);
     }
 }
 
@@ -91,13 +91,13 @@ impl<CTX, INSP, I, P> Deref for Evm<CTX, INSP, I, P> {
     type Target = CTX;
 
     fn deref(&self) -> &Self::Target {
-        &self.ctx.ctx
+        &self.data.ctx
     }
 }
 
 impl<CTX, INSP, I, P> DerefMut for Evm<CTX, INSP, I, P> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.ctx.ctx
+        &mut self.data.ctx
     }
 }
 
