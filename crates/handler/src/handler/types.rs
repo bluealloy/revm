@@ -1,61 +1,38 @@
-use super::{EthHandler, FrameContextTrait};
-use crate::{
-    instructions::{EthInstructionExecutor, InstructionExecutor},
-    precompile_provider::PrecompileProvider,
-    EthPrecompileProvider, FrameContext, FrameResult,
-};
+use super::{EthHandler, EthTraitError};
+use crate::FrameResult;
 use auto_impl::auto_impl;
-use context::Context;
+use context::{Context, ContextTrait, EvmTypesTrait};
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
     Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, ErrorGetter, Journal,
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
 use handler_interface::Frame;
-use interpreter::{interpreter::EthInterpreter, FrameInput, Host};
+use interpreter::{FrameInput, Host};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
 
-pub struct MainnetHandler<CTX, ERROR, FRAME, FRAMECTX> {
-    pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, FRAMECTX)>,
+pub struct MainnetHandler<CTX, ERROR, FRAME> {
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME)>,
 }
 
-impl<CTX, ERROR, FRAME, FRAMECTX> EthHandler for MainnetHandler<CTX, ERROR, FRAME, FRAMECTX>
+impl<CTX, ERROR, FRAME> EthHandler for MainnetHandler<CTX, ERROR, FRAME>
 where
-    CTX: EthContext,
-    ERROR: EthError<CTX>,
-    FRAMECTX: FrameContextTrait<
-        Context = CTX,
-        Precompiles: PrecompileProvider,
-        Instructions: InstructionExecutor,
-    >,
+    CTX: EvmTypesTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
+    ERROR: EthTraitError<CTX>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: Frame<
-        Context = CTX,
-        Error = ERROR,
-        FrameResult = FrameResult,
-        FrameInit = FrameInput,
-        FrameContext = FRAMECTX,
-    >,
+    FRAME: Frame<Context = CTX, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
 {
-    type Context = CTX;
+    type Evm = CTX;
     type Error = ERROR;
     type Frame = FRAME;
-    type FrameContext = FRAMECTX;
     type HaltReason = HaltReason;
 }
 
-impl<CTX: Host + CfgGetter, ERROR, FRAME> Default
-    for MainnetHandler<
-        CTX,
-        ERROR,
-        FRAME,
-        FrameContext<EthPrecompileProvider<CTX>, EthInstructionExecutor<EthInterpreter, CTX>>,
-    >
-{
+impl<CTX: ContextTrait + Host, ERROR, FRAME> Default for MainnetHandler<CTX, ERROR, FRAME> {
     fn default() -> Self {
         Self {
             _phantom: core::marker::PhantomData,

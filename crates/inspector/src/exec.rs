@@ -26,47 +26,46 @@ use revm::{
 };
 use std::rc::Rc;
 
-pub trait InspectEvm<INTR: InterpreterTypes, CTX>: ExecuteEvm {
-    fn inspect<'a, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output
-    where
-        INSP: Inspector<&'a mut CTX, INTR> + 'a,
-        CTX: 'a,
-    {
-        self.set_tx(tx);
-        self.inspect_previous(inspector)
-    }
+// pub trait InspectEvm<INTR: InterpreterTypes, CTX>: ExecuteEvm {
+//     fn inspect<'a, INSP>(&'a mut self, tx: Self::Transaction, inspector: INSP) -> Self::Output
+//     where
+//         INSP: Inspector<&'a mut CTX, INTR> + 'a,
+//         CTX: 'a,
+//     {
+//         self.set_tx(tx);
+//         self.inspect_previous(inspector)
+//     }
 
-    /// Drawback if inspector overlives the context it will take the mutable reference
-    /// of it and inspector needs to be dropped to release the mutable reference.
-    fn inspect_previous<'a, INSP>(&'a mut self, inspector: INSP) -> Self::Output
-    where
-        INSP: Inspector<&'a mut CTX, INTR> + 'a,
-        CTX: 'a;
-}
+//     /// Drawback if inspector overlives the context it will take the mutable reference
+//     /// of it and inspector needs to be dropped to release the mutable reference.
+//     fn inspect_previous<'a, INSP>(&'a mut self, inspector: INSP) -> Self::Output
+//     where
+//         INSP: Inspector<&'a mut CTX, INTR> + 'a,
+//         CTX: 'a;
+// }
 
-impl<
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-        CHAIN,
-    > InspectEvm<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>
-    for MEVM<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        FrameContext<
-            EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-            EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        >,
-    >
-{
-    fn inspect_previous<'a, INSP>(&'a mut self, inspector: INSP) -> Self::Output
-    where
-        INSP: Inspector<&'a mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter> + 'a,
-    {
-        inspect_main(&mut self.ctx, &mut self.frame_ctx, inspector)
-    }
-}
+// impl<
+//         BLOCK: Block,
+//         TX: Transaction,
+//         CFG: Cfg,
+//         DB: Database,
+//         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
+//         CHAIN,
+//         INSP,
+//     > InspectEvm<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>
+//     for MEVM<
+//         Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
+//         FrameContext<
+//             EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//             EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//         >,
+//         INSP,
+//     >
+// {
+//     fn inspect_previous(&mut self, inspector: INSP) -> Self::Output {
+//         inspect_main(&mut self.ctx, &mut self.frame_ctx, inspector)
+//     }
+// }
 
 // pub trait InspectCommitEvm<INTR: InterpreterTypes>: InspectEvm<INTR> + ExecuteCommitEvm {
 //     fn inspect_commit<'a, 'b, INSP>(
@@ -104,19 +103,19 @@ impl<
 //     }
 // }
 
-pub fn on_memv<'a, CTX, INSP>(
-    evm: &'a mut MEVM<
+pub fn on_memv<CTX, INSP>(
+    evm: &mut MEVM<
         CTX,
         FrameContext<EthPrecompileProvider<CTX>, EthInstructionExecutor<EthInterpreter, CTX>>,
+        INSP,
     >,
-    inspector: INSP,
 ) -> Result<
     ResultAndState<HaltReason>,
     EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, InvalidTransaction>,
 >
 where
-    CTX: EthContext + JournalExtGetter + 'a,
-    INSP: Inspector<&'a mut CTX, EthInterpreter> + 'a,
+    CTX: EthContext + JournalExtGetter,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
     let (ctx, framectx) = evm.all_mut();
 
@@ -138,7 +137,7 @@ pub fn inspect_main<'a, CTX, INSP>(
 >
 where
     CTX: EthContext + JournalExtGetter + 'a,
-    INSP: Inspector<&'a mut CTX, EthInterpreter> + 'a,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
     //let t = transact_main(evm);
     let mut insp = InspectorHandlerImpl::<_, _, _, _, _>::new(MainnetHandler::<

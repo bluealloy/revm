@@ -3,6 +3,7 @@ pub mod performant_access;
 use core::ops::{Deref, DerefMut};
 
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
+use auto_impl::auto_impl;
 use context_interface::{
     block::BlockSetter, transaction::TransactionSetter, Block, BlockGetter, Cfg, CfgGetter,
     DatabaseGetter, ErrorGetter, Journal, JournalGetter, Transaction, TransactionGetter,
@@ -10,60 +11,120 @@ use context_interface::{
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use interpreter::Host;
+use primitives::U256;
 use specification::hardfork::SpecId;
 
-pub struct MEVM<CTX, FRAMECTX> {
-    pub ctx: CTX,
-    pub frame_ctx: FRAMECTX,
+pub struct Evm<CTX, INSP, I, P> {
+    pub ctx: Ctx<CTX, INSP>,
+    pub instruction: I,
+    pub precompiles: P,
 }
 
-impl<CTX, FRAMECTX> MEVM<CTX, FRAMECTX> {
-    pub fn all_mut(&mut self) -> (&mut CTX, &mut FRAMECTX) {
-        (&mut self.ctx, &mut self.frame_ctx)
-    }
+pub struct Ctx<CTX, INSP> {
+    pub ctx: CTX,
+    pub inspector: INSP,
+}
 
-    pub fn new(ctx: CTX, frame_ctx: FRAMECTX) -> Self {
-        MEVM { ctx, frame_ctx }
-    }
-
-    pub fn into_compontents(self) -> (CTX, FRAMECTX) {
-        (self.ctx, self.frame_ctx)
-    }
-
-    pub fn into_context(self) -> CTX {
-        self.ctx
-    }
-
-    pub fn ctx(&mut self) -> &mut CTX {
-        &mut self.ctx
-    }
-
-    pub fn frame_ctx(&mut self) -> &mut FRAMECTX {
-        &mut self.frame_ctx
-    }
-
-    pub fn modify_ctx<F, OCTX>(self, f: F) -> MEVM<OCTX, FRAMECTX>
-    where
-        F: FnOnce(CTX) -> OCTX,
-    {
-        MEVM {
-            ctx: f(self.ctx),
-            frame_ctx: self.frame_ctx,
+impl<CTX> Evm<CTX, (), (), ()> {
+    pub fn new(ctx: CTX) -> Self {
+        Evm {
+            ctx: Ctx { ctx, inspector: () },
+            instruction: (),
+            precompiles: (),
         }
     }
 }
 
-impl<CTX, FRAMECTX> Deref for MEVM<CTX, FRAMECTX> {
-    type Target = CTX;
+impl<CTX: ContextTrait, INSP, I, P> EvmTypesTrait for Evm<CTX, INSP, I, P> {
+    type Context = CTX;
+    type Inspector = INSP;
+    type Instructions = I;
+    type Precompiles = P;
 
-    fn deref(&self) -> &Self::Target {
-        &self.ctx
+    fn ctx(&mut self) -> &mut Self::Context {
+        &mut self.ctx.ctx
+    }
+
+    fn ctx_ref(&self) -> &Self::Context {
+        &self.ctx.ctx
+    }
+
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
+        (&mut self.ctx.ctx, &mut self.ctx.inspector)
+    }
+
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
+        (&mut self.ctx.ctx, &mut self.instruction)
+    }
+
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
+        (&mut self.ctx.ctx, &mut self.precompiles)
     }
 }
 
-impl<CTX, FRAMECTX> DerefMut for MEVM<CTX, FRAMECTX> {
+#[auto_impl(&mut, Box)]
+pub trait EvmTypesTrait {
+    type Context: ContextTrait;
+    type Inspector;
+    type Instructions;
+    type Precompiles;
+
+    fn ctx(&mut self) -> &mut Self::Context;
+
+    fn ctx_ref(&self) -> &Self::Context;
+
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
+
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
+
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
+}
+
+// }
+// impl<CTX, FRAMECTX, INSP> MEVM<CTX, FRAMECTX, INSP> {
+//     pub fn all_mut(&mut self) -> (&mut CTX, &mut FRAMECTX) {
+//         (&mut self.ctx, &mut self.frame_ctx)
+//     }
+
+//     pub fn into_compontents(self) -> (CTX, FRAMECTX) {
+//         (self.ctx, self.frame_ctx)
+//     }
+
+//     pub fn into_context(self) -> CTX {
+//         self.ctx
+//     }
+
+//     pub fn ctx(&mut self) -> &mut CTX {
+//         &mut self.ctx
+//     }
+
+//     pub fn frame_ctx(&mut self) -> &mut FRAMECTX {
+//         &mut self.frame_ctx
+//     }
+
+//     pub fn modify_ctx<F, OCTX>(self, f: F) -> MEVM<OCTX, FRAMECTX, INSP>
+//     where
+//         F: FnOnce(CTX) -> OCTX,
+//     {
+//         MEVM {
+//             ctx: f(self.ctx),
+//             frame_ctx: self.frame_ctx,
+//             inspector: self.inspector,
+//         }
+//     }
+// }
+
+impl<CTX, INSP, I, P> Deref for Evm<CTX, INSP, I, P> {
+    type Target = CTX;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ctx.ctx
+    }
+}
+
+impl<CTX, INSP, I, P> DerefMut for Evm<CTX, INSP, I, P> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.ctx
+        &mut self.ctx.ctx
     }
 }
 
@@ -89,6 +150,99 @@ pub struct Context<
     pub chain: CHAIN,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
+}
+
+#[auto_impl(&mut, Box)]
+pub trait ContextTrait {
+    type Block: Block;
+    type Tx: Transaction;
+    type Cfg: Cfg;
+    type Db: Database;
+    type Journal: Journal<Database = Self::Db>;
+    type Chain;
+
+    fn tx(&self) -> &Self::Tx;
+    fn block(&self) -> &Self::Block;
+    fn cfg(&self) -> &Self::Cfg;
+    fn journal(&mut self) -> &mut Self::Journal;
+    fn journal_ref(&self) -> &Self::Journal;
+    fn db(&mut self) -> &mut Self::Db;
+    fn db_ref(&self) -> &Self::Db;
+    fn chain(&mut self) -> &mut Self::Chain;
+    fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error>;
+
+    // Performant load of access list
+    fn load_access_list(&mut self) -> Result<(), <Self::Db as Database>::Error>;
+    // TODO do a default impls where access list from tx is completly copied and
+    // loaded from journal.
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        DB: Database,
+        CFG: Cfg,
+        JOURNAL: Journal<Database = DB>,
+        CHAIN,
+    > ContextTrait for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+    type Block = BLOCK;
+    type Tx = TX;
+    type Cfg = CFG;
+    type Db = DB;
+    type Journal = JOURNAL;
+    type Chain = CHAIN;
+
+    fn tx(&self) -> &Self::Tx {
+        &self.tx
+    }
+
+    fn block(&self) -> &Self::Block {
+        &self.block
+    }
+
+    fn cfg(&self) -> &Self::Cfg {
+        &self.cfg
+    }
+
+    fn journal(&mut self) -> &mut Self::Journal {
+        &mut self.journaled_state
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.journaled_state
+    }
+
+    fn db(&mut self) -> &mut Self::Db {
+        self.journaled_state.db()
+    }
+
+    fn db_ref(&self) -> &Self::Db {
+        self.journaled_state.db_ref()
+    }
+
+    fn chain(&mut self) -> &mut Self::Chain {
+        &mut self.chain
+    }
+
+    fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error> {
+        &mut self.error
+    }
+
+    fn load_access_list(&mut self) -> Result<(), <Self::Db as Database>::Error> {
+        let journal = &mut self.journaled_state;
+        let tx = &mut self.tx;
+        let Some(access_list) = tx.access_list() else {
+            return Ok(());
+        };
+        for access_list in access_list {
+            journal.warm_account_and_storage(
+                *access_list.0,
+                access_list.1.iter().map(|i| U256::from_be_bytes(i.0)),
+            )?;
+        }
+        Ok(())
+    }
 }
 
 impl<
@@ -423,32 +577,31 @@ impl<BLOCK: Block, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAI
         self.block = block;
     }
 }
-/********    MEVEM block/tx setters/getters     *****/
+// /********    MEVEM block/tx setters/getters     *****/
+// impl<CTX: BlockGetter, FRAMECTX, INSP> BlockGetter for MEVM<CTX, FRAMECTX, INSP> {
+//     type Block = <CTX as BlockGetter>::Block;
 
-impl<CTX: BlockGetter, FRAMECTX> BlockGetter for MEVM<CTX, FRAMECTX> {
-    type Block = <CTX as BlockGetter>::Block;
+//     fn block(&self) -> &Self::Block {
+//         self.ctx.block()
+//     }
+// }
 
-    fn block(&self) -> &Self::Block {
-        self.ctx.block()
-    }
-}
+// impl<CTX: BlockSetter, FRAMECTX, INSP> BlockSetter for MEVM<CTX, FRAMECTX, INSP> {
+//     fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+//         self.ctx.set_block(block);
+//     }
+// }
 
-impl<CTX: BlockSetter, FRAMECTX> BlockSetter for MEVM<CTX, FRAMECTX> {
-    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
-        self.ctx.set_block(block);
-    }
-}
+// impl<CTX: TransactionGetter, FRAMECTX, INSP> TransactionGetter for MEVM<CTX, FRAMECTX, INSP> {
+//     type Transaction = <CTX as TransactionGetter>::Transaction;
 
-impl<CTX: TransactionGetter, FRAMECTX> TransactionGetter for MEVM<CTX, FRAMECTX> {
-    type Transaction = <CTX as TransactionGetter>::Transaction;
+//     fn tx(&self) -> &Self::Transaction {
+//         self.ctx.tx()
+//     }
+// }
 
-    fn tx(&self) -> &Self::Transaction {
-        self.ctx.tx()
-    }
-}
-
-impl<CTX: TransactionSetter, FRAMECTX> TransactionSetter for MEVM<CTX, FRAMECTX> {
-    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
-        self.ctx.set_tx(tx);
-    }
-}
+// impl<CTX: TransactionSetter, FRAMECTX, INSP> TransactionSetter for MEVM<CTX, FRAMECTX, INSP> {
+//     fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
+//         self.ctx.set_tx(tx);
+//     }
+// }

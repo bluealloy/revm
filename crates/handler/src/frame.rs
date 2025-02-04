@@ -1,13 +1,11 @@
-use crate::{
-    handler::FrameContextTrait, instructions::InstructionExecutor,
-    precompile_provider::PrecompileProvider,
-};
+use crate::{instructions::InstructionExecutor, precompile_provider::PrecompileProvider};
 
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
+use context::{ContextTrait, EvmTypesTrait};
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
-    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    BlockGetter, Cfg, CfgGetter, Database, ErrorGetter, JournalDBError, JournalGetter, Transaction,
     TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
@@ -31,8 +29,8 @@ use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{rc::Rc, sync::Arc};
 
-pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> {
-    _phantom: core::marker::PhantomData<(FRAMECTX, CTX, ERROR)>,
+pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
+    phantom: core::marker::PhantomData<(CTX, ERROR)>,
     data: FrameData,
     /// Depth of the call frame.
     depth: usize,
@@ -44,9 +42,55 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAMECTX> {
     pub memory: Rc<RefCell<SharedMemory>>,
 }
 
-impl<CTX, IW, ERROR, FRAMECTX> EthFrame<CTX, ERROR, IW, FRAMECTX>
+impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter<()>>
 where
-    CTX: JournalGetter,
+    EVM: EvmTypesTrait<
+        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Instructions: InstructionExecutor<
+            Context = EVM::Context,
+            InterpreterTypes = EthInterpreter<()>,
+            Output = InterpreterAction,
+        >,
+    >,
+    ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
+{
+    type Context = EVM;
+    type FrameInit = FrameInput;
+    type FrameResult = FrameResult;
+    type Error = ERROR;
+
+    fn init_first(
+        context: &mut Self::Context,
+        frame_input: Self::FrameInit,
+    ) -> Result<handler_interface::FrameOrResult<Self>, Self::Error> {
+        EthFrame::init_first(context, frame_input)
+    }
+
+    fn init(
+        &self,
+        context: &mut Self::Context,
+        frame_input: Self::FrameInit,
+    ) -> Result<handler_interface::FrameOrResult<Self>, Self::Error> {
+        self.init(context, frame_input)
+    }
+
+    fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error> {
+        self.run(context)
+    }
+
+    fn return_result(
+        &mut self,
+        context: &mut Self::Context,
+        result: Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        self.return_result(context, result)
+    }
+}
+
+pub type CtxTraitDbError<CTX> = <<CTX as ContextTrait>::Db as Database>::Error;
+
+impl<CTX, ERROR, IW> EthFrame<CTX, ERROR, IW>
+where
     IW: InterpreterTypes,
 {
     pub fn new(
@@ -57,7 +101,7 @@ where
         memory: Rc<RefCell<SharedMemory>>,
     ) -> Self {
         Self {
-            _phantom: core::marker::PhantomData,
+            phantom: Default::default(),
             data,
             depth,
             interpreter,
@@ -67,26 +111,26 @@ where
     }
 }
 
-impl<CTX, ERROR, FRAMECTX> EthFrame<CTX, ERROR, EthInterpreter, FRAMECTX>
+impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
-    CTX: EthFrameContext,
-    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    FRAMECTX: FrameContextTrait<
-        Context = CTX,
-        Precompiles: PrecompileProvider<Output = InterpreterResult>,
+    EVM: EvmTypesTrait<
+        Context: ContextTrait,
+        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor,
     >,
+    ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
-        context: &mut CTX,
-        frame_context: &mut FRAMECTX,
+        evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
+
+        let (context, precompiles) = evm.ctx_precompiles();
 
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
@@ -127,7 +171,7 @@ where
         }
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         if !is_ext_delegate_call {
-            if let Some(result) = frame_context.precompiles().run(
+            if let Some(result) = precompiles.run(
                 context,
                 &inputs.bytecode_address,
                 &inputs.input,
@@ -202,11 +246,12 @@ where
     /// Make create frame.
     #[inline]
     pub fn make_create_frame(
-        context: &mut CTX,
+        evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CreateInputs,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+        let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -304,11 +349,12 @@ where
     /// Make create frame.
     #[inline]
     pub fn make_eofcreate_frame(
-        context: &mut CTX,
+        evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &EOFCreateInputs,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+        let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::EOFCreate(
@@ -415,120 +461,64 @@ where
     }
 
     pub fn init_with_context(
+        evm: &mut EVM,
         depth: usize,
         frame_init: FrameInput,
         memory: Rc<RefCell<SharedMemory>>,
-        context: &mut CTX,
-        frame_context: &mut FRAMECTX,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         match frame_init {
-            FrameInput::Call(inputs) => {
-                Self::make_call_frame(context, frame_context, depth, memory, &inputs)
-            }
-            FrameInput::Create(inputs) => Self::make_create_frame(context, depth, memory, &inputs),
+            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, &inputs),
+            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, &inputs),
             FrameInput::EOFCreate(inputs) => {
-                Self::make_eofcreate_frame(context, depth, memory, &inputs)
+                Self::make_eofcreate_frame(evm, depth, memory, &inputs)
             }
         }
     }
 }
 
-pub struct FrameContext<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionExecutor> {
-    pub precompiles: PRECOMPILE,
-    pub instructions: INSTRUCTION,
-}
-
-impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionExecutor>
-    FrameContext<PRECOMPILE, INSTRUCTION>
-{
-    pub fn new(precompiles: PRECOMPILE, instructions: INSTRUCTION) -> Self {
-        Self {
-            precompiles,
-            instructions,
-        }
-    }
-}
-
-impl<CTX, PRECOMPILE, INSTRUCTION> FrameContextTrait for FrameContext<PRECOMPILE, INSTRUCTION>
+impl<CTX, ERROR> EthFrame<CTX, ERROR, EthInterpreter<()>>
 where
-    PRECOMPILE: PrecompileProvider<Context = CTX>,
-    INSTRUCTION: InstructionExecutor<CTX = CTX>,
-{
-    type Context = CTX;
-    type Precompiles = PRECOMPILE;
-    type Instructions = INSTRUCTION;
-
-    fn precompiles(&mut self) -> &mut Self::Precompiles {
-        &mut self.precompiles
-    }
-
-    fn instructions(&mut self) -> &mut Self::Instructions {
-        &mut self.instructions
-    }
-}
-
-impl<CTX, ERROR, FRAMECTX> Frame for EthFrame<CTX, ERROR, EthInterpreter<()>, FRAMECTX>
-where
-    CTX: EthFrameContext,
-    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    FRAMECTX: FrameContextTrait<
-        Context = CTX,
-        Precompiles: PrecompileProvider<Output = InterpreterResult>,
+    CTX: EvmTypesTrait<
+        Context: ContextTrait,
+        Precompiles: PrecompileProvider<Context = CTX::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor<
+            Context = CTX::Context,
             InterpreterTypes = EthInterpreter<()>,
             Output = InterpreterAction,
         >,
     >,
+    ERROR: From<CtxTraitDbError<CTX::Context>> + From<PrecompileErrors>,
 {
-    type Context = CTX;
-    type Error = ERROR;
-    type FrameInit = FrameInput;
-    type FrameContext = FRAMECTX;
-    type FrameResult = FrameResult;
-
-    fn init_first(
-        context: &mut Self::Context,
-        frame_context: &mut Self::FrameContext,
-        frame_input: Self::FrameInit,
-    ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
+    pub fn init_first(
+        evm: &mut CTX,
+        frame_input: FrameInput,
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
-
-        frame_context.precompiles().set_spec(context.cfg().spec());
+        let (context, precompiles) = evm.ctx_precompiles();
+        precompiles.set_spec(context.cfg().spec());
         context
             .journal()
-            .warm_precompiles(frame_context.precompiles().warm_addresses().collect());
+            .warm_precompiles(precompiles.warm_addresses().collect());
 
         memory.borrow_mut().new_context();
-        Self::init_with_context(0, frame_input, memory, context, frame_context)
+        Self::init_with_context(evm, 0, frame_input, memory)
     }
 
     fn init(
         &self,
         context: &mut CTX,
-        frame_context: &mut Self::FrameContext,
-        frame_init: Self::FrameInit,
-    ) -> Result<ItemOrResult<Self, Self::FrameResult>, Self::Error> {
+        frame_init: FrameInput,
+    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         self.memory.borrow_mut().new_context();
-        Self::init_with_context(
-            self.depth + 1,
-            frame_init,
-            self.memory.clone(),
-            context,
-            frame_context,
-        )
+        Self::init_with_context(context, self.depth + 1, frame_init, self.memory.clone())
     }
 
-    fn run(
-        &mut self,
-        context: &mut Self::Context,
-        frame_context: &mut Self::FrameContext,
-    ) -> Result<FrameInitOrResult<Self>, Self::Error> {
+    pub fn run(&mut self, evm: &mut CTX) -> Result<FrameInitOrResult<Self>, ERROR> {
+        let (context, instructions) = evm.ctx_instructions();
         let spec = context.cfg().spec().into();
 
         // Run interpreter
-        let next_action = frame_context
-            .instructions()
-            .run(context, &mut self.interpreter);
+        let next_action = instructions.run(context, &mut self.interpreter);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
@@ -587,14 +577,9 @@ where
         Ok(result)
     }
 
-    fn return_result(
-        &mut self,
-        context: &mut Self::Context,
-        _frame_context: &mut Self::FrameContext,
-        result: Self::FrameResult,
-    ) -> Result<(), Self::Error> {
+    fn return_result(&mut self, context: &mut CTX, result: FrameResult) -> Result<(), ERROR> {
         self.memory.borrow_mut().free_context();
-        context.take_error()?;
+        core::mem::replace(context.ctx().error(), Ok(()))?;
 
         // Insert result to the top frame.
         match result {

@@ -1,54 +1,51 @@
-use crate::{
-    exec::{MainBuilder, MainContext},
-    ExecuteCommitEvm, ExecuteEvm,
-};
-use context::{BlockEnv, Cfg, CfgEnv, Context, JournaledState, TxEnv, MEVM};
+use crate::{exec::MainContext, ExecuteEvm};
+use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Evm, JournaledState, TxEnv};
 use context_interface::{
-    result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    Block, Database, DatabaseGetter, Journal, Transaction,
+    result::{EVMError, HaltReason, InvalidTransaction, ResultAndState},
+    Block, Database, Journal, Transaction,
 };
-use database_interface::{DatabaseCommit, EmptyDB};
+use database_interface::EmptyDB;
 use handler::{
-    instructions::EthInstructionExecutor, EthContext, EthFrame, EthHandler, EthPrecompileProvider,
-    FrameContext, MainnetHandler,
+    instructions::EthInstructionExecutor, EthFrame, EthHandler, EthPrecompileProvider,
+    MainnetHandler,
 };
-use interpreter::interpreter::EthInterpreter;
+use interpreter::{interpreter::EthInterpreter, Host};
 use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-{
-    type FrameContext = FrameContext<
-        EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-    >;
+// impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+// where
+//     BLOCK: Block,
+//     TX: Transaction,
+//     CFG: Cfg,
+//     DB: Database,
+//     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+// {
+//     type FrameContext = FrameContext<
+//         EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//         EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//     >;
 
-    fn build_mainnet(self) -> MEVM<Self, Self::FrameContext> {
-        MEVM {
-            ctx: self,
-            frame_ctx: FrameContext::new(
-                EthPrecompileProvider::default(),
-                EthInstructionExecutor::default(),
-            ),
-        }
-    }
-}
+//     fn build_mainnet(self) -> MEVM<Self, Self::FrameContext, ()> {
+//         MEVM {
+//             ctx: self,
+//             frame_ctx: FrameContext::new(
+//                 EthPrecompileProvider::default(),
+//                 EthInstructionExecutor::default(),
+//             ),
+//             inspector: (),
+//         }
+//     }
+// }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteEvm
-    for MEVM<
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> ExecuteEvm
+    for Evm<
         Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        FrameContext<
-            EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-            EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        >,
+        INSP,
+        EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+        EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
     >
 where
     BLOCK: Block,
@@ -65,42 +62,53 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> ExecuteCommitEvm
-    for MEVM<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        FrameContext<
-            EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-            EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        >,
-    >
-where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-{
-    type CommitOutput =
-        Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+// impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> ExecuteCommitEvm
+//     for MEVM<
+//         Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
+//         FrameContext<
+//             EthPrecompileProvider<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//             EthInstructionExecutor<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
+//         >,
+//         INSP,
+//     >
+// where
+//     BLOCK: Block,
+//     TX: Transaction,
+//     CFG: Cfg,
+//     DB: Database + DatabaseCommit,
+//     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+// {
+//     type CommitOutput =
+//         Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
 
-    fn exec_commit_previous(&mut self) -> Self::CommitOutput {
-        transact_main(self).map(|r| {
-            self.ctx.db().commit(r.state);
-            r.result
-        })
-    }
-}
+//     fn exec_commit_previous(&mut self) -> Self::CommitOutput {
+//         transact_main(self).map(|r| {
+//             self.ctx.db().commit(r.state);
+//             r.result
+//         })
+//     }
+// }
 
-pub fn transact_main<CTX: EthContext>(
-    evm: &mut MEVM<
+pub fn transact_main<CTX: ContextTrait + Host, INSP>(
+    evm: &mut Evm<
         CTX,
-        FrameContext<EthPrecompileProvider<CTX>, EthInstructionExecutor<EthInterpreter, CTX>>,
+        INSP,
+        EthInstructionExecutor<EthInterpreter, CTX>,
+        EthPrecompileProvider<CTX>,
     >,
-) -> Result<
-    ResultAndState<HaltReason>,
-    EVMError<<<CTX as DatabaseGetter>::Database as Database>::Error, InvalidTransaction>,
-> {
-    MainnetHandler::<CTX, _, EthFrame<CTX, _, _, _>, _>::default().run(evm)
+) -> Result<ResultAndState<HaltReason>, EVMError<<CTX::Db as Database>::Error, InvalidTransaction>>
+where
+    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+{
+    let mut t = MainnetHandler::<
+        _,
+        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
+        EthFrame<_, _, _>,
+    > {
+        _phantom: core::marker::PhantomData,
+    };
+
+    t.run(evm)
 }
 
 impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<EmptyDB>, ()> {
@@ -116,6 +124,7 @@ mod test {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
+    use context::Ctx;
     use context_interface::TransactionType;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{address, TxKind, U256};
@@ -138,9 +147,17 @@ mod test {
                 tx.kind = TxKind::Call(auth);
             });
 
-        let mut evm = ctx.build_mainnet();
+        let mut evm = Evm {
+            ctx: Ctx { ctx, inspector: () },
+            instruction: EthInstructionExecutor::default(),
+            precompiles: EthPrecompileProvider::default(),
+        };
 
-        let ok = evm.exec_previous().unwrap();
+        let ok = transact_main(&mut evm).unwrap();
+
+        // let mut evm = ctx.build_mainnet();
+
+        // let ok = evm.exec_previous().unwrap();
 
         let auth_acc = ok.state.get(&auth).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));

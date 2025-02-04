@@ -5,13 +5,13 @@ use interpreter::{
 use std::rc::Rc;
 
 pub trait InstructionExecutor {
-    type CTX;
+    type Context;
     type InterpreterTypes: InterpreterTypes;
     type Output;
 
     fn run(
         &mut self,
-        context: &mut Self::CTX,
+        context: &mut Self::Context,
         interpreter: &mut Interpreter<Self::InterpreterTypes>,
     ) -> Self::Output;
 }
@@ -59,14 +59,14 @@ where
     CTX: Host,
 {
     type InterpreterTypes = IT;
-    type CTX = CTX;
+    type Context = CTX;
     /// TODO Interpreter action could be tied to InterpreterTypes so we can
     /// set custom actions from instructions.
     type Output = InterpreterAction;
 
     fn run(
         &mut self,
-        context: &mut Self::CTX,
+        context: &mut Self::Context,
         interpreter: &mut Interpreter<Self::InterpreterTypes>,
     ) -> Self::Output {
         interpreter.run_plain(self.instruction_table.as_ref(), context)

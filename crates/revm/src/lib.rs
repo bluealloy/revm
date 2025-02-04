@@ -28,5 +28,5 @@ mod exec_eth;
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use exec::{ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext};
+pub use exec::{ExecuteEvm, MainContext};
 pub use exec_eth::transact_main;

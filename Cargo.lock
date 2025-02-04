@@ -3334,6 +3334,7 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "cfg-if",
  "derive-where",
  "revm-bytecode",

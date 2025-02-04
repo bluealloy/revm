@@ -1,5 +1,6 @@
 use super::frame_data::FrameResult;
 use bytecode::EOF_MAGIC_BYTES;
+use context::ContextTrait;
 use context_interface::{Transaction, TransactionGetter};
 use interpreter::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
@@ -49,7 +50,7 @@ pub fn create_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) ->
 }
 
 /// TODO : Frame result should be a generic trait with needed functions.
-pub fn last_frame_result<CTX: TransactionGetter>(context: CTX, frame_result: &mut FrameResult) {
+pub fn last_frame_result<CTX: ContextTrait>(context: CTX, frame_result: &mut FrameResult) {
     let instruction_result = frame_result.interpreter_result().result;
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
