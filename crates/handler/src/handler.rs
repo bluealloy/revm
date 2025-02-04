@@ -1,19 +1,26 @@
 pub mod types;
 
-use context::{ContextTrait, EvmTypesTrait};
+use auto_impl::auto_impl;
+use context::{ContextTrait, Evm};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 pub use types::{EthContext, EthError, MainnetHandler};
 
-use crate::{execution, post_execution, pre_execution, validation, FrameResult};
+use crate::{
+    execution, inspector::Inspector, instructions::InstructionExecutor, post_execution,
+    pre_execution, validation, FrameResult,
+};
 use context_interface::{
     result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
 use handler_interface::{Frame, FrameInitOrResult, FrameOrResult, ItemOrResult};
-use interpreter::{FrameInput, InitialAndFloorGas};
+use interpreter::{
+    interpreter_types::{Jumps, LoopControl},
+    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
+};
 use std::{vec, vec::Vec};
 
 pub trait EthTraitError<EVM: EvmTypesTrait>:
@@ -32,6 +39,106 @@ impl<
             + From<PrecompileErrors>,
     > EthTraitError<EVM> for T
 {
+}
+
+impl<CTX, INSP, I, P> EvmTypesTrait for Evm<CTX, INSP, I, P>
+where
+    CTX: ContextTrait + Host,
+    INSP: Inspector<CTX, I::InterpreterTypes>,
+    I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
+{
+    type Context = CTX;
+    type Inspector = INSP;
+    type Instructions = I;
+    type Precompiles = P;
+
+    fn run_interpreter(
+        &mut self,
+        interpreter: &mut Interpreter<
+            <Self::Instructions as InstructionExecutor>::InterpreterTypes,
+        >,
+    ) -> <Self::Instructions as InstructionExecutor>::Output {
+        let inspect = self.enabled_inspection;
+        let context = &mut self.ctx.ctx;
+        let instructions = &mut self.instruction;
+        let inspector = &mut self.ctx.inspector;
+        if inspect {
+            let instructions = instructions.inspector_instruction_table();
+            interpreter.reset_control();
+
+            // Main loop
+            while interpreter.control.instruction_result().is_continue() {
+                // Get current opcode.
+                let opcode = interpreter.bytecode.opcode();
+
+                // Call Inspector step.
+                inspector.step(interpreter, context);
+                if interpreter.control.instruction_result() != InstructionResult::Continue {
+                    break;
+                }
+
+                // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+                // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+                // it will do noop and just stop execution of this contract
+                interpreter.bytecode.relative_jump(1);
+
+                // Execute instruction.
+                instructions[opcode as usize](interpreter, context);
+
+                // Call step_end.
+                inspector.step_end(interpreter, context);
+            }
+
+            interpreter.take_next_action()
+        } else {
+            interpreter.run_plain(instructions.plain_instruction_table(), context)
+        }
+    }
+
+    fn ctx(&mut self) -> &mut Self::Context {
+        &mut self.ctx.ctx
+    }
+
+    fn ctx_ref(&self) -> &Self::Context {
+        &self.ctx.ctx
+    }
+
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
+        (&mut self.ctx.ctx, &mut self.ctx.inspector)
+    }
+
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
+        (&mut self.ctx.ctx, &mut self.instruction)
+    }
+
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
+        (&mut self.ctx.ctx, &mut self.precompiles)
+    }
+}
+
+#[auto_impl(&mut, Box)]
+pub trait EvmTypesTrait {
+    type Context: ContextTrait;
+    type Inspector;
+    type Instructions: InstructionExecutor;
+    type Precompiles;
+
+    fn run_interpreter(
+        &mut self,
+        interpreter: &mut Interpreter<
+            <Self::Instructions as InstructionExecutor>::InterpreterTypes,
+        >,
+    ) -> <Self::Instructions as InstructionExecutor>::Output;
+
+    fn ctx(&mut self) -> &mut Self::Context;
+
+    fn ctx_ref(&self) -> &Self::Context;
+
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
+
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
+
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
 /*

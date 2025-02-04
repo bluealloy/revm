@@ -20,7 +20,7 @@ members = [
 
     # variants
     # "crates/optimism",
-    #"crates/inspector",
+    # "crates/inspector",
 
     # utility
     "crates/statetest-types",

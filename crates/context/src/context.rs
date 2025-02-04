@@ -10,12 +10,13 @@ use context_interface::{
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::Host;
+use interpreter::{Host, Interpreter};
 use primitives::U256;
 use specification::hardfork::SpecId;
 
 pub struct Evm<CTX, INSP, I, P> {
     pub ctx: Ctx<CTX, INSP>,
+    pub enabled_inspection: bool,
     pub instruction: I,
     pub precompiles: P,
 }
@@ -29,55 +30,11 @@ impl<CTX> Evm<CTX, (), (), ()> {
     pub fn new(ctx: CTX) -> Self {
         Evm {
             ctx: Ctx { ctx, inspector: () },
+            enabled_inspection: false,
             instruction: (),
             precompiles: (),
         }
     }
-}
-
-impl<CTX: ContextTrait, INSP, I, P> EvmTypesTrait for Evm<CTX, INSP, I, P> {
-    type Context = CTX;
-    type Inspector = INSP;
-    type Instructions = I;
-    type Precompiles = P;
-
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.ctx.ctx
-    }
-
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.ctx.ctx
-    }
-
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.ctx.ctx, &mut self.ctx.inspector)
-    }
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.ctx.ctx, &mut self.instruction)
-    }
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.ctx.ctx, &mut self.precompiles)
-    }
-}
-
-#[auto_impl(&mut, Box)]
-pub trait EvmTypesTrait {
-    type Context: ContextTrait;
-    type Inspector;
-    type Instructions;
-    type Precompiles;
-
-    fn ctx(&mut self) -> &mut Self::Context;
-
-    fn ctx_ref(&self) -> &Self::Context;
-
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
 // }

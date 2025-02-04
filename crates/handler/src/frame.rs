@@ -1,8 +1,11 @@
-use crate::{instructions::InstructionExecutor, precompile_provider::PrecompileProvider};
+use crate::{
+    handler::EvmTypesTrait, instructions::InstructionExecutor,
+    precompile_provider::PrecompileProvider,
+};
 
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context::{ContextTrait, EvmTypesTrait};
+use context::ContextTrait;
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
     BlockGetter, Cfg, CfgGetter, Database, ErrorGetter, JournalDBError, JournalGetter, Transaction,
@@ -75,7 +78,8 @@ where
     }
 
     fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        self.run(context)
+        let next_action = context.run_interpreter(&mut self.interpreter);
+        self.handle_runner_action(context, next_action)
     }
 
     fn return_result(
@@ -513,12 +517,15 @@ where
         Self::init_with_context(context, self.depth + 1, frame_init, self.memory.clone())
     }
 
-    pub fn run(&mut self, evm: &mut CTX) -> Result<FrameInitOrResult<Self>, ERROR> {
-        let (context, instructions) = evm.ctx_instructions();
+    pub fn handle_runner_action(
+        &mut self,
+        evm: &mut CTX,
+        next_action: InterpreterAction,
+    ) -> Result<FrameInitOrResult<Self>, ERROR> {
+        let context = evm.ctx();
         let spec = context.cfg().spec().into();
 
         // Run interpreter
-        let next_action = instructions.run(context, &mut self.interpreter);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),

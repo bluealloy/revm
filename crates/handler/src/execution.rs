@@ -1,7 +1,7 @@
 use super::frame_data::FrameResult;
 use bytecode::EOF_MAGIC_BYTES;
 use context::ContextTrait;
-use context_interface::{Transaction, TransactionGetter};
+use context_interface::Transaction;
 use interpreter::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
     FrameInput, Gas,

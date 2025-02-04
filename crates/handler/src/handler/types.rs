@@ -1,7 +1,7 @@
-use super::{EthHandler, EthTraitError};
+use super::{EthHandler, EthTraitError, EvmTypesTrait};
 use crate::FrameResult;
 use auto_impl::auto_impl;
-use context::{Context, ContextTrait, EvmTypesTrait};
+use context::{Context, ContextTrait};
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
     Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, ErrorGetter, Journal,

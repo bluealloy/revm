@@ -1,23 +1,28 @@
+use context::ContextTrait;
 use interpreter::{
     table::{make_instruction_table, InstructionTable},
     Host, Interpreter, InterpreterAction, InterpreterTypes,
 };
 use std::rc::Rc;
 
+// TODO rename to Instructions. It should store the instructions on
+// plan and inspect execution.
 pub trait InstructionExecutor {
     type Context;
     type InterpreterTypes: InterpreterTypes;
     type Output;
 
-    fn run(
-        &mut self,
-        context: &mut Self::Context,
-        interpreter: &mut Interpreter<Self::InterpreterTypes>,
-    ) -> Self::Output;
+    fn plain_instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
+
+    fn inspector_instruction_table(
+        &self,
+    ) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
 }
 
 pub struct EthInstructionExecutor<WIRE: InterpreterTypes, HOST> {
     pub instruction_table: Rc<InstructionTable<WIRE, HOST>>,
+    pub inspector_table: Rc<InstructionTable<WIRE, HOST>>,
+    pub inspection_enabled: bool,
 }
 
 pub trait InstructionExecutorGetter {
@@ -33,6 +38,8 @@ where
     fn clone(&self) -> Self {
         Self {
             instruction_table: self.instruction_table.clone(),
+            inspector_table: self.inspector_table.clone(),
+            inspection_enabled: false,
         }
     }
 }
@@ -47,10 +54,25 @@ where
     }
 
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
+        // TODO make a wrapper for inspector calls.
+        let inspector_table = base_table.clone();
         Self {
             instruction_table: Rc::new(base_table),
+            inspector_table: Rc::new(inspector_table),
+            inspection_enabled: false,
         }
     }
+}
+
+pub trait ContextInspectRun {
+    type InterpreterTypes: InterpreterTypes;
+    type Context: ContextTrait + Host;
+
+    fn run_context(
+        &mut self,
+        interpretere: Interpreter<Self::InterpreterTypes>,
+        instructions: &InstructionTable<Self::InterpreterTypes, Self::Context>,
+    );
 }
 
 impl<IT, CTX> InstructionExecutor for EthInstructionExecutor<IT, CTX>
@@ -64,14 +86,23 @@ where
     /// set custom actions from instructions.
     type Output = InterpreterAction;
 
-    fn run(
-        &mut self,
-        context: &mut Self::Context,
-        interpreter: &mut Interpreter<Self::InterpreterTypes>,
-    ) -> Self::Output {
-        interpreter.run_plain(self.instruction_table.as_ref(), context)
+    fn plain_instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
+        &self.instruction_table
+    }
+
+    fn inspector_instruction_table(
+        &self,
+    ) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
+        &self.inspector_table
     }
 }
+
+/*
+
+Frame< Inspector:
+
+
+*/
 
 impl<WIRE, HOST> Default for EthInstructionExecutor<WIRE, HOST>
 where

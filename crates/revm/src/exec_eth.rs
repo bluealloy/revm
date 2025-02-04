@@ -6,8 +6,8 @@ use context_interface::{
 };
 use database_interface::EmptyDB;
 use handler::{
-    instructions::EthInstructionExecutor, EthFrame, EthHandler, EthPrecompileProvider,
-    MainnetHandler,
+    inspector::Inspector, instructions::EthInstructionExecutor, EthFrame, EthHandler,
+    EthPrecompileProvider, MainnetHandler,
 };
 use interpreter::{interpreter::EthInterpreter, Host};
 use primitives::Log;
@@ -53,6 +53,7 @@ where
     CFG: Cfg,
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     type Output =
         Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
@@ -99,6 +100,7 @@ pub fn transact_main<CTX: ContextTrait + Host, INSP>(
 ) -> Result<ResultAndState<HaltReason>, EVMError<<CTX::Db as Database>::Error, InvalidTransaction>>
 where
     CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
     let mut t = MainnetHandler::<
         _,
@@ -127,6 +129,7 @@ mod test {
     use context::Ctx;
     use context_interface::TransactionType;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
+    use handler::noop::NoOpInspector;
     use primitives::{address, TxKind, U256};
     use specification::hardfork::SpecId;
 
@@ -148,7 +151,11 @@ mod test {
             });
 
         let mut evm = Evm {
-            ctx: Ctx { ctx, inspector: () },
+            ctx: Ctx {
+                ctx,
+                inspector: NoOpInspector {},
+            },
+            enabled_inspection: false,
             instruction: EthInstructionExecutor::default(),
             precompiles: EthPrecompileProvider::default(),
         };
