@@ -4,7 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{exec::InspectEvm, inspectors::TracerEip3155};
+use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -16,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, ExecuteCommitEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -425,17 +425,18 @@ pub fn execute_test_suite(
                         .with_tx(&tx)
                         .with_cfg(&cfg)
                         .with_db(&mut state)
-                        .build_mainnet();
+                        .build_mainnet_with_inspector(
+                            TracerEip3155::buffered(stderr()).without_summary(),
+                        );
 
                     let timer = Instant::now();
                     // TODO(rakita) inspect_commit_previous
-                    let res = evm
-                        .inspect_previous(TracerEip3155::buffered(stderr()).without_summary())
-                        .map(|c| c.result);
+                    let res: Result<ExecutionResult, EVMError<Infallible>> =
+                        evm.inspect_previous().map(|c| c.result);
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = &mut evm.ctx.journaled_state.database;
+                    let db = &mut evm.ctx.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -456,7 +457,7 @@ pub fn execute_test_suite(
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = evm.ctx.journaled_state.database;
+                    let db = evm.ctx.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -499,17 +500,19 @@ pub fn execute_test_suite(
                     .with_block(&block)
                     .with_tx(&tx)
                     .with_cfg(&cfg)
-                    .build_mainnet();
+                    .build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
+                    );
 
                 // TODO(rakita) inspect_commit_previous
-                let _ = evm.inspect_previous(TracerEip3155::buffered(stderr()).without_summary());
+                let _ = evm.inspect_previous();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
                 println!(
                     "\nState after: {:#?}",
-                    evm.ctx.journaled_state.database.cache
+                    evm.ctx.ctx.journaled_state.database.cache
                 );
                 println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");

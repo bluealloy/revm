@@ -31,12 +31,12 @@ pub trait PrecompileProvider: Clone {
     fn contains(&self, address: &Address) -> bool;
 }
 
-pub struct EthPrecompileProvider<CTX> {
+pub struct EthPrecompiles<CTX> {
     pub precompiles: &'static Precompiles,
     pub _phantom: core::marker::PhantomData<CTX>,
 }
 
-impl<CTX> Clone for EthPrecompileProvider<CTX> {
+impl<CTX> Clone for EthPrecompiles<CTX> {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
@@ -45,13 +45,13 @@ impl<CTX> Clone for EthPrecompileProvider<CTX> {
     }
 }
 
-impl<CTX: CfgGetter> Default for EthPrecompileProvider<CTX> {
+impl<CTX: CfgGetter> Default for EthPrecompiles<CTX> {
     fn default() -> Self {
         Self::new(SpecId::LATEST)
     }
 }
 
-impl<CTX: CfgGetter> EthPrecompileProvider<CTX> {
+impl<CTX: CfgGetter> EthPrecompiles<CTX> {
     pub fn new(spec: SpecId) -> Self {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
@@ -60,7 +60,7 @@ impl<CTX: CfgGetter> EthPrecompileProvider<CTX> {
     }
 }
 
-impl<CTX> PrecompileProvider for EthPrecompileProvider<CTX>
+impl<CTX> PrecompileProvider for EthPrecompiles<CTX>
 where
     CTX: ContextTrait,
 {

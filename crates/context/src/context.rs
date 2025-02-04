@@ -2,7 +2,10 @@ pub mod performant_access;
 
 use core::ops::{Deref, DerefMut};
 
-use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
+use crate::{
+    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, setters::ContextSetters,
+    tx::TxEnv,
+};
 use auto_impl::auto_impl;
 use context_interface::{
     block::BlockSetter, transaction::TransactionSetter, Block, BlockGetter, Cfg, CfgGetter,
@@ -10,7 +13,7 @@ use context_interface::{
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::{Host, Interpreter};
+use interpreter::Host;
 use primitives::U256;
 use specification::hardfork::SpecId;
 
@@ -70,6 +73,19 @@ impl<CTX> Evm<CTX, (), (), ()> {
 //         }
 //     }
 // }
+
+impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
+    type Tx = <CTX as ContextSetters>::Tx;
+    type Block = <CTX as ContextSetters>::Block;
+
+    fn set_tx(&mut self, tx: Self::Tx) {
+        self.ctx.ctx.set_tx(tx);
+    }
+
+    fn set_block(&mut self, block: Self::Block) {
+        self.ctx.ctx.set_block(block);
+    }
+}
 
 impl<CTX, INSP, I, P> Deref for Evm<CTX, INSP, I, P> {
     type Target = CTX;

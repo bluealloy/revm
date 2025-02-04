@@ -1,5 +1,8 @@
 use super::{EthHandler, EthTraitError, EvmTypesTrait};
-use crate::FrameResult;
+use crate::{
+    inspector::{EthInspectorHandler, Inspector, InspectorFrame},
+    FrameResult,
+};
 use auto_impl::auto_impl;
 use context::{Context, ContextTrait};
 use context_interface::{
@@ -8,7 +11,7 @@ use context_interface::{
     JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
 use handler_interface::Frame;
-use interpreter::{FrameInput, Host};
+use interpreter::{interpreter::EthInterpreter, FrameInput, Host};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
@@ -38,6 +41,19 @@ impl<CTX: ContextTrait + Host, ERROR, FRAME> Default for MainnetHandler<CTX, ERR
             _phantom: core::marker::PhantomData,
         }
     }
+}
+
+impl<CTX, ERROR, FRAME> EthInspectorHandler for MainnetHandler<CTX, ERROR, FRAME>
+where
+    CTX: EvmTypesTrait<
+        Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTypesTrait>::Context, EthInterpreter>,
+    >,
+    ERROR: EthTraitError<CTX>,
+    FRAME: Frame<Context = CTX, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
+        + InspectorFrame<IT = EthInterpreter, FrameInput = FrameInput>,
+{
+    type IT = EthInterpreter;
 }
 
 #[auto_impl(&mut)]

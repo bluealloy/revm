@@ -65,145 +65,109 @@ impl GasInspector {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::inspector_handle_register;
-//     use database::BenchmarkDB;
-//     use revm::{
-//         bytecode::{opcode, Bytecode},
-//         context_interface::EvmWiring as PrimitiveEvmWiring,
-//         context_interface::{DefaultEthereumWiring, EthereumWiring},
-//         interpreter::Interpreter,
-//         primitives::{address, Bytes, Log, TxKind},
-//         Evm, EvmWiring,
-//     };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use revm::{
+        bytecode::{opcode, Bytecode},
+        context::TxEnv,
+        handler::inspector::Inspector,
+        interpreter::{
+            interpreter_types::{Jumps, LoopControl},
+            CallInputs, CreateInputs, Interpreter, InterpreterTypes,
+        },
+        primitives::{address, Bytes, Log, TxKind},
+        Context,
+        ExecuteEvm,
+        InspectEvm,
+        MainBuilder,
+        MainContext, //Evm,
+                     //EvmWiring,
+    };
 
-//     type TestEvmWiring = DefaultEthereumWiring;
+    //type TestEvmWiring = DefaultEthereumWiring;
 
-//     #[derive(Default, Debug)]
-//     struct StackInspector {
-//         pc: usize,
-//         gas_inspector: GasInspector,
-//         gas_remaining_steps: Vec<(usize, u64)>,
-//     }
+    #[derive(Default, Debug)]
+    struct StackInspector {
+        pc: usize,
+        gas_inspector: GasInspector,
+        gas_remaining_steps: Vec<(usize, u64)>,
+    }
 
-//     impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for StackInspector {
-//         fn initialize_interp(
-//             &mut self,
-//             interp: &mut Interpreter,
-//             context: &mut EvmContext<EvmWiringT>,
-//         ) {
-//             self.gas_inspector.initialize_interp(interp, context);
-//         }
+    impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for StackInspector {
+        fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
+            self.gas_inspector.initialize_interp(interp.control.gas());
+        }
 
-//         fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
-//             self.pc = interp.program_counter();
-//             self.gas_inspector.step(interp, context);
-//         }
+        fn step(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
+            self.pc = interp.bytecode.pc();
+            self.gas_inspector.step(interp.control.gas());
+        }
 
-//         fn log(
-//             &mut self,
-//             interp: &mut Interpreter,
-//             context: &mut EvmContext<EvmWiringT>,
-//             log: &Log,
-//         ) {
-//             self.gas_inspector.log(interp, context, log);
-//         }
+        fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
+            self.gas_inspector.step_end(interp.control.gas());
+            self.gas_remaining_steps
+                .push((self.pc, self.gas_inspector.gas_remaining()));
+        }
 
-//         fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
-//             self.gas_inspector.step_end(interp, context);
-//             self.gas_remaining_steps
-//                 .push((self.pc, self.gas_inspector.gas_remaining()));
-//         }
+        fn call_end(&mut self, _c: &mut CTX, _i: &CallInputs, outcome: &mut CallOutcome) {
+            self.gas_inspector.call_end(outcome)
+        }
 
-//         fn call(
-//             &mut self,
-//             context: &mut EvmContext<EvmWiringT>,
-//             call: &mut CallInputs,
-//         ) -> Option<CallOutcome> {
-//             self.gas_inspector.call(context, call)
-//         }
+        fn create_end(&mut self, _c: &mut CTX, _i: &CreateInputs, outcome: &mut CreateOutcome) {
+            self.gas_inspector.create_end(outcome)
+        }
+    }
 
-//         fn call_end(
-//             &mut self,
-//             context: &mut EvmContext<EvmWiringT>,
-//             inputs: &CallInputs,
-//             outcome: CallOutcome,
-//         ) -> CallOutcome {
-//             self.gas_inspector.call_end(context, inputs, outcome)
-//         }
+    #[test]
+    fn test_gas_inspector() {
+        let contract_data: Bytes = Bytes::from(vec![
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0xb,
+            opcode::JUMPI,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::JUMPDEST,
+            opcode::STOP,
+        ]);
+        let bytecode = Bytecode::new_raw(contract_data);
 
-//         fn create(
-//             &mut self,
-//             context: &mut EvmContext<EvmWiringT>,
-//             call: &mut CreateInputs,
-//         ) -> Option<CreateOutcome> {
-//             self.gas_inspector.create(context, call);
-//             None
-//         }
+        let ctx = Context::mainnet()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .modify_tx_chained(|tx| {
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
+                tx.gas_limit = 21100;
+            });
 
-//         fn create_end(
-//             &mut self,
-//             context: &mut EvmContext<EvmWiringT>,
-//             inputs: &CreateInputs,
-//             outcome: CreateOutcome,
-//         ) -> CreateOutcome {
-//             self.gas_inspector.create_end(context, inputs, outcome)
-//         }
-//     }
+        let mut evm = ctx.build_mainnet_with_inspector(StackInspector::default());
 
-//     #[test]
-//     fn test_gas_inspector() {
-//         let contract_data: Bytes = Bytes::from(vec![
-//             opcode::PUSH1,
-//             0x1,
-//             opcode::PUSH1,
-//             0xb,
-//             opcode::JUMPI,
-//             opcode::PUSH1,
-//             0x1,
-//             opcode::PUSH1,
-//             0x1,
-//             opcode::PUSH1,
-//             0x1,
-//             opcode::JUMPDEST,
-//             opcode::STOP,
-//         ]);
-//         let bytecode = Bytecode::new_raw(contract_data);
+        // Run evm.
+        evm.inspect_previous().unwrap();
 
-//         let mut evm = Evm::<EthereumWiring<BenchmarkDB, StackInspector>>::builder()
-//             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-//             .with_default_ext_context()
-//             .modify_tx_env(|tx| {
-//                 *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
+        let inspector = &evm.ctx.inspector;
 
-//                 tx.caller = address!("1000000000000000000000000000000000000000");
-//                 tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
-//                 tx.gas_limit = 21100;
-//             })
-//             .append_handler_register(inspector_handle_register)
-//             .build();
+        // Starting from 100gas
+        let steps = vec![
+            // push1 -3
+            (0, 97),
+            // push1 -3
+            (2, 94),
+            // jumpi -10
+            (4, 84),
+            // jumpdest 1
+            (11, 83),
+            // stop 0
+            (12, 83),
+        ];
 
-//         // Run evm.
-//         evm.transact().unwrap();
-
-//         let inspector = evm.into_context().external;
-
-//         // Starting from 100gas
-//         let steps = vec![
-//             // push1 -3
-//             (0, 97),
-//             // push1 -3
-//             (2, 94),
-//             // jumpi -10
-//             (4, 84),
-//             // jumpdest 1
-//             (11, 83),
-//             // stop 0
-//             (12, 83),
-//         ];
-
-//         assert_eq!(inspector.gas_remaining_steps, steps);
-//     }
-// }
+        assert_eq!(inspector.gas_remaining_steps, steps);
+    }
+}

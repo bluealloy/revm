@@ -30,11 +30,14 @@ use specification::{
 };
 use state::Bytecode;
 use std::borrow::ToOwned;
-use std::{rc::Rc, sync::Arc};
+use std::{boxed::Box, rc::Rc, sync::Arc};
 
 pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
     phantom: core::marker::PhantomData<(CTX, ERROR)>,
+    /// Data of the frame.
     data: FrameData,
+    /// Input data for the frame.
+    pub input: FrameInput,
     /// Depth of the call frame.
     depth: usize,
     /// Journal checkpoint.
@@ -99,6 +102,7 @@ where
 {
     pub fn new(
         data: FrameData,
+        input: FrameInput,
         depth: usize,
         interpreter: Interpreter<IW>,
         checkpoint: JournalCheckpoint,
@@ -106,6 +110,7 @@ where
     ) -> Self {
         Self {
             phantom: Default::default(),
+            input,
             data,
             depth,
             interpreter,
@@ -130,7 +135,7 @@ where
         evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        inputs: &CallInputs,
+        inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -227,20 +232,22 @@ where
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
         };
-
+        let is_static = inputs.is_static;
+        let gas_limit = inputs.gas_limit;
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
+            FrameInput::Call(inputs),
             depth,
             Interpreter::new(
                 memory.clone(),
                 ExtBytecode::new_with_hash(bytecode, code_hash),
                 interpreter_input,
-                inputs.is_static,
+                is_static,
                 false,
                 context.cfg().spec().into(),
-                inputs.gas_limit,
+                gas_limit,
             ),
             checkpoint,
             memory,
@@ -253,7 +260,7 @@ where
         evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        inputs: &CreateInputs,
+        inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
@@ -332,9 +339,10 @@ where
             input: Bytes::new(),
             call_value: inputs.value,
         };
-
+        let gas_limit = inputs.gas_limit;
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Create(CreateFrame { created_address }),
+            FrameInput::Create(inputs),
             depth,
             Interpreter::new(
                 memory.clone(),
@@ -343,7 +351,7 @@ where
                 false,
                 false,
                 spec,
-                inputs.gas_limit,
+                gas_limit,
             ),
             checkpoint,
             memory,
@@ -356,7 +364,7 @@ where
         evm: &mut EVM,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        inputs: &EOFCreateInputs,
+        inputs: Box<EOFCreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
@@ -447,8 +455,10 @@ where
             call_value: inputs.value,
         };
 
+        let gas_limit = inputs.gas_limit;
         Ok(ItemOrResult::Item(Self::new(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
+            FrameInput::EOFCreate(inputs),
             depth,
             Interpreter::new(
                 memory.clone(),
@@ -457,7 +467,7 @@ where
                 false,
                 true,
                 spec,
-                inputs.gas_limit,
+                gas_limit,
             ),
             checkpoint,
             memory,
@@ -471,11 +481,9 @@ where
         memory: Rc<RefCell<SharedMemory>>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         match frame_init {
-            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, &inputs),
-            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, &inputs),
-            FrameInput::EOFCreate(inputs) => {
-                Self::make_eofcreate_frame(evm, depth, memory, &inputs)
-            }
+            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, inputs),
+            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, inputs),
+            FrameInput::EOFCreate(inputs) => Self::make_eofcreate_frame(evm, depth, memory, inputs),
         }
     }
 }

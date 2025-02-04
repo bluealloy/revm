@@ -95,6 +95,10 @@ where
         }
     }
 
+    fn enable_inspection(&mut self, enable: bool) {
+        self.enabled_inspection = enable;
+    }
+
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.ctx.ctx
     }
@@ -129,6 +133,8 @@ pub trait EvmTypesTrait {
             <Self::Instructions as InstructionExecutor>::InterpreterTypes,
         >,
     ) -> <Self::Instructions as InstructionExecutor>::Output;
+
+    fn enable_inspection(&mut self, enable: bool);
 
     fn ctx(&mut self) -> &mut Self::Context;
 

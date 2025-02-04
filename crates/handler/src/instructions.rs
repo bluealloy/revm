@@ -19,7 +19,7 @@ pub trait InstructionExecutor {
     ) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
 }
 
-pub struct EthInstructionExecutor<WIRE: InterpreterTypes, HOST> {
+pub struct EthInstructions<WIRE: InterpreterTypes, HOST> {
     pub instruction_table: Rc<InstructionTable<WIRE, HOST>>,
     pub inspector_table: Rc<InstructionTable<WIRE, HOST>>,
     pub inspection_enabled: bool,
@@ -31,7 +31,7 @@ pub trait InstructionExecutorGetter {
     fn executor(&mut self) -> &mut Self::InstructionExecutor;
 }
 
-impl<WIRE, HOST> Clone for EthInstructionExecutor<WIRE, HOST>
+impl<WIRE, HOST> Clone for EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
 {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<WIRE, HOST> EthInstructionExecutor<WIRE, HOST>
+impl<WIRE, HOST> EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host,
@@ -75,7 +75,7 @@ pub trait ContextInspectRun {
     );
 }
 
-impl<IT, CTX> InstructionExecutor for EthInstructionExecutor<IT, CTX>
+impl<IT, CTX> InstructionExecutor for EthInstructions<IT, CTX>
 where
     IT: InterpreterTypes,
     CTX: Host,
@@ -104,7 +104,7 @@ Frame< Inspector:
 
 */
 
-impl<WIRE, HOST> Default for EthInstructionExecutor<WIRE, HOST>
+impl<WIRE, HOST> Default for EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host,

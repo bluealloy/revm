@@ -3429,7 +3429,6 @@ dependencies = [
 name = "revm-inspector"
 version = "1.0.0"
 dependencies = [
- "auto_impl",
  "revm",
  "revm-database",
  "serde",

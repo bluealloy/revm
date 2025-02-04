@@ -108,7 +108,7 @@ where
                     InspectorInstructionExecutor<EthInterpreter, CTX>,
                 >,
             >,
-            //+ FrameInterpreterGetter<IT = INTR>,
+            //+ InspectorFrame<IT = INTR>,
             OpPrecompileProvider<CTX, EVMError<<DB as Database>::Error, OpTransactionError>>,
             InspectorInstructionExecutor<EthInterpreter, CTX>,
         >::default(),

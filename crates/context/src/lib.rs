@@ -18,3 +18,4 @@ pub use context::*;
 pub use journal_init::JournalInit;
 pub use journaled_state::*;
 pub use tx::TxEnv;
+pub mod setters;

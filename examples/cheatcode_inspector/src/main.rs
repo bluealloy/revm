@@ -24,7 +24,7 @@ use revm::{
         result::{EVMError, InvalidTransaction},
         Block, Journal, JournalGetter, Transaction,
     },
-    handler::{EthPrecompileProvider, PrecompileProvider},
+    handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult},
     precompile::{Address, HashSet, B256},
     primitives::{Log, U256},
@@ -383,7 +383,7 @@ where
         // `transact` cheatcode would do this
         context
             .journal()
-            .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompileProvider<
+            .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompiles<
                 InspectorContext<&mut Self, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
             >>(
                 Env {

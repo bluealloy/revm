@@ -1,10 +1,10 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{exec::InspectEvm, inspectors::TracerEip3155};
+use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
-    Context, Database, ExecuteEvm, MainBuilder, MainContext,
+    Context, Database, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -90,7 +90,7 @@ impl Cmd {
                 tx.data = input;
                 tx.nonce = nonce;
             })
-            .build_mainnet();
+            .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
             // Microbenchmark
@@ -104,9 +104,7 @@ impl Cmd {
         }
 
         let out = if self.trace {
-            let inspector = TracerEip3155::new(Box::new(std::io::stdout()));
-            evm.inspect_previous(inspector)
-                .map_err(|_| Errors::EVMError)?
+            evm.inspect_previous().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.exec_previous().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

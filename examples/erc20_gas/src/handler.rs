@@ -5,8 +5,8 @@ use revm::{
         Block, CfgGetter, Journal, Transaction, TransactionType,
     },
     handler::{
-        instructions::EthInstructionExecutor, EthContext, EthError, EthFrame, EthHandler,
-        EthPrecompileProvider, FrameContext,
+        instructions::EthInstructions, EthContext, EthError, EthFrame, EthHandler,
+        EthPrecompiles, FrameContext,
     },
     handler_interface::Frame,
     interpreter::{interpreter::EthInterpreter, Host},
@@ -45,8 +45,8 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
-    type Precompiles = EthPrecompileProvider<CTX, Self::Error>;
-    type Instructions = EthInstructionExecutor<EthInterpreter, Self::Context>;
+    type Precompiles = EthPrecompiles<CTX, Self::Error>;
+    type Instructions = EthInstructions<EthInterpreter, Self::Context>;
     type Frame =
         EthFrame<CTX, ERROR, EthInterpreter, FrameContext<Self::Precompiles, Self::Instructions>>;
     type HaltReason = HaltReason;

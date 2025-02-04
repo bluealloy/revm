@@ -3,7 +3,7 @@ use revm::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Cfg, CfgGetter, DatabaseGetter,
     },
-    handler::{instructions::EthInstructionExecutor, EthContext, EthFrame, EthHandler},
+    handler::{instructions::EthInstructions, EthContext, EthFrame, EthHandler},
     interpreter::interpreter::EthInterpreter,
     Database, DatabaseCommit,
 };
@@ -29,7 +29,7 @@ where
         _,
         EthFrame<CTX, _, _, _>,
         OpPrecompileProvider<CTX, _>,
-        EthInstructionExecutor<EthInterpreter, CTX>,
+        EthInstructions<EthInterpreter, CTX>,
     >::new();
     op.run(ctx)
 }

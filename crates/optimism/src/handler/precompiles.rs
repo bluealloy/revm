@@ -2,14 +2,14 @@ use crate::{OpSpec, OpSpecId};
 use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
-    context::Cfg, context_interface::CfgGetter, handler::EthPrecompileProvider,
+    context::Cfg, context_interface::CfgGetter, handler::EthPrecompiles,
     handler_interface::PrecompileProvider, interpreter::InterpreterResult,
     specification::hardfork::SpecId,
 };
 use std::boxed::Box;
 
 pub struct OpPrecompileProvider<CTX, ERROR> {
-    precompile_provider: EthPrecompileProvider<CTX, ERROR>,
+    precompile_provider: EthPrecompiles<CTX, ERROR>,
 }
 
 impl<CTX, ERROR> Clone for OpPrecompileProvider<CTX, ERROR> {
@@ -23,7 +23,7 @@ impl<CTX, ERROR> Clone for OpPrecompileProvider<CTX, ERROR> {
 impl<CTX, ERROR> OpPrecompileProvider<CTX, ERROR> {
     pub fn new(precompiles: &'static Precompiles) -> Self {
         Self {
-            precompile_provider: EthPrecompileProvider {
+            precompile_provider: EthPrecompiles {
                 precompiles,
                 _phantom: core::marker::PhantomData,
             },
