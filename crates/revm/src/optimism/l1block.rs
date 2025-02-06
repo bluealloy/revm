@@ -190,7 +190,11 @@ impl L1BlockInfo {
     /// Calculate the operator fee for executing this transaction.
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
-    pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: SpecId) -> U256 {
+    pub fn operator_fee_charge(&self, input: &[u8], gas_limit: U256, spec_id: SpecId) -> U256 {
+        // If the input is a deposit transaction or empty, the default value is zero.
+        if input.is_empty() || input.first() == Some(&0x7F) {
+            return U256::ZERO;
+        }
         if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
             return U256::ZERO;
         }
@@ -223,6 +227,7 @@ impl L1BlockInfo {
         // constant.
 
         operator_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
+            / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL))
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
@@ -574,5 +579,22 @@ mod tests {
         let l1_fee = l1_block_info.calculate_tx_l1_cost_fjord(TX);
 
         assert_eq!(l1_fee, expected_l1_fee)
+    }
+
+    #[test]
+    fn test_operator_fee_refund() {
+        let gas = Gas::new(50000);
+
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1055991687),
+            l1_base_fee_scalar: U256::from(5227),
+            operator_fee_scalar: Some(U256::from(2000)),
+            operator_fee_constant: Some(U256::from(5)),
+            ..Default::default()
+        };
+
+        let refunded = l1_block_info.operator_fee_refund(&gas, SpecId::ISTHMUS);
+
+        assert_eq!(refunded, U256::from(100))
     }
 }

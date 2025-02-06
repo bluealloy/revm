@@ -150,7 +150,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
         .l1_block_info
         .as_ref()
         .expect("L1BlockInfo should be loaded")
-        .operator_fee_charge(gas_limit, SPEC::SPEC_ID);
+        .operator_fee_charge(enveloped_tx, gas_limit, SPEC::SPEC_ID);
 
     let mut balance_check = gas_limit
         .checked_mul(tx.gas_price)
@@ -373,7 +373,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             .l1_block_info
             .as_ref()
             .expect("L1BlockInfo should be loaded")
-            .operator_fee_charge(gas_limit, SPEC::SPEC_ID);
+            .operator_fee_charge(enveloped_tx, gas_limit, SPEC::SPEC_ID);
 
         caller_account.info.balance = caller_account
             .info
@@ -413,6 +413,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
         let operator_fee_cost = l1_block_info.operator_fee_charge(
+            enveloped_tx,
             U256::from(gas.spent() - gas.refunded() as u64),
             SPEC::SPEC_ID,
         );
