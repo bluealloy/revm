@@ -4,16 +4,18 @@ use revm::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Block, Cfg, ContextGetters, Database, Journal,
     },
-    handler::{handler::EvmTypesTrait, inspector::Inspector, instructions::EthInstructions},
+    handler::{
+        handler::EvmTypesTrait, inspector::Inspector, instructions::EthInstructions, EthFrame,
+        EthHandler,
+    },
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
 use crate::{
-    evm::{transact_op, OpEvm},
-    transaction::OpTxTrait,
-    L1BlockInfo, OpHaltReason, OpSpec, OpTransactionError,
+    evm::OpEvm, handler::OpHandler, transaction::OpTxTrait, L1BlockInfo, OpHaltReason, OpSpec,
+    OpTransactionError,
 };
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteEvm
@@ -33,8 +35,9 @@ where
     type Output =
         Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>;
 
-    fn exec_previous(&mut self) -> Self::Output {
-        transact_op(self)
+    fn transact_previous(&mut self) -> Self::Output {
+        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        h.run(self)
     }
 }
 
@@ -57,8 +60,8 @@ where
         EVMError<<DB as Database>::Error, OpTransactionError>,
     >;
 
-    fn exec_commit_previous(&mut self) -> Self::CommitOutput {
-        transact_op(self).map(|r| {
+    fn transact_commit_previous(&mut self) -> Self::CommitOutput {
+        self.transact_previous().map(|r| {
             self.ctx().db().commit(r.state);
             r.result
         })

@@ -29,8 +29,7 @@ primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
-bytecode.workspace = true
-auto_impl.workspace = true
+bytecode.workspace = true 
 
 # misc
 derive-where.workspace = true

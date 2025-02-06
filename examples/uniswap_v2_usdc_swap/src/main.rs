@@ -13,7 +13,7 @@ use revm::{
     database_interface::WrapDatabaseAsync,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
-    transact_main, Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::ops::Div;
 
@@ -107,7 +107,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
         })
         .build_mainnet();
 
-    let ref_tx = evm.exec_previous().unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -151,7 +151,7 @@ async fn get_amount_out(
         })
         .build_mainnet();
 
-    let ref_tx = transact_main(&mut evm).unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -184,7 +184,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
         })
         .build_mainnet();
 
-    let ref_tx = transact_main(&mut evm).unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -234,7 +234,7 @@ fn swap(
         })
         .build_mainnet();
 
-    let ref_tx = evm.exec_commit_previous().unwrap();
+    let ref_tx = evm.transact_commit_previous().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -267,7 +267,7 @@ fn transfer(
         })
         .build_mainnet();
 
-    let ref_tx = evm.exec_commit_previous().unwrap();
+    let ref_tx = evm.transact_commit_previous().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

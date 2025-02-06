@@ -1,9 +1,8 @@
-use crate::{transaction::OpTxTrait, L1BlockInfo, OpSpec, OpSpecId, OpTransaction};
+use crate::{L1BlockInfo, OpSpec, OpSpecId, OpTransaction};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
-    context_interface::{Block, Cfg, Journal, Transaction},
     database_interface::EmptyDB,
-    Context, Database, JournaledState, MainContext,
+    Context, JournaledState, MainContext,
 };
 
 pub trait DefaultOp {
@@ -45,7 +44,8 @@ mod test {
     fn default_than_into() {
         let ctx = Context::op();
         // convert to optimism context
-        let mut op_ctx = ctx.build_op();
-        //let _ = op_ctx.();
+        let mut evm = ctx.build_op();
+        // execute
+        let _ = evm.transact_previous();
     }
 }

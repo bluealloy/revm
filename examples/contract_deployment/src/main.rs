@@ -10,7 +10,7 @@ use revm::{
     database_interface::EmptyDB,
     handler::handler::EvmTypesTrait,
     primitives::{hex, Bytes, TxKind, U256},
-    transact_main, ExecuteCommitEvm, MainBuilder, MainContext,
+    ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 
 /// Load number parameter and set to storage with slot 0
@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
     let mut evm = ctx.build_mainnet();
 
     println!("bytecode: {}", hex::encode(bytecode));
-    let ref_tx = evm.exec_commit_previous()?;
+    let ref_tx = evm.transact_commit_previous()?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..
@@ -74,7 +74,7 @@ fn main() -> anyhow::Result<()> {
         tx.nonce += 1;
     });
 
-    let result = transact_main(&mut evm)?;
+    let result = evm.transact_previous()?;
     let Some(storage0) = result
         .state
         .get(&address)

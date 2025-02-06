@@ -3395,7 +3395,6 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0"
 dependencies = [
- "auto_impl",
  "cfg-if",
  "derive-where",
  "revm-bytecode",
@@ -3481,7 +3480,6 @@ name = "revm-handler-interface"
 version = "1.0.0"
 dependencies = [
  "revm-database",
- "revm-primitives",
  "revm-specification",
 ]
 
@@ -3517,7 +3515,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "auto_impl",
- "derive_more",
  "indicatif",
  "once_cell",
  "revm",

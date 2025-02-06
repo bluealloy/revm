@@ -97,7 +97,7 @@ impl Cmd {
             let bench_options = microbench::Options::default().time(Duration::from_secs(3));
 
             microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.exec_previous().unwrap();
+                let _ = evm.transact_previous().unwrap();
             });
 
             return Ok(());
@@ -106,7 +106,7 @@ impl Cmd {
         let out = if self.trace {
             evm.inspect_previous().map_err(|_| Errors::EVMError)?
         } else {
-            let out = evm.exec_previous().map_err(|_| Errors::EVMError)?;
+            let out = evm.transact_previous().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out
         };

@@ -184,7 +184,7 @@ mod tests {
             })
             .build_op();
 
-        let result_and_state = evm.exec_previous().unwrap();
+        let result_and_state = evm.transact_previous().unwrap();
 
         let output = result_and_state.result.output().unwrap();
         let evm_val = FastLz::fastLzCall::abi_decode_returns(output, true)

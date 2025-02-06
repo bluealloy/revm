@@ -1,7 +1,7 @@
 use crate::{
     handler::{precompiles::OpPrecompileProvider, OpHandler},
     transaction::OpTxTrait,
-    L1BlockInfo, OpSpec, OpTransactionError, OpHaltReason,
+    L1BlockInfo, OpHaltReason, OpSpec, OpTransactionError,
 };
 use precompile::Log;
 use revm::{
@@ -15,7 +15,6 @@ use revm::{
         instructions::{EthInstructions, InstructionExecutor},
         EthFrame, EthHandler,
     },
-    handler_interface::Frame,
     interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterAction},
     state::EvmState,
     Database,
@@ -96,23 +95,4 @@ where
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
         (&mut self.data.ctx, &mut self.precompiles)
     }
-}
-
-pub fn transact_op<CTX: ContextGetters + Host, INSP>(
-    evm: &mut OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>>,
-) -> Result<
-    ResultAndState<OpHaltReason>,
-    EVMError<<CTX::Db as Database>::Error, OpTransactionError>,
->
-where
-    CTX: ContextGetters<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Tx: OpTxTrait,
-            Cfg: Cfg<Spec = OpSpec>,
-            Chain = L1BlockInfo,
-        > + Host,
-{
-    let mut t = OpHandler::<_, _, EthFrame<_, _, _>>::new();
-
-    t.run(evm)
 }

@@ -25,10 +25,10 @@ pub fn run() {
         .build_mainnet();
 
     let time = Instant::now();
-    let _ = context.exec_previous();
+    let _ = context.transact_previous();
     println!("First init: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = context.exec_previous();
+    let _ = context.transact_previous();
     println!("Run: {:?}", time.elapsed());
 }

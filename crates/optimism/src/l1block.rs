@@ -1,7 +1,6 @@
 use crate::{transaction::estimate_tx_compressed_size, OpSpecId};
 use core::ops::Mul;
 use revm::{
-    context_interface::Journal,
     database_interface::Database,
     primitives::{address, Address, U256},
     specification::hardfork::SpecId,

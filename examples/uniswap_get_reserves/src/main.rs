@@ -9,7 +9,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
     primitives::{address, TxKind, U256},
-    transact_main, Context, MainBuilder, MainContext,
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 #[tokio::main]
@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
         .build_mainnet();
 
     // Execute transaction without writing to the DB
-    let ref_tx = transact_main(&mut evm).unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     // Select ExecutionResult struct
     let result = ref_tx.result;
 

@@ -20,13 +20,13 @@ pub fn run() {
     println!("Init: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = evm.exec_previous();
+    let _ = evm.transact_previous();
     println!("First run: {:?}", time.elapsed());
 
     // Microbenchmark
     let bench_options = microbench::Options::default().time(Duration::from_secs(1));
 
     microbench::bench(&bench_options, "Run bytecode", || {
-        let _ = evm.exec_previous().unwrap();
+        let _ = evm.transact_previous().unwrap();
     });
 }

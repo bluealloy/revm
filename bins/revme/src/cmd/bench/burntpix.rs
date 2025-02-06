@@ -14,7 +14,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    transact_main, Context, MainBuilder, MainContext,
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 use std::fs::File;
@@ -36,7 +36,7 @@ pub fn run() {
 
     let db = init_db();
 
-    let mut context = Context::mainnet()
+    let mut evm = Context::mainnet()
         .with_db(db)
         .modify_tx_chained(|tx| {
             tx.caller = BENCH_CALLER;
@@ -47,7 +47,7 @@ pub fn run() {
         .build_mainnet();
 
     let started = Instant::now();
-    let tx_result = transact_main(&mut context).unwrap().result;
+    let tx_result = evm.transact_previous().unwrap().result;
     let return_data = match tx_result {
         ExecutionResult::Success {
             output, gas_used, ..
