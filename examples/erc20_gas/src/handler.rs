@@ -19,13 +19,13 @@ use std::cmp::Ordering;
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
 pub struct Erc20MainetHandler<CTX, ERROR> {
-    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+    _phantom: core::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> Erc20MainetHandler<CTX, ERROR> {
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 }

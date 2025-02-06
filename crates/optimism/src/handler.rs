@@ -27,17 +27,18 @@ use revm::{
     state::{Account, EvmState},
     Database,
 };
+use std::vec::Vec;
 
 pub struct OpHandler<EVM, ERROR, FRAME> {
     pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
-    pub _phantom: std::marker::PhantomData<(EVM, ERROR, FRAME)>,
+    pub _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
 impl<EVM, ERROR, FRAME> OpHandler<EVM, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
             mainnet: MainnetHandler::default(),
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 }

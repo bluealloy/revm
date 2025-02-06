@@ -32,7 +32,7 @@ pub struct TracerEip3155<CTX, INTR> {
     skip: bool,
     include_memory: bool,
     memory: Option<String>,
-    _phantom: std::marker::PhantomData<(CTX, INTR)>,
+    _phantom: core::marker::PhantomData<(CTX, INTR)>,
 }
 
 // # Output

@@ -8,6 +8,7 @@ use revm::{
     state::EvmState,
     Context, Database, JournaledState,
 };
+use std::vec::Vec;
 
 pub trait OpBuilder: Sized {
     type Context;

@@ -16,6 +16,7 @@ use revm::{
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm,
 };
+use std::vec::Vec;
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteEvm
     for OpEvm<
