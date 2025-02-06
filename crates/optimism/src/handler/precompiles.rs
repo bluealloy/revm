@@ -3,7 +3,7 @@ use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
     context::Cfg,
-    context_interface::ContextGetters,
+    context_interface::ContextTrait,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
     specification::hardfork::SpecId,
@@ -95,13 +95,13 @@ pub fn granite() -> &'static Precompiles {
 
 impl<CTX> PrecompileProvider for OpPrecompileProvider<CTX>
 where
-    CTX: ContextGetters<Cfg: Cfg<Spec = OpSpec>>,
+    CTX: ContextTrait<Cfg: Cfg<Spec = OpSpec>>,
 {
     type Context = CTX;
     type Output = InterpreterResult;
 
     #[inline]
-    fn set_spec(&mut self, spec: <<Self::Context as ContextGetters>::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTrait>::Cfg as Cfg>::Spec) {
         *self = Self::new_with_spec(spec);
     }
 

@@ -1,8 +1,10 @@
 use revm::{
     context::{setters::ContextSetters, EvmData},
-    context_interface::ContextGetters,
+    context_interface::ContextTrait,
     handler::{
-        handler::EvmTypesTrait,
+        handler::EvmTrait,
+        inspect_instructions,
+        inspector::Inspector,
         instructions::{EthInstructions, InstructionExecutor},
     },
     interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterAction},
@@ -41,10 +43,11 @@ impl<CTX: ContextSetters, INSP, I> ContextSetters for OpEvm<CTX, INSP, I> {
     }
 }
 
-impl<CTX, INSP, I> EvmTypesTrait for OpEvm<CTX, INSP, I>
+impl<CTX, INSP, I> EvmTrait for OpEvm<CTX, INSP, I>
 where
-    CTX: ContextGetters,
+    CTX: ContextTrait,
     I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
+    INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Context = CTX;
     type Inspector = INSP;
@@ -57,9 +60,14 @@ where
             <Self::Instructions as InstructionExecutor>::InterpreterTypes,
         >,
     ) -> <Self::Instructions as InstructionExecutor>::Output {
-        let (ctx, instructions) = self.ctx_instructions();
-        interpreter.run_plain(instructions.plain_instruction_table(), ctx)
-        // TODO if self.enabled_inspection {}
+        let context = &mut self.data.ctx;
+        let instructions = &mut self.instruction;
+        let inspector = &mut self.data.inspector;
+        if self.enabled_inspection {
+            inspect_instructions(context, interpreter, inspector, instructions)
+        } else {
+            interpreter.run_plain(instructions.plain_instruction_table(), context)
+        }
     }
 
     fn enable_inspection(&mut self, enable: bool) {

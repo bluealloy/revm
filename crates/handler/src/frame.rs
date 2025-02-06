@@ -1,25 +1,22 @@
-use crate::{
-    handler::EvmTypesTrait, instructions::InstructionExecutor,
-    precompile_provider::PrecompileProvider,
-};
-
 use super::frame_data::*;
+use crate::{
+    handler::EvmTrait, instructions::InstructionExecutor, precompile_provider::PrecompileProvider,
+    FrameInitOrResult, FrameOrResult, ItemOrResult,
+};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context_interface::ContextGetters;
+use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
     Cfg, Database, Transaction,
 };
 use core::{cell::RefCell, cmp::min};
-use handler_interface::{Frame, FrameInitOrResult, ItemOrResult};
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
-    InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
-    SharedMemory,
+    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl, InstructionResult,
+    Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256, U256};
@@ -30,6 +27,33 @@ use specification::{
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{boxed::Box, rc::Rc, sync::Arc};
+
+/// Call frame trait
+pub trait Frame: Sized {
+    type Context;
+    type FrameInit;
+    type FrameResult;
+    type Error;
+
+    fn init_first(
+        context: &mut Self::Context,
+        frame_input: Self::FrameInit,
+    ) -> Result<FrameOrResult<Self>, Self::Error>;
+
+    fn init(
+        &self,
+        context: &mut Self::Context,
+        frame_input: Self::FrameInit,
+    ) -> Result<FrameOrResult<Self>, Self::Error>;
+
+    fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error>;
+
+    fn return_result(
+        &mut self,
+        context: &mut Self::Context,
+        result: Self::FrameResult,
+    ) -> Result<(), Self::Error>;
+}
 
 pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
     phantom: core::marker::PhantomData<(CTX, ERROR)>,
@@ -49,7 +73,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
 
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter<()>>
 where
-    EVM: EvmTypesTrait<
+    EVM: EvmTrait<
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor<
             Context = EVM::Context,
@@ -67,7 +91,7 @@ where
     fn init_first(
         context: &mut Self::Context,
         frame_input: Self::FrameInit,
-    ) -> Result<handler_interface::FrameOrResult<Self>, Self::Error> {
+    ) -> Result<FrameOrResult<Self>, Self::Error> {
         EthFrame::init_first(context, frame_input)
     }
 
@@ -75,13 +99,13 @@ where
         &self,
         context: &mut Self::Context,
         frame_input: Self::FrameInit,
-    ) -> Result<handler_interface::FrameOrResult<Self>, Self::Error> {
+    ) -> Result<FrameOrResult<Self>, Self::Error> {
         self.init(context, frame_input)
     }
 
     fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error> {
         let next_action = context.run_interpreter(&mut self.interpreter);
-        self.handle_runner_action(context, next_action)
+        self.run_frame(context, next_action)
     }
 
     fn return_result(
@@ -93,7 +117,7 @@ where
     }
 }
 
-pub type CtxTraitDbError<CTX> = <<CTX as ContextGetters>::Db as Database>::Error;
+pub type CtxTraitDbError<CTX> = <<CTX as ContextTrait>::Db as Database>::Error;
 
 impl<CTX, ERROR, IW> EthFrame<CTX, ERROR, IW>
 where
@@ -121,8 +145,8 @@ where
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
-    EVM: EvmTypesTrait<
-        Context: ContextGetters,
+    EVM: EvmTrait<
+        Context: ContextTrait,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor,
     >,
@@ -489,8 +513,8 @@ where
 
 impl<CTX, ERROR> EthFrame<CTX, ERROR, EthInterpreter<()>>
 where
-    CTX: EvmTypesTrait<
-        Context: ContextGetters,
+    CTX: EvmTrait<
+        Context: ContextTrait,
         Precompiles: PrecompileProvider<Context = CTX::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor<
             Context = CTX::Context,
@@ -524,7 +548,7 @@ where
         Self::init_with_context(context, self.depth + 1, frame_init, self.memory.clone())
     }
 
-    pub fn handle_runner_action(
+    pub fn run_frame(
         &mut self,
         evm: &mut CTX,
         next_action: InterpreterAction,

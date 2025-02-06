@@ -1,10 +1,10 @@
-use super::{EthHandler, EthTraitError, EvmTypesTrait};
+use super::{EthHandler, EthTraitError};
 use crate::{
     inspector::{EthInspectorHandler, Inspector, InspectorFrame},
-    FrameResult,
+    EvmTrait, Frame, FrameResult,
 };
-use context_interface::{result::HaltReason, ContextGetters, Journal};
-use handler_interface::Frame;
+use context_interface::{result::HaltReason, ContextTrait, Journal};
+
 use interpreter::{interpreter::EthInterpreter, FrameInput};
 
 use primitives::Log;
@@ -17,9 +17,7 @@ pub struct MainnetHandler<CTX, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> EthHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTypesTrait<
-        Context: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-    >,
+    EVM: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
     ERROR: EthTraitError<EVM>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
@@ -41,9 +39,9 @@ impl<CTX, ERROR, FRAME> Default for MainnetHandler<CTX, ERROR, FRAME> {
 
 impl<CTX, ERROR, FRAME> EthInspectorHandler for MainnetHandler<CTX, ERROR, FRAME>
 where
-    CTX: EvmTypesTrait<
-        Context: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTypesTrait>::Context, EthInterpreter>,
+    CTX: EvmTrait<
+        Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,
     >,
     ERROR: EthTraitError<CTX>,
     FRAME: Frame<Context = CTX, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
@@ -51,14 +49,3 @@ where
 {
     type IT = EthInterpreter;
 }
-
-// impl<
-//         BLOCK: Block,
-//         TX: Transaction,
-//         CFG: Cfg,
-//         DB: Database,
-//         JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
-//         CHAIN,
-//     > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-// {
-// }

@@ -1,6 +1,6 @@
 use auto_impl::auto_impl;
 use context::Cfg;
-use context_interface::ContextGetters;
+use context_interface::ContextTrait;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};
@@ -10,10 +10,10 @@ use std::boxed::Box;
 
 #[auto_impl(&mut, Box)]
 pub trait PrecompileProvider: Clone {
-    type Context: ContextGetters;
+    type Context: ContextTrait;
     type Output;
 
-    fn set_spec(&mut self, spec: <<Self::Context as ContextGetters>::Cfg as Cfg>::Spec);
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTrait>::Cfg as Cfg>::Spec);
 
     /// Run the precompile.
     fn run(
@@ -47,7 +47,7 @@ impl<CTX> Clone for EthPrecompiles<CTX> {
 
 impl<CTX> Default for EthPrecompiles<CTX>
 where
-    CTX: ContextGetters,
+    CTX: ContextTrait,
 {
     fn default() -> Self {
         Self {
@@ -59,11 +59,11 @@ where
 
 impl<CTX> PrecompileProvider for EthPrecompiles<CTX>
 where
-    CTX: ContextGetters,
+    CTX: ContextTrait,
 {
     type Context = CTX;
     type Output = InterpreterResult;
-    fn set_spec(&mut self, spec: <<Self::Context as ContextGetters>::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTrait>::Cfg as Cfg>::Spec) {
         self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec.into()));
     }
 

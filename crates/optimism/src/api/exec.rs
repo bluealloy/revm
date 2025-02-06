@@ -2,10 +2,10 @@ use precompile::Log;
 use revm::{
     context_interface::{
         result::{EVMError, ExecutionResult, ResultAndState},
-        Block, Cfg, ContextGetters, Database, Journal,
+        Block, Cfg, ContextTrait, Database, Journal,
     },
     handler::{
-        handler::EvmTypesTrait, inspector::Inspector, instructions::EthInstructions, EthFrame,
+        handler::EvmTrait, inspector::Inspector, instructions::EthInstructions, EthFrame,
         EthHandler,
     },
     interpreter::interpreter::EthInterpreter,

@@ -3,8 +3,6 @@ mod input;
 mod loop_control;
 mod return_data;
 mod runtime_flags;
-#[cfg(feature = "serde")]
-pub mod serde;
 mod shared_memory;
 mod stack;
 mod subroutine_stack;
@@ -209,29 +207,6 @@ impl InterpreterResult {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
-    // use crate::{table::InstructionTable, DummyHost};
-
-    // #[test]
-    // fn object_safety() {
-    //     let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
-    //     interp.spec_id = SpecId::CANCUN;
-    //     let mut host = crate::DummyHost::<DefaultEthereumWiring>::default();
-    //     let table: &InstructionTable<DummyHost<DefaultEthereumWiring>> =
-    //         &crate::table::make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>(
-    //         );
-    //     let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
-
-    //     let host: &mut dyn Host<EvmWiringT = DefaultEthereumWiring> =
-    //         &mut host as &mut dyn Host<EvmWiringT = DefaultEthereumWiring>;
-    //     let table: &InstructionTable<dyn Host<EvmWiringT = DefaultEthereumWiring>> =
-    //         &crate::table::make_instruction_table::<
-    //             Interpreter,
-    //             dyn Host<EvmWiringT = DefaultEthereumWiring>,
-    //         >();
-    //     let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
-    // }
-
     use super::*;
     use bytecode::Bytecode;
     use primitives::{Address, Bytes, U256};

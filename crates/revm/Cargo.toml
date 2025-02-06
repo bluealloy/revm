@@ -33,7 +33,6 @@ bytecode.workspace = true
 context.workspace = true
 context-interface.workspace = true
 handler.workspace = true
-handler-interface.workspace = true
 
 [dev-dependencies]
 database.workspace = true
@@ -54,7 +53,6 @@ std = [
     "interpreter/std",
     "precompile/std",
     "handler/std",
-    "handler-interface/std",
     "context/std",
     "context-interface/std",
 ]

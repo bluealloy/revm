@@ -1,12 +1,11 @@
 use crate::{
     execution,
-    handler::{EthHandler, EvmTypesTrait},
-    EthFrame, FrameResult,
+    handler::{EthHandler, EvmTrait},
+    EthFrame, Frame, FrameOrResult, FrameResult, ItemOrResult,
 };
 use auto_impl::auto_impl;
 use context::{Cfg, JournalEntry, JournaledState};
-use context_interface::{result::ResultAndState, ContextGetters, Database, Transaction};
-use handler_interface::{Frame, FrameOrResult, ItemOrResult};
+use context_interface::{result::ResultAndState, ContextTrait, Database, Transaction};
 use interpreter::{
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput,
     InitialAndFloorGas, Interpreter, InterpreterTypes,
@@ -200,9 +199,8 @@ where
 
 pub trait EthInspectorHandler: EthHandler
 where
-    Self::Evm: EvmTypesTrait<
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTypesTrait>::Context, Self::IT>,
-    >,
+    Self::Evm:
+        EvmTrait<Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, Self::IT>>,
     Self::Frame: InspectorFrame<IT = Self::IT>,
 {
     type IT: InterpreterTypes;
@@ -274,17 +272,6 @@ where
         ret
     }
 
-    fn inspect_frame_return_result(
-        &mut self,
-        frame: &mut Self::Frame,
-        evm: &mut Self::Evm,
-        result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<(), Self::Error> {
-        // TODO
-        // context.frame_end(&mut result);
-        self.frame_return_result(frame, evm, result)
-    }
-
     fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
@@ -336,8 +323,6 @@ where
         }
     }
 }
-
-// TODO INSTRUCTIONS FRAME START AND END
 
 fn frame_start<CTX, INTR: InterpreterTypes>(
     context: &mut CTX,

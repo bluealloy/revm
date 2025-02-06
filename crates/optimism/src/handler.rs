@@ -11,17 +11,16 @@ use crate::{
 };
 use precompile::Log;
 use revm::{
-    context_interface::ContextGetters,
+    context_interface::ContextTrait,
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
         Block, Cfg, Journal, Transaction,
     },
     handler::{
-        handler::{EthTraitError, EvmTypesTrait},
+        handler::{EthTraitError, EvmTrait},
         inspector::{EthInspectorHandler, Inspector, InspectorFrame},
-        EthHandler, FrameResult, MainnetHandler,
+        EthHandler, Frame, FrameResult, MainnetHandler,
     },
-    handler_interface::Frame,
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{hash_map::HashMap, U256},
     specification::hardfork::SpecId,
@@ -61,8 +60,8 @@ impl<DB, TX> IsTxError for EVMError<DB, TX> {
 
 impl<EVM, ERROR, FRAME> EthHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTypesTrait<
-        Context: ContextGetters<
+    EVM: EvmTrait<
+        Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
             Cfg: Cfg<Spec = OpSpec>,
@@ -381,14 +380,14 @@ where
 
 impl<EVM, ERROR, FRAME> EthInspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTypesTrait<
-        Context: ContextGetters<
+    EVM: EvmTrait<
+        Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
             Cfg: Cfg<Spec = OpSpec>,
             Chain = L1BlockInfo,
         >,
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTypesTrait>::Context, EthInterpreter>,
+        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,
     >,
     ERROR: EthTraitError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.

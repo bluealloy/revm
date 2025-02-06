@@ -1,62 +1,8 @@
-use crate::{
-    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, setters::ContextSetters,
-    tx::TxEnv,
-};
-use context_interface::{Block, Cfg, ContextGetters, Journal, Transaction};
-use core::ops::{Deref, DerefMut};
+use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
+use context_interface::{Block, Cfg, ContextTrait, Journal, Transaction};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use specification::hardfork::SpecId;
-
-pub struct Evm<CTX, INSP, I, P> {
-    pub data: EvmData<CTX, INSP>,
-    pub enabled_inspection: bool,
-    pub instruction: I,
-    pub precompiles: P,
-}
-
-pub struct EvmData<CTX, INSP> {
-    pub ctx: CTX,
-    pub inspector: INSP,
-}
-
-impl<CTX> Evm<CTX, (), (), ()> {
-    pub fn new(ctx: CTX) -> Self {
-        Evm {
-            data: EvmData { ctx, inspector: () },
-            enabled_inspection: false,
-            instruction: (),
-            precompiles: (),
-        }
-    }
-}
-
-impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
-    type Tx = <CTX as ContextSetters>::Tx;
-    type Block = <CTX as ContextSetters>::Block;
-
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.data.ctx.set_tx(tx);
-    }
-
-    fn set_block(&mut self, block: Self::Block) {
-        self.data.ctx.set_block(block);
-    }
-}
-
-impl<CTX, INSP, I, P> Deref for Evm<CTX, INSP, I, P> {
-    type Target = CTX;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data.ctx
-    }
-}
-
-impl<CTX, INSP, I, P> DerefMut for Evm<CTX, INSP, I, P> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.data.ctx
-    }
-}
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
@@ -89,7 +35,7 @@ impl<
         CFG: Cfg,
         JOURNAL: Journal<Database = DB>,
         CHAIN,
-    > ContextGetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+    > ContextTrait for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     type Block = BLOCK;
     type Tx = TX;

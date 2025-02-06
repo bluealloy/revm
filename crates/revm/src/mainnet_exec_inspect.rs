@@ -3,10 +3,10 @@ use crate::{InspectCommitEvm, InspectEvm};
 use context::{Cfg, Context, Evm};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    Block, ContextGetters, Database, Journal, Transaction,
+    Block, ContextTrait, Database, Journal, Transaction,
 };
 use database_interface::DatabaseCommit;
-use handler::{handler::EvmTypesTrait, inspector::EthInspectorHandler};
+use handler::{handler::EvmTrait, inspector::EthInspectorHandler};
 use handler::{
     inspector::Inspector, instructions::EthInstructions, EthFrame, EthHandler, EthPrecompiles,
     MainnetHandler,

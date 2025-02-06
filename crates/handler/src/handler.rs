@@ -1,20 +1,15 @@
-pub mod types;
-
-pub use types::MainnetHandler;
-
 use crate::{
     execution, inspector::Inspector, instructions::InstructionExecutor, post_execution,
-    pre_execution, validation, FrameResult,
+    pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult, FrameResult, ItemOrResult,
 };
 use auto_impl::auto_impl;
 use context::Evm;
-use context_interface::ContextGetters;
+use context_interface::ContextTrait;
 use context_interface::{
     result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
-use handler_interface::{Frame, FrameInitOrResult, FrameOrResult, ItemOrResult};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
@@ -24,27 +19,66 @@ use primitives::Log;
 use state::EvmState;
 use std::{vec, vec::Vec};
 
-pub trait EthTraitError<EVM: EvmTypesTrait>:
+pub trait EthTraitError<EVM: EvmTrait>:
     From<InvalidTransaction>
     + From<InvalidHeader>
-    + From<<<EVM::Context as ContextGetters>::Db as Database>::Error>
+    + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
     + From<PrecompileErrors>
 {
 }
 
 impl<
-        EVM: EvmTypesTrait,
+        EVM: EvmTrait,
         T: From<InvalidTransaction>
             + From<InvalidHeader>
-            + From<<<EVM::Context as ContextGetters>::Db as Database>::Error>
+            + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
             + From<PrecompileErrors>,
     > EthTraitError<EVM> for T
 {
 }
 
-impl<CTX, INSP, I, P> EvmTypesTrait for Evm<CTX, INSP, I, P>
+pub fn inspect_instructions<CTX, I>(
+    context: &mut CTX,
+    interpreter: &mut Interpreter<I::InterpreterTypes>,
+    mut inspector: impl Inspector<CTX, I::InterpreterTypes>,
+    instructions: &mut I,
+) -> I::Output
 where
-    CTX: ContextGetters + Host,
+    CTX: ContextTrait + Host,
+    I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
+{
+    let instructions = instructions.inspector_instruction_table();
+    interpreter.reset_control();
+
+    // Main loop
+    while interpreter.control.instruction_result().is_continue() {
+        // Get current opcode.
+        let opcode = interpreter.bytecode.opcode();
+
+        // Call Inspector step.
+        inspector.step(interpreter, context);
+        if interpreter.control.instruction_result() != InstructionResult::Continue {
+            break;
+        }
+
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        interpreter.bytecode.relative_jump(1);
+
+        // Execute instruction.
+        instructions[opcode as usize](interpreter, context);
+
+        // Call step_end.
+        inspector.step_end(interpreter, context);
+    }
+
+    interpreter.take_next_action()
+}
+
+impl<CTX, INSP, I, P> EvmTrait for Evm<CTX, INSP, I, P>
+where
+    CTX: ContextTrait + Host,
     INSP: Inspector<CTX, I::InterpreterTypes>,
     I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
 {
@@ -60,38 +94,11 @@ where
             <Self::Instructions as InstructionExecutor>::InterpreterTypes,
         >,
     ) -> <Self::Instructions as InstructionExecutor>::Output {
-        let inspect = self.enabled_inspection;
         let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
         let inspector = &mut self.data.inspector;
-        if inspect {
-            let instructions = instructions.inspector_instruction_table();
-            interpreter.reset_control();
-
-            // Main loop
-            while interpreter.control.instruction_result().is_continue() {
-                // Get current opcode.
-                let opcode = interpreter.bytecode.opcode();
-
-                // Call Inspector step.
-                inspector.step(interpreter, context);
-                if interpreter.control.instruction_result() != InstructionResult::Continue {
-                    break;
-                }
-
-                // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-                // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-                // it will do noop and just stop execution of this contract
-                interpreter.bytecode.relative_jump(1);
-
-                // Execute instruction.
-                instructions[opcode as usize](interpreter, context);
-
-                // Call step_end.
-                inspector.step_end(interpreter, context);
-            }
-
-            interpreter.take_next_action()
+        if self.enabled_inspection {
+            inspect_instructions(context, interpreter, inspector, instructions)
         } else {
             interpreter.run_plain(instructions.plain_instruction_table(), context)
         }
@@ -129,8 +136,8 @@ where
 }
 
 #[auto_impl(&mut, Box)]
-pub trait EvmTypesTrait {
-    type Context: ContextGetters;
+pub trait EvmTrait {
+    type Context: ContextTrait;
     type Inspector;
     type Instructions: InstructionExecutor;
     type Precompiles;
@@ -156,9 +163,7 @@ pub trait EvmTypesTrait {
 }
 
 pub trait EthHandler {
-    type Evm: EvmTypesTrait<
-        Context: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-    >;
+    type Evm: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
     type Error: EthTraitError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.

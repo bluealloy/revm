@@ -1,5 +1,5 @@
 use super::frame_data::FrameResult;
-use context_interface::ContextGetters;
+use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
@@ -29,7 +29,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
 }
 
-pub fn reimburse_caller<CTX: ContextGetters>(
+pub fn reimburse_caller<CTX: ContextTrait>(
     context: &mut CTX,
     gas: &mut Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
@@ -51,7 +51,7 @@ pub fn reimburse_caller<CTX: ContextGetters>(
     Ok(())
 }
 
-pub fn reward_beneficiary<CTX: ContextGetters>(
+pub fn reward_beneficiary<CTX: ContextTrait>(
     context: &mut CTX,
     gas: &mut Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
@@ -88,7 +88,7 @@ pub fn reward_beneficiary<CTX: ContextGetters>(
 ///
 /// TODO make Journal FinalOutput more generic.
 pub fn output<
-    CTX: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     HALTREASON: HaltReasonTrait,
 >(
     context: &mut CTX,

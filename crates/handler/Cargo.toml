@@ -30,8 +30,7 @@ context.workspace = true
 primitives.workspace = true
 state.workspace = true
 specification.workspace = true
-bytecode.workspace = true
-handler-interface.workspace = true
+bytecode.workspace = true 
 auto_impl.workspace = true
 
 # Optional

@@ -3,7 +3,7 @@ use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{ContextGetters, Journal, Transaction},
+    context_interface::{ContextTrait, Journal, Transaction},
     handler::inspector::Inspector,
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
@@ -114,7 +114,7 @@ struct Summary {
 
 impl<CTX, INTR> TracerEip3155<CTX, INTR>
 where
-    CTX: ContextGetters,
+    CTX: ContextTrait,
     INTR:,
 {
     /// Creates a new EIP-3155 tracer with the given output writer, by first wrapping it in a
@@ -219,7 +219,7 @@ impl CloneStack for Stack {
 
 impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
 where
-    CTX: ContextGetters,
+    CTX: ContextTrait,
     INTR: InterpreterTypes<Stack: StackTrait + CloneStack>,
 {
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {

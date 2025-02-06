@@ -1,11 +1,11 @@
 pub use crate::journaled_state::StateLoad;
 use database_interface::Database;
 
-use crate::{context::ContextGetters, journaled_state::AccountLoad, Block, Journal};
+use crate::{context::ContextTrait, journaled_state::AccountLoad, Block, Journal};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 
 /// EVM context host.
-pub trait Host: ContextGetters {
+pub trait Host: ContextTrait {
     fn set_error(&mut self, error: <Self::Db as Database>::Error) {
         *self.error() = Err(error);
     }
@@ -118,7 +118,7 @@ pub trait Host: ContextGetters {
     }
 }
 
-impl<T: ContextGetters> Host for T {}
+impl<T: ContextTrait> Host for T {}
 
 /// Represents the result of an `sstore` operation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -180,20 +180,3 @@ pub struct SelfDestructResult {
     pub target_exists: bool,
     pub previously_destroyed: bool,
 }
-
-// TODO TEST
-// #[cfg(test)]
-// mod tests {
-//     use database_interface::EmptyDB;
-//     use context_interface::EthereumWiring;
-
-//     use super::*;
-
-//     fn assert_host<H: Host + ?Sized>() {}
-
-//     #[test]
-//     fn object_safety() {
-//         assert_host::<DummyHost<EthereumWiring<EmptyDB, ()>>>();
-//         assert_host::<dyn Host<EvmWiringT = EthereumWiring<EmptyDB, ()>>>();
-//     }
-// }

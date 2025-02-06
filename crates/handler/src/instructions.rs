@@ -1,12 +1,13 @@
-use context_interface::ContextGetters;
+use auto_impl::auto_impl;
+use context_interface::ContextTrait;
 use interpreter::{
     table::{make_instruction_table, InstructionTable},
     Host, Interpreter, InterpreterAction, InterpreterTypes,
 };
 use std::rc::Rc;
 
-// TODO rename to Instructions. It should store the instructions on
-// plan and inspect execution.
+// TODO It should store the instructions for plan and inspect execution.
+#[auto_impl(&, Arc, Rc)]
 pub trait InstructionExecutor {
     type Context;
     type InterpreterTypes: InterpreterTypes;
@@ -66,7 +67,7 @@ where
 
 pub trait ContextInspectRun {
     type InterpreterTypes: InterpreterTypes;
-    type Context: ContextGetters + Host;
+    type Context: ContextTrait + Host;
 
     fn run_context(
         &mut self,
@@ -96,13 +97,6 @@ where
         &self.inspector_table
     }
 }
-
-/*
-
-Frame< Inspector:
-
-
-*/
 
 impl<WIRE, HOST> Default for EthInstructions<WIRE, HOST>
 where

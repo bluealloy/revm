@@ -125,12 +125,15 @@ async fn main() -> anyhow::Result<()> {
             etx.gas_priority_fee = tx.max_priority_fee_per_gas();
             etx.chain_id = Some(chain_id);
             etx.nonce = tx.nonce();
-            // TODO rakita
-            // if let Some(access_list) = tx.access_list() {
-            //     etx.access_list = access_list.to_owned();
-            // } else {
-            //     etx.access_list = Default::default();
-            // }
+            if let Some(access_list) = tx.access_list() {
+                etx.access_list = access_list
+                    .0
+                    .iter()
+                    .map(|item| (item.address, item.storage_keys.clone()))
+                    .collect();
+            } else {
+                etx.access_list = Default::default();
+            }
 
             etx.kind = match tx.to() {
                 Some(to_address) => TxKind::Call(to_address),
