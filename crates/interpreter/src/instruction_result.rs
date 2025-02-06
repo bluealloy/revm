@@ -1,6 +1,6 @@
 use context_interface::{
     journaled_state::TransferError,
-    result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason},
+    result::{HaltReason, OutOfGasError, SuccessReason},
 };
 use core::fmt::Debug;
 
@@ -262,7 +262,7 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum SuccessOrHalt<HaltReasonT: HaltReasonTrait> {
+pub enum SuccessOrHalt<HaltReasonT> {
     Success(SuccessReason),
     Revert,
     Halt(HaltReasonT),
@@ -270,7 +270,7 @@ pub enum SuccessOrHalt<HaltReasonT: HaltReasonTrait> {
     Internal(InternalResult),
 }
 
-impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonT> SuccessOrHalt<HaltReasonT> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -308,13 +308,13 @@ impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
     }
 }
 
-impl<HALT: HaltReasonTrait> From<HaltReason> for SuccessOrHalt<HALT> {
+impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
     fn from(reason: HaltReason) -> Self {
         SuccessOrHalt::Halt(reason.into())
     }
 }
 
-impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonT: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop

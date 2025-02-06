@@ -7,7 +7,7 @@ use crate::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
         OpTransactionError, OpTxTrait,
     },
-    L1BlockInfo, OpSpec, OpSpecId, OpHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    L1BlockInfo, OpHaltReason, OpSpec, OpSpecId, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
 use precompile::Log;
 use revm::{
