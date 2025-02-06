@@ -29,4 +29,4 @@ pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
 pub use exec_inspect::{ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm};
-pub use mainnet_builder::{MainBuilder, MainContext};
+pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};

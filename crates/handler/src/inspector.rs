@@ -360,19 +360,19 @@ fn frame_end<CTX, INTR: InterpreterTypes>(
             let FrameInput::Call(i) = frame_input else {
                 panic!("FrameInput::Call expected");
             };
-            inspector.call_end(context, &i, outcome);
+            inspector.call_end(context, i, outcome);
         }
         FrameResult::Create(outcome) => {
             let FrameInput::Create(i) = frame_input else {
                 panic!("FrameInput::Create expected");
             };
-            inspector.create_end(context, &i, outcome);
+            inspector.create_end(context, i, outcome);
         }
         FrameResult::EOFCreate(outcome) => {
             let FrameInput::EOFCreate(i) = frame_input else {
                 panic!("FrameInput::EofCreate expected");
             };
-            inspector.eofcreate_end(context, &i, outcome);
+            inspector.eofcreate_end(context, i, outcome);
         }
     }
 }

@@ -1,12 +1,12 @@
-use crate::{evm::OpEvm, transaction::OpTxTrait, L1BlockInfo, OpSpec};
+use crate::{evm::OpEvm, transaction::OpTxTrait, L1BlockInfo, OpSpec, OpTransaction};
 use precompile::Log;
 use revm::{
-    context::Cfg,
+    context::{BlockEnv, Cfg, CfgEnv, TxEnv},
     context_interface::{Block, Journal},
     handler::{instructions::EthInstructions, noop::NoOpInspector},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
-    Context, Database,
+    Context, Database, JournaledState,
 };
 
 pub trait OpBuilder: Sized {
@@ -45,3 +45,6 @@ where
         OpEvm::new(self, inspector)
     }
 }
+
+pub type OpContext<DB> =
+    Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpec>, DB, JournaledState<DB>, L1BlockInfo>;

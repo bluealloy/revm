@@ -98,7 +98,7 @@ where
                     InstructionResult::PrecompileError
                 };
             }
-            Err(err @ PrecompileErrors::Fatal { .. }) => return Err(err.into()),
+            Err(err @ PrecompileErrors::Fatal { .. }) => return Err(err),
         }
         Ok(Some(result))
     }

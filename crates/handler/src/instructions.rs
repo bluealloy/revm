@@ -56,7 +56,7 @@ where
 
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         // TODO make a wrapper for inspector calls.
-        let inspector_table = base_table.clone();
+        let inspector_table = base_table;
         Self {
             instruction_table: Rc::new(base_table),
             inspector_table: Rc::new(inspector_table),

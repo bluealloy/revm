@@ -36,6 +36,7 @@ pub trait InspectEvm: ExecuteEvm {
         self.set_inspector(inspector);
         self.inspect_previous()
     }
+
     fn inspect(
         &mut self,
         tx: <Self as ContextSetters>::Tx,

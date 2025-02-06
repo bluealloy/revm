@@ -8,27 +8,16 @@ use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
+pub type MainnetEvm<CTX, INSP> =
+    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
+
 pub trait MainBuilder: Sized {
     type Context;
 
-    fn build_mainnet(
-        self,
-    ) -> Evm<
-        Self::Context,
-        NoOpInspector,
-        EthInstructions<EthInterpreter, Self::Context>,
-        EthPrecompiles<Self::Context>,
-    >;
+    fn build_mainnet(self) -> MainnetEvm<Self::Context, NoOpInspector>;
 
-    fn build_mainnet_with_inspector<INSP>(
-        self,
-        inspector: INSP,
-    ) -> Evm<
-        Self::Context,
-        INSP,
-        EthInstructions<EthInterpreter, Self::Context>,
-        EthPrecompiles<Self::Context>,
-    >;
+    fn build_mainnet_with_inspector<INSP>(self, inspector: INSP)
+        -> MainnetEvm<Self::Context, INSP>;
 }
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
@@ -41,14 +30,7 @@ where
 {
     type Context = Self;
 
-    fn build_mainnet(
-        self,
-    ) -> Evm<
-        Self::Context,
-        NoOpInspector,
-        EthInstructions<EthInterpreter, Self::Context>,
-        EthPrecompiles<Self::Context>,
-    > {
+    fn build_mainnet(self) -> MainnetEvm<Self::Context, NoOpInspector> {
         Evm {
             data: EvmData {
                 ctx: self,
@@ -63,12 +45,7 @@ where
     fn build_mainnet_with_inspector<INSP>(
         self,
         inspector: INSP,
-    ) -> Evm<
-        Self::Context,
-        INSP,
-        EthInstructions<EthInterpreter, Self::Context>,
-        EthPrecompiles<Self::Context>,
-    > {
+    ) -> MainnetEvm<Self::Context, INSP> {
         Evm {
             data: EvmData {
                 ctx: self,
