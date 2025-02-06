@@ -9,7 +9,7 @@
 mod eip3155;
 mod gas;
 
-/// [Inspector] implementations.
+/// Inspector implementations.
 pub mod inspectors {
     #[cfg(all(feature = "std", feature = "serde-json"))]
     pub use super::eip3155::TracerEip3155;
