@@ -4,7 +4,7 @@ use revm::{
     primitives::{TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 pub fn run() {
     let time = Instant::now();
@@ -23,10 +23,7 @@ pub fn run() {
     let _ = evm.transact_previous();
     println!("First run: {:?}", time.elapsed());
 
-    // Microbenchmark
-    let bench_options = microbench::Options::default().time(Duration::from_secs(1));
-
-    microbench::bench(&bench_options, "Run bytecode", || {
-        let _ = evm.transact_previous().unwrap();
-    });
+    let time = Instant::now();
+    let _ = evm.transact_previous();
+    println!("Second run: {:?}", time.elapsed());
 }
