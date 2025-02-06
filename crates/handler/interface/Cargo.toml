@@ -24,7 +24,6 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-auto_impl.workspace = true
 specification.workspace = true
 
 [dev-dependencies]

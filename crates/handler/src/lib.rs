@@ -22,5 +22,5 @@ pub mod validation;
 // Public exports
 pub use frame::{return_create, return_eofcreate, CtxTraitDbError, EthFrame, EthFrameContext};
 pub use frame_data::{FrameData, FrameResult};
-pub use handler::{EthContext, EthError, EthHandler, MainnetHandler};
+pub use handler::{EthHandler, EthTraitError, MainnetHandler};
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};

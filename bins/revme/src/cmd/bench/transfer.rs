@@ -1,11 +1,10 @@
-use std::time::Instant;
-
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
     primitives::{TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
+use std::time::{Duration, Instant};
 
 pub fn run() {
     let time = Instant::now();
@@ -24,7 +23,10 @@ pub fn run() {
     let _ = evm.exec_previous();
     println!("First run: {:?}", time.elapsed());
 
-    let time = Instant::now();
-    let _ = evm.exec_previous();
-    println!("Run: {:?}", time.elapsed());
+    // Microbenchmark
+    let bench_options = microbench::Options::default().time(Duration::from_secs(1));
+
+    microbench::bench(&bench_options, "Run bytecode", || {
+        let _ = evm.exec_previous().unwrap();
+    });
 }

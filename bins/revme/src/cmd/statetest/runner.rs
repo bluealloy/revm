@@ -16,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, InspectCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -430,9 +430,7 @@ pub fn execute_test_suite(
                         );
 
                     let timer = Instant::now();
-                    // TODO(rakita) inspect_commit_previous
-                    let res: Result<ExecutionResult, EVMError<Infallible>> =
-                        evm.inspect_previous().map(|c| c.result);
+                    let res = evm.inspect_commit_previous();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
@@ -504,8 +502,7 @@ pub fn execute_test_suite(
                         TracerEip3155::buffered(stderr()).without_summary(),
                     );
 
-                // TODO(rakita) inspect_commit_previous
-                let _ = evm.inspect_previous();
+                let _ = evm.inspect_commit_previous();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);

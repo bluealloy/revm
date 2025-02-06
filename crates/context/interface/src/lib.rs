@@ -16,7 +16,7 @@ pub mod transaction;
 
 pub use block::{Block, BlockGetter};
 pub use cfg::{Cfg, CfgGetter, CreateScheme, TransactTo};
-pub use context::PerformantContextAccess;
+pub use context::ContextGetters;
 pub use database_interface::{DBErrorMarker, Database, DatabaseGetter};
 pub use errors::ErrorGetter;
 pub use journaled_state::{Journal, JournalDBError, JournalGetter};

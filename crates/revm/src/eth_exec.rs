@@ -1,8 +1,8 @@
 use crate::{exec::ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext};
-use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Evm, EvmData, JournaledState, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, JournaledState, TxEnv};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    Block, Database, Journal, Transaction,
+    Block, ContextGetters, Database, Journal, Transaction,
 };
 use database_interface::{DatabaseCommit, EmptyDB};
 use handler::{
@@ -114,11 +114,11 @@ where
     }
 }
 
-pub fn transact_main<CTX: ContextTrait + Host, INSP>(
+pub fn transact_main<CTX: ContextGetters + Host, INSP>(
     evm: &mut Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>,
 ) -> Result<ResultAndState<HaltReason>, EVMError<<CTX::Db as Database>::Error, InvalidTransaction>>
 where
-    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
     let mut t = MainnetHandler::<

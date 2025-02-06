@@ -3,19 +3,18 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use bytecode::Bytecode;
-use context::ContextTrait;
+use context_interface::ContextGetters;
 use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
     transaction::{Transaction, TransactionType},
-    Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, JournalGetter,
-    PerformantContextAccess, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, JournalGetter, TransactionGetter,
 };
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
 use specification::{eip7702, hardfork::SpecId};
 use std::vec::Vec;
 
-pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error>>(
+pub fn load_accounts<CTX: ContextGetters, ERROR: From<<CTX::Db as Database>::Error>>(
     context: &mut CTX,
 ) -> Result<(), ERROR> {
     let spec = context.cfg().spec().into();
@@ -36,13 +35,21 @@ pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error
     }
 
     // Load access list
-    context.load_access_list()?;
+    let (tx, journal) = context.tx_journal();
+    if let Some(access_list) = tx.access_list() {
+        for access_list in access_list {
+            journal.warm_account_and_storage(
+                *access_list.0,
+                access_list.1.iter().map(|i| U256::from_be_bytes(i.0)),
+            )?;
+        }
+    }
 
     Ok(())
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextTrait>(
+pub fn deduct_caller<CTX: ContextGetters>(
     context: &mut CTX,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee();
@@ -83,7 +90,7 @@ pub fn deduct_caller<CTX: ContextTrait>(
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<
-    CTX: ContextTrait,
+    CTX: ContextGetters,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
@@ -179,23 +186,4 @@ pub fn apply_eip7702_auth_list<
         refunded_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
 
     Ok(refunded_gas)
-}
-
-pub trait EthPreExecutionContext:
-    TransactionGetter
-    + BlockGetter
-    + JournalGetter
-    + CfgGetter
-    + PerformantContextAccess<Error = <<Self as DatabaseGetter>::Database as Database>::Error>
-{
-}
-
-impl<
-        CTX: TransactionGetter
-            + BlockGetter
-            + JournalGetter
-            + CfgGetter
-            + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
-    > EthPreExecutionContext for CTX
-{
 }

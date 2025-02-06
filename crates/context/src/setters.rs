@@ -1,6 +1,5 @@
+use crate::Context;
 use context_interface::{Block, Cfg, Database, Journal, Transaction};
-
-use crate::{Context, ContextTrait};
 
 pub trait ContextSetters {
     type Tx: Transaction;

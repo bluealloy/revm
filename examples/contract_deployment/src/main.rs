@@ -8,6 +8,7 @@ use revm::{
     context::Context,
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
+    handler::handler::EvmTypesTrait,
     primitives::{hex, Bytes, TxKind, U256},
     transact_main, ExecuteCommitEvm, MainBuilder, MainContext,
 };
@@ -67,7 +68,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    evm.ctx.modify_tx(|tx| {
+    evm.ctx().modify_tx(|tx| {
         tx.kind = TxKind::Call(address);
         tx.data = Default::default();
         tx.nonce += 1;

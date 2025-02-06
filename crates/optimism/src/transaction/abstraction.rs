@@ -1,6 +1,5 @@
 use super::deposit::{DepositTransaction, DepositTransactionParts};
 use auto_impl::auto_impl;
-use inspector::inspector_context::InspectorContext;
 use revm::{
     context::TxEnv,
     context_interface::{
@@ -31,16 +30,6 @@ impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>,
 
     fn op_tx(&self) -> &Self::OpTransaction {
         &self.tx
-    }
-}
-
-impl<INSP, CTX: DatabaseGetter + OpTxGetter + TransactionGetter> OpTxGetter
-    for InspectorContext<INSP, CTX>
-{
-    type OpTransaction = <CTX as OpTxGetter>::OpTransaction;
-
-    fn op_tx(&self) -> &Self::OpTransaction {
-        self.inner.op_tx()
     }
 }
 

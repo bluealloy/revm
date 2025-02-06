@@ -1,16 +1,14 @@
 pub mod types;
 
-use auto_impl::auto_impl;
-use context::{ContextTrait, Evm};
-use precompile::PrecompileErrors;
-use primitives::Log;
-use state::EvmState;
-pub use types::{EthContext, EthError, MainnetHandler};
+pub use types::MainnetHandler;
 
 use crate::{
     execution, inspector::Inspector, instructions::InstructionExecutor, post_execution,
     pre_execution, validation, FrameResult,
 };
+use auto_impl::auto_impl;
+use context::Evm;
+use context_interface::ContextGetters;
 use context_interface::{
     result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
@@ -21,12 +19,15 @@ use interpreter::{
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
 };
+use precompile::PrecompileErrors;
+use primitives::Log;
+use state::EvmState;
 use std::{vec, vec::Vec};
 
 pub trait EthTraitError<EVM: EvmTypesTrait>:
     From<InvalidTransaction>
     + From<InvalidHeader>
-    + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
+    + From<<<EVM::Context as ContextGetters>::Db as Database>::Error>
     + From<PrecompileErrors>
 {
 }
@@ -35,7 +36,7 @@ impl<
         EVM: EvmTypesTrait,
         T: From<InvalidTransaction>
             + From<InvalidHeader>
-            + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
+            + From<<<EVM::Context as ContextGetters>::Db as Database>::Error>
             + From<PrecompileErrors>,
     > EthTraitError<EVM> for T
 {
@@ -43,7 +44,7 @@ impl<
 
 impl<CTX, INSP, I, P> EvmTypesTrait for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTrait + Host,
+    CTX: ContextGetters + Host,
     INSP: Inspector<CTX, I::InterpreterTypes>,
     I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
 {
@@ -52,6 +53,7 @@ where
     type Instructions = I;
     type Precompiles = P;
 
+    #[inline]
     fn run_interpreter(
         &mut self,
         interpreter: &mut Interpreter<
@@ -95,26 +97,32 @@ where
         }
     }
 
+    #[inline]
     fn enable_inspection(&mut self, enable: bool) {
         self.enabled_inspection = enable;
     }
 
+    #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.data.ctx
     }
 
+    #[inline]
     fn ctx_ref(&self) -> &Self::Context {
         &self.data.ctx
     }
 
+    #[inline]
     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
         (&mut self.data.ctx, &mut self.data.inspector)
     }
 
+    #[inline]
     fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
         (&mut self.data.ctx, &mut self.instruction)
     }
 
+    #[inline]
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
         (&mut self.data.ctx, &mut self.precompiles)
     }
@@ -122,7 +130,7 @@ where
 
 #[auto_impl(&mut, Box)]
 pub trait EvmTypesTrait {
-    type Context: ContextTrait;
+    type Context: ContextGetters;
     type Inspector;
     type Instructions: InstructionExecutor;
     type Precompiles;
@@ -147,35 +155,9 @@ pub trait EvmTypesTrait {
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
-/*
-
-EVM {
-ctx
-frame
-inspector
-}
-
-trait EthHandler {
-
-    fn get_ctx_frame_mut(&mut) -> (&mut Self::Context, &mut Self::FrameContext);
-}
-
-trait InsectorEthHandler: EthHandler {
-    fn components(&mut) -> (&mut Self::Context,&mut FrameCtx, &mut Self::Inspector);
-
-    fn run_precompile
-
-*/
-
-// pub trait InspectorEthHandler: EthHandler<Context: Clone> {
-//     type Inspector; // Inspector<Context = Self::Context, EthInterpreter>;
-
-//     fn get_inspector_ctx(&mut self) -> (&mut Self::Inspector, &mut Self::Context);
-// }
-
 pub trait EthHandler {
     type Evm: EvmTypesTrait<
-        Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Context: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     >;
     type Error: EthTraitError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
@@ -189,6 +171,7 @@ pub trait EthHandler {
     // TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTrait;
 
+    #[inline]
     fn run(
         &mut self,
         evm: &mut Self::Evm,
@@ -199,6 +182,7 @@ pub trait EthHandler {
         self.post_execution(evm, exec_result, init_and_floor_gas, eip7702_refund)
     }
     /// Call all validation functions
+    #[inline]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
         self.validate_tx_against_state(evm)?;
@@ -206,6 +190,7 @@ pub trait EthHandler {
     }
 
     /// Call all Pre execution functions.
+    #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.load_accounts(evm)?;
         self.deduct_caller(evm)?;
@@ -213,6 +198,7 @@ pub trait EthHandler {
         Ok(gas)
     }
 
+    #[inline]
     fn execution(
         &mut self,
         evm: &mut Self::Evm,
@@ -231,6 +217,7 @@ pub trait EthHandler {
         Ok(frame_result)
     }
 
+    #[inline]
     fn post_execution(
         &self,
         evm: &mut Self::Evm,
@@ -253,16 +240,19 @@ pub trait EthHandler {
     /* VALIDATION */
 
     /// Validate env.
+    #[inline]
     fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         validation::validate_env(evm.ctx())
     }
 
     /// Validate transactions against state.
+    #[inline]
     fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         validation::validate_tx_against_state(evm.ctx())
     }
 
     /// Validate initial gas.
+    #[inline]
     fn validate_initial_tx_gas(&self, evm: &Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
         validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
@@ -270,19 +260,23 @@ pub trait EthHandler {
 
     /* PRE EXECUTION */
 
+    #[inline]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::load_accounts(evm.ctx())
     }
 
+    #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
     }
 
+    #[inline]
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
     }
 
     /* EXECUTION */
+    #[inline]
     fn create_first_frame(
         &mut self,
         evm: &mut Self::Evm,
@@ -293,6 +287,7 @@ pub trait EthHandler {
         self.frame_init_first(evm, init_frame)
     }
 
+    #[inline]
     fn last_frame_result(
         &self,
         evm: &mut Self::Evm,
@@ -304,6 +299,7 @@ pub trait EthHandler {
 
     /* FRAMES */
 
+    #[inline]
     fn frame_init_first(
         &mut self,
         evm: &mut Self::Evm,
@@ -312,6 +308,7 @@ pub trait EthHandler {
         Self::Frame::init_first(evm, frame_input)
     }
 
+    #[inline]
     fn frame_init(
         &mut self,
         frame: &Self::Frame,
@@ -321,6 +318,7 @@ pub trait EthHandler {
         Frame::init(frame, evm, frame_input)
     }
 
+    #[inline]
     fn frame_call(
         &mut self,
         frame: &mut Self::Frame,
@@ -329,6 +327,7 @@ pub trait EthHandler {
         Frame::run(frame, evm)
     }
 
+    #[inline]
     fn frame_return_result(
         &mut self,
         frame: &mut Self::Frame,
@@ -338,6 +337,7 @@ pub trait EthHandler {
         Self::Frame::return_result(frame, evm, result)
     }
 
+    #[inline]
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
@@ -376,6 +376,7 @@ pub trait EthHandler {
     /* POST EXECUTION */
 
     /// Calculate final refund.
+    #[inline]
     fn eip7623_check_gas_floor(
         &self,
         _evm: &mut Self::Evm,
@@ -386,6 +387,7 @@ pub trait EthHandler {
     }
 
     /// Calculate final refund.
+    #[inline]
     fn refund(
         &self,
         evm: &mut Self::Evm,
@@ -397,6 +399,7 @@ pub trait EthHandler {
     }
 
     /// Reimburse the caller with balance it didn't spent.
+    #[inline]
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
@@ -406,6 +409,7 @@ pub trait EthHandler {
     }
 
     /// Reward beneficiary with transaction rewards.
+    #[inline]
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
@@ -415,6 +419,7 @@ pub trait EthHandler {
     }
 
     /// Main return handle, takes state from journal and transforms internal result to output.
+    #[inline]
     fn output(
         &self,
         evm: &mut Self::Evm,
@@ -430,6 +435,7 @@ pub trait EthHandler {
     /// End handle in comparison to output handle will be called every time after execution.
     ///
     /// While output will be omitted in case of the error.
+    #[inline]
     fn end(
         &self,
         _evm: &mut Self::Evm,
@@ -441,6 +447,7 @@ pub trait EthHandler {
     /// Clean handler. It resets internal Journal state to default one.
     ///
     /// This handle is called every time regardless of the result of the transaction.
+    #[inline]
     fn clear(&self, evm: &mut Self::Evm) {
         evm.ctx().journal().clear();
     }

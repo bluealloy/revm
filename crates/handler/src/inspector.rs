@@ -4,8 +4,8 @@ use crate::{
     EthFrame, FrameResult,
 };
 use auto_impl::auto_impl;
-use context::{Cfg, ContextTrait, JournalEntry, JournaledState};
-use context_interface::{result::ResultAndState, Database, Transaction};
+use context::{Cfg, JournalEntry, JournaledState};
+use context_interface::{result::ResultAndState, ContextGetters, Database, Transaction};
 use handler_interface::{Frame, FrameOrResult, ItemOrResult};
 use interpreter::{
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput,

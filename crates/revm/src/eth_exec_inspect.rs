@@ -1,13 +1,14 @@
 use crate::{
     exec::ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
-use context::{BlockEnv, Cfg, CfgEnv, Context, ContextTrait, Evm, JournaledState, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, JournaledState, TxEnv};
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    Block, Database, Journal, Transaction,
+    Block, ContextGetters, Database, Journal, Transaction,
 };
 use database_interface::{DatabaseCommit, EmptyDB};
 use handler::{
+    handler::EvmTypesTrait,
     inspector::{EthInspectorHandler, Inspector},
     instructions::EthInstructions,
     noop::NoOpInspector,
@@ -61,15 +62,18 @@ where
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
-        todo!()
+        inspect_main(self).map(|r| {
+            self.ctx().db().commit(r.state);
+            r.result
+        })
     }
 }
 
-pub fn inspect_main<CTX: ContextTrait + Host, INSP>(
+pub fn inspect_main<CTX: ContextGetters + Host, INSP>(
     evm: &mut Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>,
 ) -> Result<ResultAndState<HaltReason>, EVMError<<CTX::Db as Database>::Error, InvalidTransaction>>
 where
-    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextGetters<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
     let mut t = MainnetHandler::<

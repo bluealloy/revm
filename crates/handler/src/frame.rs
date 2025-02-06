@@ -5,7 +5,7 @@ use crate::{
 
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context::ContextTrait;
+use context_interface::ContextGetters;
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
     BlockGetter, Cfg, CfgGetter, Database, ErrorGetter, JournalDBError, JournalGetter, Transaction,
@@ -94,7 +94,7 @@ where
     }
 }
 
-pub type CtxTraitDbError<CTX> = <<CTX as ContextTrait>::Db as Database>::Error;
+pub type CtxTraitDbError<CTX> = <<CTX as ContextGetters>::Db as Database>::Error;
 
 impl<CTX, ERROR, IW> EthFrame<CTX, ERROR, IW>
 where
@@ -123,7 +123,7 @@ where
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTypesTrait<
-        Context: ContextTrait,
+        Context: ContextGetters,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor,
     >,
@@ -491,7 +491,7 @@ where
 impl<CTX, ERROR> EthFrame<CTX, ERROR, EthInterpreter<()>>
 where
     CTX: EvmTypesTrait<
-        Context: ContextTrait,
+        Context: ContextGetters,
         Precompiles: PrecompileProvider<Context = CTX::Context, Output = InterpreterResult>,
         Instructions: InstructionExecutor<
             Context = CTX::Context,

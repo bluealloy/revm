@@ -1,15 +1,7 @@
 use crate::{
-    context::OpContext,
     handler::{precompiles::OpPrecompileProvider, OpHandler},
     transaction::{abstraction::OpTxGetter, OpTxTrait},
-    L1BlockInfoGetter, OpSpec, OpTransactionError, OptimismHaltReason,
-};
-use inspector::{
-    exec::InspectEvm,
-    inspector_context::InspectorContext,
-    inspector_instruction::InspectorInstructionExecutor,
-    journal::{JournalExt, JournalExtGetter},
-    Inspector, InspectorCtx, InspectorHandlerImpl,
+    OpSpec, OpTransactionError, OpHaltReason,
 };
 use revm::{
     context::Cfg,
@@ -83,7 +75,7 @@ impl<
 
 pub fn inspect_op<DB, CTX>(
     ctx: &mut CTX,
-) -> Result<ResultAndState<OptimismHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>
+) -> Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>
 where
     DB: Database,
     CTX: EthContext
@@ -120,7 +112,7 @@ where
 pub fn inspect_op_commit<DB: Database + DatabaseCommit, CTX>(
     ctx: &mut CTX,
 ) -> Result<
-    ExecutionResult<OptimismHaltReason>,
+    ExecutionResult<OpHaltReason>,
     EVMError<<DB as Database>::Error, OpTransactionError>,
 >
 where

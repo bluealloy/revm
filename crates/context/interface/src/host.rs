@@ -4,19 +4,15 @@ pub use crate::journaled_state::StateLoad;
 use database_interface::Database;
 pub use dummy::DummyHost;
 
-use crate::{
-    journaled_state::AccountLoad, Block, BlockGetter, CfgGetter, Journal, JournalGetter,
-    TransactionGetter,
-};
+use crate::{context::ContextGetters, journaled_state::AccountLoad, Block, Journal};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
-use std::boxed::Box;
 
 /// EVM context host.
-pub trait Host: JournalGetter + TransactionGetter + BlockGetter + CfgGetter {
-    fn set_error(
-        &mut self,
-        error: <<<Self as JournalGetter>::Journal as Journal>::Database as Database>::Error,
-    );
+//#[auto_impl(&mut, Box)]
+pub trait Host: ContextGetters {
+    fn set_error(&mut self, error: <Self::Db as Database>::Error) {
+        *self.error() = Err(error);
+    }
 
     /// Gets the block hash of the given block `number`.
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
@@ -126,23 +122,7 @@ pub trait Host: JournalGetter + TransactionGetter + BlockGetter + CfgGetter {
     }
 }
 
-impl<T: Host> Host for &mut T {
-    fn set_error(
-        &mut self,
-        error: <<<Self as JournalGetter>::Journal as Journal>::Database as Database>::Error,
-    ) {
-        (**self).set_error(error)
-    }
-}
-
-impl<T: Host> Host for Box<T> {
-    fn set_error(
-        &mut self,
-        error: <<<Self as JournalGetter>::Journal as Journal>::Database as Database>::Error,
-    ) {
-        (**self).set_error(error)
-    }
-}
+impl<T: ContextGetters> Host for T {}
 
 /// Represents the result of an `sstore` operation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

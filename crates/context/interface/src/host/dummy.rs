@@ -1,4 +1,3 @@
-use super::Host;
 use crate::{
     Block, BlockGetter, Cfg, CfgGetter, Journal, JournalGetter, Transaction, TransactionGetter,
 };
@@ -102,14 +101,15 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg, JOURNAL: Journal> JournalGetter
     }
 }
 
-impl<TX: Transaction, BLOCK: Block, CFG: Cfg, JOURNAL: Journal> Host
-    for DummyHost<BLOCK, TX, CFG, JOURNAL>
-{
-    #[inline]
-    fn set_error(
-        &mut self,
-        error: <<<Self as crate::JournalGetter>::Journal as crate::Journal>::Database as database_interface::Database>::Error,
-    ) {
-        panic!("Error: {:?}", error);
-    }
-}
+// TODO(add dummy)
+// impl<TX: Transaction, BLOCK: Block, CFG: Cfg, JOURNAL: Journal> Host
+//     for DummyHost<BLOCK, TX, CFG, JOURNAL>
+// {
+//     #[inline]
+//     fn set_error(
+//         &mut self,
+//         error: <<<Self as crate::JournalGetter>::Journal as crate::Journal>::Database as database_interface::Database>::Error,
+//     ) {
+//         panic!("Error: {:?}", error);
+//     }
+// }

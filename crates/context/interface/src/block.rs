@@ -4,7 +4,6 @@ pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
-use std::boxed::Box;
 
 /// Trait for retrieving block information required for execution.
 #[auto_impl(&, &mut, Box, Arc)]
@@ -75,20 +74,4 @@ pub trait BlockGetter {
     type Block: Block;
 
     fn block(&self) -> &Self::Block;
-}
-
-pub trait BlockSetter: BlockGetter {
-    fn set_block(&mut self, block: <Self as BlockGetter>::Block);
-}
-
-impl<T: BlockSetter> BlockSetter for &mut T {
-    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
-        (**self).set_block(block)
-    }
-}
-
-impl<T: BlockSetter> BlockSetter for Box<T> {
-    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
-        (**self).set_block(block)
-    }
 }

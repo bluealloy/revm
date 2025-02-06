@@ -1,4 +1,4 @@
-use context::ContextTrait;
+use context_interface::ContextGetters;
 use interpreter::{
     table::{make_instruction_table, InstructionTable},
     Host, Interpreter, InterpreterAction, InterpreterTypes,
@@ -66,7 +66,7 @@ where
 
 pub trait ContextInspectRun {
     type InterpreterTypes: InterpreterTypes;
-    type Context: ContextTrait + Host;
+    type Context: ContextGetters + Host;
 
     fn run_context(
         &mut self,

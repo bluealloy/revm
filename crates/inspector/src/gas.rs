@@ -71,22 +71,18 @@ mod tests {
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use revm::{
         bytecode::{opcode, Bytecode},
-        context::TxEnv,
         handler::inspector::Inspector,
         interpreter::{
             interpreter_types::{Jumps, LoopControl},
             CallInputs, CreateInputs, Interpreter, InterpreterTypes,
         },
-        primitives::{address, Bytes, Log, TxKind},
+        primitives::{Bytes, TxKind},
         Context,
-        ExecuteEvm,
         InspectEvm,
         MainBuilder,
         MainContext, //Evm,
                      //EvmWiring,
     };
-
-    //type TestEvmWiring = DefaultEthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {

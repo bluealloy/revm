@@ -2,17 +2,19 @@ use crate::{OpSpec, OpSpecId};
 use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
-    context::Cfg, context_interface::CfgGetter, handler::EthPrecompiles,
-    handler_interface::PrecompileProvider, interpreter::InterpreterResult,
+    context::Cfg,
+    context_interface::ContextGetters,
+    handler::{EthPrecompiles, PrecompileProvider},
+    interpreter::InterpreterResult,
     specification::hardfork::SpecId,
 };
 use std::boxed::Box;
 
-pub struct OpPrecompileProvider<CTX, ERROR> {
-    precompile_provider: EthPrecompiles<CTX, ERROR>,
+pub struct OpPrecompileProvider<CTX> {
+    precompile_provider: EthPrecompiles<CTX>,
 }
 
-impl<CTX, ERROR> Clone for OpPrecompileProvider<CTX, ERROR> {
+impl<CTX> Clone for OpPrecompileProvider<CTX> {
     fn clone(&self) -> Self {
         Self {
             precompile_provider: self.precompile_provider.clone(),
@@ -20,7 +22,7 @@ impl<CTX, ERROR> Clone for OpPrecompileProvider<CTX, ERROR> {
     }
 }
 
-impl<CTX, ERROR> OpPrecompileProvider<CTX, ERROR> {
+impl<CTX> OpPrecompileProvider<CTX> {
     pub fn new(precompiles: &'static Precompiles) -> Self {
         Self {
             precompile_provider: EthPrecompiles {
@@ -91,19 +93,15 @@ pub fn granite() -> &'static Precompiles {
     })
 }
 
-impl<CTX, ERROR> PrecompileProvider for OpPrecompileProvider<CTX, ERROR>
+impl<CTX> PrecompileProvider for OpPrecompileProvider<CTX>
 where
-    CTX: CfgGetter,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    ERROR: From<PrecompileErrors>,
+    CTX: ContextGetters<Cfg: Cfg<Spec = OpSpec>>,
 {
     type Context = CTX;
-    type Error = ERROR;
     type Output = InterpreterResult;
-    type Spec = OpSpec;
 
     #[inline]
-    fn set_spec(&mut self, spec: Self::Spec) {
+    fn set_spec(&mut self, spec: <<Self::Context as ContextGetters>::Cfg as Cfg>::Spec) {
         *self = Self::new_with_spec(spec);
     }
 
@@ -114,7 +112,7 @@ where
         address: &precompile::Address,
         bytes: &precompile::Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, Self::Error> {
+    ) -> Result<Option<Self::Output>, PrecompileErrors> {
         self.precompile_provider
             .run(context, address, bytes, gas_limit)
     }
@@ -130,7 +128,7 @@ where
     }
 }
 
-impl<CTX, ERROR> Default for OpPrecompileProvider<CTX, ERROR> {
+impl<CTX> Default for OpPrecompileProvider<CTX> {
     fn default() -> Self {
         Self::new_with_spec(OpSpec::Op(OpSpecId::ISTHMUS))
     }

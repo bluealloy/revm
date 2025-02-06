@@ -1,13 +1,10 @@
 use crate::{transaction::estimate_tx_compressed_size, OpSpecId};
-use auto_impl::auto_impl;
 use core::ops::Mul;
-use inspector::inspector_context::InspectorContext;
 use revm::{
-    context_interface::{DatabaseGetter, Journal},
+    context_interface::Journal,
     database_interface::Database,
     primitives::{address, Address, U256},
     specification::hardfork::SpecId,
-    Context,
 };
 
 use super::OpSpec;
@@ -243,36 +240,6 @@ impl L1BlockInfo {
             .saturating_mul(self.l1_blob_base_fee_scalar.unwrap_or_default());
 
         calldata_cost_per_byte.saturating_add(blob_cost_per_byte)
-    }
-}
-
-#[auto_impl(&mut, Box)]
-pub trait L1BlockInfoGetter {
-    fn l1_block_info(&self) -> &L1BlockInfo;
-    fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo;
-}
-
-impl<BLOCK, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>> L1BlockInfoGetter
-    for Context<BLOCK, TX, SPEC, DB, JOURNAL, L1BlockInfo>
-{
-    fn l1_block_info(&self) -> &L1BlockInfo {
-        &self.chain
-    }
-
-    fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo {
-        &mut self.chain
-    }
-}
-
-impl<INSP, CTX: DatabaseGetter + L1BlockInfoGetter> L1BlockInfoGetter
-    for InspectorContext<INSP, CTX>
-{
-    fn l1_block_info(&self) -> &L1BlockInfo {
-        self.inner.l1_block_info()
-    }
-
-    fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo {
-        self.inner.l1_block_info_mut()
     }
 }
 

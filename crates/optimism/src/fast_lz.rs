@@ -108,7 +108,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::context::OpContext;
+    use crate::api::builder::OpBuilder;
 
     use super::*;
     use alloy_sol_types::sol;
@@ -160,7 +160,9 @@ mod tests {
         // The source of this contract is here: https://github.com/danyalprout/fastlz/blob/main/src/FastLz.sol#L6-L10
 
         use database::FFADDRESS;
-        use revm::ExecuteEvm;
+        use revm::{Context, ExecuteEvm};
+
+        use crate::api::default_ctx::DefaultOp;
         sol! {
             interface FastLz {
                 function fastLz(bytes input) external view returns (uint256);
@@ -171,18 +173,18 @@ mod tests {
 
         let native_val = flz_compress_len(&input);
 
-        let mut ctx = OpContext(
-            OpContext::default_ctx().with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone())),
-        );
-        ctx.modify_tx(|tx| {
-            tx.base.caller = EEADDRESS;
-            tx.base.kind = TxKind::Call(FFADDRESS);
-            tx.base.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
-            tx.base.gas_limit = 3_000_000;
-            tx.enveloped_tx = Some(Bytes::default());
-        });
+        let mut evm = Context::op()
+            .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
+            .modify_tx_chained(|tx| {
+                tx.base.caller = EEADDRESS;
+                tx.base.kind = TxKind::Call(FFADDRESS);
+                tx.base.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
+                tx.base.gas_limit = 3_000_000;
+                tx.enveloped_tx = Some(Bytes::default());
+            })
+            .build_op();
 
-        let result_and_state = ctx.exec_previous().unwrap();
+        let result_and_state = evm.exec_previous().unwrap();
 
         let output = result_and_state.result.output().unwrap();
         let evm_val = FastLz::fastLzCall::abi_decode_returns(output, true)

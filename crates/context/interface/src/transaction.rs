@@ -7,7 +7,6 @@ use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
-use std::boxed::Box;
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
@@ -151,20 +150,4 @@ pub trait TransactionGetter {
     type Transaction: Transaction;
 
     fn tx(&self) -> &Self::Transaction;
-}
-
-pub trait TransactionSetter: TransactionGetter {
-    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction);
-}
-
-impl<T: TransactionSetter> TransactionSetter for &mut T {
-    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
-        (**self).set_tx(block)
-    }
-}
-
-impl<T: TransactionSetter> TransactionSetter for Box<T> {
-    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
-        (**self).set_tx(block)
-    }
 }

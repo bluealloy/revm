@@ -19,19 +19,19 @@ members = [
     "crates/handler",
 
     # variants
-    # "crates/optimism",
-    # "crates/inspector",
+    "crates/optimism",
+    "crates/inspector",
 
     # utility
     "crates/statetest-types",
 
     # examples
-    # "examples/block_traces",
+    "examples/block_traces",
     # "examples/cheatcode_inspector",
-    # "examples/contract_deployment",
-    # "examples/database_components",
-    # "examples/uniswap_get_reserves",
-    # "examples/uniswap_v2_usdc_swap",
+    "examples/contract_deployment",
+    "examples/database_components",
+    "examples/uniswap_get_reserves",
+    "examples/uniswap_v2_usdc_swap",
     # "examples/erc20_gas",
     # "examples/custom_opcodes",
 ]
