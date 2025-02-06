@@ -1,6 +1,6 @@
 use auto_impl::auto_impl;
 use context::Cfg;
-use context_interface::{CfgGetter, ContextGetters};
+use context_interface::ContextGetters;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};
@@ -45,16 +45,13 @@ impl<CTX> Clone for EthPrecompiles<CTX> {
     }
 }
 
-impl<CTX: CfgGetter> Default for EthPrecompiles<CTX> {
+impl<CTX> Default for EthPrecompiles<CTX>
+where
+    CTX: ContextGetters,
+{
     fn default() -> Self {
-        Self::new(SpecId::LATEST)
-    }
-}
-
-impl<CTX: CfgGetter> EthPrecompiles<CTX> {
-    pub fn new(spec: SpecId) -> Self {
         Self {
-            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
+            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::LATEST)),
             _phantom: core::marker::PhantomData,
         }
     }

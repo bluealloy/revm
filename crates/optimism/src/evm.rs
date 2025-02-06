@@ -1,24 +1,14 @@
-use crate::{
-    handler::{precompiles::OpPrecompileProvider, OpHandler},
-    transaction::OpTxTrait,
-    L1BlockInfo, OpHaltReason, OpSpec, OpTransactionError,
-};
-use precompile::Log;
 use revm::{
-    context::{setters::ContextSetters, Cfg, EvmData},
-    context_interface::{
-        result::{EVMError, ResultAndState},
-        ContextGetters, Journal,
-    },
+    context::{setters::ContextSetters, EvmData},
+    context_interface::ContextGetters,
     handler::{
         handler::EvmTypesTrait,
         instructions::{EthInstructions, InstructionExecutor},
-        EthFrame, EthHandler,
     },
     interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterAction},
-    state::EvmState,
-    Database,
 };
+
+use crate::handler::precompiles::OpPrecompileProvider;
 
 pub struct OpEvm<CTX, INSP, I> {
     pub data: EvmData<CTX, INSP>,

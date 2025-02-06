@@ -1,14 +1,10 @@
-mod dummy;
-
 pub use crate::journaled_state::StateLoad;
 use database_interface::Database;
-pub use dummy::DummyHost;
 
 use crate::{context::ContextGetters, journaled_state::AccountLoad, Block, Journal};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 
 /// EVM context host.
-//#[auto_impl(&mut, Box)]
 pub trait Host: ContextGetters {
     fn set_error(&mut self, error: <Self::Db as Database>::Error) {
         *self.error() = Err(error);

@@ -2,10 +2,7 @@ use crate::{
     block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, setters::ContextSetters,
     tx::TxEnv,
 };
-use context_interface::{
-    Block, BlockGetter, Cfg, CfgGetter, ContextGetters, DatabaseGetter, ErrorGetter, Journal,
-    JournalGetter, Transaction, TransactionGetter,
-};
+use context_interface::{Block, Cfg, ContextGetters, Journal, Transaction};
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
@@ -366,79 +363,5 @@ where
         F: FnOnce(&mut JOURNAL),
     {
         f(&mut self.journaled_state);
-    }
-}
-
-impl<BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> CfgGetter
-    for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-{
-    type Cfg = CFG;
-
-    fn cfg(&self) -> &Self::Cfg {
-        &self.cfg
-    }
-}
-
-impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalGetter
-    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
-where
-    DB: Database,
-    JOURNAL: Journal<Database = DB>,
-{
-    type Journal = JOURNAL;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        &mut self.journaled_state
-    }
-
-    fn journal_ref(&self) -> &Self::Journal {
-        &self.journaled_state
-    }
-}
-
-impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> DatabaseGetter
-    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
-where
-    DB: Database,
-    JOURNAL: Journal<Database = DB>,
-{
-    type Database = DB;
-
-    fn db(&mut self) -> &mut Self::Database {
-        self.journaled_state.db()
-    }
-
-    fn db_ref(&self) -> &Self::Database {
-        self.journaled_state.db_ref()
-    }
-}
-
-impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> ErrorGetter
-    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
-{
-    type Error = DB::Error;
-
-    fn take_error(&mut self) -> Result<(), Self::Error> {
-        core::mem::replace(&mut self.error, Ok(()))
-    }
-}
-
-impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
-    TransactionGetter for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
-{
-    type Transaction = TX;
-
-    fn tx(&self) -> &Self::Transaction {
-        &self.tx
-    }
-}
-
-impl<BLOCK: Block, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> BlockGetter
-    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
-{
-    type Block = BLOCK;
-
-    fn block(&self) -> &Self::Block {
-        &self.block
     }
 }

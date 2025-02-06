@@ -23,7 +23,6 @@ all = "warn"
 
 [dependencies]
 # revm
-specification.workspace = true
 
 [dev-dependencies]
 database.workspace = true

@@ -3,7 +3,7 @@ use context_interface::{
     journaled_state::Journal,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
-    Block, BlockGetter, Cfg, CfgGetter, Database, JournalDBError, JournalGetter, TransactionGetter,
+    Block, Cfg, Database,
 };
 use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
@@ -317,26 +317,4 @@ pub fn validate_initial_tx_gas(
     };
 
     Ok(gas)
-}
-
-/// Helper trait that summarizes ValidationHandler requirements from Context.
-///
-pub trait EthValidationContext:
-    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
-{
-}
-
-impl<T: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthValidationContext for T {}
-
-/// Helper trait that summarizes all possible requirements by EthValidation.
-pub trait EthValidationError<CTX: JournalGetter>:
-    From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>
-{
-}
-
-impl<
-        CTX: JournalGetter,
-        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
-    > EthValidationError<CTX> for T
-{
 }

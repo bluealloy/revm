@@ -27,7 +27,7 @@ pub mod table;
 
 // Reexport primary types.
 pub use context_interface::{
-    host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad},
+    host::{Host, SStoreResult, SelfDestructResult, StateLoad},
     CreateScheme,
 };
 pub use gas::{Gas, InitialAndFloorGas};

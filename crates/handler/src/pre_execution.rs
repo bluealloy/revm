@@ -8,7 +8,7 @@ use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
     transaction::{Transaction, TransactionType},
-    Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, JournalGetter, TransactionGetter,
+    Block, Cfg, Database,
 };
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
 use specification::{eip7702, hardfork::SpecId};

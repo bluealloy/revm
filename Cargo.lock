@@ -3480,7 +3480,6 @@ name = "revm-handler-interface"
 version = "1.0.0"
 dependencies = [
  "revm-database",
- "revm-specification",
 ]
 
 [[package]]
@@ -3519,7 +3518,6 @@ dependencies = [
  "once_cell",
  "revm",
  "revm-database",
- "revm-inspector",
  "revm-precompile",
  "rstest 0.23.0",
  "serde",

@@ -8,8 +8,7 @@ use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::ContextGetters;
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
-    BlockGetter, Cfg, CfgGetter, Database, ErrorGetter, JournalDBError, JournalGetter, Transaction,
-    TransactionGetter,
+    Cfg, Database, Transaction,
 };
 use core::{cell::RefCell, cmp::min};
 use handler_interface::{Frame, FrameInitOrResult, ItemOrResult};
@@ -18,7 +17,7 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
+    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
     InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
     SharedMemory,
 };
@@ -810,25 +809,4 @@ pub fn return_eofcreate<JOURNAL: Journal>(
 
     // Eof bytecode is going to be hashed.
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
-}
-
-pub trait EthFrameContext:
-    TransactionGetter
-    + Host
-    + ErrorGetter<Error = JournalDBError<Self>>
-    + BlockGetter
-    + JournalGetter
-    + CfgGetter
-{
-}
-
-impl<
-        CTX: TransactionGetter
-            + ErrorGetter<Error = JournalDBError<CTX>>
-            + BlockGetter
-            + JournalGetter
-            + CfgGetter
-            + Host,
-    > EthFrameContext for CTX
-{
 }

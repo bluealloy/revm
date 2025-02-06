@@ -68,10 +68,3 @@ pub trait Block {
         self.blob_excess_gas_and_price().map(|a| a.excess_blob_gas)
     }
 }
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait BlockGetter {
-    type Block: Block;
-
-    fn block(&self) -> &Self::Block;
-}
