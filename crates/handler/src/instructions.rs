@@ -6,30 +6,18 @@ use interpreter::{
 };
 use std::rc::Rc;
 
-// TODO It should store the instructions for plan and inspect execution.
+/// Stores instructions for EVM.
 #[auto_impl(&, Arc, Rc)]
-pub trait InstructionExecutor {
+pub trait InstructionProvider {
     type Context;
     type InterpreterTypes: InterpreterTypes;
     type Output;
 
-    fn plain_instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
-
-    fn inspector_instruction_table(
-        &self,
-    ) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
+    fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
 }
 
 pub struct EthInstructions<WIRE: InterpreterTypes, HOST> {
     pub instruction_table: Rc<InstructionTable<WIRE, HOST>>,
-    pub inspector_table: Rc<InstructionTable<WIRE, HOST>>,
-    pub inspection_enabled: bool,
-}
-
-pub trait InstructionExecutorGetter {
-    type InstructionExecutor: InstructionExecutor;
-
-    fn executor(&mut self) -> &mut Self::InstructionExecutor;
 }
 
 impl<WIRE, HOST> Clone for EthInstructions<WIRE, HOST>
@@ -39,8 +27,6 @@ where
     fn clone(&self) -> Self {
         Self {
             instruction_table: self.instruction_table.clone(),
-            inspector_table: self.inspector_table.clone(),
-            inspection_enabled: false,
         }
     }
 }
@@ -55,12 +41,8 @@ where
     }
 
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
-        // TODO make a wrapper for inspector calls.
-        let inspector_table = base_table;
         Self {
             instruction_table: Rc::new(base_table),
-            inspector_table: Rc::new(inspector_table),
-            inspection_enabled: false,
         }
     }
 }
@@ -76,7 +58,7 @@ pub trait ContextInspectRun {
     );
 }
 
-impl<IT, CTX> InstructionExecutor for EthInstructions<IT, CTX>
+impl<IT, CTX> InstructionProvider for EthInstructions<IT, CTX>
 where
     IT: InterpreterTypes,
     CTX: Host,
@@ -87,14 +69,8 @@ where
     /// set custom actions from instructions.
     type Output = InterpreterAction;
 
-    fn plain_instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
+    fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table
-    }
-
-    fn inspector_instruction_table(
-        &self,
-    ) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
-        &self.inspector_table
     }
 }
 

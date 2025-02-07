@@ -9,8 +9,10 @@ use revm::{
         Block, Cfg, ContextTrait, Database, Journal,
     },
     handler::{
-        handler::EvmTrait, inspector::Inspector, instructions::EthInstructions, EthFrame,
-        EthHandler,
+        handler::EvmTrait,
+        inspector::{Inspector, JournalExt},
+        instructions::EthInstructions,
+        EthFrame, EthHandler,
     },
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
@@ -29,7 +31,7 @@ where
     TX: OpTxTrait,
     CFG: Cfg<Spec = OpSpec>,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
 {
     type Output =
@@ -52,7 +54,7 @@ where
     TX: OpTxTrait,
     CFG: Cfg<Spec = OpSpec>,
     DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
 {
     type CommitOutput = Result<
@@ -79,7 +81,7 @@ where
     TX: OpTxTrait,
     CFG: Cfg<Spec = OpSpec>,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
 {
     type Inspector = INSP;
@@ -105,7 +107,7 @@ where
     TX: OpTxTrait,
     CFG: Cfg<Spec = OpSpec>,
     DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {

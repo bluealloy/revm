@@ -1,6 +1,6 @@
 use super::frame_data::*;
 use crate::{
-    handler::EvmTrait, instructions::InstructionExecutor, precompile_provider::PrecompileProvider,
+    handler::EvmTrait, instructions::InstructionProvider, precompile_provider::PrecompileProvider,
     FrameInitOrResult, FrameOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
@@ -75,7 +75,7 @@ impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter<()>>
 where
     EVM: EvmTrait<
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionExecutor<
+        Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter<()>,
             Output = InterpreterAction,
@@ -148,7 +148,7 @@ where
     EVM: EvmTrait<
         Context: ContextTrait,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionExecutor,
+        Instructions: InstructionProvider,
     >,
     ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
 {
@@ -516,7 +516,7 @@ where
     CTX: EvmTrait<
         Context: ContextTrait,
         Precompiles: PrecompileProvider<Context = CTX::Context, Output = InterpreterResult>,
-        Instructions: InstructionExecutor<
+        Instructions: InstructionProvider<
             Context = CTX::Context,
             InterpreterTypes = EthInterpreter<()>,
             Output = InterpreterAction,

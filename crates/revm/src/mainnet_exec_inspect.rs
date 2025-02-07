@@ -6,6 +6,7 @@ use context_interface::{
     Block, ContextTrait, Database, Journal, Transaction,
 };
 use database_interface::DatabaseCommit;
+use handler::inspector::JournalExt;
 use handler::{handler::EvmTrait, inspector::EthInspectorHandler};
 use handler::{
     inspector::Inspector, instructions::EthInstructions, EthFrame, EthHandler, EthPrecompiles,
@@ -29,7 +30,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     type Output =
@@ -53,7 +54,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     type CommitOutput =
@@ -79,7 +80,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     type Inspector = INSP;
@@ -109,7 +110,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {

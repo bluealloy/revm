@@ -53,7 +53,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes> {
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         let _ = interp;
         let _ = context;
         let _ = log;
@@ -155,18 +155,22 @@ pub trait JournalExt {
 }
 
 impl<DB: Database> JournalExt for JournaledState<DB> {
+    #[inline]
     fn logs(&self) -> &[Log] {
         &self.logs
     }
 
+    #[inline]
     fn last_journal(&self) -> &[JournalEntry] {
         self.journal.last().expect("Journal is never empty")
     }
 
+    #[inline]
     fn evm_state(&self) -> &EvmState {
         &self.state
     }
 
+    #[inline]
     fn evm_state_mut(&mut self) -> &mut EvmState {
         &mut self.state
     }
@@ -379,11 +383,11 @@ fn frame_end<CTX, INTR: InterpreterTypes>(
 
 // INSTRUCTIONS FOR INSPECTOR
 
-// pub struct InspectorInstructionExecutor<WIRE: InterpreterTypes, HOST> {
+// pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
 //     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
 // }
 
-// impl<WIRE, HOST> Clone for InspectorInstructionExecutor<WIRE, HOST>
+// impl<WIRE, HOST> Clone for InspectorInstructionProvider<WIRE, HOST>
 // where
 //     WIRE: InterpreterTypes,
 // {
@@ -394,7 +398,7 @@ fn frame_end<CTX, INTR: InterpreterTypes>(
 //     }
 // }
 
-// impl<WIRE, HOST> InspectorInstructionExecutor<WIRE, HOST>
+// impl<WIRE, HOST> InspectorInstructionProvider<WIRE, HOST>
 // where
 //     WIRE: InterpreterTypes,
 //     HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,

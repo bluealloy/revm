@@ -1,15 +1,18 @@
+use crate::inspector::JournalExt;
 use crate::{
-    execution, inspector::Inspector, instructions::InstructionExecutor, post_execution,
+    execution, inspector::Inspector, instructions::InstructionProvider, post_execution,
     pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult, FrameResult, ItemOrResult,
 };
 use auto_impl::auto_impl;
-use context::Evm;
+use context::{Evm, JournalEntry};
 use context_interface::ContextTrait;
 use context_interface::{
     result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
+use interpreter::table::InstructionTable;
+use interpreter::InterpreterTypes;
 use interpreter::{
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
@@ -37,19 +40,19 @@ impl<
 {
 }
 
-pub fn inspect_instructions<CTX, I>(
+pub fn inspect_instructions<CTX, IT>(
     context: &mut CTX,
-    interpreter: &mut Interpreter<I::InterpreterTypes>,
-    mut inspector: impl Inspector<CTX, I::InterpreterTypes>,
-    instructions: &mut I,
-) -> I::Output
+    interpreter: &mut Interpreter<IT>,
+    mut inspector: impl Inspector<CTX, IT>,
+    instructions: &InstructionTable<IT, CTX>,
+) -> InterpreterAction
 where
-    CTX: ContextTrait + Host,
-    I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
+    CTX: ContextTrait<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
 {
-    let instructions = instructions.inspector_instruction_table();
     interpreter.reset_control();
 
+    let mut log_num = context.journal().logs().len();
     // Main loop
     while interpreter.control.instruction_result().is_continue() {
         // Get current opcode.
@@ -69,18 +72,51 @@ where
         // Execute instruction.
         instructions[opcode as usize](interpreter, context);
 
+        // check if new log is added
+        let new_log = context.journal().logs().len();
+        if log_num < new_log {
+            // as there is a change in log number this means new log is added
+            let log = context.journal().logs().last().unwrap().clone();
+            inspector.log(interpreter, context, log);
+            log_num = new_log;
+        }
+
         // Call step_end.
         inspector.step_end(interpreter, context);
     }
 
-    interpreter.take_next_action()
+    let next_action = interpreter.take_next_action();
+
+    // handle selfdestruct
+    if let InterpreterAction::Return { result } = &next_action {
+        if result.result == InstructionResult::SelfDestruct {
+            match context.journal().last_journal().last() {
+                Some(JournalEntry::AccountDestroyed {
+                    address,
+                    target,
+                    had_balance,
+                    ..
+                }) => {
+                    inspector.selfdestruct(*address, *target, *had_balance);
+                }
+                Some(JournalEntry::BalanceTransfer {
+                    from, to, balance, ..
+                }) => {
+                    inspector.selfdestruct(*from, *to, *balance);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    next_action
 }
 
 impl<CTX, INSP, I, P> EvmTrait for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTrait + Host,
+    CTX: ContextTrait<Journal: JournalExt> + Host,
     INSP: Inspector<CTX, I::InterpreterTypes>,
-    I: InstructionExecutor<Context = CTX, Output = InterpreterAction>,
+    I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;
     type Inspector = INSP;
@@ -91,16 +127,21 @@ where
     fn run_interpreter(
         &mut self,
         interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionExecutor>::InterpreterTypes,
+            <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionExecutor>::Output {
+    ) -> <Self::Instructions as InstructionProvider>::Output {
         let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
         let inspector = &mut self.data.inspector;
         if self.enabled_inspection {
-            inspect_instructions(context, interpreter, inspector, instructions)
+            inspect_instructions(
+                context,
+                interpreter,
+                inspector,
+                instructions.instruction_table(),
+            )
         } else {
-            interpreter.run_plain(instructions.plain_instruction_table(), context)
+            interpreter.run_plain(instructions.instruction_table(), context)
         }
     }
 
@@ -139,15 +180,15 @@ where
 pub trait EvmTrait {
     type Context: ContextTrait;
     type Inspector;
-    type Instructions: InstructionExecutor;
+    type Instructions: InstructionProvider;
     type Precompiles;
 
     fn run_interpreter(
         &mut self,
         interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionExecutor>::InterpreterTypes,
+            <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionExecutor>::Output;
+    ) -> <Self::Instructions as InstructionProvider>::Output;
 
     fn enable_inspection(&mut self, enable: bool);
 
