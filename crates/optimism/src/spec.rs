@@ -29,9 +29,8 @@ impl OpSpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
-            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE | Self::ISTHMUS => {
-                SpecId::CANCUN
-            }
+            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
+            Self::ISTHMUS => SpecId::PRAGUE,
         }
     }
 

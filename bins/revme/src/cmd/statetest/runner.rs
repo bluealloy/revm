@@ -388,7 +388,7 @@ pub fn execute_test_suite(
                         access_list
                             .iter()
                             .map(|item| (item.address, item.storage_keys.clone()))
-                            .collect::<Vec<_>>()
+                            .collect()
                     })
                     .unwrap_or_default();
 
