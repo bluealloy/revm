@@ -9,8 +9,11 @@ use std::{convert::Infallible, fmt::Debug};
 
 use database::InMemoryDB;
 use inspector::{
-    exec::inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155,
-    journal::JournalExt, GetInspector, Inspector,
+    exec::{inspect_main, InspectEvm},
+    inspector_context::InspectorContext,
+    inspectors::TracerEip3155,
+    journal::JournalExt,
+    GetInspector, Inspector,
 };
 use revm::{
     bytecode::Bytecode,
@@ -21,14 +24,13 @@ use revm::{
         result::{EVMError, InvalidTransaction},
         Block, Journal, JournalGetter, Transaction,
     },
-    handler::EthPrecompileProvider,
-    handler_interface::PrecompileProvider,
+    handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult},
     precompile::{Address, HashSet, B256},
     primitives::{Log, U256},
     specification::hardfork::SpecId,
     state::{Account, EvmState, TransientStorage},
-    Context, Database, DatabaseCommit, JournalEntry, JournaledState,
+    Context, Database, DatabaseCommit, JournalEntry, JournaledState, MainBuilder,
 };
 
 /// Backend for cheatcodes.
@@ -289,7 +291,6 @@ trait DatabaseExt: Journal {
         PrecompileT: PrecompileProvider<
             Context = InspectorContext<InspectorT, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
             Output = InterpreterResult,
-            Error = EVMError<Infallible, InvalidTransaction>,
         >;
 
     /// Mimics `DatabaseExt::roll_fork_to_transaction`
@@ -382,9 +383,8 @@ where
         // `transact` cheatcode would do this
         context
             .journal()
-            .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompileProvider<
-                InspectorContext<&mut Self, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
-                EVMError<Infallible, InvalidTransaction>,
+            .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompiles<
+                InspectorContext<&mut Self, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
             >>(
                 Env {
                     block: block.clone(),
@@ -479,13 +479,14 @@ where
         chain: (),
         error: Ok(()),
     };
+    let mut evm = context.build_mainnet();
 
-    let mut inspector_context = InspectorContext::<
-        InspectorT,
-        Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-    >::new(context, inspector);
-
-    let result = inspect_main(&mut inspector_context)?;
+    // let mut inspector_context = InspectorContext::<
+    //     InspectorT,
+    //     Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+    // >::new(context, inspector);
+    let result = evm.inspect_previous(inspector)?;
+    //let result = inspect_main(&mut inspector_context)?;
 
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(result.state);
@@ -515,31 +516,22 @@ fn main() -> anyhow::Result<()> {
     let mut inspector = Cheatcodes::<BlockEnv, TxEnv, CfgEnv>::default();
     let env = Env::mainnet();
 
-    let context = Context {
+    let mut evm = Context {
         tx: env.tx,
         block: env.block,
         cfg: env.cfg,
         journaled_state: backend,
         chain: (),
         error: Ok(()),
-    };
-    let mut context = InspectorContext::new(context, &mut inspector);
+    }
+    .build_mainnet();
 
-    inspect_main(&mut context)?;
+    evm.inspect_previous(&mut inspector)?;
 
     // Sanity check
-    assert_eq!(context.inspector.call_count, 2);
-    assert_eq!(
-        context.inner.journaled_state.method_with_inspector_counter,
-        1
-    );
-    assert_eq!(
-        context
-            .inner
-            .journaled_state
-            .method_without_inspector_counter,
-        1
-    );
+    assert_eq!(inspector.call_count, 2);
+    assert_eq!(evm.ctx.journaled_state.method_with_inspector_counter, 1);
+    assert_eq!(evm.ctx.journaled_state.method_without_inspector_counter, 1);
 
     Ok(())
 }

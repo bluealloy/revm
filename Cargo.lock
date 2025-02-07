@@ -1508,16 +1508,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "example-cheatcode-inspector"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "revm",
- "revm-database",
- "revm-inspector",
-]
-
-[[package]]
 name = "example-contract-deployment"
 version = "0.0.0"
 dependencies = [
@@ -3394,7 +3384,6 @@ dependencies = [
  "revm-database",
  "revm-database-interface",
  "revm-handler",
- "revm-handler-interface",
  "revm-interpreter",
  "revm-precompile",
  "revm-primitives",
@@ -3419,6 +3408,7 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "cfg-if",
  "derive-where",
  "revm-bytecode",
@@ -3485,11 +3475,11 @@ dependencies = [
 name = "revm-handler"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "revm-bytecode",
  "revm-context",
  "revm-context-interface",
  "revm-database",
- "revm-handler-interface",
  "revm-interpreter",
  "revm-precompile",
  "revm-primitives",
@@ -3499,20 +3489,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-handler-interface"
-version = "1.0.0"
-dependencies = [
- "auto_impl",
- "revm-database",
- "revm-primitives",
- "revm-specification",
-]
-
-[[package]]
 name = "revm-inspector"
 version = "1.0.0"
 dependencies = [
- "auto_impl",
  "revm",
  "revm-database",
  "serde",
@@ -3541,12 +3520,10 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "auto_impl",
- "derive_more",
  "indicatif",
  "once_cell",
  "revm",
  "revm-database",
- "revm-inspector",
  "revm-precompile",
  "rstest 0.23.0",
  "serde",

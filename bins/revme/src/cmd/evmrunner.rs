@@ -1,10 +1,10 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{exec::InspectEvm, inspectors::TracerEip3155};
+use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
-    transact_main, Context, Database, ExecuteEvm,
+    Context, Database, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -82,30 +82,31 @@ impl Cmd {
 
         // BenchmarkDB is dummy state that implements Database trait.
         // The bytecode is deployed at zero address.
-        let mut ctx = Context::builder().with_db(db).modify_tx_chained(|tx| {
-            tx.caller = CALLER;
-            tx.kind = TxKind::Call(Address::ZERO);
-            tx.data = input;
-            tx.nonce = nonce;
-        });
+        let mut evm = Context::mainnet()
+            .with_db(db)
+            .modify_tx_chained(|tx| {
+                tx.caller = CALLER;
+                tx.kind = TxKind::Call(Address::ZERO);
+                tx.data = input;
+                tx.nonce = nonce;
+            })
+            .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
             // Microbenchmark
             let bench_options = microbench::Options::default().time(Duration::from_secs(3));
 
             microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = ctx.exec_previous().unwrap();
+                let _ = evm.transact_previous().unwrap();
             });
 
             return Ok(());
         }
 
         let out = if self.trace {
-            let inspector = TracerEip3155::new(Box::new(std::io::stdout()));
-            ctx.inspect_previous(inspector)
-                .map_err(|_| Errors::EVMError)?
+            evm.inspect_previous().map_err(|_| Errors::EVMError)?
         } else {
-            let out = transact_main(&mut ctx).map_err(|_| Errors::EVMError)?;
+            let out = evm.transact_previous().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out
         };

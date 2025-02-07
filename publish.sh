@@ -8,8 +8,7 @@ cargo publish --package revm-specification
 cargo publish --package revm-bytecode
 cargo publish --package revm-state
 cargo publish --package revm-database-interface
-cargo publish --package revm-context-interface
-cargo publish --package revm-handler-interface
+cargo publish --package revm-context-interface 
 cargo publish --package revm-interpreter
 cargo publish --package revm-precompile
 cargo publish --package revm-database

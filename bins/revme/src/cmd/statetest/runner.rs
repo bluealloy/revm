@@ -4,7 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{exec::InspectCommitEvm, inspectors::TracerEip3155};
+use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -16,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, ExecuteCommitEvm,
+    Context, ExecuteCommitEvm, InspectCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -411,28 +411,30 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut ctx = Context::builder()
+                let mut evm = Context::mainnet()
                     .with_block(&block)
                     .with_tx(&tx)
                     .with_cfg(&cfg)
-                    .with_db(&mut state);
+                    .with_db(&mut state)
+                    .build_mainnet();
 
                 // Do the deed
                 let (e, exec_result) = if trace {
-                    let mut ctx = Context::builder()
+                    let mut evm = Context::mainnet()
                         .with_block(&block)
                         .with_tx(&tx)
                         .with_cfg(&cfg)
-                        .with_db(&mut state);
+                        .with_db(&mut state)
+                        .build_mainnet_with_inspector(
+                            TracerEip3155::buffered(stderr()).without_summary(),
+                        );
 
                     let timer = Instant::now();
-                    let res = ctx.inspect_commit_previous(
-                        TracerEip3155::buffered(stderr()).without_summary(),
-                    );
+                    let res = evm.inspect_commit_previous();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = &mut ctx.journaled_state.database;
+                    let db = &mut evm.data.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -449,11 +451,11 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = ctx.exec_commit_previous();
+                    let res = evm.transact_commit_previous();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = ctx.journaled_state.database;
+                    let db = evm.data.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -491,19 +493,24 @@ pub fn execute_test_suite(
 
                 println!("\nTraces:");
 
-                let mut ctx = Context::builder()
+                let mut evm = Context::mainnet()
                     .with_db(&mut state)
                     .with_block(&block)
                     .with_tx(&tx)
-                    .with_cfg(&cfg);
+                    .with_cfg(&cfg)
+                    .build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
+                    );
 
-                let _ = ctx
-                    .inspect_commit_previous(TracerEip3155::buffered(stderr()).without_summary());
+                let _ = evm.inspect_commit_previous();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!("\nState after: {:#?}", ctx.journaled_state.database.cache);
+                println!(
+                    "\nState after: {:#?}",
+                    evm.data.ctx.journaled_state.database.cache
+                );
                 println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");
                 println!("Block: {block:#?}");

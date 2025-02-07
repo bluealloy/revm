@@ -13,7 +13,7 @@ use revm::{
     database_interface::WrapDatabaseAsync,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
-    transact_main, Context, ExecuteCommitEvm, ExecuteEvm,
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::ops::Div;
 
@@ -96,7 +96,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(alloy_db)
         .modify_tx_chained(|tx| {
             // 0x1 because calling USDC proxy from zero address fails
@@ -104,9 +104,10 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
             tx.kind = TxKind::Call(token);
             tx.data = encoded.into();
             tx.value = U256::from(0);
-        });
+        })
+        .build_mainnet();
 
-    let ref_tx = ctx.exec_previous().unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -140,16 +141,17 @@ async fn get_amount_out(
     }
     .abi_encode();
 
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(cache_db)
         .modify_tx_chained(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000000");
             tx.kind = TxKind::Call(uniswap_v2_router);
             tx.data = encoded.into();
             tx.value = U256::from(0);
-        });
+        })
+        .build_mainnet();
 
-    let ref_tx = transact_main(&mut ctx).unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -172,16 +174,17 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
 
     let encoded = getReservesCall {}.abi_encode();
 
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(cache_db)
         .modify_tx_chained(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000000");
             tx.kind = TxKind::Call(pair_address);
             tx.data = encoded.into();
             tx.value = U256::from(0);
-        });
+        })
+        .build_mainnet();
 
-    let ref_tx = transact_main(&mut ctx).unwrap();
+    let ref_tx = evm.transact_previous().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -220,7 +223,7 @@ fn swap(
     }
     .abi_encode();
 
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(cache_db)
         .modify_tx_chained(|tx| {
             tx.caller = from;
@@ -228,9 +231,10 @@ fn swap(
             tx.data = encoded.into();
             tx.value = U256::from(0);
             tx.nonce = 1;
-        });
+        })
+        .build_mainnet();
 
-    let ref_tx = ctx.exec_commit_previous().unwrap();
+    let ref_tx = evm.transact_commit_previous().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -253,16 +257,17 @@ fn transfer(
 
     let encoded = transferCall { to, amount }.abi_encode();
 
-    let mut ctx = Context::builder()
+    let mut evm = Context::mainnet()
         .with_db(cache_db)
         .modify_tx_chained(|tx| {
             tx.caller = from;
             tx.kind = TxKind::Call(token);
             tx.data = encoded.into();
             tx.value = U256::from(0);
-        });
+        })
+        .build_mainnet();
 
-    let ref_tx = ctx.exec_commit_previous().unwrap();
+    let ref_tx = evm.transact_commit_previous().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

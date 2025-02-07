@@ -1,47 +1,15 @@
 use super::deposit::{DepositTransaction, DepositTransactionParts};
 use auto_impl::auto_impl;
-use inspector::inspector_context::InspectorContext;
 use revm::{
     context::TxEnv,
-    context_interface::{
-        transaction::{AuthorizationItem, Transaction},
-        DatabaseGetter, Journal, TransactionGetter,
-    },
+    context_interface::transaction::{AuthorizationItem, Transaction},
     primitives::{Address, Bytes, TxKind, B256, U256},
-    Context, Database,
 };
 use std::vec;
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait OpTxTrait: Transaction + DepositTransaction {
     fn enveloped_tx(&self) -> Option<&Bytes>;
-}
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait OpTxGetter: TransactionGetter {
-    type OpTransaction: OpTxTrait;
-
-    fn op_tx(&self) -> &Self::OpTransaction;
-}
-
-impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> OpTxGetter
-    for Context<BLOCK, OpTransaction<TX>, CFG, DB, JOURNAL, CHAIN>
-{
-    type OpTransaction = OpTransaction<TX>;
-
-    fn op_tx(&self) -> &Self::OpTransaction {
-        &self.tx
-    }
-}
-
-impl<INSP, CTX: DatabaseGetter + OpTxGetter + TransactionGetter> OpTxGetter
-    for InspectorContext<INSP, CTX>
-{
-    type OpTransaction = <CTX as OpTxGetter>::OpTransaction;
-
-    fn op_tx(&self) -> &Self::OpTransaction {
-        self.inner.op_tx()
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

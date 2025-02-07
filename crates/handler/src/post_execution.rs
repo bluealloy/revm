@@ -1,9 +1,9 @@
 use super::frame_data::FrameResult;
+use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, Transaction,
-    TransactionGetter,
+    Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{Log, U256};
@@ -29,10 +29,10 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
 }
 
-pub fn reimburse_caller<CTX: BlockGetter + TransactionGetter + JournalGetter>(
+pub fn reimburse_caller<CTX: ContextTrait>(
     context: &mut CTX,
     gas: &mut Gas,
-) -> Result<(), JournalDBError<CTX>> {
+) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
     let caller = context.tx().caller();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
@@ -51,10 +51,10 @@ pub fn reimburse_caller<CTX: BlockGetter + TransactionGetter + JournalGetter>(
     Ok(())
 }
 
-pub fn reward_beneficiary<CTX: CfgGetter + BlockGetter + TransactionGetter + JournalGetter>(
+pub fn reward_beneficiary<CTX: ContextTrait>(
     context: &mut CTX,
     gas: &mut Gas,
-) -> Result<(), JournalDBError<CTX>> {
+) -> Result<(), <CTX::Db as Database>::Error> {
     let block = context.block();
     let tx = context.tx();
     let beneficiary = block.beneficiary();
@@ -88,7 +88,7 @@ pub fn reward_beneficiary<CTX: CfgGetter + BlockGetter + TransactionGetter + Jou
 ///
 /// TODO make Journal FinalOutput more generic.
 pub fn output<
-    CTX: JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     HALTREASON: HaltReasonTrait,
 >(
     context: &mut CTX,

@@ -59,10 +59,3 @@ pub enum CreateScheme {
         salt: U256,
     },
 }
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait CfgGetter {
-    type Cfg: Cfg;
-
-    fn cfg(&self) -> &Self::Cfg;
-}

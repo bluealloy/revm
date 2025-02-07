@@ -1,11 +1,9 @@
+use crate::host::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
-use database_interface::{Database, DatabaseGetter};
+use database_interface::Database;
 use primitives::{Address, Bytes, HashSet, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
-use std::boxed::Box;
-
-use crate::host::{SStoreResult, SelfDestructResult};
 
 pub trait Journal {
     type Database: Database;
@@ -213,40 +211,4 @@ pub struct AccountLoad {
     pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
-}
-
-/// Helper that extracts database error from [`JournalGetter`].
-pub type JournalDBError<CTX> =
-    <<<CTX as JournalGetter>::Journal as Journal>::Database as Database>::Error;
-
-pub trait JournalGetter: DatabaseGetter {
-    type Journal: Journal<Database = <Self as DatabaseGetter>::Database>;
-
-    fn journal(&mut self) -> &mut Self::Journal;
-
-    fn journal_ref(&self) -> &Self::Journal;
-}
-
-impl<T: JournalGetter> JournalGetter for &mut T {
-    type Journal = T::Journal;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        T::journal(*self)
-    }
-
-    fn journal_ref(&self) -> &Self::Journal {
-        T::journal_ref(*self)
-    }
-}
-
-impl<T: JournalGetter> JournalGetter for Box<T> {
-    type Journal = T::Journal;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        T::journal(self.as_mut())
-    }
-
-    fn journal_ref(&self) -> &Self::Journal {
-        T::journal_ref(self.as_ref())
-    }
 }

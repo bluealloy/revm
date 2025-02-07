@@ -2,56 +2,49 @@ use revm::{
     context::Cfg,
     context_interface::{
         result::{HaltReason, InvalidTransaction},
-        Block, CfgGetter, Journal, Transaction, TransactionType,
+        Block, ContextTrait, Journal, Transaction, TransactionType,
     },
-    handler::{
-        instructions::EthInstructionExecutor, EthContext, EthError, EthFrame, EthHandler,
-        EthPrecompileProvider, FrameContext,
-    },
-    handler_interface::Frame,
-    interpreter::{interpreter::EthInterpreter, Host},
-    precompile::PrecompileErrors,
-    primitives::U256,
+    handler::{EthHandler, EthTraitError, EvmTrait, Frame, FrameResult},
+    interpreter::FrameInput,
+    primitives::{Log, U256},
     specification::hardfork::SpecId,
+    state::EvmState,
 };
 use std::cmp::Ordering;
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
-pub struct Erc20MainetHandler<CTX, ERROR> {
-    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+pub struct Erc20MainetHandler<EVM, ERROR, FRAME> {
+    _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
-impl<CTX, ERROR> Erc20MainetHandler<CTX, ERROR> {
+impl<CTX, ERROR, FRAME> Erc20MainetHandler<CTX, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 }
 
-impl<CTX: CfgGetter + Host, ERROR: From<PrecompileErrors>> Default
-    for Erc20MainetHandler<CTX, ERROR>
-{
+impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<CTX, ERROR> EthHandler for Erc20MainetHandler<CTX, ERROR>
+impl<EVM, ERROR, FRAME> EthHandler for Erc20MainetHandler<EVM, ERROR, FRAME>
 where
-    CTX: EthContext,
-    ERROR: EthError<CTX>,
+    EVM: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
+    FRAME: Frame<Context = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    ERROR: EthTraitError<EVM>,
 {
-    type Context = CTX;
+    type Evm = EVM;
     type Error = ERROR;
-    type Precompiles = EthPrecompileProvider<CTX, Self::Error>;
-    type Instructions = EthInstructionExecutor<EthInterpreter, Self::Context>;
-    type Frame =
-        EthFrame<CTX, ERROR, EthInterpreter, FrameContext<Self::Precompiles, Self::Instructions>>;
+    type Frame = FRAME;
     type HaltReason = HaltReason;
 
-    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        let context = evm.ctx();
         let caller = context.tx().caller();
         let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
         let _ = context.journal().load_account(TOKEN)?.data.clone();
@@ -107,7 +100,8 @@ where
         Ok(())
     }
 
-    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        let context = evm.ctx();
         // load and touch token account
         let _ = context.journal().load_account(TOKEN)?.data;
         context.journal().touch_account(TOKEN);
@@ -125,16 +119,17 @@ where
 
         let caller = context.tx().caller();
         println!("Deduct caller: {:?} for amount: {gas_cost:?}", caller);
-        token_operation::<CTX, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
+        token_operation::<EVM::Context, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
 
         Ok(())
     }
 
     fn reimburse_caller(
         &self,
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
+        let context = evm.ctx();
         let basefee = context.block().basefee() as u128;
         let caller = context.tx().caller();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
@@ -142,16 +137,22 @@ where
 
         let reimbursement =
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
-        token_operation::<CTX, ERROR>(context, TREASURY, caller, U256::from(reimbursement))?;
+        token_operation::<EVM::Context, ERROR>(
+            context,
+            TREASURY,
+            caller,
+            U256::from(reimbursement),
+        )?;
 
         Ok(())
     }
 
     fn reward_beneficiary(
         &self,
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
+        let context = evm.ctx();
         let tx = context.tx();
         let beneficiary = context.block().beneficiary();
         let basefee = context.block().basefee() as u128;
@@ -166,7 +167,7 @@ where
 
         let reward =
             coinbase_gas_price.saturating_mul((gas.spent() - gas.refunded() as u64) as u128);
-        token_operation::<CTX, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
+        token_operation::<EVM::Context, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
 
         Ok(())
     }

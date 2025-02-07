@@ -1,9 +1,10 @@
-use crate::{inspectors::GasInspector, Inspector};
+use crate::inspectors::GasInspector;
 use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{CfgGetter, Journal, JournalGetter, Transaction, TransactionGetter},
+    context_interface::{ContextTrait, Journal, Transaction},
+    handler::inspector::Inspector,
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
@@ -31,7 +32,7 @@ pub struct TracerEip3155<CTX, INTR> {
     skip: bool,
     include_memory: bool,
     memory: Option<String>,
-    _phantom: std::marker::PhantomData<(CTX, INTR)>,
+    _phantom: core::marker::PhantomData<(CTX, INTR)>,
 }
 
 // # Output
@@ -113,7 +114,7 @@ struct Summary {
 
 impl<CTX, INTR> TracerEip3155<CTX, INTR>
 where
-    CTX: CfgGetter + TransactionGetter,
+    CTX: ContextTrait,
     INTR:,
 {
     /// Creates a new EIP-3155 tracer with the given output writer, by first wrapping it in a
@@ -218,7 +219,7 @@ impl CloneStack for Stack {
 
 impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
 where
-    CTX: CfgGetter + TransactionGetter + JournalGetter,
+    CTX: ContextTrait,
     INTR: InterpreterTypes<Stack: StackTrait + CloneStack>,
 {
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
