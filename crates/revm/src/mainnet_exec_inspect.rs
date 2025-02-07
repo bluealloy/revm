@@ -1,9 +1,10 @@
 use crate::{exec_inspect::ExecuteCommitEvm, ExecuteEvm};
 use crate::{InspectCommitEvm, InspectEvm};
-use context::{Cfg, Context, Evm};
+use context::setters::ContextSetters;
+use context::Evm;
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    Block, ContextTrait, Database, Journal, Transaction,
+    ContextTrait, Database, Journal,
 };
 use database_interface::DatabaseCommit;
 use handler::inspector::JournalExt;
@@ -18,23 +19,17 @@ use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> ExecuteEvm
-    for Evm<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        INSP,
-        EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        EthPrecompiles<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-    >
+impl<CTX, INSP> ExecuteEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
 where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
+    CTX: ContextSetters
+        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
-    type Output =
-        Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+    type Output = Result<
+        ResultAndState<HaltReason>,
+        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
+    >;
 
     fn transact_previous(&mut self) -> Self::Output {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
@@ -42,23 +37,20 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> ExecuteCommitEvm
-    for Evm<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        INSP,
-        EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        EthPrecompiles<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-    >
+impl<CTX, INSP> ExecuteCommitEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
 where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
+    CTX: ContextSetters
+        + ContextTrait<
+            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
+            Db: DatabaseCommit,
+        >,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
-    type CommitOutput =
-        Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+    type CommitOutput = Result<
+        ExecutionResult<HaltReason>,
+        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
+    >;
 
     fn transact_commit_previous(&mut self) -> Self::CommitOutput {
         self.transact_previous().map(|r| {
@@ -68,20 +60,12 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> InspectEvm
-    for Evm<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        INSP,
-        EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        EthPrecompiles<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-    >
+impl<CTX, INSP> InspectEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
 where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
+    CTX: ContextSetters
+        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
     type Inspector = INSP;
 
@@ -90,7 +74,7 @@ where
     }
 
     fn inspect_previous(&mut self) -> Self::Output {
-        let mut t = MainnetHandler::<_, EVMError<DB::Error, InvalidTransaction>, EthFrame<_, _, _>> {
+        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
             _phantom: core::marker::PhantomData,
         };
 
@@ -98,20 +82,15 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, INSP> InspectCommitEvm
-    for Evm<
-        Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-        INSP,
-        EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-        EthPrecompiles<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>>,
-    >
+impl<CTX, INSP> InspectCommitEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
 where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database + DatabaseCommit,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
+    CTX: ContextSetters
+        + ContextTrait<
+            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
+            Db: DatabaseCommit,
+        >,
+    INSP: Inspector<CTX, EthInterpreter>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
         self.inspect_previous().map(|r| {
@@ -129,6 +108,7 @@ mod test {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
+    use context::Context;
     use context_interface::TransactionType;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{address, TxKind, U256};

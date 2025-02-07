@@ -25,6 +25,8 @@ pub mod validation;
 pub use frame::{return_create, return_eofcreate, CtxTraitDbError, EthFrame, Frame};
 pub use frame_data::{FrameData, FrameResult};
 pub use handler::{inspect_instructions, EthHandler, EthTraitError, EvmTrait};
+pub use inspector::{Inspector, JournalExt};
 pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
 pub use mainnet_handler::MainnetHandler;
+pub use noop::NoOpInspector;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};

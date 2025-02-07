@@ -14,14 +14,14 @@ use reqwest::{Client, Url};
 use revm::{
     context_interface::{
         result::{InvalidHeader, InvalidTransaction},
-        Journal, JournalDBError, JournalGetter,
+        ContextTrait, Journal,
     },
     database_interface::WrapDatabaseAsync,
     precompile::PrecompileErrors,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     specification::hardfork::SpecId,
     state::AccountInfo,
-    Context, Database, MainContext,
+    Context, Database, MainBuilder, MainContext,
 };
 
 pub mod exec;
@@ -88,10 +88,10 @@ pub fn token_operation<CTX, ERROR>(
     amount: U256,
 ) -> Result<(), ERROR>
 where
-    CTX: JournalGetter,
+    CTX: ContextTrait,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalDBError<CTX>>
+        + From<<CTX::Db as Database>::Error>
         + From<PrecompileErrors>,
 {
     let sender_balance_slot = erc_address_storage(sender);
@@ -139,7 +139,9 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
         })
         .modify_block_chained(|b| {
             b.basefee = 1;
-        });
+        })
+        .build_mainnet();
+
     transact_erc20evm_commit(&mut ctx).unwrap();
 
     Ok(())

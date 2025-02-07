@@ -1,6 +1,8 @@
 use crate::Context;
+use auto_impl::auto_impl;
 use context_interface::{Block, Cfg, Database, Journal, Transaction};
 
+#[auto_impl(&mut, Box)]
 pub trait ContextSetters {
     type Tx: Transaction;
     type Block: Block;

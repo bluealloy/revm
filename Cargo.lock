@@ -1526,6 +1526,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-erc20-gas"
+version = "0.0.0"
+dependencies = [
+ "alloy-provider",
+ "alloy-sol-types",
+ "alloy-transport-http",
+ "anyhow",
+ "reqwest",
+ "revm",
+ "revm-database",
+ "tokio",
+]
+
+[[package]]
 name = "example-uniswap-get-reserves"
 version = "0.0.0"
 dependencies = [
@@ -3394,6 +3408,7 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "cfg-if",
  "derive-where",
  "revm-bytecode",

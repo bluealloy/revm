@@ -13,22 +13,22 @@ pub fn run() {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
 
     // BenchmarkDB is dummy state that implements Database trait.
-    let mut context = Context::mainnet()
+    let context = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = BENCH_CALLER;
             tx.kind = TxKind::Call(BENCH_TARGET);
-            //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
-        })
-        .build_mainnet();
+        });
+
+    let mut evm = context.build_mainnet();
 
     let time = Instant::now();
-    let _ = context.transact_previous();
+    let _ = evm.transact_previous();
     println!("First init: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = context.transact_previous();
+    let _ = evm.transact_previous();
     println!("Run: {:?}", time.elapsed());
 }
