@@ -1,6 +1,6 @@
 use crate::{OpSpec, OpSpecId};
 use once_cell::race::OnceBox;
-use precompile::{bls12_381, secp256r1, PrecompileErrors, Precompiles};
+use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
     context::Cfg,
     context_interface::ContextTrait,
@@ -98,7 +98,7 @@ pub fn isthumus() -> &'static Precompiles {
         #[cfg(feature = "blst")]
         let precompiles = {
             let mut precompiles = precompiles;
-            precompiles.extend(bls12_381::precompiles());
+            precompiles.extend(precompile::bls12_381::precompiles());
             precompiles
         };
         Box::new(precompiles)
