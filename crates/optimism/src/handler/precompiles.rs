@@ -35,7 +35,6 @@ impl<CTX> OpPrecompileProvider<CTX> {
     #[inline]
     pub fn new_with_spec(spec: OpSpec) -> Self {
         match spec {
-            // No changes
             spec @ (OpSpec::Eth(
                 SpecId::FRONTIER
                 | SpecId::FRONTIER_THAWING
@@ -57,16 +56,12 @@ impl<CTX> OpPrecompileProvider<CTX> {
                 | SpecId::CANCUN,
             )
             | OpSpec::Op(
-                OpSpecId::BEDROCK
-                | OpSpecId::REGOLITH
-                | OpSpecId::CANYON
-                | OpSpecId::ECOTONE
-                | OpSpecId::HOLOCENE
-                | OpSpecId::ISTHMUS,
+                OpSpecId::BEDROCK | OpSpecId::REGOLITH | OpSpecId::CANYON | OpSpecId::ECOTONE,
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
-            OpSpec::Op(OpSpecId::GRANITE)
-            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(granite()),
+            OpSpec::Op(OpSpecId::GRANITE | OpSpecId::HOLOCENE) => Self::new(granite()),
+            OpSpec::Op(OpSpecId::ISTHMUS)
+            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(isthumus()),
         }
     }
 }
@@ -89,6 +84,23 @@ pub fn granite() -> &'static Precompiles {
         let mut precompiles = Precompiles::cancun().clone();
         // Restrict bn256Pairing input size
         precompiles.extend([secp256r1::P256VERIFY]);
+        Box::new(precompiles)
+    })
+}
+
+/// Returns precompiles for isthumus spec.
+pub fn isthumus() -> &'static Precompiles {
+    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    INSTANCE.get_or_init(|| {
+        let precompiles = granite().clone();
+        // Prague bls12 precompiles
+        // Don't include BLS12-381 precompiles in no_std builds.
+        #[cfg(feature = "blst")]
+        let precompiles = {
+            let mut precompiles = precompiles;
+            precompiles.extend(precompile::bls12_381::precompiles());
+            precompiles
+        };
         Box::new(precompiles)
     })
 }
