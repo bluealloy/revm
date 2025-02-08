@@ -1,0 +1,924 @@
+{
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Berlin-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Berlin": [
+                {
+                    "hash": "0x6b782b3826b53ae2e8ebea3585648c75e87459fb70a3ad0ad58025e867c9e86c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b1456",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x069578",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0xfe6d081388950ff92ae8dcbd55bc319fb22df3c45c3789f28755a594e2c2f417",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Byzantium-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Byzantium": [
+                {
+                    "hash": "0x7dc61640680eaa1caf8d8f7458872c370a6c31cec9983d5b8a591c3a89b58cfb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b665e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x064370",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x699774deaec9e3916ccaab4a2c4eff60b214df590c7389560eecc7481b465828",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Cancun-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016010565b5f5560205ff35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xb56915796a9b7a9b1c40d2cf7b8b7e6c25098ab3aafd76d6cd6edabb7d74e083",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016010565b5f5560205ff35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b146a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f99e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x26695e2feacb207aa42c2703a28eebbc2954454a651f6770e395ed2aca0da22c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_ConstantinopleFix-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "ConstantinopleFix": [
+                {
+                    "hash": "0x7dc61640680eaa1caf8d8f7458872c370a6c31cec9983d5b8a591c3a89b58cfb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b665e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x064370",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x1650352f8aded1d43627620df255f18f68c050ece3469d35a73866fc23952da9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Homestead-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b600082820190509291505056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Homestead": [
+                {
+                    "hash": "0x154f5935a676cbe98229394ce886e15212312de9a32076027fd4b77e79ad3d18",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf860800a8307a12094000000000000000000000000000000000000100080801ca08852a15dfcce4d37ed08c9dd99a42dc48d8d24a2ca16b97a2305fb9ee8dd14a7a07702c68e6921f2d1b530f1a66e373214355fb828f90ebbfb0fa9312d57cd9c52",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b600082820190509291505056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b658c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x064442",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x554afdb25ad5c9b7804692cbf954c8ce21889fe5c4f6f1d57d73611579f9972e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Istanbul-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Istanbul": [
+                {
+                    "hash": "0x7dc61640680eaa1caf8d8f7458872c370a6c31cec9983d5b8a591c3a89b58cfb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b665e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x064370",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x33517158d018180b6aee8f1c23abe662c2fc6146f9914238fc6398281ac0fe00",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_London-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentDifficulty": "0x020000",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "London": [
+                {
+                    "hash": "0xad2805e2bebbce8cc20207e2cefc20e4bc9e080bae569b734b3177db925b5e4f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b1456",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f9a4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x4e626f7e035caa5b3682ad3795630997ffa53be9cf6392e7f8bf0524502cabad",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Paris-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016012565b60005560206000f35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Paris": [
+                {
+                    "hash": "0xad2805e2bebbce8cc20207e2cefc20e4bc9e080bae569b734b3177db925b5e4f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016012565b60005560206000f35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b1456",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f9a4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x2a67a367a1254afb90627f4e4ef4acf88eea2b9298183e1883e4d26948faec76",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Prague-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016010565b5f5560205ff35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xb56915796a9b7a9b1c40d2cf7b8b7e6c25098ab3aafd76d6cd6edabb7d74e083",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016010565b5f5560205ff35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b146a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f99e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x5c27bd5eedd1f03caaf7f18edacbd01455682907d5d405a0da3ded64f70948ed",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "devnets/prague/6",
+                "commit": "fa33d824decac0a6ac55adc943e7f139b0719f0e"
+            }
+        }
+    },
+    "tests/homestead/yul/test_yul_example.py::test_yul[fork_Shanghai-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x6009600260016010565b5f5560205ff35b019056",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x0ba1a9ce0ba1a9ce",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x07a120"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Shanghai": [
+                {
+                    "hash": "0xb56915796a9b7a9b1c40d2cf7b8b7e6c25098ab3aafd76d6cd6edabb7d74e083",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a8307a120940000000000000000000000000000000000001000808026a00141be98af88ea73fa99d7dcda246716f1ffb823e2a37ce07796aa32c39f1a0e9f2235efef08f9ca13c3ea4b4f2bc22810b5d3d8d570945dba45024e456c1a71",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0ba1a9ce",
+                            "code": "0x6009600260016010565b5f5560205ff35b019056",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x0ba1a9ce0b9b146a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01f99e",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {},
+        "_info": {
+            "hash": "0x3bc9df4e8e1c0bc5266c1cc33f2822f97c4ab51813d0a648d26d2ff053aae438",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test function documentation:\nTest YUL compiled bytecode.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-6@v1.0.0/tests/homestead/yul/test_yul_example.py#L16",
+            "fixture_format": "state_test",
+            "eels-resolution": {
+                "git-url": "https://github.com/ethereum/execution-specs.git",
+                "branch": "master",
+                "commit": "9b95554a88d2a8485f8180254d0f6a493a593fda"
+            }
+        }
+    }
+}
