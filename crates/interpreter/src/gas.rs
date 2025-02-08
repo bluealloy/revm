@@ -140,9 +140,8 @@ impl Gas {
         if let Some(new_remaining) = self.remaining.checked_sub(cost) {
             self.remaining = new_remaining;
             true
-        }
-        else {
-            false //OO Gas
+        } else {
+            false
         }
     }
 
