@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v16.0.0...revm-precompile-v16.1.0) - 2025-02-08
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- integrate codspeed (#1935)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- *(Inspector)* frame_end called multiple times (#2037)
+
+### Other
+
+- bump kzg.rs (#2002)
+- align crates versions (#1983)
+- blst reprice, remove g1/g2 mul (#1981)
+- integrate rust-secp256k1 (#1915)
+- fix comments and docs into more sensible (#1920)
+- Rename PRAGUE_EOF to OSAKA (#1903)
+- *(precompile)* use secp256k1 global context for ecrecover (#1843)
+- fix some typos (#1800)
+- Replace `PrecompileError` variant ([#1797](https://github.com/bluealloy/revm/pull/1797))
+- *(deps)* bump once_cell from 1.19.0 to 1.20.0 (#1773)
+
 ## [11.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.0...revm-precompile-v11.0.1) - 2024-08-30
 
 ### Other
