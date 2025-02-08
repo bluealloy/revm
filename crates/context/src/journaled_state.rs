@@ -1,7 +1,4 @@
-use bytecode::{
-    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH},
-    Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
-};
+use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::journaled_state::{AccountLoad, Journal, JournalCheckpoint, TransferError};
 use database_interface::Database;
 use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
@@ -433,8 +430,6 @@ impl<DB: Database> JournaledState<DB> {
 
         let code = if code.is_eof() {
             EOF_MAGIC_BYTES.clone()
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_BYTES.clone()
         } else {
             code.original_bytes()
         };
@@ -460,8 +455,6 @@ impl<DB: Database> JournaledState<DB> {
 
         let hash = if code.is_eof() {
             EOF_MAGIC_HASH
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_HASH
         } else {
             acc.info.code_hash
         };
