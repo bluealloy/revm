@@ -175,7 +175,6 @@ where
                 .into());
             }
 
-            // TODO check if operator_fee_charge needs to be checked against balance!
             caller_account.info.balance = caller_account
                 .info
                 .balance
