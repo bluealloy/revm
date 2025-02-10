@@ -373,12 +373,12 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             return_result!(output);
         }
 
-        SYSCALL_ID_WRITE_PREIMAGE | SYSCALL_ID_PREIMAGE_COPY | SYSCALL_ID_PREIMAGE_SIZE => {
-            unreachable!("revm: unsupported system interruption")
-        }
-
-        SYSCALL_ID_EXT_STORAGE_READ => {
-            unreachable!("revm: unsupported system interruption")
+        // TODO(dmitry123): "rethink these system calls"
+        SYSCALL_ID_WRITE_PREIMAGE
+        | SYSCALL_ID_PREIMAGE_COPY
+        | SYSCALL_ID_PREIMAGE_SIZE
+        | SYSCALL_ID_EXT_STORAGE_READ => {
+            return_error!(Revert);
         }
 
         SYSCALL_ID_TRANSIENT_READ => {
@@ -412,6 +412,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             return_result!(Bytes::default());
         }
 
-        _ => unreachable!("revm: unsupported system interruption"),
+        _ => return_error!(Revert),
     }
 }
