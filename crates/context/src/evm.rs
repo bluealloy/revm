@@ -47,6 +47,11 @@ impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
             precompiles,
         }
     }
+
+    /// Consumes self and returns inner Inspector.
+    pub fn into_inspector(self) -> INSP {
+        self.data.inspector
+    }
 }
 
 impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
