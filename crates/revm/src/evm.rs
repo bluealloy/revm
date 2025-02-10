@@ -1,7 +1,6 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    frame::SystemInterruptionFrame,
     handler::Handler,
     interpreter::{
         CallInputs,
@@ -32,7 +31,7 @@ use crate::{
     FrameResult,
 };
 use core::fmt;
-use revm_interpreter::gas::InitialAndFloorGas;
+use revm_interpreter::{gas::InitialAndFloorGas, interpreter_action::SystemInterruptionOutcome};
 use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
@@ -123,6 +122,21 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
+                InterpreterAction::InterruptedCall { mut inputs } => {
+                    // execute system interruption,
+                    // in inputs we store updated info about the call,
+                    // for example, new gas info
+                    let gas_remaining = inputs.gas.remaining();
+                    let frame_or_result =
+                        exec.system_interruption(&mut self.context, &mut inputs)?;
+                    let is_frame = frame_or_result.is_frame();
+                    stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome::new(
+                        inputs,
+                        gas_remaining,
+                        is_frame,
+                    ));
+                    frame_or_result
+                }
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
                 InterpreterAction::EOFCreate { inputs } => {
                     exec.eofcreate(&mut self.context, inputs)?
@@ -150,33 +164,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                             // return_eofcreate
                             FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
                         }
-                        Frame::SystemInterruption(_) => unreachable!("todo"),
-                        Frame::Resume(_, _, _) => unreachable!("todo"),
                     })
                 }
-                InterpreterAction::InterruptRwasm {
-                    call_id,
-                    code_hash,
-                    input,
-                    gas_limit,
-                    state,
-                    caller,
-                } => FrameOrResult::Frame(Frame::SystemInterruption(Box::new(
-                    SystemInterruptionFrame {
-                        call_id,
-                        code_hash,
-                        input,
-                        gas_limit,
-                        state,
-                        caller,
-                        is_static: false,
-                    },
-                ))),
-                InterpreterAction::ResumeRwasm {
-                    call_id,
-                    result,
-                    caller,
-                } => FrameOrResult::Frame(Frame::Resume(call_id, result, caller)),
                 InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
             };
             // handle result
@@ -192,6 +181,13 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                         return Ok(result);
                     };
                     stack_frame = top_frame;
+                    // if call is interrupted then we need to remember the interrupted state;
+                    // the execution can be continued
+                    // since the state is updated already
+                    if stack_frame.is_interrupted_call() {
+                        stack_frame.insert_interrupted_result(result.into_interpreter_result());
+                        continue;
+                    }
                     let ctx = &mut self.context;
                     // Insert result to the top frame.
                     match result {

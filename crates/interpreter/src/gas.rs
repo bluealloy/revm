@@ -133,11 +133,16 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let (remaining, overflow) = self.remaining.overflowing_sub(cost);
+        let (remaining, overflow) = self.remaining().overflowing_sub(cost);
         let success = !overflow;
         if success {
             self.remaining = remaining;
         }
         success
+    }
+
+    #[inline]
+    pub fn record_denominated_cost(&mut self, fuel_cost: u64) -> bool {
+        self.record_cost((fuel_cost + FUEL_DENOM_RATE - 1) / FUEL_DENOM_RATE)
     }
 }

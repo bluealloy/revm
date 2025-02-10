@@ -1,15 +1,37 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, AccountLoad, InstructionResult, InterpreterResult,
-        SStoreResult, SelfDestructResult, StateLoad,
+        analysis::to_analysed,
+        gas,
+        return_ok,
+        AccountLoad,
+        InstructionResult,
+        InterpreterResult,
+        SStoreResult,
+        SelfDestructResult,
+        StateLoad,
     },
     journaled_state::JournaledState,
     primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
-        Eof, HashSet, Spec,
+        AccessListItem,
+        Account,
+        Address,
+        AnalysisKind,
+        Bytecode,
+        Bytes,
+        CfgEnv,
+        EVMError,
+        Env,
+        Eof,
+        HashSet,
+        Spec,
         SpecId::{self, *},
-        B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
+        B256,
+        EIP7702_MAGIC_BYTES,
+        EIP7702_MAGIC_HASH,
+        EOF_MAGIC_BYTES,
+        EOF_MAGIC_HASH,
+        U256,
     },
     JournalCheckpoint,
 };
@@ -388,8 +410,17 @@ impl<DB: Database> InnerEvmContext<DB> {
             }
         };
 
+        // since rwasm is EOF, we use `ReturnContract`
+        // return result to indicate that EOF is created,
+        // but there is no need
+        // to update bytecode since it's immutable during the deployment process
+        let is_rwasm_contract_creation =
+            interpreter_result.result == InstructionResult::ReturnContract;
+
         // set code
-        self.journaled_state.set_code(address, bytecode);
+        if !is_rwasm_contract_creation {
+            self.journaled_state.set_code(address, bytecode);
+        }
 
         interpreter_result.result = InstructionResult::Return;
     }

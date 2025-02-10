@@ -3,7 +3,6 @@
 mod execution;
 mod post_execution;
 mod pre_execution;
-mod rwasm;
 mod validation;
 // Public exports
 
@@ -19,6 +18,7 @@ pub use execution::{
     insert_create_outcome,
     insert_eofcreate_outcome,
     last_frame_return,
+    system_interruption,
 };
 pub use post_execution::{clear, end, output, refund, reimburse_caller, reward_beneficiary};
 pub use pre_execution::{
@@ -28,5 +28,4 @@ pub use pre_execution::{
     load_accounts,
     load_precompiles,
 };
-pub use rwasm::resume_rwasm_frame;
 pub use validation::{validate_env, validate_initial_tx_gas, validate_tx_against_state};

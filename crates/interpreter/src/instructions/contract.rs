@@ -1,17 +1,35 @@
 mod call_helpers;
 
-pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
-
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     interpreter::Interpreter,
     primitives::{
-        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
+        eof::EofHeader,
+        keccak256,
+        Address,
+        BerlinSpec,
+        Bytes,
+        Eof,
+        Spec,
+        SpecId::*,
+        B256,
+        U256,
     },
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
+    CallInputs,
+    CallScheme,
+    CallValue,
+    CreateInputs,
+    CreateScheme,
+    EOFCreateInputs,
+    Host,
+    InstructionResult,
+    InterpreterAction,
+    InterpreterResult,
+    MAX_INITCODE_SIZE,
 };
+pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use core::cmp::max;
+use revm_primitives::wasm::{WASM_MAGIC_BYTES, WASM_MAX_CODE_SIZE};
 use std::boxed::Box;
 
 /// EOF Create instruction
@@ -183,10 +201,12 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     // it simplifies the reasoning about the gas costs and is
     // applied uniformly for all introduced EXT*CALL instructions.
     //
-    // If Gas available to callee is less than MIN_CALLEE_GAS trigger light failure (Same as Revert).
+    // If Gas available to callee is less than MIN_CALLEE_GAS trigger light failure (Same as
+    // Revert).
     if gas_limit < MIN_CALLEE_GAS {
         // Push 1 to stack to indicate that call light failed.
-        // It is safe to ignore stack overflow error as we already popped multiple values from stack.
+        // It is safe to ignore stack overflow error as we already popped multiple values from
+        // stack.
         let _ = interpreter.stack_mut().push(U256::from(1));
         interpreter.return_data_buffer.clear();
         // Return none to continue execution.
@@ -341,14 +361,26 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
 
     let mut code = Bytes::new();
     if len != 0 {
+        let code_offset = as_usize_or_fail!(interpreter, code_offset);
+
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
-            // Limit is set as double of max contract bytecode size
+            // The limit is set as double of max contract bytecode size
             let max_initcode_size = host
                 .env()
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
+                .or_else(|| {
+                    if len >= 4
+                        && interpreter.shared_memory.try_slice(code_offset, 4)
+                            == Some(&WASM_MAGIC_BYTES)
+                    {
+                        Some(WASM_MAX_CODE_SIZE)
+                    } else {
+                        None
+                    }
+                })
                 .unwrap_or(MAX_INITCODE_SIZE);
             if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitCodeSizeLimit;
@@ -357,7 +389,6 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
             gas!(interpreter, gas::initcode_cost(len as u64));
         }
 
-        let code_offset = as_usize_or_fail!(interpreter, code_offset);
         resize_memory!(interpreter, code_offset, len);
         code = Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len));
     }

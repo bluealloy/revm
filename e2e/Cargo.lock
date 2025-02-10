@@ -3165,7 +3165,6 @@ dependencies = [
  "ethers-providers",
  "fluentbase-core",
  "fluentbase-runtime",
- "fluentbase-rwasm",
  "fluentbase-sdk",
  "revm-interpreter",
  "revm-precompile",
@@ -3213,7 +3212,6 @@ dependencies = [
  "cfg-if",
  "dyn-clone",
  "enumn",
- "fluentbase-rwasm",
  "hex",
  "serde",
 ]

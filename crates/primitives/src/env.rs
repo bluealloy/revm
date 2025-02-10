@@ -3,6 +3,7 @@ pub mod handler_cfg;
 use crate::{
     calc_blob_gasprice,
     calc_excess_blob_gas,
+    wasm::{WASM_MAGIC_BYTES, WASM_MAX_CODE_SIZE},
     AccessListItem,
     Account,
     Address,
@@ -148,6 +149,13 @@ impl Env {
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
+                .or_else(|| {
+                    if self.tx.data.len() >= 4 && self.tx.data[..4] == WASM_MAGIC_BYTES {
+                        Some(WASM_MAX_CODE_SIZE)
+                    } else {
+                        None
+                    }
+                })
                 .unwrap_or(MAX_INITCODE_SIZE);
             if self.tx.data.len() > max_initcode_size {
                 return Err(InvalidTransaction::CreateInitCodeSizeLimit);

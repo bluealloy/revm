@@ -29,7 +29,9 @@ use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_sdk::runtime::TestingContext;
 
 pub mod context_reader;
+pub mod executor;
 pub mod sdk_adapter;
+pub mod syscall;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hard fork specification).

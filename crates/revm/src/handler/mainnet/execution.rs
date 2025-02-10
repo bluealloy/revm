@@ -1,7 +1,6 @@
 use crate::{
     db::Database,
     frame::EOFCreateFrame,
-    handler::mainnet::rwasm::{execute_rwasm_frame, execute_system_interruption},
     interpreter::{
         return_ok,
         return_revert,
@@ -13,6 +12,10 @@ use crate::{
         SharedMemory,
     },
     primitives::{Bytecode, EVMError, Spec},
+    rwasm::{
+        executor::{execute_rwasm_frame, execute_rwasm_resume},
+        syscall::execute_rwasm_interruption,
+    },
     CallFrame,
     Context,
     CreateFrame,
@@ -22,6 +25,7 @@ use crate::{
 };
 use core::mem;
 use revm_interpreter::{
+    interpreter_action::SystemInterruptionInputs,
     opcode::InstructionTables,
     CallOutcome,
     EOFCreateInputs,
@@ -39,14 +43,20 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
-    if let Frame::SystemInterruption(system_interruption) = frame {
-        return execute_system_interruption::<SPEC, EXT, DB>(context, system_interruption);
+    if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
+        return Ok(execute_rwasm_resume(interrupted_outcome));
     }
 
+    let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
 
-    if let Bytecode::Rwasm(_instance, rwasm_bytecode) = &interpreter.contract.bytecode {
-        return execute_rwasm_frame::<SPEC, EXT, DB>(interpreter, rwasm_bytecode.clone(), context);
+    if let Bytecode::Rwasm(rwasm_bytecode) = &interpreter.contract.bytecode {
+        return execute_rwasm_frame::<SPEC, EXT, DB>(
+            interpreter,
+            rwasm_bytecode.clone(),
+            context,
+            is_create,
+        );
     }
 
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
@@ -95,6 +105,15 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_call_frame(&inputs)
+}
+
+/// Handle frame sub call.
+#[inline]
+pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    inputs: &mut Box<SystemInterruptionInputs>,
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs)
 }
 
 #[inline]

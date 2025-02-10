@@ -15,6 +15,7 @@ use crate::{
     },
     primitives::{
         keccak256,
+        rwasm::WASM_MAGIC_BYTES,
         Address,
         Bytecode,
         Bytes,
@@ -35,6 +36,7 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
+use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -282,8 +284,21 @@ impl<DB: Database> EvmContext<DB> {
                 .unwrap_or_default();
         }
 
-        let contract =
+        let mut contract =
             Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+
+        if let Some(precompiled_address) = try_resolve_precompile_account(inputs.input.as_ref()) {
+            let account = self
+                .inner
+                .journaled_state
+                .load_code(precompiled_address, &mut self.inner.db)?;
+            // rewrite bytecode address and code hash, since rWasm rely on it
+            contract.bytecode_address = Some(precompiled_address);
+            contract.hash = Some(account.info.code_hash);
+            // rewrite bytecode
+            contract.bytecode = account.info.code.clone().unwrap_or_default();
+        }
+
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(FrameOrResult::new_call_frame(
             inputs.return_memory_offset.clone(),
@@ -367,10 +382,26 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        let (bytecode, constructor_params) = if inputs.init_code.len() > WASM_MAGIC_BYTES.len()
+            && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
+        {
+            let Some(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
+                return return_error(InstructionResult::Revert);
+            };
+            // for rwasm, we set bytecode before execution
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            self.journaled_state
+                .set_code(created_address, bytecode.clone());
+            (bytecode, compilation_result.constructor_params)
+        } else {
+            (
+                Bytecode::new_raw(inputs.init_code.clone()),
+                Bytes::default(),
+            )
+        };
 
         let contract = Contract::new(
-            Bytes::new(),
+            constructor_params,
             bytecode,
             Some(init_code_hash),
             created_address,
