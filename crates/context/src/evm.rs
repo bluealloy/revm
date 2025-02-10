@@ -24,6 +24,36 @@ impl<CTX> Evm<CTX, (), (), ()> {
     }
 }
 
+impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
+    /// Consumed self and returns new Evm type with given Inspector.
+    pub fn with_inspector<OINSP>(self, inspector: OINSP) -> Evm<CTX, OINSP, I, P> {
+        Evm {
+            data: EvmData {
+                ctx: self.data.ctx,
+                inspector,
+            },
+            enabled_inspection: self.enabled_inspection,
+            instruction: self.instruction,
+            precompiles: self.precompiles,
+        }
+    }
+
+    /// Consumes self and returns new Evm type with given Precompiles.
+    pub fn with_precompiles<OP>(self, precompiles: OP) -> Evm<CTX, INSP, I, OP> {
+        Evm {
+            data: self.data,
+            enabled_inspection: self.enabled_inspection,
+            instruction: self.instruction,
+            precompiles,
+        }
+    }
+
+    /// Consumes self and returns inner Inspector.
+    pub fn into_inspector(self) -> INSP {
+        self.data.inspector
+    }
+}
+
 impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
     type Tx = <CTX as ContextSetters>::Tx;
     type Block = <CTX as ContextSetters>::Block;
