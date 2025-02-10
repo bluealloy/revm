@@ -3,11 +3,12 @@
 pub mod precompiles;
 
 use crate::{
+    constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
     transaction::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
         OpTransactionError, OpTxTrait,
     },
-    L1BlockInfo, OpHaltReason, OpSpec, OpSpecId, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    L1BlockInfo, OpHaltReason, OpSpec, OpSpecId,
 };
 use precompile::Log;
 use revm::{
@@ -119,6 +120,7 @@ where
 
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
+        let spec = ctx.cfg().spec();
         let caller = ctx.tx().caller();
         let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
@@ -148,8 +150,22 @@ where
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
+        // Additionally deduct the operator fee from the caller's account.
         if !is_deposit {
-            let mut caller_account = evm.ctx().journal().load_account(caller)?;
+            let ctx = evm.ctx();
+
+            // Deduct the operator fee from the caller's account.
+            let gas_limit = U256::from(ctx.tx().gas_limit());
+            let enveloped_tx = ctx
+                .tx()
+                .enveloped_tx()
+                .expect("all not deposit tx have enveloped tx")
+                .clone();
+            let operator_fee_charge =
+                ctx.chain()
+                    .operator_fee_charge(&enveloped_tx, gas_limit, spec);
+
+            let mut caller_account = ctx.journal().load_account(caller)?;
 
             if tx_l1_cost > caller_account.info.balance {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
@@ -158,7 +174,11 @@ where
                 }
                 .into());
             }
-            caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+            caller_account.info.balance = caller_account
+                .info
+                .balance
+                .saturating_sub(tx_l1_cost.saturating_add(operator_fee_charge));
         }
         Ok(())
     }
@@ -229,6 +249,33 @@ where
         Ok(())
     }
 
+    fn reimburse_caller(
+        &self,
+        evm: &mut Self::Evm,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        self.mainnet.reimburse_caller(evm, exec_result)?;
+
+        let context = evm.ctx();
+        if context.tx().source_hash().is_zero() {
+            let caller = context.tx().caller();
+            let spec = context.cfg().spec();
+            let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
+
+            let caller_account = context.journal().load_account(caller)?;
+
+            // In additional to the normal transaction fee, additionally refund the caller
+            // for the operator fee.
+            caller_account.data.info.balance = caller_account
+                .data
+                .info
+                .balance
+                .saturating_add(operator_fee_refund);
+        }
+
+        Ok(())
+    }
+
     fn refund(
         &self,
         evm: &mut Self::Evm,
@@ -264,17 +311,22 @@ where
             // If the transaction is not a deposit transaction, fees are paid out
             // to both the Base Fee Vault as well as the L1 Fee Vault.
             let ctx = evm.ctx();
-            let envolepo = ctx.tx().enveloped_tx().cloned();
+            let enveloped = ctx.tx().enveloped_tx().cloned();
             let spec = ctx.cfg().spec();
             let l1_block_info = ctx.chain();
 
-            let Some(enveloped_tx) = &envolepo else {
+            let Some(enveloped_tx) = &enveloped else {
                 return Err(ERROR::from_string(
                     "[OPTIMISM] Failed to load enveloped transaction.".into(),
                 ));
             };
 
             let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
+            let operator_fee_cost = l1_block_info.operator_fee_charge(
+                enveloped_tx,
+                U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+                spec,
+            );
 
             // Send the L1 cost of the transaction to the L1 Fee Vault.
             let mut l1_fee_vault_account = ctx.journal().load_account(L1_FEE_RECIPIENT)?;
@@ -288,6 +340,13 @@ where
             base_fee_vault_account.info.balance += U256::from(basefee.saturating_mul(
                 (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
             ));
+
+            // Send the operator fee of the transaction to the coinbase.
+            let mut operator_fee_vault_account =
+                evm.ctx().journal().load_account(OPERATOR_FEE_RECIPIENT)?;
+
+            operator_fee_vault_account.mark_touch();
+            operator_fee_vault_account.data.info.balance += operator_fee_cost;
         }
         Ok(())
     }
@@ -616,6 +675,42 @@ mod tests {
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
         // l1block cost is 1048 fee.
+        handler.deduct_caller(&mut evm).unwrap();
+
+        // Check the account balance is updated.
+        let account = evm.ctx().journal().load_account(caller).unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
+
+    #[test]
+    fn test_remove_operator_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(151),
+                ..Default::default()
+            },
+        );
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                operator_fee_scalar: Some(U256::from(10_000_000)),
+                operator_fee_constant: Some(U256::from(50)),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS.into())
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 10;
+                tx.enveloped_tx = Some(bytes!("FACADE"));
+            });
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
+        // 10_000_000 * 10 / 1_000_000 + 50 = 150
         handler.deduct_caller(&mut evm).unwrap();
 
         // Check the account balance is updated.

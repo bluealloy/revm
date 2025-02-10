@@ -7,6 +7,7 @@ extern crate alloc as std;
 
 pub mod api;
 pub mod bn128;
+pub mod constants;
 pub mod evm;
 pub mod fast_lz;
 pub mod handler;
@@ -20,7 +21,7 @@ pub use api::{
     default_ctx::DefaultOp,
 };
 pub use evm::OpEvm;
-pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+pub use l1block::L1BlockInfo;
 pub use result::OpHaltReason;
 pub use spec::*;
 pub use transaction::{error::OpTransactionError, estimate_tx_compressed_size, OpTransaction};
