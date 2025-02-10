@@ -87,6 +87,10 @@ where
         &self.data.ctx
     }
 
+    fn inspector(&mut self) -> &mut Self::Inspector {
+        &mut self.data.inspector
+    }
+
     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
         (&mut self.data.ctx, &mut self.data.inspector)
     }

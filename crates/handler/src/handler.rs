@@ -161,6 +161,11 @@ where
     }
 
     #[inline]
+    fn inspector(&mut self) -> &mut Self::Inspector {
+        &mut self.data.inspector
+    }
+
+    #[inline]
     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
         (&mut self.data.ctx, &mut self.data.inspector)
     }
@@ -193,6 +198,8 @@ pub trait EvmTrait {
     fn enable_inspection(&mut self, enable: bool);
 
     fn ctx(&mut self) -> &mut Self::Context;
+
+    fn inspector(&mut self) -> &mut Self::Inspector;
 
     fn ctx_ref(&self) -> &Self::Context;
 
