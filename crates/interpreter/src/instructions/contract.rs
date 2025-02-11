@@ -15,7 +15,6 @@ use crate::{
         B256,
         U256,
     },
-    primitives::rwasm::WASM_MAGIC_BYTES,
     CallInputs,
     CallScheme,
     CallValue,
@@ -26,7 +25,7 @@ use crate::{
     InstructionResult,
     InterpreterAction,
     InterpreterResult,
-    MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE,
 };
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use core::cmp::max;
