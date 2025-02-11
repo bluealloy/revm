@@ -6,7 +6,7 @@ use specification::hardfork::SpecId;
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
-    type Spec: Into<SpecId>;
+    type Spec: Into<SpecId> + Clone;
 
     fn chain_id(&self) -> u64;
 
