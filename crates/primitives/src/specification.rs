@@ -68,8 +68,8 @@ pub enum SpecId {
     GRANITE = 23,
     HOLOCENE = 24,
     PRAGUE = 25,
-    OSAKA = 26,
-    ISTHMUS = 27,
+    ISTHMUS = 26,
+    OSAKA = 27,
     #[default]
     LATEST = u8::MAX,
 }
