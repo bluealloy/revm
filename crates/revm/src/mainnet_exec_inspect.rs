@@ -8,6 +8,7 @@ use context_interface::{
 };
 use database_interface::DatabaseCommit;
 use handler::inspector::JournalExt;
+use handler::PrecompileProvider;
 use handler::{handler::EvmTrait, inspector::EthInspectorHandler};
 use handler::{
     inspector::Inspector, instructions::EthInstructions, EthFrame, EthHandler, EthPrecompiles,
@@ -15,16 +16,18 @@ use handler::{
 };
 use interpreter::interpreter::EthInterpreter;
 
+use interpreter::InterpreterResult;
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
 
-impl<CTX, INSP> ExecuteEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
+impl<CTX, INSP, PRECOMPILES> ExecuteEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
         + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type Output = Result<
         ResultAndState<HaltReason>,
@@ -37,8 +40,8 @@ where
     }
 }
 
-impl<CTX, INSP> ExecuteCommitEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>
+impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
+    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
         + ContextTrait<
@@ -46,6 +49,7 @@ where
             Db: DatabaseCommit,
         >,
     INSP: Inspector<CTX, EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
         ExecutionResult<HaltReason>,
