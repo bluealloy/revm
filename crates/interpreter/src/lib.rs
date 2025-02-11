@@ -42,7 +42,7 @@ pub use interpreter_action::{
     EOFCreateInputs, EOFCreateKind, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
-pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE};
 
 #[doc(hidden)]
 pub use revm_primitives as primitives;

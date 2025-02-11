@@ -15,6 +15,7 @@ use crate::{
         B256,
         U256,
     },
+    primitives::rwasm::WASM_MAGIC_BYTES,
     CallInputs,
     CallScheme,
     CallValue,
@@ -25,7 +26,7 @@ use crate::{
     InstructionResult,
     InterpreterAction,
     InterpreterResult,
-    MAX_INITCODE_SIZE,
+    MAX_INITCODE_SIZE, WASM_MAX_CODE_SIZE,
 };
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use core::cmp::max;
@@ -362,7 +363,6 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     let mut code = Bytes::new();
     if len != 0 {
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
-
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
             // The limit is set as double of max contract bytecode size
@@ -371,17 +371,16 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
-                .or_else(|| {
+                .unwrap_or_else(|| {
                     if len >= 4
                         && interpreter.shared_memory.try_slice(code_offset, 4)
                             == Some(&WASM_MAGIC_BYTES)
                     {
-                        Some(WASM_MAX_CODE_SIZE)
+                        WASM_MAX_CODE_SIZE
                     } else {
-                        None
+                        MAX_INITCODE_SIZE
                     }
-                })
-                .unwrap_or(MAX_INITCODE_SIZE);
+                });
             if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitCodeSizeLimit;
                 return;
