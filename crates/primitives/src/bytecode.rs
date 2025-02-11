@@ -208,7 +208,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
-            Self::Rwasm(bytecode) => bytecode,
+            Self::Rwasm(bytecode) => bytecode.as_ref(),
         }
     }
 
@@ -233,6 +233,8 @@ pub enum BytecodeDecodeError {
     Eof(EofDecodeError),
     /// EIP-7702 decode error
     Eip7702(Eip7702DecodeError),
+    /// Rwasm decode failure error
+    RwasmDecodeFailure,
 }
 
 impl From<EofDecodeError> for BytecodeDecodeError {
@@ -255,6 +257,7 @@ impl fmt::Display for BytecodeDecodeError {
         match self {
             Self::Eof(e) => fmt::Display::fmt(e, f),
             Self::Eip7702(e) => fmt::Display::fmt(e, f),
+            Self::RwasmDecodeFailure => write!(f, "failed to decode wasm module"),
         }
     }
 }

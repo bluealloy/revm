@@ -12,12 +12,12 @@ use revm_primitives::{
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(pairing));
 /// BLS12_PAIRING precompile address.
-pub const ADDRESS: u64 = 0x11;
+pub const ADDRESS: u64 = 0x0f;
 
 /// Multiplier gas fee for BLS12-381 pairing operation.
-const PAIRING_MULTIPLIER_BASE: u64 = 43000;
+const PAIRING_MULTIPLIER_BASE: u64 = 32600;
 /// Offset gas fee for BLS12-381 pairing operation.
-const PAIRING_OFFSET_BASE: u64 = 65000;
+const PAIRING_OFFSET_BASE: u64 = 37700;
 /// Input length of pairing operation.
 const INPUT_LENGTH: usize = 384;
 

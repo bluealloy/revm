@@ -14,10 +14,11 @@ use crate::{
     },
     Context, ContextPrecompiles, FrameResult,
 };
-use core::ops::Mul;
-use revm_precompile::{secp256r1, PrecompileSpecId};
-use std::string::ToString;
-use std::sync::Arc;
+use core::{cmp::Ordering, ops::Mul};
+use revm_precompile::PrecompileSpecId;
+use std::{boxed::Box, string::ToString, sync::Arc};
+
+use super::l1block::OPERATOR_FEE_RECIPIENT;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.cfg.spec_id, {
@@ -27,17 +28,17 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // Load additional precompiles for the given chain spec.
         handler.pre_execution.load_precompiles = Arc::new(load_precompiles::<SPEC, EXT, DB>);
-        // load l1 data
-        handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<SPEC, EXT, DB>);
         handler.post_execution.refund = Arc::new(refund::<SPEC, EXT, DB>);
+        handler.post_execution.reimburse_caller = Arc::new(reimburse_caller::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
         handler.post_execution.end = Arc::new(end::<SPEC, EXT, DB>);
+        handler.post_execution.clear = Arc::new(clear::<EXT, DB>);
     });
 }
 
@@ -67,10 +68,122 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
+    // No validation is needed for deposit transactions, as they are pre-verified on L1.
     if context.evm.inner.env.tx.optimism.source_hash.is_some() {
         return Ok(());
     }
-    mainnet::validate_tx_against_state::<SPEC, EXT, DB>(context)
+
+    // storage l1 block info for later use. l1_block_info is cleared after execution.
+    if context.evm.inner.l1_block_info.is_none() {
+        // the L1-cost fee is only computed for Optimism non-deposit transactions.
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
+        context.evm.inner.l1_block_info = Some(l1_block_info);
+    }
+
+    let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
+
+    // load acc
+    let tx_caller = tx.caller;
+    let account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_code(tx_caller, &mut context.evm.inner.db)?
+        .data;
+
+    // EIP-3607: Reject transactions from senders with deployed code
+    // This EIP is introduced after london but there was no collision in past
+    // so we can leave it enabled always
+    if !cfg.is_eip3607_disabled() {
+        let bytecode = &account.info.code.as_ref().unwrap();
+        // allow EOAs whose code is a valid delegation designation,
+        // i.e. 0xef0100 || address, to continue to originate transactions.
+        if !bytecode.is_empty() && !bytecode.is_eip7702() {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::RejectCallerWithCode,
+            ));
+        }
+    }
+
+    // Check that the transaction's nonce is correct
+    if let Some(tx) = tx.nonce {
+        let state = account.info.nonce;
+        match tx.cmp(&state) {
+            Ordering::Greater => {
+                return Err(EVMError::Transaction(InvalidTransaction::NonceTooHigh {
+                    tx,
+                    state,
+                }));
+            }
+            Ordering::Less => {
+                return Err(EVMError::Transaction(InvalidTransaction::NonceTooLow {
+                    tx,
+                    state,
+                }));
+            }
+            _ => {}
+        }
+    }
+
+    // get envelope
+    let Some(enveloped_tx) = &tx.optimism.enveloped_tx else {
+        return Err(EVMError::Custom(
+            "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+        ));
+    };
+
+    // compute L1 cost
+    let tx_l1_cost = context
+        .evm
+        .inner
+        .l1_block_info
+        .as_mut()
+        .expect("L1BlockInfo should be loaded")
+        .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
+
+    let gas_limit = U256::from(tx.gas_limit);
+    let operator_fee_charge = context
+        .evm
+        .inner
+        .l1_block_info
+        .as_ref()
+        .expect("L1BlockInfo should be loaded")
+        .operator_fee_charge(gas_limit, SPEC::SPEC_ID);
+
+    let mut balance_check = gas_limit
+        .checked_mul(tx.gas_price)
+        .and_then(|gas_cost| gas_cost.checked_add(tx.value))
+        .and_then(|total_cost| total_cost.checked_add(tx_l1_cost))
+        .and_then(|total_cost| total_cost.checked_add(operator_fee_charge))
+        .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+    if SPEC::enabled(SpecId::CANCUN) {
+        // if the tx is not a blob tx, this will be None, so we add zero
+        let data_fee = env.calc_max_data_fee().unwrap_or_default();
+        balance_check = balance_check
+            .checked_add(U256::from(data_fee))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+    }
+
+    // Check if account has enough balance for gas_limit*gas_price and value transfer.
+    // Transfer will be done inside `*_inner` functions.
+    if balance_check > account.info.balance {
+        if cfg.is_balance_check_disabled() {
+            // Add transaction cost to balance to ensure execution doesn't fail.
+            account.info.balance = balance_check;
+        } else {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: Box::new(balance_check),
+                    balance: Box::new(account.info.balance),
+                },
+            ));
+        }
+    }
+
+    Ok(())
 }
 
 /// Handle output of the transaction
@@ -160,45 +273,50 @@ pub fn refund<SPEC: Spec, EXT, DB: Database>(
     }
 }
 
+/// Reimburse the transaction caller.
+#[inline]
+pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &Gas,
+) -> Result<(), EVMError<DB::Error>> {
+    mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)?;
+
+    if context.evm.inner.env.tx.optimism.source_hash.is_none() {
+        let caller_account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+        let operator_fee_refund = context
+            .evm
+            .inner
+            .l1_block_info
+            .as_ref()
+            .expect("L1BlockInfo should be loaded")
+            .operator_fee_refund(gas, SPEC::SPEC_ID);
+
+        // In additional to the normal transaction fee, additionally refund the caller
+        // for the operator fee.
+        caller_account.data.info.balance = caller_account
+            .data
+            .info
+            .balance
+            .saturating_add(operator_fee_refund);
+    }
+
+    Ok(())
+}
+
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
-    let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
-
-    if SPEC::enabled(SpecId::FJORD) {
-        precompiles.extend([
-            // EIP-7212: secp256r1 P256verify
-            secp256r1::P256VERIFY,
-        ])
-    }
-
     if SPEC::enabled(SpecId::GRANITE) {
-        precompiles.extend([
-            // Restrict bn256Pairing input size
-            optimism::bn128::pair::GRANITE,
-        ])
+        ContextPrecompiles::from_static_precompiles(optimism::precompile::granite())
+    } else if SPEC::enabled(SpecId::FJORD) {
+        ContextPrecompiles::from_static_precompiles(optimism::precompile::fjord())
+    } else {
+        ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
     }
-
-    precompiles
-}
-
-/// Load account (make them warm) and l1 data from database.
-#[inline]
-pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
-    // the L1-cost fee is only computed for Optimism non-deposit transactions.
-
-    if context.evm.inner.env.tx.optimism.source_hash.is_none() {
-        let l1_block_info =
-            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
-                .map_err(EVMError::Database)?;
-
-        // storage l1 block info for later use.
-        context.evm.inner.l1_block_info = Some(l1_block_info);
-    }
-
-    mainnet::load_accounts::<SPEC, EXT, DB>(context)
 }
 
 /// Deduct max balance from caller
@@ -226,6 +344,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
+    // Additionally deduct the operator fee from the caller's account.
     if context.evm.inner.env.tx.optimism.source_hash.is_none() {
         // get envelope
         let Some(enveloped_tx) = &context.evm.inner.env.tx.optimism.enveloped_tx else {
@@ -238,18 +357,26 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             .evm
             .inner
             .l1_block_info
-            .as_ref()
+            .as_mut()
             .expect("L1BlockInfo should be loaded")
             .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
-        if tx_l1_cost.gt(&caller_account.info.balance) {
-            return Err(EVMError::Transaction(
-                InvalidTransaction::LackOfFundForMaxFee {
-                    fee: tx_l1_cost.into(),
-                    balance: caller_account.info.balance.into(),
-                },
-            ));
-        }
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+        // Deduct the operator fee from the caller's account.
+        let gas_limit = U256::from(context.evm.inner.env.tx.gas_limit);
+
+        let operator_fee_charge = context
+            .evm
+            .inner
+            .l1_block_info
+            .as_ref()
+            .expect("L1BlockInfo should be loaded")
+            .operator_fee_charge(gas_limit, SPEC::SPEC_ID);
+
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(operator_fee_charge);
     }
     Ok(())
 }
@@ -270,7 +397,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = &context.evm.inner.l1_block_info else {
+        let Some(l1_block_info) = &mut context.evm.inner.l1_block_info else {
             return Err(EVMError::Custom(
                 "[OPTIMISM] Failed to load L1 block information.".to_string(),
             ));
@@ -283,6 +410,10 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
+        let operator_fee_cost = l1_block_info.operator_fee_charge(
+            U256::from(gas.spent() - gas.refunded() as u64),
+            SPEC::SPEC_ID,
+        );
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let mut l1_fee_vault_account = context
@@ -307,6 +438,16 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .block
             .basefee
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
+
+        // Send the operator fee of the transaction to the coinbase.
+        let mut operator_fee_vault_account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(OPERATOR_FEE_RECIPIENT, &mut context.evm.inner.db)?;
+
+        operator_fee_vault_account.mark_touch();
+        operator_fee_vault_account.data.info.balance += operator_fee_cost;
     }
     Ok(())
 }
@@ -401,6 +542,14 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
     })
 }
 
+/// Clears cache OP l1 value.
+#[inline]
+pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+    // clear error and journaled state.
+    mainnet::clear(context);
+    context.evm.inner.l1_block_info = None;
+}
+
 #[cfg(test)]
 mod tests {
     use revm_interpreter::{CallOutcome, InterpreterResult};
@@ -409,8 +558,8 @@ mod tests {
     use crate::{
         db::{EmptyDB, InMemoryDB},
         primitives::{
-            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, LatestSpec, RegolithSpec,
-            B256,
+            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, IsthmusSpec, LatestSpec,
+            RegolithSpec, B256,
         },
         L1BlockInfo,
     };
@@ -601,6 +750,40 @@ mod tests {
     }
 
     #[test]
+    fn test_remove_operator_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(151),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            operator_fee_scalar: Some(U256::from(10_000_000)),
+            operator_fee_constant: Some(U256::from(50)),
+            ..Default::default()
+        });
+        context.evm.inner.env.tx.gas_limit = 10;
+
+        // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
+        // 10_000_000 * 10 / 1_000_000 + 50 = 150
+        context.evm.inner.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+        deduct_caller::<IsthmusSpec, (), _>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(caller, &mut context.evm.inner.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
+
+    #[test]
     fn test_remove_l1_cost_lack_of_funds() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
@@ -622,7 +805,7 @@ mod tests {
         context.evm.inner.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
 
         assert_eq!(
-            deduct_caller::<RegolithSpec, (), _>(&mut context),
+            validate_tx_against_state::<RegolithSpec, (), _>(&mut context),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),

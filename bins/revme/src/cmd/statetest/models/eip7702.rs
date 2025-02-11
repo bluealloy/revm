@@ -1,5 +1,5 @@
 use alloy_rlp::{Decodable, Error as RlpError, Header};
-use revm::primitives::{AccessList, Bytes, Signature, SignedAuthorization, TxKind, U256};
+use revm::primitives::{AccessList, Bytes, PrimitiveSignature, SignedAuthorization, TxKind, U256};
 use std::vec::Vec;
 
 /// TODO remove it when new tests are generated that has a Authorization json field.
@@ -67,7 +67,7 @@ pub struct TxEip7702 {
     /// Input as data, or if `to` is [`TxKind::Call`]: An unlimited size byte array specifying the
     /// input data of the message call, formally Td.
     pub input: Bytes,
-    pub signature: Signature,
+    pub signature: PrimitiveSignature,
 }
 
 impl TxEip7702 {
@@ -97,7 +97,7 @@ impl TxEip7702 {
             input: Decodable::decode(buf)?,
             access_list: Decodable::decode(buf)?,
             authorization_list: Decodable::decode(buf)?,
-            signature: Signature::decode_rlp_vrs(buf)?,
+            signature: PrimitiveSignature::decode_rlp_vrs(buf, bool::decode)?,
         })
     }
 

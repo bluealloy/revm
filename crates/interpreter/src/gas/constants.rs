@@ -33,9 +33,19 @@ pub const SSTORE_SET: u64 = 20000;
 pub const SSTORE_RESET: u64 = 5000;
 pub const REFUND_SSTORE_CLEARS: i64 = 15000;
 
-pub const TRANSACTION_ZERO_DATA: u64 = 4;
-pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;
-pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
+/// The standard cost of calldata token.
+pub const STANDARD_TOKEN_COST: u64 = 4;
+/// The cost of a non-zero byte in calldata.
+pub const NON_ZERO_BYTE_DATA_COST: u64 = 68;
+/// The multiplier for a non zero byte in calldata.
+pub const NON_ZERO_BYTE_MULTIPLIER: u64 = NON_ZERO_BYTE_DATA_COST / STANDARD_TOKEN_COST;
+/// The cost of a non-zero byte in calldata adjusted by [EIP-2028](https://eips.ethereum.org/EIPS/eip-2028).
+pub const NON_ZERO_BYTE_DATA_COST_ISTANBUL: u64 = 16;
+/// The multiplier for a non zero byte in calldata adjusted by [EIP-2028](https://eips.ethereum.org/EIPS/eip-2028).
+pub const NON_ZERO_BYTE_MULTIPLIER_ISTANBUL: u64 =
+    NON_ZERO_BYTE_DATA_COST_ISTANBUL / STANDARD_TOKEN_COST;
+// The cost floor per token as defined by [EIP-2028](https://eips.ethereum.org/EIPS/eip-2028).
+pub const TOTAL_COST_FLOOR_PER_TOKEN: u64 = 10;
 
 pub const EOF_CREATE_GAS: u64 = 32000;
 
@@ -52,3 +62,5 @@ pub const INITCODE_WORD_COST: u64 = 2;
 
 pub const CALL_STIPEND: u64 = 2300;
 pub const MIN_CALLEE_GAS: u64 = CALL_STIPEND;
+
+pub const FUEL_DENOM_RATE: u64 = 1000;

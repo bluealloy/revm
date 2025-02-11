@@ -6,6 +6,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.0.0...revm-interpreter-v15.1.0) - 2025-01-13
+
+### Added
+
+- *(EIP-7623)* adjuct floor gas check order ([#1990](https://github.com/bluealloy/revm/pull/1990))
+
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v14.0.0...revm-interpreter-v15.0.0) - 2024-12-26
+
+### Added
+
+- apply latest EIP-7702 changes ([#1850](https://github.com/bluealloy/revm/pull/1850))
+- *(Prague)* EIP-7623 Increase Calldata Cost ([#1744](https://github.com/bluealloy/revm/pull/1744))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v13.0.0...revm-interpreter-v14.0.0) - 2024-11-06
+
+### Other
+
+- bump alloy-eip7702 and remove `Parity` re-export ([#1842](https://github.com/bluealloy/revm/pull/1842))
+
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v12.0.0...revm-interpreter-v13.0.0) - 2024-10-23
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v11.0.0...revm-interpreter-v12.0.0) - 2024-10-17
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v10.0.3...revm-interpreter-v11.0.0) - 2024-10-17
+
+### Other
+
+- updated the following local packages: revm-primitives
+
 ## [10.0.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v10.0.2...revm-interpreter-v10.0.3) - 2024-09-26
 
 ### Other

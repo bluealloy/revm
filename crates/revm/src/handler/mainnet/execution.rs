@@ -2,15 +2,35 @@ use crate::{
     db::Database,
     frame::EOFCreateFrame,
     interpreter::{
-        return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
+        return_ok,
+        return_revert,
+        CallInputs,
+        CreateInputs,
+        CreateOutcome,
+        Gas,
+        InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    primitives::{Bytecode, EVMError, Spec},
+    rwasm::{
+        executor::{execute_rwasm_frame, execute_rwasm_resume},
+        syscall::execute_rwasm_interruption,
+    },
+    CallFrame,
+    Context,
+    CreateFrame,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use core::mem;
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInputs, InterpreterAction, InterpreterResult,
+    interpreter_action::SystemInterruptionInputs,
+    opcode::InstructionTables,
+    CallOutcome,
+    EOFCreateInputs,
+    InterpreterAction,
+    InterpreterResult,
     EMPTY_SHARED_MEMORY,
 };
 use std::boxed::Box;
@@ -23,8 +43,24 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
+    if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
+        return Ok(execute_rwasm_resume(interrupted_outcome));
+    }
+
+    let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
+
+    if let Bytecode::Rwasm(rwasm_bytecode) = &interpreter.contract.bytecode {
+        return execute_rwasm_frame::<SPEC, EXT, DB>(
+            interpreter,
+            rwasm_bytecode.clone(),
+            context,
+            is_create,
+        );
+    }
+
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
+
     let next_action = match instruction_tables {
         InstructionTables::Plain(table) => interpreter.run(memory, table, context),
         InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
@@ -69,6 +105,15 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_call_frame(&inputs)
+}
+
+/// Handle frame sub call.
+#[inline]
+pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    inputs: &mut Box<SystemInterruptionInputs>,
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs)
 }
 
 #[inline]
@@ -184,8 +229,10 @@ pub fn insert_eofcreate_outcome<EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::handler::mainnet::refund;
-    use crate::primitives::{CancunSpec, Env};
+    use crate::{
+        handler::mainnet::refund,
+        primitives::{CancunSpec, Env},
+    };
     use revm_precompile::Bytes;
 
     /// Creates frame result.

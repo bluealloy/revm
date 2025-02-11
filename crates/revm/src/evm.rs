@@ -3,15 +3,35 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
+        CallInputs,
+        CreateInputs,
+        EOFCreateInputs,
+        Host,
+        InterpreterAction,
+        SharedMemory,
     },
     primitives::{
-        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
+        specification::SpecId,
+        BlockEnv,
+        CfgEnv,
+        EVMError,
+        EVMResult,
+        EnvWithHandlerCfg,
+        ExecutionResult,
+        HandlerCfg,
+        ResultAndState,
+        TxEnv,
+        TxKind,
+        EOF_MAGIC_BYTES,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context,
+    ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use core::fmt;
+use revm_interpreter::{gas::InitialAndFloorGas, interpreter_action::SystemInterruptionOutcome};
 use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
@@ -22,8 +42,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
-    /// and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains
+    /// specification id and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -102,6 +122,21 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
+                InterpreterAction::InterruptedCall { mut inputs } => {
+                    // execute system interruption,
+                    // in inputs we store updated info about the call,
+                    // for example, new gas info
+                    let gas_remaining = inputs.gas.remaining();
+                    let frame_or_result =
+                        exec.system_interruption(&mut self.context, &mut inputs)?;
+                    let is_frame = frame_or_result.is_frame();
+                    stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome::new(
+                        inputs,
+                        gas_remaining,
+                        is_frame,
+                    ));
+                    frame_or_result
+                }
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
                 InterpreterAction::EOFCreate { inputs } => {
                     exec.eofcreate(&mut self.context, inputs)?
@@ -110,7 +145,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     // free memory context.
                     shared_memory.free_context();
 
-                    // pop last frame from the stack and consume it to create FrameResult.
+                    // pop the last frame from the stack and consume it to create FrameResult.
                     let returned_frame = call_stack
                         .pop()
                         .expect("We just returned from Interpreter frame");
@@ -146,6 +181,13 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                         return Ok(result);
                     };
                     stack_frame = top_frame;
+                    // if call is interrupted then we need to remember the interrupted state;
+                    // the execution can be continued
+                    // since the state is updated already
+                    if stack_frame.is_interrupted_call() {
+                        stack_frame.insert_interrupted_result(result.into_interpreter_result());
+                        continue;
+                    }
                     let ctx = &mut self.context;
                     // Insert result to the top frame.
                     match result {
@@ -195,12 +237,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will not validate the transaction.
     #[inline]
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self
+        let init_and_floor_gas = self
             .handler
             .validation()
             .initial_tx_gas(&self.context.evm.env)
             .inspect_err(|_e| self.clear())?;
-        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.transact_preverified_inner(init_and_floor_gas);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
@@ -208,7 +250,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
+    fn preverify_transaction_inner(&mut self) -> Result<InitialAndFloorGas, EVMError<DB::Error>> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
@@ -225,11 +267,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self
+        let init_and_floor_gas = self
             .preverify_transaction_inner()
             .inspect_err(|_e| self.clear())?;
 
-        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.transact_preverified_inner(init_and_floor_gas);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
@@ -319,7 +361,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+    fn transact_preverified_inner(&mut self, gas: InitialAndFloorGas) -> EVMResult<DB::Error> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -334,7 +376,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
+        let gas_limit = ctx.evm.env.tx.gas_limit - gas.initial_gas;
 
         // apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
@@ -348,7 +390,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             )?,
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
+                if spec_id.is_enabled_in(SpecId::OSAKA)
                     && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
                 {
                     exec.eofcreate(
@@ -379,8 +421,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .last_frame_return(ctx, &mut result)?;
 
         let post_exec = self.handler.post_execution();
+
         // calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
+
+        // EIP-7623: Increase calldata cost
+        // spend at least a gas_floor amount of gas.
+        if result.gas().spent_sub_refunded() < gas.floor_gas {
+            result.gas_mut().set_spent(gas.floor_gas);
+            // clear refund
+            result.gas_mut().set_refund(0);
+        }
+
         // Reimburse the caller
         post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary
@@ -397,20 +449,27 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
+        primitives::{
+            address,
+            Authorization,
+            Bytecode,
+            RecoveredAuthority,
+            RecoveredAuthorization,
+            U256,
+        },
     };
 
     #[test]
     fn sanity_eip7702_tx() {
-        let delegate = address!("0000000000000000000000000000000000000000");
         let caller = address!("0000000000000000000000000000000000000001");
+        let delegate = address!("0000000000000000000000000000000000000002");
         let auth = address!("0000000000000000000000000000000000000100");
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let mut evm = Evm::builder()
             .with_spec_id(SpecId::PRAGUE)
-            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .with_db(BenchmarkDB::new_bytecode(bytecode).with_target(delegate))
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(
@@ -418,9 +477,8 @@ mod tests {
                             chain_id: U256::from(1),
                             address: delegate,
                             nonce: 0,
-                        }
-                        .into_signed(Signature::test_signature()),
-                        Some(auth),
+                        },
+                        RecoveredAuthority::Valid(auth),
                     )]
                     .into(),
                 );

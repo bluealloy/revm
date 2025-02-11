@@ -66,6 +66,12 @@ impl Gas {
         self.limit - self.remaining
     }
 
+    /// Returns the total amount of gas spent, minus the refunded gas.
+    #[inline]
+    pub const fn spent_sub_refunded(&self) -> u64 {
+        self.spent().saturating_sub(self.refunded as u64)
+    }
+
     /// Returns the amount of gas remaining.
     #[inline]
     pub const fn remaining(&self) -> u64 {
@@ -115,39 +121,28 @@ impl Gas {
         self.refunded = refund;
     }
 
+    /// Set a spent value. This overrides the current spent value.
+    #[inline]
+    pub fn set_spent(&mut self, spent: u64) {
+        self.remaining = self.limit.saturating_sub(spent);
+    }
+
     /// Records an explicit cost.
     ///
     /// Returns `false` if the gas limit is exceeded.
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        // #[cfg(target_arch = "wasm32")]
-        // unsafe {
-        //     #[link(wasm_import_module = "fluentbase_v1preview")]
-        //     extern "C" {
-        //         pub fn _charge_fuel(delta: u64) -> u64;
-        //     }
-        //     _charge_fuel(cost);
-        // }
-        let (remaining, overflow) = self.remaining.overflowing_sub(cost);
-        // #[cfg(feature = "std")]
-        // {
-        //     if !overflow {
-        //         println!(
-        //             "gas_record_cost(ok): remaining={} delta={}",
-        //             remaining, cost
-        //         );
-        //     } else {
-        //         println!(
-        //             "gas_record_cost(err): remaining={} delta={}",
-        //             remaining, cost
-        //         );
-        //     }
-        // }
+        let (remaining, overflow) = self.remaining().overflowing_sub(cost);
         let success = !overflow;
         if success {
             self.remaining = remaining;
         }
         success
+    }
+
+    #[inline]
+    pub fn record_denominated_cost(&mut self, fuel_cost: u64) -> bool {
+        self.record_cost((fuel_cost + FUEL_DENOM_RATE - 1) / FUEL_DENOM_RATE)
     }
 }

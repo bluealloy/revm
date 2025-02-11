@@ -29,7 +29,9 @@ use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_sdk::runtime::TestingContext;
 
 pub mod context_reader;
+pub mod executor;
 pub mod sdk_adapter;
+pub mod syscall;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hard fork specification).
@@ -123,7 +125,7 @@ impl<EXT, DB: Database> Rwasm<'_, EXT, DB> {
                 self.clear();
                 e
             })?;
-        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.transact_preverified_inner(initial_gas_spend.initial_gas);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
@@ -140,7 +142,7 @@ impl<EXT, DB: Database> Rwasm<'_, EXT, DB> {
         self.handler
             .validation()
             .tx_against_state(&mut self.context)?;
-        Ok(initial_gas_spend)
+        Ok(initial_gas_spend.initial_gas)
     }
 
     /// Transact transaction

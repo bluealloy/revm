@@ -4,7 +4,14 @@ use crate::{
     JournalCheckpoint,
 };
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use revm_interpreter::{
+    interpreter_action::SystemInterruptionOutcome,
+    CallOutcome,
+    CreateOutcome,
+    Gas,
+    InstructionResult,
+    InterpreterResult,
+};
 use std::boxed::Box;
 
 /// Call CallStackFrame.
@@ -41,6 +48,8 @@ pub struct FrameData {
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
     pub interpreter: Interpreter,
+    /// Info about interrupted call
+    pub interrupted_outcome: Option<SystemInterruptionOutcome>,
 }
 
 /// Call stack frame.
@@ -153,6 +162,7 @@ impl Frame {
             frame_data: FrameData {
                 checkpoint,
                 interpreter,
+                interrupted_outcome: None,
             },
         }))
     }
@@ -167,6 +177,7 @@ impl Frame {
             frame_data: FrameData {
                 checkpoint,
                 interpreter,
+                interrupted_outcome: None,
             },
         }))
     }
@@ -216,6 +227,30 @@ impl Frame {
         }
     }
 
+    pub fn insert_interrupted_outcome(&mut self, interrupted_outcome: SystemInterruptionOutcome) {
+        self.frame_data_mut().interrupted_outcome = Some(interrupted_outcome);
+    }
+
+    pub fn insert_interrupted_result(&mut self, result: InterpreterResult) {
+        self.frame_data_mut()
+            .interrupted_outcome
+            .as_mut()
+            .unwrap()
+            .insert_result(result);
+    }
+
+    pub fn interrupted_outcome_mut(&mut self) -> &mut SystemInterruptionOutcome {
+        self.frame_data_mut().interrupted_outcome.as_mut().unwrap()
+    }
+
+    pub fn is_interrupted_call(&self) -> bool {
+        self.frame_data().interrupted_outcome.is_some()
+    }
+
+    pub fn take_interrupted_outcome(&mut self) -> Option<SystemInterruptionOutcome> {
+        self.frame_data_mut().interrupted_outcome.take()
+    }
+
     /// Returns a reference to the interpreter.
     pub fn interpreter(&self) -> &Interpreter {
         &self.frame_data().interpreter
@@ -247,6 +282,7 @@ impl FrameOrResult {
             frame_data: FrameData {
                 checkpoint,
                 interpreter,
+                interrupted_outcome: None,
             },
         })))
     }
@@ -293,5 +329,12 @@ impl FrameOrResult {
             result: interpreter_result,
             memory_offset,
         }))
+    }
+
+    pub fn is_frame(&self) -> bool {
+        match self {
+            FrameOrResult::Frame(_) => true,
+            FrameOrResult::Result(_) => false,
+        }
     }
 }

@@ -146,6 +146,12 @@ impl SharedMemory {
         self.slice_range(offset..offset + size)
     }
 
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn try_slice(&self, offset: usize, size: usize) -> Option<&[u8]> {
+        self.context_memory().get(offset..offset.checked_add(size)?)
+    }
+
     /// Returns a byte slice of the memory region at the given offset.
     ///
     /// # Panics

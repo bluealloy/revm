@@ -1,10 +1,10 @@
 use crate::primitives::{Address, Env, B256, U256};
 use fluentbase_sdk::{
-    BlockContext,
     BlockContextReader,
+    BlockContextV1,
     SovereignContextReader,
-    TxContext,
     TxContextReader,
+    TxContextV1,
 };
 
 pub struct EnvContextReader(pub Box<Env>);
@@ -70,8 +70,8 @@ impl TxContextReader for EnvContextReader {
 }
 
 impl SovereignContextReader for EnvContextReader {
-    fn clone_block_context(&self) -> BlockContext {
-        BlockContext {
+    fn clone_block_context(&self) -> BlockContextV1 {
+        BlockContextV1 {
             chain_id: self.block_chain_id(),
             coinbase: self.block_coinbase(),
             timestamp: self.block_timestamp(),
@@ -83,8 +83,8 @@ impl SovereignContextReader for EnvContextReader {
         }
     }
 
-    fn clone_tx_context(&self) -> TxContext {
-        TxContext {
+    fn clone_tx_context(&self) -> TxContextV1 {
+        TxContextV1 {
             gas_limit: self.tx_gas_limit(),
             nonce: self.tx_nonce(),
             gas_price: self.tx_gas_price(),

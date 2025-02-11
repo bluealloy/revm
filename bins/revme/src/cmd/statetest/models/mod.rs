@@ -45,6 +45,12 @@ pub struct Test {
     /// Logs root
     pub logs: B256,
 
+    /// Output state.
+    ///
+    /// Note: Not used.
+    #[serde(default)]
+    state: HashMap<Address, AccountInfo>,
+
     /// Tx bytes
     pub txbytes: Option<Bytes>,
 }
@@ -106,6 +112,7 @@ pub struct Env {
     pub parent_blob_gas_used: Option<U256>,
     pub parent_excess_blob_gas: Option<U256>,
     pub current_excess_blob_gas: Option<U256>,
+    pub parent_target_blobs_per_block: Option<U256>,
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

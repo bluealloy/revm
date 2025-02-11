@@ -4,7 +4,7 @@ use crate::{
 };
 use std::vec::Vec;
 
-use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
+use super::{AccountLoad, StateLoad};
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -60,13 +60,13 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn code(&mut self, _address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+    fn code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
         Some(Default::default())
     }
 
     #[inline]
-    fn code_hash(&mut self, _address: Address) -> Option<Eip7702CodeLoad<B256>> {
-        Some(Eip7702CodeLoad::new_not_delegated(KECCAK_EMPTY, false))
+    fn code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+        Some(StateLoad::new(KECCAK_EMPTY, false))
     }
 
     #[inline]

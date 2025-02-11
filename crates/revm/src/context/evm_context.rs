@@ -3,7 +3,6 @@ use crate::{
     db::Database,
     interpreter::{
         analysis::validate_eof,
-        return_ok,
         CallInputs,
         Contract,
         CreateInputs,
@@ -16,6 +15,7 @@ use crate::{
     },
     primitives::{
         keccak256,
+        rwasm::WASM_MAGIC_BYTES,
         Address,
         Bytecode,
         Bytes,
@@ -36,6 +36,7 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
+use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -236,57 +237,74 @@ impl<DB: Database> EvmContext<DB> {
             _ => {}
         };
 
-        if let Some(result) = self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
-            if matches!(result.result, return_ok!()) {
-                self.journaled_state.checkpoint_commit();
-            } else {
-                self.journaled_state.checkpoint_revert(checkpoint);
+        let is_ext_delegate = inputs.scheme.is_ext_delegate_call();
+
+        if !is_ext_delegate {
+            if let Some(result) =
+                self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)?
+            {
+                if result.result.is_ok() {
+                    self.journaled_state.checkpoint_commit();
+                } else {
+                    self.journaled_state.checkpoint_revert(checkpoint);
+                }
+                return Ok(FrameOrResult::new_call_result(
+                    result,
+                    inputs.return_memory_offset.clone(),
+                ));
             }
-            Ok(FrameOrResult::new_call_result(
-                result,
-                inputs.return_memory_offset.clone(),
-            ))
-        } else {
+        }
+        // load account and bytecode
+        let account = self
+            .inner
+            .journaled_state
+            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+
+        let code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
+
+        // ExtDelegateCall is not allowed to call non-EOF contracts.
+        if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+        }
+
+        if bytecode.is_empty() {
+            self.journaled_state.checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            bytecode = self
+                .inner
+                .journaled_state
+                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                .info
+                .code
+                .clone()
+                .unwrap_or_default();
+        }
+
+        let mut contract =
+            Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+
+        if let Some(precompiled_address) = try_resolve_precompile_account(inputs.input.as_ref()) {
             let account = self
                 .inner
                 .journaled_state
-                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
-
-            let code_hash = account.info.code_hash();
-            let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-            // ExtDelegateCall is not allowed to call non-EOF contracts.
-            if inputs.scheme.is_ext_delegate_call()
-                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
-            {
-                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-            }
-
-            if bytecode.is_empty() {
-                self.journaled_state.checkpoint_commit();
-                return return_result(InstructionResult::Stop);
-            }
-
-            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                bytecode = self
-                    .inner
-                    .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
-                    .info
-                    .code
-                    .clone()
-                    .unwrap_or_default();
-            }
-
-            let contract =
-                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-            // Create interpreter and executes call and push new CallStackFrame.
-            Ok(FrameOrResult::new_call_frame(
-                inputs.return_memory_offset.clone(),
-                checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static),
-            ))
+                .load_code(precompiled_address, &mut self.inner.db)?;
+            // rewrite bytecode address and code hash, since rWasm rely on it
+            contract.bytecode_address = Some(precompiled_address);
+            contract.hash = Some(account.info.code_hash);
+            // rewrite bytecode
+            contract.bytecode = account.info.code.clone().unwrap_or_default();
         }
+
+        // Create interpreter and executes call and push new CallStackFrame.
+        Ok(FrameOrResult::new_call_frame(
+            inputs.return_memory_offset.clone(),
+            checkpoint,
+            Interpreter::new(contract, gas.limit(), inputs.is_static),
+        ))
     }
 
     /// Make create frame.
@@ -313,7 +331,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
+        if spec_id.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
@@ -364,10 +382,26 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        let (bytecode, constructor_params) = if inputs.init_code.len() > WASM_MAGIC_BYTES.len()
+            && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
+        {
+            let Some(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
+                return return_error(InstructionResult::Revert);
+            };
+            // for rwasm, we set bytecode before execution
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            self.journaled_state
+                .set_code(created_address, bytecode.clone());
+            (bytecode, compilation_result.constructor_params)
+        } else {
+            (
+                Bytecode::new_raw(inputs.init_code.clone()),
+                Bytes::default(),
+            )
+        };
 
         let contract = Contract::new(
-            Bytes::new(),
+            constructor_params,
             bytecode,
             Some(init_code_hash),
             created_address,

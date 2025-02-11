@@ -3,15 +3,16 @@ mod call_outcome;
 mod create_inputs;
 mod create_outcome;
 mod eof_create_inputs;
+mod system_interruption_inputs;
 
+use crate::InterpreterResult;
 pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
-
-use crate::InterpreterResult;
 use std::boxed::Box;
+pub use system_interruption_inputs::{SystemInterruptionInputs, SystemInterruptionOutcome};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -25,6 +26,12 @@ pub enum InterpreterAction {
     EOFCreate { inputs: Box<EOFCreateInputs> },
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
+    /// A system interruption indicating system resource access.
+    InterruptedCall {
+        inputs: Box<SystemInterruptionInputs>,
+    },
+    /// Resume Rwasm call after system interruption.
+    // ResumeRwasm { result: SystemInterruptionResult },
     /// No action
     #[default]
     None,

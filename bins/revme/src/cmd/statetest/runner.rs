@@ -123,15 +123,6 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-
-        // evmone statetest
-        | "initcode_transaction_before_prague.json"
-        | "invalid_tx_non_existing_sender.json"
-        | "tx_non_existing_sender.json"
-        | "block_apply_withdrawal.json"
-        | "block_apply_ommers_reward.json"
-        | "known_block_hash.json"
-        | "eip7516_blob_base_fee.json"
     )
 }
 
@@ -291,20 +282,6 @@ pub fn execute_test_suite(
         env.block.difficulty = unit.env.current_difficulty;
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
-        // EIP-4844
-        if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-            env.block
-                .set_blob_excess_gas_and_price(current_excess_blob_gas.to());
-        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
-            unit.env.parent_blob_gas_used,
-            unit.env.parent_excess_blob_gas,
-        ) {
-            env.block
-                .set_blob_excess_gas_and_price(calc_excess_blob_gas(
-                    parent_blob_gas_used.to(),
-                    parent_excess_blob_gas.to(),
-                ));
-        }
 
         // tx env
         env.tx.caller = if let Some(address) = unit.transaction.sender {
@@ -330,16 +307,35 @@ pub fn execute_test_suite(
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
             // so we don't support it and skip right to Petersburg.
-            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
+            if spec_name == SpecName::Constantinople {
                 continue;
             }
 
             // Enable EOF in Prague tests.
-            let spec_id = if spec_name == SpecName::Prague {
-                SpecId::PRAGUE_EOF
-            } else {
-                spec_name.to_spec_id()
-            };
+            let spec_id = spec_name.to_spec_id();
+
+            // EIP-4844
+            if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
+                env.block.set_blob_excess_gas_and_price(
+                    current_excess_blob_gas.to(),
+                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                );
+            } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+                unit.env.parent_blob_gas_used,
+                unit.env.parent_excess_blob_gas,
+            ) {
+                env.block.set_blob_excess_gas_and_price(
+                    calc_excess_blob_gas(
+                        parent_blob_gas_used.to(),
+                        parent_excess_blob_gas.to(),
+                        unit.env
+                            .parent_target_blobs_per_block
+                            .map(|i| i.to())
+                            .unwrap_or(3),
+                    ),
+                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                );
+            }
 
             if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
                 // if spec is merge and prevrandao is not set, set it to default

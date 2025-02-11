@@ -6,6 +6,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v15.0.0...revm-precompile-v16.0.0) - 2024-12-26
+
+### Added
+
+- blst reprice, remove g1/g2 mul, eest test bump ([#1951](https://github.com/bluealloy/revm/pull/1951))
+- add Isthmus spec ([#1948](https://github.com/bluealloy/revm/pull/1948))
+
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v14.0.0...revm-precompile-v15.0.0) - 2024-11-06
+
+### Other
+
+- bump alloy-eip7702 and remove `Parity` re-export ([#1842](https://github.com/bluealloy/revm/pull/1842))
+- *(precompile)* use secp256k1 global context for ecrecover  ([#1845](https://github.com/bluealloy/revm/pull/1845))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v13.0.0...revm-precompile-v14.0.0) - 2024-10-23
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v12.0.0...revm-precompile-v13.0.0) - 2024-10-17
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.3...revm-precompile-v12.0.0) - 2024-10-17
+
+### Added
+
+- Rename PRAGUE_EOF to OSAKA ([#1822](https://github.com/bluealloy/revm/pull/1822))
+
 ## [11.0.3](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.2...revm-precompile-v11.0.3) - 2024-09-26
 
 ### Other
