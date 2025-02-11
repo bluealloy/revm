@@ -38,7 +38,7 @@ pub(crate) fn granite() -> &'static Precompiles {
 pub(crate) fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = Precompiles::cancun().clone();
+        let precompiles = granite().clone();
 
         // Don't include BLS12-381 precompiles in no_std builds.
         #[cfg(feature = "blst")]

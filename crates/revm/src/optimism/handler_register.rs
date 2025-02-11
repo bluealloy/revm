@@ -355,25 +355,21 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             ));
         };
 
-        let tx_l1_cost = context
+        let l1_block = context
             .evm
             .inner
             .l1_block_info
             .as_mut()
-            .expect("L1BlockInfo should be loaded")
-            .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
+            .expect("L1BlockInfo should be loaded");
+
+        let tx_l1_cost = l1_block.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
 
         // Deduct the operator fee from the caller's account.
         let gas_limit = U256::from(context.evm.inner.env.tx.gas_limit);
 
-        let operator_fee_charge = context
-            .evm
-            .inner
-            .l1_block_info
-            .as_ref()
-            .expect("L1BlockInfo should be loaded")
-            .operator_fee_charge(enveloped_tx, gas_limit, SPEC::SPEC_ID);
+        let operator_fee_charge =
+            l1_block.operator_fee_charge(enveloped_tx, gas_limit, SPEC::SPEC_ID);
 
         caller_account.info.balance = caller_account
             .info
