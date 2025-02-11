@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.1.0...revm-interpreter-v15.2.0) - 2025-02-11
+
+### Other
+
+- revm v19.4.0 tag v54
+
 ## [15.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.0.0...revm-interpreter-v15.1.0) - 2025-01-13
 
 ### Added
