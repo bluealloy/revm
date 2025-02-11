@@ -9,7 +9,7 @@ use specification::hardfork::SpecId;
 use std::boxed::Box;
 
 #[auto_impl(&mut, Box)]
-pub trait PrecompileProvider: Clone {
+pub trait PrecompileProvider {
     type Context: ContextTrait;
     type Output;
 
