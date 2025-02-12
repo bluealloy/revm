@@ -1,7 +1,7 @@
 use revm::specification::hardfork::SpecId;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Hash)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OpSpec {
     Eth(SpecId),
@@ -9,7 +9,7 @@ pub enum OpSpec {
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Hash)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum OpSpecId {
