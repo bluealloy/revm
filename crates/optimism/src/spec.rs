@@ -28,7 +28,7 @@ impl OpSpecId {
     }
 
     pub const fn is_enabled_in(self, other: OpSpecId) -> bool {
-        self as u8 <= other as u8
+        other as u8 <= self as u8
     }
 }
 
