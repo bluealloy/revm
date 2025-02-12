@@ -192,16 +192,8 @@ where
             if spec.is_enabled_in(OpSpecId::ISTHMUS) {
                 operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
             }
-
+            
             let mut caller_account = ctx.journal().load_account(caller)?;
-
-            // if tx_l1_cost > caller_account.info.balance {
-            //     return Err(InvalidTransaction::LackOfFundForMaxFee {
-            //         fee: tx_l1_cost.into(),
-            //         balance: caller_account.info.balance.into(),
-            //     }
-            //     .into());
-            // }
 
             caller_account.info.balance = caller_account
                 .info
