@@ -87,30 +87,54 @@ mod tests {
 
     #[test]
     fn test_bedrock_post_merge_hardforks() {
-        assert!(OpSpecId::BEDROCK.into_eth_spec().is_enabled_in(SpecId::MERGE));
-        assert!(!OpSpecId::BEDROCK.into_eth_spec().is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpecId::BEDROCK.into_eth_spec().is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpecId::BEDROCK.into_eth_spec().is_enabled_in(SpecId::LATEST));
+        assert!(OpSpecId::BEDROCK
+            .into_eth_spec()
+            .is_enabled_in(SpecId::MERGE));
+        assert!(!OpSpecId::BEDROCK
+            .into_eth_spec()
+            .is_enabled_in(SpecId::SHANGHAI));
+        assert!(!OpSpecId::BEDROCK
+            .into_eth_spec()
+            .is_enabled_in(SpecId::CANCUN));
+        assert!(!OpSpecId::BEDROCK
+            .into_eth_spec()
+            .is_enabled_in(SpecId::LATEST));
         assert!(OpSpecId::BEDROCK.is_enabled_in(OpSpecId::BEDROCK));
         assert!(!OpSpecId::BEDROCK.is_enabled_in(OpSpecId::REGOLITH));
     }
 
     #[test]
     fn test_regolith_post_merge_hardforks() {
-        assert!(OpSpecId::REGOLITH.into_eth_spec().is_enabled_in(SpecId::MERGE));
-        assert!(!OpSpecId::REGOLITH.into_eth_spec().is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpecId::REGOLITH.into_eth_spec().is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpecId::REGOLITH.into_eth_spec().is_enabled_in(SpecId::LATEST));
+        assert!(OpSpecId::REGOLITH
+            .into_eth_spec()
+            .is_enabled_in(SpecId::MERGE));
+        assert!(!OpSpecId::REGOLITH
+            .into_eth_spec()
+            .is_enabled_in(SpecId::SHANGHAI));
+        assert!(!OpSpecId::REGOLITH
+            .into_eth_spec()
+            .is_enabled_in(SpecId::CANCUN));
+        assert!(!OpSpecId::REGOLITH
+            .into_eth_spec()
+            .is_enabled_in(SpecId::LATEST));
         assert!(OpSpecId::REGOLITH.is_enabled_in(OpSpecId::BEDROCK));
         assert!(OpSpecId::REGOLITH.is_enabled_in(OpSpecId::REGOLITH));
     }
 
     #[test]
     fn test_canyon_post_merge_hardforks() {
-        assert!(OpSpecId::CANYON.into_eth_spec().is_enabled_in(SpecId::MERGE));
-        assert!(OpSpecId::CANYON.into_eth_spec().is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpecId::CANYON.into_eth_spec().is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpecId::CANYON.into_eth_spec().is_enabled_in(SpecId::LATEST));
+        assert!(OpSpecId::CANYON
+            .into_eth_spec()
+            .is_enabled_in(SpecId::MERGE));
+        assert!(OpSpecId::CANYON
+            .into_eth_spec()
+            .is_enabled_in(SpecId::SHANGHAI));
+        assert!(!OpSpecId::CANYON
+            .into_eth_spec()
+            .is_enabled_in(SpecId::CANCUN));
+        assert!(!OpSpecId::CANYON
+            .into_eth_spec()
+            .is_enabled_in(SpecId::LATEST));
         assert!(OpSpecId::CANYON.is_enabled_in(OpSpecId::BEDROCK));
         assert!(OpSpecId::CANYON.is_enabled_in(OpSpecId::REGOLITH));
         assert!(OpSpecId::CANYON.is_enabled_in(OpSpecId::CANYON));
@@ -118,10 +142,18 @@ mod tests {
 
     #[test]
     fn test_ecotone_post_merge_hardforks() {
-        assert!(OpSpecId::ECOTONE.into_eth_spec().is_enabled_in(SpecId::MERGE));
-        assert!(OpSpecId::ECOTONE.into_eth_spec().is_enabled_in(SpecId::SHANGHAI));
-        assert!(OpSpecId::ECOTONE.into_eth_spec().is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpecId::ECOTONE.into_eth_spec().is_enabled_in(SpecId::LATEST));
+        assert!(OpSpecId::ECOTONE
+            .into_eth_spec()
+            .is_enabled_in(SpecId::MERGE));
+        assert!(OpSpecId::ECOTONE
+            .into_eth_spec()
+            .is_enabled_in(SpecId::SHANGHAI));
+        assert!(OpSpecId::ECOTONE
+            .into_eth_spec()
+            .is_enabled_in(SpecId::CANCUN));
+        assert!(!OpSpecId::ECOTONE
+            .into_eth_spec()
+            .is_enabled_in(SpecId::LATEST));
         assert!(OpSpecId::ECOTONE.is_enabled_in(OpSpecId::BEDROCK));
         assert!(OpSpecId::ECOTONE.is_enabled_in(OpSpecId::REGOLITH));
         assert!(OpSpecId::ECOTONE.is_enabled_in(OpSpecId::CANYON));
@@ -131,9 +163,15 @@ mod tests {
     #[test]
     fn test_fjord_post_merge_hardforks() {
         assert!(OpSpecId::FJORD.into_eth_spec().is_enabled_in(SpecId::MERGE));
-        assert!(OpSpecId::FJORD.into_eth_spec().is_enabled_in(SpecId::SHANGHAI));
-        assert!(OpSpecId::FJORD.into_eth_spec().is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpecId::FJORD.into_eth_spec().is_enabled_in(SpecId::LATEST));
+        assert!(OpSpecId::FJORD
+            .into_eth_spec()
+            .is_enabled_in(SpecId::SHANGHAI));
+        assert!(OpSpecId::FJORD
+            .into_eth_spec()
+            .is_enabled_in(SpecId::CANCUN));
+        assert!(!OpSpecId::FJORD
+            .into_eth_spec()
+            .is_enabled_in(SpecId::LATEST));
         assert!(OpSpecId::FJORD.is_enabled_in(OpSpecId::BEDROCK));
         assert!(OpSpecId::FJORD.is_enabled_in(OpSpecId::REGOLITH));
         assert!(OpSpecId::FJORD.is_enabled_in(OpSpecId::CANYON));
