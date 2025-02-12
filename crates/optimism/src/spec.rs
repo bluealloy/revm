@@ -17,7 +17,7 @@ pub enum OpSpecId {
 }
 
 impl OpSpecId {
-    /// Converts the [`OpSpec`] into a [`SpecId`].
+    /// Converts the [`OpSpecId`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,

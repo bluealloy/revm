@@ -511,7 +511,7 @@ mod tests {
                 tx.base.gas_limit = 100;
                 tx.enveloped_tx = None;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -527,7 +527,7 @@ mod tests {
                 tx.deposit.source_hash = B256::ZERO;
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -543,7 +543,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
@@ -567,7 +567,7 @@ mod tests {
                 tx.base.gas_limit = 100;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spent(), 100);
@@ -594,7 +594,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
         ctx.modify_tx(|tx| {
             tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
             tx.deposit.source_hash = B256::ZERO;
@@ -630,7 +630,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 100;
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
@@ -668,7 +668,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 100;
                 tx.deposit.source_hash = B256::ZERO;
@@ -704,7 +704,7 @@ mod tests {
                 operator_fee_constant: Some(U256::from(50)),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 10;
                 tx.enveloped_tx = Some(bytes!("FACADE"));
@@ -741,7 +741,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
@@ -771,7 +771,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.is_system_transaction = true;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
@@ -783,8 +783,7 @@ mod tests {
             ))
         );
 
-        evm.ctx()
-            .modify_cfg(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+        evm.ctx().modify_cfg(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         // Pre-regolith system transactions should be allowed.
         assert!(handler.validate_env(&mut evm).is_ok());
@@ -798,7 +797,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
@@ -814,7 +813,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
