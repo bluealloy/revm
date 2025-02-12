@@ -9,10 +9,9 @@ use alloy_provider::{
 };
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::inspectors::TracerEip3155;
+use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
-    database_interface::WrapDatabaseAsync, primitives::TxKind, Context, InspectEvm, MainBuilder,
-    MainContext,
+    database_interface::WrapDatabaseAsync, primitives::TxKind, Context, MainBuilder, MainContext,
 };
 use std::fs::OpenOptions;
 use std::io::BufWriter;

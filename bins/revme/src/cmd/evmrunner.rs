@@ -1,10 +1,10 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::inspectors::TracerEip3155;
+use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
-    Context, Database, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
+    Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;

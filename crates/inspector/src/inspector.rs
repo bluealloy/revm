@@ -1,17 +1,19 @@
-use crate::{
-    execution,
-    handler::{EthHandler, EvmTrait},
-    EthFrame, Frame, FrameOrResult, FrameResult, ItemOrResult,
-};
+use crate::{InspectorEvmTrait, InspectorFrameTrait};
 use auto_impl::auto_impl;
-use context::{Cfg, JournalEntry, JournaledState};
-use context_interface::{result::ResultAndState, ContextTrait, Database, Transaction};
-use interpreter::{
-    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-    EOFCreateInputs, FrameInput, InitialAndFloorGas, Interpreter, InterpreterTypes,
+use revm::{
+    context::{Cfg, JournalEntry, JournaledState},
+    context_interface::{result::ResultAndState, ContextTrait, Database, Transaction},
+    handler::{execution, EthHandler, EvmTrait, Frame, FrameOrResult, FrameResult, ItemOrResult},
+    interpreter::{
+        interpreter::EthInterpreter,
+        interpreter_types::{Jumps, LoopControl},
+        table::InstructionTable,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
+        InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
+    },
+    primitives::{Address, Log, U256},
+    state::EvmState,
 };
-use primitives::{Address, Log, U256};
-use state::EvmState;
 use std::{vec, vec::Vec};
 
 /// EVM [Interpreter] callbacks.
@@ -176,36 +178,12 @@ impl<DB: Database> JournalExt for JournaledState<DB> {
     }
 }
 
-pub trait InspectorFrame {
-    type IT: InterpreterTypes;
-    type FrameInput;
-
-    fn interpreter(&mut self) -> &mut Interpreter<Self::IT>;
-
-    fn frame_input(&self) -> &FrameInput;
-}
-
-impl<CTX, ERROR, IT> InspectorFrame for EthFrame<CTX, ERROR, IT>
-where
-    IT: InterpreterTypes,
-{
-    type IT = IT;
-    type FrameInput = FrameInput;
-
-    fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
-        &mut self.interpreter
-    }
-
-    fn frame_input(&self) -> &FrameInput {
-        &self.input
-    }
-}
-
 pub trait EthInspectorHandler: EthHandler
 where
-    Self::Evm:
-        EvmTrait<Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, Self::IT>>,
-    Self::Frame: InspectorFrame<IT = Self::IT>,
+    Self::Evm: InspectorEvmTrait<
+        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, Self::IT>,
+    >,
+    Self::Frame: InspectorFrameTrait<IT = Self::IT>,
 {
     type IT: InterpreterTypes;
 
@@ -215,11 +193,7 @@ where
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
-        // enable instruction inspection
-        evm.enable_inspection(true);
         let exec_result = self.inspect_execution(evm, &init_and_floor_gas);
-        // disable instruction inspection
-        evm.enable_inspection(false);
         self.post_execution(evm, exec_result?, init_and_floor_gas, eip7702_refund)
     }
 
@@ -381,113 +355,74 @@ fn frame_end<CTX, INTR: InterpreterTypes>(
     }
 }
 
-// INSTRUCTIONS FOR INSPECTOR
+pub fn inspect_instructions<CTX, IT>(
+    context: &mut CTX,
+    interpreter: &mut Interpreter<IT>,
+    mut inspector: impl Inspector<CTX, IT>,
+    instructions: &InstructionTable<IT, CTX>,
+) -> InterpreterAction
+where
+    CTX: ContextTrait<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    interpreter.reset_control();
 
-// pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
-//     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
-// }
+    let mut log_num = context.journal().logs().len();
+    // Main loop
+    while interpreter.control.instruction_result().is_continue() {
+        // Get current opcode.
+        let opcode = interpreter.bytecode.opcode();
 
-// impl<WIRE, HOST> Clone for InspectorInstructionProvider<WIRE, HOST>
-// where
-//     WIRE: InterpreterTypes,
-// {
-//     fn clone(&self) -> Self {
-//         Self {
-//             instruction_table: self.instruction_table.clone(),
-//         }
-//     }
-// }
+        // Call Inspector step.
+        inspector.step(interpreter, context);
+        if interpreter.control.instruction_result() != InstructionResult::Continue {
+            break;
+        }
 
-// impl<WIRE, HOST> InspectorInstructionProvider<WIRE, HOST>
-// where
-//     WIRE: InterpreterTypes,
-//     HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
-// {
-//     pub fn (base_table: InstructionTable<WIRE, HOST>) -> Self {
-//         let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
-//             unsafe { MaybeUninit::uninit().assume_init() };
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        interpreter.bytecode.relative_jump(1);
 
-//         for (i, element) in table.iter_mut().enumerate() {
-//             let function: InspectorInstruction<WIRE, HOST> = InspectorInstruction {
-//                 instruction: base_table[i],
-//             };
-//             *element = MaybeUninit::new(function);
-//         }
+        // Execute instruction.
+        instructions[opcode as usize](interpreter, context);
 
-//         let mut table = unsafe {
-//             core::mem::transmute::<
-//                 [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256],
-//                 [InspectorInstruction<WIRE, HOST>; 256],
-//             >(table)
-//         };
+        // check if new log is added
+        let new_log = context.journal().logs().len();
+        if log_num < new_log {
+            // as there is a change in log number this means new log is added
+            let log = context.journal().logs().last().unwrap().clone();
+            inspector.log(interpreter, context, log);
+            log_num = new_log;
+        }
 
-//         // Inspector log wrapper
-//         fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
-//             interpreter: &mut Interpreter<<CTX as InspectorCtx>::IT>,
-//             context: &mut CTX,
-//             prev: Instruction<<CTX as InspectorCtx>::IT, CTX>,
-//         ) {
-//             prev(interpreter, context);
+        // Call step_end.
+        inspector.step_end(interpreter, context);
+    }
 
-//             if interpreter.control.instruction_result() == InstructionResult::Continue {
-//                 let last_log = context.journal_ext().logs().last().unwrap().clone();
-//                 context.inspector_log(interpreter, &last_log);
-//             }
-//         }
+    let next_action = interpreter.take_next_action();
 
-//         /* LOG and Selfdestruct instructions */
-//         table[OpCode::LOG0.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 inspector_log(interp, context, log::<0, HOST>);
-//             },
-//         };
-//         table[OpCode::LOG1.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 inspector_log(interp, context, log::<1, HOST>);
-//             },
-//         };
-//         table[OpCode::LOG2.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 inspector_log(interp, context, log::<2, HOST>);
-//             },
-//         };
-//         table[OpCode::LOG3.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 inspector_log(interp, context, log::<3, HOST>);
-//             },
-//         };
-//         table[OpCode::LOG4.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 inspector_log(interp, context, log::<4, HOST>);
-//             },
-//         };
+    // handle selfdestruct
+    if let InterpreterAction::Return { result } = &next_action {
+        if result.result == InstructionResult::SelfDestruct {
+            match context.journal().last_journal().last() {
+                Some(JournalEntry::AccountDestroyed {
+                    address,
+                    target,
+                    had_balance,
+                    ..
+                }) => {
+                    inspector.selfdestruct(*address, *target, *had_balance);
+                }
+                Some(JournalEntry::BalanceTransfer {
+                    from, to, balance, ..
+                }) => {
+                    inspector.selfdestruct(*from, *to, *balance);
+                }
+                _ => {}
+            }
+        }
+    }
 
-//         table[OpCode::SELFDESTRUCT.as_usize()] = InspectorInstruction {
-//             instruction: |interp, context| {
-//                 selfdestruct::<WIRE, HOST>(interp, context);
-//                 if interp.control.instruction_result() == InstructionResult::SelfDestruct {
-//                     match context.journal_ext().last_journal().last() {
-//                         Some(JournalEntry::AccountDestroyed {
-//                             address,
-//                             target,
-//                             had_balance,
-//                             ..
-//                         }) => {
-//                             context.inspector_selfdestruct(*address, *target, *had_balance);
-//                         }
-//                         Some(JournalEntry::BalanceTransfer {
-//                             from, to, balance, ..
-//                         }) => {
-//                             context.inspector_selfdestruct(*from, *to, *balance);
-//                         }
-//                         _ => {}
-//                     }
-//                 }
-//             },
-//         };
-
-//         Self {
-//             instruction_table: Rc::new(table),
-//         }
-//     }
-// }
+    next_action
+}

@@ -68,20 +68,16 @@ impl GasInspector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{InspectEvm, Inspector};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use revm::{
         bytecode::{opcode, Bytecode},
-        handler::inspector::Inspector,
         interpreter::{
             interpreter_types::{Jumps, LoopControl},
             CallInputs, CreateInputs, Interpreter, InterpreterTypes,
         },
         primitives::{Bytes, TxKind},
-        Context,
-        InspectEvm,
-        MainBuilder,
-        MainContext, //Evm,
-                     //EvmWiring,
+        Context, MainBuilder, MainContext,
     };
 
     #[derive(Default, Debug)]

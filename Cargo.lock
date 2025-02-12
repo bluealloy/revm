@@ -3492,6 +3492,7 @@ dependencies = [
 name = "revm-inspector"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "revm",
  "revm-database",
  "serde",
@@ -3524,6 +3525,7 @@ dependencies = [
  "once_cell",
  "revm",
  "revm-database",
+ "revm-inspector",
  "revm-precompile",
  "rstest 0.23.0",
  "serde",

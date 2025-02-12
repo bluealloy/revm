@@ -1,10 +1,10 @@
 use crate::inspectors::GasInspector;
+use crate::Inspector;
 use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
     context_interface::{ContextTrait, Journal, Transaction},
-    handler::inspector::Inspector,
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,

@@ -21,12 +21,12 @@ pub use state;
 
 mod exec_inspect;
 mod mainnet_builder;
-mod mainnet_exec_inspect;
+mod mainnet_exec;
 
 // Export items.
 
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use exec_inspect::{ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm};
+pub use exec_inspect::{ExecuteCommitEvm, ExecuteEvm};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};

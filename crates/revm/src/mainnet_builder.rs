@@ -1,20 +1,20 @@
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, JournaledState, TxEnv};
 use context_interface::{Block, Database, Journal, Transaction};
 use database_interface::EmptyDB;
-use handler::{instructions::EthInstructions, noop::NoOpInspector, EthPrecompiles};
+use handler::{instructions::EthInstructions, EthPrecompiles};
 use interpreter::interpreter::EthInterpreter;
 use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
-pub type MainnetEvm<CTX, INSP> =
+pub type MainnetEvm<CTX, INSP = ()> =
     Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
 
 pub trait MainBuilder: Sized {
     type Context;
 
-    fn build_mainnet(self) -> MainnetEvm<Self::Context, NoOpInspector>;
+    fn build_mainnet(self) -> MainnetEvm<Self::Context>;
 
     fn build_mainnet_with_inspector<INSP>(self, inspector: INSP)
         -> MainnetEvm<Self::Context, INSP>;
@@ -30,13 +30,12 @@ where
 {
     type Context = Self;
 
-    fn build_mainnet(self) -> MainnetEvm<Self::Context, NoOpInspector> {
+    fn build_mainnet(self) -> MainnetEvm<Self::Context> {
         Evm {
             data: EvmData {
                 ctx: self,
-                inspector: NoOpInspector {},
+                inspector: (),
             },
-            enabled_inspection: false,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
         }
@@ -51,7 +50,6 @@ where
                 ctx: self,
                 inspector,
             },
-            enabled_inspection: true,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
         }
