@@ -12,14 +12,14 @@ use crate::{
 };
 use precompile::Log;
 use revm::{
-    context_interface::ContextTrait,
     context_interface::{
-        result::{EVMError, ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
-        Block, Cfg, Journal, Transaction,
+        result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
+        Block, Cfg, ContextTrait, Journal, Transaction,
     },
     handler::{
         handler::{EthTraitError, EvmTrait},
         inspector::{EthInspectorHandler, Inspector, InspectorFrame},
+        validation::validate_tx_against_account,
         EthHandler, Frame, FrameResult, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
@@ -98,10 +98,36 @@ where
     }
 
     fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        if evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
+        let context = evm.ctx();
+        if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         }
-        self.mainnet.validate_tx_against_state(evm)
+        let spec = context.cfg().spec();
+        let enveloped_tx = context
+            .tx()
+            .enveloped_tx()
+            .expect("all not deposit tx have enveloped tx")
+            .clone();
+        // compute L1 cost
+        let mut additional_cost = context.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
+
+        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            let gas_limit = U256::from(context.tx().gas_limit());
+            let operator_fee_charge = context
+                .chain()
+                .operator_fee_charge(&enveloped_tx, gas_limit);
+
+            additional_cost = additional_cost.saturating_add(operator_fee_charge);
+        }
+
+        let tx_caller = context.tx().caller();
+
+        // Load acc
+        let account = context.journal().load_account_code(tx_caller)?;
+        let account = account.data.info.clone();
+
+        validate_tx_against_account(&account, context, additional_cost)?;
+        Ok(())
     }
 
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
@@ -161,19 +187,13 @@ where
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            let operator_fee_charge =
-                ctx.chain()
-                    .operator_fee_charge(&enveloped_tx, gas_limit, spec);
+
+            let mut operator_fee_charge = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
+            }
 
             let mut caller_account = ctx.journal().load_account(caller)?;
-
-            if tx_l1_cost > caller_account.info.balance {
-                return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: tx_l1_cost.into(),
-                    balance: caller_account.info.balance.into(),
-                }
-                .into());
-            }
 
             caller_account.info.balance = caller_account
                 .info
@@ -326,12 +346,13 @@ where
             };
 
             let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
-            let operator_fee_cost = l1_block_info.operator_fee_charge(
-                enveloped_tx,
-                U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
-                spec,
-            );
-
+            let mut operator_fee_cost = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_cost = l1_block_info.operator_fee_charge(
+                    enveloped_tx,
+                    U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+                );
+            }
             // Send the L1 cost of the transaction to the L1 Fee Vault.
             let mut l1_fee_vault_account = ctx.journal().load_account(L1_FEE_RECIPIENT)?;
             l1_fee_vault_account.mark_touch();
@@ -440,6 +461,11 @@ where
             }
         })
     }
+
+    fn clear(&self, evm: &mut Self::Evm) {
+        evm.ctx().chain().clear_tx_l1_cost();
+        self.mainnet.clear(evm);
+    }
 }
 
 impl<EVM, ERROR, FRAME> EthInspectorHandler for OpHandler<EVM, ERROR, FRAME>
@@ -470,6 +496,7 @@ mod tests {
     use database::InMemoryDB;
     use revm::{
         context::Context,
+        context_interface::result::InvalidTransaction,
         database_interface::EmptyDB,
         handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
@@ -752,7 +779,7 @@ mod tests {
 
         // l1block cost is 1048 fee.
         assert_eq!(
-            handler.deduct_caller(&mut evm),
+            handler.validate_tx_against_state(&mut evm),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),
