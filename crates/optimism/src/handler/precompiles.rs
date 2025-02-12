@@ -1,4 +1,4 @@
-use crate::{OpSpec, OpSpecId};
+use crate::OpSpecId;
 use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
@@ -6,7 +6,6 @@ use revm::{
     context_interface::ContextTrait,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
-    specification::hardfork::SpecId,
 };
 use std::boxed::Box;
 
@@ -33,35 +32,15 @@ impl<CTX> OpPrecompileProvider<CTX> {
     }
 
     #[inline]
-    pub fn new_with_spec(spec: OpSpec) -> Self {
+    pub fn new_with_spec(spec: OpSpecId) -> Self {
         match spec {
-            spec @ (OpSpec::Eth(
-                SpecId::FRONTIER
-                | SpecId::FRONTIER_THAWING
-                | SpecId::HOMESTEAD
-                | SpecId::DAO_FORK
-                | SpecId::TANGERINE
-                | SpecId::SPURIOUS_DRAGON
-                | SpecId::BYZANTIUM
-                | SpecId::CONSTANTINOPLE
-                | SpecId::PETERSBURG
-                | SpecId::ISTANBUL
-                | SpecId::MUIR_GLACIER
-                | SpecId::BERLIN
-                | SpecId::LONDON
-                | SpecId::ARROW_GLACIER
-                | SpecId::GRAY_GLACIER
-                | SpecId::MERGE
-                | SpecId::SHANGHAI
-                | SpecId::CANCUN,
-            )
-            | OpSpec::Op(
-                OpSpecId::BEDROCK | OpSpecId::REGOLITH | OpSpecId::CANYON | OpSpecId::ECOTONE,
-            )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
-            OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
-            OpSpec::Op(OpSpecId::GRANITE | OpSpecId::HOLOCENE) => Self::new(granite()),
-            OpSpec::Op(OpSpecId::ISTHMUS)
-            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(isthumus()),
+            spec @ (OpSpecId::BEDROCK
+            | OpSpecId::REGOLITH
+            | OpSpecId::CANYON
+            | OpSpecId::ECOTONE) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
+            OpSpecId::FJORD => Self::new(fjord()),
+            OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
+            OpSpecId::ISTHMUS => Self::new(isthumus()),
         }
     }
 }
@@ -107,7 +86,7 @@ pub fn isthumus() -> &'static Precompiles {
 
 impl<CTX> PrecompileProvider for OpPrecompileProvider<CTX>
 where
-    CTX: ContextTrait<Cfg: Cfg<Spec = OpSpec>>,
+    CTX: ContextTrait<Cfg: Cfg<Spec = OpSpecId>>,
 {
     type Context = CTX;
     type Output = InterpreterResult;
@@ -142,6 +121,6 @@ where
 
 impl<CTX> Default for OpPrecompileProvider<CTX> {
     fn default() -> Self {
-        Self::new_with_spec(OpSpec::Op(OpSpecId::ISTHMUS))
+        Self::new_with_spec(OpSpecId::ISTHMUS)
     }
 }

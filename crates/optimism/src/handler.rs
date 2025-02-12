@@ -8,7 +8,7 @@ use crate::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
         OpTransactionError, OpTxTrait,
     },
-    L1BlockInfo, OpHaltReason, OpSpec, OpSpecId,
+    L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use precompile::Log;
 use revm::{
@@ -66,7 +66,7 @@ where
         Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
-            Cfg: Cfg<Spec = OpSpec>,
+            Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
     >,
@@ -290,9 +290,13 @@ where
         // Prior to Regolith, deposit transactions did not receive gas refunds.
         let is_gas_refund_disabled = is_deposit && !is_regolith;
         if !is_gas_refund_disabled {
-            exec_result
-                .gas_mut()
-                .set_final_refund(evm.ctx().cfg().spec().is_enabled_in(SpecId::LONDON));
+            exec_result.gas_mut().set_final_refund(
+                evm.ctx()
+                    .cfg()
+                    .spec()
+                    .into_eth_spec()
+                    .is_enabled_in(SpecId::LONDON),
+            );
         }
     }
 
@@ -444,7 +448,7 @@ where
         Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
-            Cfg: Cfg<Spec = OpSpec>,
+            Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
         Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,

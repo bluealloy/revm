@@ -1,4 +1,4 @@
-use crate::{L1BlockInfo, OpSpec, OpSpecId, OpTransaction};
+use crate::{L1BlockInfo, OpSpecId, OpTransaction};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
     database_interface::EmptyDB,
@@ -9,7 +9,7 @@ pub trait DefaultOp {
     fn op() -> Context<
         BlockEnv,
         OpTransaction<TxEnv>,
-        CfgEnv<OpSpec>,
+        CfgEnv<OpSpecId>,
         EmptyDB,
         JournaledState<EmptyDB>,
         L1BlockInfo,
@@ -20,7 +20,7 @@ impl DefaultOp
     for Context<
         BlockEnv,
         OpTransaction<TxEnv>,
-        CfgEnv<OpSpec>,
+        CfgEnv<OpSpecId>,
         EmptyDB,
         JournaledState<EmptyDB>,
         L1BlockInfo,
@@ -29,7 +29,7 @@ impl DefaultOp
     fn op() -> Self {
         Context::mainnet()
             .with_tx(OpTransaction::default())
-            .with_cfg(CfgEnv::new().with_spec(OpSpec::Op(OpSpecId::BEDROCK)))
+            .with_cfg(CfgEnv::new().with_spec(OpSpecId::BEDROCK))
             .with_chain(L1BlockInfo::default())
     }
 }
