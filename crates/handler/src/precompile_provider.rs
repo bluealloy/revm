@@ -45,10 +45,7 @@ impl<CTX> Clone for EthPrecompiles<CTX> {
     }
 }
 
-impl<CTX> Default for EthPrecompiles<CTX>
-where
-    CTX: ContextTrait,
-{
+impl<CTX> Default for EthPrecompiles<CTX> {
     fn default() -> Self {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::LATEST)),
