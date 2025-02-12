@@ -3,7 +3,10 @@ use auto_impl::auto_impl;
 use revm::{
     context::{Cfg, JournalEntry, JournaledState},
     context_interface::{result::ResultAndState, ContextTrait, Database, Transaction},
-    handler::{execution, EthHandler, EvmTrait, Frame, FrameOrResult, FrameResult, ItemOrResult},
+    handler::{
+        execution, EthHandler, EvmTrait, Frame, FrameInitOrResult, FrameOrResult, FrameResult,
+        ItemOrResult,
+    },
     interpreter::{
         interpreter::EthInterpreter,
         interpreter_types::{Jumps, LoopControl},
@@ -250,6 +253,15 @@ where
         ret
     }
 
+    #[inline]
+    fn inspect_frame_call(
+        &mut self,
+        frame: &mut Self::Frame,
+        evm: &mut Self::Evm,
+    ) -> Result<FrameInitOrResult<Self::Frame>, Self::Error> {
+        frame.run_inspect(evm)
+    }
+
     fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
@@ -258,7 +270,7 @@ where
         let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = self.frame_call(frame, evm)?;
+            let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(mut init) => {
