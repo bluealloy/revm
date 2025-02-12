@@ -27,7 +27,7 @@ use subroutine_stack::SubRoutineImpl;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-pub struct Interpreter<WIRE: InterpreterTypes> {
+pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub bytecode: WIRE::Bytecode,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,

@@ -7,8 +7,8 @@ use auto_impl::auto_impl;
 use context::{Cfg, JournalEntry, JournaledState};
 use context_interface::{result::ResultAndState, ContextTrait, Database, Transaction};
 use interpreter::{
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput,
-    InitialAndFloorGas, Interpreter, InterpreterTypes,
+    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
+    EOFCreateInputs, FrameInput, InitialAndFloorGas, Interpreter, InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
@@ -16,7 +16,7 @@ use std::{vec, vec::Vec};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector<CTX, INTR: InterpreterTypes> {
+pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [interpreter::InstructionResult::Continue] then the execution of the interpreter
