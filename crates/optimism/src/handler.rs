@@ -192,7 +192,7 @@ where
             if spec.is_enabled_in(OpSpecId::ISTHMUS) {
                 operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
             }
-            
+
             let mut caller_account = ctx.journal().load_account(caller)?;
 
             caller_account.info.balance = caller_account
