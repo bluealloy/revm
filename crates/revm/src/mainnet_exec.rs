@@ -57,6 +57,9 @@ where
 mod test {
     use super::*;
     use crate::{MainBuilder, MainContext};
+    use alloy_eip7702::Authorization;
+    use alloy_signer::SignerSync;
+    use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
         opcode::{PUSH1, SSTORE},
         Bytecode,
@@ -64,12 +67,19 @@ mod test {
     use context::Context;
     use context_interface::TransactionType;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{address, TxKind, U256};
+    use primitives::{TxKind, U256};
     use specification::hardfork::SpecId;
 
     #[test]
     fn sanity_eip7702_tx() {
-        let auth = address!("0000000000000000000000000000000000000100");
+        let signer = PrivateKeySigner::random();
+        let auth = Authorization {
+            chain_id: U256::ZERO,
+            nonce: 0,
+            address: FFADDRESS,
+        };
+        let signature = signer.sign_hash_sync(&auth.signature_hash()).unwrap();
+        let auth = auth.into_signed(signature);
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
@@ -79,16 +89,16 @@ mod test {
             .modify_tx_chained(|tx| {
                 tx.tx_type = TransactionType::Eip7702.into();
                 tx.gas_limit = 100_000;
-                tx.authorization_list = vec![(Some(auth), U256::from(0), 0, FFADDRESS)];
+                tx.authorization_list = vec![auth];
                 tx.caller = EEADDRESS;
-                tx.kind = TxKind::Call(auth);
+                tx.kind = TxKind::Call(signer.address());
             });
 
         let mut evm = ctx.build_mainnet();
 
         let ok = evm.transact_previous().unwrap();
 
-        let auth_acc = ok.state.get(&auth).unwrap();
+        let auth_acc = ok.state.get(&signer.address()).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
         assert_eq!(auth_acc.info.nonce, 1);
         assert_eq!(

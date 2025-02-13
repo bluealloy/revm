@@ -1,44 +1,17 @@
-use revm::{
-    context_interface::transaction::AuthorizationItem,
-    primitives::{Address, U256},
-    specification::eip2::SECP256K1N_HALF,
-};
+use revm::context::SignedAuthorization;
 use serde::{Deserialize, Serialize};
 
 /// Struct for test authorization
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct TestAuthorization {
-    /// The chain ID of the authorization.
-    pub chain_id: U256,
-    /// The address of the authorization.
-    pub address: Address,
-    /// The nonce for the authorization.
-    pub nonce: U256,
-    v: U256,
-    r: U256,
-    s: U256,
-    signer: Option<Address>,
+    #[serde(flatten)]
+    inner: SignedAuthorization,
 }
 
-impl From<TestAuthorization> for AuthorizationItem {
-    fn from(auth: TestAuthorization) -> AuthorizationItem {
-        let mut signer = auth.signer;
-
-        if auth.s > SECP256K1N_HALF {
-            signer = None
-        }
-
-        if auth.v > U256::from(1) {
-            signer = None
-        }
-
-        (
-            signer,
-            auth.chain_id,
-            auth.nonce.try_into().unwrap_or(u64::MAX),
-            auth.address,
-        )
+impl From<TestAuthorization> for SignedAuthorization {
+    fn from(auth: TestAuthorization) -> Self {
+        auth.inner
     }
 }
 

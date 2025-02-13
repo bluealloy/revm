@@ -26,3 +26,7 @@ all = "warn"
 revm = { workspace = true, features = ["std", "serde"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
+
+# alloy
+alloy-eip2930 = { workspace = true, features = ["serde"] }
+alloy-eip7702 = { workspace = true, features = ["serde"] }

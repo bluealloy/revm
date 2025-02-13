@@ -1,5 +1,5 @@
 use crate::{
-    evm::OpEvm, handler::OpHandler, transaction::OpTxTrait, L1BlockInfo, OpHaltReason, OpSpec,
+    evm::OpEvm, handler::OpHandler, transaction::OpTxTrait, L1BlockInfo, OpHaltReason, OpSpecId,
     OpTransactionError,
 };
 use inspector::{InspectCommitEvm, InspectEvm, Inspector, JournalExt};
@@ -25,7 +25,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteEvm
 where
     BLOCK: Block,
     TX: OpTxTrait,
-    CFG: Cfg<Spec = OpSpec>,
+    CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
 {
@@ -47,7 +47,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteCommitEvm
 where
     BLOCK: Block,
     TX: OpTxTrait,
-    CFG: Cfg<Spec = OpSpec>,
+    CFG: Cfg<Spec = OpSpecId>,
     DB: Database + DatabaseCommit,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
 {
@@ -73,7 +73,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> InspectEvm
 where
     BLOCK: Block,
     TX: OpTxTrait,
-    CFG: Cfg<Spec = OpSpec>,
+    CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
@@ -99,7 +99,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> InspectCommitEvm
 where
     BLOCK: Block,
     TX: OpTxTrait,
-    CFG: Cfg<Spec = OpSpec>,
+    CFG: Cfg<Spec = OpSpecId>,
     DB: Database + DatabaseCommit,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,

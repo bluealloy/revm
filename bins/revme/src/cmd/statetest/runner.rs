@@ -383,13 +383,8 @@ pub fn execute_test_suite(
                     .transaction
                     .access_lists
                     .get(test.indexes.data)
-                    .and_then(Option::as_deref)
-                    .map(|access_list| {
-                        access_list
-                            .iter()
-                            .map(|item| (item.address, item.storage_keys.clone()))
-                            .collect()
-                    })
+                    .cloned()
+                    .flatten()
                     .unwrap_or_default();
 
                 tx.authorization_list = unit

@@ -1,3 +1,4 @@
+use context_interface::transaction::AccessListTrait;
 use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::Journal,
@@ -39,7 +40,7 @@ pub fn validate_tx_against_state<
     let account = context.journal().load_account_code(tx_caller)?;
     let account = account.data.info.clone();
 
-    validate_tx_against_account::<CTX>(&account, context)?;
+    validate_tx_against_account(&account, context, U256::ZERO)?;
     Ok(())
 }
 
@@ -234,6 +235,7 @@ pub fn validate_tx_env<CTX: ContextTrait, Error>(
 pub fn validate_tx_against_account<CTX: ContextTrait>(
     account: &AccountInfo,
     context: CTX,
+    additional_cost: U256,
 ) -> Result<(), InvalidTransaction> {
     let tx = context.tx();
     let tx_type = context.tx().tx_type();
@@ -264,10 +266,11 @@ pub fn validate_tx_against_account<CTX: ContextTrait>(
         }
     }
 
-    // gas_limit * max_fee + value
+    // gas_limit * max_fee + value + additional_gas_cost
     let mut balance_check = U256::from(tx.gas_limit())
         .checked_mul(U256::from(tx.max_fee_per_gas()))
         .and_then(|gas_cost| gas_cost.checked_add(tx.value()))
+        .and_then(|gas_cost| gas_cost.checked_add(additional_cost))
         .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
     if tx_type == TransactionType::Eip4844 {
@@ -294,7 +297,10 @@ pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
+    let (accounts, storages) = tx
+        .access_list()
+        .map(|al| al.access_list_nums())
+        .unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(
         spec,

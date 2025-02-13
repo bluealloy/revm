@@ -2,7 +2,7 @@ use super::deposit::{DepositTransaction, DepositTransactionParts};
 use auto_impl::auto_impl;
 use revm::{
     context::TxEnv,
-    context_interface::transaction::{AuthorizationItem, Transaction},
+    context_interface::transaction::Transaction,
     primitives::{Address, Bytes, TxKind, B256, U256},
 };
 use std::vec;
@@ -46,6 +46,9 @@ impl Default for OpTransaction<TxEnv> {
 }
 
 impl<T: Transaction> Transaction for OpTransaction<T> {
+    type AccessList = T::AccessList;
+    type Authorization = T::Authorization;
+
     fn tx_type(&self) -> u8 {
         self.base.tx_type()
     }
@@ -78,7 +81,7 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.chain_id()
     }
 
-    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>> {
+    fn access_list(&self) -> Option<&Self::AccessList> {
         self.base.access_list()
     }
 
@@ -110,7 +113,7 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.authorization_list_len()
     }
 
-    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem> {
+    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization> {
         self.base.authorization_list()
     }
 }

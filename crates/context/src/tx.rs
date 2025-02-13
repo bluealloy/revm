@@ -1,4 +1,5 @@
-use context_interface::transaction::AuthorizationItem;
+pub use alloy_eip2930::AccessList;
+pub use alloy_eip7702::SignedAuthorization;
 use context_interface::Transaction;
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
@@ -39,7 +40,7 @@ pub struct TxEnv {
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<(Address, Vec<B256>)>,
+    pub access_list: AccessList,
 
     /// The priority fee per gas
     ///
@@ -72,7 +73,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction via [EIP-7702].
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
-    pub authorization_list: Vec<AuthorizationItem>,
+    pub authorization_list: Vec<SignedAuthorization>,
 }
 
 impl Default for TxEnv {
@@ -87,7 +88,7 @@ impl Default for TxEnv {
             data: Bytes::default(),
             nonce: 0,
             chain_id: Some(1), // Mainnet chain ID is 1
-            access_list: Vec::new(),
+            access_list: Default::default(),
             gas_priority_fee: Some(0),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: 0,
@@ -97,6 +98,9 @@ impl Default for TxEnv {
 }
 
 impl Transaction for TxEnv {
+    type AccessList = AccessList;
+    type Authorization = SignedAuthorization;
+
     fn tx_type(&self) -> u8 {
         self.tx_type
     }
@@ -129,12 +133,8 @@ impl Transaction for TxEnv {
         self.chain_id
     }
 
-    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>> {
-        Some(
-            self.access_list
-                .iter()
-                .map(|(address, storage_keys)| (address, storage_keys.as_slice())),
-        )
+    fn access_list(&self) -> Option<&Self::AccessList> {
+        Some(&self.access_list)
     }
 
     fn max_fee_per_gas(&self) -> u128 {
@@ -149,8 +149,8 @@ impl Transaction for TxEnv {
         self.authorization_list.len()
     }
 
-    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem> {
-        self.authorization_list.iter().cloned()
+    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization> {
+        self.authorization_list.iter()
     }
 
     fn input(&self) -> &Bytes {

@@ -125,11 +125,7 @@ async fn main() -> anyhow::Result<()> {
             etx.chain_id = Some(chain_id);
             etx.nonce = tx.nonce();
             if let Some(access_list) = tx.access_list() {
-                etx.access_list = access_list
-                    .0
-                    .iter()
-                    .map(|item| (item.address, item.storage_keys.clone()))
-                    .collect();
+                etx.access_list = access_list.clone()
             } else {
                 etx.access_list = Default::default();
             }

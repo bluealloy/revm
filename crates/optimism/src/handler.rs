@@ -8,18 +8,18 @@ use crate::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
         OpTransactionError, OpTxTrait,
     },
-    L1BlockInfo, OpHaltReason, OpSpec, OpSpecId,
+    L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use inspector::{EthInspectorHandler, Inspector, InspectorEvmTrait, InspectorFrameTrait};
 use precompile::Log;
 use revm::{
-    context_interface::ContextTrait,
     context_interface::{
-        result::{EVMError, ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
-        Block, Cfg, Journal, Transaction,
+        result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
+        Block, Cfg, ContextTrait, Journal, Transaction,
     },
     handler::{
         handler::{EthTraitError, EvmTrait},
+        validation::validate_tx_against_account,
         EthHandler, Frame, FrameResult, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
@@ -66,7 +66,7 @@ where
         Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
-            Cfg: Cfg<Spec = OpSpec>,
+            Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
     >,
@@ -98,10 +98,36 @@ where
     }
 
     fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        if evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
+        let context = evm.ctx();
+        if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         }
-        self.mainnet.validate_tx_against_state(evm)
+        let spec = context.cfg().spec();
+        let enveloped_tx = context
+            .tx()
+            .enveloped_tx()
+            .expect("all not deposit tx have enveloped tx")
+            .clone();
+        // compute L1 cost
+        let mut additional_cost = context.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
+
+        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            let gas_limit = U256::from(context.tx().gas_limit());
+            let operator_fee_charge = context
+                .chain()
+                .operator_fee_charge(&enveloped_tx, gas_limit);
+
+            additional_cost = additional_cost.saturating_add(operator_fee_charge);
+        }
+
+        let tx_caller = context.tx().caller();
+
+        // Load acc
+        let account = context.journal().load_account_code(tx_caller)?;
+        let account = account.data.info.clone();
+
+        validate_tx_against_account(&account, context, additional_cost)?;
+        Ok(())
     }
 
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
@@ -161,19 +187,13 @@ where
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            let operator_fee_charge =
-                ctx.chain()
-                    .operator_fee_charge(&enveloped_tx, gas_limit, spec);
+
+            let mut operator_fee_charge = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
+            }
 
             let mut caller_account = ctx.journal().load_account(caller)?;
-
-            if tx_l1_cost > caller_account.info.balance {
-                return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: tx_l1_cost.into(),
-                    balance: caller_account.info.balance.into(),
-                }
-                .into());
-            }
 
             caller_account.info.balance = caller_account
                 .info
@@ -290,9 +310,13 @@ where
         // Prior to Regolith, deposit transactions did not receive gas refunds.
         let is_gas_refund_disabled = is_deposit && !is_regolith;
         if !is_gas_refund_disabled {
-            exec_result
-                .gas_mut()
-                .set_final_refund(evm.ctx().cfg().spec().is_enabled_in(SpecId::LONDON));
+            exec_result.gas_mut().set_final_refund(
+                evm.ctx()
+                    .cfg()
+                    .spec()
+                    .into_eth_spec()
+                    .is_enabled_in(SpecId::LONDON),
+            );
         }
     }
 
@@ -322,12 +346,13 @@ where
             };
 
             let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
-            let operator_fee_cost = l1_block_info.operator_fee_charge(
-                enveloped_tx,
-                U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
-                spec,
-            );
-
+            let mut operator_fee_cost = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_cost = l1_block_info.operator_fee_charge(
+                    enveloped_tx,
+                    U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+                );
+            }
             // Send the L1 cost of the transaction to the L1 Fee Vault.
             let mut l1_fee_vault_account = ctx.journal().load_account(L1_FEE_RECIPIENT)?;
             l1_fee_vault_account.mark_touch();
@@ -436,6 +461,11 @@ where
             }
         })
     }
+
+    fn clear(&self, evm: &mut Self::Evm) {
+        evm.ctx().chain().clear_tx_l1_cost();
+        self.mainnet.clear(evm);
+    }
 }
 
 impl<EVM, ERROR, FRAME> EthInspectorHandler for OpHandler<EVM, ERROR, FRAME>
@@ -444,7 +474,7 @@ where
         Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
-            Cfg: Cfg<Spec = OpSpec>,
+            Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
         Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,
@@ -471,6 +501,7 @@ mod tests {
     use database::InMemoryDB;
     use revm::{
         context::Context,
+        context_interface::result::InvalidTransaction,
         database_interface::EmptyDB,
         handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
@@ -512,7 +543,7 @@ mod tests {
                 tx.base.gas_limit = 100;
                 tx.enveloped_tx = None;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -528,7 +559,7 @@ mod tests {
                 tx.deposit.source_hash = B256::ZERO;
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -544,7 +575,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
@@ -568,7 +599,7 @@ mod tests {
                 tx.base.gas_limit = 100;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spent(), 100);
@@ -595,7 +626,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
         ctx.modify_tx(|tx| {
             tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
             tx.deposit.source_hash = B256::ZERO;
@@ -631,7 +662,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 100;
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
@@ -669,7 +700,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 100;
                 tx.deposit.source_hash = B256::ZERO;
@@ -705,7 +736,7 @@ mod tests {
                 operator_fee_constant: Some(U256::from(50)),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
             .modify_tx_chained(|tx| {
                 tx.base.gas_limit = 10;
                 tx.enveloped_tx = Some(bytes!("FACADE"));
@@ -742,7 +773,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into())
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
@@ -753,7 +784,7 @@ mod tests {
 
         // l1block cost is 1048 fee.
         assert_eq!(
-            handler.deduct_caller(&mut evm),
+            handler.validate_tx_against_state(&mut evm),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),
@@ -772,7 +803,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.is_system_transaction = true;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
@@ -784,8 +815,7 @@ mod tests {
             ))
         );
 
-        evm.ctx()
-            .modify_cfg(|cfg| cfg.spec = OpSpecId::BEDROCK.into());
+        evm.ctx().modify_cfg(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         // Pre-regolith system transactions should be allowed.
         assert!(handler.validate_env(&mut evm).is_ok());
@@ -799,7 +829,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
@@ -815,7 +845,7 @@ mod tests {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
                 tx.deposit.source_hash = B256::ZERO;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH.into());
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();

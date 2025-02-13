@@ -1,3 +1,4 @@
+use core::cmp::Ordering;
 use revm::{
     context::Cfg,
     context_interface::{
@@ -10,7 +11,6 @@ use revm::{
     specification::hardfork::SpecId,
     state::EvmState,
 };
-use std::cmp::Ordering;
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 

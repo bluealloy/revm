@@ -2,10 +2,11 @@ use super::{
     changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
     StorageWithOriginalValues,
 };
-use core::ops::{Deref, DerefMut};
+use core::{
+    cmp::Ordering,
+    ops::{Deref, DerefMut},
+};
 use primitives::{Address, HashMap, U256};
-use std::cmp::Ordering;
-
 use state::AccountInfo;
 use std::vec::Vec;
 
