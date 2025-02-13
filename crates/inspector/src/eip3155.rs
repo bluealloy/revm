@@ -187,19 +187,20 @@ where
     }
 
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
-        if self.print_summary {
-            let spec = context.cfg().spec().into();
-            let gas_limit = context.tx().gas_limit();
-            let value = Summary {
-                state_root: B256::ZERO.to_string(),
-                output: result.output.to_string(),
-                gas_used: gas_limit - self.gas_inspector.gas_remaining(),
-                pass: result.is_ok(),
-                time: None,
-                fork: Some(spec.to_string()),
-            };
-            let _ = self.write_value(&value);
+        if !self.print_summary {
+            return;
         }
+        let spec = context.cfg().spec().into();
+        let gas_limit = context.tx().gas_limit();
+        let value = Summary {
+            state_root: B256::ZERO.to_string(),
+            output: result.output.to_string(),
+            gas_used: gas_limit - self.gas_inspector.gas_remaining(),
+            pass: result.is_ok(),
+            time: None,
+            fork: Some(spec.to_string()),
+        };
+        let _ = self.write_value(&value);
     }
 
     fn write_value(&mut self, value: &impl serde::Serialize) -> std::io::Result<()> {
@@ -292,6 +293,7 @@ where
 
         if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
+            let _ = self.output.flush();
             // Clear the state if we are at the top level.
             self.clear();
         }
@@ -302,6 +304,7 @@ where
 
         if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
+            let _ = self.output.flush();
             // Clear the state if we are at the top level.
             self.clear();
         }
