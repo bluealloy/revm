@@ -1,3 +1,4 @@
+use context_interface::transaction::AccessListTrait;
 use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::Journal,
@@ -296,7 +297,10 @@ pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
+    let (accounts, storages) = tx
+        .access_list()
+        .map(|al| al.access_list_nums())
+        .unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(
         spec,

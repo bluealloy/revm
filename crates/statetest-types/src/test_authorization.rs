@@ -1,4 +1,4 @@
-use alloy_eip7702::SignedAuthorization;
+use revm::context::SignedAuthorization;
 use serde::{Deserialize, Serialize};
 
 /// Struct for test authorization

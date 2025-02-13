@@ -18,6 +18,6 @@ pub use cfg::{Cfg, CfgEnv};
 pub use context::*;
 pub use journal_init::JournalInit;
 pub use journaled_state::*;
-pub use tx::TxEnv;
+pub use tx::{AccessList, SignedAuthorization, TxEnv};
 pub mod setters;
 pub use evm::{Evm, EvmData};

@@ -3,6 +3,7 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use bytecode::Bytecode;
+use context_interface::transaction::{AccessListTrait, AuthorizationTrait};
 use context_interface::ContextTrait;
 use context_interface::{
     journaled_state::Journal,
@@ -10,9 +11,8 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,
 };
-use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
+use primitives::{BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
 use specification::{eip7702, hardfork::SpecId};
-use std::vec::Vec;
 
 pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error>>(
     context: &mut CTX,
@@ -37,11 +37,8 @@ pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error
     // Load access list
     let (tx, journal) = context.tx_journal();
     if let Some(access_list) = tx.access_list() {
-        for access_list in access_list {
-            journal.warm_account_and_storage(
-                *access_list.0,
-                access_list.1.iter().map(|i| U256::from_be_bytes(i.0)),
-            )?;
+        for (address, storage) in access_list.access_list() {
+            journal.warm_account_and_storage(address, storage.map(|i| U256::from_be_bytes(i.0)))?;
         }
     }
 
@@ -105,47 +102,31 @@ pub fn apply_eip7702_auth_list<
         return Ok(0);
     }
 
-    #[derive(Debug)]
-    struct Authorization {
-        authority: Option<Address>,
-        address: Address,
-        nonce: u64,
-        chain_id: U256,
-    }
-
-    let authorization_list = tx
-        .authorization_list()
-        .map(|a| Authorization {
-            authority: a.0,
-            chain_id: a.1,
-            nonce: a.2,
-            address: a.3,
-        })
-        .collect::<Vec<_>>();
     let chain_id = context.cfg().chain_id();
+    let (tx, journal) = context.tx_journal();
 
     let mut refunded_accounts = 0;
-    for authorization in authorization_list {
+    for authorization in tx.authorization_list() {
         // 1. Verify the chain id is either 0 or the chain's current ID.
-        let auth_chain_id = authorization.chain_id;
+        let auth_chain_id = authorization.chain_id();
         if !auth_chain_id.is_zero() && auth_chain_id != U256::from(chain_id) {
             continue;
         }
 
         // 2. Verify the `nonce` is less than `2**64 - 1`.
-        if authorization.nonce == u64::MAX {
+        if authorization.nonce() == u64::MAX {
             continue;
         }
 
         // recover authority and authorized addresses.
         // 3. `authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]`
-        let Some(authority) = authorization.authority else {
+        let Some(authority) = authorization.authority() else {
             continue;
         };
 
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
-        let mut authority_acc = context.journal().load_account_code(authority)?;
+        let mut authority_acc = journal.load_account_code(authority)?;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
@@ -156,7 +137,7 @@ pub fn apply_eip7702_auth_list<
         }
 
         // 6. Verify the nonce of `authority` is equal to `nonce`. In case `authority` does not exist in the trie, verify that `nonce` is equal to `0`.
-        if authorization.nonce != authority_acc.info.nonce {
+        if authorization.nonce() != authority_acc.info.nonce {
             continue;
         }
 
@@ -166,11 +147,13 @@ pub fn apply_eip7702_auth_list<
         }
 
         // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
-        //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation. Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
-        let (bytecode, hash) = if authorization.address.is_zero() {
+        //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation.
+        //    Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
+        let address = authorization.address();
+        let (bytecode, hash) = if address.is_zero() {
             (Bytecode::default(), KECCAK_EMPTY)
         } else {
-            let bytecode = Bytecode::new_eip7702(authorization.address);
+            let bytecode = Bytecode::new_eip7702(address);
             let hash = bytecode.hash_slow();
             (bytecode, hash)
         };
