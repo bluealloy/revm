@@ -27,7 +27,7 @@ primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
-alloy-eip7702.workspace = true
+alloy-eip7702 = { workspace = true, features = ["k256"] }
 alloy-eip2930.workspace = true
 
 # mics
