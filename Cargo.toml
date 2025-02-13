@@ -53,6 +53,11 @@ statetest-types = { path = "crates/statetest-types", package = "revm-statetest-t
 context = { path = "crates/context", package = "revm-context", version = "1.0.0", default-features = false }
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "1.0.0", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0", default-features = false }
+
+# alloy
+alloy-eip2930 = { version = "0.1.0", default-features = false }
+alloy-eip7702 = { version = "0.5.0", default-features = false }
+
 # misc
 cfg-if = { version = "1.0", default-features = false }
 auto_impl = { version = "1.2.0" }

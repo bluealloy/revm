@@ -32,6 +32,10 @@ specification.workspace = true
 bytecode.workspace = true
 auto_impl.workspace = true
 
+# alloy
+alloy-eip2930.workspace = true
+alloy-eip7702 = { workspace = true, features = ["k256"] }
+
 # misc
 derive-where.workspace = true
 cfg-if.workspace = true
