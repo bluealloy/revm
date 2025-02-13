@@ -1,5 +1,10 @@
+mod alloy_types;
+pub mod eip2930;
+pub mod eip7702;
 pub mod transaction_type;
 
+pub use eip2930::AccessListTrait;
+pub use eip7702::AuthorizationTrait;
 use specification::eip4844::GAS_PER_BLOB;
 pub use transaction_type::TransactionType;
 
@@ -11,9 +16,6 @@ use primitives::{Address, Bytes, TxKind, B256, U256};
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
 
-/// (Optional signer, chain id, nonce, address)
-pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
-
 /// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum
 ///
 /// Access to any associated type is gaited behind [`tx_type`][Transaction::tx_type] function.
@@ -22,6 +24,9 @@ pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
+    type AccessList: AccessListTrait;
+    type Authorization: AuthorizationTrait;
+
     /// Returns the transaction type.
     ///
     /// Depending on this field other functions should be called.
@@ -68,20 +73,11 @@ pub trait Transaction {
     /// For Eip1559 it is max_fee_per_gas.
     fn gas_price(&self) -> u128;
 
-    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>>;
+    /// Access list for the transaction.
+    ///
+    /// Introduced in EIP-2930.
+    fn access_list(&self) -> Option<&Self::AccessList>;
 
-    fn access_list_nums(&self) -> Option<(usize, usize)> {
-        self.access_list().map(|al| {
-            let mut accounts_num = 0;
-            let mut storage_num = 0;
-            for (_, storage) in al {
-                accounts_num += 1;
-                storage_num += storage.len();
-            }
-
-            (accounts_num, storage_num)
-        })
-    }
     /// Returns vector of fixed size hash(32 bytes)
     ///
     /// Note : EIP-4844 transaction field.
@@ -114,6 +110,7 @@ pub trait Transaction {
     /// Returns length of the authorization list.
     ///
     /// # Note
+    ///
     /// Transaction is considered invalid if list is empty.
     fn authorization_list_len(&self) -> usize;
 
@@ -123,7 +120,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem>;
+    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization>;
 
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {

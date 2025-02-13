@@ -27,6 +27,8 @@ primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
+alloy-eip7702.workspace = true
+alloy-eip2930.workspace = true
 
 # mics
 auto_impl.workspace = true
@@ -45,4 +47,3 @@ default = ["std"]
 std = ["serde?/std"]
 serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
 serde-json = ["serde"]
-

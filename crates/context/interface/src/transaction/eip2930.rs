@@ -21,15 +21,3 @@ pub trait AccessListTrait {
         (account_num, storage_num)
     }
 }
-
-// TODO : Move to default context
-use specification::eip2930::AccessList;
-
-impl AccessListTrait for AccessList {
-    fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
-        self.0.iter().map(|item| {
-            let slots = item.storage_keys.iter().copied();
-            (item.address, slots)
-        })
-    }
-}

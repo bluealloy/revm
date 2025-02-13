@@ -3448,6 +3448,8 @@ dependencies = [
 name = "revm-context-interface"
 version = "1.0.0"
 dependencies = [
+ "alloy-eip2930",
+ "alloy-eip7702",
  "auto_impl",
  "revm-database",
  "revm-database-interface",
