@@ -3,7 +3,7 @@ use precompile::Log;
 use revm::{
     context::{BlockEnv, Cfg, CfgEnv, TxEnv},
     context_interface::{Block, Journal},
-    handler::{instructions::EthInstructions, noop::NoOpInspector},
+    handler::instructions::EthInstructions,
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
     Context, Database, JournaledState,
@@ -13,9 +13,7 @@ use std::vec::Vec;
 pub trait OpBuilder: Sized {
     type Context;
 
-    fn build_op(
-        self,
-    ) -> OpEvm<Self::Context, NoOpInspector, EthInstructions<EthInterpreter, Self::Context>>;
+    fn build_op(self) -> OpEvm<Self::Context, (), EthInstructions<EthInterpreter, Self::Context>>;
 
     fn build_op_with_inspector<INSP>(
         self,
@@ -33,10 +31,8 @@ where
 {
     type Context = Self;
 
-    fn build_op(
-        self,
-    ) -> OpEvm<Self::Context, NoOpInspector, EthInstructions<EthInterpreter, Self::Context>> {
-        OpEvm::new(self, NoOpInspector {})
+    fn build_op(self) -> OpEvm<Self::Context, (), EthInstructions<EthInterpreter, Self::Context>> {
+        OpEvm::new(self, ())
     }
 
     fn build_op_with_inspector<INSP>(

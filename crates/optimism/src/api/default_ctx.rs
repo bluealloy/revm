@@ -38,13 +38,14 @@ impl DefaultOp
 mod test {
     use super::*;
     use crate::api::builder::OpBuilder;
-    use revm::{ExecuteEvm, InspectEvm};
+    use inspector::{InspectEvm, NoOpInspector};
+    use revm::ExecuteEvm;
 
     #[test]
     fn default_run_op() {
         let ctx = Context::op();
         // convert to optimism context
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.build_op_with_inspector(NoOpInspector {});
         // execute
         let _ = evm.transact_previous();
         // inspect

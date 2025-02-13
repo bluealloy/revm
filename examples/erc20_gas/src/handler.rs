@@ -35,7 +35,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
 impl<EVM, ERROR, FRAME> EthHandler for Erc20MainetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
-    FRAME: Frame<Context = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
     ERROR: EthTraitError<EVM>,
 {
     type Evm = EVM;

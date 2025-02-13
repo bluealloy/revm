@@ -2,21 +2,17 @@ use crate::{
     evm::OpEvm, handler::OpHandler, transaction::OpTxTrait, L1BlockInfo, OpHaltReason, OpSpecId,
     OpTransactionError,
 };
+use inspector::{InspectCommitEvm, InspectEvm, Inspector, JournalExt};
 use precompile::Log;
 use revm::{
     context_interface::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Block, Cfg, ContextTrait, Database, Journal,
     },
-    handler::{
-        handler::EvmTrait,
-        inspector::{Inspector, JournalExt},
-        instructions::EthInstructions,
-        EthFrame, EthHandler,
-    },
+    handler::{handler::EvmTrait, instructions::EthInstructions, EthFrame, EthHandler},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
-    Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm, InspectCommitEvm, InspectEvm,
+    Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 use std::vec::Vec;
 
@@ -31,8 +27,7 @@ where
     TX: OpTxTrait,
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
+    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
 {
     type Output =
         Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>;
@@ -55,7 +50,6 @@ where
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database + DatabaseCommit,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-    INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
 {
     type CommitOutput = Result<
         ExecutionResult<OpHaltReason>,
@@ -87,7 +81,7 @@ where
     type Inspector = INSP;
 
     fn set_inspector(&mut self, inspector: Self::Inspector) {
-        self.data.inspector = inspector;
+        self.0.data.inspector = inspector;
     }
 
     fn inspect_previous(&mut self) -> Self::Output {

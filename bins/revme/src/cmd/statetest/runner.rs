@@ -4,7 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::inspectors::TracerEip3155;
+use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -16,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, ExecuteCommitEvm, InspectCommitEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};

@@ -30,33 +30,33 @@ use std::{boxed::Box, rc::Rc, sync::Arc};
 
 /// Call frame trait
 pub trait Frame: Sized {
-    type Context;
+    type Evm;
     type FrameInit;
     type FrameResult;
     type Error;
 
     fn init_first(
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
     fn init(
         &self,
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
-    fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error>;
+    fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
     fn return_result(
         &mut self,
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error>;
 }
 
-pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
-    phantom: core::marker::PhantomData<(CTX, ERROR)>,
+pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
+    phantom: core::marker::PhantomData<(EVM, ERROR)>,
     /// Data of the frame.
     data: FrameData,
     /// Input data for the frame.
@@ -71,46 +71,46 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes> {
     pub memory: Rc<RefCell<SharedMemory>>,
 }
 
-impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter<()>>
+impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTrait<
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
-            InterpreterTypes = EthInterpreter<()>,
+            InterpreterTypes = EthInterpreter,
             Output = InterpreterAction,
         >,
     >,
     ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
 {
-    type Context = EVM;
+    type Evm = EVM;
     type FrameInit = FrameInput;
     type FrameResult = FrameResult;
     type Error = ERROR;
 
     fn init_first(
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        EthFrame::init_first(context, frame_input)
+        EthFrame::init_first(evm, frame_input)
     }
 
     fn init(
         &self,
-        context: &mut Self::Context,
+        evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        self.init(context, frame_input)
+        self.init(evm, frame_input)
     }
 
-    fn run(&mut self, context: &mut Self::Context) -> Result<FrameInitOrResult<Self>, Self::Error> {
+    fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
         let next_action = context.run_interpreter(&mut self.interpreter);
-        self.run_frame(context, next_action)
+        self.process_next_action(context, next_action)
     }
 
     fn return_result(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut Self::Evm,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
         self.return_result(context, result)
@@ -511,21 +511,21 @@ where
     }
 }
 
-impl<CTX, ERROR> EthFrame<CTX, ERROR, EthInterpreter<()>>
+impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
-    CTX: EvmTrait<
+    EVM: EvmTrait<
         Context: ContextTrait,
-        Precompiles: PrecompileProvider<Context = CTX::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
-            Context = CTX::Context,
-            InterpreterTypes = EthInterpreter<()>,
+            Context = EVM::Context,
+            InterpreterTypes = EthInterpreter,
             Output = InterpreterAction,
         >,
     >,
-    ERROR: From<CtxTraitDbError<CTX::Context>> + From<PrecompileErrors>,
+    ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     pub fn init_first(
-        evm: &mut CTX,
+        evm: &mut EVM,
         frame_input: FrameInput,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
@@ -541,16 +541,16 @@ where
 
     fn init(
         &self,
-        context: &mut CTX,
+        evm: &mut EVM,
         frame_init: FrameInput,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         self.memory.borrow_mut().new_context();
-        Self::init_with_context(context, self.depth + 1, frame_init, self.memory.clone())
+        Self::init_with_context(evm, self.depth + 1, frame_init, self.memory.clone())
     }
 
-    pub fn run_frame(
+    pub fn process_next_action(
         &mut self,
-        evm: &mut CTX,
+        evm: &mut EVM,
         next_action: InterpreterAction,
     ) -> Result<FrameInitOrResult<Self>, ERROR> {
         let context = evm.ctx();
@@ -615,9 +615,9 @@ where
         Ok(result)
     }
 
-    fn return_result(&mut self, context: &mut CTX, result: FrameResult) -> Result<(), ERROR> {
+    fn return_result(&mut self, evm: &mut EVM, result: FrameResult) -> Result<(), ERROR> {
         self.memory.borrow_mut().free_context();
-        core::mem::replace(context.ctx().error(), Ok(()))?;
+        core::mem::replace(evm.ctx().error(), Ok(()))?;
 
         // Insert result to the top frame.
         match result {

@@ -3,7 +3,6 @@ use core::ops::{Deref, DerefMut};
 
 pub struct Evm<CTX, INSP, I, P> {
     pub data: EvmData<CTX, INSP>,
-    pub enabled_inspection: bool,
     pub instruction: I,
     pub precompiles: P,
 }
@@ -17,7 +16,6 @@ impl<CTX> Evm<CTX, (), (), ()> {
     pub fn new(ctx: CTX) -> Self {
         Evm {
             data: EvmData { ctx, inspector: () },
-            enabled_inspection: false,
             instruction: (),
             precompiles: (),
         }
@@ -32,7 +30,6 @@ impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
                 ctx: self.data.ctx,
                 inspector,
             },
-            enabled_inspection: self.enabled_inspection,
             instruction: self.instruction,
             precompiles: self.precompiles,
         }
@@ -42,7 +39,6 @@ impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
     pub fn with_precompiles<OP>(self, precompiles: OP) -> Evm<CTX, INSP, I, OP> {
         Evm {
             data: self.data,
-            enabled_inspection: self.enabled_inspection,
             instruction: self.instruction,
             precompiles,
         }

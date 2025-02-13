@@ -23,7 +23,7 @@ where
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
-            InterpreterTypes = EthInterpreter<()>,
+            InterpreterTypes = EthInterpreter,
             Output = InterpreterAction,
         >,
     >,
@@ -43,7 +43,7 @@ where
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
-            InterpreterTypes = EthInterpreter<()>,
+            InterpreterTypes = EthInterpreter,
             Output = InterpreterAction,
         >,
     >,

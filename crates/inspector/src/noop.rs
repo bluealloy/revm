@@ -1,5 +1,5 @@
 use crate::inspector::Inspector;
-use interpreter::InterpreterTypes;
+use revm::interpreter::InterpreterTypes;
 
 /// Dummy [Inspector], helpful as standalone replacement.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]

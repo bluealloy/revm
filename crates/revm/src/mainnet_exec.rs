@@ -1,5 +1,4 @@
 use crate::{exec_inspect::ExecuteCommitEvm, ExecuteEvm};
-use crate::{InspectCommitEvm, InspectEvm};
 use context::setters::ContextSetters;
 use context::Evm;
 use context_interface::{
@@ -7,11 +6,8 @@ use context_interface::{
     ContextTrait, Database, Journal,
 };
 use database_interface::DatabaseCommit;
-use handler::inspector::JournalExt;
-use handler::PrecompileProvider;
-use handler::{handler::EvmTrait, inspector::EthInspectorHandler};
 use handler::{
-    inspector::Inspector, instructions::EthInstructions, EthFrame, EthHandler, MainnetHandler,
+    instructions::EthInstructions, EthFrame, EthHandler, MainnetHandler, PrecompileProvider,
 };
 use interpreter::interpreter::EthInterpreter;
 
@@ -23,9 +19,7 @@ use std::vec::Vec;
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters
-        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
-    INSP: Inspector<CTX, EthInterpreter>,
+    CTX: ContextSetters + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -43,11 +37,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTrait<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-            Db: DatabaseCommit,
-        >,
-    INSP: Inspector<CTX, EthInterpreter>,
+        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
@@ -58,48 +48,6 @@ where
     fn transact_commit_previous(&mut self) -> Self::CommitOutput {
         self.transact_previous().map(|r| {
             self.db().commit(r.state);
-            r.result
-        })
-    }
-}
-
-impl<CTX, INSP, PRECOMPILES> InspectEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
-where
-    CTX: ContextSetters
-        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
-    INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
-{
-    type Inspector = INSP;
-
-    fn set_inspector(&mut self, inspector: Self::Inspector) {
-        self.data.inspector = inspector;
-    }
-
-    fn inspect_previous(&mut self) -> Self::Output {
-        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
-            _phantom: core::marker::PhantomData,
-        };
-
-        t.inspect_run(self)
-    }
-}
-
-impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
-where
-    CTX: ContextSetters
-        + ContextTrait<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-            Db: DatabaseCommit,
-        >,
-    INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
-{
-    fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
-        self.inspect_previous().map(|r| {
-            self.ctx().db().commit(r.state);
             r.result
         })
     }

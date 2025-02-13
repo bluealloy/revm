@@ -10,6 +10,7 @@ use crate::{
     },
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
+use inspector::{EthInspectorHandler, Inspector, InspectorEvmTrait, InspectorFrameTrait};
 use precompile::Log;
 use revm::{
     context_interface::{
@@ -18,7 +19,6 @@ use revm::{
     },
     handler::{
         handler::{EthTraitError, EvmTrait},
-        inspector::{EthInspectorHandler, Inspector, InspectorFrame},
         validation::validate_tx_against_account,
         EthHandler, Frame, FrameResult, MainnetHandler,
     },
@@ -73,7 +73,7 @@ where
     ERROR: EthTraitError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: Frame<Context = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
 {
     type Evm = EVM;
     type Error = ERROR;
@@ -470,7 +470,7 @@ where
 
 impl<EVM, ERROR, FRAME> EthInspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTrait<
+    EVM: InspectorEvmTrait<
         Context: ContextTrait<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxTrait,
@@ -482,8 +482,13 @@ where
     ERROR: EthTraitError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: Frame<Context = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
-        + InspectorFrame<IT = EthInterpreter, FrameInput = FrameInput>,
+    FRAME: InspectorFrameTrait<
+        Evm = EVM,
+        Error = ERROR,
+        FrameResult = FrameResult,
+        FrameInit = FrameInput,
+        IT = EthInterpreter,
+    >,
 {
     type IT = EthInterpreter;
 }

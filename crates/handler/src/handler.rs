@@ -1,22 +1,16 @@
-use crate::inspector::JournalExt;
 use crate::{
-    execution, inspector::Inspector, instructions::InstructionProvider, post_execution,
-    pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult, FrameResult, ItemOrResult,
+    execution, instructions::InstructionProvider, post_execution, pre_execution, validation, Frame,
+    FrameInitOrResult, FrameOrResult, FrameResult, ItemOrResult,
 };
 use auto_impl::auto_impl;
-use context::{Evm, JournalEntry};
+use context::Evm;
 use context_interface::ContextTrait;
 use context_interface::{
     result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
-use interpreter::table::InstructionTable;
-use interpreter::InterpreterTypes;
-use interpreter::{
-    interpreter_types::{Jumps, LoopControl},
-    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
-};
+use interpreter::{FrameInput, Host, InitialAndFloorGas, Interpreter, InterpreterAction};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
@@ -40,86 +34,12 @@ impl<
 {
 }
 
-pub fn inspect_instructions<CTX, IT>(
-    context: &mut CTX,
-    interpreter: &mut Interpreter<IT>,
-    mut inspector: impl Inspector<CTX, IT>,
-    instructions: &InstructionTable<IT, CTX>,
-) -> InterpreterAction
-where
-    CTX: ContextTrait<Journal: JournalExt> + Host,
-    IT: InterpreterTypes,
-{
-    interpreter.reset_control();
-
-    let mut log_num = context.journal().logs().len();
-    // Main loop
-    while interpreter.control.instruction_result().is_continue() {
-        // Get current opcode.
-        let opcode = interpreter.bytecode.opcode();
-
-        // Call Inspector step.
-        inspector.step(interpreter, context);
-        if interpreter.control.instruction_result() != InstructionResult::Continue {
-            break;
-        }
-
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        interpreter.bytecode.relative_jump(1);
-
-        // Execute instruction.
-        instructions[opcode as usize](interpreter, context);
-
-        // check if new log is added
-        let new_log = context.journal().logs().len();
-        if log_num < new_log {
-            // as there is a change in log number this means new log is added
-            let log = context.journal().logs().last().unwrap().clone();
-            inspector.log(interpreter, context, log);
-            log_num = new_log;
-        }
-
-        // Call step_end.
-        inspector.step_end(interpreter, context);
-    }
-
-    let next_action = interpreter.take_next_action();
-
-    // handle selfdestruct
-    if let InterpreterAction::Return { result } = &next_action {
-        if result.result == InstructionResult::SelfDestruct {
-            match context.journal().last_journal().last() {
-                Some(JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    had_balance,
-                    ..
-                }) => {
-                    inspector.selfdestruct(*address, *target, *had_balance);
-                }
-                Some(JournalEntry::BalanceTransfer {
-                    from, to, balance, ..
-                }) => {
-                    inspector.selfdestruct(*from, *to, *balance);
-                }
-                _ => {}
-            }
-        }
-    }
-
-    next_action
-}
-
 impl<CTX, INSP, I, P> EvmTrait for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTrait<Journal: JournalExt> + Host,
-    INSP: Inspector<CTX, I::InterpreterTypes>,
+    CTX: ContextTrait + Host,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;
-    type Inspector = INSP;
     type Instructions = I;
     type Precompiles = P;
 
@@ -132,24 +52,8 @@ where
     ) -> <Self::Instructions as InstructionProvider>::Output {
         let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
-        let inspector = &mut self.data.inspector;
-        if self.enabled_inspection {
-            inspect_instructions(
-                context,
-                interpreter,
-                inspector,
-                instructions.instruction_table(),
-            )
-        } else {
-            interpreter.run_plain(instructions.instruction_table(), context)
-        }
+        interpreter.run_plain(instructions.instruction_table(), context)
     }
-
-    #[inline]
-    fn enable_inspection(&mut self, enable: bool) {
-        self.enabled_inspection = enable;
-    }
-
     #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.data.ctx
@@ -158,16 +62,6 @@ where
     #[inline]
     fn ctx_ref(&self) -> &Self::Context {
         &self.data.ctx
-    }
-
-    #[inline]
-    fn inspector(&mut self) -> &mut Self::Inspector {
-        &mut self.data.inspector
-    }
-
-    #[inline]
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.data.ctx, &mut self.data.inspector)
     }
 
     #[inline]
@@ -184,7 +78,6 @@ where
 #[auto_impl(&mut, Box)]
 pub trait EvmTrait {
     type Context: ContextTrait;
-    type Inspector;
     type Instructions: InstructionProvider;
     type Precompiles;
 
@@ -195,15 +88,9 @@ pub trait EvmTrait {
         >,
     ) -> <Self::Instructions as InstructionProvider>::Output;
 
-    fn enable_inspection(&mut self, enable: bool);
-
     fn ctx(&mut self) -> &mut Self::Context;
 
-    fn inspector(&mut self) -> &mut Self::Inspector;
-
     fn ctx_ref(&self) -> &Self::Context;
-
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
 
     fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
 
@@ -216,7 +103,7 @@ pub trait EthHandler {
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
-        Context = Self::Evm,
+        Evm = Self::Evm,
         Error = Self::Error,
         FrameResult = FrameResult,
         FrameInit = FrameInput,
