@@ -8,8 +8,8 @@ use crate::{
     interpreter::Interpreter,
     interpreter_action::FrameInput,
     interpreter_types::{
-        EofContainer, Immediates, InputsTrait, InterpreterTypes, Jumps, LoopControl, MemoryTrait,
-        ReturnData, RuntimeFlag, StackTrait,
+        EofContainer, Immediates, InputsT, InterpreterTypes, Jumps, LoopControl, MemoryT,
+        ReturnData, RuntimeFlag, StackT,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
     InterpreterAction, InterpreterResult,

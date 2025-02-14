@@ -1,7 +1,7 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, MemoryT, RuntimeFlag, StackT},
 };
 use context_interface::{host::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};

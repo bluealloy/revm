@@ -5,12 +5,9 @@ use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
-pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
+pub trait HaltReasonT: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
-impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-    HaltReasonT: Clone + Debug + PartialEq + Eq + From<HaltReason>
-{
-}
+impl<T> HaltReasonT for T where T: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

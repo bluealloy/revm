@@ -6,21 +6,21 @@ use crate::{
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
     transaction::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTrait,
+        OpTransactionError, OpTxT,
     },
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
-use inspector::{EthInspectorHandler, Inspector, InspectorEvmTrait, InspectorFrameTrait};
+use inspector::{Inspector, InspectorEvmT, InspectorFrameT, InspectorHandler};
 use precompile::Log;
 use revm::{
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
-        Block, Cfg, ContextTrait, Journal, Transaction,
+        Block, Cfg, ContextT, Journal, Transaction,
     },
     handler::{
-        handler::{EthTraitError, EvmTrait},
+        handler::{EvmT, EvmTError},
         validation::validate_tx_against_account,
-        EthHandler, Frame, FrameResult, MainnetHandler,
+        Frame, FrameResult, Handler, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{hash_map::HashMap, U256},
@@ -60,17 +60,17 @@ impl<DB, TX> IsTxError for EVMError<DB, TX> {
     }
 }
 
-impl<EVM, ERROR, FRAME> EthHandler for OpHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTrait<
-        Context: ContextTrait<
+    EVM: EvmT<
+        Context: ContextT<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Tx: OpTxTrait,
+            Tx: OpTxT,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
     >,
-    ERROR: EthTraitError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    ERROR: EvmTError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
@@ -468,21 +468,21 @@ where
     }
 }
 
-impl<EVM, ERROR, FRAME> EthInspectorHandler for OpHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: InspectorEvmTrait<
-        Context: ContextTrait<
+    EVM: InspectorEvmT<
+        Context: ContextT<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Tx: OpTxTrait,
+            Tx: OpTxT,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmT>::Context, EthInterpreter>,
     >,
-    ERROR: EthTraitError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    ERROR: EvmTError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: InspectorFrameTrait<
+    FRAME: InspectorFrameT<
         Evm = EVM,
         Error = ERROR,
         FrameResult = FrameResult,

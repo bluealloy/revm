@@ -14,7 +14,7 @@ use reqwest::{Client, Url};
 use revm::{
     context_interface::{
         result::{InvalidHeader, InvalidTransaction},
-        ContextTrait, Journal,
+        ContextT, Journal,
     },
     database_interface::WrapDatabaseAsync,
     precompile::PrecompileErrors,
@@ -88,7 +88,7 @@ pub fn token_operation<CTX, ERROR>(
     amount: U256,
 ) -> Result<(), ERROR>
 where
-    CTX: ContextTrait,
+    CTX: ContextT,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<<CTX::Db as Database>::Error>

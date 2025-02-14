@@ -1,11 +1,11 @@
 pub use crate::journaled_state::StateLoad;
 use database_interface::Database;
 
-use crate::{context::ContextTrait, journaled_state::AccountLoad, Block, Journal};
+use crate::{context::ContextT, journaled_state::AccountLoad, Block, Journal};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 
 /// EVM context host.
-pub trait Host: ContextTrait {
+pub trait Host: ContextT {
     fn set_error(&mut self, error: <Self::Db as Database>::Error) {
         *self.error() = Err(error);
     }
@@ -118,7 +118,7 @@ pub trait Host: ContextTrait {
     }
 }
 
-impl<T: ContextTrait> Host for T {}
+impl<T: ContextT> Host for T {}
 
 /// Represents the result of an `sstore` operation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

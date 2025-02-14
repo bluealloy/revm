@@ -2,7 +2,7 @@ pub mod abstraction;
 pub mod deposit;
 pub mod error;
 
-pub use abstraction::{OpTransaction, OpTxTrait};
+pub use abstraction::{OpTransaction, OpTxT};
 pub use error::OpTransactionError;
 
 use crate::fast_lz::flz_compress_len;

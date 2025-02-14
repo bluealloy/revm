@@ -1,4 +1,4 @@
-use crate::{evm::OpEvm, transaction::OpTxTrait, L1BlockInfo, OpSpecId, OpTransaction};
+use crate::{evm::OpEvm, transaction::OpTxT, L1BlockInfo, OpSpecId, OpTransaction};
 use precompile::Log;
 use revm::{
     context::{BlockEnv, Cfg, CfgEnv, TxEnv},
@@ -24,7 +24,7 @@ pub trait OpBuilder: Sized {
 impl<BLOCK, TX, CFG, DB, JOURNAL> OpBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>
 where
     BLOCK: Block,
-    TX: OpTxTrait,
+    TX: OpTxT,
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,

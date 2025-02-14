@@ -21,9 +21,6 @@ pub mod empty_db;
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 
-pub trait BytecodeTrait {
-    fn code(&self) -> &[u8];
-}
 /// Database error marker is needed to implement From conversion for Error type.
 pub trait DBErrorMarker {}
 
@@ -37,7 +34,7 @@ impl DBErrorMarker for String {}
 pub trait Database {
     /// The database error type.
     type Error: DBErrorMarker + Error;
-    //type Bytecode: BytecodeTrait;
+    //type Bytecode: BytecodeT;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

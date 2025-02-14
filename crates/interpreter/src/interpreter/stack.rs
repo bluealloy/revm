@@ -3,7 +3,7 @@ use core::{fmt, ptr};
 use primitives::U256;
 use std::vec::Vec;
 
-use super::StackTrait;
+use super::StackT;
 
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
@@ -47,7 +47,7 @@ impl Clone for Stack {
     }
 }
 
-impl StackTrait for Stack {
+impl StackT for Stack {
     fn len(&self) -> usize {
         self.len()
     }

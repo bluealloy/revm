@@ -3,7 +3,7 @@ use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
     context::Cfg,
-    context_interface::ContextTrait,
+    context_interface::ContextT,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
 };
@@ -86,13 +86,13 @@ pub fn isthumus() -> &'static Precompiles {
 
 impl<CTX> PrecompileProvider for OpPrecompileProvider<CTX>
 where
-    CTX: ContextTrait<Cfg: Cfg<Spec = OpSpecId>>,
+    CTX: ContextT<Cfg: Cfg<Spec = OpSpecId>>,
 {
     type Context = CTX;
     type Output = InterpreterResult;
 
     #[inline]
-    fn set_spec(&mut self, spec: <<Self::Context as ContextTrait>::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <<Self::Context as ContextT>::Cfg as Cfg>::Spec) {
         *self = Self::new_with_spec(spec);
     }
 

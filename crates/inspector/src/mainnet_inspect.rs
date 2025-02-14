@@ -1,9 +1,9 @@
 use revm::{
     context::{setters::ContextSetters, Evm},
-    context_interface::{ContextTrait, Journal},
+    context_interface::{ContextT, Journal},
     handler::{
-        instructions::EthInstructions, EthFrame, EthHandler, EthTraitError, EvmTrait, Frame,
-        FrameResult, MainnetHandler, PrecompileProvider,
+        instructions::EthInstructions, EthFrame, EvmT, EvmTError, Frame, FrameResult, Handler,
+        MainnetHandler, PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult},
     primitives::Log,
@@ -13,19 +13,19 @@ use revm::{
 use std::vec::Vec;
 
 use crate::{
-    EthInspectorHandler, InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTrait,
-    InspectorFrameTrait, JournalExt,
+    InspectCommitEvm, InspectEvm, Inspector, InspectorEvmT, InspectorFrameT, InspectorHandler,
+    JournalExt,
 };
 
-impl<EVM, ERROR, FRAME> EthInspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: InspectorEvmTrait<
-        Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, EthInterpreter>,
+    EVM: InspectorEvmT<
+        Context: ContextT<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmT>::Context, EthInterpreter>,
     >,
-    ERROR: EthTraitError<EVM>,
+    ERROR: EvmTError<EVM>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
-        + InspectorFrameTrait<IT = EthInterpreter>,
+        + InspectorFrameT<IT = EthInterpreter>,
 {
     type IT = EthInterpreter;
 }
@@ -34,7 +34,7 @@ impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
+        + ContextT<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
@@ -57,7 +57,7 @@ impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTrait<
+        + ContextT<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
             Db: DatabaseCommit,
         >,

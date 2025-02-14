@@ -15,7 +15,7 @@ pub mod transaction;
 
 pub use block::Block;
 pub use cfg::{Cfg, CreateScheme, TransactTo};
-pub use context::ContextTrait;
+pub use context::ContextT;
 pub use database_interface::{DBErrorMarker, Database};
 pub use journaled_state::Journal;
 pub use transaction::{Transaction, TransactionType};

@@ -2,8 +2,7 @@ use crate::{
     gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
     interpreter::Interpreter,
     interpreter_types::{
-        EofData, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
-        StackTrait,
+        EofData, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryT, RuntimeFlag, StackT,
     },
     Host,
 };

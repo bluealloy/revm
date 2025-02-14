@@ -4,9 +4,9 @@ use crate::{
 };
 use auto_impl::auto_impl;
 use context::Evm;
-use context_interface::ContextTrait;
+use context_interface::ContextT;
 use context_interface::{
-    result::{HaltReasonTrait, InvalidHeader, InvalidTransaction, ResultAndState},
+    result::{HaltReasonT, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
@@ -16,27 +16,27 @@ use primitives::Log;
 use state::EvmState;
 use std::{vec, vec::Vec};
 
-pub trait EthTraitError<EVM: EvmTrait>:
+pub trait EvmTError<EVM: EvmT>:
     From<InvalidTransaction>
     + From<InvalidHeader>
-    + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
+    + From<<<EVM::Context as ContextT>::Db as Database>::Error>
     + From<PrecompileErrors>
 {
 }
 
 impl<
-        EVM: EvmTrait,
+        EVM: EvmT,
         T: From<InvalidTransaction>
             + From<InvalidHeader>
-            + From<<<EVM::Context as ContextTrait>::Db as Database>::Error>
+            + From<<<EVM::Context as ContextT>::Db as Database>::Error>
             + From<PrecompileErrors>,
-    > EthTraitError<EVM> for T
+    > EvmTError<EVM> for T
 {
 }
 
-impl<CTX, INSP, I, P> EvmTrait for Evm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> EvmT for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTrait + Host,
+    CTX: ContextT + Host,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;
@@ -76,8 +76,8 @@ where
 }
 
 #[auto_impl(&mut, Box)]
-pub trait EvmTrait {
-    type Context: ContextTrait;
+pub trait EvmT {
+    type Context: ContextT;
     type Instructions: InstructionProvider;
     type Precompiles;
 
@@ -97,9 +97,9 @@ pub trait EvmTrait {
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
-pub trait EthHandler {
-    type Evm: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
-    type Error: EthTraitError<Self::Evm>;
+pub trait Handler {
+    type Evm: EvmT<Context: ContextT<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
+    type Error: EvmTError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -109,7 +109,7 @@ pub trait EthHandler {
         FrameInit = FrameInput,
     >;
     // TODO `HaltReason` should be part of the output.
-    type HaltReason: HaltReasonTrait;
+    type HaltReason: HaltReasonT;
 
     #[inline]
     fn run(

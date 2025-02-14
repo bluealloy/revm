@@ -2,7 +2,7 @@ use super::i256::i256_cmp;
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackT},
     Host,
 };
 use core::cmp::Ordering;
@@ -179,7 +179,7 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
 #[cfg(test)]
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
-    use crate::interpreter_wiring::StackTrait;
+    use crate::interpreter_wiring::StackT;
     use crate::{Contract, DummyHost, Interpreter};
     use primitives::{uint, U256};
     use specification::hardfork::LatestSpec;
