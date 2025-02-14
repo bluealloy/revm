@@ -4,9 +4,9 @@ use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{ContextT, Journal, Transaction},
+    context_interface::{ContextTr, Journal, Transaction},
     interpreter::{
-        interpreter_types::{Jumps, LoopControl, MemoryT, StackT},
+        interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
         InterpreterTypes, Stack,
     },
@@ -114,7 +114,7 @@ struct Summary {
 
 impl<CTX, INTR> TracerEip3155<CTX, INTR>
 where
-    CTX: ContextT,
+    CTX: ContextTr,
     INTR:,
 {
     /// Creates a new EIP-3155 tracer with the given output writer, by first wrapping it in a
@@ -220,8 +220,8 @@ impl CloneStack for Stack {
 
 impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
 where
-    CTX: ContextT,
-    INTR: InterpreterTypes<Stack: StackT + CloneStack>,
+    CTX: ContextTr,
+    INTR: InterpreterTypes<Stack: StackTr + CloneStack>,
 {
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
         self.gas_inspector.initialize_interp(interp.control.gas());

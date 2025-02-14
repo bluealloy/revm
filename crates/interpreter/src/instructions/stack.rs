@@ -2,7 +2,7 @@ use crate::{
     gas,
     instructions::utility::cast_slice_to_u256,
     interpreter::Interpreter,
-    interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackT},
+    interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
 use primitives::U256;

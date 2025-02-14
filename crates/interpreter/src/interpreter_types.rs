@@ -46,7 +46,7 @@ pub trait Jumps {
     fn opcode(&self) -> u8;
 }
 
-pub trait MemoryT {
+pub trait MemoryTr {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]);
     fn set(&mut self, memory_offset: usize, data: &[u8]);
 
@@ -61,7 +61,7 @@ pub trait MemoryT {
 
     /// Memory slice len
     ///
-    /// Uses [`slice`][MemoryT::slice] internally.
+    /// Uses [`slice`][MemoryTr::slice] internally.
     fn slice_len(&self, offset: usize, len: usize) -> impl Deref<Target = [u8]> + '_ {
         self.slice(offset..offset + len)
     }
@@ -99,7 +99,7 @@ pub trait SubRoutineStack {
     // fn eof_code_info(&self, idx: usize) -> Option<&TypesSection>;
 }
 
-pub trait StackT {
+pub trait StackTr {
     /// Returns stack length.
     fn len(&self) -> usize;
 
@@ -206,8 +206,8 @@ pub trait Interp {
 }
 
 pub trait InterpreterTypes {
-    type Stack: StackT;
-    type Memory: MemoryT;
+    type Stack: StackTr;
+    type Memory: MemoryTr;
     type Bytecode: Jumps + Immediates + LegacyBytecode + EofData + EofContainer + EofCodeInfo;
     type ReturnData: ReturnData;
     type Input: InputsT;

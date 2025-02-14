@@ -1,4 +1,4 @@
-//! Handler related to Optimism chain
+//!HandlerTr related to Optimism chain
 
 pub mod precompiles;
 
@@ -10,17 +10,17 @@ use crate::{
     },
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
-use inspector::{Inspector, InspectorEvmT, InspectorFrameT, InspectorHandler};
+use inspector::{Inspector, InspectorEvmTrr, InspectorFrame, InspectorHandler};
 use precompile::Log;
 use revm::{
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
-        Block, Cfg, ContextT, Journal, Transaction,
+        Block, Cfg, ContextTr, Journal, Transaction,
     },
     handler::{
-        handler::{EvmT, EvmTError},
+        handler::{EvmTr, EvmTrError},
         validation::validate_tx_against_account,
-        Frame, FrameResult, Handler, MainnetHandler,
+        Frame, FrameResult, HandlerTr, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{hash_map::HashMap, U256},
@@ -60,17 +60,17 @@ impl<DB, TX> IsTxError for EVMError<DB, TX> {
     }
 }
 
-impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> HandlerTr for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmT<
-        Context: ContextT<
+    EVM: EvmTr<
+        Context: ContextTr<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxT,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
     >,
-    ERROR: EvmTError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
@@ -470,19 +470,19 @@ where
 
 impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: InspectorEvmT<
-        Context: ContextT<
+    EVM: InspectorEvmTrr<
+        Context: ContextTr<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
             Tx: OpTxT,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
-        Inspector: Inspector<<<Self as Handler>::Evm as EvmT>::Context, EthInterpreter>,
+        Inspector: Inspector<<<Self as HandlerTr>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
-    ERROR: EvmTError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: InspectorFrameT<
+    FRAME: InspectorFrame<
         Evm = EVM,
         Error = ERROR,
         FrameResult = FrameResult,

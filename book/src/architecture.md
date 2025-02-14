@@ -7,28 +7,28 @@ REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)](http
 ### Main components/traits:
 
 Revm consist of few traits that implement functionality of the EVM. The main traits are:
-* **EvmT**: This trait allows as to access main EVM fields and to run interpreter. It defines **Context**, **Precompiles**, **Instructions**. Docs
-* **ContextT**: is gained from EvmT and consist of types needed for execution. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields. Docs
-* **Handler**: is a trait that by default implements Ethereum logic, it takes EvmT as a input. Entry point is a `run` function. Docs
-* **Frame**: is a associate type of Handler and contains runtime data of the call and logic of executing the call, default impl is a type is EthFrame. Docs
+* **EvmTr**: This trait allows as to access main EVM fields and to run interpreter. It defines **Context**, **Precompiles**, **Instructions**. Docs
+* **ContextTr**: is gained from EvmTr and consist of types needed for execution. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields. Docs
+* **Handler**: is a trait that by default implements Ethereum logic, it takes EvmTr as a input. Entry point is a `run` function. Docs
+* **Frame**: is a associate type ofHandlerTr and contains runtime data of the call and logic of executing the call, default impl is a type is EthFrame. Docs
 
 Inspection for tracing is extensing above traits with:
-* **InspectorEvmT** is derived from EvmT and allows running Evm in Inspection mode. It contains **Inspector** associate type. Docs
-* **InspectorHandler** is derived from Handler and allows running Evm in Inspection mode. Entry point is `inspect_run` function and it calls a alternative functions for execution loop that includes inspector calls. Docs
-* **Inspector** is a a user oriented trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from InspectorHandler and InspectorEvmT. Docs
+* **InspectorEvmTrr** is derived from EvmTr and allows running Evm in Inspection mode. It contains **Inspector** associate type. Docs
+* **InspectorHandler** is derived fromHandlerTr and allows running Evm in Inspection mode. Entry point is `inspect_run` function and it calls a alternative functions for execution loop that includes inspector calls. Docs
+* **Inspector** is a a user oriented trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from InspectorHandler and InspectorEvmTrr. Docs
 
 
 ### Simplified code
 
 ```rust,ignore
-pub trait EvmT {
-    type Context: ContextT;
+pub trait EvmTr {
+    type Context: ContextTr;
     ...
     fn execute_interpreter(..);
 }
 
-pub trait Handler {
-    type Evm: EvmT;
+pub trait HandlerTr {
+    type Evm: EvmTr;
     type Frame: Frame;
     ...
     fn run(evm);
@@ -36,7 +36,7 @@ pub trait Handler {
 ```
 
 ### flow of execution
-Execution flow can be found here (TODO Move to codebase to Handler trait):
+Execution flow can be found here (TODO Move to codebase toHandlerTr trait):
 * It starts with creation of new EVM instance
   * Building of the Context
   * Building of the EVM. Inspector/Precompiles are created.

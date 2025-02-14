@@ -1,5 +1,5 @@
 use context_interface::transaction::AccessListT;
-use context_interface::ContextT;
+use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,
     result::{InvalidHeader, InvalidTransaction},
@@ -13,7 +13,7 @@ use specification::{eip4844, hardfork::SpecId};
 use state::AccountInfo;
 use std::boxed::Box;
 
-pub fn validate_env<CTX: ContextT, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
+pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {
     let spec = context.cfg().spec().into();
@@ -29,7 +29,7 @@ pub fn validate_env<CTX: ContextT, ERROR: From<InvalidHeader> + From<InvalidTran
 }
 
 pub fn validate_tx_against_state<
-    CTX: ContextT,
+    CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     mut context: CTX,
@@ -102,7 +102,7 @@ pub fn validate_eip4844_tx(
 }
 
 /// Validate transaction against block and configuration for mainnet.
-pub fn validate_tx_env<CTX: ContextT, Error>(
+pub fn validate_tx_env<CTX: ContextTr, Error>(
     context: CTX,
     spec_id: SpecId,
 ) -> Result<(), InvalidTransaction> {
@@ -232,7 +232,7 @@ pub fn validate_tx_env<CTX: ContextT, Error>(
 
 /// Validate account against the transaction.
 #[inline]
-pub fn validate_tx_against_account<CTX: ContextT>(
+pub fn validate_tx_against_account<CTX: ContextTr>(
     account: &AccountInfo,
     context: CTX,
     additional_cost: U256,

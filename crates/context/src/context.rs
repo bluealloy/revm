@@ -1,5 +1,5 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
-use context_interface::{Block, Cfg, ContextT, Journal, Transaction};
+use context_interface::{Block, Cfg, ContextTr, Journal, Transaction};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use specification::hardfork::SpecId;
@@ -35,7 +35,7 @@ impl<
         CFG: Cfg,
         JOURNAL: Journal<Database = DB>,
         CHAIN,
-    > ContextT for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+    > ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     type Block = BLOCK;
     type Tx = TX;

@@ -1,5 +1,5 @@
 use auto_impl::auto_impl;
-use context_interface::ContextT;
+use context_interface::ContextTr;
 use interpreter::{
     table::{make_instruction_table, InstructionTable},
     Host, Interpreter, InterpreterAction, InterpreterTypes,
@@ -49,7 +49,7 @@ where
 
 pub trait ContextInspectRun {
     type InterpreterTypes: InterpreterTypes;
-    type Context: ContextT + Host;
+    type Context: ContextTr + Host;
 
     fn run_context(
         &mut self,

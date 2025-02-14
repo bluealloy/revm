@@ -1,10 +1,10 @@
 use super::frame_data::*;
 use crate::{
-    handler::EvmT, instructions::InstructionProvider, precompile_provider::PrecompileProvider,
+    handler::EvmTr, instructions::InstructionProvider, precompile_provider::PrecompileProvider,
     FrameInitOrResult, FrameOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context_interface::ContextT;
+use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
     Cfg, Database, Transaction,
@@ -73,7 +73,7 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
 
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
-    EVM: EvmT<
+    EVM: EvmTr<
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -81,7 +81,7 @@ where
             Output = InterpreterAction,
         >,
     >,
-    ERROR: From<ContextTDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -117,7 +117,7 @@ where
     }
 }
 
-pub type ContextTDbError<CTX> = <<CTX as ContextT>::Db as Database>::Error;
+pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
 impl<CTX, ERROR, IW> EthFrame<CTX, ERROR, IW>
 where
@@ -145,12 +145,12 @@ where
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
-    EVM: EvmT<
-        Context: ContextT,
+    EVM: EvmTr<
+        Context: ContextTr,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
-    ERROR: From<ContextTDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     /// Make call frame
     #[inline]
@@ -513,8 +513,8 @@ where
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
-    EVM: EvmT<
-        Context: ContextT,
+    EVM: EvmTr<
+        Context: ContextTr,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -522,7 +522,7 @@ where
             Output = InterpreterAction,
         >,
     >,
-    ERROR: From<ContextTDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     pub fn init_first(
         evm: &mut EVM,

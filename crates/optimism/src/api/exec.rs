@@ -7,9 +7,9 @@ use precompile::Log;
 use revm::{
     context_interface::{
         result::{EVMError, ExecutionResult, ResultAndState},
-        Block, Cfg, ContextT, Database, Journal,
+        Block, Cfg, ContextTr, Database, Journal,
     },
-    handler::{handler::EvmT, instructions::EthInstructions, EthFrame, Handler},
+    handler::{handler::EvmTr, instructions::EthInstructions, EthFrame, HandlerTr},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,

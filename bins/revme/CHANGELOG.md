@@ -144,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - k256 compile error ([#451](https://github.com/bluealloy/revm/pull/451))
 
 ### Other
-- *(EvmBuilder)* rename builder functions to HandlerCfg ([#1050](https://github.com/bluealloy/revm/pull/1050))
+- *(EvmBuilder)* rename builder functions toHandlerTrCfg ([#1050](https://github.com/bluealloy/revm/pull/1050))
 - *(Interpreter)* Split calls to separate functions ([#1005](https://github.com/bluealloy/revm/pull/1005))
 - *(revme)* EmptyDb Blockhash string, json-outcome flag, set prevrandao in statetest ([#994](https://github.com/bluealloy/revm/pull/994))
 - *(revme)* add recovery of address from secret key ([#992](https://github.com/bluealloy/revm/pull/992))

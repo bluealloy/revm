@@ -4,7 +4,7 @@
 
 use bytecode::Bytecode;
 use context_interface::transaction::{AccessListT, AuthorizationT};
-use context_interface::ContextT;
+use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
@@ -14,7 +14,7 @@ use context_interface::{
 use primitives::{BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
 use specification::{eip7702, hardfork::SpecId};
 
-pub fn load_accounts<CTX: ContextT, ERROR: From<<CTX::Db as Database>::Error>>(
+pub fn load_accounts<CTX: ContextTr, ERROR: From<<CTX::Db as Database>::Error>>(
     context: &mut CTX,
 ) -> Result<(), ERROR> {
     let spec = context.cfg().spec().into();
@@ -46,7 +46,9 @@ pub fn load_accounts<CTX: ContextT, ERROR: From<<CTX::Db as Database>::Error>>(
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextT>(context: &mut CTX) -> Result<(), <CTX::Db as Database>::Error> {
+pub fn deduct_caller<CTX: ContextTr>(
+    context: &mut CTX,
+) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee();
     let blob_price = context.block().blob_gasprice().unwrap_or_default();
     let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
@@ -85,7 +87,7 @@ pub fn deduct_caller<CTX: ContextT>(context: &mut CTX) -> Result<(), <CTX::Db as
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<
-    CTX: ContextT,
+    CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,

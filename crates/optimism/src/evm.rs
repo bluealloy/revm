@@ -1,8 +1,8 @@
 use revm::{
     context::{setters::ContextSetters, Evm, EvmData},
-    context_interface::ContextT,
+    context_interface::ContextTr,
     handler::{
-        handler::EvmT,
+        handler::EvmTr,
         instructions::{EthInstructions, InstructionProvider},
     },
     interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterAction},
@@ -39,9 +39,9 @@ impl<CTX: ContextSetters, INSP, I> ContextSetters for OpEvm<CTX, INSP, I> {
     }
 }
 
-impl<CTX, INSP, I, P> EvmT for OpEvm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P>
 where
-    CTX: ContextT,
+    CTX: ContextTr,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;

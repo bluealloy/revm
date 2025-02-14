@@ -4,7 +4,7 @@ use crate::{
 };
 use auto_impl::auto_impl;
 use context::Evm;
-use context_interface::ContextT;
+use context_interface::ContextTr;
 use context_interface::{
     result::{HaltReasonT, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
@@ -16,27 +16,27 @@ use primitives::Log;
 use state::EvmState;
 use std::{vec, vec::Vec};
 
-pub trait EvmTError<EVM: EvmT>:
+pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
-    + From<<<EVM::Context as ContextT>::Db as Database>::Error>
+    + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
     + From<PrecompileErrors>
 {
 }
 
 impl<
-        EVM: EvmT,
+        EVM: EvmTr,
         T: From<InvalidTransaction>
             + From<InvalidHeader>
-            + From<<<EVM::Context as ContextT>::Db as Database>::Error>
+            + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
             + From<PrecompileErrors>,
-    > EvmTError<EVM> for T
+    > EvmTrError<EVM> for T
 {
 }
 
-impl<CTX, INSP, I, P> EvmT for Evm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextT + Host,
+    CTX: ContextTr + Host,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;
@@ -76,8 +76,8 @@ where
 }
 
 #[auto_impl(&mut, Box)]
-pub trait EvmT {
-    type Context: ContextT;
+pub trait EvmTr {
+    type Context: ContextTr;
     type Instructions: InstructionProvider;
     type Precompiles;
 
@@ -97,9 +97,9 @@ pub trait EvmT {
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
-pub trait Handler {
-    type Evm: EvmT<Context: ContextT<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
-    type Error: EvmTError<Self::Evm>;
+pub trait HandlerTr {
+    type Evm: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
+    type Error: EvmTrError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
