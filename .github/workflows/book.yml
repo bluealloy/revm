@@ -32,7 +32,9 @@ jobs:
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Run tests
-        run: mdbook test
+        run:  |
+          chmod -c -R +rX "README.md" |
+          mdbook test
 
   lint:
     runs-on: ubuntu-latest
@@ -50,9 +52,7 @@ jobs:
           echo `pwd`/mdbook-linkcheck >> $GITHUB_PATH
 
       - name: Run linkcheck
-        run: |
-          chmod -c -R +rX "README.md" |
-          mdbook-linkcheck --standalone
+        run: mdbook-linkcheck --standalone
 
   build:
     runs-on: ubuntu-latest
