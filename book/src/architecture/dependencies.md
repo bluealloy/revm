@@ -2,7 +2,7 @@
 
 Revm project is no_std compliant, and it uses `alloc` crate for heap allocation.
 
-Native types are imported from `alloy-primitives` crate, this is where we get Address, Bytes, B256 types where big number U256 is exported from `ruint`. Additionaly `hashbrown` crate or `HashMap/HashSet` with different hashing algorithm are imported from it.
+Native types are imported from `alloy-primitives` crate, this is where we get Address, Bytes, B256 types where big number U256 is exported from `ruint`. Additionally `hashbrown` crate or `HashMap/HashSet` with different hashing algorithm are imported from it.
 
 `alloy-eip7702` and `alloy-eip2930` are used in TxEnv as parts of transaction.
 

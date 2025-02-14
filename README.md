@@ -21,7 +21,7 @@ Revm offers two primary applications: firstly, it functions as an executor where
 
 Here is a straightforward example of using the Execution API: It allows us to create an Ethereum Virtual Machine (EVM) and execute transactions. Additionally, it can be utilized to generate traces with the inspector or more complex example of foundry cheatcodes.
 
-```rust
+```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet();
 let out = evm.transact(tx);
 

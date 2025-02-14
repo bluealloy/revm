@@ -18,7 +18,7 @@ cargo build --release
 
 Main crate is revm, inspection is in saparate crate revm-inspection and revm-database has a few database implementations.
 
-Curent versions of those crates are:
+Current versions of those crates are:
 ```toml
 revm = "20.0.0-alpha.1"
 revm-inspection = "0.1.0"
@@ -38,7 +38,7 @@ Downside of no_std support is that of right now we don't have a bls12-381 implem
 
 Below is a simple usage example of Execution API: where we create an EVM and transact a transaction or when we want to generate traces with the inspector.
 
-```rust
+```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet();
 let out = evm.transact(tx);
 

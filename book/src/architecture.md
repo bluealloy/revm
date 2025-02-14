@@ -20,7 +20,7 @@ Inspection for tracing is extensing above traits with:
 
 ### Simplified code
 
-```rust
+```rust,ignore
 pub trait EvmTrait {
     type Context: ContextTrait;
     ...
@@ -52,4 +52,4 @@ Execution flow can be found here (TODO Move to codebase to EthHandler trait):
       * If Return, then the frame is popped and the return value is pushed to the parent frame. If it is new call, then a new frame is created and pushed to the call stack.
       * If call stack is empty the execution loop is done.
     * handles the result of execution.s
-  * Post execution deals with halt and revert handling redistrubution of rewards and reimbursment of unspend gas.
+  * Post execution deals with halt and revert handling redistribution of rewards and reimbursement of unspend gas.
