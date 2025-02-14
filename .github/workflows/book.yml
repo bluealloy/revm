@@ -50,7 +50,9 @@ jobs:
           echo `pwd`/mdbook-linkcheck >> $GITHUB_PATH
 
       - name: Run linkcheck
-        run: mdbook-linkcheck --standalone
+        run: |
+          chmod -c -R +rX "README.md" |
+          mdbook-linkcheck --standalone
 
   build:
     runs-on: ubuntu-latest
