@@ -46,6 +46,8 @@ The full list of projects that use Revm is available in the [awesome-revm](./awe
 
 ### How to, dev section
 
+Note that book and code docs are still in WIP stage and they are being updated!
+
 Part of the links point to the code documentation or the book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
 
 * How to build and use revm can be found here. (code)
