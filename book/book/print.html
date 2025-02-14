@@ -1,0 +1,510 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title></title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h3 id="revm"><a class="header" href="#revm">Revm</a></h3>
+<p><a href="https://github.com/bluealloy/revm/actions/workflows/ci.yml"><img src="https://github.com/bluealloy/revm/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+<a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" /></a>
+<a href="https://t.me/+Ig4WDWOzikA3MzA0"><img src="https://img.shields.io/badge/chat-telegram-blue" alt="Chat" /></a></p>
+<p>Revm is a highly efficient and stable implementation of the Ethereum Virtual Machine (EVM) written in Rust.</p>
+<p><img src="https://raw.githubusercontent.com/bluealloy/revm/refs/heads/main/assets/logo/revm-banner.png" alt="banner" /></p>
+<p>Known for its robustness, it stands as one of the most popular libraries and critical component of the Ethereum ecosystem. Revm plays a crucial role across various projects, being widely utilized by almost all tooling and block builders. It is integrated into Reth, multiple Layer 2 variants and other clients and serving as a standard for zkVMs.</p>
+<p>Revm offers two primary applications: firstly, it functions as an executor where users can set up block info and process mainnet transactions; secondly, it acts as a framework that facilitates the extension and support of different EVM variants such as revm-optimism.</p>
+<h3 id="how-to-use"><a class="header" href="#how-to-use">How to use:</a></h3>
+<p>Here is a straightforward example of using the Execution API: It allows us to create an Ethereum Virtual Machine (EVM) and execute transactions. Additionally, it can be utilized to generate traces with the inspector or more complex example of foundry cheatcodes.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut evm = Context::mainnet().with_block(block).build_mainnet();
+let out = evm.transact(tx);
+
+// or you can use powerful inspection tool to trace it
+let mut evm = evm.with_inspector(tracer);
+let out = evm.inspect_with_tx(tx);
+<span class="boring">}</span></code></pre></pre>
+<p>The Evm Framework API is somewhat complex to use, but this document provides a detailed explanation. It enables users to extend logic, incorporate various context types, and offers built-in support for inspection. For a practical example, you can refer to the revm-optimism crate.</p>
+<h3 id="users"><a class="header" href="#users">Users:</a></h3>
+<p>As previously noted, there are several groups of projects that utilize this technology:</p>
+<ul>
+<li><strong>Major block builders</strong>.</li>
+<li><strong>Clients</strong>: <a href="https://github.com/paradigmxyz/reth">Reth</a>, <a href="https://github.com/a16z/helios">Helios</a>, <a href="https://github.com/ethereum/trin">Trin</a>,..</li>
+<li><strong>Tooling</strong>: <a href="https://github.com/foundry-rs/foundry/">Foundry</a>, <a href="https://github.com/NomicFoundation/hardhat">Hardhat</a>,..</li>
+<li><strong>L2s</strong>: <a href="https://github.com/bluealloy/revm/tree/main/crates/optimism">Optimism</a>, <a href="https://github.com/coinbase">Coinbase</a>, <a href="https://github.com/scroll-tech/revm">Scroll</a>,..</li>
+<li><strong>zkVM</strong>: <a href="https://github.com/risc0/risc0-ethereum">Risc0</a>, <a href="https://github.com/succinctlabs/sp1-reth">Succinct</a>,..</li>
+</ul>
+<p>The full list of projects that use Revm is available in the <a href="../.././awesome.html">awesome-revm</a> section of the book.</p>
+<h3 id="how-to-dev-section"><a class="header" href="#how-to-dev-section">How to, dev section</a></h3>
+<p>Part of the links point to the code documentation or the book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.</p>
+<ul>
+<li>How to build and use revm can be found here. (code)</li>
+<li>Architecture overview can be seen here. (book)</li>
+<li>Structure of the project (list of crates) can be seen here. (book)</li>
+<li>How to use Revm Framework can be found here. (book)</li>
+<li>Release procedure and changelogs explanation. (book)</li>
+<li>How to use revme (Revm binary with few commands) can be found here. (code)</li>
+<li>How to run Ethereum test can be found here: (book)</li>
+<li>How to run examples and benchmark with <code>samply</code> to check performance. (book)</li>
+<li>If there is more explanations please open PR request for it.</li>
+</ul>
+<h3 id="community"><a class="header" href="#community">Community:</a></h3>
+<p>For questions please open an github issue or join public telegram group: <a href="https://t.me/+Ig4WDWOzikA3MzA0">https://t.me/+Ig4WDWOzikA3MzA0</a></p>
+<h3 id="licence"><a class="header" href="#licence">Licence</a></h3>
+<p>Revm is licensed under MIT Licence.</p>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.</p>
+<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<p>For any security questions or findings, please reach out to me directly via email at dragan0rakita@gmail.com or contact me on Keybase under the username <a href="https://keybase.io/draganrakita/">draganrakita</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="awesome-revm"><a class="header" href="#awesome-revm">Awesome Revm</a></h1>
+<p>A curated list of excellent Revm-related resources. Feel free to contribute to this list!</p>
+<h4 id="repositories"><a class="header" href="#repositories">Repositories</a></h4>
+<ul>
+<li><a href="https://github.com/bluealloy/revm"><strong>Main Repo:</strong> Revm Repository</a> - The central code repository for Revm.</li>
+<li><a href="https://bluealloy.github.io/revm/"><strong>Book:</strong> </a> - Comprehensive user documentation for Revm.</li>
+</ul>
+<h4 id="audits"><a class="header" href="#audits">Audits</a></h4>
+<ul>
+<li><a href="https://hackmd.io/@draganrakita/rklf0PuBR/edit"><strong>Guido Vranken</strong></a> - Security audit and analysis.</li>
+<li><a href="https://x.com/rakitadragan/status/1803540273907245293?t=i_h-Mkvh0w91UpMIH2ILEw&amp;s=19"><strong>Tweet</strong></a> - Tweet announcing the audit.</li>
+</ul>
+<h4 id="clients"><a class="header" href="#clients">Clients</a></h4>
+<ul>
+<li><a href="https://github.com/paradigmxyz/reth"><strong>Reth:</strong></a> A modular, contributor-friendly, and ultra-fast implementation of the Ethereum protocol.</li>
+<li><a href="https://github.com/a16z/helios"><strong>Helios</strong></a> is a trustless, efficient, and portable multichain light client written in Rust.</li>
+<li><a href="https://github.com/ethereum/trin"><strong>Trin</strong></a> is a Rust implementation of a Portal Network client.</li>
+</ul>
+<h4 id="evm-variants"><a class="header" href="#evm-variants">EVM Variants</a></h4>
+<ul>
+<li><a href="https://github.com/bluealloy/revm/tree/main/crates/optimism"><strong>Optimism</strong></a> is a ethereum L2 network.</li>
+<li><a href="https://github.com/coinbase"><strong>Base</strong></a> is an Ethereum Layer 2 (L2) chain that offers a safe, low-cost, developer-friendly way to build on-chain</li>
+<li><a href="https://github.com/scroll-tech/revm"><strong>Scroll</strong></a> is its own Layer 2 network built on Ethereum (more specifically, a “zero-knowledge rollup”).</li>
+</ul>
+<h4 id="tools"><a class="header" href="#tools">Tools</a></h4>
+<ul>
+<li><a href="https://github.com/foundry-rs/foundry"><strong>Foundry:</strong></a> A portable and modular toolkit for rapid Ethereum application development in Rust.</li>
+<li><a href="https://github.com/NomicFoundation/hardhat"><strong>Hardhat:</strong></a> A comprehensive development environment for compiling, deploying, testing, and debugging Ethereum software.</li>
+<li><a href="https://github.com/primitivefinance/arbiter"><strong>Arbiter:</strong></a> smart-contract simulation.</li>
+</ul>
+<h4 id="frameworks-and-libraries"><a class="header" href="#frameworks-and-libraries">Frameworks and Libraries</a></h4>
+<ul>
+<li><a href="https://github.com/paradigmxyz/revm-inspectors"><strong>revm-inspectors:</strong></a> Hooks for EVM execution.</li>
+<li><a href="https://github.com/paradigmxyz/eip3074-instructions"><strong>eip3074-instructions:</strong></a> Implements custom instructions for AUTH and AUTHCALL operations.</li>
+<li><a href="https://github.com/paradigmxyz/revmc"><strong>Revmc:</strong></a> JIT and AOT compiler for the Ethereum Virtual Machine, leveraging Revm.</li>
+<li><a href="https://github.com/risc0/risc0-ethereum"><strong>Risc0-ethereum</strong></a> is a zero-knowledge verifiable general computing platform, with Ethereum integration</li>
+<li><a href="https://github.com/op-rs/kona"><strong>Kona</strong></a> is a suite of portable implementations of the OP Stack rollup state transition, namely the derivation pipeline and the block execution logic.</li>
+</ul>
+<h4 id="tutorials"><a class="header" href="#tutorials">Tutorials</a></h4>
+<ul>
+<li><a href="https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4"><strong>Revm is All You Need:</strong></a> Guide on building simulated blockchain environments.</li>
+<li><a href="https://github.com/bluealloy/revm/blob/main/examples/uniswap_v2_usdc_swap.rs"><strong>Uniswap Swap Example:</strong></a> Demonstrates a USDC swap on Uniswap V2.</li>
+<li><a href="https://github.com/bluealloy/revm/blob/main/examples/fork_ref_transact.rs"><strong>Fork Transaction Example:</strong></a> Example of a fork transaction.</li>
+<li><a href="https://github.com/Cionn3/revm-by-example"><strong>revm-by-example:</strong></a> Practical examples using the Rust Ethereum Virtual Machine.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p>List of crates can be found in <a href="./architecture/crates.html">Crates</a> section of the book.</p>
+<p>REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)] changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here <a href="">Ethereum Hardforks</a> and repository that contains all EIPs can be found here <a href="https://eips.ethereum.org/">EIPs</a>.</p>
+<h3 id="main-componentstraits"><a class="header" href="#main-componentstraits">Main components/traits:</a></h3>
+<p>Revm consist of few traits that implement functionality of the EVM. The main traits are:</p>
+<ul>
+<li><strong>EvmTrait</strong>: This trait allows as to access main EVM fields and to run interpreter. It defines <strong>Context</strong>, <strong>Precompiles</strong>, <strong>Instructions</strong>. Docs</li>
+<li><strong>ContextTrait</strong>: is gained from EvmTrait and consist of types needed for execution. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields. Docs</li>
+<li><strong>EthHandler</strong>: is a trait that by default implements Ethereum logic, it takes EvmTrait as a input. Entry point is a <code>run</code> function. Docs</li>
+<li><strong>Frame</strong>: is a associate type of EthHandler and contains runtime data of the call and logic of executing the call, default impl is a type is EthFrame. Docs</li>
+</ul>
+<p>Inspection for tracing is extensing above traits with:</p>
+<ul>
+<li><strong>InspectorEvmTrait</strong> is derived from EvmTrait and allows running Evm in Inspection mode. It contains <strong>Inspector</strong> associate type. Docs</li>
+<li><strong>EthInspectorHandler</strong> is derived from EthHandler and allows running Evm in Inspection mode. Entry point is <code>inspect_run</code> function and it calls a alternative functions for execution loop that includes inspector calls. Docs</li>
+<li><strong>Inspector</strong> is a a user oriented trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from EthInspectorHandler and InspectorEvmTrait. Docs</li>
+</ul>
+<h3 id="simplified-code"><a class="header" href="#simplified-code">Simplified code</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait EvmTrait {
+    type Context: ContextTrait;
+    ...
+    fn execute_interpreter(..);
+}
+
+pub trait EthHandler {
+    type Evm: EvmTrait;
+    type Frame: Frame;
+    ...
+    fn run(evm);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="flow-of-execution"><a class="header" href="#flow-of-execution">flow of execution</a></h3>
+<p>Execution flow can be found here (TODO Move to codebase to EthHandler trait):</p>
+<ul>
+<li>It starts with creation of new EVM instance
+<ul>
+<li>Building of the Context</li>
+<li>Building of the EVM. Inspector/Precompiles are created.</li>
+<li>Adding of the Inspector if needed.</li>
+</ul>
+</li>
+<li>transact/inspect. Both inspection and transaction have same flow where the only difference is that inspection includes calls to the inspector.
+<ul>
+<li>validation of transaction and doing balance gas limit check.</li>
+<li>pre execution loads all warm accounts and deducts the caller.</li>
+<li>Execution :
+<ul>
+<li>Creates first frame with Interpreter or executes precompile.</li>
+<li>run the frame loop:
+<ul>
+<li>Calls Evm to exec interpreter with the frame. Interpreter loops is called here</li>
+<li>Output of Interpreter loop is NextAction that can be a Return of Call.</li>
+<li>If Return, then the frame is popped and the return value is pushed to the parent frame. If it is new call, then a new frame is created and pushed to the call stack.</li>
+<li>If call stack is empty the execution loop is done.</li>
+</ul>
+</li>
+<li>handles the result of execution.s</li>
+</ul>
+</li>
+<li>Post execution deals with halt and revert handling redistrubution of rewards and reimbursment of unspend gas.</li>
+</ul>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="external-core-dependencies"><a class="header" href="#external-core-dependencies">External core dependencies</a></h1>
+<p>Revm project is no_std compliant, and it uses <code>alloc</code> crate for heap allocation.</p>
+<p>Native types are imported from <code>alloy-primitives</code> crate, this is where we get Address, Bytes, B256 types where big number U256 is exported from <code>ruint</code>. Additionaly <code>hashbrown</code> crate or <code>HashMap/HashSet</code> with different hashing algorithm are imported from it.</p>
+<p><code>alloy-eip7702</code> and <code>alloy-eip2930</code> are used in TxEnv as parts of transaction.</p>
+<p>Precompiles require a lot of cryprography and math libs:</p>
+<ul>
+<li><code>c-kzg</code> is a minimal implementation of the Polynomial Commitments API for EIP-4844, written in C. (With rust bindings)</li>
+<li><code>modexp</code> is a big integer modular exponentiation precompile.</li>
+<li><code>secp256k1</code> is an ECDSA public key recovery precompile, based on <code>secp256k1</code> curves. <code>k256</code> is used as a fallback for no_std environments.</li>
+<li>...</li>
+</ul>
+<p><code>serde</code> and <code>serde-json</code> are behind a feature flag to serialize and deserialize data structures.</p>
+<p>Some utility crates are used throughout the codebase: <code>auto_impl</code>, <code>derive_more</code> etc. Where in some places few libs are imported for specific use cases like <code>nnum</code> or <code>dawdaw</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><p>Revm project is split in multiple crates, each crate is responsible for different part of the project. The main crates are:</p>
+<p>There is one binary crate <code>revme</code>. It is used for running Ethereum state tests json.</p>
+<h3 id="library-crates"><a class="header" href="#library-crates">Library crates</a></h3>
+<ul>
+<li>revm:</li>
+<li>primitives:</li>
+<li>interpreter:</li>
+<li>precompile:</li>
+<li>database:</li>
+<li>database/interface:</li>
+<li>bytecode:</li>
+<li>state:</li>
+<li>specification:</li>
+<li>context:</li>
+<li>context/interface:</li>
+<li>handler:</li>
+</ul>
+<h3 id="variants"><a class="header" href="#variants">variants</a></h3>
+<ul>
+<li>optimism</li>
+<li>inspector</li>
+</ul>
+<h3 id="utility"><a class="header" href="#utility">utility</a></h3>
+<ul>
+<li>statetest-types:</li>
+</ul>
+<h3 id="examples"><a class="header" href="#examples">examples</a></h3>
+<ul>
+<li>block_traces:</li>
+<li>cheatcode_inspector:</li>
+<li>contract_deployment:</li>
+<li>database_components:</li>
+<li>uniswap_get_reserves:</li>
+<li>uniswap_v2_usdc_swap:</li>
+<li>erc20_gas:</li>
+</ul>
+<h1 id="dependency-of-library-crates-can-be-seen-here"><a class="header" href="#dependency-of-library-crates-can-be-seen-here">Dependency of library crates can be seen here</a></h1>
+<p>TODO Add dependency graph here</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="revm-framework"><a class="header" href="#revm-framework">Revm Framework</a></h1>
+<p>Creating new variant of Revm is done by using a framework that is provided by the project. The framework is a set of traits that can be overridden to create a new logic that is needed. Overriding those traits can add new precompile or omit/change some logic of the EVM.</p>
+<p>The main traits that are used for creating a new variant are:</p>
+<p>Steps to implement a new variant:</p>
+<ol>
+<li>Include Revm</li>
+<li>Add main Evm type <code>MyEvm</code> and give it a Context, Precompile, Instructions and optionally Inspector.</li>
+<li>Implement EvmTrait for <code>MyEvm</code>.</li>
+<li>Create a empty <code>MyEvmHandler</code> type and implement EthHandler for it. Override any logic that you want.</li>
+<li>Now you can use <code>MyEvmHandler</code> to run your own <code>MyEvm</code> instance. Other steps are more for agronomics and easier usage.</li>
+<li>Create a <code>MyContextBuilder</code> trait that will build your context with default types you want to use.</li>
+<li>Create a <code>MyEvmBuilder</code> trait that will build your Evm with default instructions and precompiles.</li>
+<li>Implement <code>ExecuteEvm</code>, <code>ExecuteCommitEvm</code> to have same interface as any other variant of EVM.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="dev-section"><a class="header" href="#dev-section">Dev Section</a></h1>
+<p>Contains information for developers who want to build and develop revm.</p>
+<h3 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h3>
+<pre><code class="language-shell">git clone https://github.com/bluealloy/revm.git
+cd revm
+cargo build --release
+</code></pre>
+<p><strong><em>Note:</em></strong> This project tends to use the newest rust version, so if you're encountering a build error try running rustup update first.</p>
+<p><strong><em>Note:</em></strong> <code>clang</code> is required for building revm with <code>c-kzg</code> or <code>secp256k1</code> feature flags as they depend on <code>C</code> libraries. If you don't have it installed, you can install it with <code>apt install clang</code>.</p>
+<h3 id="importing-crates"><a class="header" href="#importing-crates">Importing crates</a></h3>
+<p>Main crate is revm, inspection is in saparate crate revm-inspection and revm-database has a few database implementations.</p>
+<p>Curent versions of those crates are:</p>
+<pre><code class="language-toml">revm = "20.0.0-alpha.1"
+revm-inspection = "0.1.0"
+revm-database = "0.1.0"
+</code></pre>
+<p>Additional tools that can be useful can be found in <a href="./awesome.html">Awesome Revm</a> section of the book. For example paradigm/revm-inspector crate contains a lot of Inspector used for tracing inside Reth and Foundry.</p>
+<h3 id="no_std-support"><a class="header" href="#no_std-support">no_std support</a></h3>
+<p>If you are in need of no_std support you would need to use no-default-features flag and disable default features. All crates (expect revme binary) support no_std in some capacity.</p>
+<p>Downside of no_std support is that of right now we don't have a bls12-381 implementation that is no_std compatible. PR that would solve this:</p>
+<h3 id="use-case"><a class="header" href="#use-case">Use case</a></h3>
+<p>Below is a simple usage example of Execution API: where we create an EVM and transact a transaction or when we want to generate traces with the inspector.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut evm = Context::mainnet().with_block(block).build_mainnet();
+let out = evm.transact(tx);
+
+// or you can use powerful inspection tool to trace it
+let mut evm = evm.with_inspector(tracer);
+let out = evm.inspect_with_tx(tx);
+<span class="boring">}</span></code></pre></pre>
+<p>The usage of the Evm Framework API is a bit more complex, but it is extensively explained here. It allows extending logic, adding different context types, and supporting inspection out of the box. For an example, you can check the revm-optimism crate.</p>
+<p>Examples section of the book lists all examples that are available in the repository. And it is good starting point for understanding how to use revm.</p>
+<h3 id="running-eth-tests"><a class="header" href="#running-eth-tests">Running eth tests</a></h3>
+<p>Eth tests are suite of tests from Ethereum Fondation that are used to test EVM implementations.
+Part of these tests are included in revm repository in <code>tests</code> folder.</p>
+<p>Download eth tests from (this will take some time): <code>git clone https://github.com/ethereum/tests</code> all statetest that can be run by revme can be found in <code>GeneralStateTests</code> folder.</p>
+<p>When you have downlodaed the test they can be run via <code>revme</code> with command:
+<code>cargo run --release -p revme -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests</code></p>
+<p>After running <code>cargo build --release -p revme</code> the <code>revme</code> binary can be found in <code>target/release</code> folder.</p>
+<h3 id="cicd"><a class="header" href="#cicd">CI/CD</a></h3>
+<p>CI/CD runs on GitHub actions and will test no_std/clippy/fmt correctness of the code. It will also run el statetests and benchmarks with codspeed. You can find the configuration in <code>.github/workflows</code> folder.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="list-of-examples"><a class="header" href="#list-of-examples">List of examples</a></h1>
+<ul>
+<li>"examples/block_traces",</li>
+<li>"examples/contract_deployment",</li>
+<li>"examples/database_components",</li>
+<li>"examples/uniswap_get_reserves",</li>
+<li>"examples/uniswap_v2_usdc_swap",</li>
+<li>"examples/erc20_gas",</li>
+<li>"examples/cheatcode_inspector" PENDING</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="release-procedure"><a class="header" href="#release-procedure">Release procedure</a></h1>
+<p>This document describes the procedure for releasing a new version of the <code>revm</code> project. The repository is hosted on github and the published to the crates. Every published crate is part of one tag (currently tag v55) that contains all crates versions. The versions depending on the change can be major, minor or patch, we dont have one version for all packages.</p>
+<p>Link of tag to the particular version of the crate can be found in CHANGELOG file.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="cicd-1"><a class="header" href="#cicd-1">CI/CD</a></h1>
+<p>On every pull request all statetest are run.</p>
+<h1 id="revme"><a class="header" href="#revme">revme</a></h1>
+<p>Is a binary crate that is used for running Ethereum state tests json and it has few other utilities.</p>
+<p>It can be downloaded from crates as <code>crates install revme</code>.</p>
+<p>Test can be found here <code>tests</code> or from the <a href="">ethereum tests</a> repository.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contact"><a class="header" href="#contact">Contact</a></h1>
+<p>Git repo can be found <a href="https://github.com/bluealloy/revm/">https://github.com/bluealloy/revm/</a></p>
+<p>For questions please open github issue or join public telegram group: <a href="https://t.me/+Ig4WDWOzikA3MzA0">https://t.me/+Ig4WDWOzikA3MzA0</a></p>
+<h3 id="licence-1"><a class="header" href="#licence-1">Licence</a></h3>
+<p>Licensed under MIT Licence.</p>
+<p>unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.</p>
+<h3 id="security-1"><a class="header" href="#security-1">Security</a></h3>
+<p>If there is security question/findings please contact me directly on email at<code>dragan0rakita@gmail.com</code> or on keybase <a href="https://keybase.io/draganrakita/">@draganrakita</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

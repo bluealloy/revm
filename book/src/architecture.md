@@ -2,26 +2,24 @@
 
 List of crates can be found in [Crates](./architecture/crates.md) section of the book.
 
-REVM as any EVM implement a list of EIP (Ethereum Inprovment Protocol) changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here [Ethereum Hardforks]() and repository that contains all EIPs can be found here [EIPs](https://eips.ethereum.org/).
+REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)] changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here [Ethereum Hardforks]() and repository that contains all EIPs can be found here [EIPs](https://eips.ethereum.org/).
 
 ### Main components/traits:
 
 Revm consist of few traits that implement functionality of the EVM. The main traits are:
-* **EvmTrait**: This trait allows as to run interpreter and access main EVM fields. It defines **Context**, **Inspector**, **Precompiles**, and **Instructions**.
-* **ContextTrait**: is gained from EvmTrait and consist of internal and external context. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields.
-* **EthHandler**: is a trait that by default implements Ethereum logic, it takes EvmTrait as a input. Entry point is a `run` function.
-* **Frame**: is part of associate type of EthHandler and contains runtime data of the call and logic of executing the call, default impl is a type EthFrame.
+* **EvmTrait**: This trait allows as to access main EVM fields and to run interpreter. It defines **Context**, **Precompiles**, **Instructions**. Docs
+* **ContextTrait**: is gained from EvmTrait and consist of types needed for execution. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields. Docs
+* **EthHandler**: is a trait that by default implements Ethereum logic, it takes EvmTrait as a input. Entry point is a `run` function. Docs
+* **Frame**: is a associate type of EthHandler and contains runtime data of the call and logic of executing the call, default impl is a type is EthFrame. Docs
 
-Inspectiong for tracing abstraction is done with:
-* **InspectorEvmTrait** is derived from EvmTrait and allows running Evm in Inspection mode. It contains Inspector associate type.
-* **EthInspectorHandler** is derived from EthHandler and allows running Evm in Inspection mode. Entry point is `inspect_run` function and it calls a alternative functions for execution loop that includes inspector calls.
-* **Inspector** is a trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from EthInspectorHandler and InspectorEvmTrait.
-
-
-### Usage
+Inspection for tracing is extensing above traits with:
+* **InspectorEvmTrait** is derived from EvmTrait and allows running Evm in Inspection mode. It contains **Inspector** associate type. Docs
+* **EthInspectorHandler** is derived from EthHandler and allows running Evm in Inspection mode. Entry point is `inspect_run` function and it calls a alternative functions for execution loop that includes inspector calls. Docs
+* **Inspector** is a a user oriented trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from EthInspectorHandler and InspectorEvmTrait. Docs
 
 
-Simplified diagram can be found here:
+### Simplified code
+
 ```rust
 pub trait EvmTrait {
     type Context: ContextTrait;
@@ -38,7 +36,7 @@ pub trait EthHandler {
 ```
 
 ### flow of execution
-Execution flow can be found here (TODO Move to codebase):
+Execution flow can be found here (TODO Move to codebase to EthHandler trait):
 * It starts with creation of new EVM instance
   * Building of the Context
   * Building of the EVM. Inspector/Precompiles are created.
@@ -55,4 +53,3 @@ Execution flow can be found here (TODO Move to codebase):
       * If call stack is empty the execution loop is done.
     * handles the result of execution.s
   * Post execution deals with halt and revert handling redistrubution of rewards and reimbursment of unspend gas.
-  * 
