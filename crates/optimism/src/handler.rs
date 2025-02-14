@@ -1,4 +1,4 @@
-//!HandlerTr related to Optimism chain
+//!Handler related to Optimism chain
 
 pub mod precompiles;
 
@@ -6,11 +6,11 @@ use crate::{
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
     transaction::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxT,
+        OpTransactionError, OpTxTr,
     },
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
-use inspector::{Inspector, InspectorEvmTrr, InspectorFrame, InspectorHandler};
+use inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler};
 use precompile::Log;
 use revm::{
     context_interface::{
@@ -20,7 +20,7 @@ use revm::{
     handler::{
         handler::{EvmTr, EvmTrError},
         validation::validate_tx_against_account,
-        Frame, FrameResult, HandlerTr, MainnetHandler,
+        Frame, FrameResult, Handler, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{hash_map::HashMap, U256},
@@ -60,12 +60,12 @@ impl<DB, TX> IsTxError for EVMError<DB, TX> {
     }
 }
 
-impl<EVM, ERROR, FRAME> HandlerTr for OpHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<
         Context: ContextTr<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Tx: OpTxT,
+            Tx: OpTxTr,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
@@ -470,14 +470,14 @@ where
 
 impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: InspectorEvmTrr<
+    EVM: InspectorEvmTr<
         Context: ContextTr<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Tx: OpTxT,
+            Tx: OpTxTr,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
         >,
-        Inspector: Inspector<<<Self as HandlerTr>::Evm as EvmTr>::Context, EthInterpreter>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.

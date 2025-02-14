@@ -1,10 +1,10 @@
-use crate::{InspectorEvmTrr, InspectorFrame};
+use crate::{InspectorEvmTr, InspectorFrame};
 use auto_impl::auto_impl;
 use revm::{
     context::{Cfg, JournalEntry, JournaledState},
     context_interface::{result::ResultAndState, ContextTr, Database, Transaction},
     handler::{
-        execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, HandlerTr,
+        execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler,
         ItemOrResult,
     },
     interpreter::{
@@ -181,11 +181,10 @@ impl<DB: Database> JournalExt for JournaledState<DB> {
     }
 }
 
-pub trait InspectorHandler: HandlerTr
+pub trait InspectorHandler: Handler
 where
-    Self::Evm: InspectorEvmTrr<
-        Inspector: Inspector<<<Self as HandlerTr>::Evm as EvmTr>::Context, Self::IT>,
-    >,
+    Self::Evm:
+        InspectorEvmTr<Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, Self::IT>>,
     Self::Frame: InspectorFrame<IT = Self::IT>,
 {
     type IT: InterpreterTypes;

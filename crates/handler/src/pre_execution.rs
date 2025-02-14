@@ -3,7 +3,7 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use bytecode::Bytecode;
-use context_interface::transaction::{AccessListT, AuthorizationT};
+use context_interface::transaction::{AccessListTr, AuthorizationTr};
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,

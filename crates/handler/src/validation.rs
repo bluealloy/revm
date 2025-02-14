@@ -1,4 +1,4 @@
-use context_interface::transaction::AccessListT;
+use context_interface::transaction::AccessListTr;
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,

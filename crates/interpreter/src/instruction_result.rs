@@ -262,15 +262,15 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum SuccessOrHalt<HaltReasonT> {
+pub enum SuccessOrHalt<HaltReasonTr> {
     Success(SuccessReason),
     Revert,
-    Halt(HaltReasonT),
+    Halt(HaltReasonTr),
     FatalExternalError,
     Internal(InternalResult),
 }
 
-impl<HaltReasonT> SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonTr> SuccessOrHalt<HaltReasonTr> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -300,7 +300,7 @@ impl<HaltReasonT> SuccessOrHalt<HaltReasonT> {
 
     /// Returns the [HaltReason] value the EVM has experienced an exceptional halt
     #[inline]
-    pub fn to_halt(self) -> Option<HaltReasonT> {
+    pub fn to_halt(self) -> Option<HaltReasonTr> {
         match self {
             SuccessOrHalt::Halt(reason) => Some(reason),
             _ => None,
@@ -314,7 +314,7 @@ impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
     }
 }
 
-impl<HaltReasonT: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonTr> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop

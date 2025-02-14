@@ -276,7 +276,7 @@ This release got yanked and replaced with 7.1.0
 
 ## [4.0.0](https://github.com/bluealloy/revm/compare/revm-v3.5.0...revm-v4.0.0) - 2024-02-07
 
-Refactored the logic insideHandlerTr and added EvmBuilder that allows overwriting the default behavior.
+Refactored the logic inside Handler and added EvmBuilder that allows overwriting the default behavior.
 Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
 
 ### Added
@@ -320,7 +320,7 @@ Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
 - spelling on last commit ([#1058](https://github.com/bluealloy/revm/pull/1058))
 - helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
 - *(deps)* bump tokio from 1.35.1 to 1.36.0 ([#1052](https://github.com/bluealloy/revm/pull/1052))
-- *(EvmBuilder)* rename builder functions toHandlerTrCfg ([#1050](https://github.com/bluealloy/revm/pull/1050))
+- *(EvmBuilder)* rename builder functions to HandlerCfg ([#1050](https://github.com/bluealloy/revm/pull/1050))
 - *(deps)* bump ethers-contract from 2.0.11 to 2.0.13 ([#1034](https://github.com/bluealloy/revm/pull/1034))
 - *(std)* Add std HashMap,HashSet ([#1041](https://github.com/bluealloy/revm/pull/1041))
 - group handlers ([#1030](https://github.com/bluealloy/revm/pull/1030))

@@ -6,7 +6,7 @@ use auto_impl::auto_impl;
 use context::Evm;
 use context_interface::ContextTr;
 use context_interface::{
-    result::{HaltReasonT, InvalidHeader, InvalidTransaction, ResultAndState},
+    result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
@@ -97,7 +97,7 @@ pub trait EvmTr {
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
-pub trait HandlerTr {
+pub trait Handler {
     type Evm: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
     type Error: EvmTrError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
@@ -109,7 +109,7 @@ pub trait HandlerTr {
         FrameInit = FrameInput,
     >;
     // TODO `HaltReason` should be part of the output.
-    type HaltReason: HaltReasonT;
+    type HaltReason: HaltReasonTr;
 
     #[inline]
     fn run(

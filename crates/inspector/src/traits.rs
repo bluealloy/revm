@@ -1,3 +1,4 @@
+use crate::{inspect_instructions, Inspector, JournalExt};
 use revm::{
     context::{setters::ContextSetters, Evm},
     context_interface::ContextTr,
@@ -12,10 +13,8 @@ use revm::{
     precompile::PrecompileErrors,
 };
 
-use crate::{inspect_instructions, Inspector, JournalExt};
-
 /// Inspector EVM trait.
-pub trait InspectorEvmTrr: EvmTr {
+pub trait InspectorEvmTr: EvmTr {
     type Inspector;
 
     fn inspector(&mut self) -> &mut Self::Inspector;
@@ -30,7 +29,7 @@ pub trait InspectorEvmTrr: EvmTr {
     ) -> <Self::Instructions as InstructionProvider>::Output;
 }
 
-impl<CTX, INSP, I, P> InspectorEvmTrr for Evm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
@@ -86,7 +85,7 @@ where
                 InterpreterTypes = EthInterpreter,
                 Output = InterpreterAction,
             >,
-        > + InspectorEvmTrr,
+        > + InspectorEvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     type IT = EthInterpreter;

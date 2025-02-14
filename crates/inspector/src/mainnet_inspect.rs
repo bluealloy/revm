@@ -2,7 +2,7 @@ use revm::{
     context::{setters::ContextSetters, Evm},
     context_interface::{ContextTr, Journal},
     handler::{
-        instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, HandlerTr,
+        instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
         MainnetHandler, PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult},
@@ -13,15 +13,15 @@ use revm::{
 use std::vec::Vec;
 
 use crate::{
-    InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTrr, InspectorFrame, InspectorHandler,
+    InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler,
     JournalExt,
 };
 
 impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: InspectorEvmTrr<
+    EVM: InspectorEvmTr<
         Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-        Inspector: Inspector<<<Self as HandlerTr>::Evm as EvmTr>::Context, EthInterpreter>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>

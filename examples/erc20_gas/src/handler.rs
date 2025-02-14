@@ -5,7 +5,7 @@ use revm::{
         result::{HaltReason, InvalidTransaction},
         Block, ContextTr, Journal, Transaction, TransactionType,
     },
-    handler::{EvmTr, EvmTrError, Frame, FrameResult, HandlerTr},
+    handler::{EvmTr, EvmTrError, Frame, FrameResult, Handler},
     interpreter::FrameInput,
     primitives::{Log, U256},
     specification::hardfork::SpecId,
@@ -32,7 +32,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
     }
 }
 
-impl<EVM, ERROR, FRAME> HandlerTr for Erc20MainetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for Erc20MainetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,

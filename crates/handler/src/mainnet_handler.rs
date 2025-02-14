@@ -1,4 +1,4 @@
-use super::{EvmTrError, HandlerTr};
+use super::{EvmTrError, Handler};
 use crate::{EvmTr, Frame, FrameResult};
 use context_interface::{result::HaltReason, ContextTr, Journal};
 use interpreter::FrameInput;
@@ -10,7 +10,7 @@ pub struct MainnetHandler<CTX, ERROR, FRAME> {
     pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME)>,
 }
 
-impl<EVM, ERROR, FRAME> HandlerTr for MainnetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
     ERROR: EvmTrError<EVM>,

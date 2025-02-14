@@ -7,7 +7,7 @@ use context_interface::{
 };
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::EthInstructions, EthFrame, HandlerTr, MainnetHandler, PrecompileProvider,
+    instructions::EthInstructions, EthFrame, Handler, MainnetHandler, PrecompileProvider,
 };
 use interpreter::interpreter::EthInterpreter;
 

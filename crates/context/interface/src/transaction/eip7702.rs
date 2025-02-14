@@ -3,7 +3,7 @@ use primitives::{Address, U256};
 
 /// Authorization trait.
 #[auto_impl(&, Box, Arc, Rc)]
-pub trait AuthorizationT {
+pub trait AuthorizationTr {
     /// Authority address.
     ///
     /// # Note

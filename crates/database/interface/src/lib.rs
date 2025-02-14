@@ -34,7 +34,6 @@ impl DBErrorMarker for String {}
 pub trait Database {
     /// The database error type.
     type Error: DBErrorMarker + Error;
-    //type Bytecode: BytecodeT;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

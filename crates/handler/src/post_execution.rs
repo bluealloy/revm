@@ -2,7 +2,7 @@ use super::frame_data::FrameResult;
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,
-    result::{ExecutionResult, HaltReasonT, ResultAndState},
+    result::{ExecutionResult, HaltReasonTr, ResultAndState},
     Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
@@ -89,7 +89,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
 /// TODO make Journal FinalOutput more generic.
 pub fn output<
     CTX: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-    HALTREASON: HaltReasonT,
+    HALTREASON: HaltReasonTr,
 >(
     context: &mut CTX,
     // TODO, make this more generic and nice.
