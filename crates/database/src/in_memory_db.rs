@@ -389,7 +389,7 @@ impl AccountState {
     }
 }
 
-/// Custom benchmarking DB that only has account info for the zero address.
+/// Custom benchmarking DB that only has account info for the FFADDRESS address.
 ///
 /// Any other address will return an empty account.
 #[derive(Debug, Default, Clone)]
