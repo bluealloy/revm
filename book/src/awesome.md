@@ -7,8 +7,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 - [**Book:** ](https://bluealloy.github.io/revm/) - Comprehensive user documentation for Revm.
 
 #### Audits
-- [**Guido Vranken**](https://hackmd.io/@draganrakita/rklf0PuBR/edit) - Security audit and analysis.
-- [**Tweet**](https://x.com/rakitadragan/status/1803540273907245293?t=i_h-Mkvh0w91UpMIH2ILEw&s=19) - Tweet announcing the audit.
+- [**Coomunity driven Audit done by Guido Vranken**](https://rakita.github.io/blog/blog/005-revm-audit/)
 
 #### Clients
 - [**Reth:**](https://github.com/paradigmxyz/reth) A modular, contributor-friendly, and ultra-fast implementation of the Ethereum protocol.
@@ -35,6 +34,5 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 
 #### Tutorials
 - [**Revm is All You Need:**](https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4) Guide on building simulated blockchain environments.
-- [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/blob/main/examples/uniswap_v2_usdc_swap.rs) Demonstrates a USDC swap on Uniswap V2.
-- [**Fork Transaction Example:**](https://github.com/bluealloy/revm/blob/main/examples/fork_ref_transact.rs) Example of a fork transaction.
+- [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/tree/main/examples/uniswap_get_reserves) Demonstrates a USDC swap on Uniswap V2.evm is available in the [awesome-revm](./awesome.md) section o
 - [**revm-by-example:**](https://github.com/Cionn3/revm-by-example) Practical examples using the Rust Ethereum Virtual Machine.

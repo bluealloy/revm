@@ -2,7 +2,7 @@
 
 List of crates can be found in [Crates](./architecture/crates.md) section of the book.
 
-REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)] changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here [Ethereum Hardforks]() and repository that contains all EIPs can be found here [EIPs](https://eips.ethereum.org/).
+REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)](https://github.com/ethereum/EIPs) changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here [Ethereum Hardforks]() and repository that contains all EIPs can be found here [EIPs](https://eips.ethereum.org/).
 
 ### Main components/traits:
 
