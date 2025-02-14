@@ -33,7 +33,8 @@ jobs:
 
       - name: Run tests
         run: |
-          chmod -c 777 "/home/runner/work/revm/revm"
+          cp README.md book/src/README.md
+          sed -i -e 's|../../README.md|README.md|g' book/src/SUMMARY.md
           mdbook test
 
   lint:
