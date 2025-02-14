@@ -33,8 +33,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pwd
-          chmod -c -R +rX "/home/runner/work/revm/revm/book/src/../../README.md"
+          chmod -c 777 "/home/runner/work/revm/revm/book/src/../../README.md"
           mdbook test
 
   lint:
