@@ -1,96 +1,53 @@
-use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use crate::PrecompileError;
-use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
+use super::g1::{encode_g1_point, extract_g1_input};
+use crate::{u64_to_address, PrecompileWithAddress};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
+use blst::{
+    blst_p1, blst_p1_add_or_double_affine, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine,
+};
 use primitives::Bytes;
+use crate::bls12_381::bls12_381_const::{G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH,G1_INPUT_ITEM_LENGTH};
 
-/// Length of each of the elements in a g1 operation input.
-pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
+/// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
+pub const PRECOMPILE: PrecompileWithAddress =
+    PrecompileWithAddress(u64_to_address(G1_ADD_ADDRESS), g1_add);
 
-/// Output length of a g1 operation.
-const G1_OUTPUT_LENGTH: usize = 128;
 
-/// Encodes a G1 point in affine format into byte slice with padded elements.
-pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
-    let mut out = vec![0u8; G1_OUTPUT_LENGTH];
-    // SAFETY: Out comes from fixed length array, input is a blst value.
-    unsafe {
-        fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &(*input).x);
-        fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &(*input).y);
+/// G1 addition call expects `256` bytes as an input that is interpreted as byte
+/// concatenation of two G1 points (`128` bytes each).
+/// Output is an encoding of addition operation result - single G1 point (`128`
+/// bytes).
+/// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
+pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    if G1_ADD_BASE_GAS_FEE > gas_limit {
+        return Err(PrecompileError::OutOfGas.into());
     }
-    out.into()
-}
 
-/// Returns a `blst_p1_affine` from the provided byte slices, which represent the x and y
-/// affine coordinates of the point.
-///
-/// If the x or y coordinate do not represent a canonical field element, an error is returned.
-///
-/// See [fp_from_bendian] for more information.
-pub(super) fn decode_and_check_g1(
-    p0_x: &[u8; 48],
-    p0_y: &[u8; 48],
-) -> Result<blst_p1_affine, PrecompileError> {
-    let out = blst_p1_affine {
-        x: fp_from_bendian(p0_x)?,
-        y: fp_from_bendian(p0_y)?,
-    };
-
-    Ok(out)
-}
-
-/// Extracts a G1 point in Affine format from a 128 byte slice representation.
-///
-/// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
-pub(super) fn extract_g1_input(
-    input: &[u8],
-    subgroup_check: bool,
-) -> Result<blst_p1_affine, PrecompileError> {
-    if input.len() != G1_INPUT_ITEM_LENGTH {
+    if input.len() != G1_ADD_INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {G1_INPUT_ITEM_LENGTH} bytes, was {}",
+            "G1ADD input should be {G1_ADD_INPUT_LENGTH} bytes, was {}",
             input.len()
-        )));
+        ))
+        .into());
     }
 
-    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
-    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
-    let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
+    // NB: There is no subgroup check for the G1 addition precompile.
+    //
+    // So we set the subgroup checks here to `false`
+    let a_aff = &extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH], false)?;
+    let b_aff = &extract_g1_input(&input[G1_INPUT_ITEM_LENGTH..], false)?;
 
-    if subgroup_check {
-        // NB: Subgroup checks
-        //
-        // Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        //
-        // Implementations SHOULD use the optimized subgroup check method:
-        //
-        // https://eips.ethereum.org/assets/eip-2537/fast_subgroup_checks
-        //
-        // On any input that fail the subgroup check, the precompile MUST return an error.
-        //
-        // As endomorphism acceleration requires input on the correct subgroup, implementers MAY
-        // use endomorphism acceleration.
-        if unsafe { !blst_p1_affine_in_g1(&out) } {
-            return Err(PrecompileError::Other("Element not in G1".to_string()));
-        }
-    } else {
-        // From EIP-2537:
-        //
-        // Error cases:
-        //
-        // * An input is neither a point on the G1 elliptic curve nor the infinity point
-        //
-        // NB: There is no subgroup check for the G1 addition precompile.
-        //
-        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g1 because the latter performs
-        // the subgroup check.
-        //
-        // SAFETY: Out is a blst value.
-        if unsafe { !blst_p1_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other(
-                "Element not on G1 curve".to_string(),
-            ));
-        }
-    }
+    let mut b = blst_p1::default();
+    // SAFETY: `b` and `b_aff` are blst values.
+    unsafe { blst_p1_from_affine(&mut b, b_aff) };
 
-    Ok(out)
+    let mut p = blst_p1::default();
+    // SAFETY: `p`, `b` and `a_aff` are blst values.
+    unsafe { blst_p1_add_or_double_affine(&mut p, &b, a_aff) };
+
+    let mut p_aff = blst_p1_affine::default();
+    // SAFETY: `p_aff` and `p`` are blst values.
+    unsafe { blst_p1_to_affine(&mut p_aff, &p) };
+
+    let out = encode_g1_point(&p_aff);
+    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out))
 }
