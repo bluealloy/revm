@@ -1,25 +1,17 @@
 use super::{
-    g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH},
+    g2::{encode_g2_point, extract_g2_input},
     msm::msm_required_gas,
-    utils::{extract_scalar_input, NBITS, SCALAR_LENGTH},
+    utils::extract_scalar_input
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
 use primitives::Bytes;
+use crate::bls12_381::bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH,G2_INPUT_ITEM_LENGTH,  UTILS_NBITS, UTILS_SCALAR_LENGTH};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), g2_msm);
-
-/// BLS12_G2MSM precompile address.
-pub const ADDRESS: u64 = 0x0e;
-
-/// Base gas fee for BLS12-381 g2_mul operation.
-pub const BASE_GAS_FEE: u64 = 22500;
-
-/// Input length of g2_mul operation.
-pub const INPUT_LENGTH: usize = 288;
+    PrecompileWithAddress(u64_to_address(G2_ADD_ADDRESS), g2_msm);
 
 // Discounts table for G2 MSM as a vector of pairs `[k, discount]`:
 pub static DISCOUNT_TABLE: [u16; 128] = [
@@ -42,24 +34,24 @@ pub static DISCOUNT_TABLE: [u16; 128] = [
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
 pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % INPUT_LENGTH != 0 {
+    if input_len == 0 || input_len % G2_ADD_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
             "G2MSM input length should be multiple of {}, was {}",
-            INPUT_LENGTH, input_len
+            G2_ADD_INPUT_LENGTH, input_len
         ))
         .into());
     }
 
-    let k = input_len / INPUT_LENGTH;
-    let required_gas = msm_required_gas(k, &DISCOUNT_TABLE, BASE_GAS_FEE);
+    let k = input_len / G2_ADD_INPUT_LENGTH;
+    let required_gas = msm_required_gas(k, &DISCOUNT_TABLE, G2_ADD_BASE_GAS_FEE);
     if required_gas > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
 
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars: Vec<u8> = Vec::with_capacity(k * UTILS_SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
+        let slice = &input[i * G2_ADD_INPUT_LENGTH..i * G2_ADD_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
         // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
         // filter points at infinity (and their corresponding scalars) from the input.
         if slice.iter().all(|i| *i == 0) {
@@ -79,8 +71,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         scalars.extend_from_slice(
             &extract_scalar_input(
-                &input[i * INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
-                    ..i * INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
+                &input[i * G2_ADD_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
+                    ..i * G2_ADD_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + UTILS_SCALAR_LENGTH],
             )?
             .b,
         );
@@ -92,7 +84,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let points = p2_affines::from(&g2_points);
-    let multiexp = points.mult(&scalars, NBITS);
+    let multiexp = points.mult(&scalars, UTILS_NBITS);
 
     let mut multiexp_aff = blst_p2_affine::default();
     // SAFETY: `multiexp_aff` and `multiexp` are blst values.
