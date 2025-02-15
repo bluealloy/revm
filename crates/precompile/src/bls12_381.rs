@@ -17,7 +17,7 @@ pub mod map_fp_to_g1;
 #[cfg(feature = "blst")]
 pub mod pairing;
 mod utils;
-pub mod reuse_const;
+pub mod bls12_381_const;
 pub mod msm;
 
 /// Returns the BLS12-381 precompiles with their addresses.
