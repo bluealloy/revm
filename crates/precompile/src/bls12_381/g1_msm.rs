@@ -1,25 +1,18 @@
 use super::{
-    g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH},
+    g1::{encode_g1_point, extract_g1_input},
     msm::msm_required_gas,
-    utils::{extract_scalar_input, NBITS, SCALAR_LENGTH},
+    utils::extract_scalar_input
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine, p1_affines};
 use primitives::Bytes;
+use crate::bls12_381::bls12_381_const::{G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, G1_INPUT_ITEM_LENGTH,UTILS_SCALAR_LENGTH, UTILS_NBITS};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), g1_msm);
+    PrecompileWithAddress(u64_to_address(G1_MSM_ADDRESS), g1_msm);
 
-/// BLS12_G1MSM precompile address.
-pub const ADDRESS: u64 = 0x0c;
-
-/// Base gas fee for BLS12-381 g1_mul operation.
-pub const BASE_GAS_FEE: u64 = 12000;
-
-/// Input length of g1_mul operation.
-pub const INPUT_LENGTH: usize = 160;
 
 /// Discounts table for G1 MSM as a vector of pairs `[k, discount]`.
 pub static DISCOUNT_TABLE: [u16; 128] = [
@@ -42,24 +35,24 @@ pub static DISCOUNT_TABLE: [u16; 128] = [
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
 pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % INPUT_LENGTH != 0 {
+    if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
             "G1MSM input length should be multiple of {}, was {}",
-            INPUT_LENGTH, input_len
+            G1_MSM_INPUT_LENGTH, input_len
         ))
         .into());
     }
 
-    let k = input_len / INPUT_LENGTH;
-    let required_gas = msm_required_gas(k, &DISCOUNT_TABLE, BASE_GAS_FEE);
+    let k = input_len / G1_MSM_INPUT_LENGTH;
+    let required_gas = msm_required_gas(k, &DISCOUNT_TABLE, G1_MSM_BASE_GAS_FEE);
     if required_gas > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
 
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars: Vec<u8> = Vec::with_capacity(k * UTILS_SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
+        let slice = &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
 
         // BLST batch API for p1_affines blows up when you pass it a point at infinity, so we must
         // filter points at infinity (and their corresponding scalars) from the input.
@@ -79,8 +72,8 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         scalars.extend_from_slice(
             &extract_scalar_input(
-                &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
-                    ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
+                &input[i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
+                    ..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + UTILS_SCALAR_LENGTH],
             )?
             .b,
         );
@@ -92,7 +85,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let points = p1_affines::from(&g1_points);
-    let multiexp = points.mult(&scalars, NBITS);
+    let multiexp = points.mult(&scalars, UTILS_NBITS);
 
     let mut multiexp_aff = blst_p1_affine::default();
     // SAFETY: `multiexp_aff` and `multiexp` are blst values.
