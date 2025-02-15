@@ -1,28 +1,24 @@
-use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
 use crate::PrecompileError;
 use blst::{blst_fp2, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
 use primitives::Bytes;
+use crate::bls12_381::bls12_381_const::{G2_OUTPUT_LENGTH,G2_INPUT_ITEM_LENGTH, UTILS_FP_LENGTH, UTILS_PADDED_FP_LENGTH};
 
-/// Length of each of the elements in a g2 operation input.
-pub(super) const G2_INPUT_ITEM_LENGTH: usize = 256;
-
-/// Output length of a g2 operation.
-const G2_OUTPUT_LENGTH: usize = 256;
 
 /// Encodes a G2 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     let mut out = vec![0u8; G2_OUTPUT_LENGTH];
-    fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x.fp[0]);
+    fp_to_bytes(&mut out[..UTILS_PADDED_FP_LENGTH], &input.x.fp[0]);
     fp_to_bytes(
-        &mut out[PADDED_FP_LENGTH..2 * PADDED_FP_LENGTH],
+        &mut out[UTILS_PADDED_FP_LENGTH..2 * UTILS_PADDED_FP_LENGTH],
         &input.x.fp[1],
     );
     fp_to_bytes(
-        &mut out[2 * PADDED_FP_LENGTH..3 * PADDED_FP_LENGTH],
+        &mut out[2 * UTILS_PADDED_FP_LENGTH..3 * UTILS_PADDED_FP_LENGTH],
         &input.y.fp[0],
     );
     fp_to_bytes(
-        &mut out[3 * PADDED_FP_LENGTH..4 * PADDED_FP_LENGTH],
+        &mut out[3 * UTILS_PADDED_FP_LENGTH..4 * UTILS_PADDED_FP_LENGTH],
         &input.y.fp[1],
     );
     out.into()
@@ -69,9 +65,9 @@ pub(super) fn extract_g2_input(
         )));
     }
 
-    let mut input_fps = [&[0; FP_LENGTH]; 4];
+    let mut input_fps = [&[0; UTILS_FP_LENGTH]; 4];
     for i in 0..4 {
-        input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
+        input_fps[i] = remove_padding(&input[i * UTILS_PADDED_FP_LENGTH..(i + 1) * UTILS_PADDED_FP_LENGTH])?;
     }
 
     let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
