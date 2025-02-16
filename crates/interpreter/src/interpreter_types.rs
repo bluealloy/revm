@@ -19,7 +19,7 @@ pub trait Immediates {
     fn read_slice(&self, len: usize) -> &[u8];
 }
 
-pub trait InputsT {
+pub trait InputsTr {
     fn target_address(&self) -> Address;
     fn caller_address(&self) -> Address;
     fn input(&self) -> &[u8];
@@ -210,7 +210,7 @@ pub trait InterpreterTypes {
     type Memory: MemoryTr;
     type Bytecode: Jumps + Immediates + LegacyBytecode + EofData + EofContainer + EofCodeInfo;
     type ReturnData: ReturnData;
-    type Input: InputsT;
+    type Input: InputsTr;
     type SubRoutineStack: SubRoutineStack;
     type Control: LoopControl;
     type RuntimeFlag: RuntimeFlag;

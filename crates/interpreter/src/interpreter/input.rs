@@ -1,4 +1,4 @@
-use crate::interpreter_types::InputsT;
+use crate::interpreter_types::InputsTr;
 use primitives::{Address, Bytes, U256};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub struct InputsImpl {
     pub call_value: U256,
 }
 
-impl InputsT for InputsImpl {
+impl InputsTr for InputsImpl {
     fn target_address(&self) -> Address {
         self.target_address
     }

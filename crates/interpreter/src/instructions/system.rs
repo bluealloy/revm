@@ -2,7 +2,7 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        InputsT, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
+        InputsTr, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
         StackTr,
     },
     Host, InstructionResult,
