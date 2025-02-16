@@ -3451,7 +3451,6 @@ dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
  "auto_impl",
- "revm-database",
  "revm-database-interface",
  "revm-primitives",
  "revm-specification",
