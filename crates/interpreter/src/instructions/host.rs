@@ -2,9 +2,7 @@ use crate::{
     gas::{self, warm_cold_cost, CALL_STIPEND},
     instructions::utility::{IntoAddress, IntoU256},
     interpreter::Interpreter,
-    interpreter_types::{
-        InputsTrait, InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
-    },
+    interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
 };
 use core::cmp::min;

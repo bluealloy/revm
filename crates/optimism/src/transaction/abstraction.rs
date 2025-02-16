@@ -8,7 +8,7 @@ use revm::{
 use std::vec;
 
 #[auto_impl(&, &mut, Box, Arc)]
-pub trait OpTxTrait: Transaction + DepositTransaction {
+pub trait OpTxTr: Transaction + DepositTransaction {
     fn enveloped_tx(&self) -> Option<&Bytes>;
 }
 
@@ -132,7 +132,7 @@ impl<T: Transaction> DepositTransaction for OpTransaction<T> {
     }
 }
 
-impl<T: Transaction> OpTxTrait for OpTransaction<T> {
+impl<T: Transaction> OpTxTr for OpTransaction<T> {
     fn enveloped_tx(&self) -> Option<&Bytes> {
         self.enveloped_tx.as_ref()
     }

@@ -277,26 +277,26 @@ impl JournalExt for Backend {
 trait DatabaseExt: Journal {
     /// Mimics `DatabaseExt::transact`
     /// See `commit_transaction` for the generics
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<InspectorT, BlockTr TxT, CfgT, PrecompileT>(
         &mut self,
-        env: Env<BlockT, TxT, CfgT>,
+        env: Env<BlockTr TxT, CfgT>,
         inspector: InspectorT,
     ) -> anyhow::Result<()>
     where
-        InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-            + GetInspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+        InspectorT: Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
+            + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
         BlockT: Block,
         TxT: Transaction,
         CfgT: Cfg,
         PrecompileT: PrecompileProvider<
-            Context = InspectorContext<InspectorT, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
+            Context = InspectorContext<InspectorT, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>,
             Output = InterpreterResult,
         >;
 
     /// Mimics `DatabaseExt::roll_fork_to_transaction`
-    fn method_that_constructs_inspector<BlockT, TxT, CfgT /* PrecompileT */>(
+    fn method_that_constructs_inspector<BlockTy, TxT, CfgT /* PrecompileT */>(
         &mut self,
-        env: Env<BlockT, TxT, CfgT>,
+        env: Env<BlockTy, TxT, CfgT>,
     ) -> anyhow::Result<()>
     where
         BlockT: Block,
@@ -309,7 +309,7 @@ trait DatabaseExt: Journal {
     // blocker for multichain cheatcodes.
     /*
         PrecompileT: PrecompileProvider<
-            Context = InspectorContext<InspectorT, InMemoryDB, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>,
+            Context = InspectorContext<InspectorT, InMemoryDB, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>,
             Output = InterpreterResult,
             Error = EVMError<Infallible, InvalidTransaction>,
         >;
@@ -317,26 +317,26 @@ trait DatabaseExt: Journal {
 }
 
 impl DatabaseExt for Backend {
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<InspectorT, BlockTr TxT, CfgT, PrecompileT>(
         &mut self,
-        env: Env<BlockT, TxT, CfgT>,
+        env: Env<BlockTr TxT, CfgT>,
         inspector: InspectorT,
     ) -> anyhow::Result<()>
     where
-        InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-            + GetInspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+        InspectorT: Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
+            + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
         BlockT: Block,
         TxT: Transaction,
         CfgT: Cfg,
     {
-        commit_transaction::<InspectorT, BlockT, TxT, CfgT>(self, env, inspector)?;
+        commit_transaction::<InspectorT, BlockTr TxT, CfgT>(self, env, inspector)?;
         self.method_with_inspector_counter += 1;
         Ok(())
     }
 
-    fn method_that_constructs_inspector<BlockT, TxT, CfgT /* , PrecompileT */>(
+    fn method_that_constructs_inspector<BlockTy, TxT, CfgT /* , PrecompileT */>(
         &mut self,
-        env: Env<BlockT, TxT, CfgT>,
+        env: Env<BlockTy, TxT, CfgT>,
     ) -> anyhow::Result<()>
     where
         BlockT: Block,
@@ -346,8 +346,8 @@ impl DatabaseExt for Backend {
         let inspector = TracerEip3155::new(Box::new(std::io::sink()));
         commit_transaction::<
             // Generic interpreter types are not supported yet in the `Evm` implementation
-            TracerEip3155<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
-            BlockT,
+            TracerEip3155<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+            BlockTr
             TxT,
             CfgT,
         >(self, env, inspector)?;
@@ -360,12 +360,12 @@ impl DatabaseExt for Backend {
 /// An REVM inspector that intercepts calls to the cheatcode address and executes them with the help of the
 /// `DatabaseExt` trait.
 #[derive(Clone, Default)]
-struct Cheatcodes<BlockT, TxT, CfgT> {
+struct Cheatcodes<BlockTr TxT, CfgT> {
     call_count: usize,
-    phantom: core::marker::PhantomData<(BlockT, TxT, CfgT)>,
+    phantom: core::marker::PhantomData<(BlockTr TxT, CfgT)>,
 }
 
-impl<BlockT, TxT, CfgT> Cheatcodes<BlockT, TxT, CfgT>
+impl<BlockTr TxT, CfgT> Cheatcodes<BlockTr TxT, CfgT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
@@ -373,7 +373,7 @@ where
 {
     fn apply_cheatcode(
         &mut self,
-        context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+        context: &mut Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
     ) -> anyhow::Result<()> {
         // We cannot avoid cloning here, because we need to mutably borrow the context to get the journal.
         let block = context.block.clone();
@@ -383,8 +383,8 @@ where
         // `transact` cheatcode would do this
         context
             .journal()
-            .method_that_takes_inspector_as_argument::<&mut Self, BlockT, TxT, CfgT, EthPrecompiles<
-                InspectorContext<&mut Self, Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
+            .method_that_takes_inspector_as_argument::<&mut Self, BlockTr TxT, CfgT, EthPrecompiles<
+                InspectorContext<&mut Self, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>
             >>(
                 Env {
                     block: block.clone(),
@@ -397,14 +397,14 @@ where
         // `rollFork(bytes32 transaction)` cheatcode would do this
         context
             .journal()
-            .method_that_constructs_inspector::<BlockT, TxT, CfgT>(Env { block, tx, cfg })?;
+            .method_that_constructs_inspector::<BlockTr TxT, CfgT>(Env { block, tx, cfg })?;
 
         Ok(())
     }
 }
 
-impl<BlockT, TxT, CfgT> Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-    for Cheatcodes<BlockT, TxT, CfgT>
+impl<BlockTr TxT, CfgT> Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
+    for Cheatcodes<BlockTr TxT, CfgT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
@@ -413,7 +413,7 @@ where
     /// Note that precompiles are no longer accessible via `EvmContext::precompiles`.
     fn call(
         &mut self,
-        context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+        context: &mut Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
         _inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         self.call_count += 1;
@@ -428,8 +428,8 @@ where
 
 /// EVM environment
 #[derive(Clone, Debug)]
-struct Env<BlockT, TxT, CfgT> {
-    block: BlockT,
+struct Env<BlockTr TxT, CfgT> {
+    block: BlockTr
     tx: TxT,
     cfg: CfgT,
 }
@@ -450,17 +450,17 @@ impl Env<BlockEnv, TxEnv, CfgEnv> {
 
 /// Executes a transaction and runs the inspector using the `Backend` as the state.
 /// Mimics `commit_transaction` <https://github.com/foundry-rs/foundry/blob/25cc1ac68b5f6977f23d713c01ec455ad7f03d21/crates/evm/core/src/backend/mod.rs#L1931>
-fn commit_transaction<InspectorT, BlockT, TxT, CfgT>(
+fn commit_transaction<InspectorT, BlockTr TxT, CfgT>(
     backend: &mut Backend,
-    env: Env<BlockT, TxT, CfgT>,
+    env: Env<BlockTr TxT, CfgT>,
     inspector: InspectorT,
 ) -> Result<(), EVMError<Infallible, InvalidTransaction>>
 where
     InspectorT: Inspector<
-            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
             // Generic interpreter types are not supported yet in the `Evm` implementation
             EthInterpreter,
-        > + GetInspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+        > + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
     BlockT: Block,
     TxT: Transaction,
     CfgT: Cfg,
@@ -483,7 +483,7 @@ where
 
     // let mut inspector_context = InspectorContext::<
     //     InspectorT,
-    //     Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+    //     Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
     // >::new(context, inspector);
     let result = evm.inspect_previous(inspector)?;
     //let result = inspect_main(&mut inspector_context)?;

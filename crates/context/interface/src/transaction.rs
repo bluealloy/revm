@@ -3,8 +3,8 @@ pub mod eip2930;
 pub mod eip7702;
 pub mod transaction_type;
 
-pub use eip2930::AccessListTrait;
-pub use eip7702::AuthorizationTrait;
+pub use eip2930::AccessListTr;
+pub use eip7702::AuthorizationTr;
 use specification::eip4844::GAS_PER_BLOB;
 pub use transaction_type::TransactionType;
 
@@ -24,8 +24,8 @@ pub trait TransactionError: Debug + core::error::Error {}
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
-    type AccessList: AccessListTrait;
-    type Authorization: AuthorizationTrait;
+    type AccessList: AccessListTr;
+    type Authorization: AuthorizationTr;
 
     /// Returns the transaction type.
     ///

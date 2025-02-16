@@ -5,27 +5,24 @@ use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
-pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
+pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
-impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-    HaltReasonT: Clone + Debug + PartialEq + Eq + From<HaltReason>
-{
-}
+impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<HaltReasonT = HaltReason> {
+pub struct ResultAndState<HaltReasonTy = HaltReason> {
     /// Status of execution
-    pub result: ExecutionResult<HaltReasonT>,
+    pub result: ExecutionResult<HaltReasonTy>,
     /// State that got updated
     pub state: EvmState,
 }
 
-impl<HaltReasonT> ResultAndState<HaltReasonT> {
+impl<HaltReasonTy> ResultAndState<HaltReasonTy> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
     pub fn map_haltreason<F, OHR>(self, op: F) -> ResultAndState<OHR>
     where
-        F: FnOnce(HaltReasonT) -> OHR,
+        F: FnOnce(HaltReasonTy) -> OHR,
     {
         ResultAndState {
             result: self.result.map_haltreason(op),
@@ -37,7 +34,7 @@ impl<HaltReasonT> ResultAndState<HaltReasonT> {
 /// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult<HaltReasonT = HaltReason> {
+pub enum ExecutionResult<HaltReasonTy = HaltReason> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -50,13 +47,13 @@ pub enum ExecutionResult<HaltReasonT = HaltReason> {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas
     Halt {
-        reason: HaltReasonT,
+        reason: HaltReasonTy,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl<HaltReasonT> ExecutionResult<HaltReasonT> {
+impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     /// Returns if transaction execution is successful.
     ///
     /// 1 indicates success, 0 indicates revert.
@@ -69,7 +66,7 @@ impl<HaltReasonT> ExecutionResult<HaltReasonT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
     pub fn map_haltreason<F, OHR>(self, op: F) -> ExecutionResult<OHR>
     where
-        F: FnOnce(HaltReasonT) -> OHR,
+        F: FnOnce(HaltReasonTy) -> OHR,
     {
         match self {
             Self::Success {

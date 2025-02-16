@@ -7,7 +7,7 @@ use core::{
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
 
-use super::MemoryTrait;
+use super::MemoryTr;
 
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
@@ -72,7 +72,7 @@ impl MemoryGetter for SharedMemory {
     }
 }
 
-impl<T: MemoryGetter> MemoryTrait for Rc<RefCell<T>> {
+impl<T: MemoryGetter> MemoryTr for Rc<RefCell<T>> {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         self.borrow_mut()
             .memory_mut()

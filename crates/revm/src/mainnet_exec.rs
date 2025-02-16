@@ -3,11 +3,11 @@ use context::setters::ContextSetters;
 use context::Evm;
 use context_interface::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    ContextTrait, Database, Journal,
+    ContextTr, Database, Journal,
 };
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::EthInstructions, EthFrame, EthHandler, MainnetHandler, PrecompileProvider,
+    instructions::EthInstructions, EthFrame, Handler, MainnetHandler, PrecompileProvider,
 };
 use interpreter::interpreter::EthInterpreter;
 
@@ -19,7 +19,7 @@ use std::vec::Vec;
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextSetters + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -37,7 +37,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>,
+        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
