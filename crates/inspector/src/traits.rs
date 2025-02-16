@@ -1,8 +1,9 @@
+use crate::{inspect_instructions, Inspector, JournalExt};
 use revm::{
     context::{setters::ContextSetters, Evm},
-    context_interface::ContextTrait,
+    context_interface::ContextTr,
     handler::{
-        instructions::InstructionProvider, CtxTraitDbError, EthFrame, EvmTrait, Frame,
+        instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame,
         FrameInitOrResult, PrecompileProvider,
     },
     interpreter::{
@@ -12,10 +13,8 @@ use revm::{
     precompile::PrecompileErrors,
 };
 
-use crate::{inspect_instructions, Inspector, JournalExt};
-
 /// Inspector EVM trait.
-pub trait InspectorEvmTrait: EvmTrait {
+pub trait InspectorEvmTr: EvmTr {
     type Inspector;
 
     fn inspector(&mut self) -> &mut Self::Inspector;
@@ -30,9 +29,9 @@ pub trait InspectorEvmTrait: EvmTrait {
     ) -> <Self::Instructions as InstructionProvider>::Output;
 }
 
-impl<CTX, INSP, I, P> InspectorEvmTrait for Evm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTrait<Journal: JournalExt> + ContextSetters,
+    CTX: ContextTr<Journal: JournalExt> + ContextSetters,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
@@ -66,7 +65,7 @@ where
 }
 
 // TODO move InspectorFrame here
-pub trait InspectorFrameTrait: Frame {
+pub trait InspectorFrame: Frame {
     type IT: InterpreterTypes;
 
     fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
@@ -76,18 +75,18 @@ pub trait InspectorFrameTrait: Frame {
     fn frame_input(&self) -> &FrameInput;
 }
 
-impl<EVM, ERROR> InspectorFrameTrait for EthFrame<EVM, ERROR, EthInterpreter>
+impl<EVM, ERROR> InspectorFrame for EthFrame<EVM, ERROR, EthInterpreter>
 where
-    EVM: EvmTrait<
-            Context: ContextTrait,
+    EVM: EvmTr<
+            Context: ContextTr,
             Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
             Instructions: InstructionProvider<
                 Context = EVM::Context,
                 InterpreterTypes = EthInterpreter,
                 Output = InterpreterAction,
             >,
-        > + InspectorEvmTrait,
-    ERROR: From<CtxTraitDbError<EVM::Context>> + From<PrecompileErrors>,
+        > + InspectorEvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
 {
     type IT = EthInterpreter;
 

@@ -2,7 +2,7 @@ use crate::{Block, Cfg, Database, Journal, Transaction};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
-pub trait ContextTrait {
+pub trait ContextTr {
     type Block: Block;
     type Tx: Transaction;
     type Cfg: Cfg;

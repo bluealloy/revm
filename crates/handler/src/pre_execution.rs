@@ -3,8 +3,8 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use bytecode::Bytecode;
-use context_interface::transaction::{AccessListTrait, AuthorizationTrait};
-use context_interface::ContextTrait;
+use context_interface::transaction::{AccessListTr, AuthorizationTr};
+use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
@@ -14,7 +14,7 @@ use context_interface::{
 use primitives::{BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
 use specification::{eip7702, hardfork::SpecId};
 
-pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error>>(
+pub fn load_accounts<CTX: ContextTr, ERROR: From<<CTX::Db as Database>::Error>>(
     context: &mut CTX,
 ) -> Result<(), ERROR> {
     let spec = context.cfg().spec().into();
@@ -46,7 +46,7 @@ pub fn load_accounts<CTX: ContextTrait, ERROR: From<<CTX::Db as Database>::Error
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextTrait>(
+pub fn deduct_caller<CTX: ContextTr>(
     context: &mut CTX,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee();
@@ -87,7 +87,7 @@ pub fn deduct_caller<CTX: ContextTrait>(
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<
-    CTX: ContextTrait,
+    CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,

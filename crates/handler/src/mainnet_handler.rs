@@ -1,6 +1,6 @@
-use super::{EthHandler, EthTraitError};
-use crate::{EvmTrait, Frame, FrameResult};
-use context_interface::{result::HaltReason, ContextTrait, Journal};
+use super::{EvmTrError, Handler};
+use crate::{EvmTr, Frame, FrameResult};
+use context_interface::{result::HaltReason, ContextTr, Journal};
 use interpreter::FrameInput;
 use primitives::Log;
 use state::EvmState;
@@ -10,10 +10,10 @@ pub struct MainnetHandler<CTX, ERROR, FRAME> {
     pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME)>,
 }
 
-impl<EVM, ERROR, FRAME> EthHandler for MainnetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTrait<Context: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
-    ERROR: EthTraitError<EVM>,
+    EVM: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
+    ERROR: EvmTrError<EVM>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,

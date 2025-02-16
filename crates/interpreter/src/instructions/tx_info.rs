@@ -1,7 +1,7 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
 use context_interface::{Block, Transaction, TransactionType};

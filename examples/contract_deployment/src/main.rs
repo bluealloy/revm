@@ -8,7 +8,7 @@ use revm::{
     context::Context,
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
-    handler::handler::EvmTrait,
+    handler::handler::EvmTr,
     primitives::{hex, Bytes, TxKind, U256},
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };

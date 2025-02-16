@@ -2,7 +2,7 @@ use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
 use primitives::U256;
