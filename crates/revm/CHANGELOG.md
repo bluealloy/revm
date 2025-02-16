@@ -6,6 +6,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.0](https://github.com/bluealloy/revm/compare/revm-v19.5.0...revm-v20.0.0) - 2025-02-16
+
+### Added
+
+- Split Inspector trait from EthHandler into standalone crate (#2075)
+- integrate alloy-eips (#2078)
+- Evm structure (Cached Instructions and Precompiles) (#2049)
+- Context execution (#2013)
+- EthHandler trait (#2001)
+- *(EIP-7623)* adjuct floor gas check order (main) (#1991)
+- *(EIP-7623)* Increase calldata cost. backport from rel/v51 (#1965)
+- simplify Transaction trait (#1959)
+- expose precompile address in Journal, DB::Error: StdError (#1956)
+- integrate codspeed (#1935)
+- Make Ctx journal generic (#1933)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- push NonceChange to Journal in deduct_caller (#1804)
+- Merge validation/analyzis with Bytecode (#1793)
+- Restructuring Part3 inspector crate (#1788)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- to_plain_state (#1778)
+- *(example)* deploy bytecode from scratch (#1767)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- make macro crate-agnostic (#1802)
+
+### Other
+
+- Rename NameTrait to NameTr (#2084)
+- backport op l1 fetch perf (#2076)
+- API cleanup (#2067)
+- Add helpers with_inspector with_precompile (#2063)
+- Bump licence year to 2025 (#2058)
+- bump alloy versions to match latest (#2007)
+- align crates versions (#1983)
+- Make inspector use generics, rm associated types (#1934)
+- fix comments and docs into more sensible (#1920)
+- EVM transact, make output generic for POSTEXEC (#1931)
+- Move CfgEnv from context-interface to context crate (#1910)
+- bumps select alloy crates to 0.6 (#1854)
+- some no_std cleanup (#1834)
+- bump alloy to 0.4.2 (#1817)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+- *(deps)* bump anyhow from 1.0.88 to 1.0.89 (#1772)
+- simplify SuccessOrHalt trait bound (#1768)
+
 ## [14.0.1](https://github.com/bluealloy/revm/compare/revm-v14.0.0...revm-v14.0.1) - 2024-08-30
 
 ### Other
