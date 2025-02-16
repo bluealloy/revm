@@ -39,9 +39,6 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
-[dev-dependencies]
-database.workspace = true
-
 [features]
 default = ["std"]
 std = ["serde?/std"]
