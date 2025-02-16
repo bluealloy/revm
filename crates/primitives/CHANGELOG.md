@@ -6,6 +6,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-primitives-v15.1.0...revm-primitives-v16.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- simplify Transaction trait (#1959)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- to_plain_state (#1778)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- Bump licence year to 2025 (#2058)
+- align crates versions (#1983)
+- Update HISTORY_STORAGE_ADDRESS (#1946)
+- fix comments and docs into more sensible (#1920)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+
+## [15.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v14.0.0...revm-primitives-v15.1.0) - 2024-12-26
+
+### Added
+
+- blst reprice, remove g1/g2 mul, eest test bump ([#1951](https://github.com/bluealloy/revm/pull/1951))
+- add Isthmus spec ([#1948](https://github.com/bluealloy/revm/pull/1948))
+- eip7691 fraction update ([#1900](https://github.com/bluealloy/revm/pull/1900))
+- apply latest EIP-7702 changes ([#1850](https://github.com/bluealloy/revm/pull/1850))
+- *(Prague)* EIP-7623 Increase Calldata Cost ([#1744](https://github.com/bluealloy/revm/pull/1744))
+
+### Other
+
+- eip7702 chainid u256 change ([#1950](https://github.com/bluealloy/revm/pull/1950))
+- Uncouple blob count between CL and EL ([#1899](https://github.com/bluealloy/revm/pull/1899))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v13.0.0...revm-primitives-v14.0.0) - 2024-11-06
+
+### Added
+
+- to_plain_state ([#1778](https://github.com/bluealloy/revm/pull/1778)) ([#1841](https://github.com/bluealloy/revm/pull/1841))
+
+### Other
+
+- bump alloy-eip7702 and remove `Parity` re-export ([#1842](https://github.com/bluealloy/revm/pull/1842))
+
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v12.0.0...revm-primitives-v13.0.0) - 2024-10-23
+
+### Other
+
+- bump alloy-eip7702 ([#1829](https://github.com/bluealloy/revm/pull/1829))
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v11.0.0...revm-primitives-v12.0.0) - 2024-10-17
+
+### Other
+
+- update Cargo.toml dependencies
+
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v10.0.0...revm-primitives-v11.0.0) - 2024-10-17
+
+### Added
+
+- EIP-7702 Add u8 validity ([#1824](https://github.com/bluealloy/revm/pull/1824))
+- Rename PRAGUE_EOF to OSAKA ([#1822](https://github.com/bluealloy/revm/pull/1822))
+- *(EIP-7702)* devnet-4 changes ([#1821](https://github.com/bluealloy/revm/pull/1821))
+
+### Other
+
+- bump newest primitives ([#1823](https://github.com/bluealloy/revm/pull/1823))
+
+## [10.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v10.0.0...revm-primitives-v10.0.1) - 2024-09-26
+
+### Other
+
+- update Cargo.toml dependencies
+
+## [9.0.2](https://github.com/bluealloy/revm/compare/revm-primitives-v9.0.1...revm-primitives-v9.0.2) - 2024-09-18
+
+### Other
+
+- *(deps)* bump alloy-primitives from 0.8.0 to 0.8.2 ([#1761](https://github.com/bluealloy/revm/pull/1761))
+
+## [9.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v9.0.0...revm-primitives-v9.0.1) - 2024-08-30
+
+### Other
+- Bump new logo ([#1735](https://github.com/bluealloy/revm/pull/1735))
+- bump kzg-rs version ([#1734](https://github.com/bluealloy/revm/pull/1734))
+
 ## [9.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v9.0.0...revm-primitives-v9.0.1) - 2024-08-30
 
 ### Other

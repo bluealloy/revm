@@ -6,6 +6,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-precompile-v16.1.0...revm-precompile-v17.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- integrate codspeed (#1935)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- *(Inspector)* frame_end called multiple times (#2037)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- Bump licence year to 2025 (#2058)
+- bump kzg.rs (#2002)
+- align crates versions (#1983)
+- blst reprice, remove g1/g2 mul (#1981)
+- integrate rust-secp256k1 (#1915)
+- fix comments and docs into more sensible (#1920)
+- Rename PRAGUE_EOF to OSAKA (#1903)
+- *(precompile)* use secp256k1 global context for ecrecover (#1843)
+- fix some typos (#1800)
+- Replace `PrecompileError` variant ([#1797](https://github.com/bluealloy/revm/pull/1797))
+- *(deps)* bump once_cell from 1.19.0 to 1.20.0 (#1773)
+
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [16.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v16.0.0...revm-precompile-v16.1.0) - 2025-02-11
+
+### Other
+
+- revm v19.4.0 tag v54
+
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v15.0.0...revm-precompile-v16.0.0) - 2024-12-26
+
+### Added
+
+- blst reprice, remove g1/g2 mul, eest test bump ([#1951](https://github.com/bluealloy/revm/pull/1951))
+- add Isthmus spec ([#1948](https://github.com/bluealloy/revm/pull/1948))
+
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v14.0.0...revm-precompile-v15.0.0) - 2024-11-06
+
+### Other
+
+- bump alloy-eip7702 and remove `Parity` re-export ([#1842](https://github.com/bluealloy/revm/pull/1842))
+- *(precompile)* use secp256k1 global context for ecrecover  ([#1845](https://github.com/bluealloy/revm/pull/1845))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v13.0.0...revm-precompile-v14.0.0) - 2024-10-23
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v12.0.0...revm-precompile-v13.0.0) - 2024-10-17
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.3...revm-precompile-v12.0.0) - 2024-10-17
+
+### Added
+
+- Rename PRAGUE_EOF to OSAKA ([#1822](https://github.com/bluealloy/revm/pull/1822))
+
+## [11.0.3](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.2...revm-precompile-v11.0.3) - 2024-09-26
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [11.0.2](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.1...revm-precompile-v11.0.2) - 2024-09-18
+
+### Other
+
+- make clippy happy ([#1755](https://github.com/bluealloy/revm/pull/1755))
+
 ## [11.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.0...revm-precompile-v11.0.1) - 2024-08-30
 
 ### Other
