@@ -1,5 +1,31 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v57 tag
+date 16.02.2025
+
+Big refactor of the code.
+Introduction of Revm Framework a way to extend evm without forking.
+
+* `revm` = 19.5.0 -> 20.0.0-alpha.1
+* `revm-primitives` = 15.2.0 -> 16.0.0-alpha.1
+* `revm-interpreter` = 15.2.0 -> 16.0.0-alpha.1
+* `revm-precompile` = 16.1.0 -> 17.0.0-alpha.1
+* `revme` = 2.5.0 -> 3.0.0-alpha.1
+
+New crates:
+* `revm-bytecode` = 1.0.0-alpha.1
+* `revm-database` = 1.0.0-alpha.1
+* `revm-database-interface` = 1.0.0-alpha.1
+* `revm-specification` = 1.0.0-alpha.1
+* `revm-state` = 1.0.0-alpha.1
+* `revm-inspector` = 1.0.0-alpha.1
+* `revm-statetest-types` = 1.0.0-alpha.1
+* `revm-context` = 1.0.0-alpha.1
+* `revm-context-interface` = 1.0.0-alpha.1
+* `revm-handler` = 1.0.0-alpha.1
+
+
+
 # v56 tag
 date: 11.02.2025
 
