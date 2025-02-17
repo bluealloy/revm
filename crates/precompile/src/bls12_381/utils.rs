@@ -1,33 +1,35 @@
+use crate::bls12_381::bls12_381_const::{
+    FP_LENGTH, MODULUS_REPR, PADDED_FP_LENGTH, PADDING_LENGTH,SCALAR_LENGTH,
+};
 use crate::PrecompileError;
 use blst::{
     blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
 };
 use core::cmp::Ordering;
-use crate::bls12_381::bls12_381_const::{UTILS_FP_LENGTH, UTILS_PADDED_FP_LENGTH, UTILS_PADDING_LENGTH, UTILS_SCALAR_LENGTH, UTILS_MODULUS_REPR};
 
 /// Encodes a single finite field element into byte slice with padding.
 pub(super) fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
-    if out.len() != UTILS_PADDED_FP_LENGTH {
+    if out.len() != PADDED_FP_LENGTH {
         return;
     }
-    let (padding, rest) = out.split_at_mut(UTILS_PADDING_LENGTH);
+    let (padding, rest) = out.split_at_mut(PADDING_LENGTH);
     padding.fill(0);
     // SAFETY: Out length is checked previously, `input` is a blst value.
     unsafe { blst_bendian_from_fp(rest.as_mut_ptr(), input) };
 }
 
 /// Removes zeros with which the precompile inputs are left padded to 64 bytes.
-pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; UTILS_FP_LENGTH], PrecompileError> {
-    if input.len() != UTILS_PADDED_FP_LENGTH {
+pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], PrecompileError> {
+    if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Padded input should be {UTILS_PADDED_FP_LENGTH} bytes, was {}",
+            "Padded input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));
     }
-    let (padding, unpadded) = input.split_at(UTILS_PADDING_LENGTH);
+    let (padding, unpadded) = input.split_at(PADDING_LENGTH);
     if !padding.iter().all(|&x| x == 0) {
         return Err(PrecompileError::Other(format!(
-            "{UTILS_PADDING_LENGTH} top bytes of input are not zero",
+            "{PADDING_LENGTH} top bytes of input are not zero",
         )));
     }
     Ok(unpadded.try_into().unwrap())
@@ -44,9 +46,9 @@ pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; UTILS_FP_LENGTH], Pre
 /// * The corresponding integer is not required to be less than or equal than main subgroup order
 ///   `q`.
 pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
-    if input.len() != UTILS_SCALAR_LENGTH {
+    if input.len() != SCALAR_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {UTILS_SCALAR_LENGTH} bytes, was {}",
+            "Input should be {SCALAR_LENGTH} bytes, was {}",
             input.len()
         )));
     }
@@ -66,7 +68,7 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
 /// Checks if the input is a valid big-endian representation of a field element.
 fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modulo) in input.iter().zip(UTILS_MODULUS_REPR.iter()) {
+    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
         match i.cmp(modulo) {
             Ordering::Greater => return false,
             Ordering::Less => return true,
