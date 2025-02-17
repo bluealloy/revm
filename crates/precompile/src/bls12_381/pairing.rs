@@ -1,14 +1,13 @@
-use super::{
-    g1::extract_g1_input,
-    g2::extract_g2_input,
+use super::{g1::extract_g1_input, g2::extract_g2_input};
+use crate::bls12_381::bls12_381_const::{
+    G1_INPUT_ITEM_LENGTH, G2_INPUT_ITEM_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
+    PAIRING_PAIRING_MULTIPLIER_BAS, PAIRING_PAIRING_OFFSET_BASE,
 };
 use crate::{
     u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
 use primitives::{Bytes, B256};
-use crate::bls12_381::bls12_381_const::{PAIRING_ADDRESS, PAIRING_PAIRING_MULTIPLIER_BAS, PAIRING_PAIRING_OFFSET_BASE, PAIRING_INPUT_LENGTH, G1_INPUT_ITEM_LENGTH,G2_INPUT_ITEM_LENGTH};
-
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
