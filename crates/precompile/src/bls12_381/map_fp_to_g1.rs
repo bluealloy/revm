@@ -2,11 +2,13 @@ use super::{
     g1::encode_g1_point,
     utils::{fp_from_bendian, remove_padding},
 };
+use crate::bls12_381::bls12_381_const::{
+    MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH,
+};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine};
 use primitives::Bytes;
-use crate::bls12_381::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, UTILS_PADDED_FP_LENGTH};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -20,9 +22,9 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas.into());
     }
 
-    if input.len() != UTILS_PADDED_FP_LENGTH {
+    if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "MAP_FP_TO_G1 input should be {UTILS_PADDED_FP_LENGTH} bytes, was {}",
+            "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         ))
         .into());
