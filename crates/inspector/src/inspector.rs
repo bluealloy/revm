@@ -277,7 +277,7 @@ where
                     if let Some(output) = frame_start(context, inspector, &mut init) {
                         output
                     } else {
-                        match self.frame_init(frame, evm, init)? {
+                        match self.frame_init(frame, evm, init.clone())? {
                             ItemOrResult::Item(mut new_frame) => {
                                 // only if new frame is created call initialize_interp hook.
                                 let (context, inspector) = evm.ctx_inspector();
@@ -288,7 +288,7 @@ where
                             // Dont pop the frame as new frame was not created.
                             ItemOrResult::Result(mut result) => {
                                 let (context, inspector) = evm.ctx_inspector();
-                                frame_end(context, inspector, frame.frame_input(), &mut result);
+                                frame_end(context, inspector, &init, &mut result);
                                 result
                             }
                         }
