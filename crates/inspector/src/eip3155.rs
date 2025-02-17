@@ -1,18 +1,14 @@
 use crate::inspectors::GasInspector;
 use crate::Inspector;
-use revm::interpreter::interpreter_types::{RuntimeFlag, SubRoutineStack};
-use revm::{
-    bytecode::opcode::OpCode,
-    context::Cfg,
-    context_interface::{ContextTr, Journal, Transaction},
-    interpreter::{
-        interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
-        InterpreterTypes, Stack,
-    },
-    primitives::{hex, HashMap, B256, U256},
+use context::{Cfg, ContextTr, Journal, Transaction};
+use interpreter::{
+    interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+    InterpreterTypes, Stack,
 };
+use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;
+use state::bytecode::opcode::OpCode;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].

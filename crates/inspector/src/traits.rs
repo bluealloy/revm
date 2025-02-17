@@ -1,17 +1,14 @@
 use crate::{inspect_instructions, Inspector, JournalExt};
-use revm::{
-    context::{setters::ContextSetters, Evm},
-    context_interface::ContextTr,
-    handler::{
-        instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame,
-        FrameInitOrResult, PrecompileProvider,
-    },
-    interpreter::{
-        interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
-        InterpreterTypes,
-    },
-    precompile::PrecompileErrors,
+use context::{setters::ContextSetters, ContextTr, Evm};
+use handler::{
+    instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame, FrameInitOrResult,
+    PrecompileProvider,
 };
+use interpreter::{
+    interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
+    InterpreterTypes,
+};
+use precompile::PrecompileErrors;
 
 /// Inspector EVM trait.
 pub trait InspectorEvmTr: EvmTr {
