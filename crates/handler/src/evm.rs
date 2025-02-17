@@ -1,3 +1,4 @@
+use crate::{instructions::EthInstructions, EthFrame, Handler, MainnetHandler, PrecompileProvider};
 use context::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
     setters::ContextSetters,
@@ -7,8 +8,7 @@ use database::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::Log;
 use state::EvmState;
-
-use crate::{instructions::EthInstructions, EthFrame, Handler, MainnetHandler, PrecompileProvider};
+use std::vec::Vec;
 
 /// Execute EVM transactions.
 pub trait ExecuteEvm: ContextSetters {
