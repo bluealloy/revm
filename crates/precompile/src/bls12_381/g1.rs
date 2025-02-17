@@ -1,16 +1,18 @@
 use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
+use crate::bls12_381::bls12_381_const::{
+    G1_INPUT_ITEM_LENGTH, G1_OUTPUT_LENGTH, PADDED_FP_LENGTH,
+};
 use crate::PrecompileError;
 use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 use primitives::Bytes;
-use crate::bls12_381::bls12_381_const::{G1_OUTPUT_LENGTH, G1_INPUT_ITEM_LENGTH,UTILS_PADDED_FP_LENGTH};
 
 /// Encodes a G1 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
     let mut out = vec![0u8; G1_OUTPUT_LENGTH];
     // SAFETY: Out comes from fixed length array, input is a blst value.
     unsafe {
-        fp_to_bytes(&mut out[..UTILS_PADDED_FP_LENGTH], &(*input).x);
-        fp_to_bytes(&mut out[UTILS_PADDED_FP_LENGTH..], &(*input).y);
+        fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &(*input).x);
+        fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &(*input).y);
     }
     out.into()
 }
@@ -47,8 +49,8 @@ pub(super) fn extract_g1_input(
         )));
     }
 
-    let input_p0_x = remove_padding(&input[..UTILS_PADDED_FP_LENGTH])?;
-    let input_p0_y = remove_padding(&input[UTILS_PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
+    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
+    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
     let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
     if subgroup_check {
