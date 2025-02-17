@@ -21,4 +21,5 @@ burntpix/svgs
 rustc-ice-*
 
 e2e/tests
+e2e/Cargo.lock
 /tmp
