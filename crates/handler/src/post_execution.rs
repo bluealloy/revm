@@ -1,8 +1,8 @@
 use super::frame_data::FrameResult;
-use context_interface::ContextTrait;
+use context_interface::ContextTr;
 use context_interface::{
     journaled_state::Journal,
-    result::{ExecutionResult, HaltReasonTrait, ResultAndState},
+    result::{ExecutionResult, HaltReasonTr, ResultAndState},
     Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
@@ -29,7 +29,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
 }
 
-pub fn reimburse_caller<CTX: ContextTrait>(
+pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
@@ -51,7 +51,7 @@ pub fn reimburse_caller<CTX: ContextTrait>(
     Ok(())
 }
 
-pub fn reward_beneficiary<CTX: ContextTrait>(
+pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
@@ -88,8 +88,8 @@ pub fn reward_beneficiary<CTX: ContextTrait>(
 ///
 /// TODO make Journal FinalOutput more generic.
 pub fn output<
-    CTX: ContextTrait<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
-    HALTREASON: HaltReasonTrait,
+    CTX: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    HALTREASON: HaltReasonTr,
 >(
     context: &mut CTX,
     // TODO, make this more generic and nice.

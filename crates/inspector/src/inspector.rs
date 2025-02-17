@@ -1,10 +1,10 @@
-use crate::{InspectorEvmTrait, InspectorFrameTrait};
+use crate::{InspectorEvmTr, InspectorFrame};
 use auto_impl::auto_impl;
 use revm::{
     context::{Cfg, JournalEntry, JournaledState},
-    context_interface::{result::ResultAndState, ContextTrait, Database, Transaction},
+    context_interface::{result::ResultAndState, ContextTr, Database, Transaction},
     handler::{
-        execution, EthHandler, EvmTrait, Frame, FrameInitOrResult, FrameOrResult, FrameResult,
+        execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler,
         ItemOrResult,
     },
     interpreter::{
@@ -181,12 +181,11 @@ impl<DB: Database> JournalExt for JournaledState<DB> {
     }
 }
 
-pub trait EthInspectorHandler: EthHandler
+pub trait InspectorHandler: Handler
 where
-    Self::Evm: InspectorEvmTrait<
-        Inspector: Inspector<<<Self as EthHandler>::Evm as EvmTrait>::Context, Self::IT>,
-    >,
-    Self::Frame: InspectorFrameTrait<IT = Self::IT>,
+    Self::Evm:
+        InspectorEvmTr<Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, Self::IT>>,
+    Self::Frame: InspectorFrame<IT = Self::IT>,
 {
     type IT: InterpreterTypes;
 
@@ -374,7 +373,7 @@ pub fn inspect_instructions<CTX, IT>(
     instructions: &InstructionTable<IT, CTX>,
 ) -> InterpreterAction
 where
-    CTX: ContextTrait<Journal: JournalExt> + Host,
+    CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
     interpreter.reset_control();
