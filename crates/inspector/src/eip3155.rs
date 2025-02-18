@@ -12,7 +12,7 @@ use state::bytecode::opcode::OpCode;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-pub struct TracerEip3155<CTX, INTR> {
+pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
     /// Print summary of the execution.
@@ -28,7 +28,6 @@ pub struct TracerEip3155<CTX, INTR> {
     skip: bool,
     include_memory: bool,
     memory: Option<String>,
-    _phantom: core::marker::PhantomData<(CTX, INTR)>,
 }
 
 // # Output
@@ -108,11 +107,7 @@ struct Summary {
     fork: Option<String>,
 }
 
-impl<CTX, INTR> TracerEip3155<CTX, INTR>
-where
-    CTX: ContextTr,
-    INTR:,
-{
+impl TracerEip3155 {
     /// Creates a new EIP-3155 tracer with the given output writer, by first wrapping it in a
     /// [`BufWriter`](std::io::BufWriter).
     pub fn buffered(output: impl Write + 'static) -> Self {
@@ -136,7 +131,6 @@ where
             refunded: 0,
             mem_size: 0,
             skip: false,
-            _phantom: Default::default(),
         }
     }
 
@@ -182,7 +176,7 @@ where
         *skip = false;
     }
 
-    fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
+    fn print_summary(&mut self, result: &InterpreterResult, context: &mut impl ContextTr) {
         if !self.print_summary {
             return;
         }
@@ -214,7 +208,7 @@ impl CloneStack for Stack {
     }
 }
 
-impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
+impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155
 where
     CTX: ContextTr,
     INTR: InterpreterTypes<Stack: StackTr + CloneStack>,
