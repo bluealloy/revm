@@ -23,7 +23,14 @@ all = "warn"
 
 [dependencies]
 # revm
-revm.workspace = true
+context.workspace = true
+database-interface.workspace = true
+handler.workspace = true
+precompile.workspace = true
+primitives.workspace = true
+state.workspace = true
+interpreter.workspace = true
+
 auto_impl.workspace = true
 
 # Optional

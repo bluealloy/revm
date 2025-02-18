@@ -1,20 +1,17 @@
-use revm::{
-    context::{setters::ContextSetters, Evm},
-    context_interface::{ContextTr, Journal},
-    handler::{
-        instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
-        MainnetHandler, PrecompileProvider,
-    },
-    interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult},
-    primitives::Log,
-    state::EvmState,
-    DatabaseCommit,
+use context::{setters::ContextSetters, ContextTr, Evm, Journal};
+use database_interface::DatabaseCommit;
+use handler::{
+    instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
+    MainnetHandler, PrecompileProvider,
 };
+use interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult};
+use primitives::Log;
+use state::EvmState;
 use std::vec::Vec;
 
 use crate::{
-    InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler,
-    JournalExt,
+    inspect::{InspectCommitEvm, InspectEvm},
+    Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler, JournalExt,
 };
 
 impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>

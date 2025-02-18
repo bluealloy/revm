@@ -1,22 +1,20 @@
 use crate::{InspectorEvmTr, InspectorFrame};
 use auto_impl::auto_impl;
-use revm::{
-    context::{Cfg, JournalEntry, JournaledState},
-    context_interface::{result::ResultAndState, ContextTr, Database, Transaction},
-    handler::{
-        execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler,
-        ItemOrResult,
-    },
-    interpreter::{
-        interpreter::EthInterpreter,
-        interpreter_types::{Jumps, LoopControl},
-        table::InstructionTable,
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
-    },
-    primitives::{Address, Log, U256},
-    state::EvmState,
+use context::{
+    result::ResultAndState, Cfg, ContextTr, Database, JournalEntry, JournaledState, Transaction,
 };
+use handler::{
+    execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult,
+};
+use interpreter::{
+    interpreter::EthInterpreter,
+    interpreter_types::{Jumps, LoopControl},
+    table::InstructionTable,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
+    InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
+};
+use primitives::{Address, Log, U256};
+use state::EvmState;
 use std::{vec, vec::Vec};
 
 /// EVM [Interpreter] callbacks.

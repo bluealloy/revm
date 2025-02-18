@@ -24,8 +24,10 @@ all = "warn"
 [dependencies]
 # revm
 interpreter.workspace = true
+inspector.workspace = true
 precompile.workspace = true
 primitives.workspace = true
+database.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true

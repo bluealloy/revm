@@ -66,3 +66,58 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<Em
         Context::new(EmptyDB::new(), SpecId::LATEST)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{MainBuilder, MainContext};
+    use alloy_eip7702::Authorization;
+    use alloy_signer::SignerSync;
+    use alloy_signer_local::PrivateKeySigner;
+    use bytecode::{
+        opcode::{PUSH1, SSTORE},
+        Bytecode,
+    };
+    use context::Context;
+    use context_interface::TransactionType;
+    use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
+    use handler::ExecuteEvm;
+    use primitives::{TxKind, U256};
+    use specification::hardfork::SpecId;
+
+    #[test]
+    fn sanity_eip7702_tx() {
+        let signer = PrivateKeySigner::random();
+        let auth = Authorization {
+            chain_id: U256::ZERO,
+            nonce: 0,
+            address: FFADDRESS,
+        };
+        let signature = signer.sign_hash_sync(&auth.signature_hash()).unwrap();
+        let auth = auth.into_signed(signature);
+
+        let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
+
+        let ctx = Context::mainnet()
+            .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
+            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .modify_tx_chained(|tx| {
+                tx.tx_type = TransactionType::Eip7702.into();
+                tx.gas_limit = 100_000;
+                tx.authorization_list = vec![auth];
+                tx.caller = EEADDRESS;
+                tx.kind = TxKind::Call(signer.address());
+            });
+
+        let mut evm = ctx.build_mainnet();
+
+        let ok = evm.transact_previous().unwrap();
+
+        let auth_acc = ok.state.get(&signer.address()).unwrap();
+        assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
+        assert_eq!(auth_acc.info.nonce, 1);
+        assert_eq!(
+            auth_acc.storage.get(&U256::from(1)).unwrap().present_value,
+            U256::from(1)
+        );
+    }
+}

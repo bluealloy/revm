@@ -1,4 +1,5 @@
-use revm::{context::setters::ContextSetters, ExecuteCommitEvm, ExecuteEvm};
+use context::setters::ContextSetters;
+use handler::evm::{ExecuteCommitEvm, ExecuteEvm};
 
 pub trait InspectEvm: ExecuteEvm {
     type Inspector;
