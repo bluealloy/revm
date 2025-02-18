@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
-database.workspace = true
+database-interface.workspace = true
 interpreter.workspace = true
 precompile.workspace = true
 context-interface.workspace = true

@@ -4,7 +4,7 @@ use context::{
     setters::ContextSetters,
     ContextTr, Database, Evm, Journal,
 };
-use database::DatabaseCommit;
+use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::Log;
 use state::EvmState;
