@@ -30,27 +30,23 @@ bytecode.workspace = true
 auto_impl = "1.2"
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 # alloydb
-tokio = { version = "1.40", features = [
+tokio = { workspace = true, features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
-alloy-provider = { version = "0.9.2", optional = true, default-features = false }
-alloy-eips = { version = "0.9.2", optional = true, default-features = false }
-alloy-transport = { version = "0.9.2", optional = true, default-features = false }
-
+alloy-provider = { workspace = true, optional = true }
+alloy-eips = { workspace = true, optional = true }
+alloy-transport = { workspace = true, optional = true }
 
 [dev-dependencies]
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-anyhow = "1.0.83"
-indicatif = "0.17"
-rstest = "0.22.0"
-alloy-sol-types = "0.8"
+serde_json = { workspace = true, features = ["alloc"] }
+anyhow.workspace = true
+indicatif.workspace = true
+rstest.workspace = true
+alloy-sol-types.workspace = true
 
 [features]
 default = ["std"]

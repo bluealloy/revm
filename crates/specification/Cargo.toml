@@ -26,14 +26,10 @@ all = "warn"
 primitives.workspace = true
 
 # misc
-enumn = { version = "0.1" }
+enumn.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 

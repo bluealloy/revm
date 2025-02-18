@@ -25,6 +25,6 @@ all = "warn"
 # srevm 
 revm.workspace = true
 
-# mics
+# misc
 auto_impl.workspace = true
 derive_more.workspace = true
