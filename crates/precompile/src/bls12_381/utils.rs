@@ -1,4 +1,4 @@
-use crate::bls12_381::bls12_381_const::{
+use crate::bls12_381_const::{
     FP_LENGTH, MODULUS_REPR, PADDED_FP_LENGTH, PADDING_LENGTH,SCALAR_LENGTH,
 };
 use crate::PrecompileError;
