@@ -2,7 +2,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_eips::BlockId;
-use alloy_provider::{DynProvider, ProviderBuilder};
+use alloy_provider::ProviderBuilder;
 use alloy_sol_types::{sol, SolCall};
 use database::{AlloyDB, CacheDB};
 use revm::{
@@ -16,7 +16,7 @@ use revm::{
 async fn main() -> anyhow::Result<()> {
     // Initialize the Alloy provider and database
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
-    let provider = DynProvider::new(ProviderBuilder::new().on_builtin(rpc_url).await?);
+    let provider = ProviderBuilder::new().on_builtin(rpc_url).await?;
 
     let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
     let cache_db = CacheDB::new(alloy_db);
