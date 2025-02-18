@@ -1,5 +1,5 @@
 use super::{g1::extract_g1_input, g2::extract_g2_input};
-use crate::bls12_381::bls12_381_const::{
+use crate::bls12_381_const::{
     G1_INPUT_ITEM_LENGTH, G2_INPUT_ITEM_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_PAIRING_MULTIPLIER_BAS, PAIRING_PAIRING_OFFSET_BASE,
 };
