@@ -3,7 +3,7 @@ use super::{
     msm::msm_required_gas,
     utils::extract_scalar_input,
 };
-use crate::bls12_381::bls12_381_const::{
+use crate::bls12_381_const::{
     G1_INPUT_ITEM_LENGTH, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
     SCALAR_LENGTH,DISCOUNT_TABLE_G1_MSM
 };
