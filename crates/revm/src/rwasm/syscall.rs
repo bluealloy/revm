@@ -7,10 +7,25 @@ use crate::{
         CallOutcome,
         CallScheme,
         CallValue,
+        CreateInputs,
         InstructionResult,
         InterpreterResult,
     },
-    primitives::{Address, Bytes, EVMError, Log, LogData, Spec, B256, TANGERINE, U256},
+    primitives::{
+        wasm::{WASM_MAGIC_BYTES, WASM_MAX_CODE_SIZE},
+        Address,
+        Bytes,
+        CreateScheme,
+        EVMError,
+        Log,
+        LogData,
+        Spec,
+        SpecId,
+        B256,
+        MAX_INITCODE_SIZE,
+        TANGERINE,
+        U256,
+    },
     Context,
     Database,
     FrameOrResult,
@@ -298,7 +313,65 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CREATE | SYSCALL_ID_CREATE2 => {
-            unreachable!("revm: unsupported system interruption")
+            assert_return!(inputs.state == STATE_MAIN, Revert);
+            // not allowed for static calls
+            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            // make sure we have enough bytes inside input params
+            let is_create2 = inputs.code_hash == SYSCALL_ID_CREATE2;
+            let (scheme, value, init_code) = if is_create2 {
+                assert_return!(inputs.input.len() >= 32 + 32, Revert);
+                let value = U256::from_le_slice(&inputs.input[0..32]);
+                let salt = U256::from_le_slice(&inputs.input[32..64]);
+                let init_code = inputs.input.slice(64..);
+                (CreateScheme::Create2 { salt }, value, init_code)
+            } else {
+                assert_return!(inputs.input.len() >= 32, Revert);
+                let value = U256::from_le_slice(&inputs.input[0..32]);
+                let init_code = inputs.input.slice(32..);
+                (CreateScheme::Create, value, init_code)
+            };
+            // make sure we don't exceed max possible init code
+            let max_initcode_size = context
+                .evm
+                .env
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or_else(|| {
+                    if init_code.len() >= 4 && init_code[0..4] == WASM_MAGIC_BYTES {
+                        WASM_MAX_CODE_SIZE
+                    } else {
+                        MAX_INITCODE_SIZE
+                    }
+                });
+            assert_return!(
+                init_code.len() <= max_initcode_size,
+                CreateContractSizeLimit
+            );
+            if !init_code.is_empty() {
+                charge_gas!(gas::initcode_cost(init_code.len() as u64));
+            }
+            if is_create2 {
+                let Some(gas) = gas::create2_cost(init_code.len().try_into().unwrap()) else {
+                    return_error!(OutOfGas);
+                };
+                charge_gas!(gas);
+            } else {
+                charge_gas!(gas::CREATE);
+            };
+            let mut gas_limit = inputs.gas.remaining();
+            gas_limit -= gas_limit / 64;
+            charge_gas!(gas_limit);
+            // create inputs
+            let inputs = Box::new(CreateInputs {
+                caller: inputs.target_address,
+                scheme,
+                value,
+                init_code,
+                gas_limit,
+            });
+            let frame = context.evm.make_create_frame(SpecId::CANCUN, &inputs)?;
+            return_frame!(frame);
         }
 
         SYSCALL_ID_EMIT_LOG => {
