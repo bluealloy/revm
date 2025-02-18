@@ -3651,9 +3651,9 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.13.0"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04836b804abe06b773833991e51fddd0b88c68975d7ac67331f73aa705a500ab"
+checksum = "825df406ec217a8116bd7b06897c6cc8f65ffefc15d030ae2c9540acc9ed50b6"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -3662,7 +3662,6 @@ dependencies = [
  "bytes",
  "fastrlp 0.3.1",
  "fastrlp 0.4.0",
- "hex",
  "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
