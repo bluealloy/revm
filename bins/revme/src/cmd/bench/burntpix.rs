@@ -6,8 +6,7 @@ use static_data::{
     STORAGE_ONE, STORAGE_TWO, STORAGE_ZERO,
 };
 
-use alloy_sol_macro::sol;
-use alloy_sol_types::SolCall;
+use alloy_sol_types::{sol, SolCall};
 use database::{CacheDB, BENCH_CALLER};
 use revm::{
     context_interface::result::{ExecutionResult, Output},

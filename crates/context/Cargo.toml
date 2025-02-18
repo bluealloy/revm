@@ -41,10 +41,7 @@ derive-where.workspace = true
 cfg-if.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 database.workspace = true

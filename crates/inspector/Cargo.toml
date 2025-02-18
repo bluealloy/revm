@@ -34,13 +34,8 @@ interpreter.workspace = true
 auto_impl.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-serde_json = { version = "1.0", default-features = false, features = [
-    "alloc",
-], optional = true }
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+serde_json = { workspace = true, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 revm = { workspace = true, features = ["serde"] }

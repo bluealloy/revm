@@ -29,21 +29,17 @@ inspector.workspace = true
 auto_impl.workspace = true
 
 # static precompile sets.
-once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
+once_cell = { workspace = true, features = ["alloc"] }
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 database.workspace = true
-anyhow = "1.0.89"
-indicatif = "0.17"
-rstest = "0.23.0"
-alloy-sol-types = "0.8"
+anyhow.workspace = true
+indicatif.workspace = true
+rstest.workspace = true
+alloy-sol-types.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]

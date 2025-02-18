@@ -22,10 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.8", default-features = false, features = [
-    "rlp",
-    "map",
-] }
+alloy-primitives = { workspace = true, features = ["rlp", "map"] }
 
 [features]
 default = ["std"]
