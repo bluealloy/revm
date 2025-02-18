@@ -1,5 +1,5 @@
 use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
-use crate::bls12_381::bls12_381_const::{
+use crate::bls12_381_const::{
     G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH, FP_LENGTH, PADDED_FP_LENGTH,
 };
 use crate::PrecompileError;
