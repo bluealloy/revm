@@ -1,4 +1,4 @@
-use crate::bls12_381::bls12_381_const::MSM_MULTIPLIER;
+use crate::bls12_381_const::MSM_MULTIPLIER;
 
 /// Implements the gas schedule for G1/G2 Multiscalar-multiplication assuming 30
 /// MGas/second, see also: <https://eips.ethereum.org/EIPS/eip-2537#g1g2-multiexponentiation>
