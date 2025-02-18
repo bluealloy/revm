@@ -29,7 +29,6 @@ alloy-sol-types.workspace = true
 
 # misc
 hash-db.workspace = true
-hashbrown.workspace = true
 indicatif.workspace = true
 microbench.workspace = true
 plain_hasher.workspace = true

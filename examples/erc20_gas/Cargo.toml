@@ -30,7 +30,5 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 # alloy
 alloy-sol-types = { workspace = true, features = ["std"] }
-alloy-transport-http.workspace = true
 alloy-provider = { workspace = true, default-features = true }
-reqwest.workspace = true
 anyhow.workspace = true

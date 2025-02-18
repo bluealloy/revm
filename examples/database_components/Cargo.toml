@@ -27,4 +27,4 @@ revm.workspace = true
 
 # misc
 auto_impl.workspace = true
-derive_more.workspace = true
+thiserror.workspace = true
