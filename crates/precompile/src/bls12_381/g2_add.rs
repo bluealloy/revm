@@ -1,5 +1,5 @@
 use super::g2::{encode_g2_point, extract_g2_input};
-use crate::bls12_381::bls12_381_const::{
+use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, G2_INPUT_ITEM_LENGTH,
 };
 use crate::{u64_to_address, PrecompileWithAddress};
