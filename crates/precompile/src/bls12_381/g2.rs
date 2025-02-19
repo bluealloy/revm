@@ -66,8 +66,7 @@ pub(super) fn extract_g2_input(
 
     let mut input_fps = [&[0; FP_LENGTH]; 4];
     for i in 0..4 {
-        input_fps[i] =
-            remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
+        input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
 
     let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
