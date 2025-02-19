@@ -1,5 +1,4 @@
-/// Amount used to calculate the multi-scalar-multiplication discount
-const MSM_MULTIPLIER: u64 = 1000;
+use crate::bls12_381_const::MSM_MULTIPLIER;
 
 /// Implements the gas schedule for G1/G2 Multiscalar-multiplication assuming 30
 /// MGas/second, see also: <https://eips.ethereum.org/EIPS/eip-2537#g1g2-multiexponentiation>

@@ -1,13 +1,8 @@
-use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
+use crate::bls12_381_const::{G1_INPUT_ITEM_LENGTH, G1_OUTPUT_LENGTH, PADDED_FP_LENGTH};
 use crate::PrecompileError;
 use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 use primitives::Bytes;
-
-/// Length of each of the elements in a g1 operation input.
-pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
-
-/// Output length of a g1 operation.
-const G1_OUTPUT_LENGTH: usize = 128;
 
 /// Encodes a G1 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
