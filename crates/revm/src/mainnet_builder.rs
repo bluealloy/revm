@@ -70,7 +70,6 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<Em
 #[cfg(test)]
 mod test {
     use crate::{MainBuilder, MainContext};
-    use alloy_eip7702::Authorization;
     use alloy_signer::SignerSync;
     use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
@@ -78,7 +77,7 @@ mod test {
         Bytecode,
     };
     use context::Context;
-    use context_interface::TransactionType;
+    use context_interface::{transaction::Authorization, TransactionType};
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use handler::ExecuteEvm;
     use primitives::{TxKind, U256};

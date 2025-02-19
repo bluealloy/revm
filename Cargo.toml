@@ -54,14 +54,14 @@ context = { path = "crates/context", package = "revm-context", version = "1.0.0-
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "1.0.0-alpha.1", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0-alpha.1", default-features = false }
 
-# alloy
-alloy-rlp = { version = "0.3", default-features = false }
-alloy-primitives = { version = "0.8", default-features = false }
-alloy-sol-types = { version = "0.8.2", default-features = false }
-
+# alloy 
 alloy-eip2930 = { version = "0.1.0", default-features = false }
 alloy-eip7702 = { version = "0.5.0", default-features = false }
+alloy-primitives = { version = "0.8", default-features = false }
 
+# alloy in examples, revme or feature flagged.
+alloy-rlp = { version = "0.3", default-features = false }
+alloy-sol-types = { version = "0.8.2", default-features = false }
 alloy-consensus = { version = "0.11.1", default-features = false }
 alloy-eips = { version = "0.11.1", default-features = false }
 alloy-provider = { version = "0.11.1", default-features = false }

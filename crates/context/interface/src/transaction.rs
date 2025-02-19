@@ -3,6 +3,10 @@ pub mod eip2930;
 pub mod eip7702;
 pub mod transaction_type;
 
+pub use alloy_types::{
+    AccessList, AccessListItem, Authorization, RecoveredAuthority, RecoveredAuthorization,
+    SignedAuthorization,
+};
 pub use eip2930::AccessListTr;
 pub use eip7702::AuthorizationTr;
 use specification::eip4844::GAS_PER_BLOB;
