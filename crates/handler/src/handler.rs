@@ -173,8 +173,12 @@ pub trait Handler {
         self.reimburse_caller(evm, &mut exec_result)?;
         // Reward beneficiary
         self.reward_beneficiary(evm, &mut exec_result)?;
-        // Returns output of transaction.
-        self.output(evm, exec_result)
+        // Prepare output of transaction.
+        let output = self.output(evm, exec_result)?;
+        // Clear any internal state.
+        self.clear(evm);
+        // Return output
+        Ok(output)
     }
 
     /* VALIDATION */

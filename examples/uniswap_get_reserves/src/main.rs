@@ -14,12 +14,12 @@ use revm::{
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+    // Initialize the Alloy provider and database
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
+    let provider = ProviderBuilder::new().on_builtin(rpc_url).await?;
 
-    // Create ethers client and wrap it in Arc<M>
-    let client = ProviderBuilder::new().on_http(rpc_url);
-    let client = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
+    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let cache_db = CacheDB::new(alloy_db);
 
     // ----------------------------------------------------------- //
     //             Storage slots of UniV2Pair contract             //
@@ -48,10 +48,10 @@ async fn main() -> anyhow::Result<()> {
     let encoded = getReservesCall::new(()).abi_encode();
 
     // Query basic properties of an account incl bytecode
-    let acc_info = client.basic_ref(pool_address).unwrap().unwrap();
+    let acc_info = cache_db.basic_ref(pool_address).unwrap().unwrap();
 
     // Query value of storage slot at account address
-    let value = client.storage_ref(pool_address, slot).unwrap();
+    let value = cache_db.storage_ref(pool_address, slot).unwrap();
 
     // Initialise empty in-memory-db
     let mut cache_db = CacheDB::new(EmptyDB::default());

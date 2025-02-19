@@ -27,14 +27,12 @@ revm.workspace = true
 database = { workspace = true, features = ["std", "alloydb"] }
 
 # tokio
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 # alloy
-alloy-sol-types = { version = "0.8.2", default-features = false, features = [
-    "std",
-] }
-alloy-eips = "0.9.2"
-alloy-provider = "0.9.2"
+alloy-sol-types = { workspace = true, features = ["std"] }
+alloy-eips.workspace = true
+alloy-provider = { workspace = true, default-features = true }
 
-# mics
-anyhow = "1.0.89"
+# misc
+anyhow.workspace = true

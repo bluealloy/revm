@@ -24,8 +24,10 @@ all = "warn"
 [dependencies]
 # revm
 interpreter.workspace = true
+inspector.workspace = true
 precompile.workspace = true
 primitives.workspace = true
+database.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
@@ -36,19 +38,16 @@ handler.workspace = true
 
 [dev-dependencies]
 database.workspace = true
-alloy-sol-types = { version = "0.8.2", default-features = false, features = [
-    "std",
-] }
-ethers-contract = { version = "2.0.14", default-features = false }
-anyhow = "1.0.89"
-indicatif = "0.17"
-reqwest = { version = "0.12" }
-rstest = "0.22.0"
+alloy-sol-types = { workspace = true, features = ["std"] }
+anyhow.workspace = true
+indicatif.workspace = true
+reqwest.workspace = true
+rstest.workspace = true
 
 alloy-eip7702.workspace = true
-alloy-provider = "0.9.2"
-alloy-signer = "0.9.2"
-alloy-signer-local = "0.9.2"
+alloy-provider.workspace = true
+alloy-signer.workspace = true
+alloy-signer-local.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]

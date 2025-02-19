@@ -2,12 +2,10 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_eips::BlockId;
-use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
+use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
 use alloy_sol_types::{sol, SolCall, SolValue};
-use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
 use database::{AlloyDB, CacheDB};
-use reqwest::Client;
 use revm::{
     context_interface::result::{ExecutionResult, Output},
     database_interface::WrapDatabaseAsync,
@@ -17,19 +15,16 @@ use revm::{
 };
 use std::ops::Div;
 
-type AlloyCacheDB =
-    CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
+type AlloyCacheDB = CacheDB<WrapDatabaseAsync<AlloyDB<Ethereum, DynProvider>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+    // Initialize the Alloy provider and database
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
+    let provider = ProviderBuilder::new().on_builtin(rpc_url).await?.erased();
 
-    // Create ethers client and wrap it in Arc<M>
-    let client = ProviderBuilder::new().on_http(rpc_url);
-
-    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
-    let mut cache_db = CacheDB::new(alloy);
+    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let mut cache_db = CacheDB::new(alloy_db);
 
     // Random empty account
     let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");

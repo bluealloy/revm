@@ -76,7 +76,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     let message = Message::from_digest_slice(&hash[..]).unwrap();
     let s = SECP256K1.sign_ecdsa_recoverable(&message, &secret_key);
     let (rec_id, data) = s.serialize_compact();
-    let rec_id = rec_id.to_i32() as u8 + 27;
+    let rec_id = i32::from(rec_id) as u8 + 27;
 
     let mut message_and_signature = [0u8; 128];
     message_and_signature[0..32].copy_from_slice(&hash[..]);

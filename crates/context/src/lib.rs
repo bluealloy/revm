@@ -5,6 +5,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub use context_interface::*;
+
 pub mod block;
 pub mod cfg;
 pub mod context;

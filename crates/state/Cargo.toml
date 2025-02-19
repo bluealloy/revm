@@ -28,14 +28,10 @@ bytecode.workspace = true
 specification.workspace = true
 
 # misc
-bitflags = { version = "2.6.0", default-features = false }
+bitflags.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]

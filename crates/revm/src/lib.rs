@@ -9,8 +9,10 @@ extern crate alloc as std;
 pub use bytecode;
 pub use context;
 pub use context_interface;
+pub use database;
 pub use database_interface;
 pub use handler;
+pub use inspector;
 pub use interpreter;
 pub use precompile;
 pub use primitives;
@@ -19,14 +21,13 @@ pub use state;
 
 // Modules.
 
-mod exec_inspect;
 mod mainnet_builder;
-mod mainnet_exec;
 
 // Export items.
 
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use exec_inspect::{ExecuteCommitEvm, ExecuteEvm};
+pub use handler::{ExecuteCommitEvm, ExecuteEvm};
+pub use inspector::{InspectCommitEvm, InspectEvm, Inspector};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};
