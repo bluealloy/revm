@@ -3,8 +3,10 @@ use super::{
     msm::msm_required_gas,
     utils::extract_scalar_input,
 };
-use crate::bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_INPUT_LENGTH, G2_ADD_BASE_GAS_FEE, G2_INPUT_ITEM_LENGTH,
-    DISCOUNT_TABLE_G2_MSM, NBITS, SCALAR_LENGTH,};
+use crate::bls12_381_const::{
+    DISCOUNT_TABLE_G2_MSM, G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH,
+    G2_INPUT_ITEM_LENGTH, NBITS, SCALAR_LENGTH,
+};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
