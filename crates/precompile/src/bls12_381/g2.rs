@@ -1,5 +1,5 @@
 use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
-+use crate::bls12_381_const::{FP_LENGTH, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH, PADDED_FP_LENGTH};
+use crate::bls12_381_const::{FP_LENGTH, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH, PADDED_FP_LENGTH};
 use crate::PrecompileError;
 use blst::{blst_fp2, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
 use primitives::Bytes;
