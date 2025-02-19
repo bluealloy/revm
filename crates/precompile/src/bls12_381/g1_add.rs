@@ -1,7 +1,7 @@
 use super::g1::{encode_g1_point, extract_g1_input};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, G1_INPUT_ITEM_LENGTH,
-}
+};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{
