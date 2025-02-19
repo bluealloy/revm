@@ -40,7 +40,7 @@ impl<CTX> OpPrecompileProvider<CTX> {
             | OpSpecId::ECOTONE) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpecId::FJORD => Self::new(fjord()),
             OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
-            OpSpecId::ISTHMUS => Self::new(isthumus()),
+            OpSpecId::ISTHMUS | OpSpecId::INTEROP => Self::new(isthumus()),
         }
     }
 }

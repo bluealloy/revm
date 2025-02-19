@@ -14,6 +14,7 @@ pub enum OpSpecId {
     HOLOCENE,
     #[default]
     ISTHMUS,
+    INTEROP,
 }
 
 impl OpSpecId {
@@ -23,7 +24,7 @@ impl OpSpecId {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
             Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
-            Self::ISTHMUS => SpecId::PRAGUE,
+            Self::ISTHMUS | Self::INTEROP => SpecId::PRAGUE,
         }
     }
 
@@ -65,6 +66,7 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::GRANITE => name::GRANITE,
             OpSpecId::HOLOCENE => name::HOLOCENE,
             OpSpecId::ISTHMUS => name::ISTHMUS,
+            OpSpecId::INTEROP => name::INTEROP,
         }
     }
 }
@@ -79,6 +81,7 @@ pub mod name {
     pub const GRANITE: &str = "Granite";
     pub const HOLOCENE: &str = "Holocene";
     pub const ISTHMUS: &str = "Isthmus";
+    pub const INTEROP: &str = "Interop";
 }
 
 #[cfg(test)]
