@@ -11,6 +11,7 @@ extern crate alloc as std;
 pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
+pub mod bls12_381_const;
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -22,7 +23,6 @@ pub mod secp256k1;
 #[cfg(feature = "secp256r1")]
 pub mod secp256r1;
 pub mod utilities;
-pub mod bls12_381_const;
 
 pub use interface::*;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
