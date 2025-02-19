@@ -2,9 +2,7 @@ use super::{
     g1::encode_g1_point,
     utils::{fp_from_bendian, remove_padding},
 };
-use crate::bls12_381_const::{
-    MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH,
-};
+use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine};
