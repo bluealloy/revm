@@ -1,6 +1,6 @@
 //! # EIP-7212 secp256r1 Precompile
 //!
-//! This module implements the [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212) precompile for
+//! This module implements the [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md) precompile for
 //! secp256r1 curve support.
 //!
 //! The main purpose of this precompile is to verify ECDSA signatures that use the secp256r1, or
@@ -20,7 +20,7 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
     [P256VERIFY].into_iter()
 }
 
-/// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
+/// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(0x100), p256_verify);
 
