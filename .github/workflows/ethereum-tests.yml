@@ -49,7 +49,7 @@ jobs:
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
             ethtests/EIPTests/StateTests/stEOF \
             tests/eof_suite/eest/state_tests \
-            tests/pectra/state_tests/prague/eip7623_increase_calldata_cost
+            tests/pectra/state_tests/prague
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
