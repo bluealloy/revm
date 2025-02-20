@@ -15,13 +15,13 @@ pub const G2_MSM_INPUT_LENGTH: usize = 288;
 pub const G2_OUTPUT_LENGTH: usize = 256;
 pub const G2_INPUT_ITEM_LENGTH: usize = 256;
 pub const PAIRING_ADDRESS: u64 = 0x0f;
-pub const PAIRING_PAIRING_MULTIPLIER_BAS: u64 = 32600;
+pub const PAIRING_PAIRING_MULTIPLIER_BASE: u64 = 32600;
 pub const PAIRING_PAIRING_OFFSET_BASE: u64 = 37700;
 pub const PAIRING_INPUT_LENGTH: usize = 384;
 pub const MAP_FP_TO_G1_ADDRESS: u64 = 0x10;
 pub const MAP_FP_TO_G1_BASE_GAS_FEE: u64 = 5500;
 pub const MAP_FP2_TO_G2_ADDRESS: u64 = 0x11;
-pub const MAP_FP2_TO_G2_BASE_GAS_FEE: u64 = 0x23800;
+pub const MAP_FP2_TO_G2_BASE_GAS_FEE: u64 = 23800;
 pub const MSM_MULTIPLIER: u64 = 1000;
 /// Number of bits used in the BLS12-381 curve finite field elements.
 pub const NBITS: usize = 256;
