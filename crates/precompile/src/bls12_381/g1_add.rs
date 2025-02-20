@@ -1,7 +1,4 @@
-use super::g1::{encode_g1_point, extract_g1_input};
-use crate::bls12_381_const::{
-    G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, G1_INPUT_ITEM_LENGTH,
-};
+use super::g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{
@@ -11,7 +8,14 @@ use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G1_ADD_ADDRESS), g1_add);
+    PrecompileWithAddress(u64_to_address(ADDRESS), g1_add);
+/// BLS12_G1ADD precompile address.
+pub const ADDRESS: u64 = 0x0b;
+/// Base gas fee for BLS12-381 g1_add operation.
+const BASE_GAS_FEE: u64 = 375;
+
+/// Input length of g1_add operation.
+const INPUT_LENGTH: usize = 256;
 
 /// G1 addition call expects `256` bytes as an input that is interpreted as byte
 /// concatenation of two G1 points (`128` bytes each).
@@ -19,13 +23,13 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
 pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    if G1_ADD_BASE_GAS_FEE > gas_limit {
+    if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
 
-    if input.len() != G1_ADD_INPUT_LENGTH {
+    if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "G1ADD input should be {G1_ADD_INPUT_LENGTH} bytes, was {}",
+            "G1ADD input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
         ))
         .into());
@@ -50,5 +54,5 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);
-    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(BASE_GAS_FEE, out))
 }

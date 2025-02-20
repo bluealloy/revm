@@ -1,7 +1,6 @@
-use super::{g1::extract_g1_input, g2::extract_g2_input};
-use crate::bls12_381_const::{
-    G1_INPUT_ITEM_LENGTH, G2_INPUT_ITEM_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
-    PAIRING_PAIRING_MULTIPLIER_BAS, PAIRING_PAIRING_OFFSET_BASE,
+use super::{
+    g1::{extract_g1_input, G1_INPUT_ITEM_LENGTH},
+    g2::{extract_g2_input, G2_INPUT_ITEM_LENGTH},
 };
 use crate::{
     u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
@@ -11,7 +10,16 @@ use primitives::{Bytes, B256};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(PAIRING_ADDRESS), pairing);
+    PrecompileWithAddress(u64_to_address(ADDRESS), pairing);
+/// BLS12_PAIRING precompile address.
+pub const ADDRESS: u64 = 0x0f;
+
+/// Multiplier gas fee for BLS12-381 pairing operation.
+const PAIRING_MULTIPLIER_BASE: u64 = 32600;
+/// Offset gas fee for BLS12-381 pairing operation.
+const PAIRING_OFFSET_BASE: u64 = 37700;
+/// Input length of pairing operation.
+const INPUT_LENGTH: usize = 384;
 
 /// Pairing call expects 384*k (k being a positive integer) bytes as an inputs
 /// that is interpreted as byte concatenation of k slices. Each slice has the
@@ -27,15 +35,15 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
 pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
+    if input_len == 0 || input_len % INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
-            "Pairing input length should be multiple of {PAIRING_INPUT_LENGTH}, was {input_len}"
+            "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
         ))
         .into());
     }
 
-    let k = input_len / PAIRING_INPUT_LENGTH;
-    let required_gas: u64 = PAIRING_PAIRING_MULTIPLIER_BAS * k as u64 + PAIRING_PAIRING_OFFSET_BASE;
+    let k = input_len / INPUT_LENGTH;
+    let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
@@ -47,7 +55,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         //
         // So we set the subgroup_check flag to `true`
         let p1_aff = &extract_g1_input(
-            &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
+            &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
             true,
         )?;
 
@@ -55,8 +63,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         //
         // So we set the subgroup_check flag to `true`
         let p2_aff = &extract_g2_input(
-            &input[i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
-                ..i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
+            &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
+                ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
             true,
         )?;
 

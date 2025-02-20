@@ -1,7 +1,4 @@
-use super::g2::{encode_g2_point, extract_g2_input};
-use crate::bls12_381_const::{
-    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, G2_INPUT_ITEM_LENGTH,
-};
+use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{
@@ -11,7 +8,14 @@ use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G2_ADD_ADDRESS), g2_add);
+    PrecompileWithAddress(u64_to_address(ADDRESS), g2_add);
+/// BLS12_G2ADD precompile address.
+pub const ADDRESS: u64 = 0x0d;
+/// Base gas fee for BLS12-381 g2_add operation.
+const BASE_GAS_FEE: u64 = 600;
+
+/// Input length of g2_add operation.
+const INPUT_LENGTH: usize = 512;
 
 /// G2 addition call expects `512` bytes as an input that is interpreted as byte
 /// concatenation of two G2 points (`256` bytes each).
@@ -20,13 +24,13 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
 pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    if G2_ADD_BASE_GAS_FEE > gas_limit {
+    if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
 
-    if input.len() != G2_ADD_INPUT_LENGTH {
+    if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "G2ADD input should be {G2_ADD_INPUT_LENGTH} bytes, was {}",
+            "G2ADD input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
         ))
         .into());
@@ -51,5 +55,5 @@ pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p2_to_affine(&mut p_aff, &p) };
 
     let out = encode_g2_point(&p_aff);
-    Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(BASE_GAS_FEE, out))
 }
