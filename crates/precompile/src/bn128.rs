@@ -119,7 +119,7 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
@@ -137,7 +137,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
@@ -163,11 +163,11 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(PrecompileError::Bn128PairLength.into());
+        return Err(PrecompileError::Bn128PairLength);
     }
 
     let success = if input.is_empty() {
@@ -227,7 +227,7 @@ mod tests {
             mul::BYZANTIUM_MUL_GAS_COST,
             pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT},
         },
-        PrecompileError, PrecompileErrors,
+        PrecompileError,
     };
     use primitives::hex;
 
@@ -284,10 +284,7 @@ mod tests {
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
 
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -314,9 +311,7 @@ mod tests {
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
     }
 
@@ -349,10 +344,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Zero multiplication test
         let input = hex::decode(
@@ -396,9 +388,7 @@ mod tests {
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
     }
 
@@ -457,10 +447,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -497,9 +484,7 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
 
         // Invalid input length
@@ -518,9 +503,6 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
-        ));
+        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
     }
 }

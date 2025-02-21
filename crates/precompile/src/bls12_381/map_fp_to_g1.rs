@@ -17,15 +17,14 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
 pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
             "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
-        ))
-        .into());
+        )));
     }
 
     let input_p0 = remove_padding(input)?;

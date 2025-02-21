@@ -8,7 +8,7 @@ use interpreter::{
     interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
     InterpreterTypes,
 };
-use precompile::PrecompileErrors;
+use precompile::PrecompileError;
 
 /// Inspector EVM trait.
 pub trait InspectorEvmTr: EvmTr {
@@ -83,7 +83,7 @@ where
                 Output = InterpreterAction,
             >,
         > + InspectorEvmTr,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
 {
     type IT = EthInterpreter;
 

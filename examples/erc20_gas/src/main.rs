@@ -15,7 +15,7 @@ use revm::{
         ContextTr, Journal,
     },
     database_interface::WrapDatabaseAsync,
-    precompile::PrecompileErrors,
+    precompile::PrecompileError,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     specification::hardfork::SpecId,
     state::AccountInfo,
@@ -88,7 +88,7 @@ where
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<<CTX::Db as Database>::Error>
-        + From<PrecompileErrors>,
+        + From<PrecompileError>,
 {
     let sender_balance_slot = erc_address_storage(sender);
     let sender_balance = context.journal().sload(TOKEN, sender_balance_slot)?.data;

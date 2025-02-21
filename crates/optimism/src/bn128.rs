@@ -27,7 +27,7 @@ pub mod pair {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm::{precompile::PrecompileErrors, primitives::hex};
+    use revm::{precompile::PrecompileError, primitives::hex};
     use std::vec;
 
     #[test]
@@ -65,25 +65,16 @@ mod tests {
         .unwrap();
 
         let res = pair::run_pair(&input, 260_000);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
-        ));
+        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
 
         // Valid input length shorter than 112687
         let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Input length longer than 112687
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
-        ));
+        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
     }
 }

@@ -30,14 +30,13 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::Other(format!(
             "G1MSM input length should be multiple of {}, was {}",
             G1_MSM_INPUT_LENGTH, input_len
-        ))
-        .into());
+        )));
     }
 
     let k = input_len / G1_MSM_INPUT_LENGTH;
     let required_gas = msm_required_gas(k, &DISCOUNT_TABLE_G1_MSM, G1_MSM_BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);

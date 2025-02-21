@@ -21,15 +21,14 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
 pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() != G2_ADD_INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
             "G2ADD input should be {G2_ADD_INPUT_LENGTH} bytes, was {}",
             input.len()
-        ))
-        .into());
+        )));
     }
 
     // NB: There is no subgroup check for the G2 addition precompile.
