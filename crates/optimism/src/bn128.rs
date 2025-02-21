@@ -13,7 +13,7 @@ pub mod pair {
 
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Bn128PairLength.into());
+            return Err(PrecompileError::Bn128PairLength);
         }
         bn128::run_pair(
             input,

@@ -54,7 +54,7 @@ mod test {
         let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE_GAS_FEE);
         assert_eq!(
             fail,
-            Err(PrecompileError::Other("non-canonical fp value".to_string()).into())
+            Err(PrecompileError::Other("non-canonical fp value".to_string()))
         );
     }
 }
