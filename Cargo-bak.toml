@@ -24,14 +24,12 @@ lazy_static = { version = "1.4.0", default-features = false }
 paste = { version = "1.0", default-features = false }
 
 fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-poseidon = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
-#fluentbase-core = { path = "../fluentbase/crates/core", default-features = false }
 #fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
 #fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
 #fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }

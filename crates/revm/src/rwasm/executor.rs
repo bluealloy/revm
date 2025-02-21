@@ -18,6 +18,7 @@ use fluentbase_sdk::{
     runtime::RuntimeContextWrapper,
     BlockContextV1,
     ContractContextV1,
+    ExitCode,
     NativeAPI,
     SharedContextInput,
     SharedContextInputV1,
@@ -117,17 +118,21 @@ fn process_exec_result(
 ) -> InterpreterAction {
     // if we have success or failed exit code
     if exit_code <= 0 {
-        let result = if exit_code == 0 {
-            if is_create {
-                InstructionResult::ReturnContract
-            } else if return_data.is_empty() {
-                InstructionResult::Stop
-            } else {
-                InstructionResult::Return
+        let result = match ExitCode::from(exit_code) {
+            ExitCode::Ok => {
+                if is_create {
+                    InstructionResult::ReturnContract
+                } else if return_data.is_empty() {
+                    InstructionResult::Stop
+                } else {
+                    InstructionResult::Return
+                }
             }
-        } else {
+            ExitCode::Panic => InstructionResult::Revert,
+            ExitCode::BadSignature => InstructionResult::Return,
+            ExitCode::OutOfFuel => InstructionResult::OutOfGas,
             // TODO(dmitry123): "handle error exit codes and form result for such errors"
-            InstructionResult::Revert
+            _ => InstructionResult::Revert,
         };
         return InterpreterAction::Return {
             result: InterpreterResult {

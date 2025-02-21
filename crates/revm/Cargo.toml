@@ -27,7 +27,6 @@ revm-interpreter = { path = "../interpreter", version = "15.1.0", default-featur
 revm-precompile = { path = "../precompile", version = "16.0.0", default-features = false }
 
 # fluentbase
-fluentbase-core = { workspace = true }
 fluentbase-sdk = { workspace = true }
 fluentbase-runtime = { workspace = true }
 
@@ -89,7 +88,6 @@ std = [
     "revm-interpreter/std",
     "revm-precompile/std",
     "fluentbase-sdk/std",
-    "fluentbase-core/std",
 ]
 e2e = [
     "revm-precompile/e2e",
@@ -164,7 +162,6 @@ alloydb = []
 debug-print = [
     "revm-interpreter/debug-print"
 ]
-rwasm = []
 
 [[example]]
 name = "fork_ref_transact"

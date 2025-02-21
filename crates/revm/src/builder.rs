@@ -12,7 +12,6 @@ use crate::{
         SpecId,
         TxEnv,
     },
-    rwasm::Rwasm,
     Context,
     ContextWithHandlerCfg,
     Handler,
@@ -21,7 +20,6 @@ use core::marker::PhantomData;
 use std::boxed::Box;
 
 pub struct EvmFactoryEvm;
-pub struct EvmFactoryRwasm;
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that change underlying structures
@@ -37,9 +35,6 @@ pub struct UniversalBuilder<'a, BuilderStage, EXT, DB: Database, EVM> {
 
 pub type EvmBuilder<'a, BuilderStage, EXT, DB> =
     UniversalBuilder<'a, BuilderStage, EXT, DB, EvmFactoryEvm>;
-
-pub type RwasmBuilder<'a, BuilderStage, EXT, DB> =
-    UniversalBuilder<'a, BuilderStage, EXT, DB, EvmFactoryRwasm>;
 
 /// The first stage of the builder allows setting generic variables.
 /// Generic variables are database and external context.
@@ -242,26 +237,6 @@ impl<'a, BuilderStage, EXT, DB: Database>
 
     pub fn build(self) -> Evm<'a, EXT, DB> {
         Evm::new(self.context, self.handler)
-    }
-}
-impl<'a, BuilderStage, EXT, DB: Database>
-    UniversalBuilder<'a, BuilderStage, EXT, DB, EvmFactoryRwasm>
-{
-    /// Creates new builder from Evm, Evm is consumed, and all fields are moved to Builder.
-    /// It will preserve set handler and context.
-    ///
-    /// Builder is in HandlerStage and both database and external are set.
-    pub fn new(evm: Rwasm<'a, EXT, DB>) -> Self {
-        Self {
-            context: evm.context,
-            handler: evm.handler,
-            phantom1: PhantomData,
-            phantom2: PhantomData,
-        }
-    }
-
-    pub fn build(self) -> Rwasm<'a, EXT, DB> {
-        Rwasm::new(self.context, self.handler)
     }
 }
 
