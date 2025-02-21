@@ -18,7 +18,7 @@ use interpreter::{
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl, InstructionResult,
     Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
 };
-use precompile::PrecompileErrors;
+use precompile::PrecompileError;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
@@ -81,7 +81,7 @@ where
             Output = InterpreterAction,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -150,7 +150,7 @@ where
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
 {
     /// Make call frame
     #[inline]
@@ -522,7 +522,7 @@ where
             Output = InterpreterAction,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileErrors>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
 {
     pub fn init_first(
         evm: &mut EVM,

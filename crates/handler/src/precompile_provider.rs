@@ -2,7 +2,7 @@ use auto_impl::auto_impl;
 use context::Cfg;
 use context_interface::ContextTr;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
-use precompile::PrecompileErrors;
+use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{Address, Bytes};
 use specification::hardfork::SpecId;
@@ -22,7 +22,7 @@ pub trait PrecompileProvider {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, PrecompileErrors>;
+    ) -> Result<Option<Self::Output>, PrecompileError>;
 
     /// Get the warm addresses.
     fn warm_addresses(&self) -> Box<impl Iterator<Item = Address> + '_>;
@@ -70,7 +70,7 @@ where
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<InterpreterResult>, PrecompileErrors> {
+    ) -> Result<Option<InterpreterResult>, PrecompileError> {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
@@ -88,14 +88,16 @@ where
                 result.result = InstructionResult::Return;
                 result.output = output.bytes;
             }
-            Err(PrecompileErrors::Error(e)) => {
+            Err(e) => {
+                if let PrecompileError::Fatal(_) = e {
+                    return Err(e);
+                }
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
             }
-            Err(err @ PrecompileErrors::Fatal { .. }) => return Err(err),
         }
         Ok(Some(result))
     }

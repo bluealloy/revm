@@ -35,7 +35,7 @@ pub const P256VERIFY: PrecompileWithAddress =
 /// |          32         | 32  | 32  |     32       |      32      |
 pub fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if P256VERIFY_BASE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
     let result = if verify_impl(input).is_some() {
         B256::with_last_byte(1).into()
@@ -75,7 +75,7 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::PrecompileErrors;
+    use crate::PrecompileError;
     use primitives::hex::FromHex;
     use rstest::rstest;
 
@@ -116,10 +116,7 @@ mod test {
         let result = p256_verify(&input, target_gas);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.err(),
-            Some(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        );
+        assert_eq!(result.err(), Some(PrecompileError::OutOfGas));
     }
 
     #[rstest]

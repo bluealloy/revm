@@ -20,15 +20,14 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
 pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if G1_ADD_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() != G1_ADD_INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
             "G1ADD input should be {G1_ADD_INPUT_LENGTH} bytes, was {}",
             input.len()
-        ))
-        .into());
+        )));
     }
 
     // NB: There is no subgroup check for the G1 addition precompile.

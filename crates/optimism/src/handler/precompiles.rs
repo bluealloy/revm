@@ -1,6 +1,6 @@
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
-use precompile::{secp256r1, PrecompileErrors, Precompiles};
+use precompile::{secp256r1, PrecompileError, Precompiles};
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
@@ -103,7 +103,7 @@ where
         address: &precompile::Address,
         bytes: &precompile::Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, PrecompileErrors> {
+    ) -> Result<Option<Self::Output>, PrecompileError> {
         self.precompile_provider
             .run(context, address, bytes, gas_limit)
     }

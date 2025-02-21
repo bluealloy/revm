@@ -11,7 +11,7 @@ use context_interface::{
 };
 use core::mem;
 use interpreter::{FrameInput, Host, InitialAndFloorGas, Interpreter, InterpreterAction};
-use precompile::PrecompileErrors;
+use precompile::PrecompileError;
 use primitives::Log;
 use state::EvmState;
 use std::{vec, vec::Vec};
@@ -20,7 +20,7 @@ pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-    + From<PrecompileErrors>
+    + From<PrecompileError>
 {
 }
 
@@ -29,7 +29,7 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<PrecompileErrors>,
+            + From<PrecompileError>,
     > EvmTrError<EVM> for T
 {
 }
