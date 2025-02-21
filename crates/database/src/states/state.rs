@@ -32,7 +32,7 @@ pub struct State<DB> {
     ///
     /// This allows us to have only one layer of cache where we can fetch data.
     ///
-    /// Additionally we can introduce some preloading of data from database.
+    /// Additionally, we can introduce some preloading of data from database.
     pub cache: CacheState,
     /// Optional database that we use to fetch data from
     ///
@@ -290,7 +290,7 @@ impl<DB: Database> Database for State<DB> {
             btree_map::Entry::Vacant(entry) => {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
-                // Prune all hashes that are older then BLOCK_HASH_HISTORY
+                // Prune all hashes that are older than BLOCK_HASH_HISTORY
                 let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
                 while let Some(entry) = self.block_hashes.first_entry() {
                     if *entry.key() < last_block {

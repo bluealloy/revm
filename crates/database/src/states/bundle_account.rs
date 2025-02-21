@@ -67,7 +67,7 @@ impl BundleAccount {
         }
     }
 
-    /// Fetch account info if it exist.
+    /// Fetch account info if it exists.
     pub fn account_info(&self) -> Option<AccountInfo> {
         self.info.clone()
     }

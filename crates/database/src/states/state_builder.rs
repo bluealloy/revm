@@ -23,7 +23,7 @@ pub struct StateBuilder<DB> {
     with_bundle_update: bool,
     /// Do we want to merge transitions in background?
     ///
-    /// This will allows evm to continue executing.
+    /// This will allow evm to continue executing.
     ///
     /// Default is false.
     with_background_transition_merge: bool,
@@ -64,7 +64,7 @@ impl<DB: Database> StateBuilder<DB> {
     /// Set the database.
     pub fn with_database<ODB: Database>(self, database: ODB) -> StateBuilder<ODB> {
         // Cast to the different database.
-        // Note that we return different type depending of the database NewDBError.
+        // Note that we return different type depending on the database NewDBError.
         StateBuilder {
             with_state_clear: self.with_state_clear,
             database,
