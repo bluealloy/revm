@@ -3,11 +3,7 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use fluentbase_genesis::{
-    devnet_genesis_from_file,
-    GENESIS_KECCAK_HASH_SLOT,
-    GENESIS_POSEIDON_HASH_SLOT,
-};
+use fluentbase_genesis::devnet_genesis_from_file;
 use fluentbase_sdk::Address;
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
@@ -30,7 +26,6 @@ use revm::{
         TransactTo,
         B256,
         KECCAK_EMPTY,
-        POSEIDON_EMPTY,
         U256,
     },
     CacheState,
@@ -503,22 +498,15 @@ pub fn execute_test_suite(
 
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
-            let _source_code_hash = info
-                .storage
+            let code_hash = info
+                .code
                 .as_ref()
-                .and_then(|storage| storage.get(&GENESIS_KECCAK_HASH_SLOT))
-                .cloned()
+                .map(|v| keccak256(&v))
                 .unwrap_or(KECCAK_EMPTY);
-            let rwasm_code_hash = info
-                .storage
-                .as_ref()
-                .and_then(|storage| storage.get(&GENESIS_POSEIDON_HASH_SLOT))
-                .cloned()
-                .unwrap_or(POSEIDON_EMPTY);
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash: rwasm_code_hash,
+                code_hash,
                 code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
             };
             let mut account_storage = PlainStorage::default();

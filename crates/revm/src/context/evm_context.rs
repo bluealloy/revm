@@ -36,7 +36,7 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account};
+use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account_from_input};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -287,7 +287,9 @@ impl<DB: Database> EvmContext<DB> {
         let mut contract =
             Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
 
-        if let Some(precompiled_address) = try_resolve_precompile_account(inputs.input.as_ref()) {
+        if let Some(precompiled_address) =
+            try_resolve_precompile_account_from_input(inputs.input.as_ref())
+        {
             let account = self
                 .inner
                 .journaled_state
