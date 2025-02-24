@@ -3343,8 +3343,6 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0-alpha.1"
 dependencies = [
- "alloy-eip2930",
- "alloy-eip7702",
  "auto_impl",
  "cfg-if",
  "derive-where",
@@ -3537,8 +3535,6 @@ dependencies = [
 name = "revm-statetest-types"
 version = "1.0.0-alpha.1"
 dependencies = [
- "alloy-eip2930",
- "alloy-eip7702",
  "revm",
  "serde",
  "serde_json",

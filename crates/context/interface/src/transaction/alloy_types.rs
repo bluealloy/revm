@@ -1,8 +1,10 @@
 use super::{AccessListTr, AuthorizationTr};
 use primitives::{Address, B256, U256};
 
-use alloy_eip2930::AccessList;
-use alloy_eip7702::{RecoveredAuthorization, SignedAuthorization};
+pub use alloy_eip2930::{AccessList, AccessListItem};
+pub use alloy_eip7702::{
+    Authorization, RecoveredAuthority, RecoveredAuthorization, SignedAuthorization,
+};
 
 impl AccessListTr for AccessList {
     fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {

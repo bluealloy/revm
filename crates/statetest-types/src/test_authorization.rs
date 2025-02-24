@@ -1,4 +1,4 @@
-use revm::context::SignedAuthorization;
+use revm::context_interface::transaction::SignedAuthorization;
 use serde::{Deserialize, Serialize};
 
 /// Struct for test authorization

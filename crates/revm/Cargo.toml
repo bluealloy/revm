@@ -59,7 +59,12 @@ std = [
     "context-interface/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
-serde = ["interpreter/serde", "database-interface/serde", "primitives/serde"]
+serde = [
+    "interpreter/serde",
+    "database-interface/serde",
+    "primitives/serde",
+    "context-interface/serde",
+]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["precompile/portable"]

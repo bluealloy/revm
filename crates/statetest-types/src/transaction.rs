@@ -1,7 +1,6 @@
 use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
-use alloy_eip2930::AccessList;
 use revm::{
-    context_interface::transaction::TransactionType,
+    context_interface::transaction::{AccessList, TransactionType},
     primitives::{Address, Bytes, B256, U256},
 };
 use serde::{Deserialize, Serialize};

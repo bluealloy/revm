@@ -1,6 +1,4 @@
-pub use alloy_eip2930::AccessList;
-pub use alloy_eip7702::SignedAuthorization;
-use context_interface::Transaction;
+use context_interface::transaction::{AccessList, SignedAuthorization, Transaction};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use std::vec::Vec;
