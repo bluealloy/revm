@@ -1,7 +1,7 @@
 use core::ops::Deref;
 
 use bytecode::{
-    eof::TypesSection,
+    eof::CodeInfo,
     utils::{read_i16, read_u16},
     Bytecode,
 };
@@ -147,10 +147,8 @@ impl Immediates for ExtBytecode {
 }
 
 impl EofCodeInfo for ExtBytecode {
-    fn code_section_info(&self, idx: usize) -> Option<&TypesSection> {
-        self.base
-            .eof()
-            .and_then(|eof| eof.body.types_section.get(idx))
+    fn code_info(&self, idx: usize) -> Option<&CodeInfo> {
+        self.base.eof().and_then(|eof| eof.body.code_info.get(idx))
     }
 
     fn code_section_pc(&self, idx: usize) -> Option<usize> {
