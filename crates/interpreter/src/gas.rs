@@ -165,7 +165,7 @@ pub enum MemoryExtensionResult {
     Extended,
     /// Memory size stayed the same.
     Same,
-    /// Not enough gas to extend memory.s
+    /// Not enough gas to extend memory.
     OutOfGas,
 }
 
