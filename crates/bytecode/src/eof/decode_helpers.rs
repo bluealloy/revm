@@ -1,6 +1,9 @@
 use super::EofDecodeError;
 
-/// Consumes a u8 from the input.
+/// Consumes a single byte from the input slice and returns a tuple containing the remaining input slice
+/// and the consumed byte as a u8.
+///
+/// Returns `EofDecodeError::MissingInput` if the input slice is empty.
 #[inline]
 pub(crate) fn consume_u8(input: &[u8]) -> Result<(&[u8], u8), EofDecodeError> {
     if input.is_empty() {
@@ -10,6 +13,8 @@ pub(crate) fn consume_u8(input: &[u8]) -> Result<(&[u8], u8), EofDecodeError> {
 }
 
 /// Consumes a u16 from the input.
+///
+/// Returns `EofDecodeError::MissingInput` if the input slice is less than 2 bytes.
 #[inline]
 pub(crate) fn consume_u16(input: &[u8]) -> Result<(&[u8], u16), EofDecodeError> {
     if input.len() < 2 {

@@ -10,7 +10,7 @@ const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 /// Types section that contains stack information for matching code section
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TypesSection {
+pub struct CodeInfo {
     /// `inputs` - 1 byte - `0x00-0x7F`
     ///
     /// Number of stack elements the code section consumes
@@ -25,8 +25,8 @@ pub struct TypesSection {
     pub max_stack_size: u16,
 }
 
-impl TypesSection {
-    /// Returns new `TypesSection` with the given inputs, outputs, and max_stack_size.
+impl CodeInfo {
+    /// Returns new `CodeInfo` with the given inputs, outputs, and max_stack_size.
     pub fn new(inputs: u8, outputs: u8, max_stack_size: u16) -> Self {
         Self {
             inputs,
@@ -72,10 +72,10 @@ impl TypesSection {
     /// Validates the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
         if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
-            return Err(EofDecodeError::InvalidTypesSection);
+            return Err(EofDecodeError::InvalidCodeInfo);
         }
         if self.inputs as u16 > self.max_stack_size {
-            return Err(EofDecodeError::InvalidTypesSection);
+            return Err(EofDecodeError::InvalidCodeInfo);
         }
         Ok(())
     }

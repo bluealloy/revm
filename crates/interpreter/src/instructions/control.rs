@@ -109,7 +109,7 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let idx = interpreter.bytecode.read_u16() as usize;
 
     // Get target types
-    let Some(types) = interpreter.bytecode.code_section_info(idx) else {
+    let Some(types) = interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
     };
 
@@ -166,7 +166,7 @@ pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Get target types
     let types = interpreter
         .bytecode
-        .code_section_info(idx)
+        .code_info(idx)
         .expect("Invalid code section index");
 
     // Check max stack height for target code section.
@@ -278,7 +278,7 @@ mod test {
     use crate::{table::make_instruction_table, DummyHost, Gas};
     use bytecode::opcode::{CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP};
     use bytecode::{
-        eof::{Eof, TypesSection},
+        eof::{Eof, CodeInfo},
         Bytecode,
     };
     use primitives::bytes;
@@ -382,11 +382,11 @@ mod test {
     }
 
     fn eof_setup(bytes1: Bytes, bytes2: Bytes) -> Interpreter {
-        eof_setup_with_types(bytes1, bytes2, TypesSection::default())
+        eof_setup_with_types(bytes1, bytes2, CodeInfo::default())
     }
 
     /// Two code section and types section is for last code.
-    fn eof_setup_with_types(bytes1: Bytes, bytes2: Bytes, types: TypesSection) -> Interpreter {
+    fn eof_setup_with_types(bytes1: Bytes, bytes2: Bytes, types: CodeInfo) -> Interpreter {
         let mut eof = dummy_eof();
 
         eof.body.code_section.clear();
@@ -395,7 +395,7 @@ mod test {
 
         eof.header.code_sizes.push(bytes1.len() as u16);
         eof.body.code_section.push(bytes1.len());
-        eof.body.types_section.push(TypesSection::new(0, 0, 11));
+        eof.body.types_section.push(CodeInfo::new(0, 0, 11));
 
         eof.header.code_sizes.push(bytes2.len() as u16);
         eof.body.code_section.push(bytes2.len() + bytes1.len());
@@ -472,7 +472,7 @@ mod test {
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
         let mut interp =
-            eof_setup_with_types(bytes1, bytes2.clone(), TypesSection::new(0, 0, 1025));
+            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
 
         // CALLF
         interp.step(&table, &mut host);
@@ -510,7 +510,7 @@ mod test {
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
         let mut interp =
-            eof_setup_with_types(bytes1, bytes2.clone(), TypesSection::new(0, 0, 1025));
+            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
 
         // JUMPF
         interp.step(&table, &mut host);

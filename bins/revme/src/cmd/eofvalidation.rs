@@ -77,9 +77,9 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                 }
                 test_sum += 1;
                 let kind = if test_vector.container_kind.is_some() {
-                    Some(CodeType::ReturnContract)
+                    Some(CodeType::Initcode)
                 } else {
-                    Some(CodeType::ReturnOrStop)
+                    Some(CodeType::Runtime)
                 };
                 // In future this can be generalized to cover multiple forks, Not just Osaka.
                 let Some(test_result) = test_vector.results.get("Osaka") else {

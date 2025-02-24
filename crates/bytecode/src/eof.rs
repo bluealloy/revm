@@ -1,13 +1,13 @@
 mod body;
+mod code_info;
 mod decode_helpers;
 mod header;
 pub mod printer;
-mod types_section;
 pub mod verification;
 
 pub use body::EofBody;
+pub use code_info::CodeInfo;
 pub use header::EofHeader;
-pub use types_section::TypesSection;
 pub use verification::*;
 
 use core::cmp::min;
@@ -39,7 +39,7 @@ impl Default for Eof {
     fn default() -> Self {
         let body = EofBody {
             // Types section with zero inputs, zero outputs and zero max stack size.
-            types_section: vec![TypesSection::default()],
+            code_info: vec![CodeInfo::default()],
             code_section: vec![1],
             // One code section with a STOP byte.
             code: Bytes::from_static(&[0x00]),
@@ -136,10 +136,10 @@ pub enum EofDecodeError {
     MissingBodyWithoutData,
     /// Body size is more than specified in the header
     DanglingData,
-    /// Invalid types section data
-    InvalidTypesSection,
-    /// Invalid types section size
-    InvalidTypesSectionSize,
+    /// Invalid code info data
+    InvalidCodeInfo,
+    /// Invalid code info size
+    InvalidCodeInfoSize,
     /// Invalid EOF magic number
     InvalidEOFMagicNumber,
     /// Invalid EOF version
@@ -154,8 +154,8 @@ pub enum EofDecodeError {
     InvalidDataKind,
     /// Invalid kind after code
     InvalidKindAfterCode,
-    /// Mismatch of code and types sizes
-    MismatchCodeAndTypesSize,
+    /// Mismatch of code and info sizes
+    MismatchCodeAndInfoSize,
     /// There should be at least one size
     NonSizes,
     /// Missing size
@@ -178,8 +178,8 @@ impl fmt::Display for EofDecodeError {
             Self::MissingInput => "Short input while processing EOF",
             Self::MissingBodyWithoutData => "Short body while processing EOF",
             Self::DanglingData => "Body size is more than specified in the header",
-            Self::InvalidTypesSection => "Invalid types section data",
-            Self::InvalidTypesSectionSize => "Invalid types section size",
+            Self::InvalidCodeInfo => "Invalid types section data",
+            Self::InvalidCodeInfoSize => "Invalid types section size",
             Self::InvalidEOFMagicNumber => "Invalid EOF magic number",
             Self::InvalidEOFVersion => "Invalid EOF version",
             Self::InvalidTypesKind => "Invalid number for types kind",
@@ -187,7 +187,7 @@ impl fmt::Display for EofDecodeError {
             Self::InvalidTerminalByte => "Invalid terminal code",
             Self::InvalidDataKind => "Invalid data kind",
             Self::InvalidKindAfterCode => "Invalid kind after code",
-            Self::MismatchCodeAndTypesSize => "Mismatch of code and types sizes",
+            Self::MismatchCodeAndInfoSize => "Mismatch of code and types sizes",
             Self::NonSizes => "There should be at least one size",
             Self::ShortInputForSizes => "Missing size",
             Self::ZeroSize => "Size cant be zero",

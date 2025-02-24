@@ -94,7 +94,7 @@ pub enum InstructionResult {
     SubRoutineStackOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
-    /// Aux data is smaller then already present data size.
+    /// Aux data is smaller than already present data size.
     EofAuxDataTooSmall,
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,

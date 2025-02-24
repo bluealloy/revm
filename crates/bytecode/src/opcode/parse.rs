@@ -1,3 +1,8 @@
+//! Parsing opcodes from strings.
+//!
+//! This module provides a function to parse opcodes from strings.
+//! It is a utility function that needs to be enabled with `parse` feature.
+
 use super::OpCode;
 use crate::opcode::NAME_TO_OPCODE;
 use core::fmt;

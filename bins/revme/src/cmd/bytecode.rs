@@ -39,9 +39,9 @@ impl Cmd {
     /// Runs statetest command.
     pub fn run(&self) {
         let container_kind = if self.eof_initcode {
-            Some(CodeType::ReturnContract)
+            Some(CodeType::Initcode)
         } else if self.eof_runtime {
-            Some(CodeType::ReturnOrStop)
+            Some(CodeType::Runtime)
         } else {
             None
         };

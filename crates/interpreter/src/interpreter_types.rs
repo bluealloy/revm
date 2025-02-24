@@ -1,4 +1,4 @@
-use bytecode::eof::TypesSection;
+use bytecode::eof::CodeInfo;
 use specification::hardfork::SpecId;
 
 use crate::{Gas, InstructionResult, InterpreterAction};
@@ -96,7 +96,7 @@ pub trait SubRoutineStack {
     fn pop(&mut self) -> Option<usize>;
 
     // /// Returns code info from EOF body.
-    // fn eof_code_info(&self, idx: usize) -> Option<&TypesSection>;
+    // fn eof_code_info(&self, idx: usize) -> Option<&CodeInfo>;
 }
 
 pub trait StackTr {
@@ -172,7 +172,7 @@ pub trait EofData {
 
 pub trait EofCodeInfo {
     /// Returns code information containing stack information.
-    fn code_section_info(&self, idx: usize) -> Option<&TypesSection>;
+    fn code_info(&self, idx: usize) -> Option<&CodeInfo>;
 
     /// Returns program counter at the start of code section.
     fn code_section_pc(&self, idx: usize) -> Option<usize>;

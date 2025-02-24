@@ -507,7 +507,7 @@ pub enum HaltReason {
 
     /// Aux data overflow, new aux data is larger than [u16] max size.
     EofAuxDataOverflow,
-    /// Aud data is smaller then already present data size.
+    /// Aux data is smaller than already present data size.
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
     SubRoutineStackOverflow,
