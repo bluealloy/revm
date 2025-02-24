@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "jump table length 34 is not equal to bytecode length 2")]
+    #[should_panic(expected = "jump table length 34 is not equal to bytecode length 35")]
     fn test_panic_on_custom_jump_table() {
         let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
         let bytecode = LegacyRawBytecode(bytecode).into_analyzed();
