@@ -117,11 +117,7 @@ impl Bytecode {
     /// # Panics
     ///
     /// For possible panics see [`LegacyAnalyzedBytecode::new`].
-    pub fn new_analyzed(
-        bytecode: Bytes,
-        original_len: usize,
-        jump_table: JumpTable,
-    ) -> Self {
+    pub fn new_analyzed(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
         Self::LegacyAnalyzed(LegacyAnalyzedBytecode::new(
             bytecode,
             original_len,

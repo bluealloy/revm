@@ -132,7 +132,7 @@ impl OpCode {
     }
 
     /// Returns the opcode information for the given opcode.
-    /// Check [OpCodeInfo](OpCodeInfo) for more information.
+    /// Check [OpCodeInfo] for more information.
     #[inline]
     pub const fn info_by_op(opcode: u8) -> Option<OpCodeInfo> {
         if let Some(opcode) = Self::new(opcode) {
