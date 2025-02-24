@@ -43,9 +43,15 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 database.workspace = true
 
 [features]
-# Implementation-specific features
 default = ["std"]
-std = []
+std = ["serde?/std"]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "specification/serde",
+    "state/serde",
+    "context-interface/serde",
+]
 dev = [
     "memory_limit",
     "optional_balance_check",

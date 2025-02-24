@@ -118,3 +118,4 @@ blst = ["dep:blst"]
 name = "bench"
 path = "benches/bench.rs"
 harness = false
+required-features = ["secp256k1"]
