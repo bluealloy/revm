@@ -5,7 +5,7 @@ use context::{
     ContextTr, Database, Evm, Journal,
 };
 use database_interface::DatabaseCommit;
-use interpreter::{interpreter::EthInterpreter, Host, InterpreterResult};
+use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
@@ -38,7 +38,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>> + Host,
+    CTX: ContextSetters + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -56,8 +56,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>
-        + Host,
+        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<

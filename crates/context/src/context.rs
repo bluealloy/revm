@@ -1,5 +1,5 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
-use context_interface::{host::HostMarker, Block, Cfg, ContextTr, Journal, Transaction};
+use context_interface::{Block, Cfg, ContextTr, Journal, Transaction};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use specification::hardfork::SpecId;
@@ -26,16 +26,6 @@ pub struct Context<
     pub chain: CHAIN,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
-}
-
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> HostMarker for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
-where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg,
-    DB: Database,
-    JOURNAL: Journal<Database = DB>,
-{
 }
 
 impl<

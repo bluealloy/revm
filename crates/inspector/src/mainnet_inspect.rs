@@ -58,7 +58,7 @@ where
         + ContextTr<
             Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
             Db: DatabaseCommit,
-        > + Host,
+        >,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
