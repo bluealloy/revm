@@ -1,7 +1,7 @@
 [package]
 name = "revm-specification"
 description = "Ethereum hardforks and EIP specification structs and constants"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true

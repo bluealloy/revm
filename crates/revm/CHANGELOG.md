@@ -57,6 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.1...revm-v20.0.0-alpha.2) - 2025-02-25
+
+### Other
+
+- export eip2930 eip7702 types from one place (#2097)
+- move all dependencies to workspace (#2092)
+- re-export all crates from `revm` (#2088)
+
 ## [19.5.0](https://github.com/bluealloy/revm/compare/revm-v19.4.0...revm-v19.5.0) - 2025-02-11
 
 ### Fixed
