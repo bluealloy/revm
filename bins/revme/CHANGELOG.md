@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.1...revme-v3.0.0-alpha.2) - 2025-02-25
+
+### Other
+
+- Add docs to revm-bytecode crate (#2108)
+- *(deps)* bump breaking deps (#2093)
+- move all dependencies to workspace (#2092)
+
 ## [3.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revme-v2.5.0...revme-v3.0.0-alpha.1) - 2025-02-16
 
 ### Added

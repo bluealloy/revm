@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0-alpha.1...revm-handler-v1.0.0-alpha.2) - 2025-02-25
+
+### Fixed
+
+- call clear (#2091)
+
+### Other
+
+- PrecompileErrors to PrecompileError (#2103)
+- re-export all crates from `revm` (#2088)
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-handler-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added

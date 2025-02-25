@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.1...revm-precompile-v17.0.0-alpha.2) - 2025-02-25
+
+### Fixed
+
+- *(blst)* Fix blst wrong constants values and usage (#2102)
+
+### Other
+
+- export eip2930 eip7702 types from one place (#2097)
+- PrecompileErrors to PrecompileError (#2103)
+- Update broken link secp256r1.rs (#2099)
+- G1_msm base gas fee const correction ([#2100](https://github.com/bluealloy/revm/pull/2100))
+- Split blst constants out to individual file #2085
+- *(deps)* bump breaking deps (#2093)
+- move all dependencies to workspace (#2092)
+
 ## [17.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-precompile-v16.1.0...revm-precompile-v17.0.0-alpha.1) - 2025-02-16
 
 ### Added

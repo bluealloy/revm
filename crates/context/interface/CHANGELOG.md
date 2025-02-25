@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.1...revm-context-interface-v1.0.0-alpha.2) - 2025-02-25
+
+### Other
+
+- Add docs to revm-bytecode crate (#2108)
+- export eip2930 eip7702 types from one place (#2097)
+- move all dependencies to workspace (#2092)
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-context-interface-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added
