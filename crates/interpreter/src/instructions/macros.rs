@@ -127,6 +127,8 @@ macro_rules! resize_memory {
     };
 }
 
+/// Pops n values from the stack. Fails the instruction if n values can't be popped.
+#[macro_export]
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreterreter:expr $(,$ret:expr)? ) => {
         let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
@@ -136,6 +138,8 @@ macro_rules! popn {
     };
 }
 
+/// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
+#[macro_export]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreterreter:expr $(,$ret:expr)? ) => {
         let Some(([$( $x ),*], $top)) = $interpreterreter.stack.popn_top() else {
