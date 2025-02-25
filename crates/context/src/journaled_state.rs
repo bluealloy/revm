@@ -420,8 +420,6 @@ impl<DB: Database> JournaledState<DB> {
     /// Returns account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
-    ///
-    // TODO : Move this in Journaled state
     #[inline]
     pub fn code(&mut self, address: Address) -> Result<StateLoad<Bytes>, <DB as Database>::Error> {
         let a = self.load_account_code(address)?;
@@ -475,8 +473,8 @@ impl<DB: Database> JournaledState<DB> {
     ///
     /// # Panics
     ///
-    /// Panics if the caller is not loaded inside of the EVM state.
-    /// This is should have been done inside `create_inner`.
+    /// Panics if the caller is not loaded inside the EVM state.
+    /// This should have been done inside `create_inner`.
     #[inline]
     pub fn create_account_checkpoint(
         &mut self,
@@ -489,9 +487,9 @@ impl<DB: Database> JournaledState<DB> {
         let checkpoint = self.checkpoint();
 
         // Fetch balance of caller.
-        let caller_acc = self.state.get_mut(&caller).unwrap();
+        let caller_balance = self.state.get(&caller).unwrap().info.balance;
         // Check if caller has enough balance to send to the created contract.
-        if caller_acc.info.balance < balance {
+        if caller_balance < balance {
             self.checkpoint_revert(checkpoint);
             return Err(TransferError::OutOfFunds);
         }
@@ -509,7 +507,7 @@ impl<DB: Database> JournaledState<DB> {
             return Err(TransferError::CreateCollision);
         }
 
-        // set account status to created.
+        // set account status to create.
         target_acc.mark_created();
 
         // this entry will revert set nonce.
@@ -601,7 +599,7 @@ impl<DB: Database> JournaledState<DB> {
                     state.get_mut(&address).unwrap().info.nonce -= 1;
                 }
                 JournalEntry::AccountCreated { address } => {
-                    let account = &mut state.get_mut(&address).unwrap();
+                    let account = state.get_mut(&address).unwrap();
                     account.unmark_created();
                     account
                         .storage
@@ -680,11 +678,11 @@ impl<DB: Database> JournaledState<DB> {
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         // iterate over last N journals sets and revert our global state
-        let leng = self.journal.len();
+        let len = self.journal.len();
         self.journal
             .iter_mut()
             .rev()
-            .take(leng - checkpoint.journal_i)
+            .take(len - checkpoint.journal_i)
             .for_each(|cs| {
                 Self::journal_revert(
                     state,
@@ -723,7 +721,7 @@ impl<DB: Database> JournaledState<DB> {
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
             // and `target` at the beginning of the function.
-            let acc_balance = self.state.get_mut(&address).unwrap().info.balance;
+            let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
@@ -880,13 +878,12 @@ impl<DB: Database> JournaledState<DB> {
         if load_code {
             let info = &mut load.data.info;
             if info.code.is_none() {
-                if info.code_hash == KECCAK_EMPTY {
-                    let empty = Bytecode::default();
-                    info.code = Some(empty);
+                let code = if info.code_hash == KECCAK_EMPTY {
+                    Bytecode::default()
                 } else {
-                    let code = self.database.code_by_hash(info.code_hash)?;
-                    info.code = Some(code);
-                }
+                    self.database.code_by_hash(info.code_hash)?
+                };
+                info.code = Some(code);
             }
         }
 
@@ -1050,7 +1047,7 @@ impl<DB: Database> JournaledState<DB> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
-    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
+    /// Used to mark account that is warm inside EVM in regard to EIP-2929 AccessList.
     /// Action: We will add Account to state.
     /// Revert: we will remove account from state.
     AccountWarmed { address: Address },
@@ -1084,7 +1081,7 @@ pub enum JournalEntry {
     },
     /// Create account:
     /// Actions: Mark account as created
-    /// Revert: Unmart account as created and reset nonce to zero.
+    /// Revert: Unmark account as created and reset nonce to zero.
     AccountCreated { address: Address },
     /// Entry used to track storage changes
     /// Action: Storage change
