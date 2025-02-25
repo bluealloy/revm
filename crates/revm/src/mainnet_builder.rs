@@ -2,7 +2,7 @@ use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, JournaledState, TxEn
 use context_interface::{Block, Database, Journal, Transaction};
 use database_interface::EmptyDB;
 use handler::{instructions::EthInstructions, EthPrecompiles};
-use interpreter::interpreter::EthInterpreter;
+use interpreter::{interpreter::EthInterpreter, Host};
 use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;

@@ -41,7 +41,7 @@ impl<CTX: ContextSetters, INSP, I> ContextSetters for OpEvm<CTX, INSP, I> {
 
 impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P>
 where
-    CTX: ContextTr,
+    CTX: ContextTr + Host,
     I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
 {
     type Context = CTX;

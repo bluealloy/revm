@@ -118,7 +118,9 @@ pub trait Host: ContextTr {
     }
 }
 
-impl<T: ContextTr> Host for T {}
+pub trait HostMarker {}
+
+impl<T: ContextTr + HostMarker> Host for T {}
 
 /// Represents the result of an `sstore` operation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
