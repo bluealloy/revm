@@ -110,7 +110,7 @@ impl TxEnv {
             if let TxKind::Call(_) = self.kind {
                 tx_type = TransactionType::Eip4844;
             } else {
-                return None; 
+                return None;
             }
         }
 
@@ -118,7 +118,7 @@ impl TxEnv {
             if let TxKind::Call(_) = self.kind {
                 tx_type = TransactionType::Eip7702;
             } else {
-                return None; 
+                return None;
             }
         }
 
