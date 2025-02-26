@@ -1,4 +1,4 @@
-use context_interface::transaction::{AccessList, SignedAuthorization, Transaction};
+use context_interface::transaction::{AccessList, SignedAuthorization, Transaction, TransactionType};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use std::vec::Vec;
