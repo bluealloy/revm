@@ -8,7 +8,6 @@ extern crate alloc as std;
 pub mod block;
 pub mod cfg;
 pub mod context;
-pub mod host;
 pub mod journaled_state;
 pub mod result;
 pub mod transaction;
