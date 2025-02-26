@@ -94,6 +94,37 @@ impl Default for TxEnv {
         }
     }
 }
+impl TxEnv {
+    pub fn derive_tx_type(&self) -> Option<TransactionType> {
+        let mut tx_type = TransactionType::Legacy;
+
+        if !self.access_list.0.is_empty() {
+            tx_type = TransactionType::Eip2930;
+        }
+
+        if self.gas_priority_fee.is_some() {
+            tx_type = TransactionType::Eip1559;
+        }
+
+        if self.max_fee_per_blob_gas > 0 {
+            if let TxKind::Call(_) = self.kind {
+                tx_type = TransactionType::Eip4844;
+            } else {
+                return None; 
+            }
+        }
+
+        if !self.authorization_list.is_empty() {
+            if let TxKind::Call(_) = self.kind {
+                tx_type = TransactionType::Eip7702;
+            } else {
+                return None; 
+            }
+        }
+
+        Some(tx_type)
+    }
+}
 
 impl Transaction for TxEnv {
     type AccessList = AccessList;
