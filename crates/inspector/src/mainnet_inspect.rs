@@ -4,7 +4,7 @@ use handler::{
     instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
     MainnetHandler, PrecompileProvider,
 };
-use interpreter::{interpreter::EthInterpreter, FrameInput, Host, InterpreterResult};
+use interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult};
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
@@ -31,8 +31,7 @@ impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>
-        + Host,
+        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
