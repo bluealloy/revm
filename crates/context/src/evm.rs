@@ -1,15 +1,13 @@
-use derive_where::derive_where;
 use crate::setters::ContextSetters;
+use core::fmt::Debug;
 use core::ops::{Deref, DerefMut};
 
-#[derive_where(Debug)]
 pub struct Evm<CTX, INSP, I, P> {
     pub data: EvmData<CTX, INSP>,
     pub instruction: I,
     pub precompiles: P,
 }
 
-#[derive_where(Debug)]
 pub struct EvmData<CTX, INSP> {
     pub ctx: CTX,
     pub inspector: INSP,
@@ -22,6 +20,25 @@ impl<CTX> Evm<CTX, (), (), ()> {
             instruction: (),
             precompiles: (),
         }
+    }
+}
+
+impl<CTX: Debug, INSP: Debug, I: Debug, P: Debug> Debug for Evm<CTX, INSP, I, P> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Evm")
+            .field("data", &self.data)
+            .field("instruction", &self.instruction)
+            .field("precompiles", &self.precompiles)
+            .finish()
+    }
+}
+
+impl<CTX: Debug, INSP: Debug> Debug for EvmData<CTX, INSP> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("EvmData")
+            .field("ctx", &self.ctx)
+            .field("inspector", &self.inspector)
+            .finish()
     }
 }
 
