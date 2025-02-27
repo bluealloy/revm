@@ -11,7 +11,7 @@ use crate::{
         SpecId::{self, *},
         B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
-    JournalCheckpoint,
+    JournalCheckpoint, STYLUS_MAGIC_BYTES,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -338,7 +338,10 @@ impl<DB: Database> InnerEvmContext<DB> {
         // if ok, check contract creation limit and calculate gas deduction on output len.
         //
         // EIP-3541: Reject new contract code starting with the 0xEF byte
-        if SPEC::enabled(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
+        if SPEC::enabled(LONDON)
+            && interpreter_result.output.first() == Some(&0xEF)
+            && !interpreter_result.output.starts_with(STYLUS_MAGIC_BYTES)
+        {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
             return;

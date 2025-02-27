@@ -8,6 +8,7 @@ extern crate alloc as std;
 
 // Define modules.
 
+pub mod arbos;
 mod builder;
 mod context;
 
@@ -43,6 +44,8 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+
+pub use arbos::STYLUS_MAGIC_BYTES;
 
 // Reexport libraries
 

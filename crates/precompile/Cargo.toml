@@ -42,7 +42,7 @@ ripemd = { version = "0.1", default-features = false }
 aurora-engine-modexp = { version = "1.1", default-features = false }
 
 # ecAdd, ecMul, ecPairing
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
+bn = { git = "https://github.com/bernard-wagner/paritytech-bn", package = "substrate-bn", branch = "no-lazy-static", version = "0.6", default-features = false }
 
 # KZG point evaluation precompile
 c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [

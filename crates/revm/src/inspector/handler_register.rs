@@ -391,9 +391,9 @@ mod tests {
 
     #[test]
     fn test_inspector_reg() {
-        let mut noop = NoOpInspector;
+        let noop = NoOpInspector;
         let _evm = Evm::builder()
-            .with_external_context(&mut noop)
+            .with_external_context(noop)
             .append_handler_register(inspector_handle_register)
             .build();
     }

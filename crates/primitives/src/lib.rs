@@ -7,8 +7,10 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+mod arbos;
 mod bytecode;
 mod constants;
+
 pub mod db;
 pub mod eip7702;
 pub mod env;
@@ -24,7 +26,7 @@ pub use alloy_eip2930::{AccessList, AccessListItem};
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal,
     map::{self, hash_map, hash_set, HashMap, HashSet},
-    ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I256, U256,
+    ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I256, U256, U64,
 };
 pub use bitvec;
 pub use bytecode::*;
@@ -47,3 +49,5 @@ pub use utilities::*;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
+
+pub use arbos::*;

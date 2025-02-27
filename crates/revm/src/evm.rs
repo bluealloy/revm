@@ -1,6 +1,7 @@
 use revm_interpreter::gas::InitialAndFloorGas;
 
 use crate::{
+    arbos,
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
@@ -11,7 +12,7 @@ use crate::{
         specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
         ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult, STYLUS_MAGIC_BYTES,
 };
 use core::fmt;
 use std::{boxed::Box, vec::Vec};
@@ -76,13 +77,17 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
     /// Runs main call loop.
     #[inline]
-    pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+    pub fn run_the_loop(
+        context: &mut Context<EXT, DB>,
+        handler: &Handler<'a, Context<EXT, DB>, EXT, DB>,
+        first_frame: Frame,
+    ) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
         #[cfg(feature = "memory_limit")]
         let mut shared_memory =
-            SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
+            SharedMemory::new_with_memory_limit(context.evm.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
         let mut shared_memory = SharedMemory::new();
 
@@ -90,46 +95,54 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
         // Peek the last stack frame.
         let mut stack_frame = call_stack.last_mut().unwrap();
-
         loop {
             // Execute the frame.
-            let next_action =
-                self.handler
-                    .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
+            let next_action = if stack_frame
+                .interpreter()
+                .contract()
+                .bytecode
+                .original_bytes()
+                .starts_with(STYLUS_MAGIC_BYTES)
+            {
+                let stylus_interpreter = arbos::StylusInterpreter::new(
+                    stack_frame.interpreter().contract.clone(),
+                    stack_frame.interpreter().gas().limit(),
+                    stack_frame.interpreter().is_static,
+                );
 
+                stylus_interpreter.run(context, handler)
+            } else {
+                handler.execute_frame(stack_frame, &mut shared_memory, context)?
+            };
             // Take error and break the loop, if any.
             // This error can be set in the Interpreter when it interacts with the context.
-            self.context.evm.take_error()?;
+            context.evm.take_error()?;
 
-            let exec = &mut self.handler.execution;
+            let exec = &handler.execution;
             let frame_or_result = match next_action {
-                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
-                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
-                InterpreterAction::EOFCreate { inputs } => {
-                    exec.eofcreate(&mut self.context, inputs)?
-                }
+                InterpreterAction::Call { inputs } => exec.call(context, inputs)?,
+                InterpreterAction::Create { inputs } => exec.create(context, inputs)?,
+                InterpreterAction::EOFCreate { inputs } => exec.eofcreate(context, inputs)?,
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();
-
                     // pop last frame from the stack and consume it to create FrameResult.
                     let returned_frame = call_stack
                         .pop()
                         .expect("We just returned from Interpreter frame");
 
-                    let ctx = &mut self.context;
                     FrameOrResult::Result(match returned_frame {
                         Frame::Call(frame) => {
                             // return_call
-                            FrameResult::Call(exec.call_return(ctx, frame, result)?)
+                            FrameResult::Call(exec.call_return(context, frame, result)?)
                         }
                         Frame::Create(frame) => {
                             // return_create
-                            FrameResult::Create(exec.create_return(ctx, frame, result)?)
+                            FrameResult::Create(exec.create_return(context, frame, result)?)
                         }
                         Frame::EOFCreate(frame) => {
                             // return_eofcreate
-                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
+                            FrameResult::EOFCreate(exec.eofcreate_return(context, frame, result)?)
                         }
                     })
                 }
@@ -148,20 +161,25 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                         return Ok(result);
                     };
                     stack_frame = top_frame;
-                    let ctx = &mut self.context;
+
                     // Insert result to the top frame.
                     match result {
                         FrameResult::Call(outcome) => {
                             // return_call
-                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
+                            exec.insert_call_outcome(
+                                context,
+                                stack_frame,
+                                &mut shared_memory,
+                                outcome,
+                            )?
                         }
                         FrameResult::Create(outcome) => {
                             // return_create
-                            exec.insert_create_outcome(ctx, stack_frame, outcome)?
+                            exec.insert_create_outcome(context, stack_frame, outcome)?
                         }
                         FrameResult::EOFCreate(outcome) => {
                             // return_eofcreate
-                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
+                            exec.insert_eofcreate_outcome(context, stack_frame, outcome)?
                         }
                     }
                 }
@@ -369,7 +387,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // Starts the main running loop.
         let mut result = match first_frame_or_result {
-            FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
+            FrameOrResult::Frame(first_frame) => {
+                Evm::run_the_loop(&mut self.context, &self.handler, first_frame)?
+            }
             FrameOrResult::Result(result) => result,
         };
 

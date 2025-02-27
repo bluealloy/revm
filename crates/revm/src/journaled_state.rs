@@ -46,6 +46,9 @@ pub struct JournaledState {
     /// Note that this not include newly loaded accounts, account and storage
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
+
+    /// For Stylus we need to track the call stack to determine whether a call is reentrant.
+    pub call_stack: Vec<Address>,
 }
 
 impl JournaledState {
@@ -67,6 +70,7 @@ impl JournaledState {
             depth: 0,
             spec,
             warm_preloaded_addresses,
+            call_stack: vec![],
         }
     }
 
@@ -118,6 +122,7 @@ impl JournaledState {
             logs,
             depth,
             journal,
+            call_stack,
             // kept, see [Self::new]
             spec: _,
             warm_preloaded_addresses: _,
@@ -126,6 +131,7 @@ impl JournaledState {
         *transient_storage = TransientStorage::default();
         *journal = vec![vec![]];
         *depth = 0;
+        *call_stack = vec![];
         let state = mem::take(state);
         let logs = mem::take(logs);
 
@@ -264,7 +270,7 @@ impl JournaledState {
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, InstructionResult> {
         // Enter subroutine
-        let checkpoint = self.checkpoint();
+        let checkpoint = self.checkpoint(address);
 
         // Newly created account is present, as we just loaded it.
         let account = self.state.get_mut(&address).unwrap();
@@ -427,19 +433,21 @@ impl JournaledState {
 
     /// Makes a checkpoint that in case of Revert can bring back state to this point.
     #[inline]
-    pub fn checkpoint(&mut self) -> JournalCheckpoint {
+    pub fn checkpoint(&mut self, address: Address) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
         };
         self.depth += 1;
         self.journal.push(Default::default());
+        self.call_stack.push(address);
         checkpoint
     }
 
     /// Commit the checkpoint.
     #[inline]
     pub fn checkpoint_commit(&mut self) {
+        self.call_stack.pop();
         self.depth -= 1;
     }
 
@@ -449,6 +457,7 @@ impl JournaledState {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
+        self.call_stack.pop();
         self.depth -= 1;
         // iterate over last N journals sets and revert our global state
         let leng = self.journal.len();

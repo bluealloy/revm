@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "19.3.0"
+version = "19.4.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -25,6 +25,14 @@ all = "warn"
 # revm
 revm-interpreter = { path = "../interpreter", version = "15.1.0", default-features = false }
 revm-precompile = { path = "../precompile", version = "16.0.0", default-features = false }
+
+# arbutil = { path = "../../../nitro/arbitrator/arbutil", default-features = false }
+# stylus = { path = "../../../nitro/arbitrator/stylus", default-features = false }
+# wasmer-types = { path = "../../../nitro/arbitrator/tools/wasmer/lib/types",  default-features = false }
+
+stylus = { git = "https://github.com/bernard-wagner/nitro.git", branch = "dev", package = "stylus" }
+arbutil = { git = "https://github.com/bernard-wagner/nitro.git", branch = "dev", package = "arbutil" }
+wasmer-types = { git = "https://github.com/bernard-wagner/nitro.git", branch = "dev", package = "wasmer-types" }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -67,6 +75,8 @@ indicatif = "0.17"
 reqwest = { version = "0.12" }
 rstest = "0.22.0"
 alloy-provider = "0.7"
+serde = { version = "1.0", default-features = false }
+serde_json = { version = "1.0", default-features = false }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -155,6 +165,11 @@ required-features = ["std", "serde-json"]
 #name = "uniswap_v2_usdc_swap"
 #path = "../../examples/uniswap_v2_usdc_swap.rs"
 #required-features = ["alloydb"]
+
+[[example]]
+name = "arbos"
+path = "../../examples/arbos.rs"
+
 
 [[bench]]
 name = "bench"

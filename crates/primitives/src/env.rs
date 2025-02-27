@@ -3,9 +3,9 @@ pub mod handler_cfg;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
-    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, ArbOsCfg,
+    AuthorizationList, Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB,
+    MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -335,6 +335,8 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
+
+    pub arbos_config: Option<ArbOsCfg>,
 }
 
 impl CfgEnv {
@@ -454,6 +456,7 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
+            arbos_config: None,
         }
     }
 }
