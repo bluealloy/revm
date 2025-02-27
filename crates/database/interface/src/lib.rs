@@ -43,6 +43,59 @@ pub trait DatabaseCommit {
     fn commit(&mut self, changes: HashMap<Address, Account>);
 }
 
+/// EVM database commit interface that can fail.
+pub trait TryDatabaseCommit {
+    /// Error type to be thrown when state accumulation fails.
+    type Error: core::error::Error;
+
+    /// Commit changes to the database.
+    fn try_commit(&mut self, changes: HashMap<Address, Account>) -> Result<(), Self::Error>;
+}
+
+impl<Db> TryDatabaseCommit for Db
+where
+    Db: DatabaseCommit,
+{
+    type Error = core::convert::Infallible;
+
+    #[inline]
+    fn try_commit(&mut self, changes: HashMap<Address, Account>) -> Result<(), Self::Error> {
+        self.commit(changes);
+        Ok(())
+    }
+}
+
+#[cfg(feature = "std")]
+/// Error type for implementation of [`TryDatabaseCommit`] on
+/// [`std::sync::Arc`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ArcUpgradeError;
+
+#[cfg(feature = "std")]
+impl core::fmt::Display for ArcUpgradeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Arc reference is not unique, cannot mutate")
+    }
+}
+
+#[cfg(feature = "std")]
+impl core::error::Error for ArcUpgradeError {}
+
+#[cfg(feature = "std")]
+impl<Db> TryDatabaseCommit for std::sync::Arc<Db>
+where
+    Db: DatabaseCommit + Send + Sync,
+{
+    type Error = ArcUpgradeError;
+
+    #[inline]
+    fn try_commit(&mut self, changes: HashMap<Address, Account>) -> Result<(), Self::Error> {
+        std::sync::Arc::get_mut(self)
+            .map(|db| db.commit(changes))
+            .ok_or(ArcUpgradeError)
+    }
+}
+
 /// EVM database interface.
 ///
 /// Contains the same methods as [`Database`], but with `&self` receivers instead of `&mut self`.
