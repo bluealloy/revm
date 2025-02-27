@@ -26,7 +26,7 @@ impl<CTX: Host, INSP>
     }
 }
 
-impl<CTX: ContextSetters, INSP, I> ContextSetters for OpEvm<CTX, INSP, I> {
+impl<CTX: ContextSetters, INSP, I, P> ContextSetters for OpEvm<CTX, INSP, I, P> {
     type Tx = <CTX as ContextSetters>::Tx;
     type Block = <CTX as ContextSetters>::Block;
 
