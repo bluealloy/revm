@@ -132,7 +132,7 @@ impl TxEnv {
         self.tx_type = tx_type as u8;
         Ok(())
     }
-
+}
 
 impl Transaction for TxEnv {
     type AccessList = AccessList;
