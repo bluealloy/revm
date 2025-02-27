@@ -23,9 +23,6 @@ pub trait ContextTr {
     fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error>;
     fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
     // default implementationHost calls interface
-    fn set_error(&mut self, error: <Self::Db as Database>::Error) {
-        *self.error() = Err(error);
-    }
 
     /// Gets the block hash of the given block `number`.
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
@@ -45,7 +42,9 @@ pub trait ContextTr {
                 .journal()
                 .db()
                 .block_hash(requested_number)
-                .map_err(|e| self.set_error(e))
+                .map_err(|e| {
+                    *self.error() = Err(e);
+                })
                 .ok();
         }
 
@@ -55,7 +54,9 @@ pub trait ContextTr {
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         self.journal()
             .load_account_delegated(address)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -64,7 +65,9 @@ pub trait ContextTr {
         self.journal()
             .load_account(address)
             .map(|acc| acc.map(|a| a.info.balance))
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -72,7 +75,9 @@ pub trait ContextTr {
     fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.journal()
             .code(address)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -80,7 +85,9 @@ pub trait ContextTr {
     fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.journal()
             .code_hash(address)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -88,7 +95,9 @@ pub trait ContextTr {
     fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
         self.journal()
             .sload(address, index)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -103,7 +112,9 @@ pub trait ContextTr {
     ) -> Option<StateLoad<SStoreResult>> {
         self.journal()
             .sstore(address, index, value)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 
@@ -130,7 +141,9 @@ pub trait ContextTr {
     ) -> Option<StateLoad<SelfDestructResult>> {
         self.journal()
             .selfdestruct(address, target)
-            .map_err(|e| self.set_error(e))
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
             .ok()
     }
 }
