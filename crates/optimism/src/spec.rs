@@ -1,4 +1,4 @@
-use revm::specification::hardfork::SpecId;
+use revm::specification::hardfork::{name as eth_name, SpecId};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -15,6 +15,7 @@ pub enum OpSpecId {
     #[default]
     ISTHMUS,
     INTEROP,
+    OSAKA,
 }
 
 impl OpSpecId {
@@ -25,6 +26,7 @@ impl OpSpecId {
             Self::CANYON => SpecId::SHANGHAI,
             Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
             Self::ISTHMUS | Self::INTEROP => SpecId::PRAGUE,
+            Self::OSAKA => SpecId::OSAKA,
         }
     }
 
@@ -50,6 +52,10 @@ impl TryFrom<&str> for OpSpecId {
             name::ECOTONE => Ok(OpSpecId::ECOTONE),
             name::FJORD => Ok(OpSpecId::FJORD),
             name::GRANITE => Ok(OpSpecId::GRANITE),
+            name::HOLOCENE => Ok(OpSpecId::HOLOCENE),
+            name::ISTHMUS => Ok(OpSpecId::ISTHMUS),
+            name::INTEROP => Ok(OpSpecId::INTEROP),
+            eth_name::OSAKA => Ok(OpSpecId::OSAKA),
             _ => Err(()),
         }
     }
@@ -67,6 +73,7 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::HOLOCENE => name::HOLOCENE,
             OpSpecId::ISTHMUS => name::ISTHMUS,
             OpSpecId::INTEROP => name::INTEROP,
+            OpSpecId::OSAKA => eth_name::OSAKA,
         }
     }
 }
