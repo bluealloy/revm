@@ -10,8 +10,9 @@ use crate::{
     primitives::{Address, Bytes, EVMError, Spec, U256},
     Context,
     Database,
+    Frame,
 };
-use core::ops::Deref;
+use core::{mem, ops::Deref};
 use fluentbase_runtime::{types::FixedPreimageResolver, RuntimeContext};
 use fluentbase_sdk::{
     codec::CompactABI,
@@ -24,10 +25,11 @@ use fluentbase_sdk::{
     SharedContextInputV1,
     SyscallInvocationParams,
     TxContextV1,
+    FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::gas::FUEL_DENOM_RATE;
+use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -179,7 +181,59 @@ fn process_exec_result(
     }
 }
 
-#[inline]
+pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
+    interrupted_outcome: SystemInterruptionOutcome,
+    frame: &mut Frame,
+    shared_memory: &mut SharedMemory,
+    instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
+    context: &mut Context<EXT, DB>,
+) -> InterpreterAction {
+    let interpreter = frame.interpreter_mut();
+    let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
+
+    debug_assert!(
+        interpreter.instruction_pointer > interpreter.bytecode.as_ptr(),
+        "revm: instruction pointer underflow"
+    );
+    let prev_opcode = unsafe { *interpreter.instruction_pointer.offset(-1) };
+
+    let InterpreterResult {
+        result,
+        output,
+        gas,
+    } = interrupted_outcome.result;
+
+    assert!(result.is_ok(), "revm: interrupted evm syscall can't fail");
+    interpreter.gas = gas;
+
+    match prev_opcode {
+        opcode::BALANCE | opcode::SELFBALANCE => {
+            assert_eq!(output.len(), 32);
+            let balance = U256::from_le_slice(output.as_ref());
+            if let Err(result) = interpreter.stack.push(balance) {
+                interpreter.instruction_result = result;
+            }
+        }
+        _ => unreachable!(
+            "revm: not possible opcode ({})",
+            interpreter.current_opcode()
+        ),
+    }
+
+    if interpreter.instruction_result == InstructionResult::CallOrCreate {
+        interpreter.instruction_result = InstructionResult::Continue;
+    }
+
+    let next_action = match instruction_tables {
+        InstructionTables::Plain(table) => interpreter.run(memory, table, context),
+        InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
+    };
+    // Take the shared memory back.
+    *shared_memory = interpreter.take_memory();
+
+    next_action
+}
+
 pub fn execute_rwasm_resume(
     system_interruption_outcome: SystemInterruptionOutcome,
 ) -> InterpreterAction {

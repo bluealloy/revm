@@ -5,18 +5,27 @@ pub mod serde;
 mod shared_memory;
 mod stack;
 
-pub use contract::Contract;
-pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
-pub use stack::{Stack, STACK_LIMIT};
-
 use crate::{
-    gas, primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
-    FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
+    gas,
+    primitives::Bytes,
+    push,
+    push_b256,
+    return_ok,
+    return_revert,
+    CallOutcome,
+    CreateOutcome,
+    FunctionStack,
+    Gas,
+    Host,
+    InstructionResult,
+    InterpreterAction,
 };
+pub use contract::Contract;
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
-use std::borrow::ToOwned;
-use std::sync::Arc;
+pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
+pub use stack::{Stack, STACK_LIMIT};
+use std::{borrow::ToOwned, sync::Arc};
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]
@@ -57,9 +66,12 @@ pub struct Interpreter {
     pub is_static: bool,
     /// Actions that the EVM should do.
     ///
-    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
-    /// InstructionResult to CallOrCreate/Return/Revert so we know the reason.
+    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally
+    /// those instructions will set InstructionResult to CallOrCreate/Return/Revert so we know
+    /// the reason.
     pub next_action: InterpreterAction,
+    /// Do we enable interruptions for EVM instructions?
+    pub enable_interruptions: bool,
 }
 
 impl Default for Interpreter {
@@ -90,6 +102,7 @@ impl Interpreter {
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: InterpreterAction::None,
+            enable_interruptions: false,
         }
     }
 
@@ -147,11 +160,14 @@ impl Interpreter {
     /// # Behavior
     ///
     /// The function updates the `return_data_buffer` with the data from `create_outcome`.
-    /// Depending on the `InstructionResult` indicated by `create_outcome`, it performs one of the following:
+    /// Depending on the `InstructionResult` indicated by `create_outcome`, it performs one of the
+    /// following:
     ///
-    /// - `Ok`: Pushes the address from `create_outcome` to the stack, updates gas costs, and records any gas refunds.
+    /// - `Ok`: Pushes the address from `create_outcome` to the stack, updates gas costs, and
+    ///   records any gas refunds.
     /// - `Revert`: Pushes `U256::ZERO` to the stack and updates gas costs.
-    /// - `FatalExternalError`: Sets the `instruction_result` to `InstructionResult::FatalExternalError`.
+    /// - `FatalExternalError`: Sets the `instruction_result` to
+    ///   `InstructionResult::FatalExternalError`.
     /// - `Default`: Pushes `U256::ZERO` to the stack.
     ///
     /// # Side Effects
@@ -246,7 +262,8 @@ impl Interpreter {
     ///
     /// - `return_ok!()`: Processes successful execution, refunds gas, and updates shared memory.
     /// - `return_revert!()`: Handles a revert by only updating the gas usage and shared memory.
-    /// - `InstructionResult::FatalExternalError`: Sets the instruction result to a fatal external error.
+    /// - `InstructionResult::FatalExternalError`: Sets the instruction result to a fatal external
+    ///   error.
     /// - Any other result: No specific action is taken.
     pub fn insert_call_outcome(
         &mut self,
@@ -339,7 +356,8 @@ impl Interpreter {
     #[inline]
     pub fn program_counter(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
-        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
+        // In practice this is always true unless a caller modifies the `instruction_pointer` field
+        // manually.
         unsafe { self.instruction_pointer.offset_from(self.bytecode.as_ptr()) as usize }
     }
 
@@ -355,8 +373,8 @@ impl Interpreter {
         let opcode = unsafe { *self.instruction_pointer };
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last
+        // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
         // execute instruction.

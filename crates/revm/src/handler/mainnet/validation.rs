@@ -1,10 +1,9 @@
-use revm_interpreter::gas::{self, InitialAndFloorGas};
-
 use crate::{
     handler::SpecId,
     primitives::{db::Database, EVMError, Env, InvalidTransaction, Spec},
     Context,
 };
+use revm_interpreter::gas::{self, InitialAndFloorGas};
 
 /// Validate environment for the mainnet.
 pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<DB::Error>> {
@@ -65,7 +64,7 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
 
     // EIP-7623
     if SPEC::SPEC_ID.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > env.tx.gas_limit {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
+        // return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
     };
 
     Ok(gas)

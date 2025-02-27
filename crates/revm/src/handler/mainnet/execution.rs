@@ -13,7 +13,7 @@ use crate::{
     },
     primitives::{Bytecode, EVMError, Spec},
     rwasm::{
-        executor::{execute_rwasm_frame, execute_rwasm_resume},
+        executor::{execute_evm_resume, execute_rwasm_frame, execute_rwasm_resume},
         syscall::execute_rwasm_interruption,
     },
     CallFrame,
@@ -44,7 +44,17 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
-        return Ok(execute_rwasm_resume(interrupted_outcome));
+        return if interrupted_outcome.call_id == u32::MAX {
+            Ok(execute_evm_resume::<SPEC, EXT, DB>(
+                interrupted_outcome,
+                frame,
+                shared_memory,
+                instruction_tables,
+                context,
+            ))
+        } else {
+            Ok(execute_rwasm_resume(interrupted_outcome))
+        };
     }
 
     let is_create = frame.is_create();

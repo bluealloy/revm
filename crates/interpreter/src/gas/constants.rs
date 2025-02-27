@@ -62,5 +62,3 @@ pub const INITCODE_WORD_COST: u64 = 2;
 
 pub const CALL_STIPEND: u64 = 2300;
 pub const MIN_CALLEE_GAS: u64 = CALL_STIPEND;
-
-pub const FUEL_DENOM_RATE: u64 = 1000;
