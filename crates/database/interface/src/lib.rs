@@ -44,11 +44,15 @@ pub trait DatabaseCommit {
 }
 
 /// EVM database commit interface that can fail.
+///
+/// This is intended for use with types that may fail to commit changes, e.g.
+/// because they are directly interacting with the filesystem, or must arrange
+/// access to a shared resource.
 pub trait TryDatabaseCommit {
-    /// Error type to be thrown when state accumulation fails.
+    /// Error type for when [`TryDatabaseCommit::try_commit`] fails.
     type Error: core::error::Error;
 
-    /// Commit changes to the database.
+    /// Attempt to commit changes to the database.
     fn try_commit(&mut self, changes: HashMap<Address, Account>) -> Result<(), Self::Error>;
 }
 
