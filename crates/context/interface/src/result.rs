@@ -351,8 +351,8 @@ pub enum InvalidTransaction {
     },
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
-    /// EOF crate should have `to` address
-    EofCrateShouldHaveToAddress,
+    /// EOF create should have `to` address
+    EofCreateShouldHaveToAddress,
     /// EIP-7702 is not enabled.
     AuthorizationListNotSupported,
     /// EIP-7702 transaction has invalid fields set.
@@ -429,7 +429,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "too many blobs, have {have}, max {max}")
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
-            Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
+            Self::EofCreateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
             Self::AuthorizationListNotSupported => write!(f, "authorization list not supported"),
             Self::AuthorizationListInvalidFields => {
                 write!(f, "authorization list tx has invalid fields")
