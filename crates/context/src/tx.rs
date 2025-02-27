@@ -1,6 +1,5 @@
-use context_interface::transaction::{
-    AccessList, SignedAuthorization, Transaction, TransactionType,
-};
+use crate::TransactionType;
+use context_interface::transaction::{AccessList, SignedAuthorization, Transaction};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use std::vec::Vec;
@@ -96,8 +95,14 @@ impl Default for TxEnv {
         }
     }
 }
+
+pub enum DeriveTxTypeError {
+    MissingTargetForEip4844,
+    MissingTargetForEip7702,
+}
+
 impl TxEnv {
-    pub fn derive_tx_type(&self) -> Option<TransactionType> {
+    pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
         let mut tx_type = TransactionType::Legacy;
 
         if !self.access_list.0.is_empty() {
@@ -108,11 +113,11 @@ impl TxEnv {
             tx_type = TransactionType::Eip1559;
         }
 
-        if self.max_fee_per_blob_gas > 0 {
+        if !self.blob_hashes.is_empty() {
             if let TxKind::Call(_) = self.kind {
                 tx_type = TransactionType::Eip4844;
             } else {
-                return None;
+                return Err(DeriveTxTypeError::MissingTargetForEip4844);
             }
         }
 
@@ -120,13 +125,14 @@ impl TxEnv {
             if let TxKind::Call(_) = self.kind {
                 tx_type = TransactionType::Eip7702;
             } else {
-                return None;
+                return Err(DeriveTxTypeError::MissingTargetForEip7702);
             }
         }
 
-        Some(tx_type)
+        self.tx_type = tx_type as u8;
+        Ok(())
     }
-}
+
 
 impl Transaction for TxEnv {
     type AccessList = AccessList;
