@@ -56,3 +56,29 @@ where
             .ok_or(ArcUpgradeError)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::DatabaseCommit;
+    use std::sync::Arc;
+
+    struct MockDb;
+
+    impl DatabaseCommit for MockDb {
+        fn commit(&mut self, _changes: HashMap<Address, Account>) {}
+    }
+
+    #[test]
+    fn arc_try_commit() {
+        let mut db = Arc::new(MockDb);
+        let db_2 = Arc::clone(&db);
+
+        assert_eq!(
+            db.try_commit(Default::default()).unwrap_err(),
+            ArcUpgradeError
+        );
+        drop(db_2);
+        db.try_commit(Default::default()).unwrap();
+    }
+}
