@@ -338,8 +338,7 @@ pub trait Handler {
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
         eip7702_refund: i64,
     ) {
-        let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+        post_execution::refund(evm.ctx().cfg(), exec_result.gas_mut(), eip7702_refund)
     }
 
     /// Reimburse the caller with balance it didn't spent.

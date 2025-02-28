@@ -1,7 +1,6 @@
 use super::frame_data::FrameResult;
 use bytecode::EOF_MAGIC_BYTES;
-use context_interface::ContextTr;
-use context_interface::Transaction;
+use context_interface::{Cfg, ContextTr, Transaction};
 use interpreter::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
     FrameInput, Gas,
@@ -55,6 +54,7 @@ pub fn last_frame_result<CTX: ContextTr>(context: CTX, frame_result: &mut FrameR
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
     let refunded = gas.refunded();
+    let cfg = context.cfg();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
     *gas = Gas::new_spent(context.tx().gas_limit());
@@ -63,7 +63,7 @@ pub fn last_frame_result<CTX: ContextTr>(context: CTX, frame_result: &mut FrameR
         gas.erase_cost(remaining);
     }
 
-    if instruction_result.is_ok() {
+    if !cfg.is_gas_refund_disabled() && instruction_result.is_ok() {
         gas.record_refund(refunded);
     }
 }

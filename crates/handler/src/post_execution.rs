@@ -21,12 +21,15 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
     }
 }
 
-pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
-    gas.record_refund(eip7702_refund);
-    // Calculate gas refund for transaction.
-    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
-    // gas spend. (Before london it was 2th part of gas spend)
-    gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
+pub fn refund<CFG: Cfg>(cfg: &CFG, gas: &mut Gas, eip7702_refund: i64) {
+    if !cfg.is_gas_refund_disabled() {
+        let spec = cfg.spec().into();
+        gas.record_refund(eip7702_refund);
+        // Calculate gas refund for transaction.
+        // If spec is set to london, it will decrease the maximum refund amount to 5th part of
+        // gas spend. (Before london it was 2th part of gas spend)
+        gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
+    }
 }
 
 pub fn reimburse_caller<CTX: ContextTr>(
