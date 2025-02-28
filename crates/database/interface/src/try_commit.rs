@@ -31,7 +31,7 @@ where
 }
 
 /// Error type for implementation of [`TryDatabaseCommit`] on
-/// [`alloc::sync::Arc`].
+/// [`Arc`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ArcUpgradeError;
 
