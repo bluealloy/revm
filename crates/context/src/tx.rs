@@ -96,6 +96,8 @@ impl Default for TxEnv {
     }
 }
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DeriveTxTypeError {
     MissingTargetForEip4844,
     MissingTargetForEip7702,
