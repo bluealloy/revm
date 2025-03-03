@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Fields related to state changes are moved out from `CacheDB` into `Cache` (#2131)
-
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-database-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added
