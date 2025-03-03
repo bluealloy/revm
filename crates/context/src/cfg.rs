@@ -168,16 +168,6 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
         }
     }
 
-    fn is_gas_refund_disabled(&self) -> bool {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "optional_gas_refund")] {
-                self.disable_gas_refund
-            } else {
-                false
-            }
-        }
-    }
-
     fn is_block_gas_limit_disabled(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optional_block_gas_limit")] {
