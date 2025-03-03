@@ -28,6 +28,9 @@ use revm::{
 /// For now, we only care about the fields necessary for L1 cost calculation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct L1BlockInfo {
+    /// The L2 block number. If not same as the one in the context,
+    /// L1BlockInfo is not valid and will be reloaded from the database.
+    pub l2_block: u64,
     /// The base fee of the L1 origin block.
     pub l1_base_fee: U256,
     /// The current L1 fee overhead. None if Ecotone is activated.
@@ -52,6 +55,7 @@ impl L1BlockInfo {
     /// Try to fetch the L1 block info from the database.
     pub fn try_fetch<DB: Database>(
         db: &mut DB,
+        l2_block: u64,
         spec_id: OpSpecId,
     ) -> Result<L1BlockInfo, DB::Error> {
         // Ensure the L1 Block account is loaded into the cache after Ecotone. With EIP-4788, it is no longer the case
@@ -116,6 +120,7 @@ impl L1BlockInfo {
                         .as_ref(),
                 );
                 Ok(L1BlockInfo {
+                    l2_block,
                     l1_base_fee,
                     l1_base_fee_scalar,
                     l1_blob_base_fee: Some(l1_blob_base_fee),
