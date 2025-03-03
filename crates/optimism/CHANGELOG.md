@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-optimism-v1.0.0-alpha.1...revm-optimism-v1.0.0-alpha.2) - 2025-02-25
+
+### Other
+
+- remove wrong `&mut`/`TODO`, and avoid useless `get_mut` (#2111)
+- *(op)* Add Interop hardfork (#2095)
+- PrecompileErrors to PrecompileError (#2103)
+- move all dependencies to workspace (#2092)
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-optimism-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added
