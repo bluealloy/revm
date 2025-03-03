@@ -104,6 +104,8 @@ pub enum DeriveTxTypeError {
 }
 
 impl TxEnv {
+    /// Derives tx type from transaction fields and sets it to `tx_type`.
+    /// Returns error in case some fields were not set correctly.
     pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
         let mut tx_type = TransactionType::Legacy;
 
