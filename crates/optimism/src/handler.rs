@@ -100,12 +100,16 @@ where
     fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let spec = context.cfg().spec();
+        let block_number = context.block().number();
         if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         } else {
             // The L1-cost fee is only computed for Optimism non-deposit transactions.
-            // L1 block info is stored in the context for later use.
-            *context.chain() = L1BlockInfo::try_fetch(context.db(), spec)?;
+            if context.chain().l2_block != block_number {
+                // L1 block info is stored in the context for later use.
+                // and it will be reloaded from the database if it is not for the current block.
+                *context.chain() = L1BlockInfo::try_fetch(context.db(), block_number, spec)?;
+            }
         }
 
         let enveloped_tx = context
