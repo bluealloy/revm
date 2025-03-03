@@ -99,15 +99,21 @@ where
 
     fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         let context = evm.ctx();
+        let spec = context.cfg().spec();
         if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
+        } else {
+            // The L1-cost fee is only computed for Optimism non-deposit transactions.
+            // Storage L1 block info for later use.
+            *context.chain() = L1BlockInfo::try_fetch(context.db(), spec)?;
         }
-        let spec = context.cfg().spec();
+
         let enveloped_tx = context
             .tx()
             .enveloped_tx()
             .expect("all not deposit tx have enveloped tx")
             .clone();
+
         // compute L1 cost
         let mut additional_cost = context.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
 
@@ -128,20 +134,6 @@ where
 
         validate_tx_against_account(&account, context, additional_cost)?;
         Ok(())
-    }
-
-    fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        let spec = evm.ctx().cfg().spec();
-        if evm.ctx().tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            let l1_block_info: crate::L1BlockInfo =
-                super::L1BlockInfo::try_fetch(evm.ctx().db(), spec)?;
-
-            // Storage L1 block info for later use.
-            *evm.ctx().chain() = l1_block_info;
-        }
-
-        self.mainnet.load_accounts(evm)
     }
 
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
