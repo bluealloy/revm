@@ -1,12 +1,14 @@
 use crate::setters::ContextSetters;
 use core::ops::{Deref, DerefMut};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Evm<CTX, INSP, I, P> {
     pub data: EvmData<CTX, INSP>,
     pub instruction: I,
     pub precompiles: P,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EvmData<CTX, INSP> {
     pub ctx: CTX,
     pub inspector: INSP,

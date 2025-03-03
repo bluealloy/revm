@@ -156,11 +156,24 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.reset_control();
 
         // Main loop
-        while self.control.instruction_result().is_continue() {
-            self.step(instruction_table, host);
-        }
+        // while self.control.instruction_result().is_continue() {
+        //     self.step(instruction_table, host);
+        // }
+        
+        dispatch_tail_call(self, instruction_table, host);
 
         self.take_next_action()
+    }
+}
+
+pub fn dispatch_tail_call<IW: InterpreterTypes, H: Host>(
+    interpreter: &mut Interpreter<IW>,
+    instruction_table: &InstructionTable<IW, H>,
+    host: &mut H,
+) {
+    interpreter.step(instruction_table, host);
+    if interpreter.control.instruction_result().is_continue() {
+        dispatch_tail_call(interpreter, instruction_table, host);
     }
 }
 
