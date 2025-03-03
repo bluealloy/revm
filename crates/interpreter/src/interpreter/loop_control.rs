@@ -40,7 +40,11 @@ impl LoopControlTr for LoopControl {
         self.instruction_result = result;
     }
 
-    fn gas(&mut self) -> &mut Gas {
+    fn gas(&self) -> &Gas {
+        &self.gas
+    }
+
+    fn gas_mut(&mut self) -> &mut Gas {
         &mut self.gas
     }
 

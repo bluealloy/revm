@@ -71,7 +71,7 @@ macro_rules! gas {
         $crate::gas!($interpreter, $gas, ())
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.control.gas().record_cost($gas) {
+        if !$interpreter.control.gas_mut().record_cost($gas) {
             $interpreter
                 .control
                 .set_instruction_result($crate::InstructionResult::OutOfGas);
@@ -110,7 +110,7 @@ macro_rules! resize_memory {
         let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
         match $interpreter
             .control
-            .gas()
+            .gas_mut()
             .record_memory_expansion(words_num)
         {
             $crate::gas::MemoryExtensionResult::Extended => {

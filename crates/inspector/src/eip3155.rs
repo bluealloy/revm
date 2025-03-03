@@ -246,7 +246,7 @@ where
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step_end(interp.control.gas());
+        self.gas_inspector.step_end(interp.control.gas_mut());
         if self.skip {
             self.skip = false;
             return;
