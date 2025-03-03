@@ -104,7 +104,7 @@ where
             return Ok(());
         } else {
             // The L1-cost fee is only computed for Optimism non-deposit transactions.
-            // Storage L1 block info for later use.
+            // L1 block info is stored in the context for later use.
             *context.chain() = L1BlockInfo::try_fetch(context.db(), spec)?;
         }
 
