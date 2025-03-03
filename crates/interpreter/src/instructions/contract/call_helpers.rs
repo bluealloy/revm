@@ -3,7 +3,7 @@ use crate::{
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
 };
-use context_interface::{host::StateLoad, journaled_state::AccountLoad};
+use context_interface::{context::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;

@@ -1,4 +1,4 @@
-use crate::host::{SStoreResult, SelfDestructResult};
+use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{Address, Bytes, HashSet, Log, B256, U256};
