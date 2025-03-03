@@ -59,15 +59,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
     pub disable_eip3607: bool,
-    /// Disables all gas refunds
-    ///
-    /// This is useful when using chains that have gas refunds disabled, e.g. Avalanche.
-    ///
-    /// Reasoning behind removing gas refunds can be found in EIP-3298.
-    ///
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_gas_refund")]
-    pub disable_gas_refund: bool,
     /// Disables base fee checks for EIP-1559 transactions
     ///
     /// This is useful for testing method calls with zero gas price.
@@ -105,8 +96,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_block_gas_limit: self.disable_block_gas_limit,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: self.disable_eip3607,
-            #[cfg(feature = "optional_gas_refund")]
-            disable_gas_refund: self.disable_gas_refund,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: self.disable_base_fee,
         }
@@ -209,8 +198,6 @@ impl<SPEC: Default> Default for CfgEnv<SPEC> {
             disable_block_gas_limit: false,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: false,
-            #[cfg(feature = "optional_gas_refund")]
-            disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
         }
