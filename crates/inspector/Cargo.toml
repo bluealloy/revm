@@ -38,12 +38,11 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 serde_json = { workspace = true, features = ["alloc"], optional = true }
 
 [dev-dependencies]
-revm = { workspace = true, features = ["serde"] }
 database = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std"]
 # Preserve order of json field
 std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order"]
-serde = ["dep:serde", "revm/serde", "database/serde"]
+serde = ["dep:serde", "database/serde"]
 serde-json = ["serde", "dep:serde_json"]

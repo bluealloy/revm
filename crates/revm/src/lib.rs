@@ -19,15 +19,10 @@ pub use primitives;
 pub use specification;
 pub use state;
 
-// Modules.
-
-mod mainnet_builder;
-
 // Export items.
 
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use handler::{ExecuteCommitEvm, ExecuteEvm};
+pub use handler::{ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext, MainnetEvm};
 pub use inspector::{InspectCommitEvm, InspectEvm, Inspector};
-pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};

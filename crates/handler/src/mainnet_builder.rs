@@ -1,7 +1,7 @@
+use crate::{instructions::EthInstructions, EthPrecompiles};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, JournaledState, TxEnv};
 use context_interface::{Block, Database, Journal, Transaction};
 use database_interface::EmptyDB;
-use handler::{instructions::EthInstructions, EthPrecompiles};
 use interpreter::interpreter::EthInterpreter;
 use primitives::Log;
 use specification::hardfork::SpecId;
@@ -69,6 +69,7 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<Em
 
 #[cfg(test)]
 mod test {
+    use crate::ExecuteEvm;
     use crate::{MainBuilder, MainContext};
     use alloy_signer::SignerSync;
     use alloy_signer_local::PrivateKeySigner;
@@ -79,7 +80,6 @@ mod test {
     use context::Context;
     use context_interface::{transaction::Authorization, TransactionType};
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use handler::ExecuteEvm;
     use primitives::{TxKind, U256};
     use specification::hardfork::SpecId;
 
