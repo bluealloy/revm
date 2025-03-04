@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-optimism-v1.0.0-alpha.1...revm-optimism-v1.0.0-alpha.2) - 2025-03-04
+
+### Added
+
+- add constructor with hardfork ([#2135](https://github.com/bluealloy/revm/pull/2135))
+
+### Fixed
+
+- make op evm impl blocks generic over precompiles ([#2142](https://github.com/bluealloy/revm/pull/2142))
+- *(op)* Move loading of l1block data ([#2130](https://github.com/bluealloy/revm/pull/2130))
+
+### Other
+
+- remove `optional_gas_refund` as unused ([#2132](https://github.com/bluealloy/revm/pull/2132))
+- *(op)* Add osaka fork so EOF can be activated ([#2122](https://github.com/bluealloy/revm/pull/2122))
+- make OpEvm ContextSetters impl generic over precompiles ([#2119](https://github.com/bluealloy/revm/pull/2119))
+- remove wrong `&mut`/`TODO`, and avoid useless `get_mut` ([#2111](https://github.com/bluealloy/revm/pull/2111))
+- *(op)* Add Interop hardfork ([#2095](https://github.com/bluealloy/revm/pull/2095))
+- PrecompileErrors to PrecompileError ([#2103](https://github.com/bluealloy/revm/pull/2103))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-optimism-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added

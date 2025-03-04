@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.1...revm-interpreter-v16.0.0-alpha.2) - 2025-03-04
+
+### Added
+
+- allow host to be implemented on custom context ([#2112](https://github.com/bluealloy/revm/pull/2112))
+
+### Other
+
+- add immutable gas API to LoopControl ([#2134](https://github.com/bluealloy/revm/pull/2134))
+- expose popn macros ([#2113](https://github.com/bluealloy/revm/pull/2113))
+- Add docs to revm-bytecode crate ([#2108](https://github.com/bluealloy/revm/pull/2108))
+- fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
 
 ### Added

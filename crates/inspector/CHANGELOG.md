@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-inspector-v1.0.0-alpha.1...revm-inspector-v1.0.0-alpha.2) - 2025-03-04
+
+### Other
+
+- move mainnet builder to handler crate ([#2138](https://github.com/bluealloy/revm/pull/2138))
+- add immutable gas API to LoopControl ([#2134](https://github.com/bluealloy/revm/pull/2134))
+- PrecompileErrors to PrecompileError ([#2103](https://github.com/bluealloy/revm/pull/2103))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+- remove unused generics from TracerEip3155 ([#2090](https://github.com/bluealloy/revm/pull/2090))
+- re-export all crates from `revm` ([#2088](https://github.com/bluealloy/revm/pull/2088))
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-inspector-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added
