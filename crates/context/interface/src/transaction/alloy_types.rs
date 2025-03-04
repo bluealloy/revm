@@ -6,6 +6,8 @@ pub use alloy_eip7702::{
     Authorization, RecoveredAuthority, RecoveredAuthorization, SignedAuthorization,
 };
 
+use std::vec::Vec;
+
 impl AccessListTr for Vec<AccessListItem> {
     fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
         self.iter()
