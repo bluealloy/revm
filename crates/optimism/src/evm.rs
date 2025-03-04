@@ -75,3 +75,78 @@ where
         (&mut self.0.data.ctx, &mut self.0.precompiles)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
+        OpSpecId,
+    };
+    use database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET};
+    use precompile::Address;
+    use revm::{
+        bytecode::opcode,
+        context::result::ExecutionResult,
+        primitives::{TxKind, U256},
+        state::Bytecode,
+        Context, ExecuteEvm,
+    };
+
+    #[test]
+    fn test_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.enveloped_tx = None;
+                tx.deposit.mint = Some(100);
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.transact_previous().unwrap();
+
+        // balance should be 100
+        assert_eq!(
+            output
+                .state
+                .get(&Address::default())
+                .map(|a| a.info.balance),
+            Some(U256::from(100))
+        );
+    }
+
+    #[test]
+    fn test_halted_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.enveloped_tx = None;
+                tx.deposit.mint = Some(100);
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(BENCH_TARGET);
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE)
+            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+                [opcode::POP].into(),
+            )));
+
+        // POP would return a halt.
+        let mut evm = ctx.build_op();
+
+        let output = evm.transact_previous().unwrap();
+
+        // balance should be 100 + previous balance
+        assert_eq!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::FailedDeposit,
+                gas_used: 30_000_000
+            }
+        );
+        assert_eq!(
+            output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
+            Some(U256::from(100) + BENCH_CALLER_BALANCE)
+        );
+    }
+}
