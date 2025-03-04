@@ -186,7 +186,8 @@ pub trait ReturnData {
 pub trait LoopControl {
     fn set_instruction_result(&mut self, result: InstructionResult);
     fn set_next_action(&mut self, action: InterpreterAction, result: InstructionResult);
-    fn gas(&mut self) -> &mut Gas;
+    fn gas(&self) -> &Gas;
+    fn gas_mut(&mut self) -> &mut Gas;
     fn instruction_result(&self) -> InstructionResult;
     fn take_next_action(&mut self) -> InterpreterAction;
 }

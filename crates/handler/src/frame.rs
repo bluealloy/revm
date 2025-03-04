@@ -655,14 +655,20 @@ where
 
                 // Return unspend gas.
                 if ins_result.is_ok_or_revert() {
-                    interpreter.control.gas().erase_cost(out_gas.remaining());
+                    interpreter
+                        .control
+                        .gas_mut()
+                        .erase_cost(out_gas.remaining());
                     self.memory
                         .borrow_mut()
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
                 if ins_result.is_ok() {
-                    interpreter.control.gas().record_refund(out_gas.refunded());
+                    interpreter
+                        .control
+                        .gas_mut()
+                        .record_refund(out_gas.refunded());
                 }
             }
             FrameResult::Create(outcome) => {
@@ -684,7 +690,7 @@ where
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let this_gas = interpreter.control.gas();
+                let this_gas = interpreter.control.gas_mut();
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
@@ -716,7 +722,7 @@ where
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let this_gas = interpreter.control.gas();
+                let this_gas = interpreter.control.gas_mut();
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }

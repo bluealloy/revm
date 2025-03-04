@@ -24,8 +24,6 @@ pub trait Cfg {
 
     fn is_balance_check_disabled(&self) -> bool;
 
-    fn is_gas_refund_disabled(&self) -> bool;
-
     fn is_block_gas_limit_disabled(&self) -> bool;
 
     fn is_nonce_check_disabled(&self) -> bool;
