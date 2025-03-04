@@ -387,6 +387,7 @@ where
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
         }
+        evm.ctx().chain().clear_tx_l1_cost();
         Ok(result)
     }
 
