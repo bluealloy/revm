@@ -29,7 +29,7 @@ impl DefaultOp
     fn op() -> Self {
         Context::mainnet()
             .with_tx(OpTransaction::default())
-            .with_cfg(CfgEnv::new().with_spec(OpSpecId::BEDROCK))
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK))
             .with_chain(L1BlockInfo::default())
     }
 }
