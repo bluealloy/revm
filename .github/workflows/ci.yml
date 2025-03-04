@@ -46,7 +46,7 @@ jobs:
           targets: riscv32imac-unknown-none-elf
       - run: |
           cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
-          cargo check --target riscv32imac-unknown-none-elf -p revm-optimism --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p op-revm --no-default-features --features=${{ matrix.features }}
           cargo check --target riscv32imac-unknown-none-elf -p revm-database --no-default-features
 
   check:

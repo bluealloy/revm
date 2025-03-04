@@ -18,4 +18,4 @@ cargo publish --package revm
 cargo publish --package revm-inspector
 cargo publish --package revm-statetest-types
 cargo publish --package revme
-cargo publish --package revm-optimism
+cargo publish --package op-revm
