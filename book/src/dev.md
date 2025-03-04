@@ -47,7 +47,7 @@ let mut evm = evm.with_inspector(tracer);
 let out = evm.inspect_with_tx(tx);
 ```
 
-The usage of the Evm Framework API is a bit more complex, but it is extensively explained here. It allows extending logic, adding different context types, and supporting inspection out of the box. For an example, you can check the revm-optimism crate.
+The usage of the Evm Framework API is a bit more complex, but it is extensively explained here. It allows extending logic, adding different context types, and supporting inspection out of the box. For an example, you can check the op-revm crate.
 
 Examples section of the book lists all examples that are available in the repository. And it is good starting point for understanding how to use revm.
 
