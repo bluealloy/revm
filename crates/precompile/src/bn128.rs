@@ -212,9 +212,7 @@ pub fn run_pair(
             points.push((a, b));
         }
 
-        let mul = bn::pairing_batch(&points);
-
-        mul == Gt::one()
+        bn::pairing_batch(&points) == Gt::one()
     };
     Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(success)))
 }
