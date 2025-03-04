@@ -78,11 +78,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpSpecId};
+    use crate::{
+        transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
+        OpSpecId,
+    };
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET};
     use precompile::Address;
     use revm::{
         bytecode::opcode,
+        context::result::ExecutionResult,
         primitives::{TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
@@ -133,6 +137,13 @@ mod tests {
         let output = evm.transact_previous().unwrap();
 
         // balance should be 100 + previous balance
+        assert_eq!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::FailedDeposit,
+                gas_used: 30_000_000
+            }
+        );
         assert_eq!(
             output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
             Some(U256::from(100) + BENCH_CALLER_BALANCE)
