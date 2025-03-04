@@ -430,26 +430,28 @@ impl BenchmarkDB {
 /// BYTECODE address
 pub const FFADDRESS: Address = address!("ffffffffffffffffffffffffffffffffffffffff");
 pub const BENCH_TARGET: Address = FFADDRESS;
+pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10000000, 0, 0, 0]);
 /// CALLER address
 pub const EEADDRESS: Address = address!("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 pub const BENCH_CALLER: Address = EEADDRESS;
+pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10000000, 0, 0, 0]);
 
 impl Database for BenchmarkDB {
     type Error = Infallible;
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        if address == FFADDRESS {
+        if address == BENCH_TARGET {
             return Ok(Some(AccountInfo {
                 nonce: 1,
-                balance: U256::from(10000000),
+                balance: BENCH_TARGET_BALANCE,
                 code: Some(self.0.clone()),
                 code_hash: self.1,
             }));
         }
-        if address == EEADDRESS {
+        if address == BENCH_CALLER {
             return Ok(Some(AccountInfo {
                 nonce: 0,
-                balance: U256::from(10000000),
+                balance: BENCH_CALLER_BALANCE,
                 code: None,
                 code_hash: KECCAK_EMPTY,
             }));

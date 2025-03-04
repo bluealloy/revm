@@ -390,76 +390,72 @@ where
         Ok(result)
     }
 
-    fn end(
+    fn catch_error(
         &self,
         evm: &mut Self::Evm,
-        end_output: Result<ResultAndState<Self::HaltReason>, Self::Error>,
+        error: Self::Error,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        //end_output
-
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        end_output.or_else(|err| {
-            if err.is_tx_error() && is_deposit {
-                let ctx = evm.ctx();
-                let spec = ctx.cfg().spec();
-                let tx = ctx.tx();
-                let caller = tx.caller();
-                let mint = tx.mint();
-                let is_system_tx = tx.is_system_transaction();
-                let gas_limit = tx.gas_limit();
-                // If the transaction is a deposit transaction and it failed
-                // for any reason, the caller nonce must be bumped, and the
-                // gas reported must be altered depending on the Hardfork. This is
-                // also returned as a special Halt variant so that consumers can more
-                // easily distinguish between a failed deposit and a failed
-                // normal transaction.
+        let output = if error.is_tx_error() && is_deposit {
+            let ctx = evm.ctx();
+            let spec = ctx.cfg().spec();
+            let tx = ctx.tx();
+            let caller = tx.caller();
+            let mint = tx.mint();
+            let is_system_tx = tx.is_system_transaction();
+            let gas_limit = tx.gas_limit();
+            // If the transaction is a deposit transaction and it failed
+            // for any reason, the caller nonce must be bumped, and the
+            // gas reported must be altered depending on the Hardfork. This is
+            // also returned as a special Halt variant so that consumers can more
+            // easily distinguish between a failed deposit and a failed
+            // normal transaction.
 
-                // Increment sender nonce and account balance for the mint amount. Deposits
-                // always persist the mint amount, even if the transaction fails.
-                let account = {
-                    let mut acc = Account::from(
-                        evm.ctx()
-                            .db()
-                            .basic(caller)
-                            .unwrap_or_default()
-                            .unwrap_or_default(),
-                    );
-                    acc.info.nonce = acc.info.nonce.saturating_add(1);
-                    acc.info.balance = acc
-                        .info
-                        .balance
-                        .saturating_add(U256::from(mint.unwrap_or_default()));
-                    acc.mark_touch();
-                    acc
-                };
-                let state = HashMap::from_iter([(caller, account)]);
+            // Increment sender nonce and account balance for the mint amount. Deposits
+            // always persist the mint amount, even if the transaction fails.
+            let account = {
+                let mut acc = Account::from(
+                    evm.ctx()
+                        .db()
+                        .basic(caller)
+                        .unwrap_or_default()
+                        .unwrap_or_default(),
+                );
+                acc.info.nonce = acc.info.nonce.saturating_add(1);
+                acc.info.balance = acc
+                    .info
+                    .balance
+                    .saturating_add(U256::from(mint.unwrap_or_default()));
+                acc.mark_touch();
+                acc
+            };
+            let state = HashMap::from_iter([(caller, account)]);
 
-                // The gas used of a failed deposit post-regolith is the gas
-                // limit of the transaction. pre-regolith, it is the gas limit
-                // of the transaction for non system transactions and 0 for system
-                // transactions.
-                let gas_used = if spec.is_enabled_in(OpSpecId::REGOLITH) || !is_system_tx {
-                    gas_limit
-                } else {
-                    0
-                };
-
-                Ok(ResultAndState {
-                    result: ExecutionResult::Halt {
-                        reason: OpHaltReason::FailedDeposit,
-                        gas_used,
-                    },
-                    state,
-                })
+            // The gas used of a failed deposit post-regolith is the gas
+            // limit of the transaction. pre-regolith, it is the gas limit
+            // of the transaction for non system transactions and 0 for system
+            // transactions.
+            let gas_used = if spec.is_enabled_in(OpSpecId::REGOLITH) || !is_system_tx {
+                gas_limit
             } else {
-                Err(err)
-            }
-        })
-    }
-
-    fn clear(&self, evm: &mut Self::Evm) {
+                0
+            };
+            // clear the journal
+            Ok(ResultAndState {
+                result: ExecutionResult::Halt {
+                    reason: OpHaltReason::FailedDeposit,
+                    gas_used,
+                },
+                state,
+            })
+        } else {
+            Err(error)
+        };
+        // do cleanup
         evm.ctx().chain().clear_tx_l1_cost();
-        self.mainnet.clear(evm);
+        evm.ctx().journal().clear();
+
+        output
     }
 }
 
