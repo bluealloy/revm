@@ -117,14 +117,14 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         // run inner handler and catch all errors to handle cleanup.
-        match self.run_without_cache_error(evm) {
+        match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
     }
 
     #[inline]
-    fn run_without_cache_error(
+    fn run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {

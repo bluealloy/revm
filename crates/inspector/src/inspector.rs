@@ -191,13 +191,13 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        match self.inspect_run_without_cache_error(evm) {
+        match self.inspect_run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
     }
 
-    fn inspect_run_without_cache_error(
+    fn inspect_run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
