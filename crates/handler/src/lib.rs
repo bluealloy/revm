@@ -14,6 +14,7 @@ mod frame_data;
 pub mod handler;
 pub mod instructions;
 mod item_or_result;
+mod mainnet_builder;
 mod mainnet_handler;
 pub mod post_execution;
 pub mod pre_execution;
@@ -26,5 +27,6 @@ pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Fra
 pub use frame_data::{FrameData, FrameResult};
 pub use handler::{EvmTr, EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
+pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};

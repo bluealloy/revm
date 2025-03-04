@@ -177,6 +177,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
         }
     }
 
+    /// Returns `true` if the block gas limit is disabled.
     fn is_block_gas_limit_disabled(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optional_block_gas_limit")] {

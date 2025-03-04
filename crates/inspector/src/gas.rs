@@ -69,16 +69,15 @@ impl GasInspector {
 mod tests {
     use super::*;
     use crate::{InspectEvm, Inspector};
+    use context::Context;
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-    use revm::{
-        bytecode::{opcode, Bytecode},
-        interpreter::{
-            interpreter_types::{Jumps, LoopControl},
-            CallInputs, CreateInputs, Interpreter, InterpreterTypes,
-        },
-        primitives::{Bytes, TxKind},
-        Context, MainBuilder, MainContext,
+    use handler::{MainBuilder, MainContext};
+    use interpreter::{
+        interpreter_types::{Jumps, LoopControl},
+        CallInputs, CreateInputs, Interpreter, InterpreterTypes,
     };
+    use primitives::{Bytes, TxKind};
+    use state::bytecode::{opcode, Bytecode};
 
     #[derive(Default, Debug)]
     struct StackInspector {

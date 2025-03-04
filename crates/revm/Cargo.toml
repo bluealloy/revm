@@ -36,18 +36,6 @@ context.workspace = true
 context-interface.workspace = true
 handler.workspace = true
 
-[dev-dependencies]
-database.workspace = true
-alloy-sol-types = { workspace = true, features = ["std"] }
-anyhow.workspace = true
-indicatif.workspace = true
-reqwest.workspace = true
-rstest.workspace = true
-
-alloy-eip7702.workspace = true
-alloy-provider.workspace = true
-alloy-signer.workspace = true
-alloy-signer-local.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -63,6 +51,7 @@ serde = [
     "interpreter/serde",
     "database-interface/serde",
     "primitives/serde",
+    "handler/serde",
     "context-interface/serde",
 ]
 arbitrary = ["primitives/arbitrary"]
