@@ -9,18 +9,21 @@ use revm::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Block, Cfg, ContextTr, Database, Journal,
     },
-    handler::{handler::EvmTr, instructions::EthInstructions, EthFrame, Handler},
-    interpreter::interpreter::EthInterpreter,
+    handler::{
+        handler::EvmTr, instructions::EthInstructions, EthFrame, Handler, PrecompileProvider,
+    },
+    interpreter::{interpreter::EthInterpreter, InterpreterResult},
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 use std::vec::Vec;
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteEvm
+impl<BLOCK, TX, CFG, DB, JOURNAL, INSP, PRECOMPILE> ExecuteEvm
     for OpEvm<
         Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
         INSP,
         EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>>,
+        PRECOMPILE,
     >
 where
     BLOCK: Block,
@@ -28,6 +31,10 @@ where
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    PRECOMPILE: PrecompileProvider<
+        Context = Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
+        Output = InterpreterResult,
+    >,
 {
     type Output =
         Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>;
@@ -38,11 +45,12 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> ExecuteCommitEvm
+impl<BLOCK, TX, CFG, DB, JOURNAL, INSP, PRECOMPILE> ExecuteCommitEvm
     for OpEvm<
         Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
         INSP,
         EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>>,
+        PRECOMPILE,
     >
 where
     BLOCK: Block,
@@ -50,6 +58,10 @@ where
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database + DatabaseCommit,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
+    PRECOMPILE: PrecompileProvider<
+        Context = Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
+        Output = InterpreterResult,
+    >,
 {
     type CommitOutput = Result<
         ExecutionResult<OpHaltReason>,
@@ -64,11 +76,12 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> InspectEvm
+impl<BLOCK, TX, CFG, DB, JOURNAL, INSP, PRECOMPILE> InspectEvm
     for OpEvm<
         Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
         INSP,
         EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>>,
+        PRECOMPILE,
     >
 where
     BLOCK: Block,
@@ -77,6 +90,10 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
+    PRECOMPILE: PrecompileProvider<
+        Context = Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
+        Output = InterpreterResult,
+    >,
 {
     type Inspector = INSP;
 
@@ -90,11 +107,12 @@ where
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, INSP> InspectCommitEvm
+impl<BLOCK, TX, CFG, DB, JOURNAL, INSP, PRECOMPILE> InspectCommitEvm
     for OpEvm<
         Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
         INSP,
         EthInstructions<EthInterpreter, Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>>,
+        PRECOMPILE,
     >
 where
     BLOCK: Block,
@@ -103,6 +121,10 @@ where
     DB: Database + DatabaseCommit,
     JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
     INSP: Inspector<Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>, EthInterpreter>,
+    PRECOMPILE: PrecompileProvider<
+        Context = Context<BLOCK, TX, CFG, DB, JOURNAL, L1BlockInfo>,
+        Output = InterpreterResult,
+    >,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
         self.inspect_previous().map(|r| {
