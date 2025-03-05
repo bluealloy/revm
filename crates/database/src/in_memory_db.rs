@@ -1,10 +1,6 @@
 use core::convert::Infallible;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
-use primitives::{
-    address,
-    hash_map::{Entry, HashMap},
-    Address, Log, B256, KECCAK_EMPTY, U256,
-};
+use primitives::{address, hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
@@ -32,7 +28,7 @@ pub struct Cache {
 
 impl Default for Cache {
     fn default() -> Self {
-        let mut contracts = HashMap::new();
+        let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
         contracts.insert(B256::ZERO, Bytecode::default());
 
