@@ -23,7 +23,7 @@ use revm::{
         Frame, FrameResult, Handler, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
-    primitives::{hash_map::HashMap, U256},
+    primitives::{HashMap, U256},
     specification::hardfork::SpecId,
     state::{Account, EvmState},
     Database,
