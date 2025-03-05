@@ -24,6 +24,7 @@ pub mod interpreter;
 pub mod interpreter_action;
 pub mod interpreter_types;
 pub mod table;
+pub mod host;
 
 // Reexport primary types.
 pub use context_interface::{

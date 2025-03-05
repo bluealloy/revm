@@ -5,8 +5,9 @@ use crate::{
     interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
 };
+use context_interface::{Block, Database, Journal};
 use core::cmp::min;
-use primitives::{Bytes, Log, LogData, B256, U256};
+use primitives::{Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId::*;
 
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -15,7 +16,14 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, interpreter);
     let address = top.into_address();
-    let Some(balance) = host.balance(address) else {
+    let Ok(balance) = host
+        .journal()
+        .load_account(address)
+        .map(|acc| acc.map(|a| a.info.balance))
+        .map_err(|e| {
+            *host.error() = Err(e);
+        })
+    else {
         interpreter
             .control
             .set_instruction_result(InstructionResult::FatalExternalError);
@@ -45,7 +53,15 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::LOW);
-    let Some(balance) = host.balance(interpreter.input.target_address()) else {
+
+    let Ok(balance) = host
+        .journal()
+        .load_account(interpreter.input.target_address())
+        .map(|acc| acc.map(|a| a.info.balance))
+        .map_err(|e| {
+            *host.error() = Err(e);
+        })
+    else {
         interpreter
             .control
             .set_instruction_result(InstructionResult::FatalExternalError);
@@ -60,11 +76,15 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, interpreter);
     let address = top.into_address();
-    let Some(code) = host.code(address) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+    let code = match host.journal().code(address) {
+        Ok(code) => code,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
     let spec_id = interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
@@ -86,11 +106,15 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(interpreter, CONSTANTINOPLE);
     popn_top!([], top, interpreter);
     let address = top.into_address();
-    let Some(code_hash) = host.code_hash(address) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+    let code_hash = match host.journal().code_hash(address) {
+        Ok(code_hash) => code_hash,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
     let spec_id = interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
@@ -109,11 +133,15 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn!([address, memory_offset, code_offset, len_u256], interpreter);
     let address = address.into_address();
-    let Some(code) = host.code(address) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+    let code = match host.journal().code(address) {
+        Ok(code) => code,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
 
     let len = as_usize_or_fail!(interpreter, len_u256);
@@ -141,14 +169,33 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::BLOCKHASH);
     popn_top!([], number, interpreter);
 
-    let number_u64 = as_u64_saturated!(number);
-    let Some(hash) = host.block_hash(number_u64) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+    let requested_number = as_u64_saturated!(number);
+
+    let block_number = host.block().number();
+
+    let Some(diff) = block_number.checked_sub(requested_number) else {
+        *number = U256::ZERO;
         return;
     };
-    *number = U256::from_be_bytes(hash.0);
+
+    // blockhash should push zero if number is same as current block number.
+    if diff == 0 {
+        *number = U256::ZERO;
+        return;
+    }
+
+    if diff <= BLOCK_HASH_HISTORY {
+        match host.journal().db().block_hash(requested_number) {
+            Ok(hash) => *number = U256::from_be_bytes(hash.0),
+            Err(e) => {
+                *host.error() = Err(e);
+                interpreter
+                    .control
+                    .set_instruction_result(InstructionResult::FatalExternalError);
+                return;
+            }
+        }
+    }
 }
 
 pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -156,12 +203,21 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     popn_top!([], index, interpreter);
-    let Some(value) = host.sload(interpreter.input.target_address(), *index) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+
+    let value = match host
+        .journal()
+        .sload(interpreter.input.target_address(), *index)
+    {
+        Ok(value) => value,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
+
     gas!(
         interpreter,
         gas::sload_cost(interpreter.runtime_flag.spec_id(), value.is_cold)
@@ -176,11 +232,19 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_non_staticcall!(interpreter);
 
     popn!([index, value], interpreter);
-    let Some(state_load) = host.sstore(interpreter.input.target_address(), index, value) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+
+    let state_load = match host
+        .journal()
+        .sstore(interpreter.input.target_address(), index, value)
+    {
+        Ok(state_load) => state_load,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
@@ -222,7 +286,8 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     popn!([index, value], interpreter);
 
-    host.tstore(interpreter.input.target_address(), index, value);
+    host.journal()
+        .tstore(interpreter.input.target_address(), index, value);
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -236,7 +301,9 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     popn_top!([], index, interpreter);
 
-    *index = host.tload(interpreter.input.target_address(), *index);
+    *index = host
+        .journal()
+        .tload(interpreter.input.target_address(), *index);
 }
 
 pub fn log<const N: usize, H: Host + ?Sized>(
@@ -274,7 +341,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
             .expect("LogData should have <=4 topics"),
     };
 
-    host.log(log);
+    host.journal().log(log);
 }
 
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -284,11 +351,19 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_non_staticcall!(interpreter);
     popn!([target], interpreter);
     let target = target.into_address();
-    let Some(res) = host.selfdestruct(interpreter.input.target_address(), target) else {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
-        return;
+
+    let res = match host
+        .journal()
+        .selfdestruct(interpreter.input.target_address(), target)
+    {
+        Ok(res) => res,
+        Err(e) => {
+            *host.error() = Err(e);
+            interpreter
+                .control
+                .set_instruction_result(InstructionResult::FatalExternalError);
+            return;
+        }
     };
 
     // EIP-3529: Reduction in refunds
