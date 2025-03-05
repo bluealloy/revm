@@ -28,7 +28,7 @@ pub struct Cache {
 
 impl Default for Cache {
     fn default() -> Self {
-        let mut contracts = HashMap::new();
+        let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
         contracts.insert(B256::ZERO, Bytecode::default());
 
