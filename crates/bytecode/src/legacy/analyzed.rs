@@ -62,11 +62,11 @@ impl LegacyAnalyzedBytecode {
         if original_len > bytecode.len() {
             panic!("original_len is greater than bytecode length");
         }
-        if jump_table.0.len() != bytecode.len() {
+        if original_len > jump_table.0.len() {
             panic!(
-                "jump table length {} is not equal to bytecode length {}",
+                "jump table length {} is less than original length {}",
                 jump_table.0.len(),
-                bytecode.len()
+                original_len
             );
         }
 
@@ -139,11 +139,11 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "jump table length 34 is not equal to bytecode length 35")]
-    fn test_panic_on_custom_jump_table() {
+    #[should_panic(expected = "jump table length 1 is less than original length 2")]
+    fn test_panic_on_short_jump_table() {
         let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
         let bytecode = LegacyRawBytecode(bytecode).into_analyzed();
-        let jump_table = JumpTable(Arc::new(bitvec![u8, Lsb0; 0; 34]));
+        let jump_table = JumpTable(Arc::new(bitvec![u8, Lsb0; 0; 1]));
         let _ = LegacyAnalyzedBytecode::new(bytecode.bytecode, bytecode.original_len, jump_table);
     }
 
