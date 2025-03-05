@@ -18,20 +18,21 @@ use serde_json as _;
 use walkdir as _;
 
 pub mod gas;
+pub mod host;
 mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
 pub mod interpreter_action;
 pub mod interpreter_types;
 pub mod table;
-pub mod host;
 
 // Reexport primary types.
 pub use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    ContextTr as Host, CreateScheme,
+    CreateScheme,
 };
 pub use gas::{Gas, InitialAndFloorGas};
+pub use host::Host;
 pub use instruction_result::*;
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,

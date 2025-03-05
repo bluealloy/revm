@@ -15,9 +15,7 @@ use crate::{
     InterpreterAction, InterpreterResult,
 };
 use bytecode::eof::{Eof, EofHeader};
-use context_interface::{
-    context::StateLoad, journaled_state::AccountLoad, Cfg, CreateScheme, Journal,
-};
+use context_interface::CreateScheme;
 use core::cmp::max;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::hardfork::SpecId;
@@ -182,7 +180,12 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     target: Address,
     transfers_value: bool,
 ) -> Option<u64> {
-    let account_load = load_delegate_account(interpreter, host, target)?;
+    let Some(account_load) = host.load_account_delegated(target) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
+        return None;
+    };
 
     // account_load.is_empty will be accounted if there is transfer value
     // Berlin can be hardcoded as extcall came after berlin.
@@ -386,8 +389,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             .is_enabled_in(SpecId::SHANGHAI)
         {
             // Limit is set as double of max contract bytecode size
-            let max_initcode_size = host.cfg().max_code_size().saturating_mul(2);
-            if len > max_initcode_size {
+            if len > host.max_initcode_size() {
                 interpreter
                     .control
                     .set_instruction_result(InstructionResult::CreateInitCodeSizeLimit);
@@ -459,7 +461,10 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(account_load) = load_delegate_account(interpreter, host, to) else {
+    let Some(account_load) = host.load_account_delegated(to) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -508,7 +513,10 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = load_delegate_account(interpreter, host, to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -558,7 +566,10 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = load_delegate_account(interpreter, host, to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -588,24 +599,6 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-/// Loads the delegate account and sets the instruction result to fatal error if it fails.
-fn load_delegate_account<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
-    address: Address,
-) -> Option<StateLoad<AccountLoad>> {
-    match host.journal().load_account_delegated(address) {
-        Ok(account_load) => Some(account_load),
-        Err(e) => {
-            *host.error() = Err(e);
-            interpreter
-                .control
-                .set_instruction_result(InstructionResult::FatalExternalError);
-            return None;
-        }
-    }
-}
-
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
@@ -620,7 +613,10 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = load_delegate_account(interpreter, host, to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
     // Set `is_empty` to false as we are not creating this account.
