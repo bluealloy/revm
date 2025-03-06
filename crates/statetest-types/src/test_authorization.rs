@@ -1,6 +1,6 @@
 use revm::context_interface::transaction::SignedAuthorization;
-use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// Struct for test authorization
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -19,18 +19,17 @@ impl From<TestAuthorization> for SignedAuthorization {
 impl<'de> Deserialize<'de> for TestAuthorization {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         // This is a hack to remove duplicate yParity and v fields which can be used by the test files for cross client compat
-       let mut value : serde_json::Value = Deserialize::deserialize(deserializer)?;
-       if let Some(val) = value.as_object_mut() {
-           if val.contains_key("v") && val.contains_key("yParity") {
-               val.remove("v");
-           }
-       }
-        let inner : SignedAuthorization =  serde_json::from_value(value).map_err(D::Error::custom)?;
+        let mut value: serde_json::Value = Deserialize::deserialize(deserializer)?;
+        if let Some(val) = value.as_object_mut() {
+            if val.contains_key("v") && val.contains_key("yParity") {
+                val.remove("v");
+            }
+        }
+        let inner: SignedAuthorization = serde_json::from_value(value).map_err(D::Error::custom)?;
         Ok(Self { inner })
-       
     }
 }
 
