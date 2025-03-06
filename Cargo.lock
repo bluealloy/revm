@@ -1467,7 +1467,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "revm",
- "revm-database",
 ]
 
 [[package]]
@@ -1487,7 +1486,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
@@ -1500,7 +1498,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
@@ -1513,7 +1510,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
