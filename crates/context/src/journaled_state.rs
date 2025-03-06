@@ -1,7 +1,9 @@
 use bytecode::Bytecode;
-use context_interface::journaled_state::{AccountLoad, Journal, JournalCheckpoint, TransferError};
+use context_interface::{
+    context::{SStoreResult, SelfDestructResult, StateLoad},
+    journaled_state::{AccountLoad, Journal, JournalCheckpoint, TransferError},
+};
 use database_interface::Database;
-use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
     hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };

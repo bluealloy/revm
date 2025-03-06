@@ -3,54 +3,88 @@ use context_interface::{
     journaled_state::AccountLoad,
     Block, Cfg, Database, Journal, Transaction, TransactionType,
 };
-use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
+use primitives::{Address, Bytes, Log, B256, U256};
 
 use crate::instructions::utility::IntoU256;
 
-/// Host trait with all methods are needed by the Interpreter.
+/// Host trait with all methods that are needed by the Interpreter.
 ///
 /// This trait is implemented for all types that have `ContextTr` trait.
+///
+/// There are few groups of functions which are Block, Transaction, Config, Database and Journal functions.
 pub trait Host {
     /* Block */
+
+    /// Block basefee, calls ContextTr::block().basefee()
     fn basefee(&self) -> U256;
+    /// Block blob gasprice, calls `ContextTr::block().blob_gasprice()`
     fn blob_gasprice(&self) -> U256;
+    /// Block gas limit, calls ContextTr::block().gas_limit()
     fn gas_limit(&self) -> U256;
+    /// Block difficulty, calls ContextTr::block().difficulty()
     fn difficulty(&self) -> U256;
+    /// Block prevrandao, calls ContextTr::block().prevrandao()
     fn prevrandao(&self) -> Option<U256>;
+    /// Block number, calls ContextTr::block().number()
     fn block_number(&self) -> u64;
+    /// Block timestamp, calls ContextTr::block().timestamp()
     fn timestamp(&self) -> U256;
+    /// Block beneficiary, calls ContextTr::block().beneficiary()
     fn beneficiary(&self) -> Address;
+    /// Chain id, calls ContextTr::cfg().chain_id()
     fn chain_id(&self) -> U256;
 
     /* Transaction */
+
+    /// Transaction effective gas price, calls `ContextTr::tx().effective_gas_price(basefee as u128)`
     fn effective_gas_price(&self) -> U256;
+    /// Transaction caller, calls `ContextTr::tx().caller()`
     fn caller(&self) -> Address;
+    /// Transaction blob hash, calls `ContextTr::tx().blob_hash(number)`
     fn blob_hash(&self, number: usize) -> Option<U256>;
 
     /* Config */
+
+    /// Max initcode size, calls `ContextTr::cfg().max_code_size().saturating_mul(2)`
     fn max_initcode_size(&self) -> usize;
 
-    /* State */
+    /* Database */
+
+    /// Block hash, calls `ContextTr::journal().db().block_hash(number)`
     fn block_hash(&mut self, number: u64) -> Option<B256>;
+
+    /* Journal */
+
+    /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
     fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>>;
 
+    /// Log, calls `ContextTr::journal().log(log)`
     fn log(&mut self, log: Log);
+    /// Sstore, calls `ContextTr::journal().sstore(address, key, value)`
     fn sstore(
         &mut self,
         address: Address,
         key: U256,
         value: U256,
     ) -> Option<StateLoad<SStoreResult>>;
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+
+    /// Sload, calls `ContextTr::journal().sload(address, key)`
     fn sload(&mut self, address: Address, key: U256) -> Option<StateLoad<U256>>;
+    /// Tstore, calls `ContextTr::journal().tstore(address, key, value)`
     fn tstore(&mut self, address: Address, key: U256, value: U256);
+    /// Tload, calls `ContextTr::journal().tload(address, key)`
     fn tload(&mut self, address: Address, key: U256) -> U256;
+    /// Balance, calls `ContextTr::journal().load_account(address)`
+    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+    /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
+    /// Load account code, calls `ContextTr::journal().load_account_code(address)`
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
+    /// Load account code hash, calls `ContextTr::journal().code_hash(address)`
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 }
 
@@ -93,6 +127,8 @@ impl<CTX: ContextTr> Host for CTX {
         U256::from(self.cfg().chain_id())
     }
 
+    /* Transaction */
+
     fn effective_gas_price(&self) -> U256 {
         let basefee = self.block().basefee();
         U256::from(self.tx().effective_gas_price(basefee as u128))
@@ -101,8 +137,6 @@ impl<CTX: ContextTr> Host for CTX {
     fn caller(&self) -> Address {
         self.tx().caller()
     }
-
-    /* Transaction */
 
     fn blob_hash(&self, number: usize) -> Option<U256> {
         let tx = &self.tx();
@@ -120,33 +154,19 @@ impl<CTX: ContextTr> Host for CTX {
         self.cfg().max_code_size().saturating_mul(2)
     }
 
-    /* State */
+    /* Database */
 
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = self.block().number();
-
-        let Some(diff) = block_number.checked_sub(requested_number) else {
-            return Some(B256::ZERO);
-        };
-
-        // blockhash should push zero if number is same as current block number.
-        if diff == 0 {
-            return Some(B256::ZERO);
-        }
-
-        if diff <= BLOCK_HASH_HISTORY {
-            return self
-                .journal()
-                .db()
-                .block_hash(requested_number)
-                .map_err(|e| {
-                    *self.error() = Err(e);
-                })
-                .ok();
-        }
-
-        Some(B256::ZERO)
+        self.journal()
+            .db()
+            .block_hash(requested_number)
+            .map_err(|e| {
+                *self.error() = Err(e);
+            })
+            .ok()
     }
+
+    /* Journal */
 
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         self.journal()
