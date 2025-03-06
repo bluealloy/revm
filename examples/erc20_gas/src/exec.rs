@@ -9,7 +9,7 @@ use revm::{
         instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Handler,
         PrecompileProvider,
     },
-    interpreter::{interpreter::EthInterpreter, InterpreterAction, InterpreterResult},
+    interpreter::{interpreter::EthInterpreter, InterpreterResult},
     primitives::Log,
     state::EvmState,
 };
