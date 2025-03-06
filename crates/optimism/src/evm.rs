@@ -5,7 +5,9 @@ use revm::{
         handler::EvmTr,
         instructions::{EthInstructions, InstructionProvider},
     },
-    interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterAction},
+    interpreter::{
+        interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
+    },
 };
 
 use crate::handler::precompiles::OpPrecompileProvider;
@@ -42,7 +44,10 @@ impl<CTX: ContextSetters, INSP, I, P> ContextSetters for OpEvm<CTX, INSP, I, P> 
 impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P>
 where
     CTX: ContextTr,
-    I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
+    I: InstructionProvider<
+        Context = CTX,
+        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
+    >,
 {
     type Context = CTX;
     type Instructions = I;
@@ -53,7 +58,8 @@ where
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionProvider>::Output {
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
+    {
         let context = &mut self.0.data.ctx;
         let instructions = &mut self.0.instruction;
         interpreter.run_plain(instructions.instruction_table(), context)
