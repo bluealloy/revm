@@ -8,9 +8,8 @@ mod stack;
 mod subroutine_stack;
 
 use crate::{
-    interpreter_types::*,
-    table::{CustomInstruction, InstructionTable},
-    Gas, Host, Instruction, InstructionResult, InterpreterAction,
+    interpreter_types::*, Gas, Host, Instruction, InstructionResult, InstructionTable,
+    InterpreterAction,
 };
 use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
@@ -25,6 +24,7 @@ pub use stack::{Stack, STACK_LIMIT};
 use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
 
+/// Main interpreter structue that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
@@ -71,6 +71,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
     }
 }
 
+/// Default types for Ethereum interpreter.
 pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }
@@ -85,23 +86,10 @@ impl<EXT, MG: MemoryGetter> InterpreterTypes for EthInterpreter<EXT, MG> {
     type Control = LoopControlImpl;
     type RuntimeFlag = RuntimeFlags;
     type Extend = EXT;
+    type Output = InterpreterAction;
 }
 
-impl<IW: InterpreterTypes, H: Host + ?Sized> CustomInstruction for Instruction<IW, H> {
-    type Wire = IW;
-    type Host = H;
-
-    #[inline]
-    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
-        (self)(interpreter, host);
-    }
-
-    #[inline]
-    fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
-        instruction
-    }
-}
-
+// TODO InterpreterAction should be replaces with InterpreterTypes::Output.
 impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
@@ -121,15 +109,18 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
 
         // Execute instruction.
-        instruction_table[opcode as usize].exec(self, host)
+        instruction_table[opcode as usize](self, host)
     }
 
+    /// Resets the control to the initial state. so that we can run the interpreter again.
     #[inline]
     pub fn reset_control(&mut self) {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
     }
 
+    /// Takes the next action from the control and returns it.
+    #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
         let action = self.control.take_next_action();
@@ -148,6 +139,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 
     /// Executes the interpreter until it returns or stops.
+    #[inline]
     pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,

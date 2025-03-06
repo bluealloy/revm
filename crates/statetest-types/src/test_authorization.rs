@@ -34,6 +34,7 @@ mod tests {
             "signer": "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71"
         }"#;
 
-        let _: TestAuthorization = serde_json::from_str(auth).unwrap();
+        let auth: TestAuthorization = serde_json::from_str(auth).unwrap();
+        println!("{:?}", auth);
     }
 }

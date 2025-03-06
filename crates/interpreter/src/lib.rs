@@ -1,6 +1,6 @@
 //! # revm-interpreter
 //!
-//! REVM Interpreter.
+//! Interpreter is part of the project that executes EVM instructions.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -17,7 +17,6 @@ pub mod instructions;
 pub mod interpreter;
 pub mod interpreter_action;
 pub mod interpreter_types;
-pub mod table;
 
 // Reexport primary types.
 pub use context_interface::{
@@ -27,6 +26,7 @@ pub use context_interface::{
 pub use gas::{Gas, InitialAndFloorGas};
 pub use host::Host;
 pub use instruction_result::*;
+pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,
     EMPTY_SHARED_MEMORY, STACK_LIMIT,
@@ -37,4 +37,3 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use specification::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};
-pub use table::Instruction;

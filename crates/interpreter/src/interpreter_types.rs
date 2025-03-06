@@ -19,6 +19,7 @@ pub trait Immediates {
     fn read_slice(&self, len: usize) -> &[u8];
 }
 
+/// Trait for fetching inputs of the call.
 pub trait InputsTr {
     fn target_address(&self) -> Address;
     fn caller_address(&self) -> Address;
@@ -26,12 +27,17 @@ pub trait InputsTr {
     fn call_value(&self) -> U256;
 }
 
+/// Trait needed for legacy bytecode.
+///
+/// Used in [`bytecode::opcode::CODECOPY`] and [`bytecode::opcode::CODESIZE`] opcodes.
 pub trait LegacyBytecode {
+    /// Returns curent bytecode original length. Used in [`bytecode::opcode::CODESIZE`] opcode.
     fn bytecode_len(&self) -> usize;
+    /// Returns curent bytecode original slice. Used in [`bytecode::opcode::CODECOPY`] opcode.
     fn bytecode_slice(&self) -> &[u8];
 }
 
-/// Trait for interpreter to be able to jump
+/// Trait for Interpreter to be able to jump
 pub trait Jumps {
     /// Relative jumps does not require checking for overflow.
     fn relative_jump(&mut self, offset: isize);
@@ -46,16 +52,34 @@ pub trait Jumps {
     fn opcode(&self) -> u8;
 }
 
+/// Trait for Interpreter memory operations.
 pub trait MemoryTr {
+    /// Sets memory data at given offset from data with a given data_offset and len.
+    ///
+    /// # Panics
+    ///
+    /// Panics if range is out of scope of allocated memory.
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]);
+    /// Sets memory data at given offset.
+    ///
+    /// # Panics
+    ///
+    /// Panics if range is out of scope of allocated memory.
     fn set(&mut self, memory_offset: usize, data: &[u8]);
 
+    /// Returns memory size.
     fn size(&self) -> usize;
+
+    /// Copies memory data from source to destination.
+    ///
+    /// # Panics
+    /// Panics if range is out of scope of allocated memory.
     fn copy(&mut self, destination: usize, source: usize, len: usize);
 
     /// Memory slice with range
     ///
     /// # Panics
+    ///
     /// Panics if range is out of scope of allocated memory.
     fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_;
 
@@ -69,24 +93,34 @@ pub trait MemoryTr {
     /// Resizes memory to new size
     ///
     /// # Note
+    ///
     /// It checks memory limits.
     fn resize(&mut self, new_size: usize) -> bool;
 }
 
+/// Returns EOF containers. Used by [`bytecode::opcode::RETURNCONTRACT`] and [`bytecode::opcode::EOFCREATE`] opcodes.
 pub trait EofContainer {
+    /// Returns EOF container at given index.
     fn eof_container(&self, index: usize) -> Option<&Bytes>;
 }
 
+/// Handles EOF introduced sub routine calls.
 pub trait SubRoutineStack {
+    /// Returns sub routine stack length.
     fn len(&self) -> usize;
 
+    /// Returns `true` if sub routine stack is empty.
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Returns current sub routine index.
     fn routine_idx(&self) -> usize;
 
     /// Sets new code section without touching subroutine stack.
+    ///
+    /// This is used for [`bytecode::opcode::JUMPF`] opcode. Where
+    /// tail call is performed.
     fn set_routine_idx(&mut self, idx: usize);
 
     /// Pushes a new frame to the stack and new code index.
@@ -94,11 +128,9 @@ pub trait SubRoutineStack {
 
     /// Pops previous subroutine, sets previous code index and returns program counter.
     fn pop(&mut self) -> Option<usize>;
-
-    // /// Returns code info from EOF body.
-    // fn eof_code_info(&self, idx: usize) -> Option<&CodeInfo>;
 }
 
+/// Functions needed for Interpreter Stack operations.
 pub trait StackTr {
     /// Returns stack length.
     fn len(&self) -> usize;
@@ -117,6 +149,9 @@ pub trait StackTr {
     #[must_use]
     fn push(&mut self, value: U256) -> bool;
 
+    /// Pushes B256 value to the stack.
+    ///
+    /// Internally converts B256 to U256 and then calls [`StackTr::push`].
     #[must_use]
     fn push_b256(&mut self, value: B256) -> bool {
         self.push(value.into())
@@ -142,6 +177,9 @@ pub trait StackTr {
         self.popn::<1>().map(|[value]| value)
     }
 
+    /// Pops address from the stack.
+    ///
+    /// Internally call [`StackTr::pop`] and converts [`U256`] into [`Address`].
     #[must_use]
     fn pop_address(&mut self) -> Option<Address> {
         self.pop().map(|value| Address::from(value.to_be_bytes()))
@@ -164,12 +202,17 @@ pub trait StackTr {
     fn dup(&mut self, n: usize) -> bool;
 }
 
+/// EOF data fetching.
 pub trait EofData {
+    /// Returns EOF data.
     fn data(&self) -> &[u8];
+    /// Returns EOF data slice.
     fn data_slice(&self, offset: usize, len: usize) -> &[u8];
+    /// Returns EOF data size.
     fn data_size(&self) -> usize;
 }
 
+/// EOF code info.
 pub trait EofCodeInfo {
     /// Returns code information containing stack information.
     fn code_info(&self, idx: usize) -> Option<&CodeInfo>;
@@ -178,9 +221,18 @@ pub trait EofCodeInfo {
     fn code_section_pc(&self, idx: usize) -> Option<usize>;
 }
 
+/// Returns return data.
 pub trait ReturnData {
+    /// Returns return data.
     fn buffer(&self) -> &[u8];
-    fn buffer_mut(&mut self) -> &mut Bytes;
+
+    /// Sets return buffer.
+    fn set_buffer(&mut self, bytes: Bytes);
+
+    /// Clears return buffer.
+    fn clear(&mut self) {
+        self.set_buffer(Bytes::new());
+    }
 }
 
 pub trait LoopControl {
@@ -216,4 +268,5 @@ pub trait InterpreterTypes {
     type Control: LoopControl;
     type RuntimeFlag: RuntimeFlag;
     type Extend;
+    type Output;
 }

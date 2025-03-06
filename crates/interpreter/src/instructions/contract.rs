@@ -214,7 +214,7 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
         // Push 1 to stack to indicate that call light failed.
         // It is safe to ignore stack overflow error as we already popped multiple values from stack.
         let _ = interpreter.stack.push(U256::from(1));
-        interpreter.return_data.buffer_mut().clear();
+        interpreter.return_data.clear();
         // Return none to continue execution.
         return None;
     }

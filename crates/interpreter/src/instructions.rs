@@ -16,20 +16,19 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter_types::InterpreterTypes, Host};
+use crate::{interpreter_types::InterpreterTypes, Host, Interpreter};
 
-/// Returns the instruction function for the given opcode and spec.
-pub const fn instruction<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    opcode: u8,
-) -> crate::table::Instruction<WIRE, H> {
-    let table = instruction_table::<WIRE, H>();
-    table[opcode as usize]
-}
+/// EVM opcode function signature.
+pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
 
+/// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
+pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
+
+/// Returns the instruction table for the given spec.
 pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
-) -> [crate::table::Instruction<WIRE, H>; 256] {
+) -> [Instruction<WIRE, H>; 256] {
     use bytecode::opcode::*;
-    let mut table = [control::unknown as crate::table::Instruction<WIRE, H>; 256];
+    let mut table = [control::unknown as Instruction<WIRE, H>; 256];
 
     table[STOP as usize] = control::stop;
     table[ADD as usize] = arithmetic::add;

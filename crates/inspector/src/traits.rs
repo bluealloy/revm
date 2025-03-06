@@ -23,13 +23,16 @@ pub trait InspectorEvmTr: EvmTr {
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionProvider>::Output;
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output;
 }
 
 impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
-    I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
+    I: InstructionProvider<
+        Context = CTX,
+        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
+    >,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Inspector = INSP;
@@ -47,7 +50,8 @@ where
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionProvider>::Output {
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
+    {
         let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
         let inspector = &mut self.data.inspector;
@@ -80,7 +84,6 @@ where
             Instructions: InstructionProvider<
                 Context = EVM::Context,
                 InterpreterTypes = EthInterpreter,
-                Output = InterpreterAction,
             >,
         > + InspectorEvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,

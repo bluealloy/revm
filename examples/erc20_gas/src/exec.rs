@@ -24,7 +24,6 @@ where
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
-            Output = InterpreterAction,
         >,
     >,
 {
@@ -44,7 +43,6 @@ where
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
-            Output = InterpreterAction,
         >,
     >,
 {
