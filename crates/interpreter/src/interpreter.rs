@@ -87,7 +87,7 @@ impl<EXT, MG: MemoryGetter> InterpreterTypes for EthInterpreter<EXT, MG> {
     type Extend = EXT;
 }
 
-impl<IW: InterpreterTypes, H: Host> CustomInstruction for Instruction<IW, H> {
+impl<IW: InterpreterTypes, H: Host + ?Sized> CustomInstruction for Instruction<IW, H> {
     type Wire = IW;
     type Host = H;
 
@@ -107,7 +107,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step<H: Host>(
+    pub(crate) fn step<H: Host + ?Sized>(
         &mut self,
         instruction_table: &[Instruction<IW, H>; 256],
         host: &mut H,
@@ -148,7 +148,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 
     /// Executes the interpreter until it returns or stops.
-    pub fn run_plain<H: Host>(
+    pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,

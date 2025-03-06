@@ -23,18 +23,17 @@ all = "warn"
 
 [dependencies]
 # revm
-interpreter.workspace = true
 context-interface.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
-auto_impl.workspace = true
 
 # misc
 derive-where.workspace = true
 cfg-if.workspace = true
+auto_impl.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

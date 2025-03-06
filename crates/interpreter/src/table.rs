@@ -19,7 +19,7 @@ pub type CustomInstructionTable<IT> = [IT; 256];
 
 pub trait CustomInstruction {
     type Wire: InterpreterTypes;
-    type Host;
+    type Host: ?Sized;
 
     fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host);
 

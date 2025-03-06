@@ -18,6 +18,7 @@ use serde_json as _;
 use walkdir as _;
 
 pub mod gas;
+pub mod host;
 mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
@@ -28,9 +29,10 @@ pub mod table;
 // Reexport primary types.
 pub use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    ContextTr as Host, CreateScheme,
+    CreateScheme,
 };
 pub use gas::{Gas, InitialAndFloorGas};
+pub use host::Host;
 pub use instruction_result::*;
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,
@@ -41,5 +43,5 @@ pub use interpreter_action::{
     EOFCreateKind, FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
-pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+pub use specification::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};
 pub use table::Instruction;
