@@ -63,7 +63,7 @@ portable = ["precompile/portable"]
 alloydb = ["database/alloydb"]
 
 # Enables serde-json inside inspector crate
-serde-json = ["inspector/serde-json"]
+serde-json = ["serde", "inspector/serde-json"]
 
 test-utils = []
 
