@@ -31,9 +31,9 @@ pub trait InputsTr {
 ///
 /// Used in [`bytecode::opcode::CODECOPY`] and [`bytecode::opcode::CODESIZE`] opcodes.
 pub trait LegacyBytecode {
-    /// Returns curent bytecode original length. Used in [`bytecode::opcode::CODESIZE`] opcode.
+    /// Returns current bytecode original length. Used in [`bytecode::opcode::CODESIZE`] opcode.
     fn bytecode_len(&self) -> usize;
-    /// Returns curent bytecode original slice. Used in [`bytecode::opcode::CODECOPY`] opcode.
+    /// Returns current bytecode original slice. Used in [`bytecode::opcode::CODECOPY`] opcode.
     fn bytecode_slice(&self) -> &[u8];
 }
 

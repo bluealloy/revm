@@ -24,7 +24,7 @@ pub use stack::{Stack, STACK_LIMIT};
 use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
 
-/// Main interpreter structue that contains all components defines in [`InterpreterTypes`].s
+/// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
