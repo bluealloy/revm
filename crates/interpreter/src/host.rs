@@ -264,3 +264,109 @@ impl<CTX: ContextTr> Host for CTX {
             .ok()
     }
 }
+
+/// Dummy host that implements [`Host`] trait and  returns all default values.
+pub struct DummyHost;
+
+impl Host for DummyHost {
+    fn basefee(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn blob_gasprice(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn gas_limit(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn difficulty(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn prevrandao(&self) -> Option<U256> {
+        None
+    }
+
+    fn block_number(&self) -> u64 {
+        0
+    }
+
+    fn timestamp(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn beneficiary(&self) -> Address {
+        Address::ZERO
+    }
+
+    fn chain_id(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn effective_gas_price(&self) -> U256 {
+        U256::ZERO
+    }
+
+    fn caller(&self) -> Address {
+        Address::ZERO
+    }
+
+    fn blob_hash(&self, _number: usize) -> Option<U256> {
+        None
+    }
+
+    fn max_initcode_size(&self) -> usize {
+        0
+    }
+
+    fn block_hash(&mut self, _number: u64) -> Option<B256> {
+        None
+    }
+
+    fn selfdestruct(
+        &mut self,
+        _address: Address,
+        _target: Address,
+    ) -> Option<StateLoad<SelfDestructResult>> {
+        None
+    }
+
+    fn log(&mut self, _log: Log) {}
+
+    fn sstore(
+        &mut self,
+        _address: Address,
+        _key: U256,
+        _value: U256,
+    ) -> Option<StateLoad<SStoreResult>> {
+        None
+    }
+
+    fn sload(&mut self, _address: Address, _key: U256) -> Option<StateLoad<U256>> {
+        None
+    }
+
+    fn tstore(&mut self, _address: Address, _key: U256, _value: U256) {}
+
+    fn tload(&mut self, _address: Address, _key: U256) -> U256 {
+        U256::ZERO
+    }
+
+    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+        None
+    }
+
+    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
+        None
+    }
+
+    fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
+        None
+    }
+
+    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+        None
+    }
+}

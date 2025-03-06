@@ -12,7 +12,7 @@ impl ReturnData for ReturnDataImpl {
         self.0.as_ref()
     }
 
-    fn buffer_mut(&mut self) -> &mut Bytes {
-        &mut self.0
+    fn set_buffer(&mut self, bytes: Bytes) {
+        self.0 = bytes;
     }
 }

@@ -1458,8 +1458,6 @@ dependencies = [
  "anyhow",
  "indicatif",
  "revm",
- "revm-database",
- "revm-inspector",
  "tokio",
 ]
 
@@ -1469,7 +1467,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "revm",
- "revm-database",
 ]
 
 [[package]]
@@ -1489,7 +1486,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
@@ -1502,7 +1498,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
@@ -1515,7 +1510,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "revm",
- "revm-database",
  "tokio",
 ]
 
@@ -3408,7 +3402,6 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "serde",
- "serde_json",
  "walkdir",
 ]
 

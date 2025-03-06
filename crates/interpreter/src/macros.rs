@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! debug_unreachable {
     ($($t:tt)*) => {
         if cfg!(debug_assertions) {
@@ -8,6 +9,7 @@ macro_rules! debug_unreachable {
     };
 }
 
+#[macro_export]
 macro_rules! assume {
     ($e:expr $(,)?) => {
         if !$e {

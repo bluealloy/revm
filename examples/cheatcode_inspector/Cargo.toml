@@ -22,9 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm = {workspace = true, features = ["std"] }
-database = { workspace = true, features = ["std"] }
-inspector = { workspace = true, features = ["std", "serde-json"] }
+# revms
+revm = { workspace = true, features = ["std", "serde-json"] }
 
 # misc
 anyhow = "1.0.89"
