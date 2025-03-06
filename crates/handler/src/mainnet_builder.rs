@@ -109,7 +109,7 @@ mod test {
 
         let mut evm = ctx.build_mainnet();
 
-        let ok = evm.transact_previous().unwrap();
+        let ok = evm.replay().unwrap();
 
         let auth_acc = ok.state.get(&signer.address()).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));

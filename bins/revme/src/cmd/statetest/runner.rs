@@ -446,7 +446,7 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = evm.transact_commit_previous();
+                    let res = evm.replay_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();

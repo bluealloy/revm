@@ -18,9 +18,8 @@ use revm::{
         Block, Cfg, ContextTr, Journal, Transaction,
     },
     handler::{
-        handler::{EvmTr, EvmTrError},
-        validation::validate_tx_against_account,
-        Frame, FrameResult, Handler, MainnetHandler,
+        handler::EvmTrError, validation::validate_tx_against_account, EvmTr, Frame, FrameResult,
+        Handler, MainnetHandler,
     },
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{HashMap, U256},

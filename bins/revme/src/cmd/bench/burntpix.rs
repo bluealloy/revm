@@ -46,7 +46,7 @@ pub fn run() {
         .build_mainnet();
 
     let started = Instant::now();
-    let tx_result = evm.transact_previous().unwrap().result;
+    let tx_result = evm.replay().unwrap().result;
     let return_data = match tx_result {
         ExecutionResult::Success {
             output, gas_used, ..

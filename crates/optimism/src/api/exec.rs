@@ -9,9 +9,7 @@ use revm::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Block, Cfg, ContextTr, Database, Journal,
     },
-    handler::{
-        handler::EvmTr, instructions::EthInstructions, EthFrame, Handler, PrecompileProvider,
-    },
+    handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     state::EvmState,
     Context, DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
@@ -39,7 +37,7 @@ where
     type Output =
         Result<ResultAndState<OpHaltReason>, EVMError<<DB as Database>::Error, OpTransactionError>>;
 
-    fn transact_previous(&mut self) -> Self::Output {
+    fn replay(&mut self) -> Self::Output {
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run(self)
     }
@@ -68,8 +66,8 @@ where
         EVMError<<DB as Database>::Error, OpTransactionError>,
     >;
 
-    fn transact_commit_previous(&mut self) -> Self::CommitOutput {
-        self.transact_previous().map(|r| {
+    fn replay_commit(&mut self) -> Self::CommitOutput {
+        self.replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result
         })

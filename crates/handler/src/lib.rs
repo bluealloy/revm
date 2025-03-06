@@ -22,10 +22,10 @@ mod precompile_provider;
 pub mod validation;
 
 // Public exports
-pub use evm::{ExecuteCommitEvm, ExecuteEvm};
+pub use evm::{EvmTr, ExecuteCommitEvm, ExecuteEvm};
 pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Frame};
 pub use frame_data::{FrameData, FrameResult};
-pub use handler::{EvmTr, EvmTrError, Handler};
+pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
