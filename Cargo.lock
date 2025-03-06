@@ -3408,7 +3408,6 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "serde",
- "serde_json",
  "walkdir",
 ]
 

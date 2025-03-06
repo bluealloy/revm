@@ -2,7 +2,9 @@ use bytecode::Bytecode;
 use core::hash::{Hash, Hasher};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-/// AccountInfo account information
+/// Account information that contains balance, nonce, code hash and code
+///
+/// Code is set as optional.
 #[derive(Clone, Debug, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {

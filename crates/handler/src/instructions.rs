@@ -1,23 +1,25 @@
 use auto_impl::auto_impl;
-use context_interface::ContextTr;
 use interpreter::{
-    table::{make_instruction_table, InstructionTable},
-    Host, Interpreter, InterpreterAction, InterpreterTypes,
+    instructions::{instruction_table, InstructionTable},
+    Host, Instruction, InterpreterTypes,
 };
-use std::rc::Rc;
+use std::boxed::Box;
 
 /// Stores instructions for EVM.
 #[auto_impl(&, Arc, Rc)]
 pub trait InstructionProvider {
+    /// Context type.
     type Context;
+    /// Interpreter types.
     type InterpreterTypes: InterpreterTypes;
-    type Output;
 
+    /// Returns the instruction table that is used by EvmTr to execute instructions.
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
 }
 
+/// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
 pub struct EthInstructions<WIRE: InterpreterTypes, HOST> {
-    pub instruction_table: Rc<InstructionTable<WIRE, HOST>>,
+    pub instruction_table: Box<InstructionTable<WIRE, HOST>>,
 }
 
 impl<WIRE, HOST> Clone for EthInstructions<WIRE, HOST>
@@ -36,26 +38,22 @@ where
     WIRE: InterpreterTypes,
     HOST: Host,
 {
+    /// Returns `EthInstructions` with mainnet spec.
     pub fn new_mainnet() -> Self {
-        Self::new(make_instruction_table::<WIRE, HOST>())
+        Self::new(instruction_table::<WIRE, HOST>())
     }
 
+    /// Rerurns new `EthInstructions` with custom instruction table.
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         Self {
-            instruction_table: Rc::new(base_table),
+            instruction_table: Box::new(base_table),
         }
     }
-}
 
-pub trait ContextInspectRun {
-    type InterpreterTypes: InterpreterTypes;
-    type Context: ContextTr + Host;
-
-    fn run_context(
-        &mut self,
-        interpretere: Interpreter<Self::InterpreterTypes>,
-        instructions: &InstructionTable<Self::InterpreterTypes, Self::Context>,
-    );
+    /// Inserts a new instruction into the instruction table.s
+    pub fn insert_instruction(&mut self, opcode: u8, instruction: Instruction<WIRE, HOST>) {
+        self.instruction_table[opcode as usize] = instruction;
+    }
 }
 
 impl<IT, CTX> InstructionProvider for EthInstructions<IT, CTX>
@@ -65,9 +63,6 @@ where
 {
     type InterpreterTypes = IT;
     type Context = CTX;
-    /// TODO Interpreter action could be tied to InterpreterTypes so we can
-    /// set custom actions from instructions.
-    type Output = InterpreterAction;
 
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table

@@ -10,7 +10,9 @@ use context_interface::{
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
-use interpreter::{FrameInput, Host, InitialAndFloorGas, Interpreter, InterpreterAction};
+use interpreter::{
+    FrameInput, Host, InitialAndFloorGas, Interpreter, InterpreterAction, InterpreterTypes,
+};
 use precompile::PrecompileError;
 use primitives::Log;
 use state::EvmState;
@@ -37,7 +39,10 @@ impl<
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
 where
     CTX: ContextTr + Host,
-    I: InstructionProvider<Context = CTX, Output = InterpreterAction>,
+    I: InstructionProvider<
+        Context = CTX,
+        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
+    >,
 {
     type Context = CTX;
     type Instructions = I;
@@ -49,7 +54,8 @@ where
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionProvider>::Output {
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
+    {
         let context = &mut self.data.ctx;
         let instructions = &mut self.instruction;
         interpreter.run_plain(instructions.instruction_table(), context)
@@ -86,7 +92,7 @@ pub trait EvmTr {
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
         >,
-    ) -> <Self::Instructions as InstructionProvider>::Output;
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output;
 
     fn ctx(&mut self) -> &mut Self::Context;
 
