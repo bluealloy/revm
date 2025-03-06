@@ -2,11 +2,11 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};
-use database::CacheDB;
 use revm::{
     bytecode::opcode,
     context::Context,
     context_interface::result::{ExecutionResult, Output},
+    database::CacheDB,
     database_interface::EmptyDB,
     handler::handler::EvmTr,
     primitives::{hex, Bytes, TxKind, U256},

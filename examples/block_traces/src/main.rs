@@ -7,11 +7,13 @@ use alloy_provider::{
     network::primitives::{BlockTransactions, BlockTransactionsKind},
     Provider, ProviderBuilder,
 };
-use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
-    database_interface::WrapDatabaseAsync, primitives::TxKind, Context, MainBuilder, MainContext,
+    database::{AlloyDB, CacheDB, StateBuilder},
+    database_interface::WrapDatabaseAsync,
+    inspector::{inspectors::TracerEip3155, InspectEvm},
+    primitives::TxKind,
+    Context, MainBuilder, MainContext,
 };
 use std::fs::OpenOptions;
 use std::io::BufWriter;

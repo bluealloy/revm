@@ -7,14 +7,6 @@
 
 use std::{convert::Infallible, fmt::Debug};
 
-use database::InMemoryDB;
-use inspector::{
-    exec::{inspect_main, InspectEvm},
-    inspector_context::InspectorContext,
-    inspectors::TracerEip3155,
-    journal::JournalExt,
-    GetInspector, Inspector,
-};
 use revm::{
     bytecode::Bytecode,
     context::{BlockEnv, Cfg, CfgEnv, TxEnv},
@@ -31,6 +23,14 @@ use revm::{
     specification::hardfork::SpecId,
     state::{Account, EvmState, TransientStorage},
     Context, Database, DatabaseCommit, JournalEntry, JournaledState, MainBuilder,
+     database::InMemoryDB,
+inspector::{
+    exec::{inspect_main, InspectEvm},
+    inspector_context::InspectorContext,
+    inspectors::TracerEip3155,
+    journal::JournalExt,
+    GetInspector, Inspector,
+},
 };
 
 /// Backend for cheatcodes.
