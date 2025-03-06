@@ -12,6 +12,7 @@ use std::vec::Vec;
 
 /// Execute EVM transactions.
 pub trait ExecuteEvm: ContextSetters {
+    /// Output of transaction execution.
     type Output;
 
     fn transact_previous(&mut self) -> Self::Output;
@@ -23,12 +24,14 @@ pub trait ExecuteEvm: ContextSetters {
 }
 
 /// Execute EVM transactions and commit to the state.
-/// TODO this trait can be implemented for all ExecuteEvm for specific Output/CommitOutput
 pub trait ExecuteCommitEvm: ExecuteEvm {
+    /// Commit output of transaction execution.
     type CommitOutput;
 
+    /// Transact the transaction and commit to the state.
     fn transact_commit_previous(&mut self) -> Self::CommitOutput;
 
+    /// Transact the transaction and commit to the state.
     fn transact_commit(&mut self, tx: Self::Tx) -> Self::CommitOutput {
         self.set_tx(tx);
         self.transact_commit_previous()
