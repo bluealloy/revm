@@ -53,10 +53,17 @@ serde = [
     "primitives/serde",
     "handler/serde",
     "context-interface/serde",
+    "inspector/serde",
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["precompile/portable"]
+
+# Enables alloydb inside database crate
+alloydb = ["database/alloydb"]
+
+# Enables serde-json inside inspector crate
+serde-json = ["inspector/serde-json"]
 
 test-utils = []
 

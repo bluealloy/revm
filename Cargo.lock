@@ -1458,8 +1458,6 @@ dependencies = [
  "anyhow",
  "indicatif",
  "revm",
- "revm-database",
- "revm-inspector",
  "tokio",
 ]
 
