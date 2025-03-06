@@ -207,13 +207,13 @@ impl InterpreterResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use bytecode::Bytecode;
-    use primitives::{Address, Bytes, U256};
-
     #[test]
     #[cfg(feature = "serde")]
     fn test_interpreter_serde() {
+        use super::*;
+        use bytecode::Bytecode;
+        use primitives::{Address, Bytes, U256};
+
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),

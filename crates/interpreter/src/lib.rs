@@ -10,13 +10,6 @@ extern crate alloc as std;
 #[macro_use]
 mod macros;
 
-// silence lint
-#[cfg(test)]
-use serde_json as _;
-
-#[cfg(test)]
-use walkdir as _;
-
 pub mod gas;
 pub mod host;
 mod instruction_result;

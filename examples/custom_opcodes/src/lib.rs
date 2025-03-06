@@ -219,19 +219,6 @@ macro_rules! custom_opcode_spec_to_generic {
     }};
 }
 
-// impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeEvmWiring, EXT, DB> {
-//     pub fn custom_opcode_with_spec(spec_id: CustomOpcodeSpecId) -> Self {
-//         let mut handler = Self::mainnet_with_spec(spec_id);
-
-//         custom_opcode_spec_to_generic!(spec_id, {
-//             let table = make_custom_instruction_table::<_, SPEC>();
-//             handler.set_instruction_table(InstructionTables::Plain(table));
-//         });
-
-//         handler
-//     }
-// }
-
 pub fn make_custom_instruction_table<
     EvmWiringT: EvmWiring,
     H: Host + ?Sized,

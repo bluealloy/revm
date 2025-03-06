@@ -17,6 +17,7 @@ pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
 /// A table of boxed instructions.
 pub type CustomInstructionTable<IT> = [IT; 256];
 
+/// Custom instruction trait.
 pub trait CustomInstruction {
     type Wire: InterpreterTypes;
     type Host: ?Sized;
@@ -134,19 +135,3 @@ where
 {
     core::array::from_fn(|i| f(table[i]))
 }
-
-// TODO
-// /// Updates a boxed instruction with a new one.
-// #[inline]
-// pub fn update_custom_instruction<W, H, F>(
-//     instruction: &mut impl CustomInstruction<Wire = W, Host = H>,
-//     f: F,
-// ) where
-//     W: InterpreterTypes,
-//     H: Host + ?Sized,
-//     F: Fn(&DynInstruction<W, H>, &mut W, &mut H),
-// {
-//     // Note: This first allocation gets elided by the compiler.
-//     let prev = core::mem::replace(instruction, Box::new(|_, _| {}));
-//     *instruction = Box::new(move |i, h| f(&prev, i, h));
-// }
