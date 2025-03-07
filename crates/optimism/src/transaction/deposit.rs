@@ -2,11 +2,15 @@ use revm::primitives::B256;
 
 pub const DEPOSIT_TRANSACTION_TYPE: u8 = 0x7E;
 
+/// Deposit transaction trait
 pub trait DepositTransaction {
+    /// Source hash of the deposit transaction
     fn source_hash(&self) -> B256;
 
+    /// Mint of the deposit transaction
     fn mint(&self) -> Option<u128>;
 
+    /// Whether the transaction is a system transaction
     fn is_system_transaction(&self) -> bool;
 }
 

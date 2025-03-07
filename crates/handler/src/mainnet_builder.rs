@@ -1,5 +1,5 @@
 use crate::{instructions::EthInstructions, EthPrecompiles};
-use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, Journal, JournalOutput, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
@@ -23,7 +23,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: JournalTr<Database = DB, FinalOutput = JournalOutput>,
+    JOURNAL: JournalTr<Database = DB>,
 {
     type Context = Self;
 

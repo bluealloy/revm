@@ -1,8 +1,6 @@
 //!Handler related to Optimism chain
-
-pub mod precompiles;
-
 use crate::{
+    api::exec::OpContextTr,
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
     transaction::{
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
@@ -11,7 +9,6 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::JournalOutput,
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
         Block, Cfg, ContextTr, JournalTr, Transaction,
@@ -60,14 +57,7 @@ impl<DB, TX> IsTxError for EVMError<DB, TX> {
 
 impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<
-        Context: ContextTr<
-            Journal: JournalTr<FinalOutput = JournalOutput>,
-            Tx: OpTxTr,
-            Cfg: Cfg<Spec = OpSpecId>,
-            Chain = L1BlockInfo,
-        >,
-    >,
+    EVM: EvmTr<Context: OpContextTr>,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
@@ -461,12 +451,7 @@ where
 impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
-        Context: ContextTr<
-            Journal: JournalTr<FinalOutput = JournalOutput>,
-            Tx: OpTxTr,
-            Cfg: Cfg<Spec = OpSpecId>,
-            Chain = L1BlockInfo,
-        >,
+        Context: OpContextTr,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
@@ -486,7 +471,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{DefaultOp, OpBuilder, OpContext};
+    use crate::{api::default_ctx::OpContext, DefaultOp, OpBuilder};
     use revm::{
         context::Context,
         context_interface::result::InvalidTransaction,

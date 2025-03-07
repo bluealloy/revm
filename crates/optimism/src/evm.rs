@@ -1,3 +1,4 @@
+use crate::precompiles::OpPrecompileProvider;
 use revm::{
     context::{setters::ContextSetters, Evm, EvmData},
     context_interface::ContextTr,
@@ -9,8 +10,6 @@ use revm::{
         interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
     },
 };
-
-use crate::handler::precompiles::OpPrecompileProvider;
 
 pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrecompileProvider<CTX>>(
     pub Evm<CTX, INSP, I, P>,

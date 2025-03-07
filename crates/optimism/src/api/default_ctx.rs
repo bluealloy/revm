@@ -5,27 +5,17 @@ use revm::{
     Context, Journal, MainContext,
 };
 
+/// Type alias for the default context type of the OpEvm.
+pub type OpContext<DB> =
+    Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, DB, Journal<DB>, L1BlockInfo>;
+
+/// Trait that allows for a default context to be created.
 pub trait DefaultOp {
-    fn op() -> Context<
-        BlockEnv,
-        OpTransaction<TxEnv>,
-        CfgEnv<OpSpecId>,
-        EmptyDB,
-        Journal<EmptyDB>,
-        L1BlockInfo,
-    >;
+    /// Create a default context.
+    fn op() -> OpContext<EmptyDB>;
 }
 
-impl DefaultOp
-    for Context<
-        BlockEnv,
-        OpTransaction<TxEnv>,
-        CfgEnv<OpSpecId>,
-        EmptyDB,
-        Journal<EmptyDB>,
-        L1BlockInfo,
-    >
-{
+impl DefaultOp for OpContext<EmptyDB> {
     fn op() -> Self {
         Context::mainnet()
             .with_tx(OpTransaction::default())

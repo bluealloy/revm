@@ -6,19 +6,19 @@
 extern crate alloc as std;
 
 pub mod api;
-pub mod bn128;
 pub mod constants;
 pub mod evm;
 pub mod fast_lz;
 pub mod handler;
 pub mod l1block;
+pub mod precompiles;
 pub mod result;
 pub mod spec;
 pub mod transaction;
 
 pub use api::{
-    builder::{OpBuilder, OpContext},
-    default_ctx::DefaultOp,
+    builder::OpBuilder,
+    default_ctx::{DefaultOp, OpContext},
 };
 pub use evm::OpEvm;
 pub use l1block::L1BlockInfo;
