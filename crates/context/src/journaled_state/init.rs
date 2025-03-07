@@ -12,7 +12,7 @@ impl<DB> Journal<DB> {
     /// This is useful when you want to transfer the current state to a new execution context that doesn't
     /// need access to the original database, like when snapshotting state or forking execution.
     ///
-    /// If you need to preserve the original journal, use [`to_init`] instead which clones the state.
+    /// If you need to preserve the original journal, use [`Self::to_init`] instead which clones the state.
     pub fn into_init(self) -> JournalInit {
         JournalInit {
             database: EmptyDB::default(),

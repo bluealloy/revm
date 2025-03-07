@@ -177,7 +177,7 @@ pub trait JournalTr {
 
     /// Does cleanup and returns modified state.
     ///
-    /// This resets the [Journal] to its initial state.
+    /// This resets the [JournalTr] to its initial state.
     fn finalize(&mut self) -> Self::FinalOutput;
 }
 
