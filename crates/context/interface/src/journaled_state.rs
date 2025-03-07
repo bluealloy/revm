@@ -8,7 +8,7 @@ use state::{
     Account, Bytecode,
 };
 
-pub trait Journal {
+pub trait JournalTr {
     type Database: Database;
     type FinalOutput;
 

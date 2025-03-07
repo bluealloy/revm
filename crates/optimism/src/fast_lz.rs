@@ -108,20 +108,18 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::builder::OpBuilder;
-
     use super::*;
+    use crate::api::{builder::OpBuilder, default_ctx::DefaultOp};
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
-    use database::BenchmarkDB;
-    use database::EEADDRESS;
     use revm::{
         bytecode::Bytecode,
+        database::{BenchmarkDB, EEADDRESS, FFADDRESS},
         primitives::{bytes, Bytes, TxKind, U256},
     };
-    use std::vec::Vec;
-
+    use revm::{Context, ExecuteEvm};
     use rstest::rstest;
+    use std::vec::Vec;
 
     #[rstest]
     #[case::empty(&[], 0)]
@@ -158,11 +156,6 @@ mod tests {
     fn test_flz_native_evm_parity(#[case] input: Bytes) {
         // This bytecode and ABI is for a contract, which wraps the LibZip library for easier fuzz testing.
         // The source of this contract is here: https://github.com/danyalprout/fastlz/blob/main/src/FastLz.sol#L6-L10
-
-        use database::FFADDRESS;
-        use revm::{Context, ExecuteEvm};
-
-        use crate::api::default_ctx::DefaultOp;
         sol! {
             interface FastLz {
                 function fastLz(bytes input) external view returns (uint256);

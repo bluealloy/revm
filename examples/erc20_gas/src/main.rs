@@ -11,7 +11,7 @@ use exec::transact_erc20evm_commit;
 use revm::{
     context_interface::{
         result::{InvalidHeader, InvalidTransaction},
-        ContextTr, Journal,
+        ContextTr, JournalTr,
     },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,

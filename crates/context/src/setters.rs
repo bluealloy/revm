@@ -1,6 +1,6 @@
 use crate::Context;
 use auto_impl::auto_impl;
-use context_interface::{Block, Cfg, Database, Journal, Transaction};
+use context_interface::{Block, Cfg, Database, JournalTr, Transaction};
 
 /// Setters for the context.
 #[auto_impl(&mut, Box)]
@@ -24,7 +24,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: Journal<Database = DB>,
+    JOURNAL: JournalTr<Database = DB>,
 {
     type Tx = TX;
     type Block = BLOCK;

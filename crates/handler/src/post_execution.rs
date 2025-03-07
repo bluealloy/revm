@@ -1,15 +1,14 @@
 use super::frame_data::FrameResult;
+use context::JournalOutput;
 use context_interface::ContextTr;
 use context_interface::{
-    journaled_state::Journal,
+    journaled_state::JournalTr,
     result::{ExecutionResult, HaltReasonTr, ResultAndState},
     Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{Log, U256};
+use primitives::U256;
 use specification::hardfork::SpecId;
-use state::EvmState;
-use std::vec::Vec;
 
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
@@ -88,7 +87,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
 ///
 /// TODO make Journal FinalOutput more generic.
 pub fn output<
-    CTX: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
     HALTREASON: HaltReasonTr,
 >(
     context: &mut CTX,
@@ -103,7 +102,7 @@ pub fn output<
     let instruction_result = result.into_interpreter_result();
 
     // Reset journal and return present state.
-    let (state, logs) = context.journal().finalize();
+    let JournalOutput { state, logs } = context.journal().finalize();
 
     let result = match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {

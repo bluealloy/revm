@@ -1,7 +1,7 @@
 use context_interface::transaction::AccessListTr;
 use context_interface::ContextTr;
 use context_interface::{
-    journaled_state::Journal,
+    journaled_state::JournalTr,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,

@@ -1,11 +1,11 @@
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
-use precompile::{secp256r1, PrecompileError, Precompiles};
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
+    precompile::{self, secp256r1, PrecompileError, Precompiles},
 };
 use std::boxed::Box;
 

@@ -6,7 +6,7 @@ use crate::{
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::ContextTr;
 use context_interface::{
-    journaled_state::{Journal, JournalCheckpoint},
+    journaled_state::{JournalCheckpoint, JournalTr},
     Cfg, Database, Transaction,
 };
 use core::{cell::RefCell, cmp::min};
@@ -744,7 +744,7 @@ where
     }
 }
 
-pub fn return_create<JOURNAL: Journal>(
+pub fn return_create<JOURNAL: JournalTr>(
     journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
@@ -800,7 +800,7 @@ pub fn return_create<JOURNAL: Journal>(
     interpreter_result.result = InstructionResult::Return;
 }
 
-pub fn return_eofcreate<JOURNAL: Journal>(
+pub fn return_eofcreate<JOURNAL: JournalTr>(
     journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,

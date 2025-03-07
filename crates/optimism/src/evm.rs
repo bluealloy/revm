@@ -88,12 +88,11 @@ mod tests {
         transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
         OpSpecId,
     };
-    use database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET};
-    use precompile::Address;
     use revm::{
         bytecode::opcode,
         context::result::ExecutionResult,
-        primitives::{TxKind, U256},
+        database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
+        primitives::{Address, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
     };

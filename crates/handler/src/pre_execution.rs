@@ -6,7 +6,7 @@ use bytecode::Bytecode;
 use context_interface::transaction::{AccessListTr, AuthorizationTr};
 use context_interface::ContextTr;
 use context_interface::{
-    journaled_state::Journal,
+    journaled_state::JournalTr,
     result::InvalidTransaction,
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,

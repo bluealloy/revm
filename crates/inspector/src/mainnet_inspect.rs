@@ -1,13 +1,10 @@
-use context::{setters::ContextSetters, ContextTr, Evm, Journal};
+use context::{setters::ContextSetters, ContextTr, Evm, JournalOutput, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
     instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
     MainnetHandler, PrecompileProvider,
 };
 use interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult};
-use primitives::Log;
-use state::EvmState;
-use std::vec::Vec;
 
 use crate::{
     inspect::{InspectCommitEvm, InspectEvm},
@@ -17,7 +14,7 @@ use crate::{
 impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
-        Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM>,
@@ -30,8 +27,7 @@ where
 impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters
-        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt>,
+    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
@@ -54,10 +50,7 @@ impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)> + JournalExt,
-            Db: DatabaseCommit,
-        >,
+        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {

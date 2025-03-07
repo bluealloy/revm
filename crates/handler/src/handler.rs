@@ -3,16 +3,15 @@ use crate::{
     execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
     FrameResult, ItemOrResult,
 };
+use context::JournalOutput;
 use context_interface::ContextTr;
 use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
-    Cfg, Database, Journal, Transaction,
+    Cfg, Database, JournalTr, Transaction,
 };
 use core::mem;
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use precompile::PrecompileError;
-use primitives::Log;
-use state::EvmState;
 use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
@@ -34,7 +33,7 @@ impl<
 }
 
 pub trait Handler {
-    type Evm: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>;
+    type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
     type Error: EvmTrError<Self::Evm>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.

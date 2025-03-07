@@ -1,6 +1,6 @@
 use crate::inspectors::GasInspector;
 use crate::Inspector;
-use context::{Cfg, ContextTr, Journal, Transaction};
+use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,

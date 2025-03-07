@@ -6,16 +6,13 @@ use auto_impl::auto_impl;
 use context::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
     setters::ContextSetters,
-    ContextTr, Database, Evm, Journal,
+    ContextTr, Database, Evm, JournalOutput, JournalTr,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{
     interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterResult,
     InterpreterTypes,
 };
-use primitives::Log;
-use state::EvmState;
-use std::vec::Vec;
 
 /// Main trait that combines the context, instructions and precompiles and allows execution of interpreter.
 #[auto_impl(&mut, Box)]
@@ -125,7 +122,7 @@ where
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -143,7 +140,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>, Db: DatabaseCommit>,
+        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<

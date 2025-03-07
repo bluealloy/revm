@@ -56,7 +56,7 @@ impl Backend {
 
 impl Journal for Backend {
     type Database = InMemoryDB;
-    type FinalOutput = (EvmState, Vec<Log>);
+    type FinalOutput = JournalOutputs;
 
     fn new(database: InMemoryDB) -> Self {
         Self::new(SpecId::LATEST, database)
