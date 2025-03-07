@@ -53,8 +53,7 @@ pub trait JournalEntryTr {
     /// # Notes
     ///   
     /// The spurious dragon flag is used to skip revertion 0x000..0003 precompile. This
-    /// behavious is special and it caused by bug in Geth and Parity and it is better
-    /// explained in [PR#716](https://github.com/ethereum/EIPs/issues/716).
+    /// Behaviour is special and it caused by bug in Geth and Parity that is explained in [PR#716](https://github.com/ethereum/EIPs/issues/716).
     ///
     /// From yellow paper:
     /// ```text
