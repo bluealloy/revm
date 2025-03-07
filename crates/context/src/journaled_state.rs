@@ -15,6 +15,41 @@ use std::{vec, vec::Vec};
 
 use crate::JournalInit;
 
+/// Trait for journal entries. it tracks changes across the state and allows to revert them.
+pub trait JournalEntryTr {
+    fn account_warmed(address: Address) -> Self;
+
+    fn account_destroyed(
+        address: Address,
+        target: Address,
+        was_destroyed: bool,
+        had_balance: U256,
+    ) -> Self;
+
+    fn account_touched(address: Address) -> Self;
+
+    fn balance_transfer(from: Address, to: Address, balance: U256) -> Self;
+
+    fn nonce_changed(address: Address) -> Self;
+
+    fn account_created(address: Address) -> Self;
+
+    fn storage_changed(address: Address, key: U256, had_value: U256) -> Self;
+
+    fn storage_warmed(address: Address, key: U256) -> Self;
+
+    fn transient_storage_changed(address: Address, key: U256, had_value: U256) -> Self;
+
+    fn code_changed(address: Address) -> Self;
+
+    fn revert(
+        self,
+        state: &mut EvmState,
+        transient_storage: &mut TransientStorage,
+        is_spurious_dragon_enabled: bool,
+    );
+}
+
 /// A journal of state changes internal to the EVM
 ///
 /// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
@@ -22,7 +57,10 @@ use crate::JournalInit;
 /// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JournaledState<DB> {
+pub struct JournaledState<DB, ENTRY = JournalEntry>
+where
+    ENTRY: JournalEntryTr,
+{
     /// Database
     pub database: DB,
     /// The current state
@@ -36,7 +74,7 @@ pub struct JournaledState<DB> {
     /// The current call stack depth
     pub depth: usize,
     /// The journal of state changes, one for each call
-    pub journal: Vec<Vec<JournalEntry>>,
+    pub journal: Vec<Vec<ENTRY>>,
     /// The spec ID for the EVM
     ///
     /// This spec is used for two things:
@@ -58,12 +96,12 @@ pub struct JournaledState<DB> {
     pub precompiles: HashSet<Address>,
 }
 
-impl<DB: Database> Journal for JournaledState<DB> {
+impl<DB: Database, ENTRY: JournalEntryTr> Journal for JournaledState<DB, ENTRY> {
     type Database = DB;
     // TODO : Make a struck here.
     type FinalOutput = (EvmState, Vec<Log>);
 
-    fn new(database: DB) -> JournaledState<DB> {
+    fn new(database: DB) -> JournaledState<DB, ENTRY> {
         Self::new(SpecId::LATEST, database)
     }
 
@@ -242,7 +280,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
     }
 }
 
-impl<DB: Database> JournaledState<DB> {
+impl<DB: Database, ENTRY: JournalEntryTr> JournaledState<DB, ENTRY> {
     /// Creates new JournaledState.
     ///
     /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
@@ -251,7 +289,7 @@ impl<DB: Database> JournaledState<DB> {
     /// # Note
     /// This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(spec: SpecId, database: DB) -> JournaledState<DB> {
+    pub fn new(spec: SpecId, database: DB) -> JournaledState<DB, ENTRY> {
         Self {
             database,
             state: HashMap::default(),
@@ -289,9 +327,9 @@ impl<DB: Database> JournaledState<DB> {
 
     /// Mark account as touched.
     #[inline]
-    fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
+    fn touch_account(journal: &mut Vec<ENTRY>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
-            journal.push(JournalEntry::AccountTouched { address: *address });
+            journal.push(ENTRY::account_touched(*address));
             account.mark_touch();
         }
     }
@@ -321,7 +359,7 @@ impl<DB: Database> JournaledState<DB> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::CodeChange { address });
+            .push(ENTRY::code_changed(address));
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
@@ -347,7 +385,7 @@ impl<DB: Database> JournaledState<DB> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::NonceChange { address });
+            .push(ENTRY::nonce_changed(address));
 
         account.info.nonce += 1;
 
@@ -396,11 +434,7 @@ impl<DB: Database> JournaledState<DB> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::BalanceTransfer {
-                from: *from,
-                to: *to,
-                balance,
-            });
+            .push(ENTRY::balance_transfer(*from, *to, balance));
 
         Ok(None)
     }
@@ -456,9 +490,7 @@ impl<DB: Database> JournaledState<DB> {
         target_acc.mark_created();
 
         // this entry will revert set nonce.
-        last_journal.push(JournalEntry::AccountCreated {
-            address: target_address,
-        });
+        last_journal.push(ENTRY::account_created(target_address));
         target_acc.info.code = None;
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
@@ -481,11 +513,7 @@ impl<DB: Database> JournaledState<DB> {
         self.state.get_mut(&caller).unwrap().info.balance -= balance;
 
         // add journal entry of transferred balance
-        last_journal.push(JournalEntry::BalanceTransfer {
-            from: caller,
-            to: target_address,
-            balance,
-        });
+        last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
 
         Ok(checkpoint)
     }
@@ -495,105 +523,11 @@ impl<DB: Database> JournaledState<DB> {
     fn journal_revert(
         state: &mut EvmState,
         transient_storage: &mut TransientStorage,
-        journal_entries: Vec<JournalEntry>,
+        journal_entries: Vec<ENTRY>,
         is_spurious_dragon_enabled: bool,
     ) {
         for entry in journal_entries.into_iter().rev() {
-            match entry {
-                JournalEntry::AccountWarmed { address } => {
-                    state.get_mut(&address).unwrap().mark_cold();
-                }
-                JournalEntry::AccountTouched { address } => {
-                    if is_spurious_dragon_enabled && address == PRECOMPILE3 {
-                        continue;
-                    }
-                    // remove touched status
-                    state.get_mut(&address).unwrap().unmark_touch();
-                }
-                JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    was_destroyed,
-                    had_balance,
-                } => {
-                    let account = state.get_mut(&address).unwrap();
-                    // set previous state of selfdestructed flag, as there could be multiple
-                    // selfdestructs in one transaction.
-                    if was_destroyed {
-                        // flag is still selfdestructed
-                        account.mark_selfdestruct();
-                    } else {
-                        // flag that is not selfdestructed
-                        account.unmark_selfdestruct();
-                    }
-                    account.info.balance += had_balance;
-
-                    if address != target {
-                        let target = state.get_mut(&target).unwrap();
-                        target.info.balance -= had_balance;
-                    }
-                }
-                JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding and subtracting the balance.
-                    let from = state.get_mut(&from).unwrap();
-                    from.info.balance += balance;
-                    let to = state.get_mut(&to).unwrap();
-                    to.info.balance -= balance;
-                }
-                JournalEntry::NonceChange { address } => {
-                    state.get_mut(&address).unwrap().info.nonce -= 1;
-                }
-                JournalEntry::AccountCreated { address } => {
-                    let account = state.get_mut(&address).unwrap();
-                    account.unmark_created();
-                    account
-                        .storage
-                        .values_mut()
-                        .for_each(|slot| slot.mark_cold());
-                    account.info.nonce = 0;
-                }
-                JournalEntry::StorageWarmed { address, key } => {
-                    state
-                        .get_mut(&address)
-                        .unwrap()
-                        .storage
-                        .get_mut(&key)
-                        .unwrap()
-                        .mark_cold();
-                }
-                JournalEntry::StorageChanged {
-                    address,
-                    key,
-                    had_value,
-                } => {
-                    state
-                        .get_mut(&address)
-                        .unwrap()
-                        .storage
-                        .get_mut(&key)
-                        .unwrap()
-                        .present_value = had_value;
-                }
-                JournalEntry::TransientStorageChange {
-                    address,
-                    key,
-                    had_value,
-                } => {
-                    let tkey = (address, key);
-                    if had_value.is_zero() {
-                        // if previous value is zero, remove it
-                        transient_storage.remove(&tkey);
-                    } else {
-                        // if not zero, reinsert old value to transient storage.
-                        transient_storage.insert(tkey, had_value);
-                    }
-                }
-                JournalEntry::CodeChange { address } => {
-                    let acc = state.get_mut(&address).unwrap();
-                    acc.info.code_hash = KECCAK_EMPTY;
-                    acc.info.code = None;
-                }
-            }
+            entry.revert(state, transient_storage, is_spurious_dragon_enabled);
         }
     }
 
@@ -682,19 +616,15 @@ impl<DB: Database> JournaledState<DB> {
         let journal_entry = if acc.is_created() || !is_cancun_enabled {
             acc.mark_selfdestruct();
             acc.info.balance = U256::ZERO;
-            Some(JournalEntry::AccountDestroyed {
+            Some(ENTRY::account_destroyed(
                 address,
                 target,
-                was_destroyed: previously_destroyed,
-                had_balance: balance,
-            })
+                previously_destroyed,
+                balance,
+            ))
         } else if address != target {
             acc.info.balance = U256::ZERO;
-            Some(JournalEntry::BalanceTransfer {
-                from: address,
-                to: target,
-                balance,
-            })
+            Some(ENTRY::balance_transfer(address, target, balance))
         } else {
             // State is not changed:
             // * if we are after Cancun upgrade and
@@ -818,7 +748,7 @@ impl<DB: Database> JournaledState<DB> {
             self.journal
                 .last_mut()
                 .unwrap()
-                .push(JournalEntry::AccountWarmed { address });
+                .push(ENTRY::account_warmed(address));
         }
         if load_code {
             let info = &mut load.data.info;
@@ -871,7 +801,7 @@ impl<DB: Database> JournaledState<DB> {
             self.journal
                 .last_mut()
                 .unwrap()
-                .push(JournalEntry::StorageWarmed { address, key });
+                .push(ENTRY::storage_warmed(address, key));
         }
 
         Ok(StateLoad::new(value, is_cold))
@@ -911,11 +841,7 @@ impl<DB: Database> JournaledState<DB> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::StorageChanged {
-                address,
-                key,
-                had_value: present.data,
-            });
+            .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
         Ok(StateLoad::new(
@@ -973,11 +899,7 @@ impl<DB: Database> JournaledState<DB> {
             self.journal
                 .last_mut()
                 .unwrap()
-                .push(JournalEntry::TransientStorageChange {
-                    address,
-                    key,
-                    had_value,
-                });
+                .push(ENTRY::transient_storage_changed(address, key, had_value));
         }
     }
 
@@ -1052,6 +974,168 @@ pub enum JournalEntry {
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
     CodeChange { address: Address },
+}
+impl JournalEntryTr for JournalEntry {
+    fn account_warmed(address: Address) -> Self {
+        JournalEntry::AccountWarmed { address }
+    }
+
+    fn account_destroyed(
+        address: Address,
+        target: Address,
+        was_destroyed: bool, // if account had already been destroyed before this journal entry
+        had_balance: U256,
+    ) -> Self {
+        JournalEntry::AccountDestroyed {
+            address,
+            target,
+            was_destroyed,
+            had_balance,
+        }
+    }
+
+    fn account_touched(address: Address) -> Self {
+        JournalEntry::AccountTouched { address }
+    }
+
+    fn balance_transfer(from: Address, to: Address, balance: U256) -> Self {
+        JournalEntry::BalanceTransfer { from, to, balance }
+    }
+
+    fn account_created(address: Address) -> Self {
+        JournalEntry::AccountCreated { address }
+    }
+
+    fn storage_changed(address: Address, key: U256, had_value: U256) -> Self {
+        JournalEntry::StorageChanged {
+            address,
+            key,
+            had_value,
+        }
+    }
+
+    fn nonce_changed(address: Address) -> Self {
+        JournalEntry::NonceChange { address }
+    }
+
+    fn storage_warmed(address: Address, key: U256) -> Self {
+        JournalEntry::StorageWarmed { address, key }
+    }
+
+    fn transient_storage_changed(address: Address, key: U256, had_value: U256) -> Self {
+        JournalEntry::TransientStorageChange {
+            address,
+            key,
+            had_value,
+        }
+    }
+
+    fn code_changed(address: Address) -> Self {
+        JournalEntry::CodeChange { address }
+    }
+
+    fn revert(
+        self,
+        state: &mut EvmState,
+        transient_storage: &mut TransientStorage,
+        is_spurious_dragon_enabled: bool,
+    ) {
+        match self {
+            JournalEntry::AccountWarmed { address } => {
+                state.get_mut(&address).unwrap().mark_cold();
+            }
+            JournalEntry::AccountTouched { address } => {
+                if is_spurious_dragon_enabled && address == PRECOMPILE3 {
+                    return;
+                }
+                // remove touched status
+                state.get_mut(&address).unwrap().unmark_touch();
+            }
+            JournalEntry::AccountDestroyed {
+                address,
+                target,
+                was_destroyed,
+                had_balance,
+            } => {
+                let account = state.get_mut(&address).unwrap();
+                // set previous state of selfdestructed flag, as there could be multiple
+                // selfdestructs in one transaction.
+                if was_destroyed {
+                    // flag is still selfdestructed
+                    account.mark_selfdestruct();
+                } else {
+                    // flag that is not selfdestructed
+                    account.unmark_selfdestruct();
+                }
+                account.info.balance += had_balance;
+
+                if address != target {
+                    let target = state.get_mut(&target).unwrap();
+                    target.info.balance -= had_balance;
+                }
+            }
+            JournalEntry::BalanceTransfer { from, to, balance } => {
+                // we don't need to check overflow and underflow when adding and subtracting the balance.
+                let from = state.get_mut(&from).unwrap();
+                from.info.balance += balance;
+                let to = state.get_mut(&to).unwrap();
+                to.info.balance -= balance;
+            }
+            JournalEntry::NonceChange { address } => {
+                state.get_mut(&address).unwrap().info.nonce -= 1;
+            }
+            JournalEntry::AccountCreated { address } => {
+                let account = &mut state.get_mut(&address).unwrap();
+                account.unmark_created();
+                account
+                    .storage
+                    .values_mut()
+                    .for_each(|slot| slot.mark_cold());
+                account.info.nonce = 0;
+            }
+            JournalEntry::StorageWarmed { address, key } => {
+                state
+                    .get_mut(&address)
+                    .unwrap()
+                    .storage
+                    .get_mut(&key)
+                    .unwrap()
+                    .mark_cold();
+            }
+            JournalEntry::StorageChanged {
+                address,
+                key,
+                had_value,
+            } => {
+                state
+                    .get_mut(&address)
+                    .unwrap()
+                    .storage
+                    .get_mut(&key)
+                    .unwrap()
+                    .present_value = had_value;
+            }
+            JournalEntry::TransientStorageChange {
+                address,
+                key,
+                had_value,
+            } => {
+                let tkey = (address, key);
+                if had_value.is_zero() {
+                    // if previous value is zero, remove it
+                    transient_storage.remove(&tkey);
+                } else {
+                    // if not zero, reinsert old value to transient storage.
+                    transient_storage.insert(tkey, had_value);
+                }
+            }
+            JournalEntry::CodeChange { address } => {
+                let acc = state.get_mut(&address).unwrap();
+                acc.info.code_hash = KECCAK_EMPTY;
+                acc.info.code = None;
+            }
+        }
+    }
 }
 
 impl<DB> JournaledState<DB> {
