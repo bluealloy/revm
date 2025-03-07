@@ -2,7 +2,7 @@ use crate::{L1BlockInfo, OpSpecId, OpTransaction};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
     database_interface::EmptyDB,
-    Context, JournaledState, MainContext,
+    Context, Journal, MainContext,
 };
 
 pub trait DefaultOp {
@@ -11,7 +11,7 @@ pub trait DefaultOp {
         OpTransaction<TxEnv>,
         CfgEnv<OpSpecId>,
         EmptyDB,
-        JournaledState<EmptyDB>,
+        Journal<EmptyDB>,
         L1BlockInfo,
     >;
 }
@@ -22,7 +22,7 @@ impl DefaultOp
         OpTransaction<TxEnv>,
         CfgEnv<OpSpecId>,
         EmptyDB,
-        JournaledState<EmptyDB>,
+        Journal<EmptyDB>,
         L1BlockInfo,
     >
 {
@@ -38,8 +38,10 @@ impl DefaultOp
 mod test {
     use super::*;
     use crate::api::builder::OpBuilder;
-    use inspector::{InspectEvm, NoOpInspector};
-    use revm::ExecuteEvm;
+    use revm::{
+        inspector::{InspectEvm, NoOpInspector},
+        ExecuteEvm,
+    };
 
     #[test]
     fn default_run_op() {

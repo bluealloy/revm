@@ -1,7 +1,7 @@
 use crate::{InspectorEvmTr, InspectorFrame};
 use auto_impl::auto_impl;
 use context::{
-    result::ResultAndState, Cfg, ContextTr, Database, JournalEntry, JournaledState, Transaction,
+    result::ResultAndState, Cfg, ContextTr, Database, Journal, JournalEntry, Transaction,
 };
 use handler::{
     execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult,
@@ -157,7 +157,7 @@ pub trait JournalExt {
     fn evm_state_mut(&mut self) -> &mut EvmState;
 }
 
-impl<DB: Database> JournalExt for JournaledState<DB> {
+impl<DB: Database> JournalExt for Journal<DB> {
     #[inline]
     fn logs(&self) -> &[Log] {
         &self.logs

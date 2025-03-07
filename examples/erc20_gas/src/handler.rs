@@ -1,15 +1,14 @@
 use core::cmp::Ordering;
 use revm::{
-    context::Cfg,
+    context::{Cfg, JournalOutput},
     context_interface::{
         result::{HaltReason, InvalidTransaction},
-        Block, ContextTr, Journal, Transaction, TransactionType,
+        Block, ContextTr, JournalTr, Transaction, TransactionType,
     },
     handler::{EvmTr, EvmTrError, Frame, FrameResult, Handler},
     interpreter::FrameInput,
-    primitives::{Log, U256},
+    primitives::U256,
     specification::hardfork::SpecId,
-    state::EvmState,
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
@@ -34,7 +33,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> Handler for Erc20MainetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>>,
+    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
     ERROR: EvmTrError<EVM>,
 {

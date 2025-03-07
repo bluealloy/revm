@@ -10,24 +10,23 @@ use crate::{
     },
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
-use inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler};
-use precompile::Log;
 use revm::{
+    context::JournalOutput,
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
-        Block, Cfg, ContextTr, Journal, Transaction,
+        Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
         handler::EvmTrError, validation::validate_tx_against_account, EvmTr, Frame, FrameResult,
         Handler, MainnetHandler,
     },
+    inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
     primitives::{HashMap, U256},
     specification::hardfork::SpecId,
-    state::{Account, EvmState},
+    state::Account,
     Database,
 };
-use std::vec::Vec;
 
 pub struct OpHandler<EVM, ERROR, FRAME> {
     pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
@@ -63,7 +62,7 @@ impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<
         Context: ContextTr<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
+            Journal: JournalTr<FinalOutput = JournalOutput>,
             Tx: OpTxTr,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
@@ -463,7 +462,7 @@ impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
         Context: ContextTr<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
+            Journal: JournalTr<FinalOutput = JournalOutput>,
             Tx: OpTxTr,
             Cfg: Cfg<Spec = OpSpecId>,
             Chain = L1BlockInfo,
@@ -486,13 +485,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{DefaultOp, OpBuilder, OpContext};
-
     use super::*;
-    use database::InMemoryDB;
+    use crate::{DefaultOp, OpBuilder, OpContext};
     use revm::{
         context::Context,
         context_interface::result::InvalidTransaction,
+        database::InMemoryDB,
         database_interface::EmptyDB,
         handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},

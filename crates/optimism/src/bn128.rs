@@ -1,4 +1,4 @@
-use precompile::{
+use revm::precompile::{
     bn128, {PrecompileError, PrecompileResult, PrecompileWithAddress},
 };
 

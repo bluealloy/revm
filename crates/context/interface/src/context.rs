@@ -1,5 +1,5 @@
 pub use crate::journaled_state::StateLoad;
-use crate::{Block, Cfg, Database, Journal, Transaction};
+use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
 use primitives::U256;
 
@@ -9,7 +9,7 @@ pub trait ContextTr {
     type Tx: Transaction;
     type Cfg: Cfg;
     type Db: Database;
-    type Journal: Journal<Database = Self::Db>;
+    type Journal: JournalTr<Database = Self::Db>;
     type Chain;
 
     fn tx(&self) -> &Self::Tx;

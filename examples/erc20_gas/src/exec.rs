@@ -1,8 +1,9 @@
 use crate::handler::Erc20MainetHandler;
 use revm::{
+    context::JournalOutput,
     context_interface::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-        ContextTr, Journal,
+        ContextTr, JournalTr,
     },
     database_interface::DatabaseCommit,
     handler::{
@@ -10,8 +11,6 @@ use revm::{
         PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
-    primitives::Log,
-    state::EvmState,
 };
 
 pub fn transact_erc20evm<EVM>(
@@ -19,7 +18,7 @@ pub fn transact_erc20evm<EVM>(
 ) -> Result<ResultAndState<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>,
+        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -35,10 +34,7 @@ pub fn transact_erc20evm_commit<EVM>(
 ) -> Result<ExecutionResult<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
 where
     EVM: EvmTr<
-        Context: ContextTr<
-            Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>,
-            Db: DatabaseCommit,
-        >,
+        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
         Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,

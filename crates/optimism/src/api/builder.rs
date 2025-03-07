@@ -1,14 +1,11 @@
 use crate::{evm::OpEvm, transaction::OpTxTr, L1BlockInfo, OpSpecId, OpTransaction};
-use precompile::Log;
 use revm::{
-    context::{BlockEnv, Cfg, CfgEnv, TxEnv},
-    context_interface::{Block, Journal},
+    context::{BlockEnv, Cfg, CfgEnv, JournalOutput, TxEnv},
+    context_interface::{Block, JournalTr},
     handler::instructions::EthInstructions,
     interpreter::interpreter::EthInterpreter,
-    state::EvmState,
-    Context, Database, JournaledState,
+    Context, Database, Journal,
 };
-use std::vec::Vec;
 
 pub trait OpBuilder: Sized {
     type Context;
@@ -27,7 +24,7 @@ where
     TX: OpTxTr,
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: JournalTr<Database = DB, FinalOutput = JournalOutput>,
 {
     type Context = Self;
 
@@ -44,4 +41,4 @@ where
 }
 
 pub type OpContext<DB> =
-    Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, DB, JournaledState<DB>, L1BlockInfo>;
+    Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, DB, Journal<DB>, L1BlockInfo>;

@@ -2593,9 +2593,6 @@ dependencies = [
  "indicatif",
  "once_cell",
  "revm",
- "revm-database",
- "revm-inspector",
- "revm-precompile",
  "rstest",
  "serde",
 ]

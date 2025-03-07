@@ -23,9 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
-revm.workspace = true
-precompile = { workspace = true, features = ["secp256r1"] }
-inspector.workspace = true
+revm = { workspace = true, features = ["secp256r1"] }
 auto_impl.workspace = true
 
 # static precompile sets.
@@ -35,7 +33,6 @@ once_cell = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
-database.workspace = true
 anyhow.workspace = true
 indicatif.workspace = true
 rstest.workspace = true
@@ -43,7 +40,7 @@ alloy-sol-types.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = ["serde?/std", "revm/std", "precompile/std"]
+std = ["serde?/std", "revm/std"]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
 portable = ["revm/portable"]

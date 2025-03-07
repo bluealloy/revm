@@ -8,7 +8,7 @@ use state::{
     Account, Bytecode,
 };
 
-pub trait Journal {
+pub trait JournalTr {
     type Database: Database;
     type FinalOutput;
 
@@ -177,7 +177,7 @@ pub trait Journal {
 
     /// Does cleanup and returns modified state.
     ///
-    /// This resets the [Journal] to its initial state.
+    /// This resets the [JournalTr] to its initial state.
     fn finalize(&mut self) -> Self::FinalOutput;
 }
 

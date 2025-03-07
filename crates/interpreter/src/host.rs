@@ -1,7 +1,7 @@
 use context_interface::{
     context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
-    Block, Cfg, Database, Journal, Transaction, TransactionType,
+    Block, Cfg, Database, JournalTr, Transaction, TransactionType,
 };
 use primitives::{Address, Bytes, Log, B256, U256};
 

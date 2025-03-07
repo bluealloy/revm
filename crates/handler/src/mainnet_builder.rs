@@ -1,12 +1,9 @@
 use crate::{instructions::EthInstructions, EthPrecompiles};
-use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, JournaledState, TxEnv};
-use context_interface::{Block, Database, Journal, Transaction};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, Journal, JournalOutput, TxEnv};
+use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
-use primitives::Log;
 use specification::hardfork::SpecId;
-use state::EvmState;
-use std::vec::Vec;
 
 pub type MainnetEvm<CTX, INSP = ()> =
     Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
@@ -26,7 +23,7 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+    JOURNAL: JournalTr<Database = DB, FinalOutput = JournalOutput>,
 {
     type Context = Self;
 
@@ -61,7 +58,7 @@ pub trait MainContext {
     fn mainnet() -> Self;
 }
 
-impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, JournaledState<EmptyDB>, ()> {
+impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, Journal<EmptyDB>, ()> {
     fn mainnet() -> Self {
         Context::new(EmptyDB::new(), SpecId::LATEST)
     }

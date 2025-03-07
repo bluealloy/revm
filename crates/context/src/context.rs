@@ -1,5 +1,5 @@
-use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
-use context_interface::{Block, Cfg, ContextTr, Journal, Transaction};
+use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
+use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use specification::hardfork::SpecId;
@@ -11,7 +11,7 @@ pub struct Context<
     TX = TxEnv,
     CFG = CfgEnv,
     DB: Database = EmptyDB,
-    JOURNAL: Journal<Database = DB> = JournaledState<DB>,
+    JOURNAL: JournalTr<Database = DB> = Journal<DB>,
     CHAIN = (),
 > {
     /// Block information.
@@ -33,7 +33,7 @@ impl<
         TX: Transaction,
         DB: Database,
         CFG: Cfg,
-        JOURNAL: Journal<Database = DB>,
+        JOURNAL: JournalTr<Database = DB>,
         CHAIN,
     > ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
@@ -91,7 +91,7 @@ impl<
         BLOCK: Block + Default,
         TX: Transaction + Default,
         DB: Database,
-        JOURNAL: Journal<Database = DB>,
+        JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
     > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN>
 {
@@ -118,9 +118,9 @@ where
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
-    JOURNAL: Journal<Database = DB>,
+    JOURNAL: JournalTr<Database = DB>,
 {
-    pub fn with_new_journal<OJOURNAL: Journal<Database = DB>>(
+    pub fn with_new_journal<OJOURNAL: JournalTr<Database = DB>>(
         self,
         mut journal: OJOURNAL,
     ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN> {
@@ -139,9 +139,9 @@ where
     pub fn with_db<ODB: Database>(
         self,
         db: ODB,
-    ) -> Context<BLOCK, TX, CFG, ODB, JournaledState<ODB>, CHAIN> {
+    ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN> {
         let spec = self.cfg.spec().into();
-        let mut journaled_state = JournaledState::new(spec, db);
+        let mut journaled_state = Journal::new(spec, db);
         journaled_state.set_spec_id(spec);
         Context {
             tx: self.tx,
