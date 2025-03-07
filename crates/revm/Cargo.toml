@@ -106,6 +106,7 @@ optimism = [
     "revm-interpreter/optimism",
     "revm-precompile/optimism",
     "dep:once_cell",
+    "fluentbase-runtime/optimism"
 ]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
