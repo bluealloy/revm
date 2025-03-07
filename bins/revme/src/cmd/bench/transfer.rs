@@ -20,10 +20,10 @@ pub fn run() {
     println!("Init: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = evm.transact_previous();
+    let _ = evm.replay();
     println!("First run: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = evm.transact_previous();
+    let _ = evm.replay();
     println!("Second run: {:?}", time.elapsed());
 }

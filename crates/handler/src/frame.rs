@@ -1,6 +1,6 @@
 use super::frame_data::*;
 use crate::{
-    handler::EvmTr, instructions::InstructionProvider, precompile_provider::PrecompileProvider,
+    instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
     FrameInitOrResult, FrameOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};

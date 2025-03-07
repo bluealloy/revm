@@ -102,7 +102,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
         })
         .build_mainnet();
 
-    let ref_tx = evm.transact_previous().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -146,7 +146,7 @@ async fn get_amount_out(
         })
         .build_mainnet();
 
-    let ref_tx = evm.transact_previous().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -179,7 +179,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
         })
         .build_mainnet();
 
-    let ref_tx = evm.transact_previous().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -229,7 +229,7 @@ fn swap(
         })
         .build_mainnet();
 
-    let ref_tx = evm.transact_commit_previous().unwrap();
+    let ref_tx = evm.replay_commit().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -262,7 +262,7 @@ fn transfer(
         })
         .build_mainnet();
 
-    let ref_tx = evm.transact_commit_previous().unwrap();
+    let ref_tx = evm.replay_commit().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

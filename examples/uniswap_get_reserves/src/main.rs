@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
         .build_mainnet();
 
     // Execute transaction without writing to the DB
-    let ref_tx = evm.transact_previous().unwrap();
+    let ref_tx = evm.replay().unwrap();
     // Select ExecutionResult struct
     let result = ref_tx.result;
 

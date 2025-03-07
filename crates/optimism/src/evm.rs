@@ -2,8 +2,8 @@ use revm::{
     context::{setters::ContextSetters, Evm, EvmData},
     context_interface::ContextTr,
     handler::{
-        handler::EvmTr,
         instructions::{EthInstructions, InstructionProvider},
+        EvmTr,
     },
     interpreter::{
         interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
@@ -110,7 +110,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
 
-        let output = evm.transact_previous().unwrap();
+        let output = evm.replay().unwrap();
 
         // balance should be 100
         assert_eq!(
@@ -140,7 +140,7 @@ mod tests {
         // POP would return a halt.
         let mut evm = ctx.build_op();
 
-        let output = evm.transact_previous().unwrap();
+        let output = evm.replay().unwrap();
 
         // balance should be 100 + previous balance
         assert_eq!(

@@ -1,17 +1,15 @@
-use super::frame_data::FrameResult;
 use bytecode::EOF_MAGIC_BYTES;
-use context_interface::ContextTr;
 use context_interface::Transaction;
 use interpreter::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
-    FrameInput, Gas,
+    FrameInput,
 };
 use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::boxed::Box;
 
+/// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
 pub fn create_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) -> FrameInput {
-    // Make new frame action.
     let input = tx.input().clone();
 
     match tx.kind() {
@@ -46,24 +44,5 @@ pub fn create_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) ->
                 }))
             }
         }
-    }
-}
-
-/// TODO : Frame result should be a generic trait with needed functions.
-pub fn last_frame_result<CTX: ContextTr>(context: CTX, frame_result: &mut FrameResult) {
-    let instruction_result = frame_result.interpreter_result().result;
-    let gas = frame_result.gas_mut();
-    let remaining = gas.remaining();
-    let refunded = gas.refunded();
-
-    // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(context.tx().gas_limit());
-
-    if instruction_result.is_ok_or_revert() {
-        gas.erase_cost(remaining);
-    }
-
-    if instruction_result.is_ok() {
-        gas.record_refund(refunded);
     }
 }

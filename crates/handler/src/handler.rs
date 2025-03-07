@@ -1,18 +1,15 @@
+use crate::EvmTr;
 use crate::{
-    execution, instructions::InstructionProvider, post_execution, pre_execution, validation, Frame,
-    FrameInitOrResult, FrameOrResult, FrameResult, ItemOrResult,
+    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
+    FrameResult, ItemOrResult,
 };
-use auto_impl::auto_impl;
-use context::Evm;
 use context_interface::ContextTr;
 use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, Journal, Transaction,
 };
 use core::mem;
-use interpreter::{
-    FrameInput, Host, InitialAndFloorGas, Interpreter, InterpreterAction, InterpreterTypes,
-};
+use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use precompile::PrecompileError;
 use primitives::Log;
 use state::EvmState;
@@ -34,73 +31,6 @@ impl<
             + From<PrecompileError>,
     > EvmTrError<EVM> for T
 {
-}
-
-impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
-where
-    CTX: ContextTr + Host,
-    I: InstructionProvider<
-        Context = CTX,
-        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
-    >,
-{
-    type Context = CTX;
-    type Instructions = I;
-    type Precompiles = P;
-
-    #[inline]
-    fn run_interpreter(
-        &mut self,
-        interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionProvider>::InterpreterTypes,
-        >,
-    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
-    {
-        let context = &mut self.data.ctx;
-        let instructions = &mut self.instruction;
-        interpreter.run_plain(instructions.instruction_table(), context)
-    }
-    #[inline]
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.data.ctx
-    }
-
-    #[inline]
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.data.ctx
-    }
-
-    #[inline]
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.data.ctx, &mut self.instruction)
-    }
-
-    #[inline]
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.data.ctx, &mut self.precompiles)
-    }
-}
-
-#[auto_impl(&mut, Box)]
-pub trait EvmTr {
-    type Context: ContextTr;
-    type Instructions: InstructionProvider;
-    type Precompiles;
-
-    fn run_interpreter(
-        &mut self,
-        interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionProvider>::InterpreterTypes,
-        >,
-    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output;
-
-    fn ctx(&mut self) -> &mut Self::Context;
-
-    fn ctx_ref(&self) -> &Self::Context;
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
 pub trait Handler {
@@ -252,7 +182,21 @@ pub trait Handler {
         evm: &mut Self::Evm,
         frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        execution::last_frame_result(evm.ctx(), frame_result);
+        let instruction_result = frame_result.interpreter_result().result;
+        let gas = frame_result.gas_mut();
+        let remaining = gas.remaining();
+        let refunded = gas.refunded();
+
+        // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
+        *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
+
+        if instruction_result.is_ok_or_revert() {
+            gas.erase_cost(remaining);
+        }
+
+        if instruction_result.is_ok() {
+            gas.record_refund(refunded);
+        }
         Ok(())
     }
 

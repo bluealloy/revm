@@ -16,7 +16,7 @@ pub fn simple_example(bytecode: Bytecode) {
             tx.gas_limit = 1_000_000_000;
         })
         .build_mainnet();
-    let _ = evm.transact_previous().unwrap();
+    let _ = evm.replay().unwrap();
 }
 
 pub fn run() {

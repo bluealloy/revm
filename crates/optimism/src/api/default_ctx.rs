@@ -47,7 +47,7 @@ mod test {
         // convert to optimism context
         let mut evm = ctx.build_op_with_inspector(NoOpInspector {});
         // execute
-        let _ = evm.transact_previous();
+        let _ = evm.replay();
         // inspect
         let _ = evm.inspect_previous();
     }

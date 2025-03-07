@@ -25,10 +25,10 @@ pub fn run() {
     let mut evm = context.build_mainnet();
 
     let time = Instant::now();
-    let _ = evm.transact_previous();
+    let _ = evm.replay();
     println!("First init: {:?}", time.elapsed());
 
     let time = Instant::now();
-    let _ = evm.transact_previous();
+    let _ = evm.replay();
     println!("Run: {:?}", time.elapsed());
 }
