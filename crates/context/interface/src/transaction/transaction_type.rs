@@ -13,7 +13,7 @@ pub enum TransactionType {
     Eip4844,
     /// EIP-7702 Set EOA account code transaction type
     Eip7702,
-    /// Custom type means that transaction trait was extend and have custom types
+    /// Custom type means that the transaction trait was extended and has custom types
     Custom,
 }
 
