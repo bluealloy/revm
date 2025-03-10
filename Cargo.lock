@@ -2585,7 +2585,7 @@ checksum = "b410bbe7e14ab526a0e86877eb47c6996a2bd7746f027ba551028c925390e4e9"
 
 [[package]]
 name = "op-revm"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3254,7 +3254,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "20.0.0-alpha.2"
+version = "20.0.0-alpha.3"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3347,7 +3347,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3368,7 +3368,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3385,7 +3385,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "16.0.0-alpha.2"
+version = "16.0.0-alpha.3"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3398,7 +3398,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "17.0.0-alpha.2"
+version = "17.0.0-alpha.3"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
@@ -3445,7 +3445,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 dependencies = [
  "revm",
  "serde",
@@ -3454,7 +3454,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "3.0.0-alpha.2"
+version = "3.0.0-alpha.3"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",

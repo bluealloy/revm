@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.2...revm-precompile-v17.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- *(precompiles)* add portable flag for bls ([#2174](https://github.com/bluealloy/revm/pull/2174))
+
+### Other
+
+- v59 release-plz update ([#2170](https://github.com/bluealloy/revm/pull/2170))
+
 ## [17.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.1...revm-precompile-v17.0.0-alpha.2) - 2025-03-10
 
 ### Added
