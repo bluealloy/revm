@@ -85,7 +85,6 @@ derive-where = { version = "1.2.7", default-features = false }
 enumn = "0.1"
 k256 = { version = "0.13.3", default-features = false }
 kzg-rs = { version = "0.2.4", default-features = false }
-libsecp256k1 = { version = "0.7", default-features = false }
 once_cell = { version = "1.19", default-features = false }
 p256 = { version = "0.13.2", default-features = false }
 paste = "1.0"
