@@ -42,12 +42,23 @@ database.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std"]
+std = [
+	"serde?/std",
+	"bytecode/std",
+	"context-interface/std",
+	"database/std",
+	"database-interface/std",
+	"primitives/std",
+	"state/std"
+]
 serde = [
-    "dep:serde",
-    "primitives/serde",
-    "state/serde",
-    "context-interface/serde",
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"context-interface/serde",
+	"bytecode/serde",
+	"database/serde",
+	"database-interface/serde"
 ]
 dev = [
     "memory_limit",

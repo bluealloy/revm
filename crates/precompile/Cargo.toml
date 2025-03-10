@@ -80,14 +80,19 @@ serde_derive.workspace = true
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-    "primitives/std",
-    "k256/std",
-    "once_cell/std",
-    "ripemd/std",
-    "sha2/std",
-    "c-kzg?/std",
-    "secp256k1?/std",
-    "libsecp256k1?/std",
+	"primitives/std",
+	"k256/std",
+	"once_cell/std",
+	"ripemd/std",
+	"sha2/std",
+	"c-kzg?/std",
+	"secp256k1?/std",
+	"libsecp256k1?/std",
+	"aurora-engine-modexp/std",
+	"p256?/std",
+	"context-interface/std",
+	"serde/std",
+	"serde_json/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]

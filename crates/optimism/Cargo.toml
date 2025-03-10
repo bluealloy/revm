@@ -40,7 +40,12 @@ alloy-sol-types.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = ["serde?/std", "revm/std"]
+std = [
+	"serde?/std",
+	"revm/std",
+	"alloy-sol-types/std",
+	"once_cell/std"
+]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
 portable = ["revm/portable"]

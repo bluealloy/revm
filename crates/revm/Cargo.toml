@@ -39,20 +39,30 @@ handler.workspace = true
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-    "interpreter/std",
-    "precompile/std",
-    "handler/std",
-    "context/std",
-    "context-interface/std",
+	"interpreter/std",
+	"precompile/std",
+	"handler/std",
+	"context/std",
+	"context-interface/std",
+	"bytecode/std",
+	"database/std",
+	"database-interface/std",
+	"inspector/std",
+	"primitives/std",
+	"state/std"
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
 serde = [
-    "interpreter/serde",
-    "database-interface/serde",
-    "primitives/serde",
-    "handler/serde",
-    "context-interface/serde",
-    "inspector/serde",
+	"interpreter/serde",
+	"database-interface/serde",
+	"primitives/serde",
+	"handler/serde",
+	"context-interface/serde",
+	"inspector/serde",
+	"bytecode/serde",
+	"context/serde",
+	"database/serde",
+	"state/serde"
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]

@@ -37,13 +37,20 @@ bincode.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "context-interface/std"]
+std = [
+	"serde?/std",
+	"primitives/std",
+	"context-interface/std",
+	"bytecode/std",
+	"database-interface/std"
+]
 hashbrown = ["primitives/hashbrown"]
 serde = [
-    "dep:serde",
-    "primitives/serde",
-    "bytecode/serde",
-    "context-interface/serde",
+	"dep:serde",
+	"primitives/serde",
+	"bytecode/serde",
+	"context-interface/serde",
+	"database-interface/serde"
 ]
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
