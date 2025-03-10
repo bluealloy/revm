@@ -1,5 +1,13 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v58 tag
+date: 10.03.2025
+
+Small release
+
+* `revm`: 19.5.0 -> 19.6.0
+* `revme`: 2.5.0 -> 2.6.0
+
 # v56 tag
 date: 11.02.2025
 
