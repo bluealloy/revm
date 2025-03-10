@@ -102,7 +102,9 @@ c-kzg = ["dep:c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["dep:kzg-rs"]
 
-portable = ["c-kzg"]
+# Compile in portable mode, without ISA extensions.
+# Binary can be executed on all systems.
+portable = ["c-kzg?/portable", "blst?/portable"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
