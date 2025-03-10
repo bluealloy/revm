@@ -56,7 +56,6 @@ serde = [
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
-portable = ["precompile/portable"]
 
 # Enables alloydb inside database crate
 alloydb = ["database/alloydb"]
@@ -86,3 +85,7 @@ c-kzg = [
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 secp256r1 = ["precompile/secp256r1"]
+
+# Compile in portable mode, without ISA extensions.
+# Binary can be executed on all systems.
+portable = ["precompile/portable"]
