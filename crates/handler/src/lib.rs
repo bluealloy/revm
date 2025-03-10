@@ -27,6 +27,6 @@ pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Fra
 pub use frame_data::{FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
-pub use mainnet_builder::{MainBuilder, MainContext, MainnetEvm, MainnetContext};
+pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
