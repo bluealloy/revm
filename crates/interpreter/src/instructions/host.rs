@@ -156,14 +156,16 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     }
 
-    if diff <= BLOCK_HASH_HISTORY {
+    *number = if diff <= BLOCK_HASH_HISTORY {
         let Some(hash) = host.block_hash(requested_number) else {
             interpreter
                 .control
                 .set_instruction_result(InstructionResult::FatalExternalError);
             return;
         };
-        *number = U256::from_be_bytes(hash.0);
+        U256::from_be_bytes(hash.0)
+    } else {
+        U256::ZERO
     }
 }
 
