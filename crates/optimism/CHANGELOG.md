@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.1...op-revm-v1.0.0-alpha.2) - 2025-03-10
+
+### Other
+
+- updated the following local packages: revm
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-optimism-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added

@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v60 tag
+date: 10.03.2025
+
+Bug fix on blockhash opcode.
+
+* `revm-interpreter`: 16.0.0-alpha.2 -> 16.0.0-alpha.3
+* `revm-precompile`: 17.0.0-alpha.2 -> 17.0.0-alpha.3
+* `revm`: 20.0.0-alpha.2 -> 20.0.0-alpha.3
+* `revm-handler`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-inspector`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-statetest-types`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revme`: 3.0.0-alpha.2 -> 3.0.0-alpha.3
+* `op-revm`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+
+
 # v59 tag
 date: 10.03.2025
 
