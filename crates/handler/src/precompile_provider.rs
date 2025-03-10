@@ -4,8 +4,7 @@ use context_interface::ContextTr;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
-use primitives::{Address, Bytes};
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, Address, Bytes};
 use std::boxed::Box;
 
 #[auto_impl(&mut, Box)]

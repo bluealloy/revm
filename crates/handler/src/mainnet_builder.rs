@@ -3,7 +3,7 @@ use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
-use specification::hardfork::SpecId;
+use primitives::hardfork::SpecId;
 
 pub type MainnetEvm<CTX, INSP = ()> =
     Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
@@ -77,8 +77,7 @@ mod test {
     use context::Context;
     use context_interface::{transaction::Authorization, TransactionType};
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{TxKind, U256};
-    use specification::hardfork::SpecId;
+    use primitives::{hardfork::SpecId, TxKind, U256};
 
     #[test]
     fn sanity_eip7702_tx() {

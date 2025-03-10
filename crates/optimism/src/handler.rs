@@ -19,8 +19,8 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
+    primitives::hardfork::SpecId,
     primitives::{HashMap, U256},
-    specification::hardfork::SpecId,
     state::Account,
     Database,
 };

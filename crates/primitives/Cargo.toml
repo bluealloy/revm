@@ -22,12 +22,20 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# alloy
 alloy-primitives = { workspace = true, features = ["rlp", "map"] }
+
+# mics
+enumn.workspace = true
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
 
 [features]
 default = ["std"]
 std = ["alloy-primitives/std"]
-serde = ["alloy-primitives/serde"]
+serde = ["dep:serde", "alloy-primitives/serde"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]

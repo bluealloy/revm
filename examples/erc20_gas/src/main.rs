@@ -16,8 +16,7 @@ use revm::{
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
     precompile::PrecompileError,
-    primitives::{address, keccak256, Address, Bytes, TxKind, U256},
-    specification::hardfork::SpecId,
+    primitives::{address, hardfork::SpecId, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
     Context, Database, MainBuilder, MainContext,
 };

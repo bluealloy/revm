@@ -4,8 +4,7 @@ use interpreter::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
     FrameInput,
 };
-use primitives::TxKind;
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, TxKind};
 use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.

@@ -11,8 +11,11 @@ use context_interface::{
 };
 use core::mem;
 use database_interface::Database;
-use primitives::{hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256};
-use specification::hardfork::{SpecId, SpecId::*};
+use primitives::{
+    hardfork::{SpecId, SpecId::*},
+    hash_map::Entry,
+    Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
+};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::{vec, vec::Vec};
 
@@ -643,7 +646,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
-        let account = self.load_code(address)?;
+        let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
+        let account = self.load_account_optional(address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(

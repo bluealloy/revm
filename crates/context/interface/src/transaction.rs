@@ -9,13 +9,12 @@ pub use alloy_types::{
 };
 pub use eip2930::AccessListTr;
 pub use eip7702::AuthorizationTr;
-use specification::eip4844::GAS_PER_BLOB;
 pub use transaction_type::TransactionType;
 
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
-use primitives::{Address, Bytes, TxKind, B256, U256};
+use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}

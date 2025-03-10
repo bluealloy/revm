@@ -19,11 +19,11 @@ use interpreter::{
     Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use precompile::PrecompileError;
-use primitives::{keccak256, Address, Bytes, B256, U256};
-use specification::{
+use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
 };
+use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{boxed::Box, rc::Rc, sync::Arc};

@@ -10,12 +10,17 @@ repository.workspace = true
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst", "serde-json"] }
+revm = { workspace = true, features = [
+    "std",
+    "hashbrown",
+    "c-kzg",
+    "blst",
+    "serde-json",
+] }
 primitives.workspace = true
 database.workspace = true
 database-interface.workspace = true
 state.workspace = true
-specification.workspace = true
 bytecode = { workspace = true, features = ["std", "parse"] }
 context.workspace = true
 context-interface.workspace = true

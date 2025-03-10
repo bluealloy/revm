@@ -4,7 +4,9 @@ use database_interface::DatabaseRef;
 use database_interface::WrapDatabaseRef;
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use specification::hardfork::SpecId;
+use primitives::hardfork::SpecId;
+
+
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
 pub struct Context<

@@ -24,7 +24,6 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-specification.workspace = true
 
 # Jumpmap
 bitvec = { workspace = true, features = ["alloc"] }

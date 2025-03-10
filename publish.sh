@@ -4,7 +4,6 @@
 set -e
 
 cargo publish --package revm-primitives
-cargo publish --package revm-specification
 cargo publish --package revm-bytecode
 cargo publish --package revm-state
 cargo publish --package revm-database-interface

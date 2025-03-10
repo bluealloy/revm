@@ -4,8 +4,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
-use primitives::U256;
-use specification::hardfork::SpecId::*;
+use primitives::{hardfork::SpecId::*, U256};
 
 /// EIP-1344: ChainID opcode
 pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(

@@ -3266,7 +3266,6 @@ dependencies = [
  "revm-interpreter",
  "revm-precompile",
  "revm-primitives",
- "revm-specification",
  "revm-state",
 ]
 
@@ -3278,7 +3277,6 @@ dependencies = [
  "paste",
  "phf",
  "revm-primitives",
- "revm-specification",
  "serde",
 ]
 
@@ -3294,7 +3292,6 @@ dependencies = [
  "revm-database",
  "revm-database-interface",
  "revm-primitives",
- "revm-specification",
  "revm-state",
  "serde",
 ]
@@ -3308,7 +3305,6 @@ dependencies = [
  "auto_impl",
  "revm-database-interface",
  "revm-primitives",
- "revm-specification",
  "revm-state",
  "serde",
 ]
@@ -3366,7 +3362,6 @@ dependencies = [
  "revm-interpreter",
  "revm-precompile",
  "revm-primitives",
- "revm-specification",
  "revm-state",
  "serde",
 ]
@@ -3397,7 +3392,6 @@ dependencies = [
  "revm-context-interface",
  "revm-database-interface",
  "revm-primitives",
- "revm-specification",
  "serde",
  "walkdir",
 ]
@@ -3420,7 +3414,6 @@ dependencies = [
  "rand",
  "revm-context-interface",
  "revm-primitives",
- "revm-specification",
  "ripemd",
  "rstest",
  "secp256k1",
@@ -3436,14 +3429,7 @@ name = "revm-primitives"
 version = "16.0.0-alpha.1"
 dependencies = [
  "alloy-primitives",
-]
-
-[[package]]
-name = "revm-specification"
-version = "1.0.0-alpha.1"
-dependencies = [
  "enumn",
- "revm-primitives",
  "serde",
 ]
 
@@ -3454,7 +3440,6 @@ dependencies = [
  "bitflags",
  "revm-bytecode",
  "revm-primitives",
- "revm-specification",
  "serde",
 ]
 
@@ -3489,7 +3474,6 @@ dependencies = [
  "revm-handler",
  "revm-inspector",
  "revm-primitives",
- "revm-specification",
  "revm-state",
  "revm-statetest-types",
  "serde",
