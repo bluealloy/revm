@@ -11,8 +11,7 @@ use crate::{
 };
 use core::ops::Mul;
 use revm::{
-    database_interface::Database, interpreter::Gas, primitives::U256,
-    primitives::hardfork::SpecId,
+    database_interface::Database, interpreter::Gas, primitives::hardfork::SpecId, primitives::U256,
 };
 
 /// L1 block info

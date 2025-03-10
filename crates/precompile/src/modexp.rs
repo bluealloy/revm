@@ -2,10 +2,10 @@ use crate::{
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
     PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use primitives::U256;
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::Bytes;
+use primitives::U256;
 
 pub const BYZANTIUM: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);

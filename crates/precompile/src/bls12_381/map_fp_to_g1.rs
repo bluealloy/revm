@@ -46,7 +46,7 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::primitives::hex;
+    use primitives::hex;
 
     #[test]
     fn sanity_test() {

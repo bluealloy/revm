@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex, keccak256, U256};
+use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex, keccak256, Bytes, U256};
 use revm_precompile::{
     bn128::{
         add::ISTANBUL_ADD_GAS_COST,
@@ -8,7 +8,6 @@ use revm_precompile::{
     },
     kzg_point_evaluation::run,
     secp256k1::ec_recover_run,
-    Bytes,
 };
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};

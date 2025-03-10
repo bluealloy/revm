@@ -9,6 +9,7 @@ use revm::{
         self, bn128, secp256r1, PrecompileError, Precompiles,
         {PrecompileResult, PrecompileWithAddress},
     },
+    primitives::{Address, Bytes},
 };
 use std::boxed::Box;
 
@@ -107,20 +108,20 @@ where
     fn run(
         &mut self,
         context: &mut Self::Context,
-        address: &precompile::Address,
-        bytes: &precompile::Bytes,
+        address: &Address,
+        bytes: &Bytes,
         gas_limit: u64,
     ) -> Result<Option<Self::Output>, PrecompileError> {
         self.inner.run(context, address, bytes, gas_limit)
     }
 
     #[inline]
-    fn warm_addresses(&self) -> Box<impl Iterator<Item = precompile::Address> + '_> {
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address> + '_> {
         self.inner.warm_addresses()
     }
 
     #[inline]
-    fn contains(&self, address: &precompile::Address) -> bool {
+    fn contains(&self, address: &Address) -> bool {
         self.inner.contains(address)
     }
 }
