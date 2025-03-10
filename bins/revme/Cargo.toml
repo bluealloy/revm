@@ -6,7 +6,7 @@ keywords = ["ethereum", "evm"]
 license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
-version = "2.5.0"
+version = "2.6.0"
 
 [dependencies]
 hash-db = "0.15"
