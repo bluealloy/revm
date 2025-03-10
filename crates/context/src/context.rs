@@ -170,7 +170,17 @@ where
             error: Ok(()),
         }
     }
-
+    /// Creates a new context with a new block type.
+    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
+        Context {
+            tx: self.tx,
+            block,
+            cfg: self.cfg,
+            journaled_state: self.journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
     /// Creates a new context with a new transaction type.
     pub fn with_tx<OTX: Transaction>(
         self,
