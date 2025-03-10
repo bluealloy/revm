@@ -243,7 +243,7 @@ mod test {
     use bytecode::opcode::{RETURNDATACOPY, RETURNDATALOAD};
     use bytecode::Bytecode;
     use primitives::bytes;
-    use specification::hardfork::{PragueSpec, SpecId};
+    use primitives::hardfork::{PragueSpec, SpecId};
     use context_interface::DefaultEthereumWiring;
 
     #[test]

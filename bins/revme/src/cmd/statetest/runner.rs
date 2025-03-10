@@ -14,8 +14,9 @@ use revm::{
         Cfg,
     },
     database_interface::EmptyDB,
-    primitives::{keccak256, Bytes, TxKind, B256},
-    specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
+    primitives::{
+        eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Bytes, TxKind, B256,
+    },
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;

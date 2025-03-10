@@ -7,8 +7,7 @@ use context_interface::{
     Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::U256;
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, U256};
 
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost

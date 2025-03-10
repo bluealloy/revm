@@ -5,8 +5,7 @@ use crate::{
 };
 use context_interface::{context::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
-use primitives::{Bytes, U256};
-use specification::hardfork::SpecId::*;
+use primitives::{hardfork::SpecId::*, Bytes, U256};
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(

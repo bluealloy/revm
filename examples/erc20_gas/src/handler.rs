@@ -7,8 +7,7 @@ use revm::{
     },
     handler::{EvmTr, EvmTrError, Frame, FrameResult, Handler},
     interpreter::FrameInput,
-    primitives::U256,
-    specification::hardfork::SpecId,
+    primitives::{SpecId, U256},
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};

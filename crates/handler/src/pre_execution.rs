@@ -11,8 +11,7 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,
 };
-use primitives::{BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256};
-use specification::{eip7702, hardfork::SpecId};
+use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 
 pub fn load_accounts<CTX: ContextTr, ERROR: From<<CTX::Db as Database>::Error>>(
     context: &mut CTX,
@@ -26,12 +25,6 @@ pub fn load_accounts<CTX: ContextTr, ERROR: From<<CTX::Db as Database>::Error>>(
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         let coinbase = context.block().beneficiary();
         context.journal().warm_account(coinbase);
-    }
-
-    // Load blockhash storage address
-    // EIP-2935: Serve historical block hashes from state
-    if spec.is_enabled_in(SpecId::PRAGUE) {
-        context.journal().warm_account(BLOCKHASH_STORAGE_ADDRESS);
     }
 
     // Load access list

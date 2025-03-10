@@ -2,7 +2,7 @@ use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
 use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use specification::hardfork::SpecId;
+use primitives::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]

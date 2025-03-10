@@ -1,8 +1,8 @@
 use crate::{
-    primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
     PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
+use primitives::U256;
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::Bytes;

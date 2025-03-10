@@ -55,7 +55,7 @@ pub trait Host {
 
     /* Journal */
 
-    /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
+    /// Selfdestruct account, calls `ContextTr::journal().selfdestruct(address, target)`
     fn selfdestruct(
         &mut self,
         address: Address,

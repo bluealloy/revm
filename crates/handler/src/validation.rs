@@ -8,8 +8,7 @@ use context_interface::{
 };
 use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
-use primitives::{B256, U256};
-use specification::{eip4844, hardfork::SpecId};
+use primitives::{eip4844, hardfork::SpecId, B256, U256};
 use state::AccountInfo;
 use std::boxed::Box;
 

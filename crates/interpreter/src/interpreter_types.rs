@@ -1,9 +1,7 @@
-use bytecode::eof::CodeInfo;
-use specification::hardfork::SpecId;
-
 use crate::{Gas, InstructionResult, InterpreterAction};
+use bytecode::eof::CodeInfo;
 use core::ops::{Deref, Range};
-use primitives::{Address, Bytes, B256, U256};
+use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
 pub trait Immediates {

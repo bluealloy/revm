@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use primitives::{hex, keccak256, U256};
+use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex, keccak256, U256};
 use revm_precompile::{
     bn128::{
         add::ISTANBUL_ADD_GAS_COST,
@@ -12,7 +12,6 @@ use revm_precompile::{
 };
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
-use specification::eip4844::VERSIONED_HASH_VERSION_KZG;
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {

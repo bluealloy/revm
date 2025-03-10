@@ -6,8 +6,7 @@ use crate::{
     Host, InstructionResult,
 };
 use core::cmp::min;
-use primitives::{Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
-use specification::hardfork::SpecId::*;
+use primitives::{Bytes, Log, LogData, U256, hardfork::SpecId::*, B256, BLOCK_HASH_HISTORY};
 
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,

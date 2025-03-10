@@ -1,6 +1,4 @@
-pub use crate::InstructionResult;
-pub use primitives::U256;
-use primitives::{Address, B256};
+use primitives::{Address, B256, U256};
 
 /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
 /// if necessary.

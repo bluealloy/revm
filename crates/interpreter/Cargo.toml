@@ -25,7 +25,6 @@ all = "warn"
 # revm
 bytecode.workspace = true
 primitives.workspace = true
-specification.workspace = true
 context-interface.workspace = true
 
 # optional

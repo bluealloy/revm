@@ -46,17 +46,17 @@ The full list of projects that use Revm is available in the awesome-revm section
 
 ### How to, dev section
 
-Note that book and code docs are still in WIP stage and they are being updated!
+Note that [book](https://bluealloy.github.io/revm/) and [code docs](https://docs.rs/revm/20.0.0-alpha.1/revm/index.html) are still in WIP stage and they are being updated!
 
 Part of the links point to the code documentation or the book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
 
 * How to build and use revm can be found here. (code)
-* Architecture overview can be seen here. (book)
-* Structure of the project (list of crates) can be seen here. (book)
-* How to use Revm Framework can be found here. (book)
-* Release procedure and changelogs explanation. (book)
-* How to use revme (Revm binary with few commands) can be found here. (code)
-* How to run Ethereum test can be found here: (book)
+* Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
+* Structure of the project (list of crates) can be seen here. [book](https://bluealloy.github.io/revm/architecture/crates.html)
+* How to use Revm Framework can be found here. [book](https://bluealloy.github.io/revm/framework.html)
+* Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
+* How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
+* How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/dev.html#running-eth-tests)
 * How to run examples and benchmark with `samply` to check performance. (book)
 * If there is more explanations please open PR request for it.
 

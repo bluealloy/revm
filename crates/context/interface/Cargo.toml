@@ -26,7 +26,6 @@ all = "warn"
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
-specification.workspace = true
 alloy-eip7702 = { workspace = true, features = ["k256"] }
 alloy-eip2930.workspace = true
 
@@ -45,7 +44,6 @@ std = ["serde?/std", "alloy-eip7702/std", "alloy-eip2930/std"]
 serde = [
     "dep:serde",
     "primitives/serde",
-    "specification/serde",
     "state/serde",
     "alloy-eip7702/serde",
     "alloy-eip2930/serde",

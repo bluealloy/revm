@@ -20,7 +20,7 @@ use interpreter::{
 };
 use precompile::PrecompileError;
 use primitives::{keccak256, Address, Bytes, B256, U256};
-use specification::{
+use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
 };

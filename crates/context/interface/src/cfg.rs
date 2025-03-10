@@ -1,8 +1,7 @@
 use auto_impl::auto_impl;
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{TxKind, U256};
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, TxKind, U256};
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {

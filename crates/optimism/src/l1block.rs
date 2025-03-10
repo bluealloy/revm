@@ -12,7 +12,7 @@ use crate::{
 use core::ops::Mul;
 use revm::{
     database_interface::Database, interpreter::Gas, primitives::U256,
-    specification::hardfork::SpecId,
+    primitives::hardfork::SpecId,
 };
 
 /// L1 block info
