@@ -24,8 +24,8 @@ fn analysis(c: &mut Criterion) {
 
     let mut g = c.benchmark_group("analysis");
     g.noise_threshold(0.03)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
+        .warm_up_time(Duration::from_micros(100))
+        .measurement_time(Duration::from_secs(1))
         .sample_size(10);
 
     let raw = Bytecode::new_raw(contract_data.clone());
@@ -57,8 +57,8 @@ fn snailtracer(c: &mut Criterion) {
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
+        .warm_up_time(Duration::from_micros(100))
+        .measurement_time(Duration::from_secs(1))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
     bench_eval(&mut g, &mut evm);
@@ -76,7 +76,8 @@ fn transfer(c: &mut Criterion) {
         .build();
 
     let mut g = c.benchmark_group("transfer");
-    g.noise_threshold(0.03).warm_up_time(Duration::from_secs(1));
+    g.noise_threshold(0.03)
+        .warm_up_time(Duration::from_millis(100));
     bench_transact(&mut g, &mut evm);
     g.finish();
 }

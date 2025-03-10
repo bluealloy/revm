@@ -8,7 +8,7 @@ use crate::{
         db::Database,
         eip7702, Account, Bytecode, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TxKind, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
+        TxKind, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -36,16 +36,6 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
             .journaled_state
             .warm_preloaded_addresses
             .insert(coinbase);
-    }
-
-    // Load blockhash storage address
-    // EIP-2935: Serve historical block hashes from state
-    if SPEC::enabled(PRAGUE) {
-        context
-            .evm
-            .journaled_state
-            .warm_preloaded_addresses
-            .insert(BLOCKHASH_STORAGE_ADDRESS);
     }
 
     // Load access list
