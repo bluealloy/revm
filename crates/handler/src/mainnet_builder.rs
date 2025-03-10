@@ -6,7 +6,7 @@ use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
 pub type MainnetEvm<CTX, INSP = ()> =
-    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
+    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>;
 
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
 

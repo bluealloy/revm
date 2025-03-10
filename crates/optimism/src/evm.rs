@@ -1,4 +1,4 @@
-use crate::precompiles::OpPrecompileProvider;
+use crate::precompiles::OpPrecompiles;
 use revm::{
     context::{setters::ContextSetters, Evm, EvmData},
     context_interface::ContextTr,
@@ -11,18 +11,16 @@ use revm::{
     },
 };
 
-pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrecompileProvider<CTX>>(
+pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrecompiles>(
     pub Evm<CTX, INSP, I, P>,
 );
 
-impl<CTX: Host, INSP>
-    OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompileProvider<CTX>>
-{
+impl<CTX: Host, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             data: EvmData { ctx, inspector },
             instruction: EthInstructions::new_mainnet(),
-            precompiles: OpPrecompileProvider::default(),
+            precompiles: OpPrecompiles::default(),
         })
     }
 }

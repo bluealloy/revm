@@ -74,7 +74,7 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
-        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
@@ -146,7 +146,7 @@ impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
         Context: ContextTr,
-        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
     ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
@@ -514,7 +514,7 @@ impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
         Context: ContextTr,
-        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,

@@ -42,7 +42,7 @@ impl<CTX, INSP, PRECOMPILE> ExecuteEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<ResultAndState<OpHaltReason>, OpError<CTX>>;
 
@@ -56,7 +56,7 @@ impl<CTX, INSP, PRECOMPILE> ExecuteCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Db: DatabaseCommit>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<ExecutionResult<OpHaltReason>, OpError<CTX>>;
 
@@ -73,7 +73,7 @@ impl<CTX, INSP, PRECOMPILE> InspectEvm
 where
     CTX: OpContextTr<Journal: JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
 
@@ -92,7 +92,7 @@ impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
 where
     CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
         self.inspect_previous().map(|r| {

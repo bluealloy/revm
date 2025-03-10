@@ -19,7 +19,7 @@ pub fn transact_erc20evm<EVM>(
 where
     EVM: EvmTr<
         Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
-        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
@@ -35,7 +35,7 @@ pub fn transact_erc20evm_commit<EVM>(
 where
     EVM: EvmTr<
         Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
-        Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
