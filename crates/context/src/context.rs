@@ -1,9 +1,10 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
 use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
+use database_interface::DatabaseRef;
+use database_interface::WrapDatabaseRef;
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use specification::hardfork::SpecId;
-
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
 pub struct Context<
@@ -153,13 +154,18 @@ where
         }
     }
 
-    /// Creates a new context with a new block type.
-    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
+    pub fn with_ref_db<ODB: DatabaseRef>(
+        self,
+        db: ODB,
+    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN> {
+        let spec = self.cfg.spec().into();
+        let mut journaled_state = Journal::new(spec, WrapDatabaseRef(db));
+        journaled_state.set_spec_id(spec);
         Context {
             tx: self.tx,
-            block,
+            block: self.block,
             cfg: self.cfg,
-            journaled_state: self.journaled_state,
+            journaled_state,
             chain: self.chain,
             error: Ok(()),
         }
