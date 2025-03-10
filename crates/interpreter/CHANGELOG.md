@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.2...revm-interpreter-v16.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- set zero if blockhash is out of range ([#2173](https://github.com/bluealloy/revm/pull/2173))
+
 ## [16.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.1...revm-interpreter-v16.0.0-alpha.2) - 2025-03-10
 
 ### Added
