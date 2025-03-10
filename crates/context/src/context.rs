@@ -171,6 +171,7 @@ where
             error: Ok(()),
         }
     }
+
     /// Creates a new context with a new block type.
     pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
         Context {
