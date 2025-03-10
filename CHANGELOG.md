@@ -1,5 +1,31 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v59 tag
+date: 10.03.2025
+
+* Few bugs fixes mostly for optimism crate.
+* remv-optimism renamed to op-revm.
+* revm-specification files moved to revm-primitives
+* docs, initial book and cleanup.
+
+Versions:
+
+* `revm-primitives`: 16.0.0-alpha.1 -> 16.0.0-alpha.2
+* `revm-bytecode`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-state`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-database-interface`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-context-interface`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-context`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-database`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-interpreter`: 16.0.0-alpha.1 -> 16.0.0-alpha.2
+* `revm-precompile`: 17.0.0-alpha.1 -> 17.0.0-alpha.2
+* `revm-handler`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-inspector`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm`: 20.0.0-alpha.1 -> 20.0.0-alpha.2
+* `revm-statetest-types`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revme`: 3.0.0-alpha.1 -> 3.0.0-alpha.2
+* `op-revm`: 1.0.0-alpha.1
+
 # v57 tag
 date 16.02.2025
 

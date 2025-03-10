@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.1...revme-v3.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Other
+
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- rename transact_previous to replay, move EvmTr traits ([#2153](https://github.com/bluealloy/revm/pull/2153))
+- Add docs to revm-bytecode crate ([#2108](https://github.com/bluealloy/revm/pull/2108))
+- *(deps)* bump breaking deps ([#2093](https://github.com/bluealloy/revm/pull/2093))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
 ## [3.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revme-v2.5.0...revme-v3.0.0-alpha.1) - 2025-02-16
 
 ### Added

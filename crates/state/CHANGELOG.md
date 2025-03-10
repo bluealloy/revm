@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-state-v1.0.0-alpha.1...revm-state-v1.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Other
+
+- docs and cleanup (rm Custom Inst) ([#2151](https://github.com/bluealloy/revm/pull/2151))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-state-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added
