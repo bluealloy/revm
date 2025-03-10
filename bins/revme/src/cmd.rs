@@ -40,7 +40,7 @@ impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
-            Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
+            Self::EofValidation(cmd) => cmd.run(),
             Self::Evm(cmd) => cmd.run().map_err(Into::into),
             Self::Bytecode(cmd) => {
                 cmd.run();
