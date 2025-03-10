@@ -8,6 +8,8 @@ use primitives::hardfork::SpecId;
 pub type MainnetEvm<CTX, INSP = ()> =
     Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles<CTX>>;
 
+pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
+
 pub trait MainBuilder: Sized {
     type Context;
 
