@@ -34,7 +34,10 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = ["alloy-primitives/std"]
+std = [
+	"alloy-primitives/std",
+	"serde?/std"
+]
 serde = ["dep:serde", "alloy-primitives/serde"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]

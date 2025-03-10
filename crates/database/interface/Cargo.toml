@@ -43,6 +43,15 @@ alloy-sol-types.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde"]
+std = [
+	"serde?/std",
+	"alloy-sol-types/std",
+	"primitives/std",
+	"state/std"
+]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"state/serde"
+]
 asyncdb = ["dep:tokio"]

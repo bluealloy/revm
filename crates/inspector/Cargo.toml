@@ -43,6 +43,27 @@ database = { workspace = true, features = ["serde"] }
 [features]
 default = ["std"]
 # Preserve order of json field
-std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order"]
-serde = ["dep:serde", "database/serde"]
+std = [
+	"serde?/std",
+	"serde_json?/std",
+	"serde_json?/preserve_order",
+	"context/std",
+	"database/std",
+	"database-interface/std",
+	"handler/std",
+	"interpreter/std",
+	"precompile/std",
+	"primitives/std",
+	"state/std"
+]
+serde = [
+	"dep:serde",
+	"database/serde",
+	"context/serde",
+	"database-interface/serde",
+	"handler/serde",
+	"interpreter/serde",
+	"primitives/serde",
+	"state/serde"
+]
 serde-json = ["serde", "dep:serde_json"]

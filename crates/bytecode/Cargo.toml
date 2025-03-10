@@ -37,8 +37,18 @@ phf = { workspace = true, features = ["macros"], optional = true }
 
 [features]
 default = ["std", "parse"]
-std = ["serde?/std", "primitives/std"]
+std = [
+	"serde?/std",
+	"primitives/std",
+	"bitvec/std",
+	"phf?/std"
+]
 hashbrown = ["primitives/hashbrown"]
-serde = ["dep:serde", "primitives/serde", "bitvec/serde"]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"bitvec/serde",
+	"phf?/serde"
+]
 serde-json = ["serde"]
 parse = ["phf", "paste"]

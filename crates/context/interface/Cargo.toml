@@ -40,12 +40,20 @@ serde = { version = "1.0", default-features = false, features = [
 
 [features]
 default = ["std"]
-std = ["serde?/std", "alloy-eip7702/std", "alloy-eip2930/std"]
+std = [
+	"serde?/std",
+	"alloy-eip7702/std",
+	"alloy-eip2930/std",
+	"database-interface/std",
+	"primitives/std",
+	"state/std"
+]
 serde = [
-    "dep:serde",
-    "primitives/serde",
-    "state/serde",
-    "alloy-eip7702/serde",
-    "alloy-eip2930/serde",
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"alloy-eip7702/serde",
+	"alloy-eip2930/serde",
+	"database-interface/serde"
 ]
 serde-json = ["serde"]
