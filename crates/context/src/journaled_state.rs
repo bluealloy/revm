@@ -643,7 +643,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
-        let account = self.load_code(address)?;
+        let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
+        let account = self.load_account_optional(address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
