@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.1...revm-context-v1.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+- make journal entries generic ([#2154](https://github.com/bluealloy/revm/pull/2154))
+- Standalone Host, remove default fn from context ([#2147](https://github.com/bluealloy/revm/pull/2147))
+- add constructor with hardfork ([#2135](https://github.com/bluealloy/revm/pull/2135))
+- allow host to be implemented on custom context ([#2112](https://github.com/bluealloy/revm/pull/2112))
+- add the debug impl for Evm and EvmData type ([#2126](https://github.com/bluealloy/revm/pull/2126))
+
+### Other
+
+- pre EIP-7702 does not need to load code ([#2162](https://github.com/bluealloy/revm/pull/2162))
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- rename transact_previous to replay, move EvmTr traits ([#2153](https://github.com/bluealloy/revm/pull/2153))
+- move mainnet builder to handler crate ([#2138](https://github.com/bluealloy/revm/pull/2138))
+- remove `optional_gas_refund` as unused ([#2132](https://github.com/bluealloy/revm/pull/2132))
+- Adding function derive_tx_type to TxEnv ([#2118](https://github.com/bluealloy/revm/pull/2118))
+- remove wrong `&mut`/`TODO`, and avoid useless `get_mut` ([#2111](https://github.com/bluealloy/revm/pull/2111))
+- export eip2930 eip7702 types from one place ([#2097](https://github.com/bluealloy/revm/pull/2097))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+- re-export all crates from `revm` ([#2088](https://github.com/bluealloy/revm/pull/2088))
+
 ## [1.0.0-alpha.1](https://github.com/bluealloy/revm/releases/tag/revm-context-v1.0.0-alpha.1) - 2025-02-16
 
 ### Added

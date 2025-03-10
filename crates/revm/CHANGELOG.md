@@ -57,6 +57,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.1...revm-v20.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Other
+
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- examples to use main revm crate ([#2152](https://github.com/bluealloy/revm/pull/2152))
+- move mainnet builder to handler crate ([#2138](https://github.com/bluealloy/revm/pull/2138))
+- remove `optional_gas_refund` as unused ([#2132](https://github.com/bluealloy/revm/pull/2132))
+- export eip2930 eip7702 types from one place ([#2097](https://github.com/bluealloy/revm/pull/2097))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+- re-export all crates from `revm` ([#2088](https://github.com/bluealloy/revm/pull/2088))
+
 ## [19.5.0](https://github.com/bluealloy/revm/compare/revm-v19.4.0...revm-v19.5.0) - 2025-02-11
 
 ### Fixed

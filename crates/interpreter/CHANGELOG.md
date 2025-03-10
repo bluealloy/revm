@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.1...revm-interpreter-v16.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+- Standalone Host, remove default fn from context ([#2147](https://github.com/bluealloy/revm/pull/2147))
+- allow host to be implemented on custom context ([#2112](https://github.com/bluealloy/revm/pull/2112))
+
+### Other
+
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- docs and cleanup (rm Custom Inst) ([#2151](https://github.com/bluealloy/revm/pull/2151))
+- add immutable gas API to LoopControl ([#2134](https://github.com/bluealloy/revm/pull/2134))
+- expose popn macros ([#2113](https://github.com/bluealloy/revm/pull/2113))
+- Add docs to revm-bytecode crate ([#2108](https://github.com/bluealloy/revm/pull/2108))
+- fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
 
 ### Added
