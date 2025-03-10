@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.6.0](https://github.com/bluealloy/revm/compare/revm-v19.5.0...revm-v19.6.0) - 2025-03-10
+
+### Other
+
+- *bench* : reduce times for benches (#2161) (2 hours ago)
+
+
 ## [19.5.0](https://github.com/bluealloy/revm/compare/revm-v19.4.0...revm-v19.5.0) - 2025-02-11
 
 ### Fixed
