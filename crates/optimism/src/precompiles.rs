@@ -14,12 +14,12 @@ use revm::{
 use std::boxed::Box;
 
 // Optimism precompile provider
-pub struct OpPrecompileProvider<CTX> {
+pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
-    inner: EthPrecompiles<CTX>,
+    inner: EthPrecompiles,
 }
 
-impl<CTX> Clone for OpPrecompileProvider<CTX> {
+impl Clone for OpPrecompiles {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -27,14 +27,11 @@ impl<CTX> Clone for OpPrecompileProvider<CTX> {
     }
 }
 
-impl<CTX> OpPrecompileProvider<CTX> {
-    /// Create a new [`OpPrecompileProvider`] with the given precompiles.
+impl OpPrecompiles {
+    /// Create a new [`OpPrecompiles`] with the given precompiles.
     pub fn new(precompiles: &'static Precompiles) -> Self {
         Self {
-            inner: EthPrecompiles {
-                precompiles,
-                _phantom: core::marker::PhantomData,
-            },
+            inner: EthPrecompiles { precompiles },
         }
     }
 
@@ -92,22 +89,21 @@ pub fn isthumus() -> &'static Precompiles {
     })
 }
 
-impl<CTX> PrecompileProvider for OpPrecompileProvider<CTX>
+impl<CTX> PrecompileProvider<CTX> for OpPrecompiles
 where
     CTX: ContextTr<Cfg: Cfg<Spec = OpSpecId>>,
 {
-    type Context = CTX;
     type Output = InterpreterResult;
 
     #[inline]
-    fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) {
         *self = Self::new_with_spec(spec);
     }
 
     #[inline]
     fn run(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
@@ -116,7 +112,7 @@ where
     }
 
     #[inline]
-    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address> + '_> {
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
         self.inner.warm_addresses()
     }
 
@@ -126,7 +122,7 @@ where
     }
 }
 
-impl<CTX> Default for OpPrecompileProvider<CTX> {
+impl Default for OpPrecompiles {
     fn default() -> Self {
         Self::new_with_spec(OpSpecId::ISTHMUS)
     }

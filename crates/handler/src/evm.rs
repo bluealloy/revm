@@ -123,7 +123,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<
         ResultAndState<HaltReason>,
@@ -141,7 +141,7 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
 where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
         ExecutionResult<HaltReason>,

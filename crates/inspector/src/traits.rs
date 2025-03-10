@@ -80,7 +80,7 @@ impl<EVM, ERROR> InspectorFrame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
             Context: ContextTr,
-            Precompiles: PrecompileProvider<Context = EVM::Context, Output = InterpreterResult>,
+            Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
             Instructions: InstructionProvider<
                 Context = EVM::Context,
                 InterpreterTypes = EthInterpreter,

@@ -29,7 +29,7 @@ impl<CTX, INSP, PRECOMPILES> InspectEvm
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
 
@@ -52,7 +52,7 @@ where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
-    PRECOMPILES: PrecompileProvider<Context = CTX, Output = InterpreterResult>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
         self.inspect_previous().map(|r| {
