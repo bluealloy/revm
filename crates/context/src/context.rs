@@ -1,5 +1,7 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
 use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
+use database_interface::DatabaseRef;
+use database_interface::WrapDatabaseRef;
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
@@ -153,6 +155,24 @@ where
         }
     }
 
+    /// Creates a new context with a new `DatabaseRef` type.
+    pub fn with_ref_db<ODB: DatabaseRef>(
+        self,
+        db: ODB,
+    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN> {
+        let spec = self.cfg.spec().into();
+        let mut journaled_state = Journal::new(spec, WrapDatabaseRef(db));
+        journaled_state.set_spec_id(spec);
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
     /// Creates a new context with a new block type.
     pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
         Context {
@@ -164,7 +184,6 @@ where
             error: Ok(()),
         }
     }
-
     /// Creates a new context with a new transaction type.
     pub fn with_tx<OTX: Transaction>(
         self,
