@@ -154,6 +154,7 @@ where
         }
     }
 
+    /// Creates a new context with a new `DatabaseRef` type.
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
