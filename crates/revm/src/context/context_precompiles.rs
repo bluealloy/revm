@@ -166,7 +166,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
 
 impl<DB: Database> Extend<(Address, ContextPrecompile<DB>)> for ContextPrecompiles<DB> {
     fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<DB>)>>(&mut self, iter: T) {
-        self.to_mut().extend(iter.into_iter().map(Into::into))
+        self.to_mut().extend(iter)
     }
 }
 
