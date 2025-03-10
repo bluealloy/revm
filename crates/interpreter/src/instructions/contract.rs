@@ -17,8 +17,7 @@ use crate::{
 use bytecode::eof::{Eof, EofHeader};
 use context_interface::CreateScheme;
 use core::cmp::max;
-use primitives::{keccak256, Address, Bytes, B256, U256};
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, keccak256, Address, Bytes, B256, U256};
 use std::boxed::Box;
 
 /// EOF Create instruction

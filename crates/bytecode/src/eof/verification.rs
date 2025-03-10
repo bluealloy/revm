@@ -3,8 +3,10 @@ use crate::{
     opcode::{self, OPCODE_INFO},
     utils::{read_i16, read_u16},
 };
-use primitives::Bytes;
-use specification::constants::{MAX_INITCODE_SIZE, STACK_LIMIT};
+use primitives::{
+    constants::{MAX_INITCODE_SIZE, STACK_LIMIT},
+    Bytes,
+};
 
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, vec, vec::Vec};

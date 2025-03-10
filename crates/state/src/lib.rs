@@ -13,8 +13,8 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use core::hash::Hash;
+use primitives::hardfork::SpecId;
 use primitives::{HashMap, U256};
-use specification::hardfork::SpecId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

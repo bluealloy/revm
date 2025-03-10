@@ -182,7 +182,7 @@ mod tests {
     use crate::interpreter_wiring::StackTr;
     use crate::{Contract, DummyHost, Interpreter};
     use primitives::{uint, U256};
-    use specification::hardfork::LatestSpec;
+    use primitives::hardfork::LatestSpec;
     use context_interface::{default::Env, DefaultEthereumWiring};
 
     #[test]

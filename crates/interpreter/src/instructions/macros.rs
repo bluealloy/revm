@@ -54,7 +54,7 @@ macro_rules! check {
         if !$interpreter
             .runtime_flag
             .spec_id()
-            .is_enabled_in(specification::hardfork::SpecId::$min)
+            .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
             $interpreter
                 .control

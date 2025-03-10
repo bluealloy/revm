@@ -36,4 +36,4 @@ pub use interpreter_action::{
     EOFCreateKind, FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
-pub use specification::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};
+pub use primitives::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};

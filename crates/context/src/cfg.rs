@@ -1,6 +1,6 @@
 pub use context_interface::Cfg;
 
-use specification::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
+use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
 use std::{vec, vec::Vec};
 
 /// EVM configuration

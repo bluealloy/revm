@@ -1,4 +1,4 @@
-use specification::eip4844::{self, MIN_BLOB_GASPRICE};
+use primitives::eip4844::{self, MIN_BLOB_GASPRICE};
 
 /// Structure holding block blob excess gas and it calculates blob fee
 ///
@@ -110,7 +110,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use specification::eip4844::{
+    use primitives::eip4844::{
         BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
         TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
     };

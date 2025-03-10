@@ -13,7 +13,6 @@ pub use inspector;
 pub use interpreter;
 pub use precompile;
 pub use primitives;
-pub use specification;
 pub use state;
 
 // Export items.

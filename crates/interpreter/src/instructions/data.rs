@@ -88,7 +88,7 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 mod test {
     use bytecode::{Bytecode, Eof};
     use primitives::{b256, bytes, Bytes};
-    use specification::hardfork::SpecId;
+    use primitives::hardfork::SpecId;
     use std::sync::Arc;
     use context_interface::DefaultEthereumWiring;
 

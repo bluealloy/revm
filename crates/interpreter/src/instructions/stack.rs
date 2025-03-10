@@ -124,7 +124,7 @@ mod test {
     use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
     use bytecode::Bytecode;
-    use specification::hardfork::SpecId;
+    use primitives::hardfork::SpecId;
     use context_interface::DefaultEthereumWiring;
 
     #[test]

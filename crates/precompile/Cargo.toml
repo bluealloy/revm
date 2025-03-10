@@ -25,7 +25,6 @@ all = "warn"
 # revm
 primitives.workspace = true
 context-interface.workspace = true
-specification.workspace = true
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }

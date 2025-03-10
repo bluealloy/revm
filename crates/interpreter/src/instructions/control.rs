@@ -282,7 +282,7 @@ mod test {
         Bytecode,
     };
     use primitives::bytes;
-    use specification::hardfork::SpecId;
+    use primitives::hardfork::SpecId;
     use std::sync::Arc;
     use context_interface::DefaultEthereumWiring;
 

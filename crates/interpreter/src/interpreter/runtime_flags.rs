@@ -1,4 +1,4 @@
-use specification::hardfork::SpecId;
+use primitives::hardfork::SpecId;
 
 use super::RuntimeFlag;
 #[cfg(feature = "serde")]

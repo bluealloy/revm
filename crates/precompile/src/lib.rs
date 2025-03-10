@@ -28,14 +28,11 @@ pub use interface::*;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
-pub use primitives::{Address, Bytes, HashMap, HashSet, Log, B256};
-
-pub use primitives;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -286,8 +283,8 @@ impl From<SpecId> for PrecompileSpecId {
 
 impl PrecompileSpecId {
     /// Returns the appropriate precompile Spec for the primitive [SpecId].
-    pub const fn from_spec_id(spec_id: specification::hardfork::SpecId) -> Self {
-        use specification::hardfork::SpecId::*;
+    pub const fn from_spec_id(spec_id: primitives::hardfork::SpecId) -> Self {
+        use primitives::hardfork::SpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD

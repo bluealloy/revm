@@ -1,4 +1,4 @@
-use revm::specification::hardfork::{name as eth_name, SpecId};
+use revm::primitives::hardfork::{name as eth_name, SpecId};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
