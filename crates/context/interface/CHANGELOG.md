@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.2...revm-context-interface-v1.0.0-alpha.3) - 2025-03-11
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+### Other
+
+- Add comments to handler methods ([#2188](https://github.com/bluealloy/revm/pull/2188))
+
 ## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.1...revm-context-interface-v1.0.0-alpha.2) - 2025-03-10
 
 ### Added

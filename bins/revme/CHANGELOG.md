@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.3...revme-v3.0.0-alpha.4) - 2025-03-11
+
+### Other
+
+- Add comments to handler methods ([#2188](https://github.com/bluealloy/revm/pull/2188))
+
 ## [3.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.2...revme-v3.0.0-alpha.3) - 2025-03-10
 
 ### Other
