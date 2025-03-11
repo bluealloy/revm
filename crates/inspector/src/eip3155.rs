@@ -266,11 +266,8 @@ where
             mem_size: self.mem_size as u64,
 
             op_name: OpCode::new(self.opcode).map(|i| i.as_str()),
-            error: if !interp.control.instruction_result().is_ok() {
-                Some(format!("{:?}", interp.control.instruction_result()))
-            } else {
-                None
-            },
+            error: (!interp.control.instruction_result().is_ok())
+                .then(|| format!("{:?}", interp.control.instruction_result())),
             memory: self.memory.take(),
             storage: None,
             return_stack: None,

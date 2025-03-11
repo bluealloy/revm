@@ -82,7 +82,7 @@ pub trait DatabaseRef {
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WrapDatabaseRef<T: DatabaseRef>(pub T);
 
 impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
