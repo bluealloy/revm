@@ -54,7 +54,7 @@ pub fn sdiv<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *op2 = i256_div(op1, *op2);
 }
 
-pub fn rem<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub fn mod_op<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
