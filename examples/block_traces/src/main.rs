@@ -3,10 +3,7 @@
 
 use alloy_consensus::Transaction;
 use alloy_eips::{BlockId, BlockNumberOrTag};
-use alloy_provider::{
-    network::primitives::{BlockTransactions},
-    Provider, ProviderBuilder,
-};
+use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
 use indicatif::ProgressBar;
 use revm::{
     database::{AlloyDB, CacheDB, StateBuilder},
@@ -56,9 +53,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Fetch the transaction-rich block
     let block = match client
-        .get_block_by_number(
-            BlockNumberOrTag::Number(block_number),
-        )
+        .get_block_by_number(BlockNumberOrTag::Number(block_number))
         .full()
         .await
     {

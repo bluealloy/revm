@@ -1,9 +1,6 @@
 pub use alloy_eips::BlockId;
 use alloy_provider::{
-    network::{
-        primitives::{HeaderResponse},
-        BlockResponse,
-    },
+    network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
 };
 use alloy_transport::TransportError;
