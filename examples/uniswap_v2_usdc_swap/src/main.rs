@@ -21,7 +21,7 @@ type AlloyCacheDB = CacheDB<WrapDatabaseAsync<AlloyDB<Ethereum, DynProvider>>>;
 async fn main() -> Result<()> {
     // Initialize the Alloy provider and database
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
-    let provider = ProviderBuilder::new().on_builtin(rpc_url).await?.erased();
+    let provider = ProviderBuilder::new().connect(rpc_url).await?.erased();
 
     let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
     let mut cache_db = CacheDB::new(alloy_db);

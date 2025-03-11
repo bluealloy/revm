@@ -1,9 +1,6 @@
 pub use alloy_eips::BlockId;
 use alloy_provider::{
-    network::{
-        primitives::{BlockTransactionsKind, HeaderResponse},
-        BlockResponse,
-    },
+    network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
 };
 use alloy_transport::TransportError;
@@ -91,7 +88,7 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         let block = self
             .provider
             // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
-            .get_block_by_number(number.into(), BlockTransactionsKind::Hashes)
+            .get_block_by_number(number.into())
             .await?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
         Ok(B256::new(*block.unwrap().header().hash()))

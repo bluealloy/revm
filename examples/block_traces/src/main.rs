@@ -3,10 +3,7 @@
 
 use alloy_consensus::Transaction;
 use alloy_eips::{BlockId, BlockNumberOrTag};
-use alloy_provider::{
-    network::primitives::{BlockTransactions, BlockTransactionsKind},
-    Provider, ProviderBuilder,
-};
+use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
 use indicatif::ProgressBar;
 use revm::{
     database::{AlloyDB, CacheDB, StateBuilder},
@@ -56,10 +53,8 @@ async fn main() -> anyhow::Result<()> {
 
     // Fetch the transaction-rich block
     let block = match client
-        .get_block_by_number(
-            BlockNumberOrTag::Number(block_number),
-            BlockTransactionsKind::Full,
-        )
+        .get_block_by_number(BlockNumberOrTag::Number(block_number))
+        .full()
         .await
     {
         Ok(Some(block)) => block,
@@ -118,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
 
     for tx in transactions {
         evm.modify_tx(|etx| {
-            etx.caller = tx.from;
+            etx.caller = tx.inner.signer();
             etx.gas_limit = tx.gas_limit();
             etx.gas_price = tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas());
             etx.value = tx.value();
