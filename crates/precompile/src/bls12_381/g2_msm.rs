@@ -1,12 +1,12 @@
 use super::{
     g2::{encode_g2_point, extract_g2_input},
-    msm::msm_required_gas,
     utils::extract_scalar_input,
 };
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_INPUT_ITEM_LENGTH, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE,
     G2_MSM_INPUT_LENGTH, NBITS, SCALAR_LENGTH,
 };
+use crate::bls12_381_utils::msm_required_gas;
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
