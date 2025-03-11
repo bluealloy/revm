@@ -95,7 +95,8 @@ pub trait Handler {
         let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
 
         // Create first frame action
-        let first_frame = self.create_first_frame(evm, gas_limit)?;
+        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        let first_frame = self.first_frame_init(evm, first_frame_input)?;
         let mut frame_result = match first_frame {
             ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame)?,
             ItemOrResult::Result(result) => result,
@@ -165,14 +166,17 @@ pub trait Handler {
 
     /* EXECUTION */
     #[inline]
-    fn create_first_frame(
+    fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        let ctx = evm.ctx_ref();
-        let init_frame = execution::create_init_frame(ctx.tx(), ctx.cfg().spec().into(), gas_limit);
-        self.frame_init_first(evm, init_frame)
+    ) -> Result<FrameInput, Self::Error> {
+        let ctx: &<<Self as Handler>::Evm as EvmTr>::Context = evm.ctx_ref();
+        Ok(execution::create_init_frame(
+            ctx.tx(),
+            ctx.cfg().spec().into(),
+            gas_limit,
+        ))
     }
 
     #[inline]
@@ -202,7 +206,7 @@ pub trait Handler {
     /* FRAMES */
 
     #[inline]
-    fn frame_init_first(
+    fn first_frame_init(
         &mut self,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,

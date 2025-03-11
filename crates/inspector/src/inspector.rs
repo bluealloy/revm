@@ -1,11 +1,7 @@
 use crate::{InspectorEvmTr, InspectorFrame};
 use auto_impl::auto_impl;
-use context::{
-    result::ResultAndState, Cfg, ContextTr, Database, Journal, JournalEntry, Transaction,
-};
-use handler::{
-    execution, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult,
-};
+use context::{result::ResultAndState, ContextTr, Database, Journal, JournalEntry, Transaction};
+use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter::EthInterpreter,
@@ -215,7 +211,9 @@ where
         let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
 
         // Create first frame action
-        let first_frame = self.inspect_create_first_frame(evm, gas_limit)?;
+        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        let first_frame = self.inspect_first_frame_init(evm, first_frame_input)?;
+
         let mut frame_result = match first_frame {
             ItemOrResult::Item(frame) => self.inspect_run_exec_loop(evm, frame)?,
             ItemOrResult::Result(result) => result,
@@ -225,20 +223,8 @@ where
         Ok(frame_result)
     }
 
-    /* EXECUTION */
-    fn inspect_create_first_frame(
-        &mut self,
-        evm: &mut Self::Evm,
-        gas_limit: u64,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        let ctx = evm.ctx_ref();
-        let init_frame = execution::create_init_frame(ctx.tx(), ctx.cfg().spec().into(), gas_limit);
-        self.inspect_frame_init_first(evm, init_frame)
-    }
-
     /* FRAMES */
-
-    fn inspect_frame_init_first(
+    fn inspect_first_frame_init(
         &mut self,
         evm: &mut Self::Evm,
         mut frame_input: <Self::Frame as Frame>::FrameInit,
@@ -247,7 +233,7 @@ where
         if let Some(output) = frame_start(ctx, inspector, &mut frame_input) {
             return Ok(ItemOrResult::Result(output));
         }
-        let mut ret = self.frame_init_first(evm, frame_input.clone());
+        let mut ret = self.first_frame_init(evm, frame_input.clone());
 
         // only if new frame is created call initialize_interp hook.
         if let Ok(ItemOrResult::Item(frame)) = &mut ret {
