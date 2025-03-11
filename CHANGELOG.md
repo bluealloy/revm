@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v61 tag
+date: 11.03.2025
+
+Bug fixes for op-revm.
+
+* `revm-primitives`: 16.0.0-alpha.2 -> 16.0.0-alpha.3
+* `revm-bytecode`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-state`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-database-interface`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-context-interface`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-context`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-database`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-interpreter`: 16.0.0-alpha.3 -> 16.0.0-alpha.4
+* `revm-precompile`: 17.0.0-alpha.3 -> 17.0.0-alpha.4
+* `revm-handler`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-inspector`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm`: 20.0.0-alpha.3 -> 20.0.0-alpha.4
+* `revme`: 3.0.0-alpha.3 -> 3.0.0-alpha.4
+* `op-revm`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-statetest-types`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+
 # v60 tag
 date: 10.03.2025
 
