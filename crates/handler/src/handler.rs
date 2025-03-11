@@ -32,26 +32,29 @@ impl<
 {
 }
 
-/// Main logic of Ethereum Mainnet execution.
+/// The main implementation of Ethereum Mainnet transaction execution.
 ///
-/// The starting point for execution is the `run` method. And without overriding
-/// any methods allows you to execute Ethereum mainnet transactions.
+/// The [`Handler::run`] method serves as the entry point for execution and provides
+/// out-of-the-box support for executing Ethereum mainnet transactions.
 ///
-/// If there is a need to change parts of execution logic this can be done by changing default
-/// method implementation.
+/// This trait allows EVM variants to customize execution logic by implementing
+/// their own method implementations.
 ///
-/// Handler logic is split in four parts:
-///   * Verification - loads caller account checks initial gas requirement.
-///   * Pre execution - loads and warms rest of accounts and deducts initial gas.
-///   * Execution - Executed the main frame loop. It calls [`Frame`] for sub call logic.
-///   * Post execution - Calculates the final refund, checks gas floor, reimburses caller and
-///     rewards beneficiary.
+/// The handler logic consists of four phases:
+///   * Validation - Loads caller account and validates initial gas requirements
+///   * Pre-execution - Loads and warms accounts, deducts initial gas
+///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
+///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,
+///     and rewards beneficiary
+///
+/// The [`Handler::catch_error`] method handles cleanup of intermediate state if an error
+/// occurs during execution.
 pub trait Handler {
-    /// The EVM type that contains Context, Instruction, Precompiles.
+    /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
-    /// Error that is going to be returned.
+    /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
-    /// Frame type contains data for frame execution. EthFrame currently supports Call, Create and EofCreate frames.
+    /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate frames.
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -60,22 +63,34 @@ pub trait Handler {
         FrameResult = FrameResult,
         FrameInit = FrameInput,
     >;
-    /// Halt reason type is part of the output
+    /// The halt reason type included in the output
     ///  TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTr;
 
+    /// The main entry point for transaction execution.
+    ///
+    /// This method calls [`Handler::run_without_catch_error`] and if it returns an error,
+    /// calls [`Handler::catch_error`] to handle the error and cleanup.
+    ///
+    /// The [`Handler::catch_error`] method ensures intermediate state is properly cleared.
     #[inline]
     fn run(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        // run inner handler and catch all errors to handle cleanup.
+        // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
     }
 
+    /// Called by [`Handler::run`] to execute the core handler logic.
+    ///
+    /// Executes the four phases in sequence: [Handler::validate],
+    /// [Handler::pre_execution], [Handler::execution], [Handler::post_execution].
+    ///
+    /// Returns any errors without catching them or calling [`Handler::catch_error`].
     #[inline]
     fn run_without_catch_error(
         &mut self,
@@ -87,15 +102,28 @@ pub trait Handler {
         self.post_execution(evm, exec_result, init_and_floor_gas, eip7702_refund)
     }
 
-    /// Call all validation functions
+    /// Validates the execution environment and transaction parameters.
+    ///
+    /// Calculates initial and floor gas requirements and verifies they are covered by the gas limit.
+    ///
+    /// Loads the caller account and validates transaction fields against state,
+    /// including nonce checks and balance verification for maximum gas costs.
     #[inline]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
+        let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
         self.validate_tx_against_state(evm)?;
-        self.validate_initial_tx_gas(evm)
+        Ok(initial_and_floor_gas)
     }
 
-    /// Call all Pre execution functions.
+    /// Prepares the EVM state for execution.
+    ///
+    /// Loads the beneficiary account (EIP-3651: Warm COINBASE) and all accounts/storage from the access list (EIP-2929).
+    ///
+    /// Deducts the maximum possible fee from the caller's balance.
+    ///
+    /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
+    /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.load_accounts(evm)?;
@@ -104,6 +132,9 @@ pub trait Handler {
         Ok(gas)
     }
 
+    /// Creates and executes the initial frame, then processes the execution loop.
+    ///
+    /// Always calls [Handler::last_frame_result] to handle returned gas from the call.
     #[inline]
     fn execution(
         &mut self,
@@ -124,6 +155,16 @@ pub trait Handler {
         Ok(frame_result)
     }
 
+    /// Handles the final steps of transaction execution.
+    ///
+    /// Calculates final refunds and validates the gas floor (EIP-7623) to ensure minimum gas is spent.
+    /// After EIP-7623, at least floor gas must be consumed.
+    ///
+    /// Reimburses unused gas to the caller and rewards the beneficiary with transaction fees.
+    /// The effective gas price determines rewards, with the base fee being burned.
+    ///
+    /// Finally, finalizes output by returning the journal state and clearing internal state
+    /// for the next execution.
     #[inline]
     fn post_execution(
         &self,
@@ -134,55 +175,74 @@ pub trait Handler {
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(evm, &mut exec_result, eip7702_gas_refund);
-        // Check if gas floor is met and spent at least a floor gas.
+        // Ensure gas floor is met and minimum floor gas is spent.
         self.eip7623_check_gas_floor(evm, &mut exec_result, init_and_floor_gas);
-        // Reimburse the caller
+        // Return unused gas to caller
         self.reimburse_caller(evm, &mut exec_result)?;
-        // Reward beneficiary
+        // Pay transaction fees to beneficiary
         self.reward_beneficiary(evm, &mut exec_result)?;
-        // Prepare output of transaction.
+        // Prepare transaction output
         self.output(evm, exec_result)
     }
 
     /* VALIDATION */
 
-    /// Validate env.
+    /// Validates block, transaction and configuration fields.
+    ///
+    /// Performs all validation checks that can be done without loading state.
+    /// For example, verifies transaction gas limit is below block gas limit.
     #[inline]
     fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         validation::validate_env(evm.ctx())
     }
 
-    /// Validate transactions against state.
-    #[inline]
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        validation::validate_tx_against_state(evm.ctx())
-    }
-
-    /// Validate initial gas.
+    /// Calculates initial gas costs based on transaction type and input data.
+    ///
+    /// Includes additional costs for access list and authorization list.
+    ///
+    /// Verifies the initial cost does not exceed the transaction gas limit.
     #[inline]
     fn validate_initial_tx_gas(&self, evm: &Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
         validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
     }
 
+    /// Loads caller account to access nonce and balance.
+    ///
+    /// Calculates maximum possible transaction fee and verifies caller has sufficient balance.
+    #[inline]
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        validation::validate_tx_against_state(evm.ctx())
+    }
+
     /* PRE EXECUTION */
 
+    /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
     #[inline]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::load_accounts(evm.ctx())
     }
 
+    /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
+    /// Applies valid authorizations to accounts.
+    ///
+    /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
     }
 
+    /// Deducts maximum possible fee and transfer value from caller's balance.
+    ///
+    /// Unused fees are returned to caller after execution completes.
     #[inline]
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
     }
 
     /* EXECUTION */
+
+    /// Creates initial frame input using transaction parameters, gas limit and configuration.
     #[inline]
     fn first_frame_input(
         &mut self,
@@ -197,6 +257,7 @@ pub trait Handler {
         ))
     }
 
+    /// Processes the result of the initial call and handles returned gas.
     #[inline]
     fn last_frame_result(
         &self,
@@ -223,6 +284,7 @@ pub trait Handler {
 
     /* FRAMES */
 
+    /// Initializes the first frame from the provided frame input.
     #[inline]
     fn first_frame_init(
         &mut self,
@@ -232,6 +294,9 @@ pub trait Handler {
         Self::Frame::init_first(evm, frame_input)
     }
 
+    /// Initializes a new frame from the provided frame input and previous frame.
+    ///
+    /// The previous frame contains shared memory that is passed to the new frame.
     #[inline]
     fn frame_init(
         &mut self,
@@ -242,6 +307,10 @@ pub trait Handler {
         Frame::init(frame, evm, frame_input)
     }
 
+    /// Executes a frame and returns either input for a new frame or the frame's result.
+    ///
+    /// When a result is returned, the frame is removed from the call stack. When frame input
+    /// is returned, a new frame is created and pushed onto the call stack.
     #[inline]
     fn frame_call(
         &mut self,
@@ -251,6 +320,7 @@ pub trait Handler {
         Frame::run(frame, evm)
     }
 
+    /// Processes a frame's result by inserting it into the parent frame.
     #[inline]
     fn frame_return_result(
         &mut self,
@@ -261,6 +331,13 @@ pub trait Handler {
         Self::Frame::return_result(frame, evm, result)
     }
 
+    /// Executes the main frame processing loop.
+    ///
+    /// This loop manages the frame stack, processing each frame until execution completes.
+    /// For each iteration:
+    /// 1. Calls the current frame
+    /// 2. Handles the returned frame input or result
+    /// 3. Creates new frames or propagates results as needed
     #[inline]
     fn run_exec_loop(
         &mut self,
@@ -279,12 +356,12 @@ pub trait Handler {
                             frame_stack.push(new_frame);
                             continue;
                         }
-                        // Dont pop the frame as new frame was not created.
+                        // Do not pop the frame since no new frame was created
                         ItemOrResult::Result(result) => result,
                     }
                 }
                 ItemOrResult::Result(result) => {
-                    // Pop frame that returned result
+                    // Remove the frame that returned the result
                     frame_stack.pop();
                     result
                 }
@@ -299,7 +376,9 @@ pub trait Handler {
 
     /* POST EXECUTION */
 
-    /// Calculate final refund.
+    /// Validates that the minimum gas floor requirements are satisfied.
+    ///
+    /// Ensures that at least the floor gas amount has been consumed during execution.
     #[inline]
     fn eip7623_check_gas_floor(
         &self,
@@ -310,7 +389,7 @@ pub trait Handler {
         post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
     }
 
-    /// Calculate final refund.
+    /// Calculates the final gas refund amount, including any EIP-7702 refunds.
     #[inline]
     fn refund(
         &self,
@@ -322,7 +401,7 @@ pub trait Handler {
         post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
     }
 
-    /// Reimburse the caller with balance it didn't spent.
+    /// Returns unused gas costs to the transaction sender's account.
     #[inline]
     fn reimburse_caller(
         &self,
@@ -332,7 +411,7 @@ pub trait Handler {
         post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
     }
 
-    /// Reward beneficiary with transaction rewards.
+    /// Transfers transaction fees to the block beneficiary's account.
     #[inline]
     fn reward_beneficiary(
         &self,
@@ -342,7 +421,10 @@ pub trait Handler {
         post_execution::reward_beneficiary(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
     }
 
-    /// Main return handle, takes state from journal and transforms internal result to output.
+    /// Processes the final execution output.
+    ///
+    /// This method, retrieves the final state from the journal, converts internal results to the external output format.
+    /// Internal state is cleared and EVM is prepared for the next transaction.
     #[inline]
     fn output(
         &self,
@@ -353,21 +435,22 @@ pub trait Handler {
         mem::replace(ctx.error(), Ok(()))?;
         let output = post_execution::output(ctx, result);
 
-        // clear journal
+        // Clear journal
         evm.ctx().journal().clear();
         Ok(output)
     }
 
-    /// Called every time at the end of execution. Used for clearing the journal.
+    /// Handles cleanup when an error occurs during execution.
     ///
-    /// End handle in comparison to output handle will be called every time after execution.
+    /// Ensures the journal state is properly cleared before propagating the error.
+    /// On happy path journal is cleared in [`Handler::output`] method.
     #[inline]
     fn catch_error(
         &self,
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        // do the cleanup of journal if error is caught
+        // Clean up journal state if error occurs
         evm.ctx().journal().clear();
         Err(error)
     }
