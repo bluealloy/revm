@@ -36,7 +36,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[SUB as usize] = arithmetic::sub;
     table[DIV as usize] = arithmetic::div;
     table[SDIV as usize] = arithmetic::sdiv;
-    table[MOD as usize] = arithmetic::rem;
+    table[MOD as usize] = arithmetic::mod_op;
     table[SMOD as usize] = arithmetic::smod;
     table[ADDMOD as usize] = arithmetic::addmod;
     table[MULMOD as usize] = arithmetic::mulmod;
