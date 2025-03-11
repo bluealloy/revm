@@ -34,11 +34,11 @@ impl<
 
 /// Main logic of Ethereum Mainnet execution.
 ///
-/// The starting point for execution is the `run` method. And without overriding
-/// any methods allows you to execute Ethereum mainnet transactions.
+/// The starting point for execution is the [`Handler::run`] method. And when implemented
+/// out of box gives you the ability to execute Ethereum mainnet transactions.
 ///
-/// If there is a need to change parts of execution logic this can be done by changing default
-/// method implementation.
+/// It is made as a trait so that EVM variants can override of execution logic
+/// by implementing their own method logic.
 ///
 /// Handler logic is split in four parts:
 ///   * Verification - loads caller account checks initial gas requirement.
@@ -46,6 +46,9 @@ impl<
 ///   * Execution - Executed the main frame loop. It calls [`Frame`] for sub call logic.
 ///   * Post execution - Calculates the final refund, checks gas floor, reimburses caller and
 ///     rewards beneficiary.
+///
+/// [`Handler::catch_error`] method is used for cleanup of intermediate state if there is error
+/// during execution.
 pub trait Handler {
     /// The EVM type that contains Context, Instruction, Precompiles.
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
@@ -66,8 +69,8 @@ pub trait Handler {
 
     /// Main entry point for execution.
     ///
-    /// This method will call [`Handler::run_without_catch_error`] and if it returns an error.
-    /// It will call [`Handler::catch_error`] to handle the error.
+    /// This method will call [`Handler::run_without_catch_error`] and if it returns an error
+    /// it will call [`Handler::catch_error`] to handle the error.
     ///
     /// Catching error method clears the intermediate state.
     #[inline]
@@ -100,15 +103,29 @@ pub trait Handler {
         self.post_execution(evm, exec_result, init_and_floor_gas, eip7702_refund)
     }
 
-    /// Call all validation functions
+    /// Call all validation functions that validated the environment (tx, block, config).
+    ///
+    /// Next step is calculating initial and floor gas and checking if it is covered by gas_limit
+    ///
+    /// Last step loads caller account and validated transaction fields agains state.
+    /// Nonce is checked and if there is balance to cover max amount of gas that can be spend.
     #[inline]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
+        let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
         self.validate_tx_against_state(evm)?;
-        self.validate_initial_tx_gas(evm)
+        Ok(initial_and_floor_gas)
     }
 
-    /// Call all Pre execution functions.
+    /// This method prepares the evm for execution.
+    ///
+    /// It load beneficiary account (EIP-3651: Warm COINBASE) and all accounts and storages from access list.
+    /// (EIP-2929)
+    ///
+    /// Deducts the caller balance with max amount of fee that it can spend
+    ///
+    /// If transaction is EIP-7702 type, it will apply the authorization list and delegate successfull authorizations.
+    /// It returns the amount of gas refund from EIP-7702. Auhorizations are applied before execution.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.load_accounts(evm)?;
@@ -117,6 +134,9 @@ pub trait Handler {
         Ok(gas)
     }
 
+    /// Execution creates first frame input and initializes first frame and calls the exec loop.
+    ///
+    /// In the end it will always call [Handler::last_frame_result] to handle returned gas from the call.
     #[inline]
     fn execution(
         &mut self,
@@ -137,6 +157,16 @@ pub trait Handler {
         Ok(frame_result)
     }
 
+    /// Post execution handles final steps of transaction execution.
+    ///
+    /// It calculates the final refund, checks gas floor (EIP-7623) and decides to use floor gas or returned call gas.
+    /// After EIP-7623 at least floor gas should be spend.
+    ///
+    /// It reimburses the caller with the balance that was not spend and rewards the beneficiary with transaction rewards.
+    /// Transaction rewards is calculated as a effective gas price, and base fee amount is thrown away (burned).
+    ///
+    /// The last step in execution is output finalization, where journal state is returned as result of execution.
+    /// And inner state is cleared and prepared for next execution.
     #[inline]
     fn post_execution(
         &self,
@@ -159,43 +189,62 @@ pub trait Handler {
 
     /* VALIDATION */
 
-    /// Validate env.
+    /// Validate block, transaction and config fields.
+    ///
+    /// Every check that can be done without loading/touching the state
+    /// is done here. We check obvious things as if tx gas limit is less than block gas limit.
     #[inline]
     fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         validation::validate_env(evm.ctx())
     }
 
-    /// Validate transactions against state.
-    #[inline]
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        validation::validate_tx_against_state(evm.ctx())
-    }
-
-    /// Validate initial gas.
+    /// Initial gas depends on data input type of transaction and its kind, is it create or a call.
+    ///
+    /// Additional initial cost depends on access list and authorization list.
+    ///
+    /// The main check is done if initial cost is less them transaction gas limit.
     #[inline]
     fn validate_initial_tx_gas(&self, evm: &Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
         validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
     }
 
+    /// In this method caller is loaded and we get access to its nonce and balance.
+    ///
+    /// It calculates maximum fee that this tx can spend and checks if caller can pay it.
+    #[inline]
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        validation::validate_tx_against_state(evm.ctx())
+    }
+
     /* PRE EXECUTION */
 
+    /// Loads access list and beneficiary account. And marks them as warm inside [`context::Journal`].
     #[inline]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::load_accounts(evm.ctx())
     }
 
+    /// Iterates over authorization list checks if authority signature, nonce and chain ids are correct
+    /// and applies authorization to the accounts.
+    ///
+    /// Returns the amount of gas refund from EIP-7702.
     #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
     }
 
+    /// Deducts the caller balance with max amount of fee that it can spend and the balance he is sending.
+    ///
+    /// After execution unspent balance is returned to the caller.
     #[inline]
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
     }
 
     /* EXECUTION */
+
+    /// Creates first frame input from transaction, gas limit and config.
     #[inline]
     fn first_frame_input(
         &mut self,
@@ -210,6 +259,7 @@ pub trait Handler {
         ))
     }
 
+    /// Received the output of the first call and handles returned gas.
     #[inline]
     fn last_frame_result(
         &self,
