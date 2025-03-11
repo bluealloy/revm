@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.2...op-revm-v1.0.0-alpha.3) - 2025-03-11
+
+### Fixed
+
+- fix(op) enable proper precompiles p256 ([#2186](https://github.com/bluealloy/revm/pull/2186))
+- *(op)* fix inspection call ([#2184](https://github.com/bluealloy/revm/pull/2184))
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+### Other
+
+- remove CTX phantomdata from precompile providers ([#2178](https://github.com/bluealloy/revm/pull/2178))
+
 ## [1.0.0-alpha.2](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.1...op-revm-v1.0.0-alpha.2) - 2025-03-10
 
 ### Other
