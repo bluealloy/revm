@@ -65,7 +65,7 @@ pub fn fjord() -> &'static Precompiles {
 pub fn granite() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let mut precompiles = Precompiles::cancun().clone();
+        let mut precompiles = fjord().clone();
         // Restrict bn256Pairing input size
         precompiles.extend([bn128_pair::GRANITE]);
         Box::new(precompiles)
