@@ -56,7 +56,7 @@ pub fn fjord() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // EIP-7212: secp256r1 P256verify
-        precompiles.extend([bn128_pair::GRANITE]);
+        precompiles.extend([secp256r1::P256VERIFY]);
         Box::new(precompiles)
     })
 }
@@ -67,7 +67,7 @@ pub fn granite() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // Restrict bn256Pairing input size
-        precompiles.extend([secp256r1::P256VERIFY]);
+        precompiles.extend([bn128_pair::GRANITE]);
         Box::new(precompiles)
     })
 }
