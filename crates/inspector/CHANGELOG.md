@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-inspector-v1.0.0-alpha.3...revm-inspector-v1.0.0-alpha.4) - 2025-03-11
+
+### Added
+
+- decouple first_frame_input from inspector ([#2180](https://github.com/bluealloy/revm/pull/2180))
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+### Other
+
+- remove CTX phantomdata from precompile providers ([#2178](https://github.com/bluealloy/revm/pull/2178))
+
 ## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-inspector-v1.0.0-alpha.2...revm-inspector-v1.0.0-alpha.3) - 2025-03-10
 
 ### Other
