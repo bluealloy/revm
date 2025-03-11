@@ -64,6 +64,12 @@ pub trait Handler {
     ///  TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTr;
 
+    /// Main entry point for execution.
+    ///
+    /// This method will call [`Handler::run_without_catch_error`] and if it returns an error.
+    /// It will call [`Handler::catch_error`] to handle the error.
+    ///
+    /// Catching error method clears the intermediate state.
     #[inline]
     fn run(
         &mut self,
@@ -76,6 +82,13 @@ pub trait Handler {
         }
     }
 
+    /// Called by [`Handler::run`] to execute the handler logic.
+    ///
+    /// This method will call the four parts of execution. [Handler::validate],
+    /// [Handler::pre_execution], [Handler::execution], [Handler::post_execution].
+    ///
+    /// If any of the methods return an error the error will be returned, this method does not
+    /// catch or call [`Handler::catch_error`] method.
     #[inline]
     fn run_without_catch_error(
         &mut self,
