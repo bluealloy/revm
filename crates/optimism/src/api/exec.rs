@@ -9,9 +9,7 @@ use revm::{
         Cfg, ContextTr, Database, JournalTr,
     },
     handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
-    inspector::{
-        InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
-    },
+    inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
@@ -92,7 +90,7 @@ where
 impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit> + InspectorEvmTr,
+    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
