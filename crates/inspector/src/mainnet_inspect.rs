@@ -27,7 +27,7 @@ where
 impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -37,7 +37,7 @@ where
         self.data.inspector = inspector;
     }
 
-    fn inspect_previous(&mut self) -> Self::Output {
+    fn inspect_replay(&mut self) -> Self::Output {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
             _phantom: core::marker::PhantomData,
         };
@@ -55,7 +55,7 @@ where
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
-        self.inspect_previous().map(|r| {
+        self.inspect_replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result
         })

@@ -1,5 +1,5 @@
 use crate::{inspect_instructions, Inspector, JournalExt};
-use context::{setters::ContextSetters, ContextTr, Evm};
+use context::{ContextTr, Evm};
 use handler::{
     instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame, FrameInitOrResult,
     PrecompileProvider,
@@ -28,7 +28,7 @@ pub trait InspectorEvmTr: EvmTr {
 
 impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTr<Journal: JournalExt> + ContextSetters,
+    CTX: ContextTr<Journal: JournalExt>,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,

@@ -43,20 +43,20 @@ pub trait EvmTr {
 }
 
 /// Execute EVM transactions. Main trait for transaction execution.
-pub trait ExecuteEvm: ContextSetters {
+pub trait ExecuteEvm {
     /// Output of transaction execution.
     type Output;
 
     /// Transact the transaction that is set in the context.
     fn replay(&mut self) -> Self::Output;
+}
 
-    /// Transact the given transaction.
-    ///
-    /// Internally sets transaction in context and use `replay` to execute the transaction.
-    fn transact(&mut self, tx: Self::Tx) -> Self::Output {
-        self.set_tx(tx);
-        self.replay()
-    }
+/// Transact the given transaction.
+///
+/// Internally sets transaction in context and uses [`ExecuteEvm::replay`] to execute the transaction.
+pub fn transact<EVM: ContextSetters + ExecuteEvm>(evm: &mut EVM, tx: EVM::Tx) -> EVM::Output {
+    evm.set_tx(tx);
+    evm.replay()
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -66,12 +66,15 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
     /// Transact the transaction and commit to the state.
     fn replay_commit(&mut self) -> Self::CommitOutput;
+}
 
-    /// Transact the transaction and commit to the state.
-    fn transact_commit(&mut self, tx: Self::Tx) -> Self::CommitOutput {
-        self.set_tx(tx);
-        self.replay_commit()
-    }
+/// Transact the transaction and commit to the state.
+pub fn transact_commit<EVM: ContextSetters + ExecuteCommitEvm>(
+    evm: &mut EVM,
+    tx: EVM::Tx,
+) -> EVM::CommitOutput {
+    evm.set_tx(tx);
+    evm.replay_commit()
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
@@ -122,7 +125,7 @@ where
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -139,8 +142,7 @@ where
 impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
