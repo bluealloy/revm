@@ -32,9 +32,26 @@ impl<
 {
 }
 
+/// Main logic of Ethereum Mainnet execution.
+///
+/// The starting point for execution is the `run` method. And without overriding
+/// any methods allows you to execute Ethereum mainnet transactions.
+///
+/// If there is a need to change parts of execution logic this can be done by changing default
+/// method implementation.
+///
+/// Handler logic is split in four parts:
+///   * Verification - loads caller account checks initial gas requirement.
+///   * Pre execution - loads and warms rest of accounts and deducts initial gas.
+///   * Execution - Executed the main frame loop. It calls [`Frame`] for sub call logic.
+///   * Post execution - Calculates the final refund, checks gas floor, reimburses caller and
+///     rewards beneficiary.
 pub trait Handler {
+    /// The EVM type that contains Context, Instruction, Precompiles.
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
+    /// Error that is going to be returned.
     type Error: EvmTrError<Self::Evm>;
+    /// Frame type contains data for frame execution. EthFrame currently supports Call, Create and EofCreate frames.
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -43,7 +60,8 @@ pub trait Handler {
         FrameResult = FrameResult,
         FrameInit = FrameInput,
     >;
-    // TODO `HaltReason` should be part of the output.
+    /// Halt reason type is part of the output
+    ///  TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTr;
 
     #[inline]

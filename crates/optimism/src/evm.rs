@@ -6,9 +6,11 @@ use revm::{
         instructions::{EthInstructions, InstructionProvider},
         EvmTr,
     },
+    inspector::{InspectorEvmTr, JournalExt},
     interpreter::{
         interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
     },
+    Inspector,
 };
 
 pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrecompiles>(
@@ -22,6 +24,36 @@ impl<CTX: Host, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpP
             instruction: EthInstructions::new_mainnet(),
             precompiles: OpPrecompiles::default(),
         })
+    }
+}
+
+impl<CTX: ContextSetters, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
+where
+    CTX: ContextTr<Journal: JournalExt>,
+    I: InstructionProvider<
+        Context = CTX,
+        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
+    >,
+    INSP: Inspector<CTX, I::InterpreterTypes>,
+{
+    type Inspector = INSP;
+
+    fn inspector(&mut self) -> &mut Self::Inspector {
+        &mut self.0.data.inspector
+    }
+
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
+        (&mut self.0.data.ctx, &mut self.0.data.inspector)
+    }
+
+    fn run_inspect_interpreter(
+        &mut self,
+        interpreter: &mut Interpreter<
+            <Self::Instructions as InstructionProvider>::InterpreterTypes,
+        >,
+    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
+    {
+        self.0.run_inspect_interpreter(interpreter)
     }
 }
 

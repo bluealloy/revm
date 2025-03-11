@@ -9,7 +9,9 @@ use revm::{
         Cfg, ContextTr, Database, JournalTr,
     },
     handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
-    inspector::{InspectCommitEvm, InspectEvm, Inspector, JournalExt},
+    inspector::{
+        InspectCommitEvm, InspectEvm, Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
+    },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
@@ -83,14 +85,14 @@ where
 
     fn inspect_previous(&mut self) -> Self::Output {
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
-        h.run(self)
+        h.inspect_run(self)
     }
 }
 
 impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit>,
+    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit> + InspectorEvmTr,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
