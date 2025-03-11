@@ -14,6 +14,7 @@ use revm::{
         Cfg,
     },
     database_interface::EmptyDB,
+    precompile::PrecompileError,
     primitives::{
         eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Bytes, TxKind, B256,
     },
@@ -138,7 +139,10 @@ fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<Infallible, PrecompileError, InvalidTransaction>,
+    >,
     db: &mut State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,

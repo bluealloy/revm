@@ -1,7 +1,10 @@
 use core::fmt::Display;
-use revm::context_interface::{
-    result::{EVMError, InvalidTransaction},
-    transaction::TransactionError,
+use revm::{
+    context_interface::{
+        result::{EVMError, InvalidTransaction},
+        transaction::TransactionError,
+    },
+    precompile::PrecompileError,
 };
 
 /// Optimism transaction validation error.
@@ -71,7 +74,7 @@ impl From<InvalidTransaction> for OpTransactionError {
     }
 }
 
-impl<DBError> From<OpTransactionError> for EVMError<DBError, OpTransactionError> {
+impl<DBError> From<OpTransactionError> for EVMError<DBError, PrecompileError, OpTransactionError> {
     fn from(value: OpTransactionError) -> Self {
         Self::Transaction(value)
     }

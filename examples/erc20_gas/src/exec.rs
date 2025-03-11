@@ -11,11 +11,18 @@ use revm::{
         PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    precompile::PrecompileError,
 };
+
+pub type EVMErrorForContext<CTX, PRECOMPILE, TransactionError> =
+    EVMError<ContextTrDbError<CTX>, PRECOMPILE, TransactionError>;
 
 pub fn transact_erc20evm<EVM>(
     evm: &mut EVM,
-) -> Result<ResultAndState<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<
+    ResultAndState<HaltReason>,
+    EVMErrorForContext<EVM::Context, PrecompileError, InvalidTransaction>,
+>
 where
     EVM: EvmTr<
         Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
@@ -31,7 +38,10 @@ where
 
 pub fn transact_erc20evm_commit<EVM>(
     evm: &mut EVM,
-) -> Result<ExecutionResult<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<
+    ExecutionResult<HaltReason>,
+    EVMErrorForContext<EVM::Context, PrecompileError, InvalidTransaction>,
+>
 where
     EVM: EvmTr<
         Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,

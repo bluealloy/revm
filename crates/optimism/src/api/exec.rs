@@ -11,6 +11,7 @@ use revm::{
     handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    precompile::PrecompileError,
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
@@ -36,7 +37,8 @@ impl<T> OpContextTr for T where
 }
 
 /// Type alias for the error type of the OpEvm.
-type OpError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, OpTransactionError>;
+type OpError<CTX> =
+    EVMError<<<CTX as ContextTr>::Db as Database>::Error, PrecompileError, OpTransactionError>;
 
 impl<CTX, INSP, PRECOMPILE> ExecuteEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>

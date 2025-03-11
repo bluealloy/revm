@@ -1,7 +1,7 @@
 use context_interface::result::EVMError;
 use core::fmt;
 use primitives::Bytes;
-use std::string::{String, ToString};
+use std::string::String;
 
 /// A precompile operation result type
 ///
@@ -66,9 +66,9 @@ impl PrecompileError {
     }
 }
 
-impl<DB, TXERROR> From<PrecompileError> for EVMError<DB, TXERROR> {
+impl<DB, TXERROR> From<PrecompileError> for EVMError<DB, PrecompileError, TXERROR> {
     fn from(value: PrecompileError) -> Self {
-        Self::Precompile(value.to_string())
+        Self::Precompile(value)
     }
 }
 

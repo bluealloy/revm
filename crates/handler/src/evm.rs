@@ -13,6 +13,7 @@ use interpreter::{
     interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterResult,
     InterpreterTypes,
 };
+use precompile::PrecompileError;
 
 /// Main trait that combines the context, instructions and precompiles and allows execution of interpreter.
 #[auto_impl(&mut, Box)]
@@ -127,7 +128,7 @@ where
 {
     type Output = Result<
         ResultAndState<HaltReason>,
-        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
+        EVMError<<CTX::Db as Database>::Error, PrecompileError, InvalidTransaction>,
     >;
 
     fn replay(&mut self) -> Self::Output {
@@ -145,7 +146,7 @@ where
 {
     type CommitOutput = Result<
         ExecutionResult<HaltReason>,
-        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
+        EVMError<<CTX::Db as Database>::Error, PrecompileError, InvalidTransaction>,
     >;
 
     fn replay_commit(&mut self) -> Self::CommitOutput {

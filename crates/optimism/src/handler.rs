@@ -19,8 +19,7 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
-    primitives::hardfork::SpecId,
-    primitives::{HashMap, U256},
+    primitives::{hardfork::SpecId, HashMap, U256},
     state::Account,
     Database,
 };
@@ -49,7 +48,7 @@ pub trait IsTxError {
     fn is_tx_error(&self) -> bool;
 }
 
-impl<DB, TX> IsTxError for EVMError<DB, TX> {
+impl<DB, PRECOMPILE, TX> IsTxError for EVMError<DB, PRECOMPILE, TX> {
     fn is_tx_error(&self) -> bool {
         matches!(self, EVMError::Transaction(_))
     }
@@ -479,6 +478,7 @@ mod tests {
         database_interface::EmptyDB,
         handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
+        precompile::PrecompileError,
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
     };
@@ -501,7 +501,11 @@ mod tests {
             0..0,
         ));
 
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         handler
             .last_frame_result(&mut evm, &mut exec_result)
@@ -609,7 +613,11 @@ mod tests {
 
         let mut evm = ctx.build_op();
 
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
         handler.deduct_caller(&mut evm).unwrap();
 
         // Check the account balance is updated.
@@ -647,7 +655,11 @@ mod tests {
 
         let mut evm = ctx.build_op();
 
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
         handler.deduct_caller(&mut evm).unwrap();
 
         // Check the account balance is updated.
@@ -682,7 +694,11 @@ mod tests {
             });
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         // l1block cost is 1048 fee.
         handler.deduct_caller(&mut evm).unwrap();
@@ -717,7 +733,11 @@ mod tests {
             });
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
         // 10_000_000 * 10 / 1_000_000 + 50 = 150
@@ -754,7 +774,11 @@ mod tests {
 
         // l1block cost is 1048 fee.
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         // l1block cost is 1048 fee.
         assert_eq!(
@@ -780,7 +804,11 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         assert_eq!(
             handler.validate_env(&mut evm),
@@ -806,7 +834,11 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         assert!(handler.validate_env(&mut evm).is_ok());
     }
@@ -822,7 +854,11 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler = OpHandler::<
+            _,
+            EVMError<_, PrecompileError, OpTransactionError>,
+            EthFrame<_, _, _>,
+        >::new();
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(handler.validate_env(&mut evm).is_ok());
