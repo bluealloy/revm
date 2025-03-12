@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.3...op-revm-v1.0.0-alpha.4) - 2025-03-12
+
+### Added
+
+- Add tx/block to EvmExecution trait ([#2195](https://github.com/bluealloy/revm/pull/2195))
+- rename inspect_previous to inspect_replay ([#2194](https://github.com/bluealloy/revm/pull/2194))
+
+### Other
+
+- add debug to precompiles type ([#2193](https://github.com/bluealloy/revm/pull/2193))
+
 ## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.2...op-revm-v1.0.0-alpha.3) - 2025-03-11
 
 ### Fixed
