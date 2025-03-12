@@ -43,7 +43,7 @@ impl OpPrecompiles {
     }
 }
 
-/// Returns precompiles for Fjor spec.
+/// Returns precompiles for Fjord spec.
 pub fn fjord() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
