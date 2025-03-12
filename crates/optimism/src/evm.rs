@@ -101,14 +101,17 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
+        precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE,
         transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
         OpSpecId,
     };
     use revm::{
         bytecode::opcode,
-        context::result::ExecutionResult,
+        context::result::{ExecutionResult, OutOfGasError},
+        context_interface::result::HaltReason,
         database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        primitives::{Address, TxKind, U256},
+        precompile::bn128,
+        primitives::{hex::FromHex, Address, Bytes, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
     };
@@ -169,5 +172,101 @@ mod tests {
             output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
             Some(U256::from(100) + BENCH_CALLER_BALANCE)
         );
+    }
+
+    #[test]
+    fn test_tx_call_p256verify() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(
+                    Address::from_hex("0000000000000000000000000000000000000100").unwrap(),
+                );
+                tx.base.gas_limit = 24_450; // P256VERIFY base is 3450
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert successful call to P256VERIFY
+        assert!(output.result.is_success());
+    }
+
+    #[test]
+    fn test_halted_tx_call_p256verify() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(
+                    Address::from_hex("0000000000000000000000000000000000000100").unwrap(),
+                );
+                tx.base.gas_limit = 24_449; // 1 gas low
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas for P256VERIFY
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn test_halted_tx_call_bn128_pair_fjord() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
+                tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
+                tx.base.gas_limit = 19_969_000; // 19_969_000 gas needed for input len
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas for
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn test_halted_tx_call_bn128_pair_granite() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
+                tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
+                tx.base.gas_limit = 19_969_000; // 19_969_000 gas needed for input len
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::GRANITE);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert bails early because input size too big
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
     }
 }
