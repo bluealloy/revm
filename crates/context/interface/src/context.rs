@@ -2,6 +2,7 @@ pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
 use primitives::U256;
+use std::string::String;
 
 #[auto_impl(&mut, Box)]
 pub trait ContextTr {
