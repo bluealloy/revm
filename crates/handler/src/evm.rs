@@ -5,8 +5,7 @@ use crate::{
 use auto_impl::auto_impl;
 use context::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
-    setters::ContextSetters,
-    ContextTr, Database, Evm, JournalOutput, JournalTr,
+    Block, ContextSetters, ContextTr, Database, Evm, JournalOutput, JournalTr, Transaction,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{
@@ -43,9 +42,19 @@ pub trait EvmTr {
 }
 
 /// Execute EVM transactions. Main trait for transaction execution.
-pub trait ExecuteEvm: ContextSetters {
+pub trait ExecuteEvm {
     /// Output of transaction execution.
     type Output;
+    /// Transaction type.
+    type Tx: Transaction;
+    /// Block type.
+    type Block: Block;
+
+    /// Set the transaction.
+    fn set_tx(&mut self, tx: Self::Tx);
+
+    /// Set the block.
+    fn set_block(&mut self, block: Self::Block);
 
     /// Transact the transaction that is set in the context.
     fn replay(&mut self) -> Self::Output;
@@ -122,7 +131,7 @@ where
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>> + ContextSetters,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -130,17 +139,29 @@ where
         EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
     >;
 
+    type Tx = <CTX as ContextTr>::Tx;
+
+    type Block = <CTX as ContextTr>::Block;
+
     fn replay(&mut self) -> Self::Output {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self)
+    }
+
+    fn set_tx(&mut self, tx: Self::Tx) {
+        self.data.ctx.set_tx(tx);
+    }
+
+    fn set_block(&mut self, block: Self::Block) {
+        self.data.ctx.set_block(block);
     }
 }
 
 impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>
+        + ContextSetters,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<

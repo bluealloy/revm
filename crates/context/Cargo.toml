@@ -32,7 +32,6 @@ bytecode.workspace = true
 # misc
 derive-where.workspace = true
 cfg-if.workspace = true
-auto_impl.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -49,7 +48,7 @@ std = [
 	"database/std",
 	"database-interface/std",
 	"primitives/std",
-	"state/std"
+	"state/std",
 ]
 serde = [
 	"dep:serde",
@@ -58,14 +57,14 @@ serde = [
 	"context-interface/serde",
 	"bytecode/serde",
 	"database/serde",
-	"database-interface/serde"
+	"database-interface/serde",
 ]
 dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_no_base_fee",
+	"memory_limit",
+	"optional_balance_check",
+	"optional_block_gas_limit",
+	"optional_eip3607",
+	"optional_no_base_fee",
 ]
 memory_limit = []
 optional_balance_check = []
