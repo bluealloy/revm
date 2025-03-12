@@ -213,7 +213,7 @@ mod tests {
                 tx.base.kind = TxKind::Call(
                     Address::from_hex("0000000000000000000000000000000000000100").unwrap(),
                 );
-                tx.base.gas_limit = 24_449; // P256VERIFY base is 3450
+                tx.base.gas_limit = 24_449; // 1 gas low
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
 
