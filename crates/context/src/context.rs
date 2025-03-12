@@ -28,7 +28,7 @@ pub struct Context<
     /// Inner context.
     pub chain: CHAIN,
     /// Error that happened during execution.
-    pub error: Result<(), ContextError<<DB as Database>::Error>>,
+    pub error: Result<(), ContextError<DB::Error>>,
 }
 
 impl<
