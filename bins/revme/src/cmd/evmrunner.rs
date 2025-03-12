@@ -104,7 +104,7 @@ impl Cmd {
         }
 
         let out = if self.trace {
-            evm.inspect_previous().map_err(|_| Errors::EVMError)?
+            evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.replay().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

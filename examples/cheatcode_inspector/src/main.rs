@@ -484,7 +484,7 @@ where
     //     InspectorT,
     //     Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
     // >::new(context, inspector);
-    let result = evm.inspect_previous(inspector)?;
+    let result = evm.inspect_replay(inspector)?;
     //let result = inspect_main(&mut inspector_context)?;
 
     // Persist the changes to the original backend.
@@ -525,7 +525,7 @@ fn main() -> anyhow::Result<()> {
     }
     .build_mainnet();
 
-    evm.inspect_previous(&mut inspector)?;
+    evm.inspect_replay(&mut inspector)?;
 
     // Sanity check
     assert_eq!(inspector.call_count, 2);
