@@ -2314,6 +2314,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inspector_with_lifetime"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives",
+ "anyhow",
+ "revm",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
