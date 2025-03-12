@@ -201,7 +201,7 @@ mod tests {
 
         let output = evm.replay().unwrap();
 
-        // assert out of gas for P256VERIFY
+        // assert successful call to P256VERIFY
         assert!(output.result.is_success());
     }
 
