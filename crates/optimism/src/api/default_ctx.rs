@@ -41,6 +41,6 @@ mod test {
         // execute
         let _ = evm.replay();
         // inspect
-        let _ = evm.inspect_previous();
+        let _ = evm.inspect_replay();
     }
 }

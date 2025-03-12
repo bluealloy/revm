@@ -6,26 +6,29 @@ pub trait InspectEvm: ExecuteEvm {
 
     fn set_inspector(&mut self, inspector: Self::Inspector);
 
-    fn inspect_previous(&mut self) -> Self::Output;
+    fn inspect_replay(&mut self) -> Self::Output;
 
-    fn inspect_previous_with_inspector(&mut self, inspector: Self::Inspector) -> Self::Output {
+    fn inspect_with_inspector(&mut self, inspector: Self::Inspector) -> Self::Output {
         self.set_inspector(inspector);
-        self.inspect_previous()
+        self.inspect_replay()
     }
+}
 
-    fn inspect_previous_with_tx(&mut self, tx: <Self as ContextSetters>::Tx) -> Self::Output {
-        self.set_tx(tx);
-        self.inspect_previous()
-    }
+pub fn inspect_with_tx<EVM: ContextSetters + InspectEvm>(
+    evm: &mut EVM,
+    tx: EVM::Tx,
+) -> EVM::Output {
+    evm.set_tx(tx);
+    evm.inspect_replay()
+}
 
-    fn inspect(
-        &mut self,
-        tx: <Self as ContextSetters>::Tx,
-        inspector: Self::Inspector,
-    ) -> Self::Output {
-        self.set_tx(tx);
-        self.inspect_previous_with_inspector(inspector)
-    }
+pub fn inspect<EVM: ContextSetters + InspectEvm>(
+    evm: &mut EVM,
+    tx: EVM::Tx,
+    inspector: EVM::Inspector,
+) -> EVM::Output {
+    evm.set_tx(tx);
+    evm.inspect_with_inspector(inspector)
 }
 
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
@@ -38,13 +41,13 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
         self.set_inspector(inspector);
         self.inspect_commit_previous()
     }
+}
 
-    fn inspect_commit(
-        &mut self,
-        tx: <Self as ContextSetters>::Tx,
-        inspector: Self::Inspector,
-    ) -> Self::CommitOutput {
-        self.set_tx(tx);
-        self.inspect_commit_previous_with_inspector(inspector)
-    }
+pub fn inspect_commit<EVM: ContextSetters + InspectCommitEvm>(
+    evm: &mut EVM,
+    tx: EVM::Tx,
+    inspector: EVM::Inspector,
+) -> EVM::CommitOutput {
+    evm.set_tx(tx);
+    evm.inspect_commit_previous_with_inspector(inspector)
 }

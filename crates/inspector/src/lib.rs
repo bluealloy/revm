@@ -21,7 +21,7 @@ pub mod inspectors {
     pub use super::gas::GasInspector;
 }
 
-pub use inspect::{InspectCommitEvm, InspectEvm};
+pub use inspect::{inspect, inspect_commit, inspect_with_tx, InspectCommitEvm, InspectEvm};
 pub use inspector::*;
 pub use noop::NoOpInspector;
 pub use traits::*;
