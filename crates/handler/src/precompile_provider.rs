@@ -29,6 +29,8 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     fn contains(&self, address: &Address) -> bool;
 }
 
+/// The [`PrecompileProvider`] for ethereum precompiles.
+#[derive(Debug)]
 pub struct EthPrecompiles {
     pub precompiles: &'static Precompiles,
 }

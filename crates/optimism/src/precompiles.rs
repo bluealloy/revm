@@ -14,17 +14,10 @@ use revm::{
 use std::boxed::Box;
 
 // Optimism precompile provider
+#[derive(Debug, Clone)]
 pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
-}
-
-impl Clone for OpPrecompiles {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
 }
 
 impl OpPrecompiles {
