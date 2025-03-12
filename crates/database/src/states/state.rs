@@ -805,4 +805,78 @@ mod tests {
             )])])
         )
     }
+
+    // This test demonstrates a corner case where `State` produces a wrong `BundleAccount`
+    // when it is used across blocks.
+    #[test]
+    fn multiple_blocks() {
+        // We're going to create a new contract and demonstrates how a `State` produces
+        // a wrong `BundleAccount` that serves its slots wrong.
+        let contract_address = Address::from_slice(&[0x1; 20]);
+        let contract_info = AccountInfo::from_bytecode(Bytecode::default());
+
+        // Initialize a "standard" `State`.
+        let mut state = State::builder().with_bundle_update().build();
+        state.load_cache_account(contract_address).unwrap();
+
+        // Block 1: Deploy the contract with an initial slot.
+        let first_block_slot_key = U256::from(1);
+        let first_block_slot_value = state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(1));
+        let contract_account = Account {
+            info: contract_info.clone(),
+            storage: state::EvmStorage::from_iter([(
+                first_block_slot_key,
+                first_block_slot_value.clone(),
+            )]),
+            status: state::AccountStatus::Created | state::AccountStatus::Touched,
+        };
+        // We use `commit` to stay tight to the public API typical users use.
+        state.commit(HashMap::from_iter([(contract_address, contract_account)]));
+        // End the first block.
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        let contract_bundle_account = bundle.state.get(&contract_address).unwrap();
+        // Expected: The output `BundleAccount` only has the first slot.
+        assert!(contract_bundle_account.storage.len() == 1);
+        assert_eq!(
+            contract_bundle_account.storage_slot(first_block_slot_key),
+            Some(first_block_slot_value.present_value)
+        );
+        // End of block 1.
+
+        // Block 2: Write a new slot to the contract
+        let second_block_slot_key = U256::from(2);
+        let second_block_slot_value = state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(2));
+        let contract_account = Account {
+            info: contract_info,
+            storage: state::EvmStorage::from_iter([(
+                second_block_slot_key,
+                second_block_slot_value.clone(),
+            )]),
+            status: state::AccountStatus::Loaded | state::AccountStatus::Touched,
+        };
+        state.commit(HashMap::from_iter([(contract_address, contract_account)]));
+        // End the second block
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        let contract_bundle_account = bundle.state.get(&contract_address).unwrap();
+        // Expected: The `BundleAccount` only has the new slot
+        assert!(contract_bundle_account.storage.len() == 1);
+        assert_eq!(
+            contract_bundle_account.storage_slot(second_block_slot_key),
+            Some(second_block_slot_value.present_value)
+        );
+        // Unexpected: The `BundleAccount` is `InMemoryChange` even when it doesn't have the first slot.
+        assert_ne!(
+            contract_bundle_account.status,
+            AccountStatus::InMemoryChange
+        );
+        // Unexpected: The `BundleAccount` claims that the first slot is `Some(ZERO)`. It should instead
+        // return `None` to signal that it doesn't know about the slot and the user should query it from
+        // the underlying database.
+        assert_eq!(
+            contract_bundle_account.storage_slot(first_block_slot_key),
+            None
+        );
+    }
 }
