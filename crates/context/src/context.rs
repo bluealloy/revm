@@ -1,9 +1,9 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
-use context_interface::context::ContextError;
-use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
-use database_interface::DatabaseRef;
-use database_interface::WrapDatabaseRef;
-use database_interface::{Database, EmptyDB};
+use context_interface::{
+    context::{ContextError, ContextSetters},
+    Block, Cfg, ContextTr, JournalTr, Transaction,
+};
+use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
 
@@ -88,6 +88,24 @@ impl<
     }
 
     // Keep Default Implementation for Instructions Host Interface
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        DB: Database,
+        CFG: Cfg,
+        JOURNAL: JournalTr<Database = DB>,
+        CHAIN,
+    > ContextSetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+    fn set_tx(&mut self, tx: Self::Tx) {
+        self.tx = tx;
+    }
+
+    fn set_block(&mut self, block: Self::Block) {
+        self.block = block;
+    }
 }
 
 impl<

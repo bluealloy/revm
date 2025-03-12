@@ -54,7 +54,7 @@ std = [
 	"interpreter/std",
 	"precompile/std",
 	"primitives/std",
-	"state/std"
+	"state/std",
 ]
 serde = [
 	"dep:serde",
@@ -64,6 +64,6 @@ serde = [
 	"handler/serde",
 	"interpreter/serde",
 	"primitives/serde",
-	"state/serde"
+	"state/serde",
 ]
 serde-json = ["serde", "dep:serde_json"]

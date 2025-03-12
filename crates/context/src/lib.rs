@@ -17,7 +17,6 @@ pub mod tx;
 pub use block::BlockEnv;
 pub use cfg::{Cfg, CfgEnv};
 pub use context::*;
+pub use evm::{Evm, EvmData};
 pub use journaled_state::*;
 pub use tx::TxEnv;
-pub mod setters;
-pub use evm::{Evm, EvmData};

@@ -3,7 +3,7 @@ use crate::{
     OpTransactionError,
 };
 use revm::{
-    context::{setters::ContextSetters, JournalOutput},
+    context::{ContextSetters, JournalOutput},
     context_interface::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Cfg, ContextTr, Database, JournalTr,
@@ -17,21 +17,21 @@ use revm::{
 // Type alias for Optimism context
 pub trait OpContextTr:
     ContextTr<
-        Journal: JournalTr<FinalOutput = JournalOutput>,
-        Tx: OpTxTr,
-        Cfg: Cfg<Spec = OpSpecId>,
-        Chain = L1BlockInfo,
-    > + ContextSetters
+    Journal: JournalTr<FinalOutput = JournalOutput>,
+    Tx: OpTxTr,
+    Cfg: Cfg<Spec = OpSpecId>,
+    Chain = L1BlockInfo,
+>
 {
 }
 
 impl<T> OpContextTr for T where
     T: ContextTr<
-            Journal: JournalTr<FinalOutput = JournalOutput>,
-            Tx: OpTxTr,
-            Cfg: Cfg<Spec = OpSpecId>,
-            Chain = L1BlockInfo,
-        > + ContextSetters
+        Journal: JournalTr<FinalOutput = JournalOutput>,
+        Tx: OpTxTr,
+        Cfg: Cfg<Spec = OpSpecId>,
+        Chain = L1BlockInfo,
+    >
 {
 }
 
@@ -41,10 +41,22 @@ type OpError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, OpTran
 impl<CTX, INSP, PRECOMPILE> ExecuteEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr,
+    CTX: OpContextTr + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<ResultAndState<OpHaltReason>, OpError<CTX>>;
+
+    type Tx = <CTX as ContextTr>::Tx;
+
+    type Block = <CTX as ContextTr>::Block;
+
+    fn set_tx(&mut self, tx: Self::Tx) {
+        self.0.data.ctx.set_tx(tx);
+    }
+
+    fn set_block(&mut self, block: Self::Block) {
+        self.0.data.ctx.set_block(block);
+    }
 
     fn replay(&mut self) -> Self::Output {
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
@@ -55,7 +67,7 @@ where
 impl<CTX, INSP, PRECOMPILE> ExecuteCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr<Db: DatabaseCommit>,
+    CTX: OpContextTr<Db: DatabaseCommit> + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<ExecutionResult<OpHaltReason>, OpError<CTX>>;
@@ -71,7 +83,7 @@ where
 impl<CTX, INSP, PRECOMPILE> InspectEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr<Journal: JournalExt>,
+    CTX: OpContextTr<Journal: JournalExt> + ContextSetters,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -90,7 +102,7 @@ where
 impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
-    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit>,
+    CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit> + ContextSetters,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
