@@ -161,7 +161,7 @@ impl<CTX: ContextTr> Host for CTX {
             .db()
             .block_hash(requested_number)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -172,7 +172,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .load_account_delegated(address)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -183,7 +183,7 @@ impl<CTX: ContextTr> Host for CTX {
             .load_account(address)
             .map(|acc| acc.map(|a| a.info.balance))
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -193,7 +193,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .code(address)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -203,7 +203,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .code_hash(address)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -213,7 +213,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .sload(address, index)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -230,7 +230,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .sstore(address, index, value)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }
@@ -259,7 +259,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .selfdestruct(address, target)
             .map_err(|e| {
-                *self.error() = Err(e);
+                *self.error() = Err(e.into());
             })
             .ok()
     }

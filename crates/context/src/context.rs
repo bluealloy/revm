@@ -1,9 +1,9 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
-use context_interface::ContextSetters;
-use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
-use database_interface::DatabaseRef;
-use database_interface::WrapDatabaseRef;
-use database_interface::{Database, EmptyDB};
+use context_interface::{
+    context::{ContextError, ContextSetters},
+    Block, Cfg, ContextTr, JournalTr, Transaction,
+};
+use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
 
@@ -28,7 +28,7 @@ pub struct Context<
     /// Inner context.
     pub chain: CHAIN,
     /// Error that happened during execution.
-    pub error: Result<(), <DB as Database>::Error>,
+    pub error: Result<(), ContextError<DB::Error>>,
 }
 
 impl<
@@ -79,7 +79,7 @@ impl<
         &mut self.chain
     }
 
-    fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error> {
+    fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
 
