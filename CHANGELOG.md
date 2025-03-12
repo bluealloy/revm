@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v62 tag
+date: 12.03.2025
+
+A few small breaking changed in preparation for v20.0.0.
+
+* `revm-context-interface`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-context`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-interpreter`: 16.0.0-alpha.4 -> 16.0.0-alpha.5
+* `revm-handler`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-inspector`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revme`: 3.0.0-alpha.4 -> 3.0.0-alpha.5
+* `op-revm`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-precompile`: 17.0.0-alpha.4 -> 17.0.0-alpha.5
+* `revm`: 20.0.0-alpha.4 -> 20.0.0-alpha.5
+
 # v61 tag
 date: 11.03.2025
 

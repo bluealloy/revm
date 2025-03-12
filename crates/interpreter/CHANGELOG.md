@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.4...revm-interpreter-v16.0.0-alpha.5) - 2025-03-12
+
+### Added
+
+- add custom error to context ([#2197](https://github.com/bluealloy/revm/pull/2197))
+
 ## [16.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.3...revm-interpreter-v16.0.0-alpha.4) - 2025-03-11
 
 ### Fixed

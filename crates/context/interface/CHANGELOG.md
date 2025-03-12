@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.3...revm-context-interface-v1.0.0-alpha.4) - 2025-03-12
+
+### Added
+
+- add custom error to context ([#2197](https://github.com/bluealloy/revm/pull/2197))
+- Add tx/block to EvmExecution trait ([#2195](https://github.com/bluealloy/revm/pull/2195))
+
 ## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.2...revm-context-interface-v1.0.0-alpha.3) - 2025-03-11
 
 ### Fixed

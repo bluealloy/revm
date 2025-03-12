@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.4...revme-v3.0.0-alpha.5) - 2025-03-12
+
+### Added
+
+- rename inspect_previous to inspect_replay ([#2194](https://github.com/bluealloy/revm/pull/2194))
+
 ## [3.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.3...revme-v3.0.0-alpha.4) - 2025-03-11
 
 ### Other
