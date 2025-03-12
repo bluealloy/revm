@@ -1,6 +1,6 @@
 use crate::precompiles::OpPrecompiles;
 use revm::{
-    context::{setters::ContextSetters, Evm, EvmData},
+    context::{ContextSetters, Evm, EvmData},
     context_interface::ContextTr,
     handler::{
         instructions::{EthInstructions, InstructionProvider},
@@ -27,9 +27,9 @@ impl<CTX: Host, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpP
     }
 }
 
-impl<CTX: ContextSetters, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
 where
-    CTX: ContextTr<Journal: JournalExt>,
+    CTX: ContextTr<Journal: JournalExt> + ContextSetters,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
@@ -54,19 +54,6 @@ where
     ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
     {
         self.0.run_inspect_interpreter(interpreter)
-    }
-}
-
-impl<CTX: ContextSetters, INSP, I, P> ContextSetters for OpEvm<CTX, INSP, I, P> {
-    type Tx = <CTX as ContextSetters>::Tx;
-    type Block = <CTX as ContextSetters>::Block;
-
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.0.data.ctx.set_tx(tx);
-    }
-
-    fn set_block(&mut self, block: Self::Block) {
-        self.0.data.ctx.set_block(block);
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{inspect_instructions, Inspector, JournalExt};
-use context::{setters::ContextSetters, ContextTr, Evm};
+use context::{ContextSetters, ContextTr, Evm};
 use handler::{
     instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame, FrameInitOrResult,
     PrecompileProvider,

@@ -1,4 +1,3 @@
-use context::setters::ContextSetters;
 use handler::evm::{ExecuteCommitEvm, ExecuteEvm};
 
 pub trait InspectEvm: ExecuteEvm {
@@ -13,16 +12,12 @@ pub trait InspectEvm: ExecuteEvm {
         self.inspect_previous()
     }
 
-    fn inspect_previous_with_tx(&mut self, tx: <Self as ContextSetters>::Tx) -> Self::Output {
+    fn inspect_previous_with_tx(&mut self, tx: Self::Tx) -> Self::Output {
         self.set_tx(tx);
         self.inspect_previous()
     }
 
-    fn inspect(
-        &mut self,
-        tx: <Self as ContextSetters>::Tx,
-        inspector: Self::Inspector,
-    ) -> Self::Output {
+    fn inspect(&mut self, tx: Self::Tx, inspector: Self::Inspector) -> Self::Output {
         self.set_tx(tx);
         self.inspect_previous_with_inspector(inspector)
     }
@@ -39,11 +34,7 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
         self.inspect_commit_previous()
     }
 
-    fn inspect_commit(
-        &mut self,
-        tx: <Self as ContextSetters>::Tx,
-        inspector: Self::Inspector,
-    ) -> Self::CommitOutput {
+    fn inspect_commit(&mut self, tx: Self::Tx, inspector: Self::Inspector) -> Self::CommitOutput {
         self.set_tx(tx);
         self.inspect_commit_previous_with_inspector(inspector)
     }

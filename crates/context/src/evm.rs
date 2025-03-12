@@ -1,4 +1,3 @@
-use crate::setters::ContextSetters;
 use core::fmt::Debug;
 use core::ops::{Deref, DerefMut};
 
@@ -25,7 +24,7 @@ impl<CTX> Evm<CTX, (), (), ()> {
     }
 }
 
-impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
+impl<CTX, INSP, I, P> Evm<CTX, INSP, I, P> {
     /// Consumed self and returns new Evm type with given Inspector.
     pub fn with_inspector<OINSP>(self, inspector: OINSP) -> Evm<CTX, OINSP, I, P> {
         Evm {
@@ -50,19 +49,6 @@ impl<CTX: ContextSetters, INSP, I, P> Evm<CTX, INSP, I, P> {
     /// Consumes self and returns inner Inspector.
     pub fn into_inspector(self) -> INSP {
         self.data.inspector
-    }
-}
-
-impl<CTX: ContextSetters, INSP, I, P> ContextSetters for Evm<CTX, INSP, I, P> {
-    type Tx = <CTX as ContextSetters>::Tx;
-    type Block = <CTX as ContextSetters>::Block;
-
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.data.ctx.set_tx(tx);
-    }
-
-    fn set_block(&mut self, block: Self::Block) {
-        self.data.ctx.set_block(block);
     }
 }
 

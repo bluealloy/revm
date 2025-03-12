@@ -1,4 +1,4 @@
-use context::{setters::ContextSetters, ContextTr, Evm, JournalOutput, JournalTr};
+use context::{ContextSetters, ContextTr, Evm, JournalOutput, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
     instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,

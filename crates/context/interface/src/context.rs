@@ -84,3 +84,8 @@ pub struct SelfDestructResult {
     pub target_exists: bool,
     pub previously_destroyed: bool,
 }
+
+pub trait ContextSetters: ContextTr {
+    fn set_tx(&mut self, tx: Self::Tx);
+    fn set_block(&mut self, block: Self::Block);
+}
