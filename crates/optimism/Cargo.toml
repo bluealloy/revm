@@ -45,7 +45,8 @@ std = [
 	"serde?/std",
 	"revm/std",
 	"alloy-sol-types/std",
-	"once_cell/std"
+	"once_cell/std",
+	"sha2/std"
 ]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
