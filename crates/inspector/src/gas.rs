@@ -67,10 +67,13 @@ impl GasInspector {
 
 #[cfg(test)]
 mod tests {
+    use core::marker::PhantomData;
+
     use super::*;
     use crate::{InspectEvm, Inspector};
     use context::Context;
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use derive_where::derive_where;
     use handler::{MainBuilder, MainContext};
     use interpreter::{
         interpreter_types::{Jumps, LoopControl},
@@ -79,14 +82,17 @@ mod tests {
     use primitives::{Bytes, TxKind};
     use state::bytecode::{opcode, Bytecode};
 
-    #[derive(Default, Debug)]
-    struct StackInspector {
+    #[derive_where(Default, Debug)]
+    struct StackInspector<CTX> {
         pc: usize,
         gas_inspector: GasInspector,
         gas_remaining_steps: Vec<(usize, u64)>,
+        phantom: PhantomData<CTX>,
     }
 
-    impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for StackInspector {
+    impl<CTX, INTR: InterpreterTypes> Inspector<INTR> for StackInspector<CTX> {
+        type Context<'context> = CTX;
+
         fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
             self.gas_inspector.initialize_interp(interp.control.gas());
         }

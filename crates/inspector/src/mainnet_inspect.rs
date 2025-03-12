@@ -15,7 +15,10 @@ impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
         Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
-        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+        Inspector: for<'context> Inspector<
+            EthInterpreter,
+            Context<'context> = <<Self as Handler>::Evm as EvmTr>::Context,
+        >,
     >,
     ERROR: EvmTrError<EVM>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
@@ -28,7 +31,7 @@ impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: for<'context> Inspector<EthInterpreter, Context<'context> = CTX>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
@@ -51,7 +54,7 @@ impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
 where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: for<'context> Inspector<EthInterpreter, Context<'context> = CTX>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {

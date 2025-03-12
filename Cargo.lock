@@ -3548,6 +3548,7 @@ name = "revm-inspector"
 version = "1.0.0-alpha.5"
 dependencies = [
  "auto_impl",
+ "derive-where",
  "revm-context",
  "revm-database",
  "revm-database-interface",
