@@ -117,11 +117,12 @@ mod tests {
         transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
         OpSpecId,
     };
+    use revm::context_interface::result::HaltReason;
     use revm::{
         bytecode::opcode,
-        context::result::ExecutionResult,
+        context::result::{ExecutionResult, OutOfGasError},
         database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        primitives::{Address, TxKind, U256},
+        primitives::{hex::FromHex, Address, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
     };
@@ -182,5 +183,51 @@ mod tests {
             output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
             Some(U256::from(100) + BENCH_CALLER_BALANCE)
         );
+    }
+
+    #[test]
+    fn test_tx_call_p256verify() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(
+                    Address::from_hex("0000000000000000000000000000000000000100").unwrap(),
+                );
+                tx.base.gas_limit = 24_450; // P256VERIFY base is 3450
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas for P256VERIFY
+        assert!(output.result.is_success());
+    }
+
+    #[test]
+    fn test_halted_tx_call_p256verify() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(
+                    Address::from_hex("0000000000000000000000000000000000000100").unwrap(),
+                );
+                tx.base.gas_limit = 24_449; // P256VERIFY base is 3450
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas for P256VERIFY
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
     }
 }
