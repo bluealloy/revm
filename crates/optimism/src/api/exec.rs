@@ -93,7 +93,7 @@ where
         self.0.data.inspector = inspector;
     }
 
-    fn inspect_previous(&mut self) -> Self::Output {
+    fn inspect_replay(&mut self) -> Self::Output {
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.inspect_run(self)
     }
@@ -107,7 +107,7 @@ where
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
-        self.inspect_previous().map(|r| {
+        self.inspect_replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result
         })

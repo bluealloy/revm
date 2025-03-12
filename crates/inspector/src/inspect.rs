@@ -5,21 +5,21 @@ pub trait InspectEvm: ExecuteEvm {
 
     fn set_inspector(&mut self, inspector: Self::Inspector);
 
-    fn inspect_previous(&mut self) -> Self::Output;
+    fn inspect_replay(&mut self) -> Self::Output;
 
-    fn inspect_previous_with_inspector(&mut self, inspector: Self::Inspector) -> Self::Output {
+    fn inspect_replay_with_inspector(&mut self, inspector: Self::Inspector) -> Self::Output {
         self.set_inspector(inspector);
-        self.inspect_previous()
+        self.inspect_replay()
     }
 
-    fn inspect_previous_with_tx(&mut self, tx: Self::Tx) -> Self::Output {
+    fn inspect_replay_with_tx(&mut self, tx: Self::Tx) -> Self::Output {
         self.set_tx(tx);
-        self.inspect_previous()
+        self.inspect_replay()
     }
 
     fn inspect(&mut self, tx: Self::Tx, inspector: Self::Inspector) -> Self::Output {
         self.set_tx(tx);
-        self.inspect_previous_with_inspector(inspector)
+        self.inspect_replay_with_inspector(inspector)
     }
 }
 
