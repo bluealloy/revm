@@ -117,10 +117,10 @@ mod tests {
         transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
         OpSpecId,
     };
-    use revm::context_interface::result::HaltReason;
     use revm::{
         bytecode::opcode,
         context::result::{ExecutionResult, OutOfGasError},
+        context_interface::result::HaltReason,
         database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
         primitives::{hex::FromHex, Address, TxKind, U256},
         state::Bytecode,
