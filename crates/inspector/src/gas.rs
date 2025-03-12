@@ -141,7 +141,7 @@ mod tests {
         let mut evm = ctx.build_mainnet_with_inspector(StackInspector::default());
 
         // Run evm.
-        evm.inspect_previous().unwrap();
+        evm.inspect_replay().unwrap();
 
         let inspector = &evm.data.inspector;
 
