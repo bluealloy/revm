@@ -227,7 +227,7 @@ mod tests {
                 tx.base.caller = BENCH_CALLER;
                 tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
                 tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
-                tx.base.gas_limit = 19_969_000; // 19_969_000 gas needed for input len
+                tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
 
@@ -235,7 +235,7 @@ mod tests {
 
         let output = evm.replay().unwrap();
 
-        // assert out of gas for
+        // assert out of gas
         assert!(matches!(
             output.result,
             ExecutionResult::Halt {
@@ -252,7 +252,7 @@ mod tests {
                 tx.base.caller = BENCH_CALLER;
                 tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
                 tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
-                tx.base.gas_limit = 19_969_000; // 19_969_000 gas needed for input len
+                tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::GRANITE);
 
