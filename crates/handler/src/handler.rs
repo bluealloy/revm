@@ -3,13 +3,14 @@ use crate::{
     execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
     FrameResult, ItemOrResult,
 };
+use context::result::FromStringError;
 use context::JournalOutput;
+use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
     Cfg, Database, JournalTr, Transaction,
 };
-use core::mem;
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use precompile::PrecompileError;
 use std::{vec, vec::Vec};
@@ -19,6 +20,7 @@ pub trait EvmTrError<EVM: EvmTr>:
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
     + From<PrecompileError>
+    + FromStringError
 {
 }
 
@@ -27,7 +29,8 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<PrecompileError>,
+            + From<PrecompileError>
+            + FromStringError,
     > EvmTrError<EVM> for T
 {
 }
@@ -431,9 +434,13 @@ pub trait Handler {
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let ctx = evm.ctx();
-        mem::replace(ctx.error(), Ok(()))?;
-        let output = post_execution::output(ctx, result);
+        match core::mem::replace(evm.ctx().error(), Ok(())) {
+            Err(ContextError::Db(e)) => return Err(e.into()),
+            Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
+            Ok(_) => (),
+        }
+
+        let output = post_execution::output(evm.ctx(), result);
 
         // Clear journal
         evm.ctx().journal().clear();

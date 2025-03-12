@@ -4,6 +4,8 @@ use crate::{
     FrameInitOrResult, FrameOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
+use context::result::FromStringError;
+use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
@@ -80,7 +82,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -520,7 +522,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
 {
     pub fn init_first(
         evm: &mut EVM,
@@ -615,7 +617,11 @@ where
 
     fn return_result(&mut self, evm: &mut EVM, result: FrameResult) -> Result<(), ERROR> {
         self.memory.borrow_mut().free_context();
-        core::mem::replace(evm.ctx().error(), Ok(()))?;
+        match core::mem::replace(evm.ctx().error(), Ok(())) {
+            Err(ContextError::Db(e)) => return Err(e.into()),
+            Err(ContextError::Custom(e)) => return Err(ERROR::from_string(e)),
+            Ok(_) => (),
+        }
 
         // Insert result to the top frame.
         match result {

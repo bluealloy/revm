@@ -1,6 +1,7 @@
 pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
+use database_interface::DBErrorMarker;
 use primitives::U256;
 
 #[auto_impl(&mut, Box)]
@@ -20,8 +21,24 @@ pub trait ContextTr {
     fn db(&mut self) -> &mut Self::Db;
     fn db_ref(&self) -> &Self::Db;
     fn chain(&mut self) -> &mut Self::Chain;
-    fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error>;
+    fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
+}
+
+/// Inner Context error used for Interpreter to set error without returning it frm instruction
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum ContextError<DbError: DBErrorMarker> {
+    /// Database error.
+    Db(DbError),
+    /// Custom string error.
+    Custom(String),
+}
+
+impl<DbError: DBErrorMarker> From<DbError> for ContextError<DbError> {
+    fn from(value: DbError) -> Self {
+        Self::Db(value)
+    }
 }
 
 /// Represents the result of an `sstore` operation.

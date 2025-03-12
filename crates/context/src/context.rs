@@ -1,4 +1,5 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
+use context_interface::context::ContextError;
 use context_interface::{Block, Cfg, ContextTr, JournalTr, Transaction};
 use database_interface::DatabaseRef;
 use database_interface::WrapDatabaseRef;
@@ -27,7 +28,7 @@ pub struct Context<
     /// Inner context.
     pub chain: CHAIN,
     /// Error that happened during execution.
-    pub error: Result<(), <DB as Database>::Error>,
+    pub error: Result<(), ContextError<<DB as Database>::Error>>,
 }
 
 impl<
@@ -78,7 +79,7 @@ impl<
         &mut self.chain
     }
 
-    fn error(&mut self) -> &mut Result<(), <Self::Db as Database>::Error> {
+    fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
 

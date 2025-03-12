@@ -1,5 +1,5 @@
 use crate::{inspect_instructions, Inspector, JournalExt};
-use context::{setters::ContextSetters, ContextTr, Evm};
+use context::{result::FromStringError, setters::ContextSetters, ContextTr, Evm};
 use handler::{
     instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame, FrameInitOrResult,
     PrecompileProvider,
@@ -86,7 +86,7 @@ where
                 InterpreterTypes = EthInterpreter,
             >,
         > + InspectorEvmTr,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
+    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
 {
     type IT = EthInterpreter;
 
