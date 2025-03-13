@@ -74,6 +74,7 @@ auto_impl = "1.2.0"
 bitflags = { version = "2.6.0", default-features = false }
 bitvec = { version = "1", default-features = false }
 blst = "0.3.13"
+bls12_381 = "0.8"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 c-kzg = { version = "1.0.0", default-features = false }
 cfg-if = { version = "1.0", default-features = false }
