@@ -101,6 +101,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
+        precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE,
         transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, OpBuilder, OpHaltReason,
         OpSpecId,
     };
@@ -109,7 +110,8 @@ mod tests {
         context::result::{ExecutionResult, OutOfGasError},
         context_interface::result::HaltReason,
         database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        primitives::{hex::FromHex, Address, TxKind, U256},
+        precompile::bn128,
+        primitives::{hex::FromHex, Address, Bytes, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
     };
@@ -213,6 +215,56 @@ mod tests {
             output.result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn test_halted_tx_call_bn128_pair_fjord() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
+                tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
+                tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn test_halted_tx_call_bn128_pair_granite() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
+                tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
+                tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::GRANITE);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert bails early because input size too big
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
             }
         ));
