@@ -38,7 +38,7 @@ impl OpPrecompiles {
             | OpSpecId::ECOTONE) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpecId::FJORD => Self::new(fjord()),
             OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
-            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => Self::new(isthumus()),
+            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => Self::new(isthmus()),
         }
     }
 }
@@ -66,7 +66,7 @@ pub fn granite() -> &'static Precompiles {
 }
 
 /// Returns precompiles for isthumus spec.
-pub fn isthumus() -> &'static Precompiles {
+pub fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
         let precompiles = granite().clone();
