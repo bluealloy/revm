@@ -214,8 +214,6 @@ mod tests {
     fn test_prague_precompiles_in_isthmus() {
         let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
 
-        let intersection = isthmus().intersection(&new_prague_precompiles);
-
-        assert!(new_prague_precompiles.difference(&intersection).is_empty())
+        assert!(new_prague_precompiles.difference(isthmus()).is_empty())
     }
 }
