@@ -22,10 +22,24 @@ impl JumpTable {
         self.0.as_raw_slice()
     }
 
-    /// Constructs a jump map from raw bytes.
+    /// Constructs a jump map from raw bytes and length.
+    ///
+    /// Lenght represents number of bits inside slice.
+    ///
+    /// # Panics
+    ///
+    /// Panics if number of bits in slice is less than length.
     #[inline]
-    pub fn from_slice(slice: &[u8]) -> Self {
-        Self(Arc::new(BitVec::from_slice(slice)))
+    pub fn from_slice(slice: &[u8], len: usize) -> Self {
+        assert!(
+            slice.len() * 8 >= len,
+            "slice bit length {} is less than len {}",
+            slice.len() * 8,
+            len
+        );
+        let mut bitvec = BitVec::from_slice(slice);
+        unsafe { bitvec.set_len(len) };
+        Self(Arc::new(bitvec))
     }
 
     /// Checks if `pc` is a valid jump destination.
