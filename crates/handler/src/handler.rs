@@ -44,7 +44,8 @@ impl<
 /// their own method implementations.
 ///
 /// The handler logic consists of four phases:
-///   * Validation - Loads caller account and validates initial gas requirements
+///   * Validation - Validates tx/block/config fields and loads caller account and validates initial gas requirements and
+///     balance checks.
 ///   * Pre-execution - Loads and warms accounts, deducts initial gas
 ///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
 ///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,

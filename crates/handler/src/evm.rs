@@ -14,6 +14,8 @@ use interpreter::{
 };
 
 /// Main trait that combines the context, instructions and precompiles and allows execution of interpreter.
+/// 
+/// 
 #[auto_impl(&mut, Box)]
 pub trait EvmTr {
     type Context: ContextTr;
@@ -35,9 +37,13 @@ pub trait EvmTr {
     fn ctx_ref(&self) -> &Self::Context;
 
     /// Get the context and instructions.
+    ///
+    /// This allows us to obtains mutable references to both context and instructions.
     fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
 
     /// Get the context and precompiles.
+    ///
+    /// This allows us to obtains mutable references to both context and precompiles.
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 

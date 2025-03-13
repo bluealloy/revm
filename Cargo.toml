@@ -31,6 +31,7 @@ members = [
     "examples/uniswap_get_reserves",
     "examples/uniswap_v2_usdc_swap",
     "examples/erc20_gas",
+    "examples/my_evm",
     #"examples/custom_opcodes",
 ]
 resolver = "2"
