@@ -196,4 +196,26 @@ mod tests {
         let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
     }
+
+    #[test]
+    fn test_cancun_precompiles_in_fjord() {
+        // additional to cancun, fjord has p256verify
+        assert_eq!(fjord().difference(Precompiles::cancun()).len(), 1)
+    }
+
+    #[test]
+    fn test_cancun_precompiles_in_granite() {
+        // granite has p256verify (fjord)
+        // granite has modification of cancun's bn128 pair
+        assert_eq!(granite().difference(Precompiles::cancun()).len(), 2)
+    }
+
+    #[test]
+    fn test_prague_precompiles_in_isthmus() {
+        let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
+
+        let intersection = isthmus().intersection(&new_prague_precompiles);
+
+        assert!(new_prague_precompiles.difference(&intersection).is_empty())
+    }
 }

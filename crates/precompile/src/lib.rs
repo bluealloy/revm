@@ -31,7 +31,7 @@ pub use interface::*;
 use kzg_rs as _;
 
 use cfg_if::cfg_if;
-use core::hash::Hash;
+use core::{hash::Hash, ptr};
 use once_cell::race::OnceBox;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
 use std::{boxed::Box, vec::Vec};
@@ -233,6 +233,52 @@ impl Precompiles {
         let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
         self.addresses.extend(items.iter().map(|p| *p.address()));
         self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
+    }
+
+    /// Returns complement of `other` in `self`.
+    pub fn difference(&self, other: &Self) -> Self {
+        let Self { inner, addresses } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, p)| {
+                let Some(&other_p) = other.inner.get(*a) else {
+                    return true;
+                };
+                !ptr::fn_addr_eq(**p, other_p)
+            })
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = addresses
+            .difference(&other.addresses)
+            .cloned()
+            .collect::<HashSet<_>>();
+
+        Self { inner, addresses }
+    }
+
+    /// Returns intersection of `self` and `other`.
+    pub fn intersection(&self, other: &Self) -> Self {
+        let Self { inner, addresses } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, p)| {
+                let Some(&other_p) = other.inner.get(*a) else {
+                    return false;
+                };
+                ptr::fn_addr_eq(**p, other_p)
+            })
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = addresses
+            .intersection(&other.addresses)
+            .cloned()
+            .collect::<HashSet<_>>();
+
+        Self { inner, addresses }
     }
 }
 
