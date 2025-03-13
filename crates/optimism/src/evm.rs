@@ -110,7 +110,7 @@ mod tests {
         context::result::{ExecutionResult, OutOfGasError},
         context_interface::result::HaltReason,
         database::{BenchmarkDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        precompile::{bls12_381_const, bn128, u64_to_address},
+        precompile::bn128,
         primitives::{hex::FromHex, Address, Bytes, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm,
