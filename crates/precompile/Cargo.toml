@@ -25,6 +25,7 @@ all = "warn"
 # revm
 primitives.workspace = true
 context-interface.workspace = true
+bls12_381 = {version="0.8",optional=true}
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
@@ -119,6 +120,7 @@ libsecp256k1 = ["dep:libsecp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
+bls12_381 = ["dep:bls12_381"]
 
 [[bench]]
 name = "bench"
