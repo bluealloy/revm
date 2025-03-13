@@ -218,7 +218,6 @@ mod tests {
     fn test_halted_tx_call_bn128_pair_fjord() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.caller = BENCH_CALLER;
                 tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
                 tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
                 tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
@@ -243,7 +242,6 @@ mod tests {
     fn test_halted_tx_call_bn128_pair_granite() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.caller = BENCH_CALLER;
                 tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
                 tx.base.data = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2].to_vec());
                 tx.base.gas_limit = 19_969_000; // gas needed by bn128::pair for input len
