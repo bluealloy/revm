@@ -19,7 +19,7 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
             vec![
                 PrecompileWithAddress(
                     u64_to_address(0x0A),
-                    |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))
+                    |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381".into()))
                 )
             ].into_iter()
         } else {
