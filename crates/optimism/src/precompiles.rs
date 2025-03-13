@@ -214,6 +214,7 @@ mod tests {
     fn test_prague_precompiles_in_isthmus() {
         let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
 
+        // isthmus contains all precompiles that were new in prague, without modifications
         assert!(new_prague_precompiles.difference(isthmus()).is_empty())
     }
 }
