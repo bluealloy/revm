@@ -25,6 +25,7 @@ all = "warn"
 # revm
 revm = { workspace = true, features = ["secp256r1"] }
 auto_impl.workspace = true
+bls12_381 = {version="0.8",optional=true}
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
@@ -71,3 +72,4 @@ c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
+bls12_381 = ["revm/bls12_381"]
