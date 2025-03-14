@@ -263,7 +263,8 @@ mod tests {
     }
 
     #[test]
-    fn test_halted_tx_call_bls12_381_g1_add() {
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_ADD_ADDRESS));
@@ -290,6 +291,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_add_input_too_small() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
