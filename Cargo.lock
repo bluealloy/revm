@@ -2747,7 +2747,7 @@ checksum = "b410bbe7e14ab526a0e86877eb47c6996a2bd7746f027ba551028c925390e4e9"
 
 [[package]]
 name = "op-revm"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3424,7 +3424,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "20.0.0-alpha.5"
+version = "20.0.0-alpha.6"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3441,7 +3441,7 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "bitvec",
  "paste",
@@ -3452,7 +3452,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "cfg-if",
  "derive-where",
@@ -3480,7 +3480,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3516,7 +3516,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.6"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3554,7 +3554,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "16.0.0-alpha.5"
+version = "16.0.0-alpha.6"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3604,7 +3604,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "bitflags",
  "revm-bytecode",
@@ -3623,7 +3623,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "3.0.0-alpha.5"
+version = "3.0.0-alpha.6"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
