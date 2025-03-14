@@ -10,7 +10,9 @@ pub const BLOCK_HASH_HISTORY: u64 = 256;
 ///
 /// # Note
 /// This is named `HISTORY_SERVE_WINDOW` in the EIP.
-pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
+///
+/// Updated from 8192 to 8191 in <https://github.com/ethereum/EIPs/pull/9144>
+pub const BLOCKHASH_SERVE_WINDOW: usize = 8191;
 
 /// The address of precompile 3, which is handled specially in a few places
 pub const PRECOMPILE3: Address =
