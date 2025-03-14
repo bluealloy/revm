@@ -1,5 +1,7 @@
 use crate::TransactionType;
-use context_interface::transaction::{AccessList, SignedAuthorization, Transaction};
+use context_interface::transaction::{
+    AccessList, AccessListItem, SignedAuthorization, Transaction,
+};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use std::vec::Vec;
@@ -139,7 +141,7 @@ impl TxEnv {
 }
 
 impl Transaction for TxEnv {
-    type AccessList = AccessList;
+    type AccessListItem = AccessListItem;
     type Authorization = SignedAuthorization;
 
     fn tx_type(&self) -> u8 {
@@ -174,8 +176,8 @@ impl Transaction for TxEnv {
         self.chain_id
     }
 
-    fn access_list(&self) -> Option<&Self::AccessList> {
-        Some(&self.access_list)
+    fn access_list(&self) -> Option<impl Iterator<Item = &Self::AccessListItem>> {
+        Some(self.access_list.0.iter())
     }
 
     fn max_fee_per_gas(&self) -> u128 {
