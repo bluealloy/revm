@@ -1,10 +1,8 @@
-use context_interface::transaction::AccessListTr;
-use context_interface::ContextTr;
 use context_interface::{
     journaled_state::JournalTr,
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{Transaction, TransactionType},
-    Block, Cfg, Database,
+    transaction::{AccessListItemTr, Transaction, TransactionType},
+    Block, Cfg, ContextTr, Database,
 };
 use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
@@ -298,7 +296,14 @@ pub fn validate_initial_tx_gas(
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
     let (accounts, storages) = tx
         .access_list()
-        .map(|al| al.access_list_nums())
+        .map(|al| {
+            al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                num_accounts += 1;
+                num_storage_slots += item.storage_slots().count();
+
+                (num_accounts, num_storage_slots)
+            })
+        })
         .unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(
