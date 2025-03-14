@@ -317,13 +317,19 @@ pub fn validate_initial_tx_gas(
 
     // Additional check to see if limit is big enough to cover initial gas.
     if gas.initial_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit);
+        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
+            gas_limit: tx.gas_limit(),
+            initial_gas: gas.initial_gas,
+        });
     }
 
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
     if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit);
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+            gas_floor: gas.floor_gas,
+            gas_limit: tx.gas_limit(),
+        });
     };
 
     Ok(gas)
