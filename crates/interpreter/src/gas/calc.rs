@@ -1,6 +1,8 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
-use context_interface::journaled_state::AccountLoad;
+use context_interface::{
+    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction,
+};
 use primitives::{eip7702, hardfork::SpecId, U256};
 
 /// `SSTORE` opcode refund calculation.
@@ -407,6 +409,36 @@ pub fn calculate_initial_tx_gas(
     }
 
     gas
+}
+
+/// Initial gas that is deducted for transaction to be included.
+/// Initial gas contains initial stipend gas, gas for access list and input data.
+///
+/// # Returns
+///
+/// - Intrinsic gas
+/// - Number of tokens in calldata
+pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
+    let (accounts, storages) = tx
+        .access_list()
+        .map(|al| {
+            al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                num_accounts += 1;
+                num_storage_slots += item.storage_slots().count();
+
+                (num_accounts, num_storage_slots)
+            })
+        })
+        .unwrap_or_default();
+
+    calculate_initial_tx_gas(
+        spec,
+        tx.input(),
+        tx.kind().is_create(),
+        accounts as u64,
+        storages as u64,
+        tx.authorization_list_len() as u64,
+    )
 }
 
 /// Retrieve the total number of tokens in calldata.
