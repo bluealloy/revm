@@ -287,7 +287,7 @@ mod tests {
 
         let output = evm.replay().unwrap();
 
-        // assert out of gas for g1 add
+        // assert out of gas
         assert!(matches!(
             output.result,
             ExecutionResult::Halt {
@@ -303,7 +303,6 @@ mod tests {
             .modify_tx_chained(|tx| {
                 tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_ADD_ADDRESS));
                 tx.base.gas_limit = 21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE;
-                tx.base.data = Bytes::from([1; bls12_381_const::G1_ADD_INPUT_LENGTH - 2].to_vec());
             })
             .modify_chain_chained(|l1_block| {
                 l1_block.operator_fee_constant = Some(U256::ZERO);
