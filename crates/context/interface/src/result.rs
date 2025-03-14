@@ -189,7 +189,7 @@ impl Output {
 /// Main EVM error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
+pub enum EVMError<DBError, PRECOMPILE, TransactionError = InvalidTransaction> {
     /// Transaction validation error
     Transaction(TransactionError),
     /// Header validation error
@@ -201,10 +201,10 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
     /// Precompile error
-    Precompile(String),
+    Precompile(PRECOMPILE),
 }
 
-impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
+impl<DBError: DBErrorMarker, PRECOMPILE, TX> From<DBError> for EVMError<DBError, PRECOMPILE, TX> {
     fn from(value: DBError) -> Self {
         Self::Database(value)
     }
@@ -214,21 +214,25 @@ pub trait FromStringError {
     fn from_string(value: String) -> Self;
 }
 
-impl<DB, TX> FromStringError for EVMError<DB, TX> {
+impl<DB, PRECOMPILE, TX> FromStringError for EVMError<DB, PRECOMPILE, TX> {
     fn from_string(value: String) -> Self {
         Self::Custom(value)
     }
 }
 
-impl<DB, TXE: From<InvalidTransaction>> From<InvalidTransaction> for EVMError<DB, TXE> {
+impl<DB, PRECOMPILE, TXE: From<InvalidTransaction>> From<InvalidTransaction>
+    for EVMError<DB, PRECOMPILE, TXE>
+{
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(TXE::from(value))
     }
 }
 
-impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidationErrorT> {
+impl<DBError, PRECOMPILE, TransactionValidationErrorT>
+    EVMError<DBError, PRECOMPILE, TransactionValidationErrorT>
+{
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, TransactionValidationErrorT>
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, PRECOMPILE, TransactionValidationErrorT>
     where
         F: FnOnce(DBError) -> E,
     {
@@ -242,10 +246,11 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
     }
 }
 
-impl<DBError, TransactionValidationErrorT> core::error::Error
-    for EVMError<DBError, TransactionValidationErrorT>
+impl<DBError, PRECOMPILE, TransactionValidationErrorT> core::error::Error
+    for EVMError<DBError, PRECOMPILE, TransactionValidationErrorT>
 where
     DBError: core::error::Error + 'static,
+    PRECOMPILE: core::error::Error + 'static,
     TransactionValidationErrorT: core::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
@@ -253,15 +258,17 @@ where
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Precompile(_) | Self::Custom(_) => None,
+            Self::Precompile(e) => Some(e),
+            Self::Custom(_) => None,
         }
     }
 }
 
-impl<DBError, TransactionValidationErrorT> fmt::Display
-    for EVMError<DBError, TransactionValidationErrorT>
+impl<DBError, PRECOMPILE, TransactionValidationErrorT> fmt::Display
+    for EVMError<DBError, PRECOMPILE, TransactionValidationErrorT>
 where
     DBError: fmt::Display,
+    PRECOMPILE: fmt::Display,
     TransactionValidationErrorT: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -269,13 +276,14 @@ where
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Precompile(e) | Self::Custom(e) => f.write_str(e),
+            Self::Precompile(e) => write!(f, "{e}"),
+            Self::Custom(e) => f.write_str(e),
         }
     }
 }
 
-impl<DBError, TransactionValidationErrorT> From<InvalidHeader>
-    for EVMError<DBError, TransactionValidationErrorT>
+impl<DBError, PRECOMPILE, TransactionValidationErrorT> From<InvalidHeader>
+    for EVMError<DBError, PRECOMPILE, TransactionValidationErrorT>
 {
     fn from(value: InvalidHeader) -> Self {
         Self::Header(value)

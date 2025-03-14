@@ -453,7 +453,7 @@ fn commit_transaction<InspectorT, BlockTr TxT, CfgT>(
     backend: &mut Backend,
     env: Env<BlockTr TxT, CfgT>,
     inspector: InspectorT,
-) -> Result<(), EVMError<Infallible, InvalidTransaction>>
+) -> Result<(), EVMError<Infallible, PrecompileError, InvalidTransaction>>
 where
     InspectorT: Inspector<
             Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
