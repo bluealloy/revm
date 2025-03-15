@@ -7,17 +7,20 @@ use crate::{
         InterpreterAction,
         InterpreterResult,
     },
-    primitives::{Address, Bytes, EVMError, Spec, U256},
+    primitives::{Address, Bytecode, Bytes, EVMError, Spec, U256},
     Context,
     Database,
     Frame,
 };
 use core::{mem, ops::Deref};
-use fluentbase_runtime::{types::FixedPreimageResolver, RuntimeContext};
+use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
     codec::CompactABI,
+    is_self_gas_management_contract,
+    keccak256,
     runtime::RuntimeContextWrapper,
     BlockContextV1,
+    BytecodeOrHash,
     ContractContextV1,
     ExitCode,
     NativeAPI,
@@ -25,6 +28,7 @@ use fluentbase_sdk::{
     SharedContextInputV1,
     SyscallInvocationParams,
     TxContextV1,
+    B256,
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
@@ -38,15 +42,16 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     // encode input with all related context info
+    let bytecode_address = interpreter
+        .contract
+        .bytecode_address
+        .unwrap_or(interpreter.contract.target_address);
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
         block: BlockContextV1::from(context.evm.env.deref()),
         tx: TxContextV1::from(context.evm.env.deref()),
         contract: ContractContextV1 {
             address: interpreter.contract.target_address,
-            bytecode_address: interpreter
-                .contract
-                .bytecode_address
-                .unwrap_or(interpreter.contract.target_address),
+            bytecode_address,
             caller: interpreter.contract.caller,
             is_static: interpreter.is_static,
             value: interpreter.contract.call_value,
@@ -58,24 +63,30 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .to_vec();
     context_input.extend_from_slice(interpreter.contract.input.as_ref());
 
-    // TODO(dmitry123): "bytecode hash has to be real hash, otherwise proving might be challenging"
-    let bytecode_hash = interpreter
+    // calculate bytecode hash
+    let rwasm_code_hash = interpreter
         .contract
-        .bytecode_address
-        .clone()
-        .unwrap_or_else(|| interpreter.contract.target_address)
-        .into_word();
+        .hash
+        .filter(|v| v != &B256::ZERO)
+        .unwrap_or_else(|| keccak256(&rwasm_bytecode));
+    debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
+    let rwasm_bytecode = match &interpreter.contract.bytecode {
+        Bytecode::Rwasm(bytecode) => bytecode.clone(),
+        _ => unreachable!("revm: unexpected bytecode type"),
+    };
+    let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
     // fuel limit we denominate later to gas
-    let fuel_limit = interpreter.gas.limit() * FUEL_DENOM_RATE;
+    let fuel_limit = interpreter.gas.remaining() * FUEL_DENOM_RATE;
 
     // execute function
-    let runtime_context = RuntimeContext::root(interpreter.gas.limit());
-    let preimage_resolver = FixedPreimageResolver::new(rwasm_bytecode, bytecode_hash);
-    let native_sdk =
-        RuntimeContextWrapper::new(runtime_context).with_preimage_resolver(&preimage_resolver);
+    let mut runtime_context = RuntimeContext::root(fuel_limit);
+    if is_self_gas_management_contract(&bytecode_address) {
+        runtime_context = runtime_context.without_fuel();
+    }
+    let native_sdk = RuntimeContextWrapper::new(runtime_context);
     let (fuel_consumed, exit_code) = native_sdk.exec(
-        &bytecode_hash,
+        bytecode_hash,
         &context_input,
         fuel_limit,
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
@@ -83,7 +94,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     // make sure we have enough gas to charge from the call
     let mut gas = interpreter.gas;
-    if !gas.record_denominated_cost(fuel_consumed) {
+    if !gas.record_denominated_cost(fuel_consumed as u64) {
         return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -98,6 +109,10 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     Ok(process_exec_result(
         interpreter.contract.target_address,
+        interpreter
+            .contract
+            .bytecode_address
+            .unwrap_or(interpreter.contract.target_address),
         interpreter.contract.caller,
         interpreter.contract.call_value,
         exit_code,
@@ -110,6 +125,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
 fn process_exec_result(
     target_address: Address,
+    bytecode_address: Address,
     caller: Address,
     call_value: U256,
     exit_code: i32,
@@ -120,7 +136,9 @@ fn process_exec_result(
 ) -> InterpreterAction {
     // if we have success or failed exit code
     if exit_code <= 0 {
-        let result = match ExitCode::from(exit_code) {
+        let exit_code = ExitCode::from(exit_code);
+        println!("revm: exit code: {} ({})", exit_code.into_i32(), exit_code);
+        let result = match exit_code {
             ExitCode::Ok => {
                 if is_create {
                     InstructionResult::ReturnContract
@@ -133,8 +151,23 @@ fn process_exec_result(
             ExitCode::Panic => InstructionResult::Revert,
             ExitCode::BadSignature => InstructionResult::Return,
             ExitCode::OutOfFuel => InstructionResult::OutOfGas,
-            // TODO(dmitry123): "handle error exit codes and form result for such errors"
-            _ => InstructionResult::Revert,
+            // rwasm failure codes
+            ExitCode::RootCallOnly => InstructionResult::RootCallOnly,
+            ExitCode::MalformedBuiltinParams => InstructionResult::MalformedBuiltinParams,
+            ExitCode::CallDepthOverflow => InstructionResult::CallDepthOverflow,
+            ExitCode::NonNegativeExitCode => InstructionResult::NonNegativeExitCode,
+            ExitCode::UnknownError => InstructionResult::UnknownError,
+            ExitCode::InputOutputOutOfBounds => InstructionResult::InputOutputOutOfBounds,
+            ExitCode::UnreachableCodeReached => InstructionResult::UnreachableCodeReached,
+            ExitCode::MemoryOutOfBounds => InstructionResult::MemoryOutOfBounds,
+            ExitCode::TableOutOfBounds => InstructionResult::TableOutOfBounds,
+            ExitCode::IndirectCallToNull => InstructionResult::IndirectCallToNull,
+            ExitCode::IntegerDivisionByZero => InstructionResult::IntegerDivisionByZero,
+            ExitCode::IntegerOverflow => InstructionResult::IntegerOverflow,
+            ExitCode::BadConversionToInteger => InstructionResult::BadConversionToInteger,
+            ExitCode::StackOverflow => InstructionResult::StackOverflow,
+            ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
+            ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
         };
         return InterpreterAction::Return {
             result: InterpreterResult {
@@ -154,7 +187,7 @@ fn process_exec_result(
     };
 
     // if there is no enough gas for execution, then fail fast
-    if params.gas_limit > gas.remaining() * FUEL_DENOM_RATE {
+    if params.gas_limit > gas.remaining() {
         return InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -167,15 +200,13 @@ fn process_exec_result(
     InterpreterAction::InterruptedCall {
         inputs: Box::new(SystemInterruptionInputs {
             target_address,
+            bytecode_address,
             caller,
             call_value,
             call_id,
             is_create,
-            code_hash: params.code_hash,
-            input: params.input,
+            syscall_params: params,
             gas,
-            local_gas_limit: params.gas_limit,
-            state: params.state,
             is_static,
         }),
     }
@@ -189,7 +220,6 @@ pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> InterpreterAction {
     let interpreter = frame.interpreter_mut();
-    let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
 
     debug_assert!(
         interpreter.instruction_pointer > interpreter.bytecode.as_ptr(),
@@ -203,19 +233,33 @@ pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
         gas,
     } = interrupted_outcome.result;
 
-    assert!(result.is_ok(), "revm: interrupted evm syscall can't fail");
+    // if execution failed, then we must terminate execution of the contract
+    if !result.is_ok() {
+        interpreter.gas = gas;
+        return InterpreterAction::Return {
+            result: InterpreterResult::new(result, output, gas),
+        };
+    }
+
     interpreter.gas = gas;
 
     match prev_opcode {
-        opcode::BALANCE | opcode::SELFBALANCE => {
+        opcode::BALANCE | opcode::SELFBALANCE | opcode::EXTCODESIZE | opcode::CODESIZE => {
             assert_eq!(output.len(), 32);
             let balance = U256::from_le_slice(output.as_ref());
             if let Err(result) = interpreter.stack.push(balance) {
                 interpreter.instruction_result = result;
             }
         }
+        opcode::EXTCODEHASH => {
+            assert_eq!(output.len(), 32);
+            let code_hash = B256::from_slice(output.as_ref());
+            if let Err(result) = interpreter.stack.push(code_hash.into()) {
+                interpreter.instruction_result = result;
+            }
+        }
         _ => unreachable!(
-            "revm: not possible opcode ({})",
+            "revm: not resumable opcode ({})",
             interpreter.current_opcode()
         ),
     }
@@ -224,6 +268,7 @@ pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
         interpreter.instruction_result = InstructionResult::Continue;
     }
 
+    let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
     let next_action = match instruction_tables {
         InstructionTables::Plain(table) => interpreter.run(memory, table, context),
         InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
@@ -237,11 +282,16 @@ pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
 pub fn execute_rwasm_resume(
     system_interruption_outcome: SystemInterruptionOutcome,
 ) -> InterpreterAction {
-    let fuel_used = system_interruption_outcome.gas_used() * FUEL_DENOM_RATE;
+    let fuel_consumed = system_interruption_outcome.gas_consumed.spent() * FUEL_DENOM_RATE;
+    // TODO(dmitry123): "we need to pass refund as well"
+    if system_interruption_outcome.gas_consumed.refunded() > 0 {
+        unreachable!("we don't support refunds yet")
+    }
 
     let SystemInterruptionOutcome {
         call_id,
         target_address,
+        bytecode_address,
         caller,
         call_value,
         is_create,
@@ -251,14 +301,21 @@ pub fn execute_rwasm_resume(
         ..
     } = system_interruption_outcome;
 
-    let runtime_context = RuntimeContext::root(0);
+    let mut runtime_context = RuntimeContext::root(0);
+    if is_self_gas_management_contract(&bytecode_address) {
+        runtime_context = runtime_context.without_fuel();
+    }
     let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, exit_code) =
-        native_sdk.resume(call_id, result.output.as_ref(), exit_code, fuel_used);
+    let (fuel_consumed, exit_code) = native_sdk.resume(
+        call_id,
+        result.output.as_ref(),
+        exit_code,
+        fuel_consumed as u32,
+    );
 
     // make sure we have enough gas to charge from the call
     let mut gas = result.gas;
-    if !gas.record_denominated_cost(fuel_consumed) {
+    if !gas.record_denominated_cost(fuel_consumed as u64) {
         return InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -273,6 +330,7 @@ pub fn execute_rwasm_resume(
 
     process_exec_result(
         target_address,
+        bytecode_address,
         caller,
         call_value,
         exit_code,

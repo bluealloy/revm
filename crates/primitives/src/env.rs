@@ -363,6 +363,8 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
+    /// Do we enable EVM proxy for running EVM runtime?
+    pub enable_rwasm_proxy: bool,
 }
 
 impl CfgEnv {
@@ -482,6 +484,7 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
+            enable_rwasm_proxy: false,
         }
     }
 }

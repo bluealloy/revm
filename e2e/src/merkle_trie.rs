@@ -105,6 +105,6 @@ fn compute_state_merkle_trie_root_test() {
     let accounts = vec![(address, &plain_acc)];
     let accounts2 = vec![(address, &plain_acc2)];
     let state_root = state_merkle_trie_root(accounts);
-    let state_root2 = state_merkle_trie_root2(accounts2);
+    let state_root2 = state_merkle_trie_root(accounts2);
     assert_eq!(state_root, state_root2);
 }

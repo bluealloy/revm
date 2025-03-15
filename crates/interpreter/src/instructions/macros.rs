@@ -275,6 +275,19 @@ macro_rules! push {
     )*)
 }
 
+#[macro_export]
+macro_rules! try_push {
+    ($interp:expr, $($x:expr),* $(,)?) => ($(
+        match $interp.stack.push(U256::try_from($x).unwrap()) {
+            Ok(()) => {},
+            Err(e) => {
+                $interp.instruction_result = e;
+                return;
+            }
+        }
+    )*)
+}
+
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
 #[macro_export]
 macro_rules! as_u64_saturated {

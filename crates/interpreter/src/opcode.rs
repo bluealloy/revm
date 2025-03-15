@@ -3,14 +3,19 @@
 pub mod eof_printer;
 
 mod tables;
-pub use tables::{
-    make_boxed_instruction_table, make_instruction_table, update_boxed_instruction,
-    BoxedInstruction, BoxedInstructionTable, DynInstruction, Instruction, InstructionTable,
-    InstructionTables,
-};
-
 use crate::{instructions::*, primitives::Spec, Host};
 use core::{fmt, ptr::NonNull};
+pub use tables::{
+    make_boxed_instruction_table,
+    make_instruction_table,
+    update_boxed_instruction,
+    BoxedInstruction,
+    BoxedInstructionTable,
+    DynInstruction,
+    Instruction,
+    InstructionTable,
+    InstructionTables,
+};
 
 /// An error indicating that an opcode is invalid.
 #[derive(Debug, PartialEq, Eq)]
@@ -428,8 +433,8 @@ macro_rules! opcodes {
 
 // When adding new opcodes:
 // 1. add the opcode to the list below; make sure it's sorted by opcode value
-// 2. implement the opcode in the corresponding module;
-//    the function signature must be the exact same as the others
+// 2. implement the opcode in the corresponding module; the function signature must be the exact
+//    same as the others
 opcodes! {
     0x00 => STOP => control::stop => stack_io(0, 0), terminating;
 

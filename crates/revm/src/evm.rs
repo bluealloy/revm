@@ -126,13 +126,12 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     // execute system interruption,
                     // in inputs we store updated info about the call,
                     // for example, new gas info
-                    let gas_remaining = inputs.gas.remaining();
-                    let frame_or_result =
+                    let (frame_or_result, gas_consumed) =
                         exec.system_interruption(&mut self.context, &mut inputs)?;
                     let is_frame = frame_or_result.is_frame();
                     stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome::new(
                         inputs,
-                        gas_remaining,
+                        gas_consumed,
                         is_frame,
                     ));
                     frame_or_result

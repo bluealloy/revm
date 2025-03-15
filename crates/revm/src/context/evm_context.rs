@@ -21,6 +21,7 @@ use crate::{
         Bytes,
         CreateScheme,
         EVMError,
+        Eip7702Bytecode,
         Env,
         Eof,
         SpecId::{self, *},
@@ -36,7 +37,11 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account_from_input};
+use fluentbase_sdk::{
+    compile_wasm_to_rwasm,
+    try_resolve_precompile_account_from_input,
+    PRECOMPILE_EVM_RUNTIME,
+};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -260,8 +265,9 @@ impl<DB: Database> EvmContext<DB> {
             .journaled_state
             .load_code(inputs.bytecode_address, &mut self.inner.db)?;
 
-        let code_hash = account.info.code_hash();
+        let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
+        let mut bytecode_address = inputs.bytecode_address;
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
         if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
@@ -274,18 +280,19 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            bytecode = self
+            let delegated_account = self
                 .inner
                 .journaled_state
-                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
-                .info
-                .code
-                .clone()
-                .unwrap_or_default();
+                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?;
+            // TODO(dmitry123): "do we eligible to rewrite code hash for delegate contract here?"
+            code_hash = delegated_account.info.code_hash;
+            bytecode = delegated_account.info.code.clone().unwrap_or_default();
+            bytecode_address = eip7702_bytecode.delegated_address;
         }
 
         let mut contract =
             Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+        contract.bytecode_address = Some(bytecode_address);
 
         if let Some(precompiled_address) =
             try_resolve_precompile_account_from_input(inputs.input.as_ref())
@@ -384,21 +391,39 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let (bytecode, constructor_params) = if inputs.init_code.len() > WASM_MAGIC_BYTES.len()
+        let (bytecode, constructor_params, bytecode_address) = if inputs.init_code.len()
+            > WASM_MAGIC_BYTES.len()
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
-            let Some(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
+            let Ok(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
             self.journaled_state
                 .set_code(created_address, bytecode.clone());
-            (bytecode, compilation_result.constructor_params)
+            (
+                bytecode,
+                compilation_result.constructor_params,
+                Some(created_address),
+            )
+        } else if self.env.cfg.enable_rwasm_proxy {
+            let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
+            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+            self.journaled_state.set_code(created_address, bytecode);
+            let runtime_bytecode = self.code(PRECOMPILE_EVM_RUNTIME)?;
+            let runtime_bytecode = Bytecode::new_raw(runtime_bytecode.data);
+            (
+                runtime_bytecode,
+                inputs.init_code.clone(),
+                // for EIP-7702 accounts, we need to replace bytecode address
+                Some(PRECOMPILE_EVM_RUNTIME),
+            )
         } else {
             (
                 Bytecode::new_raw(inputs.init_code.clone()),
-                Bytes::default(),
+                Default::default(),
+                Some(created_address),
             )
         };
 
@@ -407,7 +432,7 @@ impl<DB: Database> EvmContext<DB> {
             bytecode,
             Some(init_code_hash),
             created_address,
-            None,
+            bytecode_address,
             inputs.caller,
             inputs.value,
         );

@@ -416,8 +416,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         // to update bytecode since it's immutable during the deployment process
         let is_rwasm_contract_creation =
             interpreter_result.result == InstructionResult::ReturnContract;
-
-        // set code
         if !is_rwasm_contract_creation {
             self.journaled_state.set_code(address, bytecode);
         }

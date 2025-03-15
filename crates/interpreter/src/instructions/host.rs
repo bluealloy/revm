@@ -1,43 +1,14 @@
 use crate::{
     gas::{self, warm_cold_cost},
     interpreter::Interpreter,
-    interpreter_action::SystemInterruptionInputs,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     Host,
     InstructionResult,
-    InterpreterAction,
 };
 use core::cmp::min;
-use fluentbase_types::{
-    FUEL_DENOM_RATE,
-    FUEL_LIMIT_SYSCALL_BALANCE,
-    STATE_MAIN,
-    SYSCALL_ID_BALANCE,
-};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    if interpreter.enable_interruptions {
-        pop_address!(interpreter, address);
-        interpreter.next_action = InterpreterAction::InterruptedCall {
-            inputs: Box::new(SystemInterruptionInputs {
-                target_address: interpreter.contract.target_address,
-                caller: interpreter.contract.caller,
-                call_value: interpreter.contract.call_value,
-                call_id: u32::MAX,
-                code_hash: SYSCALL_ID_BALANCE,
-                input: (*address).into(),
-                gas: interpreter.gas,
-                local_gas_limit: FUEL_LIMIT_SYSCALL_BALANCE / FUEL_DENOM_RATE,
-                state: STATE_MAIN,
-                is_create: false,
-                is_static: false,
-            }),
-        };
-        interpreter.instruction_result = InstructionResult::CallOrCreate;
-        return;
-    }
-
     pop_address!(interpreter, address);
     let Some(balance) = host.balance(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;

@@ -92,6 +92,26 @@ pub enum InstructionResult {
     EofAuxDataTooSmall,
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
+
+    // fluentbase error codes
+    RootCallOnly = 0x80,
+    MalformedBuiltinParams,
+    CallDepthOverflow,
+    NonNegativeExitCode,
+    UnknownError,
+    InputOutputOutOfBounds,
+    // trap error codes
+    UnreachableCodeReached,
+    MemoryOutOfBounds,
+    TableOutOfBounds,
+    IndirectCallToNull,
+    IntegerDivisionByZero,
+    IntegerOverflow,
+    BadConversionToInteger,
+    BadSignature,
+    OutOfFuel,
+    GrowthOperationLimited,
+    UnresolvedFunction,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -139,6 +159,23 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
+            HaltReason::RootCallOnly => Self::RootCallOnly,
+            HaltReason::MalformedBuiltinParams => Self::MalformedBuiltinParams,
+            HaltReason::CallDepthOverflow => Self::CallDepthOverflow,
+            HaltReason::NonNegativeExitCode => Self::NonNegativeExitCode,
+            HaltReason::UnknownError => Self::UnknownError,
+            HaltReason::InputOutputOutOfBounds => Self::InputOutputOutOfBounds,
+            HaltReason::UnreachableCodeReached => Self::UnreachableCodeReached,
+            HaltReason::MemoryOutOfBounds => Self::MemoryOutOfBounds,
+            HaltReason::TableOutOfBounds => Self::TableOutOfBounds,
+            HaltReason::IndirectCallToNull => Self::IndirectCallToNull,
+            HaltReason::IntegerDivisionByZero => Self::IntegerDivisionByZero,
+            HaltReason::IntegerOverflow => Self::IntegerOverflow,
+            HaltReason::BadConversionToInteger => Self::BadConversionToInteger,
+            HaltReason::BadSignature => Self::BadSignature,
+            HaltReason::OutOfFuel => Self::OutOfFuel,
+            HaltReason::GrowthOperationLimited => Self::GrowthOperationLimited,
+            HaltReason::UnresolvedFunction => Self::UnresolvedFunction,
         }
     }
 }
@@ -283,15 +320,15 @@ impl SuccessOrHalt {
 impl From<InstructionResult> for SuccessOrHalt {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
+            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), /* used only in interpreter loop */
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
-            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
+            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), /* used only in interpreter loop */
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), /* not gonna happen for first call */
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), /* Check for first call is done separately. */
             InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
             InstructionResult::MemoryLimitOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
@@ -319,7 +356,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), // Check for first call is done separately.
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), /* Check for first call is done separately. */
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow),
             InstructionResult::CreateContractSizeLimit
@@ -343,6 +380,35 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
             }
+            InstructionResult::RootCallOnly => Self::Halt(HaltReason::RootCallOnly),
+            InstructionResult::MalformedBuiltinParams => {
+                Self::Halt(HaltReason::MalformedBuiltinParams)
+            }
+            InstructionResult::CallDepthOverflow => Self::Halt(HaltReason::CallDepthOverflow),
+            InstructionResult::NonNegativeExitCode => Self::Halt(HaltReason::NonNegativeExitCode),
+            InstructionResult::UnknownError => Self::Halt(HaltReason::UnknownError),
+            InstructionResult::InputOutputOutOfBounds => {
+                Self::Halt(HaltReason::InputOutputOutOfBounds)
+            }
+            InstructionResult::UnreachableCodeReached => {
+                Self::Halt(HaltReason::UnreachableCodeReached)
+            }
+            InstructionResult::MemoryOutOfBounds => Self::Halt(HaltReason::MemoryOutOfBounds),
+            InstructionResult::TableOutOfBounds => Self::Halt(HaltReason::TableOutOfBounds),
+            InstructionResult::IndirectCallToNull => Self::Halt(HaltReason::IndirectCallToNull),
+            InstructionResult::IntegerDivisionByZero => {
+                Self::Halt(HaltReason::IntegerDivisionByZero)
+            }
+            InstructionResult::IntegerOverflow => Self::Halt(HaltReason::IntegerOverflow),
+            InstructionResult::BadConversionToInteger => {
+                Self::Halt(HaltReason::BadConversionToInteger)
+            }
+            InstructionResult::BadSignature => Self::Halt(HaltReason::BadSignature),
+            InstructionResult::OutOfFuel => Self::Halt(HaltReason::OutOfFuel),
+            InstructionResult::GrowthOperationLimited => {
+                Self::Halt(HaltReason::GrowthOperationLimited)
+            }
+            InstructionResult::UnresolvedFunction => Self::Halt(HaltReason::UnresolvedFunction),
         }
     }
 }

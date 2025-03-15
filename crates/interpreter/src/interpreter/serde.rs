@@ -114,7 +114,6 @@ impl<'de> Deserialize<'de> for Interpreter {
             return_data_buffer,
             is_static,
             next_action,
-            enable_interruptions: false,
         })
     }
 }

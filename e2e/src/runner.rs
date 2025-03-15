@@ -3,8 +3,7 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use crate::merkle_trie::state_merkle_trie_root2;
-use fluentbase_genesis::devnet_genesis_from_file;
+use fluentbase_genesis::devnet_genesis_v0_1_0_dev10_from_file;
 use fluentbase_sdk::Address;
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
@@ -257,18 +256,6 @@ fn check_evm_execution<EXT1>(
     // print_json_output(None);
     // return Ok(());
 
-    // if state_root1 != state_root2 {
-    //     let kind = TestErrorKind::StateRootMismatch2 {
-    //         expected: state_root1,
-    //         got: state_root2,
-    //     };
-    //     print_json_output(Some(kind.to_string()));
-    //     return Err(TestError {
-    //         name: test_name.to_string(),
-    //         kind,
-    //     });
-    // }
-
     if logs_root1 != logs_root2 {
         let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
         println!("ORIGINAL logs ({}):", logs1.len());
@@ -296,6 +283,16 @@ fn check_evm_execution<EXT1>(
         }
         assert_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
     }
+
+    let exec_result1_res = exec_result1.as_ref().unwrap();
+    let exec_result2_res = exec_result2.as_ref().unwrap();
+    assert_eq!(
+        exec_result1_res.gas_used(),
+        exec_result2_res.gas_used(),
+        "EVM <> FLUENT gas used mismatch ({})",
+        exec_result2.as_ref().unwrap().gas_used() as i64
+            - exec_result1.as_ref().unwrap().gas_used() as i64
+    );
 
     // compare contracts
     for (k, v) in evm.context.evm.db.cache.contracts.iter() {
@@ -325,17 +322,23 @@ fn check_evm_execution<EXT1>(
                 .as_ref()
                 .map(|v| &v.info)
                 .expect("missing FLUENT account");
-            // assert_eq!(
-            //     format!("{:?}", v1.status),
-            //     format!("{:?}", v2.unwrap().status),
-            //     "EVM account status mismatch ({:?}) <> ({:?})",
-            //     v1,
-            //     v2.unwrap()
-            // );
-            // assert_eq!(
-            //     a1.balance, a2.balance,
-            //     "EVM <> FLUENT account balance mismatch"
-            // );
+            if cfg!(feature = "debug-print") {
+                println!(" - status: {:?}", v1.status);
+            }
+            assert_eq!(
+                format!("{:?}", v1.status),
+                format!("{:?}", v2.unwrap().status),
+                "EVM account status mismatch ({:?}) <> ({:?})",
+                v1,
+                v2.unwrap()
+            );
+            if cfg!(feature = "debug-print") {
+                println!(" - balance: {}", a1.balance);
+            }
+            assert_eq!(
+                a1.balance, a2.balance,
+                "EVM <> FLUENT account balance mismatch",
+            );
             if cfg!(feature = "debug-print") {
                 println!(" - nonce: {}", a1.nonce);
             }
@@ -343,15 +346,15 @@ fn check_evm_execution<EXT1>(
             if cfg!(feature = "debug-print") {
                 println!(" - code_hash: {}", hex::encode(a1.code_hash));
             }
-            // assert_eq!(
-            //     a1.code_hash, a2.code_hash,
-            //     "EVM <> FLUENT account code_hash mismatch",
-            // );
-            // assert_eq!(
-            //     a1.code.as_ref().map(|b| b.original_bytes()),
-            //     a2.code.as_ref().map(|b| b.original_bytes()),
-            //     "EVM <> FLUENT account code mismatch",
-            // );
+            assert_eq!(
+                a1.code_hash, a2.code_hash,
+                "EVM <> FLUENT account code_hash mismatch",
+            );
+            assert_eq!(
+                a1.code.as_ref().map(|b| b.original_bytes()),
+                a2.code.as_ref().map(|b| b.original_bytes()),
+                "EVM <> FLUENT account code mismatch",
+            );
             if cfg!(feature = "debug-print") {
                 println!(" - storage:");
             }
@@ -406,16 +409,6 @@ fn check_evm_execution<EXT1>(
         }
     }
 
-    let _exec_result1_res = exec_result1.as_ref().unwrap();
-    let _exec_result2_res = exec_result2.as_ref().unwrap();
-    // assert_eq!(
-    //     exec_result1_res.gas_used(),
-    //     exec_result2_res.gas_used(),
-    //     "EVM <> FLUENT gas used mismatch ({})",
-    //     exec_result2.as_ref().unwrap().gas_used() as i64
-    //         - exec_result1.as_ref().unwrap().gas_used() as i64
-    // );
-
     for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
         if cfg!(feature = "debug-print") {
             println!("comparing balances (0x{})...", hex::encode(address));
@@ -438,15 +431,27 @@ fn check_evm_execution<EXT1>(
                 a2.balance - a1.balance
             };
             if balance_diff != U256::from(0) {
-                // assert_eq!(
-                //     a1.balance, a2.balance,
-                //     "EVM <> FLUENT account balance mismatch"
-                // );
+                assert_eq!(
+                    a1.balance, a2.balance,
+                    "EVM <> FLUENT account balance mismatch"
+                );
             }
         }
     }
 
     print_json_output(None);
+
+    if state_root1 != state_root2 {
+        let kind = TestErrorKind::StateRootMismatch2 {
+            expected: state_root1,
+            got: state_root2,
+        };
+        print_json_output(Some(kind.to_string()));
+        return Err(TestError {
+            name: test_name.to_string(),
+            kind,
+        });
+    }
 
     Ok(())
 }
@@ -478,7 +483,7 @@ pub fn execute_test_suite(
         kind: e.into(),
     })?;
 
-    let devnet_genesis = devnet_genesis_from_file();
+    let devnet_genesis = devnet_genesis_v0_1_0_dev10_from_file();
     // let (proxy_bytecode, proxy_bytecode_hash) = if ENABLE_EVM_PROXY_CONTRACT {
     //     let proxy_bytecode = create_delegate_proxy_bytecode(PRECOMPILE_EVM);
     //     let code_hash = B256::from(poseidon_hash(proxy_bytecode.as_ref()));
@@ -687,7 +692,11 @@ pub fn execute_test_suite(
                     .build();
                 let mut evm2 = Evm::builder()
                     .with_db(&mut state2)
-                    .modify_env(|e| *e = env.clone())
+                    .modify_env(|e| {
+                        let mut new_env = env.clone();
+                        new_env.cfg.enable_rwasm_proxy = true;
+                        *e = new_env
+                    })
                     .with_spec_id(spec_id)
                     .build();
 

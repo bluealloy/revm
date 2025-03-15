@@ -70,8 +70,6 @@ pub struct Interpreter {
     /// those instructions will set InstructionResult to CallOrCreate/Return/Revert so we know
     /// the reason.
     pub next_action: InterpreterAction,
-    /// Do we enable interruptions for EVM instructions?
-    pub enable_interruptions: bool,
 }
 
 impl Default for Interpreter {
@@ -102,7 +100,6 @@ impl Interpreter {
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: InterpreterAction::None,
-            enable_interruptions: false,
         }
     }
 
@@ -118,7 +115,6 @@ impl Interpreter {
     }
 
     /// Test related helper
-    #[cfg(test)]
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
         Self::new(
             Contract::new(
@@ -136,7 +132,7 @@ impl Interpreter {
     }
 
     /// Load EOF code into interpreter. PC is assumed to be correctly set
-    pub(crate) fn load_eof_code(&mut self, idx: usize, pc: usize) {
+    pub fn load_eof_code(&mut self, idx: usize, pc: usize) {
         // SAFETY: eof flag is true only if bytecode is Eof.
         let Bytecode::Eof(eof) = &self.contract.bytecode else {
             panic!("Expected EOF code section")
@@ -365,7 +361,7 @@ impl Interpreter {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    pub fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
         FN: Fn(&mut Interpreter, &mut H),
     {

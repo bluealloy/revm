@@ -44,18 +44,8 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
-        return if interrupted_outcome.call_id == u32::MAX {
-            Ok(execute_evm_resume::<SPEC, EXT, DB>(
-                interrupted_outcome,
-                frame,
-                shared_memory,
-                instruction_tables,
-                context,
-            ))
-        } else {
-            Ok(execute_rwasm_resume(interrupted_outcome))
-        };
-    }
+        return Ok(execute_rwasm_resume(interrupted_outcome));
+    };
 
     let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
@@ -122,7 +112,7 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
 pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: &mut Box<SystemInterruptionInputs>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
+) -> Result<(FrameOrResult, Gas), EVMError<DB::Error>> {
     execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs)
 }
 
