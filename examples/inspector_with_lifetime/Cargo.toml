@@ -1,0 +1,33 @@
+[package]
+name = "inspector_with_lifetime"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revms
+revm = { workspace = true, features = ["std"] }
+
+# alloy
+alloy-primitives = { workspace = true, features = ["rand"] }
+
+# misc
+anyhow = "1.0.89"
+

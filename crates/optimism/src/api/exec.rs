@@ -84,7 +84,7 @@ impl<CTX, INSP, PRECOMPILE> InspectEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Journal: JournalExt> + ContextSetters,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: for<'context> Inspector<EthInterpreter, Context<'context> = CTX>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
@@ -103,7 +103,7 @@ impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit> + ContextSetters,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: for<'context> Inspector<EthInterpreter, Context<'context> = CTX>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {

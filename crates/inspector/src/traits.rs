@@ -33,7 +33,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
-    INSP: Inspector<CTX, I::InterpreterTypes>,
+    INSP: for<'context> Inspector<I::InterpreterTypes, Context<'context> = CTX>,
 {
     type Inspector = INSP;
 

@@ -15,13 +15,19 @@ use std::{vec, vec::Vec};
 
 /// EVM hooks into execution.
 #[auto_impl(&mut, Box)]
-pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
+pub trait Inspector<INTR: InterpreterTypes = EthInterpreter> {
+    type Context<'context>;
+
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter<INTR>,
+        context: &mut Self::Context<'_>,
+    ) {
         let _ = interp;
         let _ = context;
     }
@@ -35,7 +41,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut Self::Context<'_>) {
         let _ = interp;
         let _ = context;
     }
@@ -45,14 +51,14 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut Self::Context<'_>) {
         let _ = interp;
         let _ = context;
     }
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut Self::Context<'_>, log: Log) {
         let _ = interp;
         let _ = context;
         let _ = log;
@@ -62,7 +68,11 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// InstructionResulting anything other than [InstructionResult::Continue] overrides the result of the call.
     #[inline]
-    fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
+    fn call(
+        &mut self,
+        context: &mut Self::Context<'_>,
+        inputs: &mut CallInputs,
+    ) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -74,7 +84,12 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// This allows the inspector to modify the given `result` before returning it.
     #[inline]
-    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
+    fn call_end(
+        &mut self,
+        context: &mut Self::Context<'_>,
+        inputs: &CallInputs,
+        outcome: &mut CallOutcome,
+    ) {
         let _ = context;
         let _ = inputs;
         let _ = outcome;
@@ -86,7 +101,11 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// If this returns `None` then the creation proceeds as normal.
     #[inline]
-    fn create(&mut self, context: &mut CTX, inputs: &mut CreateInputs) -> Option<CreateOutcome> {
+    fn create(
+        &mut self,
+        context: &mut Self::Context<'_>,
+        inputs: &mut CreateInputs,
+    ) -> Option<CreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -99,7 +118,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut CTX,
+        context: &mut Self::Context<'_>,
         inputs: &CreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -113,7 +132,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
-        context: &mut CTX,
+        context: &mut Self::Context<'_>,
         inputs: &mut EOFCreateInputs,
     ) -> Option<CreateOutcome> {
         let _ = context;
@@ -124,7 +143,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
-        context: &mut CTX,
+        context: &mut Self::Context<'_>,
         inputs: &EOFCreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -177,8 +196,12 @@ impl<DB: Database> JournalExt for Journal<DB> {
 
 pub trait InspectorHandler: Handler
 where
-    Self::Evm:
-        InspectorEvmTr<Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, Self::IT>>,
+    Self::Evm: InspectorEvmTr<
+        Inspector: for<'context> Inspector<
+            Self::IT,
+            Context<'context> = <<Self as Handler>::Evm as EvmTr>::Context,
+        >,
+    >,
     Self::Frame: InspectorFrame<IT = Self::IT>,
 {
     type IT: InterpreterTypes;
@@ -307,9 +330,9 @@ where
     }
 }
 
-fn frame_start<CTX, INTR: InterpreterTypes>(
-    context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, INTR>,
+fn frame_start<'context, CTX, INTR: InterpreterTypes>(
+    context: &'context mut CTX,
+    inspector: &mut impl Inspector<INTR, Context<'context> = CTX>,
     frame_input: &mut FrameInput,
 ) -> Option<FrameResult> {
     match frame_input {
@@ -332,9 +355,9 @@ fn frame_start<CTX, INTR: InterpreterTypes>(
     None
 }
 
-fn frame_end<CTX, INTR: InterpreterTypes>(
-    context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, INTR>,
+fn frame_end<'context, CTX, INTR: InterpreterTypes>(
+    context: &'context mut CTX,
+    inspector: &mut impl Inspector<INTR, Context<'context> = CTX>,
     frame_input: &FrameInput,
     frame_output: &mut FrameResult,
 ) {
@@ -360,10 +383,10 @@ fn frame_end<CTX, INTR: InterpreterTypes>(
     }
 }
 
-pub fn inspect_instructions<CTX, IT>(
-    context: &mut CTX,
+pub fn inspect_instructions<'context, CTX, IT>(
+    context: &'context mut CTX,
     interpreter: &mut Interpreter<IT>,
-    mut inspector: impl Inspector<CTX, IT>,
+    mut inspector: impl Inspector<IT, Context<'context> = CTX>,
     instructions: &InstructionTable<IT, CTX>,
 ) -> InterpreterAction
 where

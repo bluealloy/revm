@@ -37,7 +37,7 @@ mod test {
     fn default_run_op() {
         let ctx = Context::op();
         // convert to optimism context
-        let mut evm = ctx.build_op_with_inspector(NoOpInspector {});
+        let mut evm = ctx.build_op_with_inspector(NoOpInspector::default());
         // execute
         let _ = evm.replay();
         // inspect

@@ -452,7 +452,10 @@ impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
         Context: OpContextTr,
-        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+        Inspector: for<'context> Inspector<
+            EthInterpreter,
+            Context<'context> = <<Self as Handler>::Evm as EvmTr>::Context,
+        >,
     >,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
