@@ -86,7 +86,7 @@ where
                 InterpreterTypes = EthInterpreter,
             >,
         > + InspectorEvmTr,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type IT = EthInterpreter;
 

@@ -87,7 +87,6 @@ where
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<<CTX::Db as Database>::Error>
-        + From<PrecompileError>,
 {
     let sender_balance_slot = erc_address_storage(sender);
     let sender_balance = context.journal().sload(TOKEN, sender_balance_slot)?.data;

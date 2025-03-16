@@ -20,7 +20,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, PrecompileError>;
+    ) -> Result<Option<Self::Output>, String>;
 
     /// Get the warm addresses.
     fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>>;
@@ -76,7 +76,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<InterpreterResult>, PrecompileError> {
+    ) -> Result<Option<InterpreterResult>, String> {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
@@ -95,8 +95,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 result.output = output.bytes;
             }
             Err(e) => {
-                if let PrecompileError::Fatal(_) = e {
-                    return Err(e);
+                if let PrecompileError::Fatal(msg) = e {
+                    return Err(msg);
                 }
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG

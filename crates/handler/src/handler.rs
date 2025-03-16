@@ -19,7 +19,6 @@ pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-    + From<PrecompileError>
     + FromStringError
 {
 }
@@ -29,7 +28,6 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<PrecompileError>
             + FromStringError,
     > EvmTrError<EVM> for T
 {

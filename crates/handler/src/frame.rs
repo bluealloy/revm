@@ -82,7 +82,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -151,7 +151,7 @@ where
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
+    ERROR: From<ContextTrDbError<EVM::Context>>,
 {
     /// Make call frame
     #[inline]
@@ -522,7 +522,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     pub fn init_first(
         evm: &mut EVM,
