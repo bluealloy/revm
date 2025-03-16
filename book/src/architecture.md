@@ -1,55 +1,53 @@
 # Architecture
 
-List of crates can be found in [Crates](./architecture/crates.md) section of the book.
+REVM is a flexible implementation of the Ethereum Virtual Machine (EVM). It follows the rules of the Ethereum mainnet and stays up to date with changes through hardforks as defined in the official [Ethereum 
+execution specs](https://github.com/ethereum/execution-specs).
 
-REVM as any EVM implement a list of [EIP's (Ethereum Improvement Protocol)](https://github.com/ethereum/EIPs) changes over time. Those changes are shipped in the form of hardforks. List of hardforks can be found here [Ethereum Hardforks]() and repository that contains all EIPs can be found here [EIPs](https://eips.ethereum.org/).
+You can use REVM in two main ways:
+1. Run regular Ethereum transactions using a Execution API
+2. Create your own custom version of the EVM (for Layer 2 solutions or other chains) using EVM framework
 
-### Main components/traits:
+The main `revm` library combines all the different crates into one package and reexports them. You can see overview revm crates in [crates folder](https://github.com/bluealloy/revm/tree/main/crates) and overview of examples in [examples folder](https://github.com/bluealloy/revm/tree/main/examples).
 
-Revm consist of few traits that implement functionality of the EVM. The main traits are:
-* **EvmTr**: This trait allows as to access main EVM fields and to run interpreter. It defines **Context**, **Precompiles**, **Instructions**. Docs
-* **ContextTr**: is gained from EvmTr and consist of types needed for execution. It defines environment such as block and transaction, database for runtime fetching of accounts and storage, journal for status changes and revert handling and few more fields. Docs
-* **Handler**: is a trait that by default implements Ethereum logic, it takes EvmTr as a input. Entry point is a `run` function. Docs
-* **Frame**: is a associate type ofHandler and contains runtime data of the call and logic of executing the call, default impl is a type is EthFrame. Docs
+REVM works in no_std environments which means it can be used in zero-knowledge virtual machines (zkVMs). It also has very few external dependencies, which you can read more about in the [dev section](./dev.md).
 
-Inspection for tracing is extensing above traits with:
-* **InspectorEvmTr** is derived from EvmTr and allows running Evm in Inspection mode. It contains **Inspector** associate type. Docs
-* **InspectorHandler** is derived fromHandler and allows running Evm in Inspection mode. Entry point is `inspect_run` function and it calls a alternative functions for execution loop that includes inspector calls. Docs
-* **Inspector** is a a user oriented trait that is used for inspection of the EVM. It is used for tracing. It is part of Evm struct and it is called from InspectorHandler and InspectorEvmTr. Docs
+# Execution API
 
+REVM provides four ways to execute transactions through traits (interfaces).
 
-### Simplified code
+The State system builds on the `Database` trait and handles:
+- Getting data from external storage
+- Managing the EVM's output
+- Caching changes when running multiple transactions
 
-```rust,ignore
-pub trait EvmTr {
-    type Context: ContextTr;
-    ...
-    fn execute_interpreter(..);
-}
+You can implement one of three database interfaces depending on what you need:
 
-pub trait Handler {
-    type Evm: EvmTr;
-    type Frame: Frame;
-    ...
-    fn run(evm);
-}
-```
+- `Database`: Uses a mutable reference (`&mut self`). This is useful when you want to update a cache or track statistics while getting data. Enables basic transaction functions like `transact` and `inspect`.
 
-### flow of execution
-Execution flow can be found here (TODO Move to codebase toHandler trait):
-* It starts with creation of new EVM instance
-  * Building of the Context
-  * Building of the EVM. Inspector/Precompiles are created.
-  * Adding of the Inspector if needed.
-* transact/inspect. Both inspection and transaction have same flow where the only difference is that inspection includes calls to the inspector.
-  * validation of transaction and doing balance gas limit check.
-  * pre execution loads all warm accounts and deducts the caller.
-  * Execution :
-    * Creates first frame with Interpreter or executes precompile.
-    * run the frame loop:
-      * Calls Evm to exec interpreter with the frame. Interpreter loops is called here
-      * Output of Interpreter loop is NextAction that can be a Return of Call.
-      * If Return, then the frame is popped and the return value is pushed to the parent frame. If it is new call, then a new frame is created and pushed to the call stack.
-      * If call stack is empty the execution loop is done.
-    * handles the result of execution.s
-  * Post execution deals with halt and revert handling redistribution of rewards and reimbursement of unspend gas.
+- `DatabaseRef`: Uses a regular reference (`&self`). Good for when you only need to read data without making changes. Enables reference-based functions like `transact_ref`.
+
+- `Database + DatabaseCommit`: Adds the ability to save transaction changes directly. Enables commit functions like `transact_commit`.
+
+# EVM Framework
+
+To learn how to build your own custom EVM:
+- Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/rakita/my_evm/examples/my_evm) guide
+- Look at [op-revm](https://github.com/bluealloy/revm/tree/main/crates/optimism) to see how Optimism uses REVM
+
+Each trait needed to build custom EVM has detailed documentation explaining how it works and it is worth reading.
+
+In summary, REVM is built around several key traits that enable customizable EVM functionality. The core traits include:
+
+* **EvmTr**: The core EVM trait that provides access to the main EVM components:
+  - Context - Environment and state access
+  - Instructions - EVM opcode implementations
+  - Precompiles - Built-in contract implementations
+  - Inspector - Used for tracing, only enabled with `InspectorEvmTr` trait.
+* **ContextTr**: Accessed through EvmTr, defines the execution environment including Tx/Block/Journal/Db:
+* **Handler**: Implements the core execution logic, taking an EvmTr implementation. The default implementation follows Ethereum consensus.
+
+And traits that provide support for inspection and tracing:
+
+* **InspectorEvmTr**: Extends EvmTr to enable inspection mode execution with an associated Inspector type
+* **InspectorHandler**: Extends Handler with inspection-enabled execution paths that make Inspector callbacks
+* **Inspector**: User-implementable trait for EVM inspection/tracing

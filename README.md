@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/bluealloy/revm/actions/workflows/ci.yml/badge.svg)][gh-ci]
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)][mit-license]
+![revm](https://img.shields.io/crates/v/revm.svg)
 [![Chat][tg-badge]][tg-url]
 
 Revm is a highly efficient and stable implementation of the Ethereum Virtual Machine (EVM) written in Rust.

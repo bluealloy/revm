@@ -51,6 +51,19 @@ pub(super) fn extract_g1_input(
     let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
     let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
+    // From EIP-2537:
+    //
+    // Error cases:
+    //
+    // * An input is neither a point on the G1 elliptic curve nor the infinity point
+    //
+    // SAFETY: Out is a blst value.
+    if unsafe { !blst_p1_affine_on_curve(&out) } {
+        return Err(PrecompileError::Other(
+            "Element not on G1 curve".to_string(),
+        ));
+    }
+
     if subgroup_check {
         // NB: Subgroup checks
         //
@@ -67,25 +80,6 @@ pub(super) fn extract_g1_input(
         if unsafe { !blst_p1_affine_in_g1(&out) } {
             return Err(PrecompileError::Other("Element not in G1".to_string()));
         }
-    } else {
-        // From EIP-2537:
-        //
-        // Error cases:
-        //
-        // * An input is neither a point on the G1 elliptic curve nor the infinity point
-        //
-        // NB: There is no subgroup check for the G1 addition precompile.
-        //
-        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g1 because the latter performs
-        // the subgroup check.
-        //
-        // SAFETY: Out is a blst value.
-        if unsafe { !blst_p1_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other(
-                "Element not on G1 curve".to_string(),
-            ));
-        }
     }
-
     Ok(out)
 }

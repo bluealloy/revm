@@ -7,9 +7,7 @@ use revm::{
         EvmTr,
     },
     inspector::{InspectorEvmTr, JournalExt},
-    interpreter::{
-        interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
-    },
+    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterTypes},
     Inspector,
 };
 
@@ -17,7 +15,7 @@ pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrec
     pub Evm<CTX, INSP, I, P>,
 );
 
-impl<CTX: Host, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             data: EvmData { ctx, inspector },

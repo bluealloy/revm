@@ -71,6 +71,19 @@ pub(super) fn extract_g2_input(
 
     let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
 
+    // From EIP-2537:
+    //
+    // Error cases:
+    //
+    // * An input is neither a point on the G2 elliptic curve nor the infinity point
+    //
+    // SAFETY: Out is a blst value.
+    if unsafe { !blst_p2_affine_on_curve(&out) } {
+        return Err(PrecompileError::Other(
+            "Element not on G2 curve".to_string(),
+        ));
+    }
+
     if subgroup_check {
         // NB: Subgroup checks
         //
@@ -87,25 +100,6 @@ pub(super) fn extract_g2_input(
         if unsafe { !blst_p2_affine_in_g2(&out) } {
             return Err(PrecompileError::Other("Element not in G2".to_string()));
         }
-    } else {
-        // From EIP-2537:
-        //
-        // Error cases:
-        //
-        // * An input is neither a point on the G2 elliptic curve nor the infinity point
-        //
-        // NB: There is no subgroup check for the G2 addition precompile.
-        //
-        // We use blst_p2_affine_on_curve instead of blst_p2_affine_in_g2 because the latter performs
-        // the subgroup check.
-        //
-        // SAFETY: Out is a blst value.
-        if unsafe { !blst_p2_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other(
-                "Element not on G2 curve".to_string(),
-            ));
-        }
     }
-
     Ok(out)
 }
