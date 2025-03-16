@@ -43,17 +43,22 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<blst_p2_affine> = Vec::with_capacity(k);
     let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
-        // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
-        // filter points at infinity (and their corresponding scalars) from the input.
-        if slice.iter().all(|i| *i == 0) {
+        let encoded_g2_elements =
+            &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
+
+        // Filter out the point at infinity from the MSM for two reasons:
+        // - The current library `blst` does not handle it gracefully. In particular, it will zero out all other
+        //    points in batch related methods such as `batch_normalization`, if even one of the points is the point at infinity.
+        // - This is an optimization that will allow us to do less work, since any scalar multiplied by the point at infinity is
+        //    essentially a no-op.
+        if encoded_g2_elements.iter().all(|i| *i == 0) {
             continue;
         }
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = extract_g2_input(slice)?;
+        let p0_aff = extract_g2_input(encoded_g2_elements)?;
 
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
