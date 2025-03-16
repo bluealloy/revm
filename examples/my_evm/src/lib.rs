@@ -3,6 +3,5 @@ pub mod api;
 pub mod evm;
 pub mod handler;
 
-pub use api::*;
 pub use evm::*;
 pub use handler::*;

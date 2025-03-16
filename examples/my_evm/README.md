@@ -11,7 +11,7 @@ To implement a custom EVM variant, two key components are needed:
 2. A custom handler ([`MyHandler`]) in [`crate::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
 
 Basic usage after implementing these two components:
-```rust
+```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), ());
 let _res = MyHandler::default().run(&mut my_evm);
 ```
@@ -25,7 +25,7 @@ To enable transaction inspection capabilities, implement two additional traits:
 
 This allows integration with [`revm::Inspector`] for transaction tracing:
 
-```rust
+```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), revm::inspector::NoOpInspector);
 let _res = MyHandler::default().inspect_run(&mut my_evm);
 ```
@@ -38,7 +38,7 @@ convenient high-level interfaces:
 ### [`revm::ExecuteEvm`]
 Provides a simplified interface that abstracts away handler complexity:
 
-```rust
+```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), ());
 // Execute a new transaction
 let _result_and_state = my_evm.transact(TxEnv::default());
@@ -50,7 +50,7 @@ let _res_and_state = my_evm.replay();
 Extends [`revm::ExecuteEvm`] with database commit functionality. Requires the database
 to implement [`revm::DatabaseCommit`]:
 
-```rust
+```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet().with_db(InMemoryDB::default()), ());
 let _res = my_evm.transact_commit(TxEnv::default());
 ```
@@ -59,7 +59,7 @@ let _res = my_evm.transact_commit(TxEnv::default());
 Extends [`revm::ExecuteEvm`] with inspection methods that allow monitoring execution
 without committing changes:
 
-```rust
+```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), revm::inspector::NoOpInspector);
 // Inspect without committing
 let _res = my_evm.inspect_replay();
