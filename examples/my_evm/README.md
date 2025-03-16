@@ -7,8 +7,8 @@ specifically by disabling the beneficiary reward mechanism.
 
 To implement a custom EVM variant, two key components are needed:
 
-1. A custom EVM struct ([`MyEvm`] in [`example_my_evm::evm`]) that implements [`revm::handler::EvmTr`]
-2. A custom handler ([`MyHandler`]) in [`example_my_evm::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
+1. A custom EVM struct ([`crate::MyEvm`] in [`crate::evm`]) that implements [`revm::handler::EvmTr`]
+2. A custom handler ([`MyHandler`]) in [`crate::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
 
 Basic usage after implementing these two components:
 ```rust
@@ -32,7 +32,7 @@ let _res = MyHandler::default().inspect_run(&mut my_evm);
 
 ## High-Level Execution APIs
 
-The example includes several trait implementations in [`example_my_evm::api`] that provide
+The example includes several trait implementations in [`crate::api`] that provide
 convenient high-level interfaces:
 
 ### [`revm::ExecuteEvm`]
