@@ -5,14 +5,12 @@ mod create_outcome;
 mod eof_create_inputs;
 mod system_interruption_inputs;
 
-use crate::{Contract, Gas, InterpreterResult};
+use crate::InterpreterResult;
 pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
-use fluentbase_types::{SyscallInvocationParams, FUEL_DENOM_RATE, STATE_MAIN};
-use revm_primitives::{Bytes, B256};
 use std::boxed::Box;
 pub use system_interruption_inputs::{SystemInterruptionInputs, SystemInterruptionOutcome};
 
@@ -32,8 +30,6 @@ pub enum InterpreterAction {
     InterruptedCall {
         inputs: Box<SystemInterruptionInputs>,
     },
-    /// Resume Rwasm call after system interruption.
-    // ResumeRwasm { result: SystemInterruptionResult },
     /// No action
     #[default]
     None,
@@ -70,33 +66,6 @@ impl InterpreterAction {
         match self {
             InterpreterAction::Return { result } => Some(result),
             _ => None,
-        }
-    }
-
-    pub fn new_interrupted_call(
-        contract: &Contract,
-        code_hash: B256,
-        input: Bytes,
-        fuel_limit: u64,
-        gas: Gas,
-    ) -> Self {
-        InterpreterAction::InterruptedCall {
-            inputs: Box::new(SystemInterruptionInputs {
-                target_address: contract.target_address,
-                bytecode_address: contract.bytecode_address.unwrap_or(contract.target_address),
-                caller: contract.caller,
-                call_value: contract.call_value,
-                call_id: u32::MAX,
-                syscall_params: SyscallInvocationParams {
-                    code_hash,
-                    input,
-                    gas_limit: fuel_limit / FUEL_DENOM_RATE,
-                    state: STATE_MAIN,
-                },
-                gas,
-                is_create: false,
-                is_static: false,
-            }),
         }
     }
 }

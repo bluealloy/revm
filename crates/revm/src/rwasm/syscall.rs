@@ -77,23 +77,23 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
     macro_rules! return_result {
         ($output:expr) => {{
             let result =
-                InterpreterResult::new(InstructionResult::Return, $output.into(), inputs.gas);
+                InterpreterResult::new(InstructionResult::Return, $output.into(), local_gas);
             let result = FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
                 result,
                 Default::default(),
             )));
-            return Ok((result, local_gas));
+            return Ok((result, Gas::new(0)));
         }};
     }
     macro_rules! return_error {
         ($error:ident) => {{
             let result =
-                InterpreterResult::new(InstructionResult::$error, Default::default(), inputs.gas);
+                InterpreterResult::new(InstructionResult::$error, Default::default(), local_gas);
             let result = FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
                 result,
                 Default::default(),
             )));
-            return Ok((result, local_gas));
+            return Ok((result, Gas::new(0)));
         }};
     }
     macro_rules! return_frame {
@@ -146,7 +146,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if let Some(gas_cost) = sstore_cost(
                 SPEC::SPEC_ID,
                 &value.data,
-                inputs.gas.remaining(),
+                local_gas.remaining(),
                 value.is_cold,
             ) {
                 charge_gas!(gas_cost);
@@ -176,14 +176,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             // EIP-150: gas cost changes for IO-heavy operations
             charge_gas!(gas::call_cost(SPEC::SPEC_ID, has_transfer, account_load));
-            let mut gas_limit = if SPEC::enabled(TANGERINE) {
-                min(
-                    inputs.gas.remaining_63_of_64_parts(),
-                    inputs.syscall_params.gas_limit,
-                )
-            } else {
-                inputs.syscall_params.gas_limit
-            };
+            let mut gas_limit = min(
+                local_gas.remaining_63_of_64_parts(),
+                inputs.syscall_params.gas_limit,
+            );
             charge_gas!(gas_limit);
             if has_transfer {
                 gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
@@ -202,7 +198,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 return_memory_offset: Default::default(),
             });
             let frame = context.evm.make_call_frame(&call_inputs)?;
-            Ok((frame, local_gas))
+            return_frame!(frame);
         }
 
         SYSCALL_ID_STATIC_CALL => {
@@ -222,7 +218,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas::call_cost(SPEC::SPEC_ID, false, account_load));
             let gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
-                    inputs.gas.remaining_63_of_64_parts(),
+                    local_gas.remaining_63_of_64_parts(),
                     inputs.syscall_params.gas_limit,
                 )
             } else {
@@ -269,7 +265,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             ));
             let mut gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
-                    inputs.gas.remaining_63_of_64_parts(),
+                    local_gas.remaining_63_of_64_parts(),
                     inputs.syscall_params.gas_limit,
                 )
             } else {
@@ -315,7 +311,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas::call_cost(SPEC::SPEC_ID, false, account_load));
             let gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
-                    inputs.gas.remaining_63_of_64_parts(),
+                    local_gas.remaining_63_of_64_parts(),
                     inputs.syscall_params.gas_limit,
                 )
             } else {
@@ -386,7 +382,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             } else {
                 charge_gas!(gas::CREATE);
             };
-            let mut gas_limit = inputs.gas.remaining();
+            let mut gas_limit = local_gas.remaining();
             gas_limit -= gas_limit / 64;
             charge_gas!(gas_limit);
             // create inputs

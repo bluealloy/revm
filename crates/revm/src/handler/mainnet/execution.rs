@@ -13,7 +13,7 @@ use crate::{
     },
     primitives::{Bytecode, EVMError, Spec},
     rwasm::{
-        executor::{execute_evm_resume, execute_rwasm_frame, execute_rwasm_resume},
+        executor::{execute_rwasm_frame, execute_rwasm_resume},
         syscall::execute_rwasm_interruption,
     },
     CallFrame,

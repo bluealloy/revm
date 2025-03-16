@@ -20,62 +20,47 @@ pub struct SystemInterruptionInputs {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct SystemInterruptionOutcome {
-    pub call_id: u32,
-    pub target_address: Address,
-    pub bytecode_address: Address,
-    pub caller: Address,
-    pub call_value: U256,
-    pub is_create: bool,
-    pub is_static: bool,
+    pub inputs: Box<SystemInterruptionInputs>,
     pub result: InterpreterResult,
-    pub exit_code: i32,
-    pub gas_consumed: Gas,
     pub is_frame: bool,
 }
 
 impl SystemInterruptionOutcome {
     pub fn new(inputs: Box<SystemInterruptionInputs>, gas_consumed: Gas, is_frame: bool) -> Self {
         Self {
-            call_id: inputs.call_id,
-            target_address: inputs.target_address,
-            bytecode_address: inputs.bytecode_address,
-            caller: inputs.caller,
-            call_value: inputs.call_value,
-            is_create: inputs.is_create,
-            is_static: inputs.is_static,
+            inputs,
             result: InterpreterResult {
                 result: InstructionResult::Stop,
                 output: Default::default(),
-                gas: inputs.gas,
+                gas: gas_consumed,
             },
-            exit_code: 0,
-            gas_consumed,
             is_frame,
         }
     }
 
     fn insert_frame_result(&mut self, result: InterpreterResult) {
+        // for frame result we take gas from result field
+        // because it stores information about gas consumed before the call as well
+        let mut gas = self.result.gas;
         match result.result {
             return_ok!() => {
                 let remaining = result.gas.remaining();
-                self.result.gas.erase_cost(remaining);
+                gas.erase_cost(remaining);
                 let refunded = result.gas.refunded();
-                self.result.gas.record_refund(refunded);
-                self.exit_code = 0;
+                gas.record_refund(refunded);
             }
             return_revert!() => {
-                self.result.gas.erase_cost(result.gas.remaining());
-
-                self.exit_code = 1;
+                gas.erase_cost(result.gas.remaining());
             }
             InstructionResult::FatalExternalError => {
                 panic!("revm: fatal external error");
             }
-            _ => {
-                self.exit_code = 2;
-            }
+            _ => {}
         }
+        self.result.result = result.result;
         self.result.output = result.output;
+        // we can rewrite here gas since it's adjusted with the consumed value
+        self.result.gas = gas;
     }
 
     pub fn insert_result(&mut self, result: InterpreterResult) {
@@ -84,17 +69,15 @@ impl SystemInterruptionOutcome {
             // it means that they charge cost for the entire gas limit we need to erase
             self.insert_frame_result(result);
         } else {
-            self.exit_code = match result.result {
-                return_ok!() => 0,
-                return_revert!() => 1,
-                InstructionResult::FatalExternalError => {
-                    panic!("revm: fatal external error");
-                }
-                _ => 2,
-            };
             self.result.result = result.result;
             self.result.output = result.output;
-            self.result.gas = result.gas;
+            let mut gas = self.inputs.gas;
+            assert!(
+                gas.record_cost(result.gas.spent()),
+                "revm: interruption gas overflow"
+            );
+            gas.record_refund(result.gas.refunded());
+            self.result.gas = gas;
         }
     }
 }

@@ -33,7 +33,15 @@ use fluentbase_sdk::{
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
+use revm_interpreter::{
+    opcode,
+    opcode::InstructionTables,
+    return_error,
+    return_ok,
+    return_revert,
+    SharedMemory,
+    EMPTY_SHARED_MEMORY,
+};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -121,6 +129,68 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         is_create,
         interpreter.is_static,
     ))
+}
+
+pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAction {
+    let SystemInterruptionOutcome { inputs, result, .. } = outcome;
+
+    println!("revm: resume execution: gas={:?}", result.gas);
+    let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
+    // TODO(dmitry123): "we need to pass refund as well"
+    if result.gas.refunded() > 0 {
+        unreachable!("we don't support refunds yet")
+    }
+
+    // TODO(dmitry123): "what if EOF mode is disabled?"
+    let exit_code = match result.result {
+        return_ok!() => 0,
+        return_revert!() => 1,
+        return_error!() => 2,
+        _ => unreachable!("revm: unexpected result"),
+    };
+
+    let mut runtime_context = RuntimeContext::root(0);
+    let is_gas_free = is_self_gas_management_contract(&inputs.bytecode_address);
+    if is_gas_free {
+        runtime_context = runtime_context.without_fuel();
+    }
+    let native_sdk = RuntimeContextWrapper::new(runtime_context);
+    let (fuel_consumed, exit_code) = native_sdk.resume(
+        inputs.call_id,
+        result.output.as_ref(),
+        exit_code,
+        fuel_consumed as u32,
+    );
+
+    // if we're free from paying gas,
+    // then just take the previous gas value and don't charge anything
+    let mut gas = if is_gas_free { inputs.gas } else { result.gas };
+
+    // make sure we have enough gas to charge from the call
+    if !gas.record_denominated_cost(fuel_consumed as u64) {
+        return InterpreterAction::Return {
+            result: InterpreterResult {
+                result: InstructionResult::OutOfGas,
+                output: Bytes::default(),
+                gas,
+            },
+        };
+    }
+
+    // extract return data from the execution context
+    let return_data = native_sdk.return_data();
+
+    process_exec_result(
+        inputs.target_address,
+        inputs.bytecode_address,
+        inputs.caller,
+        inputs.call_value,
+        exit_code,
+        gas,
+        return_data,
+        inputs.is_create,
+        inputs.is_static,
+    )
 }
 
 fn process_exec_result(
@@ -277,66 +347,4 @@ pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
     *shared_memory = interpreter.take_memory();
 
     next_action
-}
-
-pub fn execute_rwasm_resume(
-    system_interruption_outcome: SystemInterruptionOutcome,
-) -> InterpreterAction {
-    let fuel_consumed = system_interruption_outcome.gas_consumed.spent() * FUEL_DENOM_RATE;
-    // TODO(dmitry123): "we need to pass refund as well"
-    if system_interruption_outcome.gas_consumed.refunded() > 0 {
-        unreachable!("we don't support refunds yet")
-    }
-
-    let SystemInterruptionOutcome {
-        call_id,
-        target_address,
-        bytecode_address,
-        caller,
-        call_value,
-        is_create,
-        is_static,
-        result,
-        exit_code,
-        ..
-    } = system_interruption_outcome;
-
-    let mut runtime_context = RuntimeContext::root(0);
-    if is_self_gas_management_contract(&bytecode_address) {
-        runtime_context = runtime_context.without_fuel();
-    }
-    let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, exit_code) = native_sdk.resume(
-        call_id,
-        result.output.as_ref(),
-        exit_code,
-        fuel_consumed as u32,
-    );
-
-    // make sure we have enough gas to charge from the call
-    let mut gas = result.gas;
-    if !gas.record_denominated_cost(fuel_consumed as u64) {
-        return InterpreterAction::Return {
-            result: InterpreterResult {
-                result: InstructionResult::OutOfGas,
-                output: Bytes::default(),
-                gas,
-            },
-        };
-    }
-
-    // extract return data from the execution context
-    let return_data = native_sdk.return_data();
-
-    process_exec_result(
-        target_address,
-        bytecode_address,
-        caller,
-        call_value,
-        exit_code,
-        gas,
-        return_data,
-        is_create,
-        is_static,
-    )
 }

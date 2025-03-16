@@ -22,6 +22,7 @@ use crate::{
     },
 };
 use core::mem;
+use fluentbase_sdk::is_self_gas_management_contract;
 use revm_interpreter::Eip7702CodeLoad;
 use std::vec::Vec;
 
@@ -658,9 +659,13 @@ impl JournaledState {
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(address, db)?;
-            account_load
-                .load
-                .set_delegate_load(delegate_account.is_cold);
+            // we need to skip this flag for the full EVM gas compatibility
+            // because all EVM contracts are represented though EIP-7702
+            if !is_self_gas_management_contract(&address) {
+                account_load
+                    .load
+                    .set_delegate_load(delegate_account.is_cold);
+            }
         }
 
         Ok(account_load)

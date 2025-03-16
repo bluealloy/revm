@@ -234,6 +234,23 @@ macro_rules! return_error {
             | InstructionResult::EofAuxDataTooSmall
             | InstructionResult::EofAuxDataOverflow
             | InstructionResult::InvalidEXTCALLTarget
+            | InstructionResult::RootCallOnly
+            | InstructionResult::MalformedBuiltinParams
+            | InstructionResult::CallDepthOverflow
+            | InstructionResult::NonNegativeExitCode
+            | InstructionResult::UnknownError
+            | InstructionResult::InputOutputOutOfBounds
+            | InstructionResult::UnreachableCodeReached
+            | InstructionResult::MemoryOutOfBounds
+            | InstructionResult::TableOutOfBounds
+            | InstructionResult::IndirectCallToNull
+            | InstructionResult::IntegerDivisionByZero
+            | InstructionResult::IntegerOverflow
+            | InstructionResult::BadConversionToInteger
+            | InstructionResult::BadSignature
+            | InstructionResult::OutOfFuel
+            | InstructionResult::GrowthOperationLimited
+            | InstructionResult::UnresolvedFunction
     };
 }
 

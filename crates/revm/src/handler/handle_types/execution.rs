@@ -145,6 +145,7 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub execute_frame: ExecuteFrameHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
+    /// System interruption call
     pub system_interruption: FrameSystemInterruptionHandle<'a, EXT, DB>,
     /// Call return
     pub call_return: FrameCallReturnHandle<'a, EXT, DB>,
