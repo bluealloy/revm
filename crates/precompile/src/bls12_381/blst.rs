@@ -1,5 +1,6 @@
 // This module contains a safe wrapper around the blst library.
 
+use crate::bls12_381_const::SCALAR_LENGTH;
 use blst::{
     blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_fp2, blst_map_to_g1,
     blst_map_to_g2, blst_miller_loop, blst_p1, blst_p1_add_or_double_affine, blst_p1_affine,
@@ -83,12 +84,17 @@ pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_a
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 pub(super) fn p1_msm(
     g1_points: Vec<blst_p1_affine>,
-    scalars: Vec<u8>,
+    scalars_bytes: Vec<u8>,
     nbits: usize,
 ) -> blst_p1_affine {
+    assert!(
+        scalars_bytes.len() % SCALAR_LENGTH == 0,
+        "Each scalar should be {SCALAR_LENGTH} bytes"
+    );
+
     assert_eq!(
         g1_points.len(),
-        scalars.len(),
+        scalars_bytes.len() / SCALAR_LENGTH,
         "number of scalars should equal the number of g1 points"
     );
     // When no inputs are given, we trigger an assert.
@@ -101,7 +107,7 @@ pub(super) fn p1_msm(
     );
 
     // Perform multi-scalar multiplication
-    let multiexp = g1_points.mult(&scalars, nbits);
+    let multiexp = g1_points.mult(&scalars_bytes, nbits);
 
     // Convert result back to affine coordinates
     p1_to_affine(&multiexp)
@@ -114,12 +120,17 @@ pub(super) fn p1_msm(
 /// Note: This method assumes that `g2_points` does not contain any points at infinity.
 pub(super) fn p2_msm(
     g2_points: Vec<blst_p2_affine>,
-    scalars: Vec<u8>,
+    scalars_bytes: Vec<u8>,
     nbits: usize,
 ) -> blst_p2_affine {
+    assert!(
+        scalars_bytes.len() % SCALAR_LENGTH == 0,
+        "Each scalar should be {SCALAR_LENGTH} bytes"
+    );
+
     assert_eq!(
         g2_points.len(),
-        scalars.len(),
+        scalars_bytes.len() / SCALAR_LENGTH,
         "number of scalars should equal the number of g2 points"
     );
     // When no inputs are given, we trigger an assert.
@@ -132,7 +143,7 @@ pub(super) fn p2_msm(
     );
 
     // Perform multi-scalar multiplication
-    let multiexp = g2_points.mult(&scalars, nbits);
+    let multiexp = g2_points.mult(&scalars_bytes, nbits);
 
     // Convert result back to affine coordinates
     p2_to_affine(&multiexp)
