@@ -1,4 +1,5 @@
 use super::{
+    blst::p2_msm,
     g2::{encode_g2_point, extract_g2_input},
     utils::extract_scalar_input,
 };
@@ -9,7 +10,7 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
+use blst::blst_p2_affine;
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -39,7 +40,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
+    let mut g2_points: Vec<blst_p2_affine> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
@@ -52,13 +53,10 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = &extract_g2_input(slice, true)?;
+        let p0_aff = extract_g2_input(slice)?;
 
-        let mut p0 = blst_p2::default();
-        // SAFETY: `p0` and `p0_aff` are blst values.
-        unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
-
-        g2_points.push(p0);
+        // Convert affine point to Jacobian coordinates using our helper function
+        g2_points.push(p0_aff);
 
         scalars.extend_from_slice(
             &extract_scalar_input(
@@ -74,12 +72,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(required_gas, [0; 256].into()));
     }
 
-    let points = p2_affines::from(&g2_points);
-    let multiexp = points.mult(&scalars, NBITS);
-
-    let mut multiexp_aff = blst_p2_affine::default();
-    // SAFETY: `multiexp_aff` and `multiexp` are blst values.
-    unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
+    // Perform multi-scalar multiplication using the safe wrapper
+    let multiexp_aff = p2_msm(g2_points, scalars, NBITS);
 
     let out = encode_g2_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out))
