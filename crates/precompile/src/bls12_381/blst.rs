@@ -79,6 +79,8 @@ pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_a
 /// Performs multi-scalar multiplication (MSM) for G1 points
 ///
 /// Takes a vector of G1 points and corresponding scalars, and returns their weighted sum
+///
+/// Note: This method assumes that `g1_points` does not contain any points at infinity.
 pub(super) fn p1_msm(
     g1_points: Vec<blst_p1_affine>,
     scalars: Vec<u8>,
@@ -108,6 +110,8 @@ pub(super) fn p1_msm(
 /// Performs multi-scalar multiplication (MSM) for G2 points
 ///
 /// Takes a vector of G2 points and corresponding scalars, and returns their weighted sum
+///
+/// Note: This method assumes that `g2_points` does not contain any points at infinity.
 pub(super) fn p2_msm(
     g2_points: Vec<blst_p2_affine>,
     scalars: Vec<u8>,
