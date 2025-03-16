@@ -41,7 +41,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let mut g1_points: Vec<blst_p1_affine> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
@@ -59,7 +59,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let p0_aff = extract_g1_input(encoded_g1_element)?;
         g1_points.push(p0_aff);
 
-        scalars.extend_from_slice(
+        scalars_bytes.extend_from_slice(
             &extract_scalar_input(
                 &input[i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                     ..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
@@ -78,7 +78,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         ));
     }
 
-    let multiexp_aff = p1_msm(g1_points, scalars, NBITS);
+    let multiexp_aff = p1_msm(g1_points, scalars_bytes, NBITS);
 
     let out = encode_g1_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out))

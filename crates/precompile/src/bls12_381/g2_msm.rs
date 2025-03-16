@@ -41,7 +41,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let mut g2_points: Vec<blst_p2_affine> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
         // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
@@ -58,7 +58,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
 
-        scalars.extend_from_slice(
+        scalars_bytes.extend_from_slice(
             &extract_scalar_input(
                 &input[i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
                     ..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
@@ -73,7 +73,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     // Perform multi-scalar multiplication using the safe wrapper
-    let multiexp_aff = p2_msm(g2_points, scalars, NBITS);
+    let multiexp_aff = p2_msm(g2_points, scalars_bytes, NBITS);
 
     let out = encode_g2_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out))
