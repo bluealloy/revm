@@ -2,7 +2,7 @@
 
 Is a binary that allows running statetest and eof validation.
 
-```
+```bash, ignore
 $: revme --help
 Usage: revme <COMMAND>
 
@@ -16,7 +16,7 @@ Commands:
 
 Options:
   -h, --help  Print help
-````
+```
 
 ## Running eth tests
 

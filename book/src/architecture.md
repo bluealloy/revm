@@ -9,7 +9,7 @@ You can use REVM in two main ways:
 
 The main `revm` library combines all the different crates into one package and reexports them. You can see overview revm crates in [crates folder](https://github.com/bluealloy/revm/tree/main/crates) and overview of examples in [examples folder](https://github.com/bluealloy/revm/tree/main/examples).
 
-REVM works in no_std environments which means it can be used in zero-knowledge virtual machines (zkVMs). It also has very few external dependencies, which you can read more about in the [dependencies section](./architecture/dependencies.md).
+REVM works in no_std environments which means it can be used in zero-knowledge virtual machines (zkVMs). It also has very few external dependencies, which you can read more about in the [dev section](./dev.md).
 
 # Execution API
 
