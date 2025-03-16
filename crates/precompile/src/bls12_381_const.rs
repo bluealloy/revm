@@ -79,7 +79,6 @@ pub const PADDED_FP2_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 pub const SCALAR_LENGTH: usize = 32;
 /// NBITS specifies the number of bits needed to represent an Fr element.
 /// This is an element in the scalar field of BLS12-381.
-/// TODO: We can likely remove this and just check what the min(scalar.length()) is before doing an MSM
 pub const NBITS: usize = 256;
 
 /// G1_ADD_INPUT_LENGTH specifies the number of bytes that the input to G1ADD
