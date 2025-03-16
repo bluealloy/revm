@@ -200,8 +200,6 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
-    /// Precompile error
-    Precompile(String),
 }
 
 impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
