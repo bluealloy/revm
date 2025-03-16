@@ -8,8 +8,7 @@ specifically by disabling the beneficiary reward mechanism.
 To implement a custom EVM variant, two key components are needed:
 
 1. A custom EVM struct ([`MyEvm`] in [`example_my_evm::evm`]) that implements [`revm::handler::EvmTr`]
-2. A custom handler ([`MyHandler`]) in [`example_my_evm::handler`] that controls execution
-  behavior and implements [`revm::handler::Handler`]
+2. A custom handler ([`MyHandler`]) in [`example_my_evm::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
 
 Basic usage after implementing these two components:
 ```rust

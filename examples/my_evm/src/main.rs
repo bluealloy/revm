@@ -1,3 +1,4 @@
+//! Example of a custom EVM variant.
 #![doc = include_str!("../README.md")]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
