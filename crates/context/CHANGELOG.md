@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.4...revm-context-v1.0.0-alpha.5) - 2025-03-16
+
+### Added
+
+- *(docs)* MyEvm example and book cleanup ([#2218](https://github.com/bluealloy/revm/pull/2218))
+
 ## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.3...revm-context-v1.0.0-alpha.4) - 2025-03-12
 
 ### Added
