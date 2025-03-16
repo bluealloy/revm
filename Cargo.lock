@@ -3621,7 +3621,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "revm",
  "serde",
