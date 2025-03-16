@@ -45,9 +45,9 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
         // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
         // filter points at infinity (and their corresponding scalars) from the input.
-        if slice.iter().all(|i| *i == 0) {
-            continue;
-        }
+        // if slice.iter().all(|i| *i == 0) {
+        //     continue;
+        // }
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
