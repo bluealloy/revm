@@ -61,14 +61,11 @@ pub const G1_LENGTH: usize = 2 * FP_LENGTH;
 /// a G1 element according to padding rules specified in EIP-2537.
 const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 
-/// FP2_LENGTH specifies the number of bytes needed to represent a
-/// Fp^2 element.
+/// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
+/// a Fp^2 element according to the padding rules specified in EIP-2537.
 ///
 /// Note: This is the quadratic extension of Fp, and by definition
 /// means we need 2 Fp elements.
-const FP2_LENGTH: usize = 2 * FP_LENGTH;
-/// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
-/// a Fp^2 element according to the padding rules specified in EIP-2537.
 pub const PADDED_FP2_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 
 /// SCALAR_LENGTH specifies the number of bytes needed to represent an Fr element.
@@ -100,12 +97,10 @@ pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
 // TODO: can we remove this since it is just `PADDED_G1_LENGTH`?
 pub const G1_INPUT_ITEM_LENGTH: usize = PADDED_G1_LENGTH;
 
-/// G2_LENGTH specifies the number of bytes needed to represent a G2 element.
-///
-/// Note: A G2 element can be represented using 2 Fp^2 elements.
-const G2_LENGTH: usize = 2 * FP2_LENGTH;
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.
+///
+/// Note: A G2 element can be represented using 2 Fp^2 elements.
 const PADDED_G2_LENGTH: usize = 2 * PADDED_FP2_LENGTH;
 
 /// G2_ADD_INPUT_LENGTH specifies the number of bytes that the input to G2ADD
