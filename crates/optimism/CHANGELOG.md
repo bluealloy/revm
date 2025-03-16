@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.4...op-revm-v1.0.0-alpha.5) - 2025-03-16
+
+### Added
+
+- *(docs)* MyEvm example and book cleanup ([#2218](https://github.com/bluealloy/revm/pull/2218))
+- add test for calling `bn128_pair` before and after granite ([#2200](https://github.com/bluealloy/revm/pull/2200))
+
+### Other
+
+- *(op-precompiles)* Add test for calling g1 add ([#2205](https://github.com/bluealloy/revm/pull/2205))
+- *(op-test)* Clean up precompile tests ([#2206](https://github.com/bluealloy/revm/pull/2206))
+- fix typo in method name ([#2202](https://github.com/bluealloy/revm/pull/2202))
+- Add tests for checking fjord precompile activation ([#2199](https://github.com/bluealloy/revm/pull/2199))
+
 ## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.3...op-revm-v1.0.0-alpha.4) - 2025-03-12
 
 ### Added

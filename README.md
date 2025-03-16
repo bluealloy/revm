@@ -53,8 +53,8 @@ Part of the links point to the code documentation or the book. code docs are the
 
 * How to build and use revm can be found here. (code)
 * Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
-* Structure of the project (list of crates) can be seen here. [book](https://bluealloy.github.io/revm/architecture/crates.html)
-* How to use Revm Framework can be found here. [book](https://bluealloy.github.io/revm/framework.html)
+* Structure of the project (list of crates and their versions) can be seen here. [book](https://github.com/bluealloy/revm/tree/main/crates)
+* How to use Revm Framework can be foud in MyEvm example. [book](https://github.com/bluealloy/revm/tree/main/examples/my_evm)
 * Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
 * How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
 * How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/dev.html#running-eth-tests)

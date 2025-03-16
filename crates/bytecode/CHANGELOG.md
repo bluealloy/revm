@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0-alpha.3...revm-bytecode-v1.0.0-alpha.4) - 2025-03-16
+
+### Fixed
+
+- JumpMap from_slice requires len ([#2203](https://github.com/bluealloy/revm/pull/2203))
+
 ## [1.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0-alpha.2...revm-bytecode-v1.0.0-alpha.3) - 2025-03-11
 
 ### Fixed

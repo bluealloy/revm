@@ -31,7 +31,7 @@ You can implement one of three database interfaces depending on what you need:
 # EVM Framework
 
 To learn how to build your own custom EVM:
-- Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/rakita/my_evm/examples/my_evm) guide
+- Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/main/examples/my_evm) guide
 - Look at [op-revm](https://github.com/bluealloy/revm/tree/main/crates/optimism) to see how Optimism uses REVM
 
 Each trait needed to build custom EVM has detailed documentation explaining how it works and it is worth reading.
