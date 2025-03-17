@@ -59,7 +59,7 @@ pub const PADDED_FP_LENGTH: usize = 64;
 pub const G1_LENGTH: usize = 2 * FP_LENGTH;
 /// PADDED_G1_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G1 element according to padding rules specified in EIP-2537.
-const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
+pub const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 
 /// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a Fp^2 element according to the padding rules specified in EIP-2537.
