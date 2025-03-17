@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.6](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.5...op-revm-v1.0.0-alpha.6) - 2025-03-17
+
+### Other
+
+- simplify single UT for OpSpecId compatibility. ([#2216](https://github.com/bluealloy/revm/pull/2216))
+- use AccessListItem associated type instead of AccessList ([#2214](https://github.com/bluealloy/revm/pull/2214))
+
 ## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.4...op-revm-v1.0.0-alpha.5) - 2025-03-16
 
 ### Added

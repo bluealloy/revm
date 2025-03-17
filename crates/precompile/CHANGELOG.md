@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.6...revm-precompile-v17.0.0-alpha.7) - 2025-03-17
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-context-interface
+
 ## [17.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.5...revm-precompile-v17.0.0-alpha.6) - 2025-03-16
 
 ### Added
