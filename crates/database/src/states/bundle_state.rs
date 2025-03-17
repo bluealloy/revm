@@ -6,10 +6,7 @@ use super::{
 };
 use bytecode::Bytecode;
 use core::{mem, ops::RangeInclusive};
-use primitives::{
-    hash_map::{self, Entry},
-    Address, HashMap, HashSet, B256, KECCAK_EMPTY, U256,
-};
+use primitives::{hash_map::Entry, Address, HashMap, HashSet, B256, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -40,7 +37,7 @@ pub enum OriginalValuesKnown {
     /// If we don't expect parent blocks to be committed or unwinded from database, this option
     /// should be used.
     Yes,
-    /// Doesn't check original values, see the implementation of [BundleState::into_plain_state] for
+    /// Doesn't check original values, see the implementation of [BundleState::to_plain_state] for
     /// more info.
     ///
     /// If the Bundle can be split or extended, we would not be sure about original values, in that
@@ -558,7 +555,7 @@ impl BundleState {
             }
             // Update state and create revert.
             let revert = match self.state.entry(address) {
-                hash_map::Entry::Occupied(mut entry) => {
+                Entry::Occupied(mut entry) => {
                     let entry = entry.get_mut();
                     self.state_size -= entry.size_hint();
                     // Update and create revert if it is present
@@ -567,7 +564,7 @@ impl BundleState {
                     self.state_size += entry.size_hint();
                     revert
                 }
-                hash_map::Entry::Vacant(entry) => {
+                Entry::Vacant(entry) => {
                     // Make revert from transition account
                     let present_bundle = transition.present_bundle_account();
                     let revert = transition.create_revert();
@@ -686,7 +683,7 @@ impl BundleState {
     pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>) {
         for (address, other_account) in other_state {
             match self.state.entry(address) {
-                hash_map::Entry::Occupied(mut entry) => {
+                Entry::Occupied(mut entry) => {
                     let this = entry.get_mut();
                     self.state_size -= this.size_hint();
 
@@ -710,7 +707,7 @@ impl BundleState {
                     // Update the state size
                     self.state_size += this.size_hint();
                 }
-                hash_map::Entry::Vacant(entry) => {
+                Entry::Vacant(entry) => {
                     // Just insert if empty
                     self.state_size += other_account.size_hint();
                     entry.insert(other_account);
@@ -782,7 +779,7 @@ impl BundleState {
     /// Returns and clears all reverts from [BundleState].
     pub fn take_all_reverts(&mut self) -> Reverts {
         self.reverts_size = 0;
-        core::mem::take(&mut self.reverts)
+        mem::take(&mut self.reverts)
     }
 
     /// Reverts the state changes of the latest transition.
