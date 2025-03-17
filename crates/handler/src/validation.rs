@@ -1,7 +1,7 @@
 use context_interface::{
     journaled_state::JournalTr,
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{AccessListItemTr, Transaction, TransactionType},
+    transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::{self, Ordering};
@@ -294,36 +294,23 @@ pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let (accounts, storages) = tx
-        .access_list()
-        .map(|al| {
-            al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
-                num_accounts += 1;
-                num_storage_slots += item.storage_slots().count();
-
-                (num_accounts, num_storage_slots)
-            })
-        })
-        .unwrap_or_default();
-
-    let gas = gas::calculate_initial_tx_gas(
-        spec,
-        tx.input(),
-        tx.kind().is_create(),
-        accounts as u64,
-        storages as u64,
-        tx.authorization_list_len() as u64,
-    );
+    let gas = gas::calculate_initial_tx_gas_for_tx(&tx, spec);
 
     // Additional check to see if limit is big enough to cover initial gas.
     if gas.initial_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit);
+        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
+            gas_limit: tx.gas_limit(),
+            initial_gas: gas.initial_gas,
+        });
     }
 
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
     if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit);
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+            gas_floor: gas.floor_gas,
+            gas_limit: tx.gas_limit(),
+        });
     };
 
     Ok(gas)
