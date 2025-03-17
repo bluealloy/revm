@@ -6,6 +6,7 @@ use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::boxed::Box;
+use std::string::String;
 
 #[auto_impl(&mut, Box)]
 pub trait PrecompileProvider<CTX: ContextTr> {
