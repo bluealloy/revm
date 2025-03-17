@@ -128,3 +128,5 @@ pub trait ContextSetters: ContextTr {
     fn set_tx(&mut self, tx: Self::Tx);
     fn set_block(&mut self, block: Self::Block);
 }
+
+pub trait HostMarker {}

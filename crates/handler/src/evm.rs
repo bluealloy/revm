@@ -9,7 +9,7 @@ use context::{
 };
 use database_interface::DatabaseCommit;
 use interpreter::{
-    interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterResult,
+    interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterResult,
     InterpreterTypes,
 };
 
@@ -93,7 +93,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTr,
+    CTX: ContextTr + Host,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
@@ -139,7 +139,7 @@ where
 impl<CTX, INSP, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>> + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>> + ContextSetters + Host,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -169,7 +169,8 @@ impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>
-        + ContextSetters,
+        + ContextSetters
+        + Host,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<
