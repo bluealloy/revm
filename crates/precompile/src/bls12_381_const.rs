@@ -88,10 +88,6 @@ pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
 /// of these pairs.
 pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
-/// G1_INPUT_ITEM_LENGTH specifies the number of bytes that the EVM will use to represent
-/// a G1 element.
-// TODO: can we remove this since it is just `PADDED_G1_LENGTH`?
-pub const G1_INPUT_ITEM_LENGTH: usize = PADDED_G1_LENGTH;
 
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.

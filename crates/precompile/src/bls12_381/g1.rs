@@ -1,5 +1,5 @@
 use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
-use crate::bls12_381_const::{G1_INPUT_ITEM_LENGTH,  PADDED_FP_LENGTH, PADDED_G1_LENGTH};
+use crate::bls12_381_const::{PADDED_G1_LENGTH,  PADDED_FP_LENGTH};
 use crate::PrecompileError;
 use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 use primitives::Bytes;
@@ -40,15 +40,15 @@ pub(super) fn extract_g1_input(
     input: &[u8],
     subgroup_check: bool,
 ) -> Result<blst_p1_affine, PrecompileError> {
-    if input.len() != G1_INPUT_ITEM_LENGTH {
+    if input.len() != PADDED_G1_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {G1_INPUT_ITEM_LENGTH} bytes, was {}",
+            "Input should be {PADDED_G1_LENGTH} bytes, was {}",
             input.len()
         )));
     }
 
     let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
-    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
+    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..PADDED_G1_LENGTH])?;
     let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
     // From EIP-2537:

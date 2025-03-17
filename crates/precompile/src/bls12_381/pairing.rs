@@ -1,6 +1,6 @@
 use super::{g1::extract_g1_input, g2::extract_g2_input};
 use crate::bls12_381_const::{
-    G1_INPUT_ITEM_LENGTH, G2_INPUT_ITEM_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
+    PADDED_G1_LENGTH, G2_INPUT_ITEM_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_PAIRING_MULTIPLIER_BASE, PAIRING_PAIRING_OFFSET_BASE,
 };
 use crate::{
@@ -47,7 +47,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         //
         // So we set the subgroup_check flag to `true`
         let p1_aff = &extract_g1_input(
-            &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
+            &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH],
             true,
         )?;
 
@@ -55,8 +55,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         //
         // So we set the subgroup_check flag to `true`
         let p2_aff = &extract_g2_input(
-            &input[i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
-                ..i * PAIRING_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
+            &input[i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH
+                ..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH + G2_INPUT_ITEM_LENGTH],
             true,
         )?;
 
