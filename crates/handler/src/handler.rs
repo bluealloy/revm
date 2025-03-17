@@ -12,14 +12,12 @@ use context_interface::{
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
-use precompile::PrecompileError;
 use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-    + From<PrecompileError>
     + FromStringError
 {
 }
@@ -29,7 +27,6 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<PrecompileError>
             + FromStringError,
     > EvmTrError<EVM> for T
 {

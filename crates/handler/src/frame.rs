@@ -20,7 +20,6 @@ use interpreter::{
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl, InstructionResult,
     Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
 };
-use precompile::PrecompileError;
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
@@ -82,7 +81,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -151,7 +150,8 @@ where
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError>,
+    ERROR: From<ContextTrDbError<EVM::Context>>,
+    ERROR: FromStringError,
 {
     /// Make call frame
     #[inline]
@@ -204,12 +204,15 @@ where
         }
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         if !is_ext_delegate_call {
-            if let Some(result) = precompiles.run(
-                context,
-                &inputs.bytecode_address,
-                &inputs.input,
-                inputs.gas_limit,
-            )? {
+            if let Ok(Some(result)) = precompiles
+                .run(
+                    context,
+                    &inputs.bytecode_address,
+                    &inputs.input,
+                    inputs.gas_limit,
+                )
+                .map_err(ERROR::from_string)
+            {
                 if result.result.is_ok() {
                     context.journal().checkpoint_commit();
                 } else {
@@ -522,7 +525,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + From<PrecompileError> + FromStringError,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     pub fn init_first(
         evm: &mut EVM,

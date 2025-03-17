@@ -15,7 +15,6 @@ use revm::{
     },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    precompile::PrecompileError,
     primitives::{address, hardfork::SpecId, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
     Context, Database, MainBuilder, MainContext,
@@ -84,10 +83,7 @@ pub fn token_operation<CTX, ERROR>(
 ) -> Result<(), ERROR>
 where
     CTX: ContextTr,
-    ERROR: From<InvalidTransaction>
-        + From<InvalidHeader>
-        + From<<CTX::Db as Database>::Error>
-        + From<PrecompileError>,
+    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<<CTX::Db as Database>::Error>,
 {
     let sender_balance_slot = erc_address_storage(sender);
     let sender_balance = context.journal().sload(TOKEN, sender_balance_slot)?.data;
