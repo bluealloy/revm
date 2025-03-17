@@ -83,10 +83,6 @@ pub const NBITS: usize = 256;
 ///
 /// Note: The input to the G1 addition precompile is 2 G1 elements.
 pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
-/// G1_OUTPUT_LENGTH specifies the number of bytes that the EVM will use
-/// to represent a G1 element.
-// TODO: can we remove this since it is just `PADDED_G1_LENGTH`?
-pub const G1_OUTPUT_LENGTH: usize = PADDED_G1_LENGTH;
 /// G1_MSM_INPUT_LENGTH specifies the number of bytes that each MSM input pair should have.
 ///
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
