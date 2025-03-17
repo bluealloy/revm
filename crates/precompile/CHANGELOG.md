@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.6...revm-precompile-v17.0.0-alpha.7) - 2025-03-17
+
+### Other
+
+- Add some documentation for the bls12-381 precompile constants ([#2222](https://github.com/bluealloy/revm/pull/2222))
+
 ## [17.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.5...revm-precompile-v17.0.0-alpha.6) - 2025-03-16
 
 ### Added
