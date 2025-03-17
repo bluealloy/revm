@@ -105,14 +105,6 @@ pub const G2_ADD_INPUT_LENGTH: usize = 2 * PADDED_G2_LENGTH;
 /// Note: An MSM pair is a G2 element and a scalar. The input to the MSM will have `n`
 /// of these pairs.
 pub const G2_MSM_INPUT_LENGTH: usize = PADDED_G2_LENGTH + SCALAR_LENGTH;
-/// G2_OUTPUT_LENGTH specifies the number of bytes that the EVM will use
-/// to represent a G2 element.
-// TODO: can we remove this since it is just `PADDED_G2_LENGTH`
-pub const G2_OUTPUT_LENGTH: usize = PADDED_G2_LENGTH;
-/// G2_INPUT_ITEM_LENGTH specifies the number of bytes that the EVM will use to represent
-/// a G2 element.
-// TODO: can we remove this since it is just `PADDED_G2_LENGTH`
-pub const G2_INPUT_ITEM_LENGTH: usize = 256;
 
 /// PAIRING_INPUT_LENGTH specifies the number of bytes that each Pairing input pair should have.
 ///

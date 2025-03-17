@@ -3,7 +3,7 @@ use super::{
     utils::extract_scalar_input,
 };
 use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G2_MSM, G2_INPUT_ITEM_LENGTH, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE,
+    DISCOUNT_TABLE_G2_MSM, PADDED_G2_LENGTH, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE,
     G2_MSM_INPUT_LENGTH, NBITS, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
@@ -42,7 +42,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
+        let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
         // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
         // filter points at infinity (and their corresponding scalars) from the input.
         if slice.iter().all(|i| *i == 0) {
@@ -62,8 +62,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         scalars.extend_from_slice(
             &extract_scalar_input(
-                &input[i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
-                    ..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
+                &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
+                    ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH],
             )?
             .b,
         );
