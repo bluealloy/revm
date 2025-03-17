@@ -216,28 +216,28 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::instruction_table;
-//     use crate::{host::DummyHost, interpreter::EthInterpreter};
-//     use bytecode::opcode::*;
+#[cfg(test)]
+mod tests {
+    use super::instruction_table;
+    use crate::{host::DummyHost, interpreter::EthInterpreter};
+    use bytecode::opcode::*;
 
-//     #[test]
-//     fn all_instructions_and_opcodes_used() {
-//         // known unknown instruction we compare it with other instructions from table.
-//         let unknown_instruction = 0x0C_usize;
-//         let instr_table = instruction_table::<EthInterpreter, DummyHost>();
+    #[test]
+    fn all_instructions_and_opcodes_used() {
+        // known unknown instruction we compare it with other instructions from table.
+        let unknown_instruction = 0x0C_usize;
+        let instr_table = instruction_table::<EthInterpreter, DummyHost>();
 
-//         let unknown_istr = instr_table[unknown_instruction];
-//         for (i, instr) in instr_table.iter().enumerate() {
-//             let is_opcode_unknown = OpCode::new(i as u8).is_none();
-//             //
-//             let is_instr_unknown = std::ptr::fn_addr_eq(*instr, unknown_istr);
-//             assert_eq!(
-//                 is_instr_unknown, is_opcode_unknown,
-//                 "Opcode 0x{:X?} is not handled",
-//                 i
-//             );
-//         }
-//     }
-// }
+        let unknown_istr = instr_table[unknown_instruction];
+        for (i, instr) in instr_table.iter().enumerate() {
+            let is_opcode_unknown = OpCode::new(i as u8).is_none();
+            //
+            let is_instr_unknown = std::ptr::fn_addr_eq(*instr, unknown_istr);
+            assert_eq!(
+                is_instr_unknown, is_opcode_unknown,
+                "Opcode 0x{:X?} is not handled",
+                i
+            );
+        }
+    }
+}
