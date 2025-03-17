@@ -204,14 +204,14 @@ where
         }
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         if !is_ext_delegate_call {
-            if let Ok(Some(result)) = precompiles
+            if let Some(result) = precompiles
                 .run(
                     context,
                     &inputs.bytecode_address,
                     &inputs.input,
                     inputs.gas_limit,
                 )
-                .map_err(ERROR::from_string)
+                .map_err(ERROR::from_string)?
             {
                 if result.result.is_ok() {
                     context.journal().checkpoint_commit();
