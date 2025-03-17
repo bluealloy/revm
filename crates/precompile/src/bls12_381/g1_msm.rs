@@ -46,11 +46,9 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
 
-        // Filter out the point at infinity from the MSM for two reasons:
-        // - The current library `blst` does not handle it gracefully. In particular, it will zero out all other
-        //    points in batch related methods such as `batch_normalization`, if even one of the points is the point at infinity.
-        // - This is an optimization that will allow us to do less work, since any scalar multiplied by the point at infinity is
-        //    essentially a no-op.
+        // Filter out points infinity as an optimization, since it is a no-op.
+        // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
+        // zero out all of the points. Since all points are in affine, this bug is avoided.
         if encoded_g1_element.iter().all(|i| *i == 0) {
             continue;
         }
