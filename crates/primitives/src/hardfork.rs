@@ -73,31 +73,33 @@ pub mod name {
     pub const LATEST: &str = "Latest";
 }
 
-impl From<&str> for SpecId {
-    fn from(name: &str) -> Self {
+impl TryFrom<&str> for SpecId {
+    type Error = ();
+
+    fn try_from(name: &str) -> Result<Self, Self::Error> {
         match name {
-            name::FRONTIER => Self::FRONTIER,
-            name::FRONTIER_THAWING => Self::FRONTIER_THAWING,
-            name::HOMESTEAD => Self::HOMESTEAD,
-            name::DAO_FORK => Self::DAO_FORK,
-            name::TANGERINE => Self::TANGERINE,
-            name::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
-            name::BYZANTIUM => Self::BYZANTIUM,
-            name::CONSTANTINOPLE => Self::CONSTANTINOPLE,
-            name::PETERSBURG => Self::PETERSBURG,
-            name::ISTANBUL => Self::ISTANBUL,
-            name::MUIR_GLACIER => Self::MUIR_GLACIER,
-            name::BERLIN => Self::BERLIN,
-            name::LONDON => Self::LONDON,
-            name::ARROW_GLACIER => Self::ARROW_GLACIER,
-            name::GRAY_GLACIER => Self::GRAY_GLACIER,
-            name::MERGE => Self::MERGE,
-            name::SHANGHAI => Self::SHANGHAI,
-            name::CANCUN => Self::CANCUN,
-            name::PRAGUE => Self::PRAGUE,
-            name::OSAKA => Self::OSAKA,
-            name::LATEST => Self::LATEST,
-            _ => Self::LATEST,
+            name::FRONTIER => Ok(Self::FRONTIER),
+            name::FRONTIER_THAWING => Ok(Self::FRONTIER_THAWING),
+            name::HOMESTEAD => Ok(Self::HOMESTEAD),
+            name::DAO_FORK => Ok(Self::DAO_FORK),
+            name::TANGERINE => Ok(Self::TANGERINE),
+            name::SPURIOUS_DRAGON => Ok(Self::SPURIOUS_DRAGON),
+            name::BYZANTIUM => Ok(Self::BYZANTIUM),
+            name::CONSTANTINOPLE => Ok(Self::CONSTANTINOPLE),
+            name::PETERSBURG => Ok(Self::PETERSBURG),
+            name::ISTANBUL => Ok(Self::ISTANBUL),
+            name::MUIR_GLACIER => Ok(Self::MUIR_GLACIER),
+            name::BERLIN => Ok(Self::BERLIN),
+            name::LONDON => Ok(Self::LONDON),
+            name::ARROW_GLACIER => Ok(Self::ARROW_GLACIER),
+            name::GRAY_GLACIER => Ok(Self::GRAY_GLACIER),
+            name::MERGE => Ok(Self::MERGE),
+            name::SHANGHAI => Ok(Self::SHANGHAI),
+            name::CANCUN => Ok(Self::CANCUN),
+            name::PRAGUE => Ok(Self::PRAGUE),
+            name::OSAKA => Ok(Self::OSAKA),
+            name::LATEST => Ok(Self::LATEST),
+            _ => Err(()),
         }
     }
 }
