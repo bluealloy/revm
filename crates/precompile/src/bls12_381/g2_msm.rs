@@ -49,9 +49,9 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // Filter out points infinity as an optimization, since it is a no-op.
         // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
         // zero out all of the points. Since all points are in affine, this bug is avoided.
-        // if encoded_g2_elements.iter().all(|i| *i == 0) {
-        //     continue;
-        // }
+        if encoded_g2_elements.iter().all(|i| *i == 0) {
+            continue;
+        }
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
