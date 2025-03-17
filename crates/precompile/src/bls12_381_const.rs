@@ -101,7 +101,7 @@ pub const G1_INPUT_ITEM_LENGTH: usize = PADDED_G1_LENGTH;
 /// a G2 element.
 ///
 /// Note: A G2 element can be represented using 2 Fp^2 elements.
-const PADDED_G2_LENGTH: usize = 2 * PADDED_FP2_LENGTH;
+pub const PADDED_G2_LENGTH: usize = 2 * PADDED_FP2_LENGTH;
 
 /// G2_ADD_INPUT_LENGTH specifies the number of bytes that the input to G2ADD
 /// must occupy.
