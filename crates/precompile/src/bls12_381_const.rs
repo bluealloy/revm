@@ -112,11 +112,10 @@ pub const G2_MSM_INPUT_LENGTH: usize = PADDED_G2_LENGTH + SCALAR_LENGTH;
 /// of these pairs.
 pub const PAIRING_INPUT_LENGTH: usize = PADDED_G1_LENGTH + PADDED_G2_LENGTH;
 
-/// PADDING_LENGTH specifies the number of bytes that an FP_ELEMENT is padded by.
+/// FP_PAD_BY specifies the number of bytes that an FP_ELEMENT is padded by to make it 32 byte aligned.
 ///
 /// Note: This should be equal to PADDED_FP_LENGTH - FP_LENGTH.
-/// TODO: Should likely rename this to FP_PADDING_LENGTH, since other objects are also padded
-pub const PADDING_LENGTH: usize = 16;
+pub const FP_PAD_BY: usize = 16;
 
 // Big-endian non-Montgomery form.
 pub const MODULUS_REPR: [u8; 48] = [
