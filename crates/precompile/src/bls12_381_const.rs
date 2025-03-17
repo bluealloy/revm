@@ -12,11 +12,9 @@ pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
 pub const G2_MSM_ADDRESS: u64 = 0x0e;
 pub const G2_MSM_BASE_GAS_FEE: u64 = 22500;
 pub const PAIRING_ADDRESS: u64 = 0x0f;
-// TODO: Why does this have PAIRING twice?
-pub const PAIRING_PAIRING_OFFSET_BASE: u64 = 37700;
+pub const PAIRING_OFFSET_BASE: u64 = 37700;
 pub const MSM_MULTIPLIER: u64 = 1000;
-// TODO: Why does this have PAIRING twice?
-pub const PAIRING_PAIRING_MULTIPLIER_BASE: u64 = 32600;
+pub const PAIRING_MULTIPLIER_BASE: u64 = 32600;
 
 /// Discounts table for G1 MSM as a vector of pairs `[k, discount]`.
 pub static DISCOUNT_TABLE_G1_MSM: [u16; 128] = [
