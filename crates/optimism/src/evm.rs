@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "blst")]
-    fn test_halted_tx_call_bls12_381_g1_add_input_too_small() {
+    fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_ADD_ADDRESS));
@@ -318,11 +318,48 @@ mod tests {
 
     #[test]
     #[cfg(feature = "blst")]
-    fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
+    fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_ADD_ADDRESS));
-                tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1;
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_MSM_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::G1_MSM_INPUT_LENGTH - 1]);
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert fails pre gas check, because input is wrong size
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
+        let gs1_msm_gas = bls12_381_utils::msm_required_gas(
+            1,
+            &bls12_381_const::DISCOUNT_TABLE_G1_MSM,
+            bls12_381_const::G1_MSM_BASE_GAS_FEE,
+        );
+
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_MSM_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::G1_MSM_INPUT_LENGTH]);
+                tx.base.gas_limit = 23_560 //initial gas for input
+                    + gs1_msm_gas
+                    - 1; // 1 gas low
             })
             .modify_chain_chained(|l1_block| {
                 l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -346,11 +383,19 @@ mod tests {
 
     #[test]
     #[cfg(feature = "blst")]
-    fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
+    fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
+        let gs1_msm_gas = bls12_381_utils::msm_required_gas(
+            1,
+            &bls12_381_const::DISCOUNT_TABLE_G1_MSM,
+            bls12_381_const::G1_MSM_BASE_GAS_FEE,
+        );
+
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_ADD_ADDRESS));
-                tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE;
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_MSM_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::G1_MSM_INPUT_LENGTH]);
+                tx.base.gas_limit = 23_560 //initial gas for input
+                    + gs1_msm_gas;
             })
             .modify_chain_chained(|l1_block| {
                 l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -362,7 +407,7 @@ mod tests {
 
         let output = evm.replay().unwrap();
 
-        // assert fails post gas check, because input is wrong size
+        // assert fails post gas check, because input is wrong layout
         assert!(matches!(
             output.result,
             ExecutionResult::Halt {

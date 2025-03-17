@@ -4,14 +4,6 @@ use alloy_primitives::{b256, Address, B256};
 /// Number of block hashes that EVM can access in the past (pre-Prague)
 pub const BLOCK_HASH_HISTORY: u64 = 256;
 
-/// EIP-2935: Serve historical block hashes from state
-///
-/// Number of block hashes the EVM can access in the past (Prague).
-///
-/// # Note
-/// This is named `HISTORY_SERVE_WINDOW` in the EIP.
-pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
-
 /// The address of precompile 3, which is handled specially in a few places
 pub const PRECOMPILE3: Address =
     Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
