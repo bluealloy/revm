@@ -4,7 +4,7 @@ use handler::{
     instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
     MainnetHandler, PrecompileProvider,
 };
-use interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult};
+use interpreter::{interpreter::EthInterpreter, FrameInput, Host, InterpreterResult};
 
 use crate::{
     inspect::{InspectCommitEvm, InspectEvm},
@@ -27,7 +27,9 @@ where
 impl<CTX, INSP, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
+    CTX: ContextSetters
+        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>
+        + Host,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -50,7 +52,8 @@ impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
     for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
+        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>
+        + Host,
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {

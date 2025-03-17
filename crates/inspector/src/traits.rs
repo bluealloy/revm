@@ -5,8 +5,8 @@ use handler::{
     PrecompileProvider,
 };
 use interpreter::{
-    interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
-    InterpreterTypes,
+    interpreter::EthInterpreter, FrameInput, Host, Interpreter, InterpreterAction,
+    InterpreterResult, InterpreterTypes,
 };
 use precompile::PrecompileError;
 
@@ -28,7 +28,7 @@ pub trait InspectorEvmTr: EvmTr {
 
 impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
-    CTX: ContextTr<Journal: JournalExt> + ContextSetters,
+    CTX: ContextTr<Journal: JournalExt> + ContextSetters + Host,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
