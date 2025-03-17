@@ -3,8 +3,8 @@ use super::{
     utils::extract_scalar_input,
 };
 use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G1_MSM, PADDED_G1_LENGTH, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE,
-    G1_MSM_INPUT_LENGTH, NBITS, SCALAR_LENGTH,
+    DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
+    PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{u64_to_address, PrecompileWithAddress};
