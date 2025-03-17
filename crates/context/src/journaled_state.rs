@@ -378,7 +378,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ) -> Result<Option<TransferError>, DB::Error> {
         if balance.is_zero() {
             self.load_account(*to)?;
-            let _ = self.load_account(*to)?;
             let to_account = self.state.get_mut(to).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
             return Ok(None);

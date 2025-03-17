@@ -9,7 +9,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, keccak256, Address, Bytes, TxKind, U256},
+    primitives::{address, keccak256, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
     state::AccountInfo,
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
     let acc_info = AccountInfo {
         nonce: 0_u64,
         balance: one_ether,
-        code_hash: keccak256(Bytes::new()),
+        code_hash: KECCAK_EMPTY,
         code: None,
     };
     cache_db.insert_account_info(account, acc_info);
