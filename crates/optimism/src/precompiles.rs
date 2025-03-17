@@ -13,6 +13,7 @@ use revm::{
 };
 use std::boxed::Box;
 use std::string::String;
+
 // Optimism precompile provider
 #[derive(Debug, Clone)]
 pub struct OpPrecompiles {
