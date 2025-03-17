@@ -68,11 +68,6 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
-    // No validation is needed for deposit transactions, as they are pre-verified on L1.
-    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
-        return Ok(());
-    }
-
     // storage l1 block info for later use. l1_block_info is cleared after execution.
     if context.evm.inner.l1_block_info.is_none() {
         // the L1-cost fee is only computed for Optimism non-deposit transactions.
@@ -80,6 +75,11 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
             crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
                 .map_err(EVMError::Database)?;
         context.evm.inner.l1_block_info = Some(l1_block_info);
+    }
+
+    // No validation is needed for deposit transactions, as they are pre-verified on L1.
+    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
+        return Ok(());
     }
 
     let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
@@ -279,14 +279,13 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)?;
+    let is_deposit = context.evm.inner.env.tx.optimism.source_hash.is_some();
 
-    if context.evm.inner.env.tx.optimism.source_hash.is_none() {
-        let caller_account = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+    if !is_deposit {
+        mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)?;
+    }
+
+    if SPEC::SPEC_ID.is_enabled_in(SpecId::ISTHMUS) {
         let operator_fee_refund = context
             .evm
             .inner
@@ -294,6 +293,12 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
             .as_ref()
             .expect("L1BlockInfo should be loaded")
             .operator_fee_refund(gas, SPEC::SPEC_ID);
+
+        let caller_account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
 
         // In additional to the normal transaction fee, additionally refund the caller
         // for the operator fee.
@@ -367,10 +372,8 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
 
         // Deduct the operator fee from the caller's account.
         let gas_limit = U256::from(context.evm.inner.env.tx.gas_limit);
-
         let operator_fee_charge =
             l1_block.operator_fee_charge(enveloped_tx, gas_limit, SPEC::SPEC_ID);
-
         caller_account.info.balance = caller_account
             .info
             .balance
@@ -438,15 +441,18 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .basefee
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
 
-        // Send the operator fee of the transaction to the coinbase.
-        let mut operator_fee_vault_account = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(OPERATOR_FEE_RECIPIENT, &mut context.evm.inner.db)?;
+        // We can only touch the operator fee vault if the Isthmus spec is enabled.
+        if SPEC::SPEC_ID.is_enabled_in(SpecId::ISTHMUS) {
+            // Send the operator fee of the transaction to the coinbase.
+            let mut operator_fee_vault_account = context
+                .evm
+                .inner
+                .journaled_state
+                .load_account(OPERATOR_FEE_RECIPIENT, &mut context.evm.inner.db)?;
 
-        operator_fee_vault_account.mark_touch();
-        operator_fee_vault_account.data.info.balance += operator_fee_cost;
+            operator_fee_vault_account.mark_touch();
+            operator_fee_vault_account.data.info.balance += operator_fee_cost;
+        }
     }
     Ok(())
 }
