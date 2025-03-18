@@ -1,6 +1,4 @@
-use crate::bls12_381_const::{
-    FP_LENGTH, MODULUS_REPR, PADDED_FP_LENGTH, PADDING_LENGTH, SCALAR_LENGTH,
-};
+use crate::bls12_381_const::{FP_LENGTH, FP_PAD_BY, MODULUS_REPR, PADDED_FP_LENGTH, SCALAR_LENGTH};
 use crate::PrecompileError;
 use blst::{
     blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
@@ -12,7 +10,7 @@ pub(super) fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
     if out.len() != PADDED_FP_LENGTH {
         return;
     }
-    let (padding, rest) = out.split_at_mut(PADDING_LENGTH);
+    let (padding, rest) = out.split_at_mut(FP_PAD_BY);
     padding.fill(0);
     // SAFETY: Out length is checked previously, `input` is a blst value.
     unsafe { blst_bendian_from_fp(rest.as_mut_ptr(), input) };
@@ -26,10 +24,10 @@ pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], Precompil
             input.len()
         )));
     }
-    let (padding, unpadded) = input.split_at(PADDING_LENGTH);
+    let (padding, unpadded) = input.split_at(FP_PAD_BY);
     if !padding.iter().all(|&x| x == 0) {
         return Err(PrecompileError::Other(format!(
-            "{PADDING_LENGTH} top bytes of input are not zero",
+            "{FP_PAD_BY} top bytes of input are not zero",
         )));
     }
     Ok(unpadded.try_into().unwrap())

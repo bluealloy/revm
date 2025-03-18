@@ -12,11 +12,9 @@ pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
 pub const G2_MSM_ADDRESS: u64 = 0x0e;
 pub const G2_MSM_BASE_GAS_FEE: u64 = 22500;
 pub const PAIRING_ADDRESS: u64 = 0x0f;
-// TODO: Why does this have PAIRING twice?
-pub const PAIRING_PAIRING_OFFSET_BASE: u64 = 37700;
+pub const PAIRING_OFFSET_BASE: u64 = 37700;
 pub const MSM_MULTIPLIER: u64 = 1000;
-// TODO: Why does this have PAIRING twice?
-pub const PAIRING_PAIRING_MULTIPLIER_BASE: u64 = 32600;
+pub const PAIRING_MULTIPLIER_BASE: u64 = 32600;
 
 /// Discounts table for G1 MSM as a vector of pairs `[k, discount]`.
 pub static DISCOUNT_TABLE_G1_MSM: [u16; 128] = [
@@ -28,7 +26,7 @@ pub static DISCOUNT_TABLE_G1_MSM: [u16; 128] = [
     544, 543, 542, 541, 540, 540, 539, 538, 537, 536, 536, 535, 534, 533, 532, 532, 531, 530, 529,
     528, 528, 527, 526, 525, 525, 524, 523, 522, 522, 521, 520, 520, 519,
 ];
-// Discounts table for G2 MSM as a vector of pairs `[k, discount]`:
+/// Discounts table for G2 MSM as a vector of pairs `[k, discount]`:
 pub static DISCOUNT_TABLE_G2_MSM: [u16; 128] = [
     1000, 1000, 923, 884, 855, 832, 812, 796, 782, 770, 759, 749, 740, 732, 724, 717, 711, 704,
     699, 693, 688, 683, 679, 674, 670, 666, 663, 659, 655, 652, 649, 646, 643, 640, 637, 634, 632,
@@ -83,19 +81,11 @@ pub const NBITS: usize = 256;
 ///
 /// Note: The input to the G1 addition precompile is 2 G1 elements.
 pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
-/// G1_OUTPUT_LENGTH specifies the number of bytes that the EVM will use
-/// to represent a G1 element.
-// TODO: can we remove this since it is just `PADDED_G1_LENGTH`?
-pub const G1_OUTPUT_LENGTH: usize = PADDED_G1_LENGTH;
 /// G1_MSM_INPUT_LENGTH specifies the number of bytes that each MSM input pair should have.
 ///
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
 /// of these pairs.
 pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
-/// G1_INPUT_ITEM_LENGTH specifies the number of bytes that the EVM will use to represent
-/// a G1 element.
-// TODO: can we remove this since it is just `PADDED_G1_LENGTH`?
-pub const G1_INPUT_ITEM_LENGTH: usize = PADDED_G1_LENGTH;
 
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.
@@ -113,14 +103,6 @@ pub const G2_ADD_INPUT_LENGTH: usize = 2 * PADDED_G2_LENGTH;
 /// Note: An MSM pair is a G2 element and a scalar. The input to the MSM will have `n`
 /// of these pairs.
 pub const G2_MSM_INPUT_LENGTH: usize = PADDED_G2_LENGTH + SCALAR_LENGTH;
-/// G2_OUTPUT_LENGTH specifies the number of bytes that the EVM will use
-/// to represent a G2 element.
-// TODO: can we remove this since it is just `PADDED_G2_LENGTH`
-pub const G2_OUTPUT_LENGTH: usize = PADDED_G2_LENGTH;
-/// G2_INPUT_ITEM_LENGTH specifies the number of bytes that the EVM will use to represent
-/// a G2 element.
-// TODO: can we remove this since it is just `PADDED_G2_LENGTH`
-pub const G2_INPUT_ITEM_LENGTH: usize = 256;
 
 /// PAIRING_INPUT_LENGTH specifies the number of bytes that each Pairing input pair should have.
 ///
@@ -128,11 +110,10 @@ pub const G2_INPUT_ITEM_LENGTH: usize = 256;
 /// of these pairs.
 pub const PAIRING_INPUT_LENGTH: usize = PADDED_G1_LENGTH + PADDED_G2_LENGTH;
 
-/// PADDING_LENGTH specifies the number of bytes that an FP_ELEMENT is padded by.
+/// FP_PAD_BY specifies the number of bytes that an FP_ELEMENT is padded by to make it 32 byte aligned.
 ///
 /// Note: This should be equal to PADDED_FP_LENGTH - FP_LENGTH.
-/// TODO: Should likely rename this to FP_PADDING_LENGTH, since other objects are also padded
-pub const PADDING_LENGTH: usize = 16;
+pub const FP_PAD_BY: usize = 16;
 
 // Big-endian non-Montgomery form.
 pub const MODULUS_REPR: [u8; 48] = [

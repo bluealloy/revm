@@ -1,6 +1,6 @@
 use super::g2::{encode_g2_point, extract_g2_input};
 use crate::bls12_381_const::{
-    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, G2_INPUT_ITEM_LENGTH,
+    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
@@ -34,8 +34,8 @@ pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // NB: There is no subgroup check for the G2 addition precompile.
     //
     // So we set the subgroup checks here to `false`
-    let a_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH], false)?;
-    let b_aff = &extract_g2_input(&input[G2_INPUT_ITEM_LENGTH..], false)?;
+    let a_aff = &extract_g2_input(&input[..PADDED_G2_LENGTH], false)?;
+    let b_aff = &extract_g2_input(&input[PADDED_G2_LENGTH..], false)?;
 
     let mut b = blst_p2::default();
     // SAFETY: `b` and `b_aff` are blst values.
