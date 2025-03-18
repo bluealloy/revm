@@ -68,7 +68,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     // Return the encoding for the point at the infinity according to EIP-2537
     // if there are no points in the MSM.
-    const ENCODED_POINT_AT_INFINITY: [u8; G1_OUTPUT_LENGTH] = [0; G1_OUTPUT_LENGTH];
+    const ENCODED_POINT_AT_INFINITY: [u8; PADDED_G1_LENGTH] = [0; PADDED_G1_LENGTH];
     if g1_points.is_empty() {
         return Ok(PrecompileOutput::new(
             required_gas,
