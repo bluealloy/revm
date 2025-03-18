@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0-alpha.6...revm-handler-v1.0.0-alpha.7) - 2025-03-18
+
+### Added
+
+- allow reuse of API for calculating initial tx gas for tx ([#2215](https://github.com/bluealloy/revm/pull/2215))
+
+### Other
+
+- use AccessListItem associated type instead of AccessList ([#2214](https://github.com/bluealloy/revm/pull/2214))
+
 ## [1.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0-alpha.5...revm-handler-v1.0.0-alpha.6) - 2025-03-16
 
 ### Added
