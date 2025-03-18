@@ -8,6 +8,7 @@ use blst::{
     blst_p2_from_affine, blst_p2_to_affine, MultiPoint,
 };
 
+#[inline]
 fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
     let mut p_affine = blst_p1_affine::default();
     // SAFETY: both inputs are valid blst types
@@ -15,6 +16,7 @@ fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
     p_affine
 }
 
+#[inline]
 fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
     let mut p = blst_p1::default();
     // SAFETY: both inputs are valid blst types
@@ -22,6 +24,7 @@ fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
     p
 }
 
+#[inline]
 fn p1_add_or_double(p: &blst_p1, p_affine: &blst_p1_affine) -> blst_p1 {
     let mut result = blst_p1::default();
     // SAFETY: all inputs are valid blst types
@@ -29,6 +32,7 @@ fn p1_add_or_double(p: &blst_p1, p_affine: &blst_p1_affine) -> blst_p1 {
     result
 }
 
+#[inline]
 fn p2_to_affine(p: &blst_p2) -> blst_p2_affine {
     let mut p_affine = blst_p2_affine::default();
     // SAFETY: both inputs are valid blst types
@@ -36,6 +40,7 @@ fn p2_to_affine(p: &blst_p2) -> blst_p2_affine {
     p_affine
 }
 
+#[inline]
 fn p2_from_affine(p_affine: &blst_p2_affine) -> blst_p2 {
     let mut p = blst_p2::default();
     // SAFETY: both inputs are valid blst types
@@ -43,6 +48,7 @@ fn p2_from_affine(p_affine: &blst_p2_affine) -> blst_p2 {
     p
 }
 
+#[inline]
 fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
     let mut result = blst_p2::default();
     // SAFETY: all inputs are valid blst types
