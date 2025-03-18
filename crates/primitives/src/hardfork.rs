@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)]
 
+use core::str::FromStr;
 pub use std::string::{String, ToString};
 pub use SpecId::*;
 
@@ -73,11 +74,13 @@ pub mod name {
     pub const LATEST: &str = "Latest";
 }
 
-impl TryFrom<&str> for SpecId {
-    type Error = ();
+pub struct UnknownHardfork;
 
-    fn try_from(name: &str) -> Result<Self, Self::Error> {
-        match name {
+impl FromStr for SpecId {
+    type Err = UnknownHardfork;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
             name::FRONTIER => Ok(Self::FRONTIER),
             name::FRONTIER_THAWING => Ok(Self::FRONTIER_THAWING),
             name::HOMESTEAD => Ok(Self::HOMESTEAD),
@@ -99,7 +102,7 @@ impl TryFrom<&str> for SpecId {
             name::PRAGUE => Ok(Self::PRAGUE),
             name::OSAKA => Ok(Self::OSAKA),
             name::LATEST => Ok(Self::LATEST),
-            _ => Err(()),
+            _ => Err(UnknownHardfork),
         }
     }
 }
