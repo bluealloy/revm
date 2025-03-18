@@ -12,7 +12,7 @@ use revm::{
     primitives::{Address, Bytes},
 };
 use std::boxed::Box;
-
+use std::string::String;
 // Optimism precompile provider
 #[derive(Debug, Clone)]
 pub struct OpPrecompiles {
@@ -100,7 +100,7 @@ where
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, PrecompileError> {
+    ) -> Result<Option<Self::Output>, String> {
         self.inner.run(context, address, bytes, gas_limit)
     }
 

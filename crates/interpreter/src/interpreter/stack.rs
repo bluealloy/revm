@@ -285,7 +285,7 @@ impl Stack {
             return Ok(());
         }
 
-        let n_words = (slice.len() + 31) / 32;
+        let n_words = slice.len().div_ceil(32);
         let new_len = self.data.len() + n_words;
         if new_len > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
@@ -330,7 +330,7 @@ impl Stack {
                 i += 1;
             }
 
-            debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
+            debug_assert_eq!(i.div_ceil(4), n_words, "wrote too much");
 
             // Zero out upper bytes of last word
             let m = i % 4; // 32 / 8

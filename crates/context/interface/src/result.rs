@@ -200,8 +200,6 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
-    /// Precompile error
-    Precompile(String),
 }
 
 impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
@@ -236,7 +234,6 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
             Self::Transaction(e) => EVMError::Transaction(e),
             Self::Header(e) => EVMError::Header(e),
             Self::Database(e) => EVMError::Database(op(e)),
-            Self::Precompile(e) => EVMError::Precompile(e),
             Self::Custom(e) => EVMError::Custom(e),
         }
     }
@@ -253,7 +250,7 @@ where
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Precompile(_) | Self::Custom(_) => None,
+            Self::Custom(_) => None,
         }
     }
 }
@@ -269,7 +266,7 @@ where
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Precompile(e) | Self::Custom(e) => f.write_str(e),
+            Self::Custom(e) => f.write_str(e),
         }
     }
 }
@@ -301,12 +298,18 @@ pub enum InvalidTransaction {
     /// Initial gas for a Call contains:
     /// - initial stipend gas
     /// - gas for access list and input data
-    CallGasCostMoreThanGasLimit,
+    CallGasCostMoreThanGasLimit {
+        initial_gas: u64,
+        gas_limit: u64,
+    },
     /// Gas floor calculated from EIP-7623 Increase calldata cost
     /// is more than the gas limit.
     ///
     /// Tx data is too large to be executed.
-    GasFloorMoreThanGasLimit,
+    GasFloorMoreThanGasLimit {
+        gas_floor: u64,
+        gas_limit: u64,
+    },
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
@@ -385,11 +388,23 @@ impl fmt::Display for InvalidTransaction {
             Self::CallerGasLimitMoreThanBlock => {
                 write!(f, "caller gas limit exceeds the block gas limit")
             }
-            Self::CallGasCostMoreThanGasLimit => {
-                write!(f, "call gas cost exceeds the gas limit")
+            Self::CallGasCostMoreThanGasLimit {
+                initial_gas,
+                gas_limit,
+            } => {
+                write!(
+                    f,
+                    "call gas cost ({initial_gas}) exceeds the gas limit ({gas_limit})"
+                )
             }
-            Self::GasFloorMoreThanGasLimit => {
-                write!(f, "gas floor exceeds the gas limit")
+            Self::GasFloorMoreThanGasLimit {
+                gas_floor,
+                gas_limit,
+            } => {
+                write!(
+                    f,
+                    "gas floor ({gas_floor}) exceeds the gas limit ({gas_limit})"
+                )
             }
             Self::RejectCallerWithCode => {
                 write!(f, "reject transactions from senders with deployed code")

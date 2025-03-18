@@ -15,8 +15,7 @@ use revm::{
     },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    precompile::PrecompileError,
-    primitives::{address, hardfork::SpecId, keccak256, Address, Bytes, TxKind, U256},
+    primitives::{address, hardfork::SpecId, keccak256, Address, TxKind, KECCAK_EMPTY, U256},
     state::AccountInfo,
     Context, Database, MainBuilder, MainContext,
 };
@@ -57,7 +56,7 @@ async fn main() -> Result<()> {
         AccountInfo {
             nonce: 0,
             balance: hundred_tokens * U256::from(2),
-            code_hash: keccak256(Bytes::new()),
+            code_hash: KECCAK_EMPTY,
             code: None,
         },
     );
@@ -84,10 +83,7 @@ pub fn token_operation<CTX, ERROR>(
 ) -> Result<(), ERROR>
 where
     CTX: ContextTr,
-    ERROR: From<InvalidTransaction>
-        + From<InvalidHeader>
-        + From<<CTX::Db as Database>::Error>
-        + From<PrecompileError>,
+    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<<CTX::Db as Database>::Error>,
 {
     let sender_balance_slot = erc_address_storage(sender);
     let sender_balance = context.journal().sload(TOKEN, sender_balance_slot)?.data;

@@ -6,6 +6,7 @@ use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::boxed::Box;
+use std::string::String;
 
 #[auto_impl(&mut, Box)]
 pub trait PrecompileProvider<CTX: ContextTr> {
@@ -20,7 +21,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<Self::Output>, PrecompileError>;
+    ) -> Result<Option<Self::Output>, String>;
 
     /// Get the warm addresses.
     fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>>;
@@ -76,7 +77,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<InterpreterResult>, PrecompileError> {
+    ) -> Result<Option<InterpreterResult>, String> {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
@@ -94,10 +95,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 result.result = InstructionResult::Return;
                 result.output = output.bytes;
             }
+            Err(PrecompileError::Fatal(e)) => return Err(e),
             Err(e) => {
-                if let PrecompileError::Fatal(_) = e {
-                    return Err(e);
-                }
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {

@@ -4,8 +4,8 @@ use super::{
     utils::extract_scalar_input,
 };
 use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G1_MSM, G1_INPUT_ITEM_LENGTH, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE,
-    G1_MSM_INPUT_LENGTH, G1_OUTPUT_LENGTH, NBITS, SCALAR_LENGTH,
+    DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
+    PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{u64_to_address, PrecompileWithAddress};
@@ -44,7 +44,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let encoded_g1_element =
-            &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
+            &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
 
         // Filter out points infinity as an optimization, since it is a no-op.
         // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
@@ -59,8 +59,8 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         scalars_bytes.extend_from_slice(
             &extract_scalar_input(
-                &input[i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
-                    ..i * G1_MSM_INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
+                &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
+                    ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH],
             )?
             .b,
         );

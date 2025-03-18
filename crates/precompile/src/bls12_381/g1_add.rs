@@ -1,7 +1,7 @@
 use super::blst::p1_add_affine;
 use super::g1::{encode_g1_point, extract_g1_input_no_subgroup_check};
 use crate::bls12_381_const::{
-    G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, G1_INPUT_ITEM_LENGTH,
+    G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
@@ -32,8 +32,8 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // check would be more than the time it takes to to do the g1 addition.
     //
     // Users should be careful to note whether the points being added are indeed in the right subgroup.
-    let a_aff = &extract_g1_input_no_subgroup_check(&input[..G1_INPUT_ITEM_LENGTH])?;
-    let b_aff = &extract_g1_input_no_subgroup_check(&input[G1_INPUT_ITEM_LENGTH..])?;
+    let a_aff = &extract_g1_input_no_subgroup_check(&input[..PADDED_G1_LENGTH])?;
+    let b_aff = &extract_g1_input_no_subgroup_check(&input[PADDED_G1_LENGTH..])?;
     let p_aff = p1_add_affine(a_aff, b_aff);
 
     let out = encode_g1_point(&p_aff);

@@ -1,7 +1,7 @@
 use super::blst::p2_add_affine;
 use super::g2::{encode_g2_point, extract_g2_input_no_subgroup_check};
 use crate::bls12_381_const::{
-    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, G2_INPUT_ITEM_LENGTH,
+    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
@@ -33,8 +33,8 @@ pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // check would be more than the time it takes to to do the g1 addition.
     //
     // Users should be careful to note whether the points being added are indeed in the right subgroup.
-    let a_aff = &extract_g2_input_no_subgroup_check(&input[..G2_INPUT_ITEM_LENGTH])?;
-    let b_aff = &extract_g2_input_no_subgroup_check(&input[G2_INPUT_ITEM_LENGTH..])?;
+    let a_aff = &extract_g2_input_no_subgroup_check(&input[..PADDED_G2_LENGTH])?;
+    let b_aff = &extract_g2_input_no_subgroup_check(&input[PADDED_G2_LENGTH..])?;
 
     // Use the safe wrapper for G2 point addition
     let p_aff = p2_add_affine(a_aff, b_aff);
