@@ -162,14 +162,37 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let precompiles = Self::cancun().clone();
-
-            // Don't include BLS12-381 precompiles in no_std builds.
-            #[cfg(feature = "blst")]
-            let precompiles = {
-                let mut precompiles = precompiles;
-                precompiles.extend(bls12_381::precompiles());
-                precompiles
-            };
+            cfg_if! {
+                if #[cfg(not(feature = "std"))] {  // If no_std is enabled
+                vec![
+                    PrecompileWithAddress(
+                        u64_to_address(0x0a),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into())),
+                    PrecompileWithAddress(
+                        u64_to_address(G1_ADD_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into())),
+                    PrecompileWithAddress(
+                        u64_to_address(G1_MSM_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))),
+                    PrecompileWithAddress(
+                        u64_to_address(G2_ADD_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))),
+                    PrecompileWithAddress(
+                        u64_to_address(G2_MSM_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))),
+                    PrecompileWithAddress(
+                        u64_to_address(PAIRING_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))),
+                    PrecompileWithAddress(
+                        u64_to_address(MAP_FP_TO_G1_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into()))),
+                    PrecompileWithAddress(
+                        u64_to_address(MAP_FP2_TO_G2_ADDRESS),
+                        |_,_| Err(PrecompileError::Fatal("no_std is not supported for BLS12-381 precompiles".into())))
+                    )
+                )
+            ].into_iter()}
+        }
 
             Box::new(precompiles)
         })
