@@ -200,8 +200,6 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
-    /// Precompile error
-    Precompile(String),
 }
 
 impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
@@ -236,7 +234,6 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
             Self::Transaction(e) => EVMError::Transaction(e),
             Self::Header(e) => EVMError::Header(e),
             Self::Database(e) => EVMError::Database(op(e)),
-            Self::Precompile(e) => EVMError::Precompile(e),
             Self::Custom(e) => EVMError::Custom(e),
         }
     }
@@ -253,7 +250,7 @@ where
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Precompile(_) | Self::Custom(_) => None,
+            Self::Custom(_) => None,
         }
     }
 }
@@ -269,7 +266,7 @@ where
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Precompile(e) | Self::Custom(e) => f.write_str(e),
+            Self::Custom(e) => f.write_str(e),
         }
     }
 }
