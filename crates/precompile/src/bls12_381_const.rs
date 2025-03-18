@@ -121,3 +121,30 @@ pub const MODULUS_REPR: [u8; 48] = [
     0x64, 0x77, 0x4b, 0x84, 0xf3, 0x85, 0x12, 0xbf, 0x67, 0x30, 0xd2, 0xa0, 0xf6, 0xb0, 0xf6, 0x24,
     0x1e, 0xab, 0xff, 0xfe, 0xb1, 0x53, 0xff, 0xff, 0xb9, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xaa, 0xab,
 ];
+
+#[test]
+fn check_discount_table_invariant_holds() {
+    // Currently EIP-2537 specifies the cost for a G1/G2 scalar multiplication in two places
+    // in two different ways.
+    //
+    // First it explicitly says that G1 Multiplication costs 12000 Gas and G2 Multiplication costs 22500.
+    //
+    // Then it implies the above constants for G1_MSM and G2_MSM via the MSM formula:
+    // MSM_COST = k * MSM_BASE_GAS_FEE * DISCOUNT[k-1] // MSM_MULTIPLIER
+    //
+    // Note that when the MSM has only one point-scalar pair (scalar multiplication), we get:
+    // MSM_COST = MSM_BASE_GAS_FEE * DISCOUNT[0] // MSM_MULTIPLIER
+    //  (This is because k==1)
+    //
+    // The 0th entry in the discount table for G1_MSM and G2_MSM is equal to MSM_MULTIPLIER
+    // so for k==1, MSM_COST = MSM_BASE_GAS_FEE
+    //
+    // For G1, MSM_BASE_GAS_FEE matches 12000 and for G2 MSM_BASE_GAS_FEE matches 22500.
+    //
+    // In this test, we check that this invariant does not change by asserting that the first value
+    // in the discount table is equal to the MULTIPLIER.
+    assert_eq!(DISCOUNT_TABLE_G1_MSM[0], MSM_MULTIPLIER as u16);
+    assert_eq!(DISCOUNT_TABLE_G2_MSM[0], MSM_MULTIPLIER as u16);
+    // Note: We could also more robustly check this by defining the G1/G2 Scalar multiplication constants
+    // from the EIP and checking that they equal to the value computed by `msm_required_gas` when k==1
+}
