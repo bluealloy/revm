@@ -5,7 +5,6 @@ use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
-use core::marker::PhantomData;
 use std::boxed::Box;
 use std::string::String;
 

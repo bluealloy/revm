@@ -45,10 +45,10 @@ jobs:
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
             ethtests/GeneralStateTests/ \
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-            tests/eof_suite/state_tests \
+            tests/eof/state_tests \
             tests/stable/
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
-          tests/eof_suite/eof_tests
+          tests/eof/eof_tests
 
