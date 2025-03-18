@@ -60,6 +60,7 @@ fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
 ///
 /// Note: `a` and `b` can be the same, ie this method is safe to call if one wants
 /// to essentially double a point
+#[inline]
 pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
     // Convert first point to Jacobian coordinates
     let a_jacobian = p1_from_affine(a);
@@ -72,6 +73,7 @@ pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_a
 }
 
 /// Add two G2 points in affine form, returning the result in affine form
+#[inline]
 pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
     // Convert first point to Jacobian coordinates
     let a_jacobian = p2_from_affine(a);
@@ -88,6 +90,7 @@ pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_a
 /// Takes a vector of G1 points and corresponding scalars, and returns their weighted sum
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
+#[inline]
 pub(super) fn p1_msm(
     g1_points: Vec<blst_p1_affine>,
     scalars_bytes: Vec<u8>,
@@ -124,6 +127,7 @@ pub(super) fn p1_msm(
 /// Takes a vector of G2 points and corresponding scalars, and returns their weighted sum
 ///
 /// Note: This method assumes that `g2_points` does not contain any points at infinity.
+#[inline]
 pub(super) fn p2_msm(
     g2_points: Vec<blst_p2_affine>,
     scalars_bytes: Vec<u8>,
@@ -158,6 +162,7 @@ pub(super) fn p2_msm(
 /// Maps a field element to a G1 point
 ///
 /// Takes a field element (blst_fp) and returns the corresponding G1 point in affine form
+#[inline]
 pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
     // Create a new G1 point in Jacobian coordinates
     let mut p = blst_p1::default();
@@ -174,6 +179,7 @@ pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
 /// Maps a field element to a G2 point
 ///
 /// Takes a field element (blst_fp2) and returns the corresponding G2 point in affine form
+#[inline]
 pub(super) fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
     // Create a new G2 point in Jacobian coordinates
     let mut p = blst_p2::default();
@@ -188,6 +194,7 @@ pub(super) fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
 }
 
 /// Computes a single miller loop for a given G1, G2 pair
+#[inline]
 fn compute_miller_loop(g1: &blst_p1_affine, g2: &blst_p2_affine) -> blst_fp12 {
     let mut result = blst_fp12::default();
 
@@ -198,6 +205,7 @@ fn compute_miller_loop(g1: &blst_p1_affine, g2: &blst_p2_affine) -> blst_fp12 {
 }
 
 /// multiply_fp12 multiplies two fp12 elements
+#[inline]
 fn multiply_fp12(a: &blst_fp12, b: &blst_fp12) -> blst_fp12 {
     let mut result = blst_fp12::default();
 
@@ -208,6 +216,7 @@ fn multiply_fp12(a: &blst_fp12, b: &blst_fp12) -> blst_fp12 {
 }
 
 /// final_exp computes the final exponentiation on an fp12 element
+#[inline]
 fn final_exp(f: &blst_fp12) -> blst_fp12 {
     let mut result = blst_fp12::default();
 
@@ -219,6 +228,7 @@ fn final_exp(f: &blst_fp12) -> blst_fp12 {
 
 /// is_fp12_one checks if an fp12 element equals
 /// multiplicative identity element, one
+#[inline]
 fn is_fp12_one(f: &blst_fp12) -> bool {
     // SAFETY: argument is a valid blst type
     unsafe { blst_fp12_is_one(f) }
@@ -226,6 +236,7 @@ fn is_fp12_one(f: &blst_fp12) -> bool {
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
+#[inline]
 pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
     // When no inputs are given, we trigger an assert.
     // While it is mathematically sound to have no inputs (can return true)
