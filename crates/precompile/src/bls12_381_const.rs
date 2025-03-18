@@ -15,7 +15,7 @@ pub const G1_ADD_BASE_GAS_FEE: u64 = 375;
 /// perform the G1_MSM precompile.
 ///
 /// The cost to do an MSM is determined by the formula:
-///    (k * G1_MSM_BASE_GAS_FEE * DISCOUNT[k]) // MSM_MULTIPLIER
+///    (k * G1_MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
 /// where k is the number of point-scalar pairs.
 ///
 /// Note: If one wants to do a G1 scalar multiplication, they would call
@@ -25,7 +25,7 @@ pub const G1_MSM_BASE_GAS_FEE: u64 = 12000;
 /// gas needed to compute an MSM.
 ///
 /// The cost to do an MSM is determined by the formula:
-///    (k * MSM_BASE_GAS_FEE * DISCOUNT[k]) // MSM_MULTIPLIER
+///    (k * MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
 /// where k is the number of point-scalar pairs.
 ///
 /// Note: If `k` is more than the size of the discount table, then
@@ -44,7 +44,7 @@ pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
 /// perform the G2_MSM precompile.
 ///
 /// The cost to do an MSM is determined by the formula:
-///    (k * G2_MSM_BASE_GAS_FEE * DISCOUNT[k]) // MSM_MULTIPLIER
+///    (k * G2_MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
 /// where k is the number of point-scalar pairs.
 ///
 /// Note: If one wants to do a G2 scalar multiplication, they would call
