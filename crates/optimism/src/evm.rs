@@ -517,4 +517,99 @@ mod tests {
             }
         ));
     }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_MSM_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::G2_MSM_INPUT_LENGTH - 1]);
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert fails pre gas check, because input is wrong size
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
+        let pairing_gas: u64 = bls12_381_const::PAIRING_PAIRING_MULTIPLIER_BASE
+            + bls12_381_const::PAIRING_PAIRING_OFFSET_BASE;
+
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::PAIRING_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::PAIRING_INPUT_LENGTH]);
+                tx.base.gas_limit = 27_144 //initial gas for input
+                    + pairing_gas
+                    - 1; // 1 gas low
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
+        let pairing_gas: u64 = bls12_381_const::PAIRING_PAIRING_MULTIPLIER_BASE
+            + bls12_381_const::PAIRING_PAIRING_OFFSET_BASE;
+
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::PAIRING_ADDRESS));
+                tx.base.data = Bytes::from([1; bls12_381_const::PAIRING_INPUT_LENGTH]);
+                tx.base.gas_limit = 27_144 //initial gas for input
+                    + pairing_gas;
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert fails post gas check, because input is wrong layout
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
+    }
 }
