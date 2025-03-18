@@ -16,7 +16,6 @@ use revm_interpreter::{
     CallOutcome,
     CreateOutcome,
     EOFCreateInputs,
-    Gas,
     InterpreterAction,
     InterpreterResult,
 };
@@ -52,8 +51,9 @@ pub type FrameCallHandle<'a, EXT, DB> = Arc<
 pub type FrameSystemInterruptionHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            &mut Box<SystemInterruptionInputs>,
-        ) -> Result<(FrameOrResult, Gas), EVMError<<DB as Database>::Error>>
+            Box<SystemInterruptionInputs>,
+            &mut Frame,
+        ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
 
@@ -223,9 +223,10 @@ impl<EXT, DB: Database> ExecutionHandler<'_, EXT, DB> {
     pub fn system_interruption(
         &self,
         context: &mut Context<EXT, DB>,
-        inputs: &mut Box<SystemInterruptionInputs>,
-    ) -> Result<(FrameOrResult, Gas), EVMError<DB::Error>> {
-        (self.system_interruption)(context, inputs)
+        inputs: Box<SystemInterruptionInputs>,
+        stack_frame: &mut Frame,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        (self.system_interruption)(context, inputs, stack_frame)
     }
 
     /// Call registered handler for call return.

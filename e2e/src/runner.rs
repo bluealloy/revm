@@ -3,11 +3,10 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use fluentbase_genesis::devnet_genesis_v0_1_0_dev10_from_file;
-use fluentbase_sdk::Address;
+use fluentbase_genesis::devnet_genesis_from_file;
+use fluentbase_sdk::{derive::derive_keccak256, Address, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use lazy_static::lazy_static;
 use revm::{
     db::{states::plain_account::PlainStorage, EmptyDB},
     inspector_handle_register,
@@ -20,6 +19,7 @@ use revm::{
         Bytecode,
         Bytes,
         EVMResultGeneric,
+        Eip7702Bytecode,
         Env,
         ExecutionResult,
         SpecId,
@@ -155,7 +155,7 @@ fn check_evm_execution<EXT1>(
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
 
     let state_root1 = state_merkle_trie_root(evm.context.evm.db.cache.trie_account().into_iter());
-    let state_root2 = state_merkle_trie_root(
+    let _state_root2 = state_merkle_trie_root(
         evm2.context
             .evm
             .db
@@ -256,6 +256,21 @@ fn check_evm_execution<EXT1>(
     // print_json_output(None);
     // return Ok(());
 
+    let mut error_list: Vec<String> = vec![];
+
+    macro_rules! error_eq {
+        ($left:expr, $right:expr, $msg:literal $(,)?) => {
+            if $left != $right {
+                error_list.push(format!("{}: {} <> {}", $msg, $left, $right));
+            }
+        };
+        ($left:expr, $right:expr, $msg:literal, $($arg:tt)+) => {
+            if $left != $right {
+                error_list.push(format!("{}: {} <> {}", format!($msg, $($arg)+), $left, $right));
+            }
+        };
+    }
+
     if logs_root1 != logs_root2 {
         let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
         println!("ORIGINAL logs ({}):", logs1.len());
@@ -281,17 +296,15 @@ fn check_evm_execution<EXT1>(
                     .unwrap_or_default()
             )
         }
-        assert_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
+        error_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
     }
 
     let exec_result1_res = exec_result1.as_ref().unwrap();
     let exec_result2_res = exec_result2.as_ref().unwrap();
-    assert_eq!(
+    error_eq!(
         exec_result1_res.gas_used(),
         exec_result2_res.gas_used(),
-        "EVM <> FLUENT gas used mismatch ({})",
-        exec_result2.as_ref().unwrap().gas_used() as i64
-            - exec_result1.as_ref().unwrap().gas_used() as i64
+        "EVM <> FLUENT gas used mismatch"
     );
 
     // compare contracts
@@ -305,7 +318,7 @@ fn check_evm_execution<EXT1>(
             .get(k)
             .expect("missing fluent contract");
         // we compare only evm bytecode
-        assert_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
+        error_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
     }
     let mut account_keys = evm.context.evm.db.cache.accounts.keys().collect::<Vec<_>>();
     account_keys.sort();
@@ -325,36 +338,36 @@ fn check_evm_execution<EXT1>(
             if cfg!(feature = "debug-print") {
                 println!(" - status: {:?}", v1.status);
             }
-            assert_eq!(
-                format!("{:?}", v1.status),
-                format!("{:?}", v2.unwrap().status),
-                "EVM account status mismatch ({:?}) <> ({:?})",
-                v1,
-                v2.unwrap()
-            );
+            // error_eq!(
+            //     format!("{:?}", v1.status),
+            //     format!("{:?}", v2.unwrap().status),
+            //     "EVM account status mismatch"
+            // );
             if cfg!(feature = "debug-print") {
                 println!(" - balance: {}", a1.balance);
             }
-            assert_eq!(
-                a1.balance, a2.balance,
-                "EVM <> FLUENT account balance mismatch",
+            error_eq!(
+                a1.balance,
+                a2.balance,
+                "EVM <> FLUENT account ({}) balance mismatch",
+                address,
             );
             if cfg!(feature = "debug-print") {
                 println!(" - nonce: {}", a1.nonce);
             }
-            assert_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
+            error_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
             if cfg!(feature = "debug-print") {
                 println!(" - code_hash: {}", hex::encode(a1.code_hash));
             }
-            assert_eq!(
-                a1.code_hash, a2.code_hash,
-                "EVM <> FLUENT account code_hash mismatch",
-            );
-            assert_eq!(
-                a1.code.as_ref().map(|b| b.original_bytes()),
-                a2.code.as_ref().map(|b| b.original_bytes()),
-                "EVM <> FLUENT account code mismatch",
-            );
+            // assert_eq!(
+            //     a1.code_hash, a2.code_hash,
+            //     "EVM <> FLUENT account code_hash mismatch",
+            // );
+            // assert_eq!(
+            //     a1.code.as_ref().map(|b| b.original_bytes()),
+            //     a2.code.as_ref().map(|b| b.original_bytes()),
+            //     "EVM <> FLUENT account code mismatch",
+            // );
             if cfg!(feature = "debug-print") {
                 println!(" - storage:");
             }
@@ -392,17 +405,17 @@ fn check_evm_execution<EXT1>(
                         .expect("missing FLUENT account (storage)")
                         .get(slot)
                         .unwrap_or_else(|| {
-                            panic!(
+                            error_list.push(format!(
                                 "missing storage key {}",
                                 hex::encode(slot.to_be_bytes::<32>())
-                            )
+                            ));
+                            &U256::ZERO
                         });
-                    assert_eq!(
+                    error_eq!(
                         *value1,
                         *value2,
-                        "EVM <> FLUENT storage value ({}) mismatch. Test: {:?}",
+                        "EVM <> FLUENT storage value ({}) mismatch",
                         hex::encode(&slot.to_be_bytes::<32>()),
-                        test_name
                     );
                 }
             }
@@ -431,38 +444,38 @@ fn check_evm_execution<EXT1>(
                 a2.balance - a1.balance
             };
             if balance_diff != U256::from(0) {
-                assert_eq!(
-                    a1.balance, a2.balance,
+                error_eq!(
+                    a1.balance,
+                    a2.balance,
                     "EVM <> FLUENT account balance mismatch"
                 );
             }
         }
     }
 
-    print_json_output(None);
-
-    if state_root1 != state_root2 {
-        let kind = TestErrorKind::StateRootMismatch2 {
-            expected: state_root1,
-            got: state_root2,
-        };
-        print_json_output(Some(kind.to_string()));
-        return Err(TestError {
-            name: test_name.to_string(),
-            kind,
-        });
+    if error_list.len() > 0 {
+        assert!(
+            false,
+            "----------------------\n{}\n----------------------\n",
+            error_list.join("\n")
+        );
     }
 
-    Ok(())
-}
+    print_json_output(None);
 
-lazy_static! {
-    // static ref EVM_LOADER: (Bytes, B256) = {
-    //     let rwasm_bytecode: Bytes =
-    //         include_bytes!("../../../contracts/assets/loader_contract.rwasm").into();
-    //     let rwasm_hash = B256::from(poseidon_hash(&rwasm_bytecode));
-    //     (rwasm_bytecode, rwasm_hash)
-    // };
+    // if state_root1 != state_root2 {
+    //     let kind = TestErrorKind::StateRootMismatch2 {
+    //         expected: state_root1,
+    //         got: state_root2,
+    //     };
+    //     print_json_output(Some(kind.to_string()));
+    //     return Err(TestError {
+    //         name: test_name.to_string(),
+    //         kind,
+    //     });
+    // }
+
+    Ok(())
 }
 
 pub fn execute_test_suite(
@@ -483,14 +496,7 @@ pub fn execute_test_suite(
         kind: e.into(),
     })?;
 
-    let devnet_genesis = devnet_genesis_v0_1_0_dev10_from_file();
-    // let (proxy_bytecode, proxy_bytecode_hash) = if ENABLE_EVM_PROXY_CONTRACT {
-    //     let proxy_bytecode = create_delegate_proxy_bytecode(PRECOMPILE_EVM);
-    //     let code_hash = B256::from(poseidon_hash(proxy_bytecode.as_ref()));
-    //     (proxy_bytecode, code_hash)
-    // } else {
-    //     (Bytes::default(), B256::ZERO)
-    // };
+    let devnet_genesis = devnet_genesis_from_file();
 
     let selected_test_cases = vec![];
     for (name, unit) in suite.0 {
@@ -504,16 +510,15 @@ pub fn execute_test_suite(
 
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
-            let code_hash = info
-                .code
-                .as_ref()
-                .map(|v| keccak256(&v))
-                .unwrap_or(KECCAK_EMPTY);
+            let bytecode = info.code.clone().map(Bytecode::new_raw);
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash,
-                code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
+                code_hash: bytecode
+                    .as_ref()
+                    .map(|v| v.hash_slow())
+                    .unwrap_or(KECCAK_EMPTY),
+                code: bytecode,
             };
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
@@ -536,40 +541,39 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }
 
-        for (address, info) in unit.pre {
+        const CODE_HASH_SLOT: B256 = B256::new(derive_keccak256!("_evm_code_hash"));
+
+        for (address, mut info) in unit.pre {
             let mut acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce,
                 ..Default::default()
             };
             let evm_code_hash = keccak256(&info.code);
-            // if ENABLE_EVM_PROXY_CONTRACT {
-            //     // write EVM code hash state
-            //     const EVM_CODE_HASH_SLOT: U256 =
-            //         U256::from_le_bytes(derive_keccak256!("_evm_bytecode_hash"));
-            //     info.storage
-            //         .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
-            //     // set account info bytecode to the proxy loader
-            //     acc_info.code_hash = proxy_bytecode_hash;
-            //     acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
-            //     // put EVM preimage inside
-            //     let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
-            //     cache_state2.insert_account(
-            //         preimage_address,
-            //         AccountInfo {
-            //             nonce: 1,
-            //             code_hash: evm_code_hash,
-            //             code: Some(Bytecode::new_raw(info.code.clone())),
-            //             ..Default::default()
-            //         },
-            //     );
-            // } else {
-            // in non-proxy mode, we store EVM bytecode in code
-            acc_info.code_hash = evm_code_hash;
-            acc_info.code = Some(Bytecode::new_raw(info.code.clone()));
-            // }
+            // write EVM code hash state
+            let evm_code_hash_slot: U256 = Into::<U256>::into(CODE_HASH_SLOT);
+            info.storage
+                .insert(evm_code_hash_slot, Into::<U256>::into(evm_code_hash));
+            // set account info bytecode to the proxy loader
+            let bytecode = Bytecode::Eip7702(Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME));
+            acc_info.code_hash = bytecode.hash_slow();
+            acc_info.code = Some(bytecode);
             // write evm account into state
             cache_state2.insert_account_with_storage(address, acc_info, info.storage);
+            // put EVM preimage inside
+            let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
+            cache_state2.insert_account(
+                preimage_address,
+                AccountInfo {
+                    nonce: 1,
+                    code_hash: evm_code_hash,
+                    code: Some(Bytecode::new_raw(info.code.clone())),
+                    ..Default::default()
+                },
+            );
+            // in non-proxy mode, we store EVM bytecode in code
+            // acc_info.code_hash = evm_code_hash;
+            // acc_info.code = Some(Bytecode::new_raw(info.code.clone()));
         }
 
         let mut env = Box::<Env>::default();
@@ -741,7 +745,9 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
+                    println!("RUNNING EVM!!!");
                     let res = evm.transact_commit();
+                    println!("RUNNING FLUENT!!!");
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 

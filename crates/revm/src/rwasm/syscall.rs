@@ -4,7 +4,6 @@ use crate::{
         gas::sstore_cost,
         interpreter_action::SystemInterruptionInputs,
         CallInputs,
-        CallOutcome,
         CallScheme,
         CallValue,
         CreateInputs,
@@ -32,6 +31,7 @@ use crate::{
     },
     Context,
     Database,
+    Frame,
     FrameOrResult,
     FrameResult,
 };
@@ -39,6 +39,7 @@ use core::cmp::min;
 use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
     keccak256,
+    FUEL_DENOM_RATE,
     STATE_MAIN,
     SYSCALL_ID_BALANCE,
     SYSCALL_ID_CALL,
@@ -64,41 +65,56 @@ use fluentbase_sdk::{
 };
 use revm_interpreter::{
     gas::{sload_cost, sstore_refund, warm_cold_cost},
+    interpreter_action::SystemInterruptionOutcome,
     Gas,
     Host,
 };
 
 pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    inputs: &Box<SystemInterruptionInputs>,
-) -> Result<(FrameOrResult, Gas), EVMError<DB::Error>> {
+    inputs: Box<SystemInterruptionInputs>,
+    stack_frame: &mut Frame,
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
     let mut local_gas = Gas::new(inputs.gas.remaining());
 
     macro_rules! return_result {
         ($output:expr) => {{
             let result =
                 InterpreterResult::new(InstructionResult::Return, $output.into(), local_gas);
-            let result = FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
-                result,
-                Default::default(),
-            )));
-            return Ok((result, Gas::new(0)));
+            let result =
+                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
+                    inputs,
+                    result,
+                    is_frame: false,
+                }));
+            return Ok(result);
         }};
     }
     macro_rules! return_error {
         ($error:ident) => {{
             let result =
                 InterpreterResult::new(InstructionResult::$error, Default::default(), local_gas);
-            let result = FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
-                result,
-                Default::default(),
-            )));
-            return Ok((result, Gas::new(0)));
+            let result =
+                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
+                    inputs,
+                    result,
+                    is_frame: false,
+                }));
+            return Ok(result);
         }};
     }
     macro_rules! return_frame {
         ($frame:expr) => {
-            return Ok(($frame, local_gas));
+            stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
+                inputs,
+                result: InterpreterResult::new(
+                    InstructionResult::Continue,
+                    Bytes::default(),
+                    local_gas,
+                ),
+                is_frame: true,
+            });
+            return Ok($frame);
         };
     }
     macro_rules! assert_return {
@@ -178,7 +194,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas::call_cost(SPEC::SPEC_ID, has_transfer, account_load));
             let mut gas_limit = min(
                 local_gas.remaining_63_of_64_parts(),
-                inputs.syscall_params.gas_limit,
+                inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE,
             );
             charge_gas!(gas_limit);
             if has_transfer {
@@ -219,10 +235,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
                     local_gas.remaining_63_of_64_parts(),
-                    inputs.syscall_params.gas_limit,
+                    inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE,
                 )
             } else {
-                inputs.syscall_params.gas_limit
+                inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE
             };
             charge_gas!(gas_limit);
             // create call inputs
@@ -251,7 +267,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
-
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
                 return_error!(FatalExternalError);
             };
@@ -266,10 +281,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let mut gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
                     local_gas.remaining_63_of_64_parts(),
-                    inputs.syscall_params.gas_limit,
+                    inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE,
                 )
             } else {
-                inputs.syscall_params.gas_limit
+                inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE
             };
             charge_gas!(gas_limit);
             // add call stipend if there is a value to be transferred
@@ -312,10 +327,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let gas_limit = if SPEC::enabled(TANGERINE) {
                 min(
                     local_gas.remaining_63_of_64_parts(),
-                    inputs.syscall_params.gas_limit,
+                    inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE,
                 )
             } else {
-                inputs.syscall_params.gas_limit
+                inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE
             };
             charge_gas!(gas_limit);
             // create call inputs

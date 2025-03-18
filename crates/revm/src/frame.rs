@@ -65,6 +65,7 @@ pub enum Frame {
 #[derive(Debug)]
 pub enum FrameResult {
     Call(CallOutcome),
+    InterruptedResult(SystemInterruptionOutcome),
     Create(CreateOutcome),
     EOFCreate(CreateOutcome),
 }
@@ -75,6 +76,7 @@ impl FrameResult {
     pub fn into_interpreter_result(self) -> InterpreterResult {
         match self {
             FrameResult::Call(outcome) => outcome.result,
+            FrameResult::InterruptedResult(outcome) => outcome.result,
             FrameResult::Create(outcome) => outcome.result,
             FrameResult::EOFCreate(outcome) => outcome.result,
         }
@@ -85,6 +87,7 @@ impl FrameResult {
     pub fn output(&self) -> Output {
         match self {
             FrameResult::Call(outcome) => Output::Call(outcome.result.output.clone()),
+            FrameResult::InterruptedResult(outcome) => Output::Call(outcome.result.output.clone()),
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
@@ -99,6 +102,7 @@ impl FrameResult {
     pub fn gas(&self) -> &Gas {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
+            FrameResult::InterruptedResult(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
             FrameResult::EOFCreate(outcome) => &outcome.result.gas,
         }
@@ -109,6 +113,7 @@ impl FrameResult {
     pub fn gas_mut(&mut self) -> &mut Gas {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
+            FrameResult::InterruptedResult(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
             FrameResult::EOFCreate(outcome) => &mut outcome.result.gas,
         }
@@ -119,6 +124,7 @@ impl FrameResult {
     pub fn interpreter_result(&self) -> &InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
+            FrameResult::InterruptedResult(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
             FrameResult::EOFCreate(outcome) => &outcome.result,
         }
@@ -129,6 +135,7 @@ impl FrameResult {
     pub fn interpreter_result_mut(&mut self) -> &InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
+            FrameResult::InterruptedResult(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
             FrameResult::EOFCreate(outcome) => &mut outcome.result,
         }
@@ -335,6 +342,13 @@ impl FrameOrResult {
         match self {
             FrameOrResult::Frame(_) => true,
             FrameOrResult::Result(_) => false,
+        }
+    }
+
+    pub fn take_interrupted_outcome(&mut self) -> Option<SystemInterruptionOutcome> {
+        match self {
+            FrameOrResult::Frame(frame) => frame.take_interrupted_outcome(),
+            FrameOrResult::Result(_) => None,
         }
     }
 }

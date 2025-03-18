@@ -5,12 +5,8 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-#fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-#fluentbase-poseidon = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-#fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-sdk = { path = "../../crates/sdk" }
-fluentbase-poseidon = { path = "../../crates/poseidon", default-features = false }
-fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
+fluentbase-genesis = { path = "../../crates/genesis", default-features = false, features = ["generate-genesis"] }
 
 revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
     "ethersdb",
@@ -21,13 +17,10 @@ revm = { package = "revm", path = "../crates/revm", default-features = false, fe
     "e2e",
 ] }
 
-rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, features = ["print-trace"] }
-
 hash-db = "=0.15"
 hex = "0.4"
 hashbrown = "0.14"
 indicatif = "0.17"
-microbench = "0.5"
 plain_hasher = "0.2"
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
@@ -40,12 +33,10 @@ thiserror = "1.0"
 triehash = "0.8"
 walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
-lazy_static = { version = "1.4.0", default-features = false }
-paste = { version = "1.0", default-features = false }
 
 [features]
 default = [
-    #    "debug-print",
+    "debug-print",
 ]
 e2e = [
     "revm/e2e",

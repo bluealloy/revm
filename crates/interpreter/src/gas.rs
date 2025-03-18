@@ -145,17 +145,17 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        // let message = std::format!("record cost: {}, remaining={}", cost, self.remaining);
-        // #[cfg(feature = "std")]
-        // println!("{}", message);
-        // #[cfg(target_arch = "wasm32")]
-        // unsafe {
-        //     #[link(wasm_import_module = "fluentbase_v1preview")]
-        //     extern "C" {
-        //         pub fn _debug_log(msg_ptr: *const u8, msg_len: u32);
-        //     }
-        //     _debug_log(message.as_ptr(), message.len() as u32);
-        // }
+        let message = std::format!("record cost: {}, remaining={}", cost, self.remaining);
+        #[cfg(feature = "std")]
+        println!("{}", message);
+        #[cfg(target_arch = "wasm32")]
+        unsafe {
+            #[link(wasm_import_module = "fluentbase_v1preview")]
+            extern "C" {
+                pub fn _debug_log(msg_ptr: *const u8, msg_len: u32);
+            }
+            _debug_log(message.as_ptr(), message.len() as u32);
+        }
         let (remaining, overflow) = self.remaining().overflowing_sub(cost);
         let success = !overflow;
         if success {
@@ -169,5 +169,10 @@ impl Gas {
         // TODO(dmitry123): "we can't do round ceil here because we need to sync gas/fuel rates"
         // self.record_cost((fuel_cost + FUEL_DENOM_RATE - 1) / FUEL_DENOM_RATE)
         self.record_cost(fuel_cost / FUEL_DENOM_RATE)
+    }
+
+    #[inline]
+    pub fn record_denominated_refund(&mut self, fuel_refund: i64) {
+        self.record_refund(fuel_refund / FUEL_DENOM_RATE as i64)
     }
 }

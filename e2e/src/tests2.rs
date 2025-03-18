@@ -26,8 +26,7 @@ macro_rules! define_tests {
 
 mod failing_tests {
     define_tests! {
-        // fn random_statetest649("tests/GeneralStateTests/stRandom2/randomStatetest649.json");
-        // fn static_callcall_00_o_o_g_e("tests/GeneralStateTests/stStaticCall/static_callcall_00_OOGE.json");
-        fn static_callcodecallcall_100_o_o_g_e("tests/GeneralStateTests/stStaticCall/static_callcodecallcall_100_OOGE.json");
+        fn st_e_i_p3651_warmcoinbase_coinbase_warm_account_call_gas_fail("tests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGasFail.json");
+        // fn st_e_i_p3651_warmcoinbase_coinbase_warm_account_call_gas("tests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json");
     }
 }

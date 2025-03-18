@@ -7,13 +7,13 @@ use crate::{
         InterpreterAction,
         InterpreterResult,
     },
-    primitives::{Address, Bytecode, Bytes, EVMError, Spec, U256},
+    primitives::{hex::hex, Address, Bytecode, Bytes, EVMError, Spec, U256},
     Context,
     Database,
     Frame,
 };
-use core::{mem, ops::Deref};
-use fluentbase_runtime::RuntimeContext;
+use core::{mem, ops::Deref, str::from_utf8};
+use fluentbase_runtime::{instruction::resume::SyscallResume, RuntimeContext};
 use fluentbase_sdk::{
     codec::CompactABI,
     is_self_gas_management_contract,
@@ -27,6 +27,7 @@ use fluentbase_sdk::{
     SharedContextInput,
     SharedContextInputV1,
     SyscallInvocationParams,
+    SyscallStatus,
     TxContextV1,
     B256,
     FUEL_DENOM_RATE,
@@ -93,7 +94,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         runtime_context = runtime_context.without_fuel();
     }
     let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, exit_code) = native_sdk.exec(
+    let (fuel_consumed, fuel_refunded, exit_code) = native_sdk.exec(
         bytecode_hash,
         &context_input,
         fuel_limit,
@@ -102,7 +103,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     // make sure we have enough gas to charge from the call
     let mut gas = interpreter.gas;
-    if !gas.record_denominated_cost(fuel_consumed as u64) {
+    if !gas.record_denominated_cost(fuel_consumed) {
         return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -111,6 +112,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
             },
         });
     }
+    gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
     let return_data = native_sdk.return_data();
@@ -136,16 +138,12 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
 
     println!("revm: resume execution: gas={:?}", result.gas);
     let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
-    // TODO(dmitry123): "we need to pass refund as well"
-    if result.gas.refunded() > 0 {
-        unreachable!("we don't support refunds yet")
-    }
+    let fuel_refunded = result.gas.refunded() * FUEL_DENOM_RATE as i64;
 
-    // TODO(dmitry123): "what if EOF mode is disabled?"
     let exit_code = match result.result {
-        return_ok!() => 0,
-        return_revert!() => 1,
-        return_error!() => 2,
+        return_ok!() => SyscallStatus::Ok as i32,
+        return_revert!() => SyscallStatus::Revert as i32,
+        return_error!() => SyscallStatus::Err as i32,
         _ => unreachable!("revm: unexpected result"),
     };
 
@@ -154,20 +152,23 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
-    let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, exit_code) = native_sdk.resume(
+    let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
+        &mut runtime_context,
         inputs.call_id,
-        result.output.as_ref(),
+        result.output.into(),
         exit_code,
-        fuel_consumed as u32,
+        fuel_consumed,
+        fuel_refunded,
+        inputs.syscall_params.fuel16_ptr,
     );
+    let return_data: Bytes = runtime_context.into_return_data().into();
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
     let mut gas = if is_gas_free { inputs.gas } else { result.gas };
 
     // make sure we have enough gas to charge from the call
-    if !gas.record_denominated_cost(fuel_consumed as u64) {
+    if !gas.record_denominated_cost(fuel_consumed) {
         return InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -176,9 +177,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
             },
         };
     }
-
-    // extract return data from the execution context
-    let return_data = native_sdk.return_data();
+    gas.record_denominated_refund(fuel_refunded);
 
     process_exec_result(
         inputs.target_address,
@@ -207,6 +206,19 @@ fn process_exec_result(
     // if we have success or failed exit code
     if exit_code <= 0 {
         let exit_code = ExitCode::from(exit_code);
+        if exit_code == ExitCode::Panic {
+            let mut output = return_data.as_ref();
+            if output.starts_with(&[0x08, 0xc3, 0x79, 0xa0]) {
+                output = &output[68..];
+            }
+            println!(
+                "output: 0x{} ({})",
+                hex::encode(&output),
+                from_utf8(output)
+                    .unwrap_or("can't decode utf-8")
+                    .trim_end_matches("\0")
+            );
+        }
         println!("revm: exit code: {} ({})", exit_code.into_i32(), exit_code);
         let result = match exit_code {
             ExitCode::Ok => {
@@ -257,7 +269,7 @@ fn process_exec_result(
     };
 
     // if there is no enough gas for execution, then fail fast
-    if params.gas_limit > gas.remaining() {
+    if params.fuel_limit / FUEL_DENOM_RATE > gas.remaining() {
         return InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,

@@ -111,9 +111,10 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
 #[inline]
 pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    inputs: &mut Box<SystemInterruptionInputs>,
-) -> Result<(FrameOrResult, Gas), EVMError<DB::Error>> {
-    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs)
+    inputs: Box<SystemInterruptionInputs>,
+    stack_frame: &mut Frame,
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs, stack_frame)
 }
 
 #[inline]
