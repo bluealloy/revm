@@ -46,7 +46,7 @@ jobs:
             ethtests/GeneralStateTests/ \
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
             tests/eof/state_tests \
-            tests/stable/
+            tests/stable/state_tests
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
