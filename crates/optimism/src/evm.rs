@@ -176,22 +176,32 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_tx_call_p256verify() {
+    fn p256verify_test_tx() -> Context<
+        BlockEnv,
+        OpTransaction<TxEnv>,
+        CfgEnv<OpSpecId>,
+        EmptyDB,
+        Journal<EmptyDB>,
+        L1BlockInfo,
+    > {
         const SPEC_ID: OpSpecId = OpSpecId::FJORD;
 
         let InitialAndFloorGas { initial_gas, .. } =
             calculate_initial_tx_gas(SPEC_ID.into(), &[], false, 0, 0, 0);
 
-        let ctx = Context::op()
+        Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.kind = TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS));
                 tx.base.gas_limit = initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE;
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::FJORD);
+            .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
+    }
+
+    #[test]
+    fn test_tx_call_p256verify() {
+        let ctx = p256verify_test_tx();
 
         let mut evm = ctx.build_op();
-
         let output = evm.replay().unwrap();
 
         // assert successful call to P256VERIFY
@@ -200,21 +210,9 @@ mod tests {
 
     #[test]
     fn test_halted_tx_call_p256verify() {
-        const SPEC_ID: OpSpecId = OpSpecId::FJORD;
-
-        let InitialAndFloorGas { initial_gas, .. } =
-            calculate_initial_tx_gas(SPEC_ID.into(), &[], false, 0, 0, 0);
-
-        let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS));
-                // 1 gas low
-                tx.base.gas_limit = initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE - 1;
-            })
-            .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        let ctx = p256verify_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
         let mut evm = ctx.build_op();
-
         let output = evm.replay().unwrap();
 
         // assert out of gas for P256VERIFY
