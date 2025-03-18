@@ -12,8 +12,11 @@ use crate::{
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use primitives::{Bytes, B256};
 
+/// Address of secp256r1 precompile.
+pub const P256VERIFY_ADDRESS: u64 = 256;
+
 /// Base gas fee for secp256r1 p256verify operation.
-const P256VERIFY_BASE: u64 = 3450;
+pub const P256VERIFY_BASE_GAS_FEE: u64 = 3450;
 
 /// Returns the secp256r1 precompile with its address.
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
@@ -22,7 +25,7 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(0x100), p256_verify);
+    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify);
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the
@@ -34,7 +37,7 @@ pub const P256VERIFY: PrecompileWithAddress =
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
 pub fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    if P256VERIFY_BASE > gas_limit {
+    if P256VERIFY_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
     let result = if verify_impl(input).is_some() {
@@ -42,7 +45,7 @@ pub fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutput::new(P256VERIFY_BASE, result))
+    Ok(PrecompileOutput::new(P256VERIFY_BASE_GAS_FEE, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is
