@@ -549,8 +549,8 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
-        let pairing_gas: u64 = bls12_381_const::PAIRING_PAIRING_MULTIPLIER_BASE
-            + bls12_381_const::PAIRING_PAIRING_OFFSET_BASE;
+        let pairing_gas: u64 =
+            bls12_381_const::PAIRING_MULTIPLIER_BASE + bls12_381_const::PAIRING_OFFSET_BASE;
 
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -583,8 +583,8 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
-        let pairing_gas: u64 = bls12_381_const::PAIRING_PAIRING_MULTIPLIER_BASE
-            + bls12_381_const::PAIRING_PAIRING_OFFSET_BASE;
+        let pairing_gas: u64 =
+            bls12_381_const::PAIRING_MULTIPLIER_BASE + bls12_381_const::PAIRING_OFFSET_BASE;
 
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
