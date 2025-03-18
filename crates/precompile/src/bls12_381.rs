@@ -1,5 +1,6 @@
 use crate::PrecompileWithAddress;
 
+mod blst;
 mod g1;
 pub mod g1_add;
 pub mod g1_msm;

@@ -1,12 +1,10 @@
-use super::g1::{encode_g1_point, extract_g1_input};
+use super::blst::p1_add_affine;
+use super::g1::{encode_g1_point, extract_g1_input_no_subgroup_check};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::{
-    blst_p1, blst_p1_add_or_double_affine, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine,
-};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
@@ -30,23 +28,13 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    // NB: There is no subgroup check for the G1 addition precompile.
+    // NB: There is no subgroup check for the G1 addition precompile because the time to do the subgroup
+    // check would be more than the time it takes to to do the g1 addition.
     //
-    // So we set the subgroup checks here to `false`
-    let a_aff = &extract_g1_input(&input[..PADDED_G1_LENGTH], false)?;
-    let b_aff = &extract_g1_input(&input[PADDED_G1_LENGTH..], false)?;
-
-    let mut b = blst_p1::default();
-    // SAFETY: `b` and `b_aff` are blst values.
-    unsafe { blst_p1_from_affine(&mut b, b_aff) };
-
-    let mut p = blst_p1::default();
-    // SAFETY: `p`, `b` and `a_aff` are blst values.
-    unsafe { blst_p1_add_or_double_affine(&mut p, &b, a_aff) };
-
-    let mut p_aff = blst_p1_affine::default();
-    // SAFETY: `p_aff` and `p`` are blst values.
-    unsafe { blst_p1_to_affine(&mut p_aff, &p) };
+    // Users should be careful to note whether the points being added are indeed in the right subgroup.
+    let a_aff = &extract_g1_input_no_subgroup_check(&input[..PADDED_G1_LENGTH])?;
+    let b_aff = &extract_g1_input_no_subgroup_check(&input[PADDED_G1_LENGTH..])?;
+    let p_aff = p1_add_affine(a_aff, b_aff);
 
     let out = encode_g1_point(&p_aff);
     Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out))

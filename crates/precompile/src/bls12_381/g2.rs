@@ -23,17 +23,37 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     out.into()
 }
 
-/// Convert the following field elements from byte slices into a `blst_p2_affine` point.
+/// Returns a `blst_p2_affine` from the provided byte slices, which represent the x and y
+/// affine coordinates of the point.
+///
+/// - If the x or y coordinate do not represent a canonical field element, an error is returned.
+///   See [check_canonical_fp2] for more information.
+/// - If the point is not on the curve, an error is returned.
 pub(super) fn decode_and_check_g2(
     x1: &[u8; 48],
     x2: &[u8; 48],
     y1: &[u8; 48],
     y2: &[u8; 48],
 ) -> Result<blst_p2_affine, PrecompileError> {
-    Ok(blst_p2_affine {
+    let out = blst_p2_affine {
         x: check_canonical_fp2(x1, x2)?,
         y: check_canonical_fp2(y1, y2)?,
-    })
+    };
+
+    // From EIP-2537:
+    //
+    // Error cases:
+    //
+    // * An input is neither a point on the G2 elliptic curve nor the infinity point
+    //
+    // SAFETY: Out is a blst value.
+    if unsafe { !blst_p2_affine_on_curve(&out) } {
+        return Err(PrecompileError::Other(
+            "Element not on G2 curve".to_string(),
+        ));
+    }
+
+    Ok(out)
 }
 
 /// Checks whether or not the input represents a canonical fp2 field element, returning the field
@@ -49,11 +69,28 @@ pub(super) fn check_canonical_fp2(
 
     Ok(fp2)
 }
-
+/// Extracts a G2 point in Affine format from a 256 byte slice representation.
+///
+/// Note: By default, no subgroup checks are performed.
+pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, PrecompileError> {
+    _extract_g2_input(input, true)
+}
+/// Extracts a G2 point in Affine format from a 256 byte slice representation
+/// without performing a subgroup check.
+///
+/// Note: Skipping subgroup checks can introduce security issues.
+/// This method should only be called if:
+///     - The EIP specifies that no subgroup check should be performed
+///     - One can be certain that the point is in the correct subgroup.
+pub(super) fn extract_g2_input_no_subgroup_check(
+    input: &[u8],
+) -> Result<blst_p2_affine, PrecompileError> {
+    _extract_g2_input(input, false)
+}
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
 /// **Note**: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
-pub(super) fn extract_g2_input(
+fn _extract_g2_input(
     input: &[u8],
     subgroup_check: bool,
 ) -> Result<blst_p2_affine, PrecompileError> {
@@ -70,19 +107,6 @@ pub(super) fn extract_g2_input(
     }
 
     let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
-
-    // From EIP-2537:
-    //
-    // Error cases:
-    //
-    // * An input is neither a point on the G2 elliptic curve nor the infinity point
-    //
-    // SAFETY: Out is a blst value.
-    if unsafe { !blst_p2_affine_on_curve(&out) } {
-        return Err(PrecompileError::Other(
-            "Element not on G2 curve".to_string(),
-        ));
-    }
 
     if subgroup_check {
         // NB: Subgroup checks

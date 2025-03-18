@@ -18,9 +18,9 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
 /// Returns a `blst_p1_affine` from the provided byte slices, which represent the x and y
 /// affine coordinates of the point.
 ///
-/// If the x or y coordinate do not represent a canonical field element, an error is returned.
-///
-/// See [fp_from_bendian] for more information.
+/// - If the x or y coordinate do not represent a canonical field element, an error is returned.
+///   See [fp_from_bendian] for more information.
+/// - If the point is not on the curve, an error is returned.
 pub(super) fn decode_and_check_g1(
     p0_x: &[u8; 48],
     p0_y: &[u8; 48],
@@ -29,27 +29,6 @@ pub(super) fn decode_and_check_g1(
         x: fp_from_bendian(p0_x)?,
         y: fp_from_bendian(p0_y)?,
     };
-
-    Ok(out)
-}
-
-/// Extracts a G1 point in Affine format from a 128 byte slice representation.
-///
-/// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
-pub(super) fn extract_g1_input(
-    input: &[u8],
-    subgroup_check: bool,
-) -> Result<blst_p1_affine, PrecompileError> {
-    if input.len() != PADDED_G1_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "Input should be {PADDED_G1_LENGTH} bytes, was {}",
-            input.len()
-        )));
-    }
-
-    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
-    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..PADDED_G1_LENGTH])?;
-    let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
     // From EIP-2537:
     //
@@ -63,6 +42,45 @@ pub(super) fn extract_g1_input(
             "Element not on G1 curve".to_string(),
         ));
     }
+
+    Ok(out)
+}
+
+/// Extracts a G1 point in Affine format from a 128 byte slice representation.
+///
+/// Note: By default, subgroup checks are performed.
+pub(super) fn extract_g1_input(input: &[u8]) -> Result<blst_p1_affine, PrecompileError> {
+    _extract_g1_input(input, true)
+}
+/// Extracts a G1 point in Affine format from a 128 byte slice representation.
+/// without performing a subgroup check.
+///
+/// Note: Skipping subgroup checks can introduce security issues.
+/// This method should only be called if:
+///     - The EIP specifies that no subgroup check should be performed
+///     - One can be certain that the point is in the correct subgroup.
+pub(super) fn extract_g1_input_no_subgroup_check(
+    input: &[u8],
+) -> Result<blst_p1_affine, PrecompileError> {
+    _extract_g1_input(input, false)
+}
+/// Extracts a G1 point in Affine format from a 128 byte slice representation.
+///
+/// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
+fn _extract_g1_input(
+    input: &[u8],
+    subgroup_check: bool,
+) -> Result<blst_p1_affine, PrecompileError> {
+    if input.len() != PADDED_G1_LENGTH {
+        return Err(PrecompileError::Other(format!(
+            "Input should be {PADDED_G1_LENGTH} bytes, was {}",
+            input.len()
+        )));
+    }
+
+    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
+    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..PADDED_G1_LENGTH])?;
+    let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
     if subgroup_check {
         // NB: Subgroup checks
