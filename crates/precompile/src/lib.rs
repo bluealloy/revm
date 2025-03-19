@@ -31,7 +31,7 @@ pub use interface::*;
 use kzg_rs as _;
 
 use cfg_if::cfg_if;
-use core::{hash::Hash, ptr};
+use core::hash::Hash;
 use once_cell::race::OnceBox;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
 use std::{boxed::Box, vec::Vec};
