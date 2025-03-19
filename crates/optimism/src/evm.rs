@@ -372,8 +372,7 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
-        let ctx = g1_msm_test_tx()
-            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(0..tx.base.data.len() - 1));
+        let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
         let output = evm.replay().unwrap();
@@ -459,8 +458,7 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
-        let ctx = g2_msm_test_tx()
-            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(0..tx.base.data.len() - 1));
+        let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
         let output = evm.replay().unwrap();
@@ -545,7 +543,7 @@ mod tests {
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         let ctx = bl12_381_pairing_test_tx()
-            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(0..tx.base.data.len() - 1));
+            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
         let output = evm.replay().unwrap();
@@ -644,8 +642,7 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
-        let ctx = fp_to_g1_test_tx()
-            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(0..tx.base.data.len() - 1));
+        let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
         let output = evm.replay().unwrap();
@@ -708,8 +705,8 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
-        let ctx = fp2_to_g2_test_tx()
-            .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(0..tx.base.data.len() - 1));
+        let ctx =
+            fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
         let output = evm.replay().unwrap();
