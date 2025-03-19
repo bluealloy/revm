@@ -78,6 +78,12 @@ pub fn isthmus() -> &'static Precompiles {
             precompiles.extend(precompile::bls12_381::precompiles());
             precompiles
         };
+        #[cfg(not(feature = "blst"))]
+        let precompiles = {
+            let mut precompiles = precompiles;
+            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
+            precompiles
+        };
         Box::new(precompiles)
     })
 }
