@@ -68,6 +68,11 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
+    // No validation is needed for deposit transactions, as they are pre-verified on L1.
+    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
+        return Ok(());
+    }
+
     // storage l1 block info for later use. l1_block_info is cleared after execution.
     if context.evm.inner.l1_block_info.is_none() {
         // the L1-cost fee is only computed for Optimism non-deposit transactions.
@@ -75,11 +80,6 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
             crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
                 .map_err(EVMError::Database)?;
         context.evm.inner.l1_block_info = Some(l1_block_info);
-    }
-
-    // No validation is needed for deposit transactions, as they are pre-verified on L1.
-    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
-        return Ok(());
     }
 
     let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
@@ -285,7 +285,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
         mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)?;
     }
 
-    if SPEC::SPEC_ID.is_enabled_in(SpecId::ISTHMUS) {
+    if !is_deposit && SPEC::SPEC_ID.is_enabled_in(SpecId::ISTHMUS) {
         let operator_fee_refund = context
             .evm
             .inner
