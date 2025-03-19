@@ -429,22 +429,39 @@ mod tests {
         ));
     }
 
-    #[test]
-    #[cfg(feature = "blst")]
-    fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
-        let ctx = Context::op()
+    fn g2_add_test_tx() -> Context<
+        BlockEnv,
+        OpTransaction<TxEnv>,
+        CfgEnv<OpSpecId>,
+        EmptyDB,
+        Journal<EmptyDB>,
+        L1BlockInfo,
+    > {
+        const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+
+        let input = Bytes::from([1; bls12_381_const::G2_ADD_INPUT_LENGTH]);
+        let InitialAndFloorGas { initial_gas, .. } =
+            calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+
+        Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_ADD_ADDRESS));
-                tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1;
+                tx.base.data = input;
+                tx.base.gas_limit = initial_gas + bls12_381_const::G2_ADD_BASE_GAS_FEE;
             })
             .modify_chain_chained(|l1_block| {
                 l1_block.operator_fee_constant = Some(U256::ZERO);
                 l1_block.operator_fee_scalar = Some(U256::ZERO)
             })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+            .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
+        let ctx = g2_add_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
         let mut evm = ctx.build_op();
-
         let output = evm.replay().unwrap();
 
         // assert out of gas
@@ -460,19 +477,9 @@ mod tests {
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
-        let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_ADD_ADDRESS));
-                tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE;
-            })
-            .modify_chain_chained(|l1_block| {
-                l1_block.operator_fee_constant = Some(U256::ZERO);
-                l1_block.operator_fee_scalar = Some(U256::ZERO)
-            })
-            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        let ctx = g2_add_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
         let mut evm = ctx.build_op();
-
         let output = evm.replay().unwrap();
 
         // assert fails post gas check, because input is wrong size
