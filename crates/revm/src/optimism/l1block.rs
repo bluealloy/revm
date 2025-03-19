@@ -191,8 +191,8 @@ impl L1BlockInfo {
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
     pub fn operator_fee_charge(&self, input: &[u8], gas_limit: U256, spec_id: SpecId) -> U256 {
-        // If the input is a deposit transaction or empty, the default value is zero.
-        if input.is_empty() || input.first() == Some(&0x7E) {
+        // If the input is a deposit transaction, the default value is zero.
+        if input.first() == Some(&0x7E) {
             return U256::ZERO;
         }
         if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
