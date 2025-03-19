@@ -1,4 +1,5 @@
-use revm::primitives::hardfork::{name as eth_name, SpecId};
+use core::str::FromStr;
+use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -41,11 +42,11 @@ impl From<OpSpecId> for SpecId {
     }
 }
 
-impl TryFrom<&str> for OpSpecId {
-    type Error = ();
+impl FromStr for OpSpecId {
+    type Err = UnknownHardfork;
 
-    fn try_from(name: &str) -> Result<Self, Self::Error> {
-        match name {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
             name::BEDROCK => Ok(OpSpecId::BEDROCK),
             name::REGOLITH => Ok(OpSpecId::REGOLITH),
             name::CANYON => Ok(OpSpecId::CANYON),
@@ -56,7 +57,7 @@ impl TryFrom<&str> for OpSpecId {
             name::ISTHMUS => Ok(OpSpecId::ISTHMUS),
             name::INTEROP => Ok(OpSpecId::INTEROP),
             eth_name::OSAKA => Ok(OpSpecId::OSAKA),
-            _ => Err(()),
+            _ => Err(UnknownHardfork),
         }
     }
 }
