@@ -212,20 +212,13 @@ mod tests {
     #[test]
     fn test_cancun_precompiles_in_granite() {
         // granite has p256verify (fjord)
-        // granite has modification of cancun's bn128 pair
-        assert_eq!(granite().difference(Precompiles::cancun()).len(), 2)
+        // granite has modification of cancun's bn128 pair (doesn't count as new precompile)
+        assert_eq!(granite().difference(Precompiles::cancun()).len(), 1)
     }
 
     #[test]
     fn test_prague_precompiles_in_isthmus() {
         let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
-
-        print_no_std::eprintln!("new prague precompiles: {:?}", new_prague_precompiles);
-        print_no_std::eprintln!("isthmus precompiles: {:?}", isthmus());
-        print_no_std::eprintln!(
-            "difference isthmus in new prague precompiles: {:?}",
-            new_prague_precompiles.difference(isthmus())
-        );
 
         // isthmus contains all precompiles that were new in prague, without modifications
         assert!(new_prague_precompiles.difference(isthmus()).is_empty())

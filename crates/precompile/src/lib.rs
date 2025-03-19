@@ -238,50 +238,34 @@ impl Precompiles {
 
     /// Returns complement of `other` in `self`.
     ///
-    /// An entry is considered equal if address as well as function pointer are equal.
+    /// Two entries are considered equal if the precompile addresses are equal.
     pub fn difference(&self, other: &Self) -> Self {
-        let Self { inner, addresses } = self;
+        let Self { inner, .. } = self;
 
         let inner = inner
             .iter()
-            .filter(|(a, p)| {
-                let Some(&other_p) = other.inner.get(*a) else {
-                    return true;
-                };
-                !ptr::fn_addr_eq(**p, other_p)
-            })
+            .filter(|(a, _)| other.inner.get(*a).is_none())
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
-        let addresses = addresses
-            .difference(&other.addresses)
-            .cloned()
-            .collect::<HashSet<_>>();
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
         Self { inner, addresses }
     }
 
     /// Returns intersection of `self` and `other`.
     ///
-    /// An entry is considered equal if address as well as function pointer are equal.
+    /// Two entries are considered equal if the precompile addresses are equal.
     pub fn intersection(&self, other: &Self) -> Self {
-        let Self { inner, addresses } = self;
+        let Self { inner, .. } = self;
 
         let inner = inner
             .iter()
-            .filter(|(a, p)| {
-                let Some(&other_p) = other.inner.get(*a) else {
-                    return false;
-                };
-                ptr::fn_addr_eq(**p, other_p)
-            })
+            .filter(|(a, _)| other.inner.get(*a).is_some())
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
-        let addresses = addresses
-            .intersection(&other.addresses)
-            .cloned()
-            .collect::<HashSet<_>>();
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
         Self { inner, addresses }
     }
@@ -371,7 +355,7 @@ mod test {
     #[test]
     fn test_difference_precompile_sets() {
         let difference = Precompiles::istanbul().difference(Precompiles::berlin());
-        assert_eq!(difference.len(), 1)
+        assert!(difference.is_empty());
     }
 
     #[test]
