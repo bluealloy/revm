@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.5...revm-context-interface-v1.0.0-alpha.6) - 2025-03-19
+
+### Added
+
+- Remove PrecompileError from PrecompileProvider ([#2233](https://github.com/bluealloy/revm/pull/2233))
+- allow reuse of API for calculating initial tx gas for tx ([#2215](https://github.com/bluealloy/revm/pull/2215))
+
+### Other
+
+- use AccessListItem associated type instead of AccessList ([#2214](https://github.com/bluealloy/revm/pull/2214))
+
 ## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-context-interface-v1.0.0-alpha.4...revm-context-interface-v1.0.0-alpha.5) - 2025-03-16
 
 ### Added

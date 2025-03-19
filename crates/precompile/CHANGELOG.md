@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.6...revm-precompile-v17.0.0-alpha.7) - 2025-03-19
+
+### Added
+
+- Remove PrecompileError from PrecompileProvider ([#2233](https://github.com/bluealloy/revm/pull/2233))
+
+### Other
+
+- add invariant test for G1/G2 Mul ([#2247](https://github.com/bluealloy/revm/pull/2247))
+- add documentation for the gas related constants for EIP2537 ([#2246](https://github.com/bluealloy/revm/pull/2246))
+- add a safe blst wrapper ([#2223](https://github.com/bluealloy/revm/pull/2223))
+- Remove redundant bls12-381 constants and cleanup naming ([#2235](https://github.com/bluealloy/revm/pull/2235))
+- Add some documentation for the bls12-381 precompile constants ([#2222](https://github.com/bluealloy/revm/pull/2222))
+
 ## [17.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.5...revm-precompile-v17.0.0-alpha.6) - 2025-03-16
 
 ### Added
