@@ -667,15 +667,15 @@ mod tests {
     > {
         const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
 
-        let input = Bytes::from([1; bls12_381_const::PADDED_FP_LENGTH]);
+        let input = Bytes::from([1; bls12_381_const::PADDED_FP2_LENGTH]);
         let InitialAndFloorGas { initial_gas, .. } =
             calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
                 tx.base.data = input;
-                tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE;
+                tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE;
             })
             .modify_chain_chained(|l1_block| {
                 l1_block.operator_fee_constant = Some(U256::ZERO);
