@@ -8,14 +8,13 @@ use crate::bls12_381_const::{
     PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{u64_to_address, PrecompileWithAddress};
+use crate::PrecompileWithAddress;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::blst_p2_affine;
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G2_MSM_ADDRESS), g2_msm);
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
 
 /// Implements EIP-2537 G2MSM precompile.
 /// G2 multi-scalar-multiplication call expects `288*k` bytes as an input that is interpreted
