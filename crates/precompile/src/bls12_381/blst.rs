@@ -4,8 +4,8 @@ use crate::bls12_381_const::SCALAR_LENGTH;
 use blst::{
     blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_fp2, blst_map_to_g1,
     blst_map_to_g2, blst_miller_loop, blst_p1, blst_p1_add_or_double_affine, blst_p1_affine,
-    blst_p1_from_affine, blst_p1_to_affine, blst_p2, blst_p2_add_or_double_affine, blst_p2_affine,
-    blst_p2_from_affine, blst_p2_to_affine, MultiPoint,
+    blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2, blst_p2_add_or_double_affine,
+    blst_p2_affine, blst_p2_from_affine, blst_p2_mult, blst_p2_to_affine, MultiPoint,
 };
 
 #[inline]
@@ -85,6 +85,41 @@ pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_a
     p2_to_affine(&sum_jacobian)
 }
 
+/// Performs a G1 scalar multiplication
+///
+/// Takes a G1 point in affine form and a scalar, and returns the result
+/// of the scalar multiplication in affine form
+#[inline]
+fn p1_scalar_mul(p: &blst_p1_affine, scalar: &[u8]) -> blst_p1_affine {
+    // Convert point to Jacobian coordinates
+    let p_jacobian = p1_from_affine(p);
+
+    let mut result = blst_p1::default();
+
+    // SAFETY: all inputs are valid blst types
+    unsafe { blst_p1_mult(&mut result, &p_jacobian, scalar.as_ptr(), scalar.len() * 8) };
+
+    // Convert result back to affine coordinates
+    p1_to_affine(&result)
+}
+
+/// Performs a G2 scalar multiplication
+///
+/// Takes a G2 point in affine form and a scalar, and returns the result
+/// of the scalar multiplication in affine form
+#[inline]
+fn p2_scalar_mul(p: &blst_p2_affine, scalar: &[u8]) -> blst_p2_affine {
+    // Convert point to Jacobian coordinates
+    let p_jacobian = p2_from_affine(p);
+
+    let mut result = blst_p2::default();
+    // SAFETY: all inputs are valid blst types
+    unsafe { blst_p2_mult(&mut result, &p_jacobian, scalar.as_ptr(), scalar.len() * 8) };
+
+    // Convert result back to affine coordinates
+    p2_to_affine(&result)
+}
+
 /// Performs multi-scalar multiplication (MSM) for G1 points
 ///
 /// Takes a vector of G1 points and corresponding scalars, and returns their weighted sum
@@ -100,7 +135,6 @@ pub(super) fn p1_msm(
         scalars_bytes.len() % SCALAR_LENGTH == 0,
         "Each scalar should be {SCALAR_LENGTH} bytes"
     );
-
     assert_eq!(
         g1_points.len(),
         scalars_bytes.len() / SCALAR_LENGTH,
@@ -114,6 +148,12 @@ pub(super) fn p1_msm(
         !g1_points.is_empty(),
         "number of inputs to pairing should be non-zero"
     );
+
+    // When there is only a single point, we use a simpler scalar multiplication
+    // procedure
+    if g1_points.len() == 1 {
+        return p1_scalar_mul(&g1_points[0], &scalars_bytes);
+    }
 
     // Perform multi-scalar multiplication
     let multiexp = g1_points.mult(&scalars_bytes, nbits);
@@ -151,6 +191,12 @@ pub(super) fn p2_msm(
         !g2_points.is_empty(),
         "number of inputs to pairing should be non-zero"
     );
+
+    // When there is only a single point, we use a simpler scalar multiplication
+    // procedure
+    if g2_points.len() == 1 {
+        return p2_scalar_mul(&g2_points[0], &scalars_bytes);
+    }
 
     // Perform multi-scalar multiplication
     let multiexp = g2_points.mult(&scalars_bytes, nbits);
