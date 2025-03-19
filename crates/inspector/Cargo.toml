@@ -1,7 +1,7 @@
 [package]
 name = "revm-inspector"
 description = "Revm inspector interface"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.6"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -26,7 +26,6 @@ all = "warn"
 context.workspace = true
 database-interface.workspace = true
 handler.workspace = true
-precompile.workspace = true
 primitives.workspace = true
 state.workspace = true
 interpreter.workspace = true
@@ -52,7 +51,6 @@ std = [
 	"database-interface/std",
 	"handler/std",
 	"interpreter/std",
-	"precompile/std",
 	"primitives/std",
 	"state/std",
 ]

@@ -378,7 +378,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ) -> Result<Option<TransferError>, DB::Error> {
         if balance.is_zero() {
             self.load_account(*to)?;
-            let _ = self.load_account(*to)?;
             let to_account = self.state.get_mut(to).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
             return Ok(None);
@@ -419,7 +418,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ///
     /// There are few steps done:
     /// 1. Make created account warm loaded (AccessList) and this should
-    ///     be done before subroutine checkpoint is created.
+    ///    be done before subroutine checkpoint is created.
     /// 2. Check if there is collision of newly created account with existing one.
     /// 3. Mark created account as created.
     /// 4. Add fund to created account

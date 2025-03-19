@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "17.0.0-alpha.5"
+version = "17.0.0-alpha.6"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -24,7 +24,6 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-context-interface.workspace = true
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
@@ -90,7 +89,6 @@ std = [
 	"libsecp256k1?/std",
 	"aurora-engine-modexp/std",
 	"p256?/std",
-	"context-interface/std",
 	"serde/std",
 	"serde_json/std"
 ]

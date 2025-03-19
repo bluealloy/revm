@@ -161,15 +161,16 @@ impl Precompiles {
     pub fn prague() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let precompiles = Self::cancun().clone();
+            let mut precompiles = Self::cancun().clone();
 
-            // Don't include BLS12-381 precompiles in no_std builds.
-            #[cfg(feature = "blst")]
-            let precompiles = {
-                let mut precompiles = precompiles;
-                precompiles.extend(bls12_381::precompiles());
-                precompiles
-            };
+            cfg_if! {
+                  if #[cfg(feature = "blst")] {  // if blst is enabled
+                      let bls = bls12_381::precompiles();
+                  } else {
+                      let bls = bls12_381_utils:: bls12_381_precompiles_not_supported();
+                  }
+            }
+            precompiles.extend(bls);
 
             Box::new(precompiles)
         })

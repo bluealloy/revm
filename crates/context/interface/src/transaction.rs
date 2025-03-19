@@ -7,7 +7,7 @@ pub use alloy_types::{
     AccessList, AccessListItem, Authorization, RecoveredAuthority, RecoveredAuthorization,
     SignedAuthorization,
 };
-pub use eip2930::AccessListTr;
+pub use eip2930::AccessListItemTr;
 pub use eip7702::AuthorizationTr;
 pub use transaction_type::TransactionType;
 
@@ -27,7 +27,7 @@ pub trait TransactionError: Debug + core::error::Error {}
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
-    type AccessList: AccessListTr;
+    type AccessListItem: AccessListItemTr;
     type Authorization: AuthorizationTr;
 
     /// Returns the transaction type.
@@ -79,7 +79,7 @@ pub trait Transaction {
     /// Access list for the transaction.
     ///
     /// Introduced in EIP-2930.
-    fn access_list(&self) -> Option<&Self::AccessList>;
+    fn access_list(&self) -> Option<impl Iterator<Item = &Self::AccessListItem>>;
 
     /// Returns vector of fixed size hash(32 bytes)
     ///

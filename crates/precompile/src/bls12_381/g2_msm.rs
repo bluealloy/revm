@@ -1,20 +1,20 @@
 use super::{
+    blst::p2_msm,
     g2::{encode_g2_point, extract_g2_input},
     utils::extract_scalar_input,
 };
 use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G2_MSM, G2_INPUT_ITEM_LENGTH, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE,
-    G2_MSM_INPUT_LENGTH, NBITS, SCALAR_LENGTH,
+    DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH, NBITS,
+    PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{u64_to_address, PrecompileWithAddress};
+use crate::PrecompileWithAddress;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
+use blst::blst_p2_affine;
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G2_MSM_ADDRESS), g2_msm);
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
 
 /// Implements EIP-2537 G2MSM precompile.
 /// G2 multi-scalar-multiplication call expects `288*k` bytes as an input that is interpreted
@@ -39,31 +39,31 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut g2_points: Vec<blst_p2_affine> = Vec::with_capacity(k);
+    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
-        // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
-        // filter points at infinity (and their corresponding scalars) from the input.
-        if slice.iter().all(|i| *i == 0) {
+        let encoded_g2_elements =
+            &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
+
+        // Filter out points infinity as an optimization, since it is a no-op.
+        // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
+        // zero out all of the points. Since all points are in affine, this bug is avoided.
+        if encoded_g2_elements.iter().all(|i| *i == 0) {
             continue;
         }
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = &extract_g2_input(slice, true)?;
+        let p0_aff = extract_g2_input(encoded_g2_elements)?;
 
-        let mut p0 = blst_p2::default();
-        // SAFETY: `p0` and `p0_aff` are blst values.
-        unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
+        // Convert affine point to Jacobian coordinates using our helper function
+        g2_points.push(p0_aff);
 
-        g2_points.push(p0);
-
-        scalars.extend_from_slice(
+        scalars_bytes.extend_from_slice(
             &extract_scalar_input(
-                &input[i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
-                    ..i * G2_MSM_INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
+                &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
+                    ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH],
             )?
             .b,
         );
@@ -74,12 +74,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(required_gas, [0; 256].into()));
     }
 
-    let points = p2_affines::from(&g2_points);
-    let multiexp = points.mult(&scalars, NBITS);
-
-    let mut multiexp_aff = blst_p2_affine::default();
-    // SAFETY: `multiexp_aff` and `multiexp` are blst values.
-    unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
+    // Perform multi-scalar multiplication using the safe wrapper
+    let multiexp_aff = p2_msm(g2_points, scalars_bytes, NBITS);
 
     let out = encode_g2_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out))

@@ -4,24 +4,46 @@ use auto_impl::auto_impl;
 use primitives::U256;
 use std::string::String;
 
+/// Trait that defines the context of the EVM execution.
+///
+/// This trait is used to access the environment and state of the EVM.
+/// It is used to access the transaction, block, configuration, database, journal, and chain.
+/// It is also used to set the error of the EVM.
 #[auto_impl(&mut, Box)]
 pub trait ContextTr {
+    /// Block type
     type Block: Block;
+    /// Transaction type
     type Tx: Transaction;
+    /// Configuration type
     type Cfg: Cfg;
+    /// Database type
     type Db: Database;
+    /// Journal type
     type Journal: JournalTr<Database = Self::Db>;
+    /// Chain type
     type Chain;
 
+    /// Get the transaction
     fn tx(&self) -> &Self::Tx;
+    /// Get the block
     fn block(&self) -> &Self::Block;
+    /// Get the configuration
     fn cfg(&self) -> &Self::Cfg;
+    /// Get the journal
     fn journal(&mut self) -> &mut Self::Journal;
+    /// Get the journal reference
     fn journal_ref(&self) -> &Self::Journal;
+    /// Get the database
     fn db(&mut self) -> &mut Self::Db;
+    /// Get the database reference
     fn db_ref(&self) -> &Self::Db;
+    /// Get the chain
     fn chain(&mut self) -> &mut Self::Chain;
+    /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
+    /// Get the transaction and journal. It is used to efficiently load access list
+    /// into journal without copying them from transaction.
     fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
 }
 

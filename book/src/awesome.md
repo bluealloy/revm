@@ -9,6 +9,10 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 #### Audits
 - [**Coomunity driven Audit done by Guido Vranken**](https://rakita.github.io/blog/blog/005-revm-audit/)
 
+#### API Extensions:
+- [**alloy-evm**](https://github.com/alloy-rs/evm) is an abstraction layer on top of revm providing common implementations of EVMs
+- [**Trevm**](https://github.com/init4tech/trevm) is a typestate API wrapper for revm
+
 #### Clients
 - [**Reth:**](https://github.com/paradigmxyz/reth) A modular, contributor-friendly, and ultra-fast implementation of the Ethereum protocol.
 - [**Helios**](https://github.com/a16z/helios) is a trustless, efficient, and portable multichain light client written in Rust.
@@ -33,6 +37,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 
 
 #### Tutorials
-- [**Revm is All You Need:**](https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4) Guide on building simulated blockchain environments.
+- (**MyEvm**)
+- **Revm is All You Need:** Guide on building simulated blockchain environments. Link: https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4
 - [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/tree/main/examples/uniswap_get_reserves) Demonstrates a USDC swap on Uniswap V2.evm is available in the [awesome-revm](./awesome.md) section o
 - [**revm-by-example:**](https://github.com/Cionn3/revm-by-example) Practical examples using the Rust Ethereum Virtual Machine.

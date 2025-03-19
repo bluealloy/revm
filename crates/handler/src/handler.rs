@@ -12,14 +12,12 @@ use context_interface::{
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
-use precompile::PrecompileError;
 use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-    + From<PrecompileError>
     + FromStringError
 {
 }
@@ -29,7 +27,6 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<PrecompileError>
             + FromStringError,
     > EvmTrError<EVM> for T
 {
@@ -44,7 +41,8 @@ impl<
 /// their own method implementations.
 ///
 /// The handler logic consists of four phases:
-///   * Validation - Loads caller account and validates initial gas requirements
+///   * Validation - Validates tx/block/config fields and loads caller account and validates initial gas requirements and
+///     balance checks.
 ///   * Pre-execution - Loads and warms accounts, deducts initial gas
 ///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
 ///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,

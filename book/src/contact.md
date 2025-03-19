@@ -9,7 +9,7 @@ For questions please open github issue or join public telegram group: [https://t
 
 Licensed under MIT Licence.
 
-unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.
 
 ### Security
 

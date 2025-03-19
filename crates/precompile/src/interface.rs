@@ -1,7 +1,6 @@
-use context_interface::result::EVMError;
 use core::fmt;
 use primitives::Bytes;
-use std::string::{String, ToString};
+use std::string::String;
 
 /// A precompile operation result type
 ///
@@ -63,12 +62,6 @@ impl PrecompileError {
     /// Returns `true` if the error is out of gas.
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
-    }
-}
-
-impl<DB, TXERROR> From<PrecompileError> for EVMError<DB, TXERROR> {
-    fn from(value: PrecompileError) -> Self {
-        Self::Precompile(value.to_string())
     }
 }
 
