@@ -76,7 +76,7 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     continue;
                 }
                 test_sum += 1;
-                let kind = match test_vector.container_kind.as_ref().map(|s| s.as_str()) {
+                let kind = match test_vector.container_kind.as_deref() {
                     Some("RUNTIME") => CodeType::Runtime,
                     Some("INITCODE") => CodeType::Initcode,
                     None => CodeType::Runtime,
