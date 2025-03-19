@@ -68,7 +68,7 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
     }
     let mut types_of_error: BTreeMap<ErrorType, usize> = BTreeMap::new();
     for test_file in test_files {
-        let s = std::fs::read_to_string(test_file).unwrap();
+        let s = std::fs::read_to_string(&test_file).unwrap();
         let suite: TestSuite = serde_json::from_str(&s).unwrap();
         for (name, test_unit) in suite.0 {
             for (vector_name, test_vector) in test_unit.vectors {
@@ -76,10 +76,11 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     continue;
                 }
                 test_sum += 1;
-                let kind = if test_vector.container_kind.is_some() {
-                    Some(CodeType::Initcode)
-                } else {
-                    Some(CodeType::Runtime)
+                let kind = match test_vector.container_kind.as_deref() {
+                    Some("RUNTIME") => CodeType::Runtime,
+                    Some("INITCODE") => CodeType::Initcode,
+                    None => CodeType::Runtime,
+                    _ => return Err(Error::Custom("Invalid container kind")),
                 };
                 // In future this can be generalized to cover multiple forks, Not just Osaka.
                 let Some(test_result) = test_vector.results.get("Osaka") else {
@@ -87,12 +88,13 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     println!("Test without result: {} - {}", name, vector_name);
                     continue;
                 };
-                let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
+                let res = validate_raw_eof_inner(test_vector.code.clone(), Some(kind));
                 if test_result.result != res.is_ok() {
                     println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nExpected exception:{:?}\nbytes:{:?}\n",
+                        "\nTest failed: {} - {}\nPath:{:?}\nresult:{:?}\nrevm err_result:{:#?}\nExpected exception:{:?}\nbytes:{:?}\n",
                         name,
                         vector_name,
+                        test_file,
                         test_result.result,
                         res.as_ref().err(),
                         test_result.exception,
