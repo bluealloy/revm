@@ -140,5 +140,5 @@ pub(super) fn pairing_check(pairs: &[(G1, G2)]) -> bool {
     if pairs.is_empty() {
         return true;
     }
-    bn::pairing_batch(&pairs) == Gt::one()
+    bn::pairing_batch(pairs) == Gt::one()
 }
