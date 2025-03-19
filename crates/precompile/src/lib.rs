@@ -237,6 +237,8 @@ impl Precompiles {
     }
 
     /// Returns complement of `other` in `self`.
+    ///
+    /// An entry is considered equal if address as well as function pointer are equal.
     pub fn difference(&self, other: &Self) -> Self {
         let Self { inner, addresses } = self;
 
@@ -260,6 +262,8 @@ impl Precompiles {
     }
 
     /// Returns intersection of `self` and `other`.
+    ///
+    /// An entry is considered equal if address as well as function pointer are equal.
     pub fn intersection(&self, other: &Self) -> Self {
         let Self { inner, addresses } = self;
 
