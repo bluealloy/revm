@@ -359,3 +359,21 @@ pub const fn u64_to_address(x: u64) -> Address {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
     ])
 }
+
+#[cfg(test)]
+mod test {
+    use crate::Precompiles;
+
+    #[test]
+    fn test_difference_precompile_sets() {
+        let difference = Precompiles::istanbul().difference(Precompiles::berlin());
+        assert_eq!(difference.len(), 1)
+    }
+
+    #[test]
+    fn test_intersection_precompile_sets() {
+        let intersection = Precompiles::homestead().intersection(Precompiles::byzantium());
+
+        assert_eq!(intersection.len(), 4)
+    }
+}
