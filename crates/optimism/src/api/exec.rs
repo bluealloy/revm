@@ -10,28 +10,28 @@ use revm::{
     },
     handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
-    interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    interpreter::{interpreter::EthInterpreter, Host, InterpreterResult},
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
 // Type alias for Optimism context
 pub trait OpContextTr:
     ContextTr<
-    Journal: JournalTr<FinalOutput = JournalOutput>,
-    Tx: OpTxTr,
-    Cfg: Cfg<Spec = OpSpecId>,
-    Chain = L1BlockInfo,
->
+        Journal: JournalTr<FinalOutput = JournalOutput>,
+        Tx: OpTxTr,
+        Cfg: Cfg<Spec = OpSpecId>,
+        Chain = L1BlockInfo,
+    > + Host
 {
 }
 
 impl<T> OpContextTr for T where
     T: ContextTr<
-        Journal: JournalTr<FinalOutput = JournalOutput>,
-        Tx: OpTxTr,
-        Cfg: Cfg<Spec = OpSpecId>,
-        Chain = L1BlockInfo,
-    >
+            Journal: JournalTr<FinalOutput = JournalOutput>,
+            Tx: OpTxTr,
+            Cfg: Cfg<Spec = OpSpecId>,
+            Chain = L1BlockInfo,
+        > + Host
 {
 }
 

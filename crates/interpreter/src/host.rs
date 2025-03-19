@@ -1,5 +1,5 @@
 use context_interface::{
-    context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
+    context::{ContextTr, HostMarker, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
     Block, Cfg, Database, JournalTr, Transaction, TransactionType,
 };
@@ -88,7 +88,8 @@ pub trait Host {
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 }
 
-impl<CTX: ContextTr> Host for CTX {
+// Blanket implementation for all contexts that opt in using the HostMarker trait
+impl<CTX: ContextTr + HostMarker> Host for CTX {
     /* Block */
 
     fn basefee(&self) -> U256 {

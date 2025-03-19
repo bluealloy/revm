@@ -7,7 +7,9 @@ use revm::{
         EvmTr,
     },
     inspector::{InspectorEvmTr, JournalExt},
-    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterTypes},
+    interpreter::{
+        interpreter::EthInterpreter, Host, Interpreter, InterpreterAction, InterpreterTypes,
+    },
     Inspector,
 };
 
@@ -15,7 +17,9 @@ pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrec
     pub Evm<CTX, INSP, I, P>,
 );
 
-impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+impl<CTX: ContextTr + Host, INSP>
+    OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles>
+{
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             data: EvmData { ctx, inspector },
@@ -27,7 +31,7 @@ impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>
 
 impl<CTX, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
 where
-    CTX: ContextTr<Journal: JournalExt> + ContextSetters,
+    CTX: ContextTr<Journal: JournalExt> + ContextSetters + Host,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
@@ -57,7 +61,7 @@ where
 
 impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P>
 where
-    CTX: ContextTr,
+    CTX: ContextTr + Host,
     I: InstructionProvider<
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,

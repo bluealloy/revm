@@ -5,7 +5,7 @@ use revm::{
         EthPrecompiles, EvmTr,
     },
     inspector::{inspect_instructions, InspectorEvmTr, JournalExt},
-    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterTypes},
+    interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterTypes},
     Inspector,
 };
 
@@ -14,7 +14,7 @@ pub struct MyEvm<CTX, INSP>(
     pub Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>,
 );
 
-impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
+impl<CTX: ContextTr + Host, INSP> MyEvm<CTX, INSP> {
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             data: EvmData { ctx, inspector },
@@ -24,9 +24,9 @@ impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
     }
 }
 
-impl<CTX: ContextTr, INSP> EvmTr for MyEvm<CTX, INSP>
+impl<CTX: ContextTr + Host, INSP> EvmTr for MyEvm<CTX, INSP>
 where
-    CTX: ContextTr,
+    CTX: ContextTr + Host,
 {
     type Context = CTX;
     type Instructions = EthInstructions<EthInterpreter, CTX>;
@@ -59,7 +59,7 @@ where
     }
 }
 
-impl<CTX: ContextTr, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
+impl<CTX: ContextTr + Host, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
 where
     CTX: ContextSetters<Journal: JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,

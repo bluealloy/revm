@@ -1,6 +1,6 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
 use context_interface::{
-    context::{ContextError, ContextSetters},
+    context::{ContextError, ContextSetters, HostMarker},
     Block, Cfg, ContextTr, JournalTr, Transaction,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
@@ -88,6 +88,18 @@ impl<
     }
 
     // Keep Default Implementation for Instructions Host Interface
+}
+
+// the following impl allows context to be used as a host
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        DB: Database,
+        CFG: Cfg,
+        JOURNAL: JournalTr<Database = DB>,
+        CHAIN,
+    > HostMarker for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
 }
 
 impl<
