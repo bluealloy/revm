@@ -484,7 +484,7 @@ mod tests {
             }
         ));
     }
-    
+
     #[test]
     #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
