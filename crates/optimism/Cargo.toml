@@ -38,7 +38,6 @@ indicatif.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true
-print-no-std.version = "0.2.1"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]

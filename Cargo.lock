@@ -1474,29 +1474,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "document-features"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95249b50c6c185bee49034bcb378a49dc2b5dff0be90ff6616d31d64febab05d"
-dependencies = [
- "litrs",
-]
-
-[[package]]
-name = "dos-cp"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48826d8677d8d4962aa63c4fe831bb1caad4225c34073091fbfd7a486f6cc68d"
-dependencies = [
- "document-features",
- "either",
- "exit-no-std",
- "iter-identify_first_last",
- "panicking",
- "pc-ints",
-]
-
-[[package]]
 name = "dunce"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1580,29 +1557,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "errno-no-std"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fdcf14936c837bfd4be0770bb6b9a0df31ddfb5d53a6e6f37d6f07ec4ca90cd"
-dependencies = [
- "document-features",
- "errno-sys",
- "libc",
- "widestring",
- "winapi",
-]
-
-[[package]]
-name = "errno-sys"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8f7083207e75d4435df450dc6413612d97fe5a441477aba02484f9f7f77057e"
-dependencies = [
- "cc",
- "libc",
-]
-
-[[package]]
 name = "example-block-traces"
 version = "0.0.0"
 dependencies = [
@@ -1672,17 +1626,6 @@ dependencies = [
  "anyhow",
  "revm",
  "tokio",
-]
-
-[[package]]
-name = "exit-no-std"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dcd5f513f5e291767d1a48311655cd6980305945027c0d8ad31c1081aa7cb7a"
-dependencies = [
- "libc",
- "pc-ints",
- "winapi",
 ]
 
 [[package]]
@@ -2401,15 +2344,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
-name = "iter-identify_first_last"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91506f15038dff631f051ed27b43954375772a20d62785f0d8c7a830e1f765eb"
-dependencies = [
- "document-features",
-]
-
-[[package]]
 name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2578,12 +2512,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23fb14cb19457329c82206317a5663005a4d404783dc74f4252769b0d5f42856"
 
 [[package]]
-name = "litrs"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
-
-[[package]]
 name = "lock_api"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2624,15 +2552,6 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
-
-[[package]]
-name = "memoffset"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
-dependencies = [
- "autocfg",
-]
 
 [[package]]
 name = "microbench"
@@ -2853,7 +2772,6 @@ dependencies = [
  "auto_impl",
  "indicatif",
  "once_cell",
- "print-no-std",
  "revm",
  "rstest",
  "serde",
@@ -3044,15 +2962,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "panicking"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0aa9928610942a1e76f5cea20f5c5f8b68cd21cd765d26a21a07b33c1714409"
-dependencies = [
- "document-features",
-]
-
-[[package]]
 name = "parity-scale-codec"
 version = "3.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3108,15 +3017,6 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
-name = "pc-ints"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cfa325ecd8dfc61925ef42dd711b5ea0bb9ef13e13056eefb9531828a18606e"
-dependencies = [
- "memoffset",
-]
 
 [[package]]
 name = "percent-encoding"
@@ -3302,19 +3202,6 @@ dependencies = [
  "fixed-hash",
  "impl-codec",
  "uint",
-]
-
-[[package]]
-name = "print-no-std"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d87ee5ba1f32020e8480d5d7882f402e4980c08f2a673c79c00b5207a08aeb63"
-dependencies = [
- "dos-cp",
- "errno-no-std",
- "iter-identify_first_last",
- "libc",
- "winapi",
 ]
 
 [[package]]
@@ -4954,28 +4841,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "widestring"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd7cf3379ca1aac9eea11fba24fd7e315d621f8dfe35c8d7d2be8b793726e07d"
-
-[[package]]
-name = "winapi"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
-dependencies = [
- "winapi-i686-pc-windows-gnu",
- "winapi-x86_64-pc-windows-gnu",
-]
-
-[[package]]
-name = "winapi-i686-pc-windows-gnu"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
-
-[[package]]
 name = "winapi-util"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4983,12 +4848,6 @@ checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
  "windows-sys 0.59.0",
 ]
-
-[[package]]
-name = "winapi-x86_64-pc-windows-gnu"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows-core"
