@@ -358,7 +358,7 @@ mod tests {
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_MSM_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::G1_MSM_ADDRESS);
                 tx.base.data = input;
                 tx.base.gas_limit = initial_gas + gs1_msm_gas;
             })
@@ -444,7 +444,7 @@ mod tests {
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G2_MSM_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::G2_MSM_ADDRESS);
                 tx.base.data = input;
                 tx.base.gas_limit = initial_gas + gs2_msm_gas;
             })
@@ -528,7 +528,7 @@ mod tests {
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::PAIRING_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::PAIRING_ADDRESS);
                 tx.base.data = input;
                 tx.base.gas_limit = initial_gas + pairing_gas;
             })
