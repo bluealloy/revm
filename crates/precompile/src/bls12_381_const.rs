@@ -1,19 +1,66 @@
-// Constants related to the bls12-381 gas schedule and precompile address
+// Constants specifying the precompile addresses for each precompile
+// in EIP-2537
 pub const G1_ADD_ADDRESS: u64 = 0x0b;
-pub const G1_ADD_BASE_GAS_FEE: u64 = 375;
 pub const G1_MSM_ADDRESS: u64 = 0x0c;
-pub const G1_MSM_BASE_GAS_FEE: u64 = 12000;
-pub const MAP_FP_TO_G1_ADDRESS: u64 = 0x10;
-pub const MAP_FP_TO_G1_BASE_GAS_FEE: u64 = 5500;
-pub const MAP_FP2_TO_G2_ADDRESS: u64 = 0x11;
-pub const MAP_FP2_TO_G2_BASE_GAS_FEE: u64 = 23800;
 pub const G2_ADD_ADDRESS: u64 = 0x0d;
-pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
 pub const G2_MSM_ADDRESS: u64 = 0x0e;
-pub const G2_MSM_BASE_GAS_FEE: u64 = 22500;
 pub const PAIRING_ADDRESS: u64 = 0x0f;
-pub const PAIRING_OFFSET_BASE: u64 = 37700;
+pub const MAP_FP_TO_G1_ADDRESS: u64 = 0x10;
+pub const MAP_FP2_TO_G2_ADDRESS: u64 = 0x11;
+
+/// G1_ADD_BASE_GAS_FEE specifies the amount of gas needed
+/// to perform the G1_ADD precompile.
+pub const G1_ADD_BASE_GAS_FEE: u64 = 375;
+/// G1_MSM_BASE_GAS_FEE specifies the base amount of gas needed to
+/// perform the G1_MSM precompile.
+///
+/// The cost to do an MSM is determined by the formula:
+///    (k * G1_MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
+/// where k is the number of point-scalar pairs.
+///
+/// Note: If one wants to do a G1 scalar multiplication, they would call
+/// this precompile with a single point and a scalar.
+pub const G1_MSM_BASE_GAS_FEE: u64 = 12000;
+/// MSM_MULTIPLIER specifies the division constant that is used to determine the
+/// gas needed to compute an MSM.
+///
+/// The cost to do an MSM is determined by the formula:
+///    (k * MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
+/// where k is the number of point-scalar pairs.
+///
+/// Note: If `k` is more than the size of the discount table, then
+/// the last value in the discount table is chosen.
 pub const MSM_MULTIPLIER: u64 = 1000;
+/// MAP_FP_TO_G1_BASE_GAS_FEE specifies the amount of gas needed
+/// to perform the MAP_FP_TO_G1 precompile.
+pub const MAP_FP_TO_G1_BASE_GAS_FEE: u64 = 5500;
+/// MAP_FP2_TO_G2_BASE_GAS_FEE specifies the amount of gas needed
+/// to perform the MAP_FP2_TO_G2 precompile.
+pub const MAP_FP2_TO_G2_BASE_GAS_FEE: u64 = 23800;
+/// G2_ADD_BASE_GAS_FEE specifies the amount of gas needed
+/// to perform the G2_ADD precompile.
+pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
+/// G2_MSM_BASE_GAS_FEE specifies the base amount of gas needed to
+/// perform the G2_MSM precompile.
+///
+/// The cost to do an MSM is determined by the formula:
+///    (k * G2_MSM_BASE_GAS_FEE * DISCOUNT\[k\]) // MSM_MULTIPLIER
+/// where k is the number of point-scalar pairs.
+///
+/// Note: If one wants to do a G2 scalar multiplication, they would call
+/// this precompile with a single point and a scalar.
+pub const G2_MSM_BASE_GAS_FEE: u64 = 22500;
+/// PAIRING_OFFSET_BASE specifies the y-intercept for the linear expression to determine
+/// the amount of gas needed to perform a pairing.
+///
+/// The cost to do a pairing is determined by the formula:
+/// cost = PAIRING_MULTIPLIER_BASE * number_of_pairs + PAIRING_OFFSET_BASE
+pub const PAIRING_OFFSET_BASE: u64 = 37700;
+/// PAIRING_MULTIPLIER_BASE specifies the slope/gradient for the linear expression to determine
+/// the amount of gas needed to perform a pairing.
+///
+/// The cost to do a pairing is determined by the formula:
+///   PAIRING_MULTIPLIER_BASE * number_of_pairs + PAIRING_OFFSET_BASE
 pub const PAIRING_MULTIPLIER_BASE: u64 = 32600;
 
 /// Discounts table for G1 MSM as a vector of pairs `[k, discount]`.
