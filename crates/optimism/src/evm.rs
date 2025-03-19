@@ -287,7 +287,7 @@ mod tests {
     fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_ADD_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::G1_ADD_ADDRESS);
                 tx.base.gas_limit = 21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE - 1;
             })
             .modify_chain_chained(|l1_block| {
@@ -315,7 +315,7 @@ mod tests {
     fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::G1_ADD_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::G1_ADD_ADDRESS);
                 tx.base.gas_limit = 21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE;
             })
             .modify_chain_chained(|l1_block| {
@@ -610,7 +610,7 @@ mod tests {
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS);
                 tx.base.data = input;
                 tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE;
             })
@@ -673,7 +673,7 @@ mod tests {
 
         Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
+                tx.base.kind = TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS);
                 tx.base.data = input;
                 tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE;
             })

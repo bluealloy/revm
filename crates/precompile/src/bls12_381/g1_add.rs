@@ -3,13 +3,12 @@ use super::g1::{encode_g1_point, extract_g1_input_no_subgroup_check};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
-use crate::{u64_to_address, PrecompileWithAddress};
+use crate::PrecompileWithAddress;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G1_ADD_ADDRESS), g1_add);
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_ADD_ADDRESS, g1_add);
 
 /// G1 addition call expects `256` bytes as an input that is interpreted as byte
 /// concatenation of two G1 points (`128` bytes each).
