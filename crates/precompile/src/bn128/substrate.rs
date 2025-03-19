@@ -65,7 +65,6 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
 /// will be (0,0,1) instead of (0,1,0)
 #[inline]
 fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2, PrecompileError> {
-    // TODO : Check whether or not we need these zero checks
     let point = if x.is_zero() && y.is_zero() {
         G2::zero()
     } else {
