@@ -1,17 +1,20 @@
+use crate::u64_to_address;
+use primitives::Address;
+
 // Constants related to the bls12-381 gas schedule and precompile address
-pub const G1_ADD_ADDRESS: u64 = 0x0b;
+pub const G1_ADD_ADDRESS: Address = u64_to_address(0x0b);
 pub const G1_ADD_BASE_GAS_FEE: u64 = 375;
-pub const G1_MSM_ADDRESS: u64 = 0x0c;
+pub const G1_MSM_ADDRESS: Address = u64_to_address(0x0c);
 pub const G1_MSM_BASE_GAS_FEE: u64 = 12000;
-pub const MAP_FP_TO_G1_ADDRESS: u64 = 0x10;
+pub const MAP_FP_TO_G1_ADDRESS: Address = u64_to_address(0x10);
 pub const MAP_FP_TO_G1_BASE_GAS_FEE: u64 = 5500;
-pub const MAP_FP2_TO_G2_ADDRESS: u64 = 0x11;
+pub const MAP_FP2_TO_G2_ADDRESS: Address = u64_to_address(0x11);
 pub const MAP_FP2_TO_G2_BASE_GAS_FEE: u64 = 23800;
-pub const G2_ADD_ADDRESS: u64 = 0x0d;
+pub const G2_ADD_ADDRESS: Address = u64_to_address(0x0d);
 pub const G2_ADD_BASE_GAS_FEE: u64 = 600;
-pub const G2_MSM_ADDRESS: u64 = 0x0e;
+pub const G2_MSM_ADDRESS: Address = u64_to_address(0x0e);
 pub const G2_MSM_BASE_GAS_FEE: u64 = 22500;
-pub const PAIRING_ADDRESS: u64 = 0x0f;
+pub const PAIRING_ADDRESS: Address = u64_to_address(0x0f);
 pub const PAIRING_OFFSET_BASE: u64 = 37700;
 pub const MSM_MULTIPLIER: u64 = 1000;
 pub const PAIRING_MULTIPLIER_BASE: u64 = 32600;

@@ -3,13 +3,12 @@ use super::g2::{encode_g2_point, extract_g2_input_no_subgroup_check};
 use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
-use crate::{u64_to_address, PrecompileWithAddress};
+use crate::PrecompileWithAddress;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(G2_ADD_ADDRESS), g2_add);
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_ADD_ADDRESS, g2_add);
 
 /// G2 addition call expects `512` bytes as an input that is interpreted as byte
 /// concatenation of two G2 points (`256` bytes each).

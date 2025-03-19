@@ -163,12 +163,11 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::cancun().clone();
 
-            let bls;
             cfg_if! {
-                      if #[cfg(not(feature = "blst"))] {  // if blst is enabled {
-                              bls = bls12_381::precompiles()
+                      if #[cfg(feature = "blst")] {  // if blst is enabled {
+                              let bls = bls12_381::precompiles();
                       } else {
-                              bls = bls12_381_utils:: bls12_381_precompiles_not_supported()
+                              let bls = bls12_381_utils:: bls12_381_precompiles_not_supported();
                       }
             }
             precompiles.extend(bls);
