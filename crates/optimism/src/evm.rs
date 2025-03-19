@@ -595,4 +595,116 @@ mod tests {
             }
         ));
     }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
+                tx.base.gas_limit = 21_000 + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE - 1;
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
+                tx.base.gas_limit = 21_000 + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE;
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert fails post gas check, because input is wrong size
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
+                tx.base.gas_limit = 21_000 + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE - 1;
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert out of gas
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "blst")]
+    fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.kind = TxKind::Call(u64_to_address(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
+                tx.base.gas_limit = 21_000 + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE;
+            })
+            .modify_chain_chained(|l1_block| {
+                l1_block.operator_fee_constant = Some(U256::ZERO);
+                l1_block.operator_fee_scalar = Some(U256::ZERO)
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        let output = evm.replay().unwrap();
+
+        // assert fails post gas check, because input is wrong size
+        assert!(matches!(
+            output.result,
+            ExecutionResult::Halt {
+                reason: OpHaltReason::Base(HaltReason::PrecompileError),
+                ..
+            }
+        ));
+    }
 }

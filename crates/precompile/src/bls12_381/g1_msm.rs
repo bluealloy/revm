@@ -1,4 +1,5 @@
 use super::{
+    blst::p1_msm,
     g1::{encode_g1_point, extract_g1_input},
     utils::extract_scalar_input,
 };
@@ -9,7 +10,7 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{u64_to_address, PrecompileWithAddress};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine, p1_affines};
+use blst::blst_p1_affine;
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
@@ -39,28 +40,24 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
-    let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut g1_points: Vec<blst_p1_affine> = Vec::with_capacity(k);
+    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let slice = &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
+        let encoded_g1_element =
+            &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
 
-        // BLST batch API for p1_affines blows up when you pass it a point at infinity, so we must
-        // filter points at infinity (and their corresponding scalars) from the input.
-        if slice.iter().all(|i| *i == 0) {
+        // Filter out points infinity as an optimization, since it is a no-op.
+        // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
+        // zero out all of the points. Since all points are in affine, this bug is avoided.
+        if encoded_g1_element.iter().all(|i| *i == 0) {
             continue;
         }
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        //
-        // So we set the subgroup_check flag to `true`
-        let p0_aff = &extract_g1_input(slice, true)?;
+        let p0_aff = extract_g1_input(encoded_g1_element)?;
+        g1_points.push(p0_aff);
 
-        let mut p0 = blst_p1::default();
-        // SAFETY: `p0` and `p0_aff` are blst values.
-        unsafe { blst_p1_from_affine(&mut p0, p0_aff) };
-        g1_points.push(p0);
-
-        scalars.extend_from_slice(
+        scalars_bytes.extend_from_slice(
             &extract_scalar_input(
                 &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
                     ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH],
@@ -69,17 +66,17 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         );
     }
 
-    // Return infinity point if all points are infinity
+    // Return the encoding for the point at the infinity according to EIP-2537
+    // if there are no points in the MSM.
+    const ENCODED_POINT_AT_INFINITY: [u8; PADDED_G1_LENGTH] = [0; PADDED_G1_LENGTH];
     if g1_points.is_empty() {
-        return Ok(PrecompileOutput::new(required_gas, [0; 128].into()));
+        return Ok(PrecompileOutput::new(
+            required_gas,
+            ENCODED_POINT_AT_INFINITY.into(),
+        ));
     }
 
-    let points = p1_affines::from(&g1_points);
-    let multiexp = points.mult(&scalars, NBITS);
-
-    let mut multiexp_aff = blst_p1_affine::default();
-    // SAFETY: `multiexp_aff` and `multiexp` are blst values.
-    unsafe { blst_p1_to_affine(&mut multiexp_aff, &multiexp) };
+    let multiexp_aff = p1_msm(g1_points, scalars_bytes, NBITS);
 
     let out = encode_g1_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out))
