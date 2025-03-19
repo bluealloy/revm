@@ -1,5 +1,4 @@
 use core::str::FromStr;
-
 use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
 #[repr(u8)]
