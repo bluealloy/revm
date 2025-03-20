@@ -16,6 +16,7 @@ revm = { workspace = true, features = [
     "c-kzg",
     "blst",
     "serde-json",
+    "bn",
 ] }
 primitives.workspace = true
 database.workspace = true

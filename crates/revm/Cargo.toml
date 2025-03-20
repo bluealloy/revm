@@ -37,7 +37,7 @@ handler.workspace = true
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
 std = [
 	"interpreter/std",
 	"precompile/std",
