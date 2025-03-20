@@ -48,10 +48,16 @@ std = [
 	"revm/std",
 	"alloy-sol-types/std",
 	"once_cell/std",
-	"sha2/std"
+	"sha2/std",
+	"alloy-primitives/std",
+	"serde_json/std"
 ]
 hashbrown = ["revm/hashbrown"]
-serde = ["dep:serde", "revm/serde"]
+serde = [
+	"dep:serde",
+	"revm/serde",
+	"alloy-primitives/serde"
+]
 portable = ["revm/portable"]
 
 dev = [
