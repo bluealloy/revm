@@ -11,7 +11,7 @@ cfg_if::cfg_if! {
             encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
             read_scalar,
         };
-    } else {
+    } else if #[cfg(feature = "bn")]{
         mod substrate;
         use substrate::{
             encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
