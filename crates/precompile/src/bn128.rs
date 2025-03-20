@@ -4,7 +4,10 @@ use crate::{
 };
 use std::vec::Vec;
 
-use substrate::{encode_g1_point, pairing_check, read_g1_point, read_g2_point};
+use substrate::{
+    encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+    read_scalar,
+};
 mod substrate;
 
 pub mod add {
@@ -121,7 +124,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let p1 = read_g1_point(&input[..G1_LEN])?;
     let p2 = read_g1_point(&input[G1_LEN..])?;
-    let result = p1 + p2;
+    let result = g1_point_add(p1, p2);
 
     let output = encode_g1_point(result);
 
@@ -137,10 +140,8 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let p = read_g1_point(&input[..G1_LEN])?;
 
-    // `Fr::from_slice` can only fail when the length is not 32.
-    let fr = bn::Fr::from_slice(&input[G1_LEN..G1_LEN + SCALAR_LEN]).unwrap();
-
-    let result = p * fr;
+    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN])?;
+    let result = g1_point_mul(p, scalar);
 
     let output = encode_g1_point(result);
 
