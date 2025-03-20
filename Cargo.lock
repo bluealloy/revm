@@ -2763,6 +2763,7 @@ checksum = "b410bbe7e14ab526a0e86877eb47c6996a2bd7746f027ba551028c925390e4e9"
 name = "op-revm"
 version = "1.0.0-alpha.5"
 dependencies = [
+ "alloy-primitives",
  "alloy-sol-types",
  "anyhow",
  "auto_impl",
@@ -2771,6 +2772,7 @@ dependencies = [
  "revm",
  "rstest",
  "serde",
+ "serde_json",
  "sha2 0.10.8",
 ]
 

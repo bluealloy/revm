@@ -38,6 +38,8 @@ indicatif.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true
+serde_json = { workspace = true, features = ["alloc"] }
+alloy-primitives.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
