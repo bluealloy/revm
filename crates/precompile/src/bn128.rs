@@ -4,11 +4,21 @@ use crate::{
 };
 use std::vec::Vec;
 
+#[cfg(feature = "matter-labs-eip1962")]
+mod matter_labs;
+#[cfg(not(feature = "matter-labs-eip1962"))]
+mod substrate;
+
+#[cfg(feature = "matter-labs-eip1962")]
+use matter_labs::{
+    encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+    read_scalar,
+};
+#[cfg(not(feature = "matter-labs-eip1962"))]
 use substrate::{
     encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
     read_scalar,
 };
-mod substrate;
 
 pub mod add {
     use super::*;
