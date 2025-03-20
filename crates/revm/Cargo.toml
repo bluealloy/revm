@@ -37,7 +37,14 @@ handler.workspace = true
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
+default = [
+	"std",
+	"c-kzg",
+	"secp256k1",
+	"portable",
+	"blst",
+	"matter-labs-eip1962",
+]
 std = [
 	"interpreter/std",
 	"precompile/std",

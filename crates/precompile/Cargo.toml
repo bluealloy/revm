@@ -78,7 +78,14 @@ serde_json.workspace = true
 serde_derive.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
+default = [
+	"std",
+	"c-kzg",
+	"secp256k1",
+	"portable",
+	"blst",
+	"matter-labs-eip1962",
+]
 std = [
 	"primitives/std",
 	"k256/std",
