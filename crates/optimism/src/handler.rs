@@ -2,10 +2,7 @@
 use crate::{
     api::exec::OpContextTr,
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
-    transaction::{
-        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTr,
-    },
+    transaction::{deposit::DEPOSIT_TRANSACTION_TYPE, OpTransactionError, OpTxTr},
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
@@ -75,7 +72,7 @@ where
         let tx_type = tx.tx_type();
         if tx_type == DEPOSIT_TRANSACTION_TYPE {
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if tx.is_system_transaction()
+            if tx.is_system_transaction().is_some_and(|is_sys| is_sys)
                 && evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
@@ -227,7 +224,7 @@ where
                 gas.record_refund(refunded);
             } else if is_deposit {
                 let tx = ctx.tx();
-                if tx.is_system_transaction() {
+                if tx.is_system_transaction().is_some_and(|is_sys| is_sys) {
                     // System transactions were a special type of deposit transaction in
                     // the Bedrock hardfork that did not incur any gas costs.
                     gas.erase_cost(tx_gas_limit);
@@ -261,7 +258,7 @@ where
         self.mainnet.reimburse_caller(evm, exec_result)?;
 
         let context = evm.ctx();
-        if context.tx().source_hash().is_zero() {
+        if context.tx().source_hash().is_none() {
             let caller = context.tx().caller();
             let spec = context.cfg().spec();
             let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
@@ -391,7 +388,7 @@ where
             let tx = ctx.tx();
             let caller = tx.caller();
             let mint = tx.mint();
-            let is_system_tx = tx.is_system_transaction();
+            let is_system_tx = tx.is_system_transaction().is_some_and(|is_sys| is_sys);
             let gas_limit = tx.gas_limit();
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the

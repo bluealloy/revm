@@ -1,4 +1,4 @@
-use super::deposit::{DepositTransaction, DepositTransactionParts};
+use super::deposit::DepositTransactionParts;
 use auto_impl::auto_impl;
 use revm::{
     context::TxEnv,
@@ -8,8 +8,17 @@ use revm::{
 use std::vec;
 
 #[auto_impl(&, &mut, Box, Arc)]
-pub trait OpTxTr: Transaction + DepositTransaction {
+pub trait OpTxTr: Transaction {
     fn enveloped_tx(&self) -> Option<&Bytes>;
+
+    /// Source hash of a deposit transaction.
+    fn source_hash(&self) -> Option<B256>;
+
+    /// Mint of a deposit transaction.
+    fn mint(&self) -> Option<u128>;
+
+    /// Whether a deposit transaction is a system transaction.
+    fn is_system_transaction(&self) -> Option<bool>;
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -118,23 +127,21 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
     }
 }
 
-impl<T: Transaction> DepositTransaction for OpTransaction<T> {
-    fn source_hash(&self) -> B256 {
-        self.deposit.source_hash
+impl<T: Transaction> OpTxTr for OpTransaction<T> {
+    fn enveloped_tx(&self) -> Option<&Bytes> {
+        self.enveloped_tx.as_ref()
+    }
+
+    fn source_hash(&self) -> Option<B256> {
+        Some(self.deposit.source_hash)
     }
 
     fn mint(&self) -> Option<u128> {
         self.deposit.mint
     }
 
-    fn is_system_transaction(&self) -> bool {
-        self.deposit.is_system_transaction
-    }
-}
-
-impl<T: Transaction> OpTxTr for OpTransaction<T> {
-    fn enveloped_tx(&self) -> Option<&Bytes> {
-        self.enveloped_tx.as_ref()
+    fn is_system_transaction(&self) -> Option<bool> {
+        Some(self.deposit.is_system_transaction)
     }
 }
 
