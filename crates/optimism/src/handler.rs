@@ -2,10 +2,7 @@
 use crate::{
     api::exec::OpContextTr,
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
-    transaction::{
-        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTr,
-    },
+    transaction::{deposit::DEPOSIT_TRANSACTION_TYPE, OpTransactionError, OpTxTr},
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
@@ -261,7 +258,7 @@ where
         self.mainnet.reimburse_caller(evm, exec_result)?;
 
         let context = evm.ctx();
-        if context.tx().source_hash().is_zero() {
+        if matches!(context.tx().source_hash(), Some(source_hash) if source_hash.is_zero()) {
             let caller = context.tx().caller();
             let spec = context.cfg().spec();
             let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
