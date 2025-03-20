@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-primitives-v16.0.0-alpha.4...revm-primitives-v16.0.0-alpha.5) - 2025-03-20
+
+### Other
+
+- make str to SpecId conversion fallible ([#2236](https://github.com/bluealloy/revm/pull/2236))
+- remove blockhash windows const ([#2228](https://github.com/bluealloy/revm/pull/2228))
+
 ## [16.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-primitives-v16.0.0-alpha.3...revm-primitives-v16.0.0-alpha.4) - 2025-03-16
 
 ### Added
