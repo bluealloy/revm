@@ -9,7 +9,7 @@ use revm::{
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
-    precompile::{secp256r1, Precompiles},
+    precompile::{self, secp256r1, Precompiles},
     primitives::{Address, Bytes},
 };
 use std::boxed::Box;
