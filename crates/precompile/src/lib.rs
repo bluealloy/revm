@@ -13,6 +13,7 @@ pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
+#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -87,15 +88,31 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
+            
+            cfg_if! {
+                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
+                    let eip1962_precompiles = [
+                        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                        bn128::add::BYZANTIUM,
+                        bn128::mul::BYZANTIUM,
+                        bn128::pair::BYZANTIUM,
+                    ];
+                } else {
+                    let eip1962_precompiles = [
+                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
+                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
+                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
+                    ];
+                }
+            }
+            precompiles.extend(eip1962_precompiles);
+            
             precompiles.extend([
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                bn128::add::BYZANTIUM,
-                bn128::mul::BYZANTIUM,
-                bn128::pair::BYZANTIUM,
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
             ]);
+
             Box::new(precompiles)
         })
     }
@@ -105,11 +122,26 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
+
+            cfg_if! {
+                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
+                    let eip1962_precompiles = [
+                        // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                        bn128::add::BYZANTIUM,
+                        bn128::mul::BYZANTIUM,
+                        bn128::pair::BYZANTIUM,
+                    ];
+                } else {
+                    let eip1962_precompiles = [
+                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
+                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
+                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
+                    ];
+                }
+            }
+            precompiles.extend(eip1962_precompiles);
+
             precompiles.extend([
-                // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                bn128::add::ISTANBUL,
-                bn128::mul::ISTANBUL,
-                bn128::pair::ISTANBUL,
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
             ]);
@@ -147,7 +179,6 @@ impl Precompiles {
                     let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
-
 
             precompiles.extend([
                 precompile,
