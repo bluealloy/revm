@@ -129,6 +129,27 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
     new_g2_point(ba, bb)
 }
 
+/// Reads a scalar from the input slice
+///
+/// Note: The scalar does not need to be canonical.
+#[inline]
+pub(super) fn read_scalar(input: &[u8]) -> Result<bn::Fr, PrecompileError> {
+    // `Fr::from_slice` can only fail when the length is not 32.
+    bn::Fr::from_slice(input).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
+}
+
+/// Performs point addition on two G1 points.
+#[inline]
+pub(super) fn g1_point_add(p1: G1, p2: G1) -> G1 {
+    p1 + p2
+}
+
+/// Performs a G1 scalar multiplication.
+#[inline]
+pub(super) fn g1_point_mul(p: G1, fr: bn::Fr) -> G1 {
+    p * fr
+}
+
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 ///
