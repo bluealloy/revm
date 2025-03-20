@@ -1,4 +1,4 @@
-use super::{FQ2_LEN, FQ_LEN, G1_LEN};
+use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
 use crate::PrecompileError;
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
@@ -133,9 +133,15 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
 ///
 /// Note: The scalar does not need to be canonical.
 #[inline]
-pub(super) fn read_scalar(input: &[u8]) -> Result<bn::Fr, PrecompileError> {
-    // `Fr::from_slice` can only fail when the length is not 32.
-    bn::Fr::from_slice(input).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
+pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
+    assert_eq!(
+        input.len(),
+        SCALAR_LEN,
+        "unexpected scalar length. got {}, expected {SCALAR_LEN}",
+        input.len()
+    );
+    // `Fr::from_slice` can only fail when the length is not `SCALAR_LEN`.
+    bn::Fr::from_slice(input).unwrap()
 }
 
 /// Performs point addition on two G1 points.

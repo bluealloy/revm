@@ -140,7 +140,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let p = read_g1_point(&input[..G1_LEN])?;
 
-    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN])?;
+    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN]);
     let result = g1_point_mul(p, scalar);
 
     let output = encode_g1_point(result);
