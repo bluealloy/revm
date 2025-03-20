@@ -7,7 +7,7 @@ use crate::{
         InterpreterAction,
         InterpreterResult,
     },
-    primitives::{hex::hex, Address, Bytecode, Bytes, EVMError, Spec, U256},
+    primitives::{hex, Address, Bytecode, Bytes, EVMError, Spec, U256},
     Context,
     Database,
     Frame,
@@ -143,6 +143,9 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     let exit_code = match result.result {
         return_ok!() => SyscallStatus::Ok as i32,
         return_revert!() => SyscallStatus::Revert as i32,
+        InstructionResult::OutOfGas | InstructionResult::OutOfFuel => {
+            SyscallStatus::OutOfGas as i32
+        }
         return_error!() => SyscallStatus::Err as i32,
         _ => unreachable!("revm: unexpected result"),
     };
