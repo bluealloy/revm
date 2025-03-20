@@ -1,7 +1,7 @@
 use context::{ContextSetters, ContextTr, Evm, JournalOutput, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::EthInstructions, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
+    instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
     MainnetHandler, PrecompileProvider,
 };
 use interpreter::{interpreter::EthInterpreter, FrameInput, InterpreterResult};
@@ -24,11 +24,11 @@ where
     type IT = EthInterpreter;
 }
 
-impl<CTX, INSP, PRECOMPILES> InspectEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> InspectEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
@@ -46,12 +46,12 @@ where
     }
 }
 
-impl<CTX, INSP, PRECOMPILES> InspectCommitEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
