@@ -140,14 +140,16 @@ pub(super) fn p1_msm(
         scalars_bytes.len() / SCALAR_LENGTH,
         "number of scalars should equal the number of g1 points"
     );
-    // When no inputs are given, we trigger an assert.
-    // While it is mathematically sound to have no inputs (can return point at infinity)
-    // EIP2537 forbids this and since this is the only function that
-    // currently calls this method, we have this assert.
-    assert!(
-        !g1_points.is_empty(),
-        "number of inputs to pairing should be non-zero"
-    );
+
+    // When no inputs are given, we return the point at infinity.
+    // This case can only trigger, if the initial MSM pairs
+    // all had, either a zero scalar or the point at infinity.
+    //
+    // The precompile will return an error, if the initial input
+    // was empty, in accordance with EIP-2537.
+    if g1_points.is_empty() {
+        return blst_p1_affine::default();
+    }
 
     // When there is only a single point, we use a simpler scalar multiplication
     // procedure
@@ -183,14 +185,16 @@ pub(super) fn p2_msm(
         scalars_bytes.len() / SCALAR_LENGTH,
         "number of scalars should equal the number of g2 points"
     );
-    // When no inputs are given, we trigger an assert.
-    // While it is mathematically sound to have no inputs (can return point at infinity)
-    // EIP2537 forbids this and since this is the only function that
-    // currently calls this method, we have this assert.
-    assert!(
-        !g2_points.is_empty(),
-        "number of inputs to pairing should be non-zero"
-    );
+
+    // When no inputs are given, we return the point at infinity.
+    // This case can only trigger, if the initial MSM pairs
+    // all had, either a zero scalar or the point at infinity.
+    //
+    // The precompile will return an error, if the initial input
+    // was empty, in accordance with EIP-2537.
+    if g2_points.is_empty() {
+        return blst_p2_affine::default();
+    }
 
     // When there is only a single point, we use a simpler scalar multiplication
     // procedure
@@ -284,15 +288,16 @@ fn is_fp12_one(f: &blst_fp12) -> bool {
 /// returns true if the result is equal to the identity element.
 #[inline]
 pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
-    // When no inputs are given, we trigger an assert.
-    // While it is mathematically sound to have no inputs (can return true)
-    // EIP2537 forbids this and since this is the only function that
-    // currently calls this method, we have this assert.
-    assert!(
-        !pairs.is_empty(),
-        "number of inputs to pairing should be non-zero"
-    );
-
+    // When no inputs are given, we return true
+    // This case can only trigger, if the initial pairing components
+    // all had, either the G1 element as the point at infinity
+    // or the G2 element as the point at infinity.
+    //
+    // The precompile will return an error, if the initial input
+    // was empty, in accordance with EIP-2537.
+    if pairs.is_empty() {
+        return true;
+    }
     // Compute the miller loop for the first pair
     let (first_g1, first_g2) = &pairs[0];
     let mut acc = compute_miller_loop(first_g1, first_g2);
