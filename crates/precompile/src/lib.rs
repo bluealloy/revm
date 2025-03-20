@@ -88,7 +88,6 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
-            
             cfg_if! {
                 if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
                     let eip1962_precompiles = [
@@ -107,7 +106,6 @@ impl Precompiles {
                 }
             }
             precompiles.extend(eip1962_precompiles);
-            
             precompiles.extend([
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
