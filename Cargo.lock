@@ -1556,6 +1556,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "eth_pairings"
+version = "0.6.0"
+source = "git+https://github.com/matter-labs/eip1962?rev=17ba98bdbdd7bdf239c09cd88ca46a486124f5e7#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "eth_pairings_repr_derive",
+ "fixed_width_field",
+ "fixed_width_group_and_loop",
+ "num-bigint 0.2.6",
+ "num-traits",
+ "once_cell",
+ "static_assertions",
+]
+
+[[package]]
+name = "eth_pairings_repr_derive"
+version = "0.2.0"
+source = "git+https://github.com/matter-labs/eip1962?rev=17ba98bdbdd7bdf239c09cd88ca46a486124f5e7#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "example-block-traces"
 version = "0.0.0"
 dependencies = [
@@ -1710,6 +1736,22 @@ dependencies = [
  "rand",
  "rustc-hex",
  "static_assertions",
+]
+
+[[package]]
+name = "fixed_width_field"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962?rev=17ba98bdbdd7bdf239c09cd88ca46a486124f5e7#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "simple_uint",
+]
+
+[[package]]
+name = "fixed_width_group_and_loop"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962?rev=17ba98bdbdd7bdf239c09cd88ca46a486124f5e7#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "simple_uint",
 ]
 
 [[package]]
@@ -2609,6 +2651,17 @@ dependencies = [
  "num-integer",
  "num-iter",
  "num-rational",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
@@ -3587,6 +3640,7 @@ dependencies = [
  "c-kzg",
  "cfg-if",
  "codspeed-criterion-compat",
+ "eth_pairings",
  "eyre",
  "k256",
  "kzg-rs",
@@ -4096,6 +4150,17 @@ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 dependencies = [
  "digest 0.10.7",
  "rand_core",
+]
+
+[[package]]
+name = "simple_uint"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962?rev=17ba98bdbdd7bdf239c09cd88ca46a486124f5e7#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "rustc-hex",
+ "static_assertions",
 ]
 
 [[package]]
