@@ -31,13 +31,13 @@ once_cell = { workspace = true, features = ["alloc"] }
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
 secp256k1 = { workspace = true, features = [
-    "alloc",
-    "recovery",
-    "rand",
-    "global-context",
+	"alloc",
+	"recovery",
+	"rand",
+	"global-context",
 ], optional = true }
 libsecp256k1 = { workspace = true, features = [
-    "static-context",
+	"static-context",
 ], optional = true }
 
 # SHA2-256 and RIPEMD-160
@@ -49,10 +49,11 @@ aurora-engine-modexp.workspace = true
 
 # ecAdd, ecMul, ecPairing
 bn.workspace = true
+eth_pairings = { workspace = true, features = ["eip_196"], optional = true }
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
-    "ethereum_kzg_settings",
+	"ethereum_kzg_settings",
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
@@ -77,7 +78,14 @@ serde_json.workspace = true
 serde_derive.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = [
+	"std",
+	"c-kzg",
+	"secp256k1",
+	"portable",
+	"blst",
+	"matter-labs-eip1962",
+]
 std = [
 	"primitives/std",
 	"k256/std",
@@ -90,7 +98,7 @@ std = [
 	"aurora-engine-modexp/std",
 	"p256?/std",
 	"serde/std",
-	"serde_json/std"
+	"serde_json/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -117,6 +125,9 @@ libsecp256k1 = ["dep:libsecp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
+
+# Use matter-labs implementation for BN128 operations (EIP1962)
+matter-labs-eip1962 = ["dep:eth_pairings"]
 
 [[bench]]
 name = "bench"
