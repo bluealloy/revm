@@ -114,6 +114,11 @@ impl TracerEip3155 {
         Self::new(Box::new(std::io::BufWriter::new(output)))
     }
 
+    /// Creates a new EIP-3155 tracer with a stdout output.
+    pub fn new_stdout() -> Self {
+        Self::buffered(std::io::stdout())
+    }
+
     /// Creates a new EIP-3155 tracer with the given output writer.
     pub fn new(output: Box<dyn Write>) -> Self {
         Self {

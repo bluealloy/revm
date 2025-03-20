@@ -14,12 +14,22 @@ pub struct EvmData<CTX, INSP> {
     pub inspector: INSP,
 }
 
-impl<CTX> Evm<CTX, (), (), ()> {
-    pub fn new(ctx: CTX) -> Self {
+impl<CTX, I, P> Evm<CTX, (), I, P> {
+    pub fn new(ctx: CTX, instruction: I, precompiles: P) -> Evm<CTX, (), I, P> {
         Evm {
             data: EvmData { ctx, inspector: () },
-            instruction: (),
-            precompiles: (),
+            instruction,
+            precompiles,
+        }
+    }
+}
+
+impl<CTX, I, INSP, P> Evm<CTX, INSP, I, P> {
+    pub fn new_with_inspector(ctx: CTX, inspector: INSP, instruction: I, precompiles: P) -> Self {
+        Evm {
+            data: EvmData { ctx, inspector },
+            instruction,
+            precompiles,
         }
     }
 }

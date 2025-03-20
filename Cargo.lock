@@ -1577,6 +1577,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-custom-opcodes"
+version = "0.0.0"
+dependencies = [
+ "revm",
+]
+
+[[package]]
 name = "example-database-components"
 version = "0.0.0"
 dependencies = [

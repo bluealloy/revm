@@ -1,6 +1,5 @@
 use crate::{
-    instructions::{EthInstructions, InstructionProvider},
-    EthFrame, Handler, MainnetHandler, PrecompileProvider,
+    instructions::InstructionProvider, EthFrame, Handler, MainnetHandler, PrecompileProvider,
 };
 use auto_impl::auto_impl;
 use context::{
@@ -136,10 +135,10 @@ where
     }
 }
 
-impl<CTX, INSP, PRECOMPILES> ExecuteEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>> + ContextSetters,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Output = Result<
@@ -165,11 +164,11 @@ where
     }
 }
 
-impl<CTX, INSP, PRECOMPILES> ExecuteCommitEvm
-    for Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>
         + ContextSetters,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type CommitOutput = Result<

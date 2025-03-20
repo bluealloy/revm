@@ -32,7 +32,7 @@ members = [
     "examples/uniswap_v2_usdc_swap",
     "examples/erc20_gas",
     "examples/my_evm",
-    #"examples/custom_opcodes",
+    "examples/custom_opcodes",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
