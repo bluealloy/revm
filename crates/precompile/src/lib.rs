@@ -27,6 +27,10 @@ pub mod secp256r1;
 pub mod utilities;
 
 pub use interface::*;
+
+#[cfg(all(feature = "bn", feature = "matter-labs-eip1962"))]
+// silence matter-labs impl lint as substrate-bn will be used as default if both are enabled.
+use eth_pairings as _;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
