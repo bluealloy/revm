@@ -129,9 +129,9 @@ impl Precompiles {
                 if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
                     let eip1962_precompiles = [
                         // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                        bn128::add::BYZANTIUM,
-                        bn128::mul::BYZANTIUM,
-                        bn128::pair::BYZANTIUM,
+                        bn128::add::ISTANBUL,
+                        bn128::mul::ISTANBUL,
+                        bn128::pair::ISTANBUL,
                     ];
                 } else {
                     let eip1962_precompiles = [
