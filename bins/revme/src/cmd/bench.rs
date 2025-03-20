@@ -36,6 +36,10 @@ impl BenchName {
 pub struct Cmd {
     #[arg(value_enum)]
     pub name: BenchName,
+    #[arg(long)]
+    pub warmup: f64,
+    #[arg(long)]
+    pub measurement_time: f64,
 }
 
 impl Cmd {

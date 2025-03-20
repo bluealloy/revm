@@ -9,7 +9,11 @@ fn evm(c: &mut Criterion) {
     revme::cmd::bench::analysis::run();
 
     for &bench_name in BenchName::ALL {
-        let cmd = MainCmd::Bench(bench::Cmd { name: bench_name });
+        let cmd = MainCmd::Bench(bench::Cmd {
+            name: bench_name,
+            warmup: 10.0,
+            measurement_time: 5.0,
+        });
         c.bench_function(bench_name.as_str(), |b| {
             b.iter(|| cmd.run().unwrap());
         });
