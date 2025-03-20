@@ -68,7 +68,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         g1_points.push(p0_aff);
 
-        scalars_bytes.extend_from_slice(&extract_scalar_input(&encoded_scalar)?.b);
+        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
     }
 
     // Return the encoding for the point at the infinity according to EIP-2537

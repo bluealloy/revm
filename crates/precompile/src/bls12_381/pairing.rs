@@ -58,7 +58,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         // extract_g1_input and extract_g2_input perform the necessary checks
         let p1_aff = extract_g1_input(encoded_g1_element)?;
-        let p2_aff = extract_g2_input(&encoded_g2_element)?;
+        let p2_aff = extract_g2_input(encoded_g2_element)?;
 
         if !g1_is_zero & !g2_is_zero {
             pairs.push((p1_aff, p2_aff));

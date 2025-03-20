@@ -70,7 +70,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
 
-        scalars_bytes.extend_from_slice(&extract_scalar_input(&encoded_scalar)?.b);
+        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
     }
 
     // Return infinity point if all points are infinity
