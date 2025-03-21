@@ -564,7 +564,7 @@ mod tests {
     }
 
     #[test]
-    fn test_consume_gas_sys_deposit_tx() {
+    fn test_consume_gas_deposit_tx() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
@@ -575,6 +575,22 @@ mod tests {
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spent(), 100);
+        assert_eq!(gas.refunded(), 0);
+    }
+
+    #[test]
+    fn test_consume_gas_sys_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+                tx.deposit.is_system_transaction = true;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
+        let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.spent(), 0);
         assert_eq!(gas.refunded(), 0);
     }
 
