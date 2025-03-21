@@ -109,7 +109,6 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
-
             precompiles.extend([
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
@@ -152,6 +151,7 @@ impl Precompiles {
                     let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
+
 
             precompiles.extend([
                 precompile,
