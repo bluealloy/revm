@@ -2,10 +2,7 @@
 use crate::{
     api::exec::OpContextTr,
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
-    transaction::{
-        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTr,
-    },
+    transaction::{deposit::DEPOSIT_TRANSACTION_TYPE, OpTransactionError, OpTxTr},
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
@@ -259,7 +256,7 @@ where
         self.mainnet.reimburse_caller(evm, exec_result)?;
 
         let context = evm.ctx();
-        if context.tx().source_hash().is_zero() {
+        if matches!(context.tx().source_hash(), Some(source_hash) if source_hash.is_zero()) {
             let caller = context.tx().caller();
             let spec = context.cfg().spec();
             let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
@@ -840,5 +837,34 @@ mod tests {
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(handler.validate_env(&mut evm).is_ok());
+    }
+
+    #[test]
+    fn test_halted_deposit_tx_post_regolith() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        assert_eq!(
+            handler.output(
+                &mut evm,
+                FrameResult::Call(CallOutcome {
+                    result: InterpreterResult {
+                        result: InstructionResult::OutOfGas,
+                        output: Default::default(),
+                        gas: Default::default(),
+                    },
+                    memory_offset: Default::default(),
+                })
+            ),
+            Err(EVMError::Transaction(
+                OpTransactionError::HaltedDepositPostRegolith
+            ))
+        )
     }
 }
