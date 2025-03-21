@@ -3344,7 +3344,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "2.6.0"
+version = "2.7.0"
 dependencies = [
  "alloy-rlp",
  "hash-db",
