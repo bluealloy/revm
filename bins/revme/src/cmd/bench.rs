@@ -36,16 +36,44 @@ impl BenchName {
 pub struct Cmd {
     #[arg(value_enum)]
     pub name: BenchName,
+    #[arg(short = 'w', long)]
+    pub warmup: Option<f64>,
+    #[arg(short = 'm', long)]
+    pub measurement_time: Option<f64>,
 }
 
 impl Cmd {
     /// Runs bench command.
     pub fn run(&self) {
+        let mut criterion = criterion::Criterion::default()
+            .warm_up_time(std::time::Duration::from_secs_f64(
+                self.warmup.unwrap_or(10.0),
+            ))
+            .measurement_time(std::time::Duration::from_secs_f64(
+                self.measurement_time.unwrap_or(1.0),
+            ));
+
         match self.name {
-            BenchName::Analysis => analysis::run(),
-            BenchName::Burntpix => burntpix::run(),
-            BenchName::Snailtracer => snailtracer::run(),
-            BenchName::Transfer => transfer::run(),
+            BenchName::Analysis => {
+                let mut criterion_group = criterion.benchmark_group("revme");
+                analysis::run(&mut criterion_group);
+                criterion_group.finish();
+            }
+            BenchName::Burntpix => {
+                let mut criterion_group = criterion.benchmark_group("revme");
+                burntpix::run(&mut criterion_group);
+                criterion_group.finish();
+            }
+            BenchName::Snailtracer => {
+                let mut criterion_group = criterion.benchmark_group("revme");
+                snailtracer::run(&mut criterion_group);
+                criterion_group.finish();
+            }
+            BenchName::Transfer => {
+                let mut criterion_group = criterion.benchmark_group("revme");
+                transfer::run(&mut criterion_group);
+                criterion_group.finish();
+            }
         }
     }
 }

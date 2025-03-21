@@ -1,3 +1,4 @@
+use criterion::{measurement::WallTime, BenchmarkGroup};
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
@@ -19,13 +20,17 @@ pub fn simple_example(bytecode: Bytecode) {
     let _ = evm.replay().unwrap();
 }
 
-pub fn run() {
-    println!("Running snailtracer example!");
-    let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
-    let start = std::time::Instant::now();
-    simple_example(bytecode);
-    let elapsed = start.elapsed();
-    println!("elapsed: {:?}", elapsed);
+pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
+    criterion_group.bench_function("snailtracer", |b| {
+        b.iter(|| {
+            println!("Running snailtracer example!");
+            let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
+            let start = std::time::Instant::now();
+            simple_example(bytecode);
+            let elapsed = start.elapsed();
+            println!("elapsed: {:?}", elapsed);
+        })
+    });
 }
 
 const BYTES: &str = include_str!("snailtracer.hex");
