@@ -39,7 +39,6 @@ rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc"] }
-alloy-primitives.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -49,14 +48,12 @@ std = [
 	"alloy-sol-types/std",
 	"once_cell/std",
 	"sha2/std",
-	"alloy-primitives/std",
 	"serde_json/std"
 ]
 hashbrown = ["revm/hashbrown"]
 serde = [
 	"dep:serde",
 	"revm/serde",
-	"alloy-primitives/serde"
 ]
 portable = ["revm/portable"]
 

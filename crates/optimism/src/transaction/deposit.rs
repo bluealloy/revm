@@ -23,7 +23,7 @@ impl DepositTransactionParts {
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
-    use alloy_primitives::b256;
+    use revm::primitives::b256;
 
     #[test]
     fn serialize_json_deposit_tx_parts() {
