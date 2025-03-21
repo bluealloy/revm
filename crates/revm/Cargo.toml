@@ -90,7 +90,7 @@ optional_no_base_fee = ["context/optional_no_base_fee"]
 
 secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
 c-kzg = [
-	"precompile/c-kzg",
+    "precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
