@@ -31,13 +31,13 @@ once_cell = { workspace = true, features = ["alloc"] }
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
 secp256k1 = { workspace = true, features = [
-    "alloc",
-    "recovery",
-    "rand",
-    "global-context",
+	"alloc",
+	"recovery",
+	"rand",
+	"global-context",
 ], optional = true }
 libsecp256k1 = { workspace = true, features = [
-    "static-context",
+	"static-context",
 ], optional = true }
 
 # SHA2-256 and RIPEMD-160
@@ -48,11 +48,14 @@ ripemd.workspace = true
 aurora-engine-modexp.workspace = true
 
 # ecAdd, ecMul, ecPairing
-bn.workspace = true
+ark-bn254 = { workspace = true, features = ["curve"] }
+ark-ec = { workspace = true, features = ["parallel"] }
+ark-ff = { workspace = true, features = ["parallel", "asm"] }
+ark-serialize = { workspace = true, features = ["parallel"] }
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
-    "ethereum_kzg_settings",
+	"ethereum_kzg_settings",
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
@@ -90,7 +93,11 @@ std = [
 	"aurora-engine-modexp/std",
 	"p256?/std",
 	"serde/std",
-	"serde_json/std"
+	"serde_json/std",
+	"ark-ff/std",
+	"ark-ec/std",
+	"ark-serialize/std",
+	"ark-bn254/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
