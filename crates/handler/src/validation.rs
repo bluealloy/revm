@@ -37,7 +37,7 @@ pub fn validate_tx_against_state<
     let account = context.journal().load_account_code(tx_caller)?;
     let account = account.data.info.clone();
 
-    validate_tx_against_account(&account, context, U256::ZERO)?;
+    validate_tx_against_account::<_, ERROR>(&account, context, U256::ZERO)?;
     Ok(())
 }
 
@@ -229,11 +229,14 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
 
 /// Validate account against the transaction.
 #[inline]
-pub fn validate_tx_against_account<CTX: ContextTr>(
+pub fn validate_tx_against_account<
+    CTX: ContextTr,
+    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
+>(
     account: &AccountInfo,
-    context: CTX,
+    mut context: CTX,
     additional_cost: U256,
-) -> Result<(), InvalidTransaction> {
+) -> Result<(), ERROR> {
     let tx = context.tx();
     let tx_type = context.tx().tx_type();
     // EIP-3607: Reject transactions from senders with deployed code
@@ -244,7 +247,7 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode);
+            return Err(InvalidTransaction::RejectCallerWithCode.into());
         }
     }
 
@@ -254,10 +257,10 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
         let state = account.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
-                return Err(InvalidTransaction::NonceTooHigh { tx, state });
+                return Err(InvalidTransaction::NonceTooHigh { tx, state }.into());
             }
             Ordering::Less => {
-                return Err(InvalidTransaction::NonceTooLow { tx, state });
+                return Err(InvalidTransaction::NonceTooLow { tx, state }.into());
             }
             _ => {}
         }
@@ -279,11 +282,20 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.balance && !context.cfg().is_balance_check_disabled() {
-        return Err(InvalidTransaction::LackOfFundForMaxFee {
-            fee: Box::new(balance_check),
-            balance: Box::new(account.balance),
-        });
+    if balance_check > account.balance {
+        if context.cfg().is_balance_check_disabled() {
+            // Add transaction cost to balance to ensure execution doesn't fail.
+            let tx_caller = tx.caller();
+            let mut account = context.journal().load_account_code(tx_caller)?;
+
+            account.info.balance = account.info.balance.saturating_add(balance_check);
+        } else {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: Box::new(balance_check),
+                balance: Box::new(account.balance),
+            }
+            .into());
+        }
     }
 
     Ok(())
