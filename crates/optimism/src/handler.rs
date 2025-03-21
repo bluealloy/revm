@@ -838,4 +838,33 @@ mod tests {
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(handler.validate_env(&mut evm).is_ok());
     }
+
+    #[test]
+    fn test_halted_deposit_tx_post_regolith() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        assert_eq!(
+            handler.output(
+                &mut evm,
+                FrameResult::Call(CallOutcome {
+                    result: InterpreterResult {
+                        result: InstructionResult::OutOfGas,
+                        output: Default::default(),
+                        gas: Default::default(),
+                    },
+                    memory_offset: Default::default(),
+                })
+            ),
+            Err(EVMError::Transaction(
+                OpTransactionError::HaltedDepositPostRegolith
+            ))
+        )
+    }
 }
