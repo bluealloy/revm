@@ -55,7 +55,7 @@ eth_pairings = { workspace = true, features = ["eip_196"], optional = true }
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
-	"ethereum_kzg_settings",
+    "ethereum_kzg_settings",
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
