@@ -49,9 +49,9 @@ aurora-engine-modexp.workspace = true
 
 # ecAdd, ecMul, ecPairing
 ark-bn254 = { workspace = true, features = ["curve"] }
-ark-ec = { workspace = true, features = ["parallel"] }
-ark-ff = { workspace = true, features = ["parallel", "asm"] }
-ark-serialize = { workspace = true, features = ["parallel"] }
+ark-ec = { workspace = true }
+ark-ff = { workspace = true, features = ["asm"] }
+ark-serialize = { workspace = true }
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
