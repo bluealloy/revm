@@ -74,11 +74,11 @@ alloydb = ["database/alloydb"]
 serde-json = ["serde", "inspector/serde-json"]
 
 dev = [
-	"memory_limit",
-	"optional_balance_check",
-	"optional_block_gas_limit",
-	"optional_eip3607",
-	"optional_no_base_fee",
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_no_base_fee",
 ]
 memory_limit = ["context/memory_limit", "interpreter/memory_limit"]
 optional_balance_check = ["context/optional_balance_check"]
