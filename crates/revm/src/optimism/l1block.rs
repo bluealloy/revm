@@ -191,13 +191,19 @@ impl L1BlockInfo {
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
     pub fn operator_fee_charge(&self, input: &[u8], gas_limit: U256, spec_id: SpecId) -> U256 {
-        // If the input is a deposit transaction or empty, the default value is zero.
-        if input.is_empty() || input.first() == Some(&0x7F) {
+        // If the input is a deposit transaction, the default value is zero.
+        if input.first() == Some(&0x7E) {
             return U256::ZERO;
         }
         if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
             return U256::ZERO;
         }
+
+        self.operator_fee_charge_inner(gas_limit)
+    }
+
+    /// Calculate the operator fee for the given `gas`.
+    fn operator_fee_charge_inner(&self, gas: U256) -> U256 {
         let operator_fee_scalar = self
             .operator_fee_scalar
             .expect("Missing operator fee scalar for isthmus L1 Block");
@@ -205,8 +211,8 @@ impl L1BlockInfo {
             .operator_fee_constant
             .expect("Missing operator fee constant for isthmus L1 Block");
 
-        let product = gas_limit.saturating_mul(operator_fee_scalar)
-            / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
+        let product =
+            gas.saturating_mul(operator_fee_scalar) / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
 
         product.saturating_add(operator_fee_constant)
     }
@@ -219,15 +225,12 @@ impl L1BlockInfo {
             return U256::ZERO;
         }
 
-        let operator_fee_scalar = self
-            .operator_fee_scalar
-            .expect("Missing operator fee scalar for isthmus L1 Block");
+        let operator_cost_gas_limit = self.operator_fee_charge_inner(U256::from(gas.limit()));
+        let operator_cost_gas_used = self.operator_fee_charge_inner(U256::from(
+            gas.limit() - (gas.remaining() + gas.refunded() as u64),
+        ));
 
-        // We're computing the difference between two operator fees, so no need to include the
-        // constant.
-
-        operator_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
-            / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL))
+        operator_cost_gas_limit.saturating_sub(operator_cost_gas_used)
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
@@ -288,7 +291,7 @@ impl L1BlockInfo {
             return tx_l1_cost;
         }
         // If the input is a deposit transaction or empty, the default value is zero.
-        let tx_l1_cost = if input.is_empty() || input.first() == Some(&0x7F) {
+        let tx_l1_cost = if input.is_empty() || input.first() == Some(&0x7E) {
             return U256::ZERO;
         } else if spec_id.is_enabled_in(SpecId::FJORD) {
             self.calculate_tx_l1_cost_fjord(input)
@@ -451,8 +454,8 @@ mod tests {
         assert_eq!(gas_cost, U256::ZERO);
         l1_block_info.clear_tx_l1_cost();
 
-        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
-        let input = bytes!("7FFACADE");
+        // Deposit transactions with the EIP-2718 type of 0x7E should result in zero
+        let input = bytes!("7EFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
         l1_block_info.clear_tx_l1_cost();
@@ -483,8 +486,8 @@ mod tests {
         assert_eq!(gas_cost, U256::ZERO);
         l1_block_info.clear_tx_l1_cost();
 
-        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
-        let input = bytes!("7FFACADE");
+        // Deposit transactions with the EIP-2718 type of 0x7E should result in zero
+        let input = bytes!("7EFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::ZERO);
         l1_block_info.clear_tx_l1_cost();
@@ -539,8 +542,8 @@ mod tests {
         assert_eq!(gas_cost, U256::ZERO);
         l1_block_info.clear_tx_l1_cost();
 
-        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
-        let input = bytes!("7FFACADE");
+        // Deposit transactions with the EIP-2718 type of 0x7E should result in zero
+        let input = bytes!("7EFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
         assert_eq!(gas_cost, U256::ZERO);
     }
