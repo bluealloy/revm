@@ -121,7 +121,7 @@ where
         let account = context.journal().load_account_code(tx_caller)?;
         let account = account.data.info.clone();
 
-        validate_tx_against_account(&account, context, additional_cost)?;
+        validate_tx_against_account::<_, ERROR>(&account, context, additional_cost)?;
         Ok(())
     }
 
