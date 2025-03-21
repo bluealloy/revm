@@ -38,7 +38,7 @@ REVM provides four ways to execute transactions through traits (API):
 * `transact(tx)` and `replay()` are function of `ExecuteEvm` trait that allow execution transactions. They return the status of execution with reason, changed state and in of case of failed execution a error.
 * `transact_commit(tx)` and `replay_commit()` are part of `ExecuteCommitEvm` that internally commits the state diff to the database and returns status of execution. Database is requires to support `DatabaseCommit` trait.
 * `inspect()`, `inspect_replay(tx)` and few others are part of `InspectEvm` trait that allow execution with inspection. This is how tracers are called.
-* `inspect_commit()`,`inspect_replay_commit(tx)` that are part of `InspectCommitEvm` trait that extends `InspectEvm` to allow commiting state diff after tracing.
+* `inspect_commit()`,`inspect_replay_commit(tx)` that are part of `InspectCommitEvm` trait that extends `InspectEvm` to allow committing state diff after tracing.
 
 For inspection API to be enabled `Evm` needs to be create with inspector.
 

@@ -17,8 +17,8 @@ use state::EvmState;
 pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called before the interpreter is initialized.
     ///
-    /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
-    /// is skipped.
+    /// If `interp.instruction_result` is set to anything other than [`interpreter::InstructionResult::Continue`]
+    /// then the execution of the interpreter is skipped.
     #[inline]
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
@@ -41,8 +41,8 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
 
     /// Called after `step` when the instruction has been executed.
     ///
-    /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
-    /// of the interpreter.
+    /// Setting `interp.instruction_result` to anything other than [`interpreter::InstructionResult::Continue`]
+    /// alters the execution of the interpreter.
     #[inline]
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
@@ -59,7 +59,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
 
     /// Called whenever a call to a contract is about to start.
     ///
-    /// InstructionResulting anything other than [InstructionResult::Continue] overrides the result of the call.
+    /// InstructionResulting anything other than [`interpreter::InstructionResult::Continue`] overrides the result of the call.
     #[inline]
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
         let _ = context;

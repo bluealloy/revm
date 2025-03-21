@@ -27,7 +27,7 @@ use std::{vec, vec::Vec};
 /// * [`Handler::frame_call`] replaced with [`InspectorHandler::inspect_frame_call`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
 ///
-/// * [`Handler::last_frame_result`] replaced with [`InspectorHandler::last_frame_result`]
+/// * [`Handler::last_frame_result`] replaced with [`InspectorHandler::inspect_last_frame_result`]
 ///
 pub trait InspectorHandler: Handler
 where
@@ -122,7 +122,7 @@ where
     ///
     /// This method acts as [`Handler::frame_call`] method for inspection.
     ///
-    /// Internaly it will call [`Inspector::step`], [`Inspector::step_end`] for each instruction.
+    /// Internally it will call [`Inspector::step`], [`Inspector::step_end`] for each instruction.
     /// And [`Inspector::log`],[`Inspector::selfdestruct`] for each log and selfdestruct instruction.
     #[inline]
     fn inspect_frame_call(
