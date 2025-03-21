@@ -387,7 +387,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         self.load_account(*to)?;
 
         // sub balance from
-        let from_account = &mut self.state.get_mut(from).unwrap();
+        let from_account = self.state.get_mut(from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
 
