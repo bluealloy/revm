@@ -26,9 +26,6 @@ use std::{vec, vec::Vec};
 /// * [`Handler::first_frame_init`] replaced with [`InspectorHandler::inspect_first_frame_init`]
 /// * [`Handler::frame_call`] replaced with [`InspectorHandler::inspect_frame_call`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
-///
-/// * [`Handler::last_frame_result`] replaced with [`InspectorHandler::inspect_last_frame_result`]
-///
 pub trait InspectorHandler: Handler
 where
     Self::Evm:
