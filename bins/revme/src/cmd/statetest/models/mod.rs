@@ -6,8 +6,11 @@ use deserializer::*;
 pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
-use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
-use serde::{Deserialize, Serialize};
+use revm::primitives::{
+    AccessList, Address, AuthorizationList, Bytes, HashMap, SignedAuthorization, B256, U256,
+};
+use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -142,7 +145,7 @@ pub struct TransactionParts {
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Authorization {
     chain_id: U256,
@@ -152,6 +155,31 @@ pub struct Authorization {
     r: U256,
     s: U256,
     signer: Option<Address>,
+}
+
+impl<'de> Deserialize<'de> for Authorization {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // This is a hack to remove duplicate yParity and v fields which can be used by the test files for cross client compat
+        let mut value: serde_json::Value = Deserialize::deserialize(deserializer)?;
+        if let Some(val) = value.as_object_mut() {
+            if val.contains_key("v") && val.contains_key("yParity") {
+                val.remove("v");
+            }
+        }
+        let inner: SignedAuthorization = serde_json::from_value(value).map_err(D::Error::custom)?;
+        Ok(Self {
+            chain_id: *inner.chain_id(),
+            address: *inner.address(),
+            nonce: U256::from(inner.nonce()),
+            v: U256::from(inner.y_parity()),
+            r: inner.r(),
+            s: inner.s(),
+            signer: inner.recover_authority().ok(),
+        })
+    }
 }
 
 #[cfg(test)]
