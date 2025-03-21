@@ -244,7 +244,7 @@ impl Precompiles {
 
         let inner = inner
             .iter()
-            .filter(|(a, _)| other.inner.get(*a).is_none())
+            .filter(|(a, _)| !other.inner.contains_key(*a))
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
@@ -261,7 +261,7 @@ impl Precompiles {
 
         let inner = inner
             .iter()
-            .filter(|(a, _)| other.inner.get(*a).is_some())
+            .filter(|(a, _)| other.inner.contains_key(*a))
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
