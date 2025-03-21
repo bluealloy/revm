@@ -34,7 +34,7 @@ jobs:
       - name: Run tests
         run: |
           cp README.md book/src/README.md
-          sed -i -e 's|../../README.md|README.md|g' book/src/SUMMARY.md
+          sed -i -e 's|../../README.md|./README.md|g' book/src/SUMMARY.md
           mdbook test
 
   lint:
@@ -81,7 +81,10 @@ jobs:
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Build book
-        run: mdbook build book
+        run: |
+          cp README.md book/src/README.md
+          sed -i -e 's|../../README.md|./README.md|g' book/src/SUMMARY.md
+          mdbook build book
 
       - name: Build docs
         run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo doc --all --no-deps

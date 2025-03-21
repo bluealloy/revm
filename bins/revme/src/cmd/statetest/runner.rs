@@ -426,7 +426,7 @@ pub fn execute_test_suite(
                         );
 
                     let timer = Instant::now();
-                    let res = evm.inspect_commit_previous();
+                    let res = evm.inspect_replay_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
@@ -498,7 +498,7 @@ pub fn execute_test_suite(
                         TracerEip3155::buffered(stderr()).without_summary(),
                     );
 
-                let _ = evm.inspect_commit_previous();
+                let _ = evm.inspect_replay_commit();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);

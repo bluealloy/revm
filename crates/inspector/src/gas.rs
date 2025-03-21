@@ -16,14 +16,19 @@ impl Default for GasInspector {
 }
 
 impl GasInspector {
+    /// Returns the remaining gas.
+    #[inline]
     pub fn gas_remaining(&self) -> u64 {
         self.gas_remaining
     }
 
+    /// Returns the last gas cost.
+    #[inline]
     pub fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
     }
 
+    /// Create a new gas inspector.
     pub fn new() -> Self {
         Self {
             gas_remaining: 0,
@@ -31,16 +36,19 @@ impl GasInspector {
         }
     }
 
+    /// Sets remaining gas to gas limit.
     #[inline]
     pub fn initialize_interp(&mut self, gas: &Gas) {
         self.gas_remaining = gas.limit();
     }
 
+    /// Sets the remaining gas.
     #[inline]
     pub fn step(&mut self, gas: &Gas) {
         self.gas_remaining = gas.remaining();
     }
 
+    /// calculate last gas cost and remaining gas.
     #[inline]
     pub fn step_end(&mut self, gas: &mut Gas) {
         let remaining = gas.remaining();
@@ -48,6 +56,7 @@ impl GasInspector {
         self.gas_remaining = remaining;
     }
 
+    /// Spend all gas if call failed.
     #[inline]
     pub fn call_end(&mut self, outcome: &mut CallOutcome) {
         if outcome.result.result.is_error() {
@@ -56,6 +65,7 @@ impl GasInspector {
         }
     }
 
+    /// Spend all gas if create failed.
     #[inline]
     pub fn create_end(&mut self, outcome: &mut CreateOutcome) {
         if outcome.result.result.is_error() {
