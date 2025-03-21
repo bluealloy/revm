@@ -42,11 +42,11 @@ sha2.workspace = true
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
 std = [
-    "serde?/std",
-    "revm/std",
-    "alloy-sol-types/std",
-    "once_cell/std",
-    "sha2/std",
+	"serde?/std",
+	"revm/std",
+        "alloy-sol-types/std",
+        "once_cell/std",
+        "sha2/std",
 ]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
