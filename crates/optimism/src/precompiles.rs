@@ -1,14 +1,14 @@
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
-
-use revm::precompile::bn128;
-
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
-    precompile::{self, secp256r1, Precompiles},
+    precompile::{
+        self, bn128, secp256r1, PrecompileError, Precompiles,
+        {PrecompileResult, PrecompileWithAddress},
+    },
     primitives::{Address, Bytes},
 };
 use std::boxed::Box;
@@ -58,14 +58,9 @@ pub fn fjord() -> &'static Precompiles {
 pub fn granite() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = fjord().clone();
-
-        let precompiles = {
-            // Restrict bn256Pairing input size
-            let mut precompiles = precompiles;
-            precompiles.extend([bn128_pair::GRANITE]);
-            precompiles
-        };
+        let mut precompiles = fjord().clone();
+        // Restrict bn256Pairing input size
+        precompiles.extend([bn128_pair::GRANITE]);
         Box::new(precompiles)
     })
 }
@@ -128,7 +123,6 @@ impl Default for OpPrecompiles {
 
 pub mod bn128_pair {
     use super::*;
-    use revm::precompile::{PrecompileError, PrecompileResult, PrecompileWithAddress};
 
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
     pub const GRANITE: PrecompileWithAddress =
