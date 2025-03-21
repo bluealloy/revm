@@ -13,7 +13,6 @@ pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -28,9 +27,9 @@ pub mod utilities;
 
 pub use interface::*;
 
-#[cfg(all(feature = "bn", feature = "matter-labs-eip1962"))]
-// silence matter-labs impl lint as substrate-bn will be used as default if both are enabled.
-use eth_pairings as _;
+#[cfg(feature = "matter-labs-eip1962")]
+// silence bn lint as matter-labs impl will be used as default if both are enabled.
+use bn as _;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
@@ -92,25 +91,12 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
-            cfg_if! {
-                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
-                    let eip1962_precompiles = [
-                        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                        bn128::add::BYZANTIUM,
-                        bn128::mul::BYZANTIUM,
-                        bn128::pair::BYZANTIUM,
-                    ];
-                } else {
-                    let eip1962_precompiles = [
-                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
-                    ];
-                }
-            }
-            precompiles.extend(eip1962_precompiles);
             precompiles.extend([
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                bn128::add::BYZANTIUM,
+                bn128::mul::BYZANTIUM,
+                bn128::pair::BYZANTIUM,
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
             ]);
@@ -124,25 +110,11 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
 
-            cfg_if! {
-                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
-                    let eip1962_precompiles = [
-                        // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                        bn128::add::ISTANBUL,
-                        bn128::mul::ISTANBUL,
-                        bn128::pair::ISTANBUL,
-                    ];
-                } else {
-                    let eip1962_precompiles = [
-                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
-                    ];
-                }
-            }
-            precompiles.extend(eip1962_precompiles);
-
             precompiles.extend([
+                // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                bn128::add::ISTANBUL,
+                bn128::mul::ISTANBUL,
+                bn128::pair::ISTANBUL,
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
             ]);

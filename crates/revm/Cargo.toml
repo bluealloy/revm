@@ -37,7 +37,7 @@ handler.workspace = true
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"interpreter/std",
 	"precompile/std",
@@ -74,11 +74,11 @@ alloydb = ["database/alloydb"]
 serde-json = ["serde", "inspector/serde-json"]
 
 dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_no_base_fee",
+	"memory_limit",
+	"optional_balance_check",
+	"optional_block_gas_limit",
+	"optional_eip3607",
+	"optional_no_base_fee",
 ]
 memory_limit = ["context/memory_limit", "interpreter/memory_limit"]
 optional_balance_check = ["context/optional_balance_check"]
@@ -90,12 +90,11 @@ optional_no_base_fee = ["context/optional_no_base_fee"]
 
 secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
 c-kzg = [
-    "precompile/c-kzg",
+	"precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 secp256r1 = ["precompile/secp256r1"]
-bn = ["precompile/bn"]
 matter-labs-eip1962 = ["precompile/matter-labs-eip1962"]
 
 # Compile in portable mode, without ISA extensions.

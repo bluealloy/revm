@@ -40,13 +40,13 @@ alloy-sol-types.workspace = true
 sha2.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-	"serde?/std",
-	"revm/std",
-	"alloy-sol-types/std",
-	"once_cell/std",
-	"sha2/std"
+    "serde?/std",
+    "revm/std",
+    "alloy-sol-types/std",
+    "once_cell/std",
+    "sha2/std",
 ]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
@@ -72,4 +72,3 @@ c-kzg = ["revm/c-kzg"]
 kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
 matter-labs-eip1962 = ["revm/matter-labs-eip1962"]
-bn = ["revm/bn"]

@@ -48,7 +48,7 @@ ripemd.workspace = true
 aurora-engine-modexp.workspace = true
 
 # ecAdd, ecMul, ecPairing
-bn = { workspace = true, optional = true }
+bn = { workspace = true }
 eth_pairings = { workspace = true, features = ["eip_196"], optional = true }
 
 # KZG point evaluation precompile
@@ -78,7 +78,7 @@ serde_json.workspace = true
 serde_derive.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"primitives/std",
 	"k256/std",
@@ -118,9 +118,6 @@ libsecp256k1 = ["dep:libsecp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
-
-# Use the substrate-bn implement for BN128 operations (EIP1962)
-bn = ["dep:bn"]
 
 # Use the matter-labs implementation for BN128 operations (EIP1962)
 matter-labs-eip1962 = ["dep:eth_pairings"]

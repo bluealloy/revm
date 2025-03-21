@@ -1,7 +1,6 @@
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
 
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 use revm::precompile::bn128;
 
 use revm::{
@@ -61,7 +60,6 @@ pub fn granite() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let precompiles = fjord().clone();
 
-        #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
         let precompiles = {
             // Restrict bn256Pairing input size
             let mut precompiles = precompiles;
@@ -133,13 +131,11 @@ pub mod bn128_pair {
     use revm::precompile::{PrecompileError, PrecompileResult, PrecompileWithAddress};
 
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     pub const GRANITE: PrecompileWithAddress =
         PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
             run_pair(input, gas_limit)
         });
 
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength);
@@ -153,7 +149,6 @@ pub mod bn128_pair {
     }
 }
 
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 #[cfg(test)]
 mod tests {
     use super::*;

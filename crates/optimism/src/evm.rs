@@ -225,7 +225,6 @@ mod tests {
         ));
     }
 
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     fn bn128_pair_test_tx(
         spec: OpSpecId,
     ) -> Context<
@@ -251,7 +250,6 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = spec)
     }
 
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     #[test]
     fn test_halted_tx_call_bn128_pair_fjord() {
         let ctx = bn128_pair_test_tx(OpSpecId::FJORD);
@@ -269,7 +267,6 @@ mod tests {
         ));
     }
 
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     #[test]
     fn test_halted_tx_call_bn128_pair_granite() {
         let ctx = bn128_pair_test_tx(OpSpecId::GRANITE);
