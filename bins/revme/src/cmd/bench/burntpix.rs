@@ -1,5 +1,6 @@
 pub mod static_data;
 
+use criterion::{measurement::WallTime, BenchmarkGroup};
 use static_data::{
     BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
     BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
@@ -28,7 +29,7 @@ sol! {
     }
 }
 
-pub fn run() {
+pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
     let run_call_data = IBURNTPIX::runCall { seed, iterations }.abi_encode();
@@ -45,33 +46,37 @@ pub fn run() {
         })
         .build_mainnet();
 
-    let started = Instant::now();
-    let tx_result = evm.replay().unwrap().result;
-    let return_data = match tx_result {
-        ExecutionResult::Success {
-            output, gas_used, ..
-        } => {
-            println!("Gas used: {:?}", gas_used);
-            println!("Time elapsed: {:?}", started.elapsed());
-            match output {
-                Output::Call(value) => value,
-                _ => unreachable!("Unexpected output type"),
-            }
-        }
-        _ => unreachable!("Execution failed: {:?}", tx_result),
-    };
+    criterion_group.bench_function("burntpix", |b| {
+        b.iter(|| {
+            let started = Instant::now();
+            let tx_result = evm.replay().unwrap().result;
+            let return_data = match tx_result {
+                ExecutionResult::Success {
+                    output, gas_used, ..
+                } => {
+                    println!("Gas used: {:?}", gas_used);
+                    println!("Time elapsed: {:?}", started.elapsed());
+                    match output {
+                        Output::Call(value) => value,
+                        _ => unreachable!("Unexpected output type"),
+                    }
+                }
+                _ => unreachable!("Execution failed: {:?}", tx_result),
+            };
 
-    // Remove returndata offset and length from output
-    let returndata_offset = 64;
-    let data = &return_data[returndata_offset..];
+            // Remove returndata offset and length from output
+            let returndata_offset = 64;
+            let data = &return_data[returndata_offset..];
 
-    // Remove trailing zeros
-    let trimmed_data = data
-        .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
-        .0;
-    let file_name = format!("{}_{}", seed, iterations);
+            // Remove trailing zeros
+            let trimmed_data = data
+                .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
+                .0;
+            let file_name = format!("{}_{}", seed, iterations);
 
-    svg(file_name, trimmed_data).expect("Failed to store svg");
+            svg(file_name, trimmed_data).expect("Failed to store svg");
+        })
+    });
 }
 
 fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
