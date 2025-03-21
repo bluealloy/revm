@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.6](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.5...op-revm-v1.0.0-alpha.6) - 2025-03-21
+
+### Added
+
+- InspectEvm fn renames, inspector docs, book cleanup ([#2275](https://github.com/bluealloy/revm/pull/2275))
+- Return Fatal error on bls precompiles if in no_std ([#2249](https://github.com/bluealloy/revm/pull/2249))
+- Remove PrecompileError from PrecompileProvider ([#2233](https://github.com/bluealloy/revm/pull/2233))
+
+### Fixed
+
+- *(op)* deposit txs are identifier 126 or 0x7e not 0x7f ([#2237](https://github.com/bluealloy/revm/pull/2237))
+
+### Other
+
+- bring operator fee fixes to trunk ([#2273](https://github.com/bluealloy/revm/pull/2273))
+- *(op-test-cov)* Add test for serializing deposit transaction parts ([#2267](https://github.com/bluealloy/revm/pull/2267))
+- *(op-precompiles)* Check subset of l1 precompiles in op ([#2204](https://github.com/bluealloy/revm/pull/2204))
+- *(op-handler)* Add test for halted deposit tx post regolith ([#2269](https://github.com/bluealloy/revm/pull/2269))
+- *(op)* Remove redundant trait DepositTransaction ([#2265](https://github.com/bluealloy/revm/pull/2265))
+- Fix sys deposit tx gas test ([#2263](https://github.com/bluealloy/revm/pull/2263))
+- remove wrong `&mut` and duplicated spec ([#2276](https://github.com/bluealloy/revm/pull/2276))
+- *(op-precompiles)* clean up op tx tests ([#2242](https://github.com/bluealloy/revm/pull/2242))
+- make str to SpecId conversion fallible ([#2236](https://github.com/bluealloy/revm/pull/2236))
+- *(op-precompiles)* Add tests for bls12-381 map fp to g ([#2241](https://github.com/bluealloy/revm/pull/2241))
+- add a safe blst wrapper ([#2223](https://github.com/bluealloy/revm/pull/2223))
+- *(op-precompiles)* Reuse tests for bls12-381 msm tests for pairing ([#2239](https://github.com/bluealloy/revm/pull/2239))
+- *(op-precompiles)* add bls12-381 g2 add and msm tests ([#2231](https://github.com/bluealloy/revm/pull/2231))
+- *(op-precompiles)* Add test for g1 msm ([#2227](https://github.com/bluealloy/revm/pull/2227))
+- simplify single UT for OpSpecId compatibility. ([#2216](https://github.com/bluealloy/revm/pull/2216))
+- use AccessListItem associated type instead of AccessList ([#2214](https://github.com/bluealloy/revm/pull/2214))
+
 ## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.4...op-revm-v1.0.0-alpha.5) - 2025-03-16
 
 ### Added

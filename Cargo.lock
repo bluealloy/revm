@@ -2772,7 +2772,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "op-revm"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.6"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3456,7 +3456,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "20.0.0-alpha.6"
+version = "20.0.0-alpha.7"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3473,7 +3473,7 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "bitvec",
  "paste",
@@ -3484,7 +3484,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.6"
 dependencies = [
  "cfg-if",
  "derive-where",
@@ -3499,7 +3499,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "1.0.0-alpha.5"
+version = "1.0.0-alpha.6"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -3512,7 +3512,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3533,7 +3533,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3548,7 +3548,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "1.0.0-alpha.6"
+version = "1.0.0-alpha.7"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3569,7 +3569,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "1.0.0-alpha.6"
+version = "1.0.0-alpha.7"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3585,7 +3585,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "16.0.0-alpha.6"
+version = "16.0.0-alpha.7"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3598,7 +3598,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "17.0.0-alpha.6"
+version = "17.0.0-alpha.7"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
@@ -3625,7 +3625,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "16.0.0-alpha.4"
+version = "16.0.0-alpha.5"
 dependencies = [
  "alloy-primitives",
  "enumn",
@@ -3634,7 +3634,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "bitflags",
  "revm-bytecode",
@@ -3653,7 +3653,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "3.0.0-alpha.6"
+version = "3.0.0-alpha.7"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
