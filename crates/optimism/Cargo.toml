@@ -43,18 +43,15 @@ serde_json = { workspace = true, features = ["alloc"] }
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-	"serde?/std",
-	"revm/std",
-	"alloy-sol-types/std",
-	"once_cell/std",
-	"sha2/std",
-	"serde_json/std"
+    "serde?/std",
+    "revm/std",
+    "alloy-sol-types/std",
+    "once_cell/std",
+    "sha2/std",
+    "serde_json/std",
 ]
 hashbrown = ["revm/hashbrown"]
-serde = [
-	"dep:serde",
-	"revm/serde",
-]
+serde = ["dep:serde", "revm/serde"]
 portable = ["revm/portable"]
 
 dev = [
@@ -76,3 +73,4 @@ c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
+bn = ["revm/bn"]
