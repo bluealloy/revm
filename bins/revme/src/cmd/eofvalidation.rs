@@ -76,10 +76,11 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     continue;
                 }
                 test_sum += 1;
-                let kind = if test_vector.container_kind.is_some() {
-                    Some(CodeType::ReturnContract)
-                } else {
-                    Some(CodeType::ReturnOrStop)
+                let kind = match test_vector.container_kind.as_deref() {
+                    Some("RUNTIME") => Some(CodeType::ReturnOrStop),
+                    Some("INITCODE") => Some(CodeType::ReturnContract),
+                    None => Some(CodeType::ReturnOrStop),
+                    _ => return Err(Error::Custom("Invalid container kind")),
                 };
                 // In future this can be generalized to cover multiple forks, Not just Osaka.
                 let Some(test_result) = test_vector.results.get("Osaka") else {

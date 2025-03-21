@@ -47,10 +47,11 @@ jobs:
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
             ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
-            tests/eof_suite/eest/state_tests \
-            tests/pectra/state_tests
+            tests/eof/state_tests \
+            tests/stable/state_tests \
+            tests/develop/state_tests
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
-          tests/eof_suite/eest/eof_tests/osaka
+          tests/eof/eof_tests/osaka
 
