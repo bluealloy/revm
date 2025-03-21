@@ -78,6 +78,12 @@ pub fn isthmus() -> &'static Precompiles {
             precompiles.extend(precompile::bls12_381::precompiles());
             precompiles
         };
+        #[cfg(not(feature = "blst"))]
+        let precompiles = {
+            let mut precompiles = precompiles;
+            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
+            precompiles
+        };
         Box::new(precompiles)
     })
 }
@@ -195,5 +201,26 @@ mod tests {
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+    }
+
+    #[test]
+    fn test_cancun_precompiles_in_fjord() {
+        // additional to cancun, fjord has p256verify
+        assert_eq!(fjord().difference(Precompiles::cancun()).len(), 1)
+    }
+
+    #[test]
+    fn test_cancun_precompiles_in_granite() {
+        // granite has p256verify (fjord)
+        // granite has modification of cancun's bn128 pair (doesn't count as new precompile)
+        assert_eq!(granite().difference(Precompiles::cancun()).len(), 1)
+    }
+
+    #[test]
+    fn test_prague_precompiles_in_isthmus() {
+        let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
+
+        // isthmus contains all precompiles that were new in prague, without modifications
+        assert!(new_prague_precompiles.difference(isthmus()).is_empty())
     }
 }
