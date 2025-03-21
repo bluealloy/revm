@@ -13,7 +13,6 @@ pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -28,8 +27,8 @@ pub mod utilities;
 
 pub use interface::*;
 
-#[cfg(all(feature = "bn", feature = "matter-labs-eip1962"))]
-// silence substrate-bn impl lint as matter-labs impl will be used as default if both are enabled.
+#[cfg(feature = "matter-labs-eip1962")]
+// silence bn lint as matter-labs impl will be used as default if both are enabled.
 use bn as _;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
@@ -92,29 +91,15 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
-            cfg_if! {
-                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
-                    let eip1962_precompiles = [
-                        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                        bn128::add::BYZANTIUM,
-                        bn128::mul::BYZANTIUM,
-                        bn128::pair::BYZANTIUM,
-                    ];
-                } else {
-                    let eip1962_precompiles = [
-                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
-                    ];
-                }
-            }
-            precompiles.extend(eip1962_precompiles);
             precompiles.extend([
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                bn128::add::BYZANTIUM,
+                bn128::mul::BYZANTIUM,
+                bn128::pair::BYZANTIUM,
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
             ]);
-
             Box::new(precompiles)
         })
     }
@@ -124,26 +109,11 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
-
-            cfg_if! {
-                if #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))] {
-                    let eip1962_precompiles = [
-                        // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                        bn128::add::ISTANBUL,
-                        bn128::mul::ISTANBUL,
-                        bn128::pair::ISTANBUL,
-                    ];
-                } else {
-                    let eip1962_precompiles = [
-                        PrecompileWithAddress(u64_to_address(6), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(7), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into()))),
-                        PrecompileWithAddress(u64_to_address(8), |_,_| Err(PrecompileError::Fatal("bn feature is not enabled".into())))
-                    ];
-                }
-            }
-            precompiles.extend(eip1962_precompiles);
-
             precompiles.extend([
+                // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                bn128::add::ISTANBUL,
+                bn128::mul::ISTANBUL,
+                bn128::pair::ISTANBUL,
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
             ]);
@@ -181,6 +151,7 @@ impl Precompiles {
                     let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
+
 
             precompiles.extend([
                 precompile,
@@ -268,6 +239,40 @@ impl Precompiles {
         self.addresses.extend(items.iter().map(|p| *p.address()));
         self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
     }
+
+    /// Returns complement of `other` in `self`.
+    ///
+    /// Two entries are considered equal if the precompile addresses are equal.
+    pub fn difference(&self, other: &Self) -> Self {
+        let Self { inner, .. } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, _)| other.inner.get(*a).is_none())
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
+
+        Self { inner, addresses }
+    }
+
+    /// Returns intersection of `self` and `other`.
+    ///
+    /// Two entries are considered equal if the precompile addresses are equal.
+    pub fn intersection(&self, other: &Self) -> Self {
+        let Self { inner, .. } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, _)| other.inner.get(*a).is_some())
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
+
+        Self { inner, addresses }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -345,4 +350,22 @@ pub const fn u64_to_address(x: u64) -> Address {
     Address::new([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
     ])
+}
+
+#[cfg(test)]
+mod test {
+    use crate::Precompiles;
+
+    #[test]
+    fn test_difference_precompile_sets() {
+        let difference = Precompiles::istanbul().difference(Precompiles::berlin());
+        assert!(difference.is_empty());
+    }
+
+    #[test]
+    fn test_intersection_precompile_sets() {
+        let intersection = Precompiles::homestead().intersection(Precompiles::byzantium());
+
+        assert_eq!(intersection.len(), 4)
+    }
 }

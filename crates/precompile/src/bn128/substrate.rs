@@ -132,6 +132,10 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
 /// Reads a scalar from the input slice
 ///
 /// Note: The scalar does not need to be canonical.
+///
+/// # Panics
+///
+/// If `input.len()` is not equal to [`SCALAR_LEN`].
 #[inline]
 pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
     assert_eq!(

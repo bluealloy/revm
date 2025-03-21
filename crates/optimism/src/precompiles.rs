@@ -1,15 +1,14 @@
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
-
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
-use revm::precompile::bn128;
-
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
-    precompile::{self, secp256r1, Precompiles},
+    precompile::{
+        self, bn128, secp256r1, PrecompileError, Precompiles,
+        {PrecompileResult, PrecompileWithAddress},
+    },
     primitives::{Address, Bytes},
 };
 use std::boxed::Box;
@@ -59,15 +58,9 @@ pub fn fjord() -> &'static Precompiles {
 pub fn granite() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = fjord().clone();
-
-        #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
-        let precompiles = {
-            // Restrict bn256Pairing input size
-            let mut precompiles = precompiles;
-            precompiles.extend([bn128_pair::GRANITE]);
-            precompiles
-        };
+        let mut precompiles = fjord().clone();
+        // Restrict bn256Pairing input size
+        precompiles.extend([bn128_pair::GRANITE]);
         Box::new(precompiles)
     })
 }
@@ -83,6 +76,12 @@ pub fn isthmus() -> &'static Precompiles {
         let precompiles = {
             let mut precompiles = precompiles;
             precompiles.extend(precompile::bls12_381::precompiles());
+            precompiles
+        };
+        #[cfg(not(feature = "blst"))]
+        let precompiles = {
+            let mut precompiles = precompiles;
+            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
             precompiles
         };
         Box::new(precompiles)
@@ -130,16 +129,13 @@ impl Default for OpPrecompiles {
 
 pub mod bn128_pair {
     use super::*;
-    use revm::precompile::{PrecompileError, PrecompileResult, PrecompileWithAddress};
 
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     pub const GRANITE: PrecompileWithAddress =
         PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
             run_pair(input, gas_limit)
         });
 
-    #[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength);
@@ -153,7 +149,6 @@ pub mod bn128_pair {
     }
 }
 
-#[cfg(any(feature = "bn", feature = "matter-labs-eip1962"))]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,5 +201,26 @@ mod tests {
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+    }
+
+    #[test]
+    fn test_cancun_precompiles_in_fjord() {
+        // additional to cancun, fjord has p256verify
+        assert_eq!(fjord().difference(Precompiles::cancun()).len(), 1)
+    }
+
+    #[test]
+    fn test_cancun_precompiles_in_granite() {
+        // granite has p256verify (fjord)
+        // granite has modification of cancun's bn128 pair (doesn't count as new precompile)
+        assert_eq!(granite().difference(Precompiles::cancun()).len(), 1)
+    }
+
+    #[test]
+    fn test_prague_precompiles_in_isthmus() {
+        let new_prague_precompiles = Precompiles::prague().difference(Precompiles::cancun());
+
+        // isthmus contains all precompiles that were new in prague, without modifications
+        assert!(new_prague_precompiles.difference(isthmus()).is_empty())
     }
 }

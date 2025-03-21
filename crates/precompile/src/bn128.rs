@@ -5,13 +5,13 @@ use crate::{
 use std::vec::Vec;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "matter-labs-eip1962")] {
+    if #[cfg(feature = "matter-labs-eip1962")]{
         mod matter_labs;
         use matter_labs::{
             encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
             read_scalar,
         };
-    } else if #[cfg(feature = "bn")]{
+    } else {
         mod substrate;
         use substrate::{
             encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
@@ -185,11 +185,28 @@ pub fn run_pair(
         // This is where G1 ends.
         let g2_start = start + G1_LEN;
 
-        // Get G1 and G2 points from the input
-        let a = read_g1_point(&input[g1_start..g2_start])?;
-        let b = read_g2_point(&input[g2_start..g2_start + G2_LEN])?;
+        let encoded_g1_element = &input[g1_start..g2_start];
+        let encoded_g2_element = &input[g2_start..g2_start + G2_LEN];
 
-        points.push((a, b));
+        // If either the G1 or G2 element is the encoded representation
+        // of the point at infinity, then these two points are no-ops
+        // in the pairing computation.
+        //
+        // Note: we do not skip the validation of these two elements even if
+        // one of them is the point at infinity because we could have G1 be
+        // the point at infinity and G2 be an invalid element or vice versa.
+        // In that case, the precompile should error because one of the elements
+        // was invalid.
+        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
+        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
+
+        // Get G1 and G2 points from the input
+        let a = read_g1_point(encoded_g1_element)?;
+        let b = read_g2_point(encoded_g2_element)?;
+
+        if !g1_is_zero && !g2_is_zero {
+            points.push((a, b));
+        }
     }
 
     let success = pairing_check(&points);
