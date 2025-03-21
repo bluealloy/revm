@@ -3,8 +3,9 @@ use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex, keccak256, Bytes, U25
 use revm_precompile::{
     bn128::{
         add::ISTANBUL_ADD_GAS_COST,
+        mul::ISTANBUL_MUL_GAS_COST,
         pair::{ISTANBUL_PAIR_BASE, ISTANBUL_PAIR_PER_POINT},
-        run_add, run_pair,
+        run_add, run_mul, run_pair,
     },
     kzg_point_evaluation::run,
     secp256k1::ec_recover_run,
@@ -64,6 +65,21 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
         .gas_used;
     println!("gas used by bn128 add precompile: {:?}", res);
 
+    // === BN128 MUL ===
+
+    let ecmul_input = hex::decode(
+        "\
+         18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
+         063c909c4720840cb5134cb9f59fa749755796819658d32efc0d288198f37266\
+         06614e20c147e940f2d70da3f74c9a17df361706a4485c742bd6788478fa17d7",
+    )
+    .unwrap();
+
+    let res = run_mul(&ecmul_input, ISTANBUL_MUL_GAS_COST, 6000)
+        .unwrap()
+        .gas_used;
+    println!("gas used by bn128 mul precompile: {:?}", res);
+
     // === ECRECOVER ===
 
     // Generate secp256k1 signature
@@ -112,6 +128,10 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     group.bench_function(group_name("bn128 add precompile"), |b| {
         b.iter(|| run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap())
+    });
+
+    group.bench_function(group_name("bn128 mul precompile"), |b| {
+        b.iter(|| run_mul(&ecmul_input, ISTANBUL_MUL_GAS_COST, 6000).unwrap())
     });
 
     group.bench_function(group_name("ecpairing precompile"), |b| {
