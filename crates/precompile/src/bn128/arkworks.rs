@@ -173,9 +173,7 @@ pub(super) fn read_scalar(input: &[u8]) -> Fr {
         "unexpected scalar length. got {}, expected {SCALAR_LEN}",
         input.len()
     );
-    let mut input = input.to_vec();
-    input.reverse();
-    Fr::deserialize_uncompressed_unchecked(&input[..]).unwrap() // TODO: Check the reasons as to why this can fail with unchecked
+    Fr::from_be_bytes_mod_order(input)
 }
 
 /// Performs point addition on two G1 points.
