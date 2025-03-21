@@ -44,25 +44,31 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     for i in 0..k {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
+        let encoded_scalar = &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
+            ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH];
 
         // Filter out points infinity as an optimization, since it is a no-op.
-        // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
-        // zero out all of the points. Since all points are in affine, this bug is avoided.
+        // Note: Previously, points were being batch converted from Jacobian to Affine.
+        // In `blst`, this would essentially, zero out all of the points.
+        // Since all points are now in affine, this bug is avoided.
         if encoded_g1_element.iter().all(|i| *i == 0) {
             continue;
         }
-
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         let p0_aff = extract_g1_input(encoded_g1_element)?;
+
+        // If the scalar is zero, then this is a no-op.
+        //
+        // Note: This check is made after checking that g1 is valid.
+        // this is because we want the precompile to error when
+        // G1 is invalid, even if the scalar is zero.
+        if encoded_scalar.iter().all(|i| *i == 0) {
+            continue;
+        }
+
         g1_points.push(p0_aff);
 
-        scalars_bytes.extend_from_slice(
-            &extract_scalar_input(
-                &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
-                    ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH],
-            )?
-            .b,
-        );
+        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
     }
 
     // Return the encoding for the point at the infinity according to EIP-2537

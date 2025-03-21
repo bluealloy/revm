@@ -44,6 +44,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     for i in 0..k {
         let encoded_g2_elements =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
+        let encoded_scalar = &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
+            ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH];
 
         // Filter out points infinity as an optimization, since it is a no-op.
         // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
@@ -51,22 +53,24 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         if encoded_g2_elements.iter().all(|i| *i == 0) {
             continue;
         }
-
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
         let p0_aff = extract_g2_input(encoded_g2_elements)?;
 
+        // If the scalar is zero, then this is a no-op.
+        //
+        // Note: This check is made after checking that g2 is valid.
+        // this is because we want the precompile to error when
+        // G2 is invalid, even if the scalar is zero.
+        if encoded_scalar.iter().all(|i| *i == 0) {
+            continue;
+        }
+
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
 
-        scalars_bytes.extend_from_slice(
-            &extract_scalar_input(
-                &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
-                    ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH],
-            )?
-            .b,
-        );
+        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
     }
 
     // Return infinity point if all points are infinity
