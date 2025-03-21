@@ -2,10 +2,7 @@
 use crate::{
     api::exec::OpContextTr,
     constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
-    transaction::{
-        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTr,
-    },
+    transaction::{deposit::DEPOSIT_TRANSACTION_TYPE, OpTransactionError, OpTxTr},
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
@@ -150,7 +147,6 @@ where
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            let spec = ctx.cfg().spec();
             tx_l1_cost = ctx.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
         }
 
@@ -178,7 +174,6 @@ where
             }
 
             let mut caller_account = ctx.journal().load_account(caller)?;
-
             caller_account.info.balance = caller_account
                 .info
                 .balance
@@ -261,7 +256,7 @@ where
         self.mainnet.reimburse_caller(evm, exec_result)?;
 
         let context = evm.ctx();
-        if context.tx().source_hash().is_zero() {
+        if matches!(context.tx().source_hash(), Some(source_hash) if source_hash.is_zero()) {
             let caller = context.tx().caller();
             let spec = context.cfg().spec();
             let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
@@ -566,7 +561,7 @@ mod tests {
     }
 
     #[test]
-    fn test_consume_gas_sys_deposit_tx() {
+    fn test_consume_gas_deposit_tx() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
@@ -577,6 +572,22 @@ mod tests {
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spent(), 100);
+        assert_eq!(gas.refunded(), 0);
+    }
+
+    #[test]
+    fn test_consume_gas_sys_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+                tx.deposit.is_system_transaction = true;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
+        let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.spent(), 0);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -833,7 +844,6 @@ mod tests {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
                 tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.base.gas_limit = 0;
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 

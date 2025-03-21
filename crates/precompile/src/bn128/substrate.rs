@@ -1,4 +1,4 @@
-use super::{FQ2_LEN, FQ_LEN, G1_LEN};
+use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
 use crate::PrecompileError;
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
@@ -127,6 +127,37 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
     let ba = read_fq2(&input[0..FQ2_LEN])?;
     let bb = read_fq2(&input[FQ2_LEN..2 * FQ2_LEN])?;
     new_g2_point(ba, bb)
+}
+
+/// Reads a scalar from the input slice
+///
+/// Note: The scalar does not need to be canonical.
+///
+/// # Panics
+///
+/// If `input.len()` is not equal to [`SCALAR_LEN`].
+#[inline]
+pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
+    assert_eq!(
+        input.len(),
+        SCALAR_LEN,
+        "unexpected scalar length. got {}, expected {SCALAR_LEN}",
+        input.len()
+    );
+    // `Fr::from_slice` can only fail when the length is not `SCALAR_LEN`.
+    bn::Fr::from_slice(input).unwrap()
+}
+
+/// Performs point addition on two G1 points.
+#[inline]
+pub(super) fn g1_point_add(p1: G1, p2: G1) -> G1 {
+    p1 + p2
+}
+
+/// Performs a G1 scalar multiplication.
+#[inline]
+pub(super) fn g1_point_mul(p: G1, fr: bn::Fr) -> G1 {
+    p * fr
 }
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
