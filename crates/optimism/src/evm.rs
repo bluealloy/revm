@@ -112,7 +112,7 @@ mod tests {
         context_interface::result::HaltReason,
         database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
         interpreter::gas::{calculate_initial_tx_gas, InitialAndFloorGas},
-        precompile::{bls12_381_const, bls12_381_utils, secp256r1, u64_to_address},
+        precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
         primitives::{Address, Bytes, TxKind, U256},
         state::Bytecode,
         Context, ExecuteEvm, Journal,
@@ -235,8 +235,6 @@ mod tests {
         Journal<EmptyDB>,
         L1BlockInfo,
     > {
-        use revm::precompile::bn128;
-
         let input = Bytes::from([1; GRANITE_MAX_INPUT_SIZE + 2]);
         let InitialAndFloorGas { initial_gas, .. } =
             calculate_initial_tx_gas(spec.into(), &input[..], false, 0, 0, 0);
