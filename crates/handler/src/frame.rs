@@ -316,10 +316,12 @@ where
         let caller_balance = context
             .journal()
             .load_account(inputs.caller)?
-            .map(|a| a.info.balance);
+            .data
+            .info
+            .balance;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance.data < inputs.value {
+        if caller_balance < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 

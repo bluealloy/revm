@@ -150,7 +150,6 @@ where
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            let spec = ctx.cfg().spec();
             tx_l1_cost = ctx.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
         }
 
@@ -178,7 +177,6 @@ where
             }
 
             let mut caller_account = ctx.journal().load_account(caller)?;
-
             caller_account.info.balance = caller_account
                 .info
                 .balance
