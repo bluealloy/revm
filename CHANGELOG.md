@@ -1,5 +1,14 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v64 tag
+date: 21.03.2025
+
+Optimisms fixes. Tests bump.
+
+* `revm`: 19.6.0 -> 19.7.0
+* `revm-precompile`: 16.1.0-> 16.2.0
+* `revme`: 2.6.0 -> 2.7.0
+
 # v58 tag
 date: 10.03.2025
 
