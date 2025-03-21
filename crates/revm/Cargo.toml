@@ -49,7 +49,7 @@ std = [
 	"database-interface/std",
 	"inspector/std",
 	"primitives/std",
-	"state/std",
+	"state/std"
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
 serde = [
@@ -62,7 +62,7 @@ serde = [
 	"bytecode/serde",
 	"context/serde",
 	"database/serde",
-	"state/serde",
+	"state/serde"
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
