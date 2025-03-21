@@ -166,7 +166,7 @@ impl Stack {
             return [U256::ZERO; N];
         }
         let mut result = [U256::ZERO; N];
-        for v in result.iter_mut() {
+        for v in &mut result {
             *v = self.data.pop().unwrap_unchecked();
         }
         result

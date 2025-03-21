@@ -1,7 +1,7 @@
 use super::Journal;
 use database_interface::EmptyDB;
 
-/// A clonable version of JournaledState that uses EmptyDB.
+/// A cloneable version of JournaledState that uses EmptyDB.
 /// Used to clone the journaled state and for initialization of new journaled state.
 pub type JournalInit = Journal<EmptyDB>;
 

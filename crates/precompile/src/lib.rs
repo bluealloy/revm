@@ -235,6 +235,40 @@ impl Precompiles {
         self.addresses.extend(items.iter().map(|p| *p.address()));
         self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
     }
+
+    /// Returns complement of `other` in `self`.
+    ///
+    /// Two entries are considered equal if the precompile addresses are equal.
+    pub fn difference(&self, other: &Self) -> Self {
+        let Self { inner, .. } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, _)| other.inner.get(*a).is_none())
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
+
+        Self { inner, addresses }
+    }
+
+    /// Returns intersection of `self` and `other`.
+    ///
+    /// Two entries are considered equal if the precompile addresses are equal.
+    pub fn intersection(&self, other: &Self) -> Self {
+        let Self { inner, .. } = self;
+
+        let inner = inner
+            .iter()
+            .filter(|(a, _)| other.inner.get(*a).is_some())
+            .map(|(a, p)| (*a, *p))
+            .collect::<HashMap<_, _>>();
+
+        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
+
+        Self { inner, addresses }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -312,4 +346,22 @@ pub const fn u64_to_address(x: u64) -> Address {
     Address::new([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
     ])
+}
+
+#[cfg(test)]
+mod test {
+    use crate::Precompiles;
+
+    #[test]
+    fn test_difference_precompile_sets() {
+        let difference = Precompiles::istanbul().difference(Precompiles::berlin());
+        assert!(difference.is_empty());
+    }
+
+    #[test]
+    fn test_intersection_precompile_sets() {
+        let intersection = Precompiles::homestead().intersection(Precompiles::byzantium());
+
+        assert_eq!(intersection.len(), 4)
+    }
 }
