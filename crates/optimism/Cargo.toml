@@ -73,4 +73,4 @@ c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
-matter-labs-eip1962 = ["revm/matter-labs-eip1962"]
+bn = ["revm/bn"]
