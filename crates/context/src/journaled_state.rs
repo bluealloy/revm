@@ -804,9 +804,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
+        let original_value = slot.original_value();
+
+        Self::touch_account(self.journal.last_mut().unwrap(), &address, acc);
+        // touch account. This is important as for pre SpuriousDragon account could be
         Ok(StateLoad::new(
             SStoreResult {
-                original_value: slot.original_value(),
+                original_value,
                 present_value: present.data,
                 new_value: new,
             },
