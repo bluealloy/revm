@@ -6,7 +6,7 @@ use revme::cmd::{
 
 fn evm(c: &mut Criterion) {
     // call analysis to init static data.
-    revme::cmd::bench::analysis::run();
+    revme::cmd::bench::analysis::run(&mut c.benchmark_group("revme"));
 
     for &bench_name in BenchName::ALL {
         let cmd = MainCmd::Bench(bench::Cmd {

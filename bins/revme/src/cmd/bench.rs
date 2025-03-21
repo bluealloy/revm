@@ -36,9 +36,9 @@ impl BenchName {
 pub struct Cmd {
     #[arg(value_enum)]
     pub name: BenchName,
-    #[arg(short, long)]
+    #[arg(short = 'w', long)]
     pub warmup: Option<f64>,
-    #[arg(short, long)]
+    #[arg(short = 'm', long)]
     pub measurement_time: Option<f64>,
 }
 
@@ -53,17 +53,11 @@ impl Cmd {
                 self.measurement_time.unwrap_or(1.0),
             ));
 
-        println!("{:?}", self.warmup);
-        println!("{:?}", self.measurement_time);
-
         match self.name {
             BenchName::Analysis => {
-                println!("also {:?}", self.warmup);
                 let mut criterion_group = criterion.benchmark_group("revme");
                 analysis::run(&mut criterion_group);
-                println!("also {:?}", self.warmup);
                 criterion_group.finish();
-                println!("this {:?}", self.warmup);
             }
             BenchName::Burntpix => {
                 let mut criterion_group = criterion.benchmark_group("revme");
@@ -74,16 +68,12 @@ impl Cmd {
                 let mut criterion_group = criterion.benchmark_group("revme");
                 snailtracer::run(&mut criterion_group);
                 criterion_group.finish();
-                println!("{:?}", self.warmup);
             }
             BenchName::Transfer => {
                 let mut criterion_group = criterion.benchmark_group("revme");
                 transfer::run(&mut criterion_group);
                 criterion_group.finish();
-                println!("{:?}", self.warmup);
             }
         }
-        println!("{:?}", self.warmup);
-        println!("{:?}", self.measurement_time);
     }
 }
