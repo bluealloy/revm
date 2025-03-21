@@ -93,7 +93,7 @@ std = [
 	"aurora-engine-modexp/std",
 	"p256?/std",
 	"serde/std",
-	"serde_json/std",
+	"serde_json/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
