@@ -48,7 +48,9 @@ ripemd.workspace = true
 aurora-engine-modexp.workspace = true
 
 # ecAdd, ecMul, ecPairing
-bn = { workspace = true }
+bn.workspace = true
+
+# Optionally use matter-labs implementation for eip1962
 eth_pairings = { workspace = true, features = ["eip_196"], optional = true }
 
 # KZG point evaluation precompile
