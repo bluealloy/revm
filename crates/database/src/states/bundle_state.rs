@@ -594,7 +594,7 @@ impl BundleState {
         let mut accounts = Vec::with_capacity(state_len);
         let mut storage = Vec::with_capacity(state_len);
 
-        for (address, account) in self.state.iter() {
+        for (address, account) in &self.state {
             // Append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if is_value_known.is_not_known() || account.is_info_changed() {
