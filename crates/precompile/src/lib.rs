@@ -114,7 +114,6 @@ impl Precompiles {
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
             ]);
-
             Box::new(precompiles)
         })
     }
