@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0](https://github.com/bluealloy/revm/compare/revm-v2.6.0...revm-v2.7.0) - 2025-03-21
+
+### Other
+
+- 857d5def chore: bump test suite to Vítkov v4.1.0 tag (#2281) 
+- 6d27c88d fix(optimism): Operator Fee Calculation & Deposit Identifier (#2257)
+
 ## [2.6.0](https://github.com/bluealloy/revm/compare/revme-v2.5.0...revme-v2.6.0) - 2025-03-10
 
 ### Other

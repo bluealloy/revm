@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [19.7.0](https://github.com/bluealloy/revm/compare/revm-v19.6.0...revm-v19.7.0) - 2025-03-21
+
+### Other
+
+- 857d5def chore: bump test suite to Vítkov v4.1.0 tag (#2281) 
+- 6d27c88d fix(optimism): Operator Fee Calculation & Deposit Identifier (#2257)
 
 ## [19.6.0](https://github.com/bluealloy/revm/compare/revm-v19.5.0...revm-v19.6.0) - 2025-03-10
 
