@@ -8,6 +8,7 @@ use std::boxed::Box;
 pub struct SystemInterruptionInputs {
     pub target_address: Address,
     pub bytecode_address: Address,
+    pub eip7702_address: Option<Address>,
     pub caller: Address,
     pub call_value: U256,
     pub call_id: u32,

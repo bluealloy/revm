@@ -4,7 +4,7 @@ use super::{
     utils::recover_address,
 };
 use fluentbase_genesis::devnet_genesis_from_file;
-use fluentbase_sdk::{derive::derive_keccak256, Address, PRECOMPILE_EVM_RUNTIME};
+use fluentbase_sdk::{Address, CODE_HASH_SLOT, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
@@ -541,8 +541,6 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }
 
-        const CODE_HASH_SLOT: B256 = B256::new(derive_keccak256!("_evm_code_hash"));
-
         for (address, mut info) in unit.pre {
             let mut acc_info = AccountInfo {
                 balance: info.balance,
@@ -550,6 +548,10 @@ pub fn execute_test_suite(
                 ..Default::default()
             };
             let evm_code_hash = keccak256(&info.code);
+            println!(
+                " - address={address}, evm_code_hash={evm_code_hash}, evm_code_hash_u256={}, code_len={}",
+                Into::<U256>::into(evm_code_hash), info.code.len(),
+            );
             // write EVM code hash state
             let evm_code_hash_slot: U256 = Into::<U256>::into(CODE_HASH_SLOT);
             info.storage
@@ -571,9 +573,6 @@ pub fn execute_test_suite(
                     ..Default::default()
                 },
             );
-            // in non-proxy mode, we store EVM bytecode in code
-            // acc_info.code_hash = evm_code_hash;
-            // acc_info.code = Some(Bytecode::new_raw(info.code.clone()));
         }
 
         let mut env = Box::<Env>::default();

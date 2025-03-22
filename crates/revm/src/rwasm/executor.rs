@@ -90,14 +90,16 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     // execute function
     let mut runtime_context = RuntimeContext::root(fuel_limit);
-    if is_self_gas_management_contract(&bytecode_address) {
-        runtime_context = runtime_context.without_fuel();
+    if let Some(eip7702_address) = interpreter.contract.eip7702_address {
+        if is_self_gas_management_contract(&eip7702_address) {
+            runtime_context = runtime_context.without_fuel();
+        }
     }
     let native_sdk = RuntimeContextWrapper::new(runtime_context);
     let (fuel_consumed, fuel_refunded, exit_code) = native_sdk.exec(
         bytecode_hash,
         &context_input,
-        fuel_limit,
+        Some(fuel_limit),
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
     );
 
@@ -119,10 +121,8 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     Ok(process_exec_result(
         interpreter.contract.target_address,
-        interpreter
-            .contract
-            .bytecode_address
-            .unwrap_or(interpreter.contract.target_address),
+        bytecode_address,
+        interpreter.contract.eip7702_address,
         interpreter.contract.caller,
         interpreter.contract.call_value,
         exit_code,
@@ -136,7 +136,10 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAction {
     let SystemInterruptionOutcome { inputs, result, .. } = outcome;
 
-    println!("revm: resume execution: gas={:?}", result.gas);
+    println!(
+        "revm: resume execution: result={:?} gas={:?}",
+        result.result, result.gas
+    );
     let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
     let fuel_refunded = result.gas.refunded() * FUEL_DENOM_RATE as i64;
 
@@ -151,7 +154,10 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     };
 
     let mut runtime_context = RuntimeContext::root(0);
-    let is_gas_free = is_self_gas_management_contract(&inputs.bytecode_address);
+    let is_gas_free = inputs
+        .eip7702_address
+        .and_then(|eip7702_address| Some(is_self_gas_management_contract(&eip7702_address)))
+        .unwrap_or(false);
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -185,6 +191,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     process_exec_result(
         inputs.target_address,
         inputs.bytecode_address,
+        inputs.eip7702_address,
         inputs.caller,
         inputs.call_value,
         exit_code,
@@ -198,6 +205,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
 fn process_exec_result(
     target_address: Address,
     bytecode_address: Address,
+    eip7702_address: Option<Address>,
     caller: Address,
     call_value: U256,
     exit_code: i32,
@@ -286,6 +294,7 @@ fn process_exec_result(
         inputs: Box::new(SystemInterruptionInputs {
             target_address,
             bytecode_address,
+            eip7702_address,
             caller,
             call_value,
             call_id,

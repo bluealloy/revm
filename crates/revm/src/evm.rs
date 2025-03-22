@@ -115,6 +115,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 self.handler
                     .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
 
+            println!("evm_next_action: {:?}", next_action);
+
             // Take error and break the loop, if any.
             // This error can be set in the Interpreter when it interacts with the context.
             self.context.evm.take_error()?;

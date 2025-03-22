@@ -267,7 +267,6 @@ impl<DB: Database> EvmContext<DB> {
 
         let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
-        let mut bytecode_address = inputs.bytecode_address;
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
         if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
@@ -279,7 +278,7 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::Stop);
         }
 
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+        let eip7702_address = if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
             let delegated_account = self
                 .inner
                 .journaled_state
@@ -287,12 +286,14 @@ impl<DB: Database> EvmContext<DB> {
             // TODO(dmitry123): "do we eligible to rewrite code hash for delegate contract here?"
             code_hash = delegated_account.info.code_hash;
             bytecode = delegated_account.info.code.clone().unwrap_or_default();
-            bytecode_address = eip7702_bytecode.delegated_address;
-        }
+            Some(eip7702_bytecode.delegated_address)
+        } else {
+            None
+        };
 
         let mut contract =
             Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-        contract.bytecode_address = Some(bytecode_address);
+        contract.eip7702_address = eip7702_address;
 
         if let Some(precompiled_address) =
             try_resolve_precompile_account_from_input(inputs.input.as_ref())
@@ -347,7 +348,7 @@ impl<DB: Database> EvmContext<DB> {
         // Fetch balance of caller.
         let caller_balance = self.balance(inputs.caller)?;
 
-        // Check if caller has enough balance to send to the created contract.
+        // Check if the caller has enough balances to send to the created contract.
         if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
@@ -391,7 +392,7 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let (bytecode, constructor_params, bytecode_address) = if inputs.init_code.len()
+        let (bytecode, constructor_params, eip7702_address) = if inputs.init_code.len()
             > WASM_MAGIC_BYTES.len()
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
@@ -402,40 +403,37 @@ impl<DB: Database> EvmContext<DB> {
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
             self.journaled_state
                 .set_code(created_address, bytecode.clone());
-            (
-                bytecode,
-                compilation_result.constructor_params,
-                Some(created_address),
-            )
+            (bytecode, compilation_result.constructor_params, None)
         } else if self.env.cfg.enable_rwasm_proxy {
             let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
             let bytecode = Bytecode::Eip7702(eip7702_bytecode);
             self.journaled_state.set_code(created_address, bytecode);
-            let runtime_bytecode = self.code(PRECOMPILE_EVM_RUNTIME)?;
-            let runtime_bytecode = Bytecode::new_raw(runtime_bytecode.data);
+            let input = inputs.init_code.clone();
+            // we should reload bytecode here since it's an EIP-7702 account
+            let bytecode = self.code(PRECOMPILE_EVM_RUNTIME)?;
             (
-                runtime_bytecode,
-                inputs.init_code.clone(),
-                // for EIP-7702 accounts, we need to replace bytecode address
+                Bytecode::new_raw(bytecode.data),
+                input,
                 Some(PRECOMPILE_EVM_RUNTIME),
             )
         } else {
             (
                 Bytecode::new_raw(inputs.init_code.clone()),
                 Default::default(),
-                Some(created_address),
+                None,
             )
         };
 
-        let contract = Contract::new(
+        let mut contract = Contract::new(
             constructor_params,
             bytecode,
             Some(init_code_hash),
             created_address,
-            bytecode_address,
+            None,
             inputs.caller,
             inputs.value,
         );
+        contract.eip7702_address = eip7702_address;
 
         Ok(FrameOrResult::new_create_frame(
             created_address,
