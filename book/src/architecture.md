@@ -15,7 +15,7 @@ REVM works in `no_std` environments which means it can be used in zero-knowledge
 
 # Execution API
 
-`Evm` the main structure for executing mainnet ethereum transaction is build with a `Context` and a builder, code for it looks like this:
+`Evm` the main structure for executing mainnet ethereum transaction is built with a `Context` and a builder, code for it looks like this:
 
 ```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet();
@@ -35,12 +35,12 @@ And `Context` contains data used in execution:
 
 REVM provides four ways to execute transactions through traits (API):
 
-* `transact(tx)` and `replay()` are function of `ExecuteEvm` trait that allow execution transactions. They return the status of execution with reason, changed state and in of case of failed execution a error.
-* `transact_commit(tx)` and `replay_commit()` are part of `ExecuteCommitEvm` that internally commits the state diff to the database and returns status of execution. Database is requires to support `DatabaseCommit` trait.
-* `inspect()`, `inspect_replay(tx)` and few others are part of `InspectEvm` trait that allow execution with inspection. This is how tracers are called.
-* `inspect_commit()`,`inspect_replay_commit(tx)` that are part of `InspectCommitEvm` trait that extends `InspectEvm` to allow committing state diff after tracing.
+* `transact(tx)` and `replay()` are function of `ExecuteEvm` trait that allow execution transactions. They return the status of execution with reason, changed state and in case of failed execution an error.
+* `transact_commit(tx)` and `replay_commit()` are part of `ExecuteCommitEvm` that internally commits the state diff to the database and returns status of execution. Database is required to support `DatabaseCommit` trait.
+* `inspect()`, `inspect_replay(tx)` and a few others are part of `InspectEvm` trait that allow execution with inspection. This is how tracers are called.
+* `inspect_commit()`,`inspect_replay_commit(tx)` are part of the `InspectCommitEvm` trait that extends `InspectEvm` to allow committing state diff after tracing.
 
-For inspection API to be enabled `Evm` needs to be create with inspector.
+For inspection API to be enabled, `Evm` needs to be created with inspector.
 
 ```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet().with_inspector(inspector);
@@ -53,7 +53,7 @@ To learn how to build your own custom EVM:
 - Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/main/examples/my_evm) guide
 - Look at [op-revm](https://github.com/bluealloy/revm/tree/main/crates/optimism) to see how Optimism uses REVM
 
-Each trait needed to build custom EVM has detailed documentation explaining how it works and it is worth reading.
+Each trait needed to build custom EVM has detailed documentation explaining how it works and is worth reading.
 
 In summary, REVM is built around several key traits that enable customizable EVM functionality. The core traits include:
 
