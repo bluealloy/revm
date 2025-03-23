@@ -19,7 +19,7 @@ use crate::{
     Host,
     InstructionResult,
     InterpreterAction,
-    OPCODE_INFO_JUMPTABLE,
+    OpCode,
 };
 pub use contract::Contract;
 use core::cmp::min;
@@ -374,13 +374,11 @@ impl Interpreter {
         // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
-        let opcode_info = OPCODE_INFO_JUMPTABLE[opcode as usize]
-            .unwrap_or_else(|| unreachable!("unknown opcode: ({:?})", opcode));
         #[cfg(feature = "std")]
         println!(
             "({:04X}) {} (0x{:02X})",
             self.program_counter() - 1,
-            opcode_info.name(),
+            unsafe { core::mem::transmute::<u8, OpCode>(opcode) },
             opcode,
         );
 

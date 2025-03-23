@@ -405,12 +405,19 @@ impl<DB: Database> EvmContext<DB> {
                 .set_code(created_address, bytecode.clone());
             (bytecode, compilation_result.constructor_params, None)
         } else if self.env.cfg.enable_rwasm_proxy {
+            // create a new EIP-7702 account that points to the EVM runtime system precompile
             let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
             let bytecode = Bytecode::Eip7702(eip7702_bytecode);
             self.journaled_state.set_code(created_address, bytecode);
+            // an original init code we pass as an input inside the runtime
+            // to execute deployment logic
             let input = inputs.init_code.clone();
             // we should reload bytecode here since it's an EIP-7702 account
             let bytecode = self.code(PRECOMPILE_EVM_RUNTIME)?;
+            // if it's a CREATE or CREATE2 call, then we should
+            // to recalculate init code hash to make sure it matches runtime hash
+            let code_hash = self.code_hash(PRECOMPILE_EVM_RUNTIME)?;
+            init_code_hash = code_hash.data;
             (
                 Bytecode::new_raw(bytecode.data),
                 input,

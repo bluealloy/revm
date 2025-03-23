@@ -37,6 +37,8 @@ serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
 ], optional = true }
+num-derive = "0.4.2"
+num-traits = { version = "0.2.19", default-features = false }
 
 [dev-dependencies]
 walkdir = "2.5"

@@ -222,6 +222,24 @@ impl<DB: Database> InnerEvmContext<DB> {
         Ok(StateLoad::new(code, a.is_cold))
     }
 
+    #[inline]
+    pub fn code_with_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<(Bytes, B256)>, EVMError<DB::Error>> {
+        let a = self.journaled_state.load_code(address, &mut self.db)?;
+        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        let code = a.info.code.as_ref().unwrap();
+        let code = if code.is_eof() {
+            EOF_MAGIC_BYTES.clone()
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_BYTES.clone()
+        } else {
+            code.original_bytes()
+        };
+        Ok(StateLoad::new((code, a.info.code_hash), a.is_cold))
+    }
+
     /// Get code hash of address.
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`

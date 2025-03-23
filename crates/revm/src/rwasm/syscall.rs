@@ -37,6 +37,7 @@ use crate::{
 use core::cmp::min;
 use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
+    is_self_gas_management_contract,
     keccak256,
     CODE_HASH_SLOT,
     EVM_BASE_SPEC,
@@ -64,6 +65,7 @@ use fluentbase_sdk::{
     SYSCALL_ID_TRANSIENT_READ,
     SYSCALL_ID_TRANSIENT_WRITE,
     SYSCALL_ID_WRITE_PREIMAGE,
+    SYSCALL_ID_YIELD_SYNC_GAS,
 };
 use revm_interpreter::{
     gas::{sload_cost, sstore_refund, warm_cold_cost},
@@ -143,7 +145,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             println!("SYSCALL_STORAGE_READ: slot={}", slot);
@@ -163,10 +165,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             // don't allow for static context
-            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
@@ -202,7 +204,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() >= 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
@@ -247,7 +249,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() >= 20
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let contract_input = inputs.syscall_params.input.slice(20..);
@@ -288,7 +290,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() >= 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
@@ -343,7 +345,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() >= 20
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let contract_input = inputs.syscall_params.input.slice(20..);
@@ -382,19 +384,28 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CREATE | SYSCALL_ID_CREATE2 => {
-            assert_return!(inputs.syscall_params.state == STATE_MAIN, Revert);
+            assert_return!(
+                inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
             // not allowed for static calls
-            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // make sure we have enough bytes inside input params
             let is_create2 = inputs.syscall_params.code_hash == SYSCALL_ID_CREATE2;
             let (scheme, value, init_code) = if is_create2 {
-                assert_return!(inputs.syscall_params.input.len() >= 32 + 32, Revert);
+                assert_return!(
+                    inputs.syscall_params.input.len() >= 32 + 32,
+                    MalformedBuiltinParams
+                );
                 let value = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
                 let salt = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
                 let init_code = inputs.syscall_params.input.slice(64..);
                 (CreateScheme::Create2 { salt }, value, init_code)
             } else {
-                assert_return!(inputs.syscall_params.input.len() >= 32, Revert);
+                assert_return!(
+                    inputs.syscall_params.input.len() >= 32,
+                    MalformedBuiltinParams
+                );
                 let value = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
                 let init_code = inputs.syscall_params.input.slice(32..);
                 (CreateScheme::Create, value, init_code)
@@ -446,17 +457,17 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         SYSCALL_ID_EMIT_LOG => {
             assert_return!(
                 inputs.syscall_params.input.len() >= 1 && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             // not allowed for static calls
-            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // read topics from input
             let topics_len = inputs.syscall_params.input[0] as usize;
-            assert_return!(topics_len <= 4, Revert);
+            assert_return!(topics_len <= 4, MalformedBuiltinParams);
             let mut topics = Vec::with_capacity(topics_len);
             assert_return!(
                 inputs.syscall_params.input.len() >= 1 + topics_len * B256::len_bytes(),
-                Revert
+                MalformedBuiltinParams
             );
             for i in 0..topics_len {
                 let offset = 1 + i * B256::len_bytes();
@@ -480,31 +491,31 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 // it's safe to go unchecked here because we do topics check upper
                 data: LogData::new_unchecked(topics, data),
             });
-            return_result!(Bytes::default());
+            return_result!(Bytes::new());
         }
 
         SYSCALL_ID_DESTROY_ACCOUNT => {
             assert_return!(
                 inputs.syscall_params.input.len() == 20
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             // not allowed for static calls
-            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let result = context.evm.selfdestruct(inputs.target_address, target)?;
             // charge gas cost
             charge_gas!(gas::selfdestruct_cost(SPEC::SPEC_ID, result));
             // return value as bytes with success exit code
-            return_result!(Bytes::default());
+            return_result!(Bytes::new());
         }
 
         SYSCALL_ID_BALANCE => {
             assert_return!(
                 inputs.syscall_params.input.len() == 20
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = context.evm.balance(address)?;
@@ -524,7 +535,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_SELF_BALANCE => {
-            assert_return!(inputs.syscall_params.state == STATE_MAIN, Revert);
+            assert_return!(
+                inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
             let value = context.evm.balance(inputs.target_address)?;
             charge_gas!(gas::LOW);
             let output: [u8; 32] = value.data.to_le_bytes();
@@ -535,7 +549,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20,
-                Revert
+                MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             println!("SYSCALL_CODE_SIZE: address={address}");
@@ -558,7 +572,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20,
-                Revert
+                MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             println!("SYSCALL_CODE_HASH: address={address}");
@@ -580,7 +594,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20 + 8 * 2,
-                Revert
+                MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let mut reader = inputs.syscall_params.input[20..].reader();
@@ -596,18 +610,18 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             charge_gas!(gas_cost);
             if code_length == 0 {
-                return_result!(Bytes::default());
+                return_result!(Bytes::new());
             }
-            let code_offset = min(code_offset, code.len() as u64);
-            let code = code
-                .data
-                .slice(code_offset as usize..(code_offset + code_length) as usize);
-            return_result!(code);
+            // TODO(dmitry123): "add offset/length checks"
+            return_result!(code.data);
         }
 
         // TODO(dmitry123): "rethink these system calls"
         SYSCALL_ID_WRITE_PREIMAGE => {
-            assert_return!(inputs.syscall_params.state == STATE_MAIN, Revert);
+            assert_return!(
+                inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
             // TODO(dmitry123): "better to have prefix"
             let preimage_hash = keccak256(inputs.syscall_params.input.as_ref());
             let address = Address::from_slice(&preimage_hash[12..]);
@@ -630,7 +644,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
             let address = Address::from_slice(&preimage_hash[12..]);
@@ -652,7 +666,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
             let address = Address::from_slice(&preimage_hash[12..]);
@@ -667,16 +681,16 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             let slot = U256::from_le_slice(&inputs.syscall_params.input[..32]);
             // execute sload
             let Some(eip7702_address) = inputs.eip7702_address else {
-                return_error!(Revert);
+                return_error!(MalformedBuiltinParams);
             };
-            println!("SYSCALL_EXT_BYTECODE_HASH: slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}",
-                     inputs.target_address, inputs.bytecode_address);
             let value = context.evm.sload(inputs.bytecode_address, slot)?;
+            println!("SYSCALL_EXT_BYTECODE_HASH: slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}",
+                     inputs.target_address, inputs.bytecode_address, value.data);
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = eip7702_address == PRECOMPILE_EVM_RUNTIME
                 && slot == Into::<U256>::into(CODE_HASH_SLOT);
@@ -691,11 +705,12 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
             // read value from storage
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32].as_ref());
             let value = context.evm.tload(inputs.target_address, slot);
+            println!("SYSCALL_TRANSIENT_READ: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
             // return value
@@ -707,19 +722,39 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(
                 inputs.syscall_params.input.len() == 64
                     && inputs.syscall_params.state == STATE_MAIN,
-                Revert
+                MalformedBuiltinParams
             );
-            assert_return!(!inputs.is_static, CallNotAllowedInsideStatic);
+            assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // read input
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
+            println!("SYSCALL_TRANSIENT_WRITE: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
             context.evm.tstore(inputs.target_address, slot, value);
             // empty result
-            return_result!(Bytes::default());
+            return_result!(Bytes::new());
         }
 
-        _ => return_error!(Revert),
+        SYSCALL_ID_YIELD_SYNC_GAS => {
+            assert_return!(
+                inputs.syscall_params.input.is_empty() && inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
+            // allow this function only for delegated contracts
+            // that has self-management gas policy like EVM or SVM runtimes
+            let Some(eip7702_address) = inputs.eip7702_address else {
+                return_error!(MalformedBuiltinParams);
+            };
+            assert_return!(
+                is_self_gas_management_contract(&eip7702_address),
+                MalformedBuiltinParams
+            );
+            println!("SYSCALL_YIELD_SYNC_GAS: eip7702_address={eip7702_address}");
+            // the syscall returns nothing
+            return_result!(Bytes::new());
+        }
+
+        _ => return_error!(MalformedBuiltinParams),
     }
 }

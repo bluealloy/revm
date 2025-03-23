@@ -1,7 +1,9 @@
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::FromPrimitive;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
     // Success Codes
@@ -112,6 +114,19 @@ pub enum InstructionResult {
     OutOfFuel,
     GrowthOperationLimited,
     UnresolvedFunction,
+}
+
+impl From<i32> for InstructionResult {
+    fn from(value: i32) -> Self {
+        Self::from_u8(u8::try_from(value).unwrap())
+            .unwrap_or_else(|| unreachable!("unknown instruction result: {}", value))
+    }
+}
+impl From<u8> for InstructionResult {
+    fn from(value: u8) -> Self {
+        Self::from_u8(value)
+            .unwrap_or_else(|| unreachable!("unknown instruction result: {}", value))
+    }
 }
 
 impl From<SuccessReason> for InstructionResult {

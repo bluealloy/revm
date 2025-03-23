@@ -746,7 +746,7 @@ pub fn execute_test_suite(
                     let timer = Instant::now();
                     println!("RUNNING EVM!!!");
                     let res = evm.transact_commit();
-                    println!("RUNNING FLUENT!!!");
+                    println!("\n\nRUNNING FLUENT!!!");
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 

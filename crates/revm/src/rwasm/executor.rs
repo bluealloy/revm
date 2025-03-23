@@ -27,22 +27,13 @@ use fluentbase_sdk::{
     SharedContextInput,
     SharedContextInputV1,
     SyscallInvocationParams,
-    SyscallStatus,
     TxContextV1,
     B256,
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{
-    opcode,
-    opcode::InstructionTables,
-    return_error,
-    return_ok,
-    return_revert,
-    SharedMemory,
-    EMPTY_SHARED_MEMORY,
-};
+use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -143,15 +134,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
     let fuel_refunded = result.gas.refunded() * FUEL_DENOM_RATE as i64;
 
-    let exit_code = match result.result {
-        return_ok!() => SyscallStatus::Ok as i32,
-        return_revert!() => SyscallStatus::Revert as i32,
-        InstructionResult::OutOfGas | InstructionResult::OutOfFuel => {
-            SyscallStatus::OutOfGas as i32
-        }
-        return_error!() => SyscallStatus::Err as i32,
-        _ => unreachable!("revm: unexpected result"),
-    };
+    let exit_code = result.result as i32;
 
     let mut runtime_context = RuntimeContext::root(0);
     let is_gas_free = inputs
@@ -230,7 +213,6 @@ fn process_exec_result(
                     .trim_end_matches("\0")
             );
         }
-        println!("revm: exit code: {} ({})", exit_code.into_i32(), exit_code);
         let result = match exit_code {
             ExitCode::Ok => {
                 if is_create {
