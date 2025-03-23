@@ -19,6 +19,7 @@ use crate::{
     Host,
     InstructionResult,
     InterpreterAction,
+    OPCODE_INFO_JUMPTABLE,
 };
 pub use contract::Contract;
 use core::cmp::min;
@@ -372,6 +373,16 @@ impl Interpreter {
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last
         // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
+
+        let opcode_info = OPCODE_INFO_JUMPTABLE[opcode as usize]
+            .unwrap_or_else(|| unreachable!("unknown opcode: ({:?})", opcode));
+        #[cfg(feature = "std")]
+        println!(
+            "({:04X}) {} (0x{:02X})",
+            self.program_counter() - 1,
+            opcode_info.name(),
+            opcode,
+        );
 
         // execute instruction.
         (instruction_table[opcode as usize])(self, host)

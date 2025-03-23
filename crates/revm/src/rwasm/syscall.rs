@@ -21,7 +21,6 @@ use crate::{
         Log,
         LogData,
         Spec,
-        SpecId,
         B256,
         BERLIN,
         ISTANBUL,
@@ -40,6 +39,7 @@ use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
     keccak256,
     CODE_HASH_SLOT,
+    EVM_BASE_SPEC,
     FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
@@ -87,6 +87,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
                     inputs,
                     result,
+                    created_address: None,
                     is_frame: false,
                 }));
             return Ok(result);
@@ -100,13 +101,15 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
                     inputs,
                     result,
+                    created_address: None,
                     is_frame: false,
                 }));
             return Ok(result);
         }};
     }
     macro_rules! return_frame {
-        ($frame:expr) => {
+        ($frame:expr) => {{
+            let mut frame = $frame;
             stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
                 inputs,
                 result: InterpreterResult::new(
@@ -114,10 +117,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                     Bytes::default(),
                     local_gas,
                 ),
+                created_address: frame.created_address(),
                 is_frame: true,
             });
-            return Ok($frame);
-        };
+            return Ok(frame);
+        }};
     }
     macro_rules! assert_return {
         ($cond:expr, $error:ident) => {
@@ -435,7 +439,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 init_code,
                 gas_limit,
             });
-            let frame = context.evm.make_create_frame(SpecId::CANCUN, &inputs)?;
+            let frame = context.evm.make_create_frame(EVM_BASE_SPEC, &inputs)?;
             return_frame!(frame);
         }
 
@@ -604,9 +608,12 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         // TODO(dmitry123): "rethink these system calls"
         SYSCALL_ID_WRITE_PREIMAGE => {
             assert_return!(inputs.syscall_params.state == STATE_MAIN, Revert);
+            // TODO(dmitry123): "better to have prefix"
             let preimage_hash = keccak256(inputs.syscall_params.input.as_ref());
             let address = Address::from_slice(&preimage_hash[12..]);
-            println!("SYSCALL_WRITE_PREIMAGE: preimage_hash={preimage_hash} address={address}");
+            println!(
+                "SYSCALL_WRITE_PREIMAGE: preimage_hash={preimage_hash} preimage_address={address}"
+            );
             let Ok(account_load) = context.evm.load_account_delegated(address) else {
                 return_error!(FatalExternalError);
             };

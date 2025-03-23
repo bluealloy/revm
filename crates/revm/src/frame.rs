@@ -351,4 +351,11 @@ impl FrameOrResult {
             FrameOrResult::Result(_) => None,
         }
     }
+
+    pub fn created_address(&mut self) -> Option<Address> {
+        match self {
+            FrameOrResult::Frame(frame) => frame.created_address(),
+            FrameOrResult::Result(_) => None,
+        }
+    }
 }

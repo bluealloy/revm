@@ -23,6 +23,7 @@ pub struct SystemInterruptionInputs {
 pub struct SystemInterruptionOutcome {
     pub inputs: Box<SystemInterruptionInputs>,
     pub result: InterpreterResult,
+    pub created_address: Option<Address>,
     pub is_frame: bool,
 }
 
@@ -35,11 +36,12 @@ impl SystemInterruptionOutcome {
                 output: Default::default(),
                 gas: gas_consumed,
             },
+            created_address: None,
             is_frame,
         }
     }
 
-    fn insert_frame_result(&mut self, result: InterpreterResult) {
+    fn insert_frame_result(&mut self, mut result: InterpreterResult) {
         // for frame result we take gas from result field
         // because it stores information about gas consumed before the call as well
         let mut gas = self.result.gas;
@@ -49,6 +51,10 @@ impl SystemInterruptionOutcome {
                 gas.erase_cost(remaining);
                 let refunded = result.gas.refunded();
                 gas.record_refund(refunded);
+                // for CREATE/CREATE2 calls, we need to write created address into output
+                if let Some(created_address) = self.created_address {
+                    result.output = created_address.into_array().into();
+                }
             }
             return_revert!() => {
                 gas.erase_cost(result.gas.remaining());
