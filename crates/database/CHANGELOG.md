@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/bluealloy/revm/compare/revm-database-v1.0.0-alpha.5...revm-database-v1.0.0) - 2025-03-24
+
+### Other
+
+- docs nits ([#2292](https://github.com/bluealloy/revm/pull/2292))
+
 ## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-database-v1.0.0-alpha.4...revm-database-v1.0.0-alpha.5) - 2025-03-21
 
 ### Other
