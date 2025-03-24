@@ -39,7 +39,7 @@ microbench.workspace = true
 plain_hasher.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
-clap = { workspace = true, features = ["derive"] }
+clap.workspace = true
 thiserror.workspace = true
 triehash.workspace = true
 walkdir.workspace = true
