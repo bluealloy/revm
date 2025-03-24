@@ -13,7 +13,13 @@ use crate::{
     Frame,
 };
 use core::{mem, ops::Deref, str::from_utf8};
-use fluentbase_runtime::{instruction::resume::SyscallResume, RuntimeContext};
+use fluentbase_runtime::{
+    instruction::{
+        exit::SyscallExit, input_size::SyscallInputSize, read::SyscallRead, resume::SyscallResume, write::SyscallWrite
+    },
+    RuntimeContext,
+};
+use fluentbase_rwasm::RwasmError;
 use fluentbase_sdk::{
     codec::CompactABI,
     is_self_gas_management_contract,
@@ -30,10 +36,20 @@ use fluentbase_sdk::{
     TxContextV1,
     B256,
     FUEL_DENOM_RATE,
+    PRECOMPILE_EVM_RUNTIME,
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
+use revm_interpreter::{
+    opcode,
+    opcode::InstructionTables,
+    return_error,
+    return_ok,
+    return_revert,
+    SharedMemory,
+    EMPTY_SHARED_MEMORY,
+};
+use wasmtime::*;
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -79,20 +95,137 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     // fuel limit we denominate later to gas
     let fuel_limit = interpreter.gas.remaining() * FUEL_DENOM_RATE;
 
-    // execute function
-    let mut runtime_context = RuntimeContext::root(fuel_limit);
-    if let Some(eip7702_address) = interpreter.contract.eip7702_address {
-        if is_self_gas_management_contract(&eip7702_address) {
-            runtime_context = runtime_context.without_fuel();
+    let (fuel_consumed, fuel_refunded, exit_code, return_data) = match &bytecode_address {
+        _ => {
+            // First the wasm module needs to be compiled. This is done with a global
+            // "compilation environment" within an `Engine`. Note that engines can be
+            // further configured through `Config` if desired instead of using the
+            // default like this is here.
+            let runtime_context = RuntimeContext::root(fuel_limit)
+                .with_input(context_input);
+
+            println!("Compiling module...");
+            let wasm_bytecode = include_bytes!("../../../../../examples/identity/lib.wasm");
+            let engine = Engine::default();
+            let module = Module::new(&engine, wasm_bytecode).unwrap();
+
+            // After a module is compiled we create a `Store` which will contain
+            // instantiated modules and other items like host functions. A Store
+            // contains an arbitrary piece of host information, and we use `MyState`
+            // here.
+            println!("Initializing...");
+            let mut store = Store::new(&engine, runtime_context);
+
+            // Our wasm module we'll be instantiating requires one imported function.
+            // the function takes no parameters and returns no results. We create a host
+            // implementation of that function here, and the `caller` parameter here is
+            // used to get access to our original `MyState` value.
+            println!("Creating callback...");
+
+            let mut linker = Linker::new(&engine);
+            linker
+                .func_wrap(
+                    "fluentbase_v1preview",
+                    "_write",
+                    |mut caller: Caller<'_, RuntimeContext>, offset: u32, length: u32| {
+                        let memory = match caller.get_export("memory") {
+                            Some(Extern::Memory(memory)) => memory,
+                            _ => panic!("failed to find host memory"),
+                        };
+                        let data: Vec<u8> = memory
+                            .data(&caller)
+                            .get(offset as usize..)
+                            .and_then(|arr| arr.get(..length as usize))
+                            .unwrap()
+                            .into();
+                        let ctx = caller.data_mut();
+                        SyscallWrite::fn_impl(ctx, &data);
+                    },
+                )
+                .unwrap();
+
+            linker
+                .func_wrap(
+                    "fluentbase_v1preview",
+                    "_input_size",
+                    |caller: Caller<'_, RuntimeContext>| -> anyhow::Result<u32> {
+                        let size = SyscallInputSize::fn_impl(caller.data());
+                        println!("_input_size syscall was executed with size={}", size);
+                        Ok(size)
+                    }
+                )
+                .unwrap();
+
+            linker
+                .func_wrap(
+                    "fluentbase_v1preview",
+                    "_read",
+                    |mut caller: Caller<'_, RuntimeContext>,
+                     target_ptr: u32,
+                     offset: u32,
+                     length: u32| {
+                        // memory.write(caller.data_mut())
+
+                        let buffer = SyscallRead::fn_impl(caller.data(), offset, length).unwrap();
+                        let memory = match caller.get_export("memory") {
+                            Some(Extern::Memory(memory)) => memory,
+                            _ => panic!("failed to find host memory"),
+                        };
+                        let _ = memory.write(caller, target_ptr as usize, &buffer);
+                    },
+                )
+                .unwrap();
+
+            linker
+                .func_wrap(
+                    "fluentbase_v1preview",
+                    "_exit",
+                    |mut caller: Caller<'_, RuntimeContext>, exit_code: i32| -> anyhow::Result<()> {
+                        let exit_code = SyscallExit::fn_impl(caller.data_mut(), exit_code).unwrap_err();
+                        println!("_exit syscall was executed with exit code {}", exit_code);
+                        Err(anyhow::Error::new(exit_code))
+
+
+                    },
+                )
+                .unwrap();
+
+            let instance = linker.instantiate(&mut store, &module).unwrap();
+
+            // Next we poke around a bit to extract the `run` function from the module.
+            println!("Extracting export...");
+            let main = instance
+                .get_typed_func::<(), ()>(&mut store, "main")
+                .unwrap();
+            println!("Calling export...");
+            match main.call(&mut store, ()) {
+                Ok(_) => {},
+                Err(exit_code) => {
+                    println!("hey here is error code {:?}", exit_code);
+                    println!("{:?}", store.data().output());
+                },
+            }
+            println!("_____________");
+            (1, 1, 0, store.data().output().clone().into())
         }
-    }
-    let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, fuel_refunded, exit_code) = native_sdk.exec(
-        bytecode_hash,
-        &context_input,
-        Some(fuel_limit),
-        if is_create { STATE_DEPLOY } else { STATE_MAIN },
-    );
+        &PRECOMPILE_EVM_RUNTIME => {
+            let mut runtime_context = RuntimeContext::root(fuel_limit);
+            runtime_context = runtime_context.without_fuel();
+            let native_sdk = RuntimeContextWrapper::new(runtime_context);
+            let (fuel_consumed, fuel_refunded, exit_code) = native_sdk.exec(
+                bytecode_hash,
+                &context_input,
+                fuel_limit,
+                if is_create { STATE_DEPLOY } else { STATE_MAIN },
+            );
+            (
+                fuel_consumed,
+                fuel_refunded,
+                exit_code,
+                native_sdk.return_data(),
+            )
+        }
+    };
 
     // make sure we have enough gas to charge from the call
     let mut gas = interpreter.gas;
@@ -106,9 +239,6 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         });
     }
     gas.record_denominated_refund(fuel_refunded);
-
-    // extract return data from the execution context
-    let return_data = native_sdk.return_data();
 
     Ok(process_exec_result(
         interpreter.contract.target_address,
