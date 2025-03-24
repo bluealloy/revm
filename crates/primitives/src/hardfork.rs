@@ -29,10 +29,9 @@ pub enum SpecId {
     MERGE,            // Paris/Merge            15537394 (TTD: 58750000000000000000000)
     SHANGHAI,         // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN,           // Cancun                 19426587 (Timestamp: 1710338135)
+    #[default]
     PRAGUE,           // Prague                 TBD
     OSAKA,            // Osaka                  TBD
-    #[default]
-    LATEST = u8::MAX,
 }
 
 impl SpecId {
@@ -101,7 +100,6 @@ impl FromStr for SpecId {
             name::CANCUN => Ok(Self::CANCUN),
             name::PRAGUE => Ok(Self::PRAGUE),
             name::OSAKA => Ok(Self::OSAKA),
-            name::LATEST => Ok(Self::LATEST),
             _ => Err(UnknownHardfork),
         }
     }
@@ -130,7 +128,6 @@ impl From<SpecId> for &'static str {
             SpecId::CANCUN => name::CANCUN,
             SpecId::PRAGUE => name::PRAGUE,
             SpecId::OSAKA => name::OSAKA,
-            SpecId::LATEST => name::LATEST,
         }
     }
 }
