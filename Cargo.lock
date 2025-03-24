@@ -3499,7 +3499,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "1.0.0-alpha.6"
+version = "1.0.0"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
