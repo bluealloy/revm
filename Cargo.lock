@@ -1570,6 +1570,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-cheatcode-inspector"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "revm",
+]
+
+[[package]]
 name = "example-contract-deployment"
 version = "0.0.0"
 dependencies = [
