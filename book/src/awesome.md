@@ -35,6 +35,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 - [**Revmc:**](https://github.com/paradigmxyz/revmc) JIT and AOT compiler for the Ethereum Virtual Machine, leveraging Revm.
 - [**Risc0-ethereum**](https://github.com/risc0/risc0-ethereum) is a zero-knowledge verifiable general computing platform, with Ethereum integration
 - [**Kona**](https://github.com/op-rs/kona) is a suite of portable implementations of the OP Stack rollup state transition, namely the derivation pipeline and the block execution logic.
+- [**mevlog-rs**](https://github.com/pawurb/mevlog-rs): Rust-based CLI tool for querying and monitoring Ethereum blockchain transactions, with flexible filtering and EVM tracing capabilities. It's a tool for MEV searchers who prefer command-line workflows over web-based explorers.   
 
 
 #### Tutorials
@@ -42,3 +43,4 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 - **Revm is All You Need:** Guide on building simulated blockchain environments. Link: https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4
 - [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/tree/main/examples/uniswap_get_reserves) Demonstrates a USDC swap on Uniswap V2.evm is available in the [awesome-revm](./awesome.md) section o
 - [**revm-by-example:**](https://github.com/Cionn3/revm-by-example) Practical examples using the Rust Ethereum Virtual Machine.
+- How to Discover long-tail MEV Strategies using Revm: https://pawelurbanek.com/long-tail-mev-revm
