@@ -13,6 +13,7 @@ use revm::{
 };
 use std::boxed::Box;
 use std::string::String;
+
 // Optimism precompile provider
 #[derive(Debug, Clone)]
 pub struct OpPrecompiles {
@@ -222,5 +223,17 @@ mod tests {
 
         // isthmus contains all precompiles that were new in prague, without modifications
         assert!(new_prague_precompiles.difference(isthmus()).is_empty())
+    }
+
+    #[test]
+    fn test_default_precompiles_is_latest() {
+        let latest = OpPrecompiles::new_with_spec(OpSpecId::default())
+            .inner
+            .precompiles;
+        let default = OpPrecompiles::default().inner.precompiles;
+        assert_eq!(latest.len(), default.len());
+
+        let intersection = default.intersection(latest);
+        assert_eq!(intersection.len(), latest.len())
     }
 }
