@@ -445,7 +445,7 @@ pub struct InterpreterResult {
 
 impl InterpreterResult {
     /// Returns a new `InterpreterResult` with the given values.
-    pub fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+    pub const fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
         Self {
             result,
             output,

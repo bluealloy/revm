@@ -32,6 +32,7 @@ use fluentbase_sdk::{
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
+    SYSCALL_ID_SYNC_EVM_GAS,
 };
 use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
 
@@ -95,17 +96,16 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     );
 
     // make sure we have enough gas to charge from the call
-    let mut gas = interpreter.gas;
-    if !gas.record_denominated_cost(fuel_consumed) {
+    if !interpreter.gas.record_denominated_cost(fuel_consumed) {
         return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
                 output: Bytes::default(),
-                gas,
+                gas: interpreter.gas,
             },
         });
     }
-    gas.record_denominated_refund(fuel_refunded);
+    interpreter.gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
     let return_data = native_sdk.return_data();
@@ -117,7 +117,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         interpreter.contract.caller,
         interpreter.contract.call_value,
         exit_code,
-        gas,
+        interpreter.gas,
         return_data,
         is_create,
         interpreter.is_static,
@@ -141,7 +141,8 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         .eip7702_address
         .and_then(|eip7702_address| Some(is_self_gas_management_contract(&eip7702_address)))
         .unwrap_or(false);
-    if is_gas_free {
+    let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
+    if is_gas_free && !is_gas_adjustment {
         runtime_context = runtime_context.without_fuel();
     }
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
@@ -157,7 +158,11 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
-    let mut gas = if is_gas_free { inputs.gas } else { result.gas };
+    let mut gas = if is_gas_free && !is_gas_adjustment {
+        inputs.gas
+    } else {
+        result.gas
+    };
 
     // make sure we have enough gas to charge from the call
     if !gas.record_denominated_cost(fuel_consumed) {
