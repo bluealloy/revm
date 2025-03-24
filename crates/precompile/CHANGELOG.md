@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.7...revm-precompile-v17.0.0) - 2025-03-24
+
+### Added
+
+- add bn_mul benchmark ([#2287](https://github.com/bluealloy/revm/pull/2287))
+
+### Other
+
+- *(op-precompiles)* Add missing g2 add tests ([#2253](https://github.com/bluealloy/revm/pull/2253))
+
 ## [17.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.6...revm-precompile-v17.0.0-alpha.7) - 2025-03-21
 
 ### Added
