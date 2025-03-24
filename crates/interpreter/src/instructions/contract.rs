@@ -168,7 +168,7 @@ pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Op
     Some(Bytes::copy_from_slice(
         interpreter
             .memory
-            .slice(return_memory_offset.clone())
+            .slice(return_memory_offset)
             .as_ref(),
     ))
 }
