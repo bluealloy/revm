@@ -13,5 +13,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ### Security
 
-If there is security question/findings please contact me directly on email at`dragan0rakita@gmail.com` or on keybase [@draganrakita](https://keybase.io/draganrakita/).
+If there is security question/findings please contact me directly on email at`dragan0rakita@gmail.com` or on keybase `@draganrakita`
 

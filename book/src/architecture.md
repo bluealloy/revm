@@ -7,7 +7,7 @@ You can use REVM in two main ways:
 1. Run regular Ethereum transactions using a Execution API
 2. Create your own custom version of the EVM (for Layer 2 solutions or other chains) using EVM framework
 
-To see usage examples you can check the [examples folder](https://github.com/bluealloy/revm/tree/ main/examples). Other than documentation, examples are main resource to see and learn about Revm.
+To see usage examples you can check the [examples folder](https://github.com/bluealloy/revm/tree/main/examples). Other than documentation, examples are main resource to see and learn about Revm.
 
 The main `revm` library combines all crates into one package and reexports them, standalone library are useful if there is need to import functionality with smaller scope. You can see overview of revm crates in [crates folder](https://github.com/bluealloy/revm/tree/main/crates).
 
