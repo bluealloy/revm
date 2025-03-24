@@ -23,12 +23,8 @@ pub fn simple_example(bytecode: Bytecode) {
 pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
     criterion_group.bench_function("snailtracer", |b| {
         b.iter(|| {
-            println!("Running snailtracer example!");
             let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
-            let start = std::time::Instant::now();
             simple_example(bytecode);
-            let elapsed = start.elapsed();
-            println!("elapsed: {:?}", elapsed);
         })
     });
 }

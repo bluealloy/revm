@@ -5,12 +5,10 @@ use revm::{
     primitives::{TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::time::Instant;
 
 pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
     criterion_group.bench_function("transfer", |b| {
         b.iter(|| {
-            let time = Instant::now();
             let mut evm = Context::mainnet()
                 .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
                 .modify_tx_chained(|tx| {
@@ -20,15 +18,7 @@ pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
                     tx.value = U256::from(10);
                 })
                 .build_mainnet();
-            println!("Init: {:?}", time.elapsed());
-
-            let time = Instant::now();
             let _ = evm.replay();
-            println!("First run: {:?}", time.elapsed());
-
-            let time = Instant::now();
-            let _ = evm.replay();
-            println!("Second run: {:?}", time.elapsed());
         })
     });
 }

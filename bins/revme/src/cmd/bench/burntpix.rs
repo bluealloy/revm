@@ -17,8 +17,8 @@ use revm::{
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
+use std::error::Error;
 use std::fs::File;
-use std::{error::Error, time::Instant};
 
 use std::{io::Write, str::FromStr};
 
@@ -48,14 +48,12 @@ pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
 
     criterion_group.bench_function("burntpix", |b| {
         b.iter(|| {
-            let started = Instant::now();
             let tx_result = evm.replay().unwrap().result;
             let return_data = match tx_result {
                 ExecutionResult::Success {
                     output, gas_used, ..
                 } => {
                     println!("Gas used: {:?}", gas_used);
-                    println!("Time elapsed: {:?}", started.elapsed());
                     match output {
                         Output::Call(value) => value,
                         _ => unreachable!("Unexpected output type"),

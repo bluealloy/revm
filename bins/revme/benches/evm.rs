@@ -1,24 +1,11 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use revme::cmd::{
-    bench::{self, BenchName},
-    MainCmd,
-};
+use revme::cmd::bench;
 
 fn evm(c: &mut Criterion) {
-    // call analysis to init static data.
-    revme::cmd::bench::analysis::run(&mut c.benchmark_group("revme"));
-
-    for &bench_name in BenchName::ALL {
-        let cmd = MainCmd::Bench(bench::Cmd {
-            name: bench_name,
-            warmup: None,
-            measurement_time: None,
-        });
-        c.bench_function(bench_name.as_str(), |b| {
-            b.iter(|| cmd.run().unwrap());
-        });
-    }
+    bench::analysis::run(&mut c.benchmark_group("revme"));
+    bench::burntpix::run(&mut c.benchmark_group("revme"));
+    bench::snailtracer::run(&mut c.benchmark_group("revme"));
+    bench::transfer::run(&mut c.benchmark_group("revme"));
 }
-
 criterion_group!(benches, evm);
 criterion_main!(benches);

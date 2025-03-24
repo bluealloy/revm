@@ -39,7 +39,9 @@ pub struct Cmd {
     #[arg(short = 'w', long)]
     pub warmup: Option<f64>,
     #[arg(short = 'm', long)]
-    pub measurement_time: Option<f64>,
+    pub time: Option<f64>,
+    #[arg(short = 's', long)]
+    pub samples: usize,
 }
 
 impl Cmd {
@@ -47,11 +49,10 @@ impl Cmd {
     pub fn run(&self) {
         let mut criterion = criterion::Criterion::default()
             .warm_up_time(std::time::Duration::from_secs_f64(
-                self.warmup.unwrap_or(10.0),
+                self.warmup.unwrap_or(0.1),
             ))
-            .measurement_time(std::time::Duration::from_secs_f64(
-                self.measurement_time.unwrap_or(1.0),
-            ));
+            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(1.0)))
+            .sample_size(self.samples);
 
         match self.name {
             BenchName::Analysis => {

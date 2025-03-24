@@ -1,11 +1,10 @@
-use criterion::{black_box, measurement::WallTime, BenchmarkGroup};
+use criterion::{measurement::WallTime, BenchmarkGroup};
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
     primitives::{bytes, hex, Bytes, TxKind},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::time::Instant;
 
 const BYTES: &str = include_str!("analysis.hex");
 
@@ -23,14 +22,7 @@ pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
     let mut evm = context.build_mainnet();
     criterion_group.bench_function("analysis", |b| {
         b.iter(|| {
-            let time = Instant::now();
             let _ = evm.replay();
-            println!("First init: {:?}", time.elapsed());
-
-            let time = Instant::now();
-            let _ = evm.replay();
-            println!("Run: {:?}", time.elapsed());
-            black_box(());
         });
     });
 }
