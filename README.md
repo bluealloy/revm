@@ -47,9 +47,9 @@ The full list of projects that use Revm is available in the awesome-revm section
 
 ### How to, dev section
 
-Note that [book](https://bluealloy.github.io/revm/) and [code docs](https://docs.rs/revm/20.0.0-alpha.1/revm/index.html) are still in WIP stage and they are being updated!
+The [book](https://bluealloy.github.io/revm/) and [`Architecture and API`](https://bluealloy.github.io/revm/architecture.html) page is the best starting resource.
 
-Part of the links point to the code documentation or the book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
+Some quicklinks can be found here. Some pointto code documentation or book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
 
 * How to build and use revm can be found here. (code)
 * Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
