@@ -87,9 +87,6 @@ impl<DB: Database> State<DB> {
     ///
     /// Update will create transitions for all accounts that are updated.
     ///
-    /// Like [CacheAccount::increment_balance], this assumes that incremented balances are not
-    /// zero, and will not overflow once incremented.
-    ///
     /// If using this to implement withdrawals, zero balances must be filtered out before calling this function.
     pub fn increment_balances(
         &mut self,
