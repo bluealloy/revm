@@ -22,9 +22,6 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-
-wasmtime = "31.0.0"
-anyhow = "1.0.87"
 # revm
 revm-interpreter = { path = "../interpreter", version = "15.1.0", default-features = false }
 revm-precompile = { path = "../precompile", version = "16.0.0", default-features = false }
@@ -32,7 +29,6 @@ revm-precompile = { path = "../precompile", version = "16.0.0", default-features
 # fluentbase
 fluentbase-sdk = { workspace = true }
 fluentbase-runtime = { workspace = true }
-fluentbase-rwasm = { workspace = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
