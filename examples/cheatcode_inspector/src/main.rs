@@ -9,7 +9,9 @@
 use std::{convert::Infallible, fmt::Debug};
 
 use revm::{
-    context::{result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput, TxEnv},
+    context::{
+        result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput, TxEnv,
+    },
     context_interface::{
         journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
         result::EVMError,
@@ -22,8 +24,8 @@ use revm::{
     },
     inspector::{inspectors::TracerEip3155, JournalExt},
     interpreter::{
-        interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult, SelfDestructResult,
-        StateLoad,
+        interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
+        SelfDestructResult, StateLoad,
     },
     primitives::{hardfork::SpecId, Address, HashSet, Log, B256, U256},
     state::{Account, Bytecode, EvmState},
@@ -68,7 +70,11 @@ impl JournalTr for Backend {
         self.journaled_state.db()
     }
 
-    fn sload(&mut self, address: Address, key: U256) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
+    fn sload(
+        &mut self,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
         self.journaled_state.sload(address, key)
     }
 
@@ -93,7 +99,11 @@ impl JournalTr for Backend {
         self.journaled_state.log(log)
     }
 
-    fn selfdestruct(&mut self, address: Address, target: Address) -> Result<StateLoad<SelfDestructResult>, Infallible> {
+    fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<StateLoad<SelfDestructResult>, Infallible> {
         self.journaled_state.selfdestruct(address, target)
     }
 
@@ -102,11 +112,14 @@ impl JournalTr for Backend {
         address: Address,
         storage_keys: impl IntoIterator<Item = U256>,
     ) -> Result<(), <Self::Database as Database>::Error> {
-        self.journaled_state.warm_account_and_storage(address, storage_keys)
+        self.journaled_state
+            .warm_account_and_storage(address, storage_keys)
     }
 
     fn warm_account(&mut self, address: Address) {
-        self.journaled_state.warm_preloaded_addresses.insert(address);
+        self.journaled_state
+            .warm_preloaded_addresses
+            .insert(address);
     }
 
     fn warm_precompiles(&mut self, addresses: HashSet<Address>) {
@@ -125,7 +138,12 @@ impl JournalTr for Backend {
         self.journaled_state.touch_account(address);
     }
 
-    fn transfer(&mut self, from: &Address, to: &Address, balance: U256) -> Result<Option<TransferError>, Infallible> {
+    fn transfer(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        balance: U256,
+    ) -> Result<Option<TransferError>, Infallible> {
         self.journaled_state.transfer(from, to, balance)
     }
 
@@ -137,11 +155,17 @@ impl JournalTr for Backend {
         self.journaled_state.load_account(address)
     }
 
-    fn load_account_code(&mut self, address: Address) -> Result<StateLoad<&mut Account>, Infallible> {
+    fn load_account_code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<&mut Account>, Infallible> {
         self.journaled_state.load_account_code(address)
     }
 
-    fn load_account_delegated(&mut self, address: Address) -> Result<StateLoad<AccountLoad>, Infallible> {
+    fn load_account_delegated(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<AccountLoad>, Infallible> {
         self.journaled_state.load_account_delegated(address)
     }
 
@@ -156,7 +180,10 @@ impl JournalTr for Backend {
         self.journaled_state.code(address)
     }
 
-    fn code_hash(&mut self, address: Address) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
         self.journaled_state.code_hash(address)
     }
 
@@ -221,7 +248,14 @@ impl JournalExt for Backend {
 trait DatabaseExt: JournalTr {
     /// Mimics `DatabaseExt::transact`
     /// See `commit_transaction` for the generics
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<
+        InspectorT,
+        BlockT,
+        TxT,
+        CfgT,
+        InstructionProviderT,
+        PrecompileT,
+    >(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
@@ -235,8 +269,10 @@ trait DatabaseExt: JournalTr {
                 Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
                 InterpreterTypes = EthInterpreter,
             > + Default,
-        PrecompileT:
-            PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default;
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default;
 
     /// Mimics `DatabaseExt::roll_fork_to_transaction`
     fn method_that_constructs_inspector<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
@@ -251,12 +287,21 @@ trait DatabaseExt: JournalTr {
                 Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
                 InterpreterTypes = EthInterpreter,
             > + Default,
-        PrecompileT:
-            PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default;
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default;
 }
 
 impl DatabaseExt for Backend {
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<
+        InspectorT,
+        BlockT,
+        TxT,
+        CfgT,
+        InstructionProviderT,
+        PrecompileT,
+    >(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
@@ -270,10 +315,14 @@ impl DatabaseExt for Backend {
                 Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
                 InterpreterTypes = EthInterpreter,
             > + Default,
-        PrecompileT:
-            PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default,
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default,
     {
-        commit_transaction::<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(self, env, inspector)?;
+        commit_transaction::<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+            self, env, inspector,
+        )?;
         self.method_with_inspector_counter += 1;
         Ok(())
     }
@@ -290,8 +339,10 @@ impl DatabaseExt for Backend {
                 Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
                 InterpreterTypes = EthInterpreter,
             > + Default,
-        PrecompileT:
-            PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default,
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default,
     {
         let inspector = TracerEip3155::new(Box::new(std::io::sink()));
         commit_transaction::<
@@ -327,10 +378,15 @@ where
             Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
             InterpreterTypes = EthInterpreter,
         > + Default,
-    PrecompileT:
-        PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
-    fn apply_cheatcode(&mut self, context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>) -> anyhow::Result<()> {
+    fn apply_cheatcode(
+        &mut self,
+        context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+    ) -> anyhow::Result<()> {
         // We cannot avoid cloning here, because we need to mutably borrow the context to get the journal.
         let block = context.block.clone();
         let tx = context.tx.clone();
@@ -351,12 +407,15 @@ where
         // `rollFork(bytes32 transaction)` cheatcode would do this
         context
             .journal()
-            .method_that_constructs_inspector::<_, _, _, InstructionProviderT, PrecompileT>(Env { block, tx, cfg })?;
+            .method_that_constructs_inspector::<_, _, _, InstructionProviderT, PrecompileT>(
+                Env { block, tx, cfg },
+            )?;
         Ok(())
     }
 }
 
-impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT> Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
+impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
+    Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
     for Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
 where
     BlockT: Block + Clone,
@@ -366,8 +425,10 @@ where
             Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
             InterpreterTypes = EthInterpreter,
         > + Default,
-    PrecompileT:
-        PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
     /// Note that precompiles are no longer accessible via `EvmContext::precompiles`.
     fn call(
@@ -424,8 +485,10 @@ where
             Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
             InterpreterTypes = EthInterpreter,
         > + Default,
-    PrecompileT:
-        PrecompileProvider<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, Output = InterpreterResult> + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
     // Create new journaled state and backend with the same DB and journaled state as the original for the transaction.
     // This new backend and state will be discarded after the transaction is done and the changes are applied to the
