@@ -4,11 +4,21 @@ use crate::{
 };
 use std::vec::Vec;
 
-use substrate::{
-    encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
-    read_scalar,
-};
-mod substrate;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "bn")]{
+        mod substrate;
+        use substrate::{
+            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+            read_scalar,
+        };
+    } else {
+        mod arkworks;
+        use arkworks::{
+            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+            read_scalar,
+        };
+    }
+}
 
 pub mod add {
     use super::*;
