@@ -121,25 +121,25 @@ pub(super) fn read_g1_point(input: &[u8]) -> Result<G1Affine, PrecompileError> {
 #[inline]
 pub(super) fn encode_g1_point(point: G1Affine) -> [u8; G1_LEN] {
     let mut output = [0u8; G1_LEN];
+    let Some((x, y)) = point.xy() else {
+        return output;
+    };
 
-    if let Some((x, y)) = point.xy() {
-        // TODO: check if serialize_uncompressed ever writes less than FQ_LEN
-        let mut x_bytes = [0u8; FQ_LEN];
-        x.serialize_uncompressed(&mut x_bytes[..])
-            .expect("Failed to serialize x coordinate");
+    let mut x_bytes = [0u8; FQ_LEN];
+    x.serialize_uncompressed(&mut x_bytes[..])
+        .expect("Failed to serialize x coordinate");
 
-        let mut y_bytes = [0u8; FQ_LEN];
-        y.serialize_uncompressed(&mut y_bytes[..])
-            .expect("Failed to serialize x coordinate");
+    let mut y_bytes = [0u8; FQ_LEN];
+    y.serialize_uncompressed(&mut y_bytes[..])
+        .expect("Failed to serialize x coordinate");
 
-        // Convert to big endian by reversing the bytes.
-        x_bytes.reverse();
-        y_bytes.reverse();
+    // Convert to big endian by reversing the bytes.
+    x_bytes.reverse();
+    y_bytes.reverse();
 
-        // Place x in the first half, y in the second half.
-        output[0..FQ_LEN].copy_from_slice(&x_bytes);
-        output[FQ_LEN..(FQ_LEN * 2)].copy_from_slice(&y_bytes);
-    }
+    // Place x in the first half, y in the second half.
+    output[0..FQ_LEN].copy_from_slice(&x_bytes);
+    output[FQ_LEN..(FQ_LEN * 2)].copy_from_slice(&y_bytes);
 
     output
 }
