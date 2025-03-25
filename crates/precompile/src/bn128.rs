@@ -5,9 +5,9 @@ use crate::{
 use std::vec::Vec;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "matter-labs-eip1962")]{
-        mod matter_labs;
-        use matter_labs::{
+    if #[cfg(feature = "arkworks")]{
+        mod arkworks;
+        use arkworks::{
             encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
             read_scalar,
         };

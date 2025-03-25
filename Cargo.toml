@@ -77,7 +77,6 @@ aurora-engine-modexp = { version = "1.1", default-features = false }
 blst = "0.3.13"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 c-kzg = { version = "1.0.0", default-features = false }
-eth_pairings = { git = "https://github.com/matter-labs/eip1962", rev = "17ba98bdbdd7bdf239c09cd88ca46a486124f5e7", default-features = false }
 k256 = { version = "0.13.3", default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false }
 kzg-rs = { version = "0.2.4", default-features = false }

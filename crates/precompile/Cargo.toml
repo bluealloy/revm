@@ -125,8 +125,8 @@ libsecp256k1 = ["dep:libsecp256k1"]
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
 
-# Use the matter-labs implementation for BN128 operations (EIP1962)
-matter-labs-eip1962 = ["dep:eth_pairings"]
+# Use the arkworks implementation for BN128 operations (EIP1962)
+arkworks = ["dep:ark-bn254", "dep:ark-ec", "dep:ark-ff", "dep:ark-serialize"]
 
 [[bench]]
 name = "bench"
