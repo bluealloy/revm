@@ -100,7 +100,7 @@ std = [
 	"ark-bn254/std",
 	"ark-ec/std",
 	"ark-ff/std",
-	"ark-serialize/std"
+	"ark-serialize/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -128,6 +128,7 @@ libsecp256k1 = ["dep:libsecp256k1"]
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
 
+# Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
 
 [[bench]]
