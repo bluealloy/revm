@@ -85,6 +85,7 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileError> {
     let point = if x.is_zero() && y.is_zero() {
         G2Affine::zero()
     } else {
+        // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G2Affine::new_unchecked(x, y);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
             return Err(PrecompileError::Bn128AffineGFailedToCreate);
