@@ -34,6 +34,7 @@ use fluentbase_sdk::{
     STATE_MAIN,
     SYSCALL_ID_SYNC_EVM_GAS,
 };
+use revm_interpreter::{return_ok, return_revert};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -132,7 +133,12 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 }
 
 pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAction {
-    let SystemInterruptionOutcome { inputs, result, .. } = outcome;
+    let SystemInterruptionOutcome {
+        inputs,
+        result,
+        is_frame,
+        ..
+    } = outcome;
 
     println!(
         "revm: resume execution: result={:?} gas={:?}",
@@ -144,7 +150,14 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     // we can safely convert the result into i32 here,
     // and we shouldn't worry about negative numbers
     // since the constraints is applied only for resulting exit codes
-    let exit_code = result.result as i32;
+    let exit_code: ExitCode = match result.result {
+        return_ok!() => ExitCode::Ok,
+        return_revert!() => ExitCode::Panic,
+        // a special case for frame execution where we always return `Err` as a failed call/create
+        _ if is_frame => ExitCode::Err,
+        InstructionResult::OutOfGas => ExitCode::OutOfFuel,
+        _ => unreachable!("revm: not supported result code: {:?}", result.result),
+    };
 
     // we count a contract as gas-free if it's a special system precompiled contract
     // that has self-gas management rules, for example, EVM/SVM runtimes
@@ -166,7 +179,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         &mut runtime_context,
         inputs.call_id,
         result.output.into(),
-        exit_code,
+        exit_code.into_i32(),
         fuel_consumed,
         fuel_refunded,
         inputs.syscall_params.fuel16_ptr,
@@ -226,10 +239,7 @@ fn process_exec_result(
 ) -> InterpreterAction {
     // if we have success or failed exit code
     if exit_code <= 0 {
-        // let is_evm = eip7702_address
-        //     .filter(|eip7702_address| eip7702_address == &PRECOMPILE_EVM_RUNTIME)
-        //     .is_some();
-        return process_halt(exit_code, return_data.clone(), is_create, gas, false);
+        return process_halt(exit_code, return_data.clone(), is_create, gas);
     }
 
     // otherwise, exit code is a "call_id" that identifies saved context
@@ -276,7 +286,6 @@ fn process_halt(
     return_data: Bytes,
     is_create: bool,
     gas: Gas,
-    is_evm: bool,
 ) -> InterpreterAction {
     let trace_output = |mut output: &[u8]| {
         if output.starts_with(&[0x08, 0xc3, 0x79, 0xa0]) {
@@ -290,21 +299,6 @@ fn process_halt(
                 .trim_end_matches("\0")
         );
     };
-
-    if is_evm {
-        let result = InstructionResult::from(-exit_code);
-        if result == InstructionResult::Revert {
-            trace_output(return_data.as_ref());
-        }
-        return InterpreterAction::Return {
-            result: InterpreterResult {
-                result,
-                output: return_data,
-                gas,
-            },
-        };
-    }
-
     let exit_code = ExitCode::from(exit_code);
     if exit_code == ExitCode::Panic {
         trace_output(return_data.as_ref());
@@ -320,6 +314,7 @@ fn process_halt(
             }
         }
         ExitCode::Panic => InstructionResult::Revert,
+        ExitCode::Err => InstructionResult::UnknownError,
         // rwasm failure codes
         ExitCode::RootCallOnly => InstructionResult::RootCallOnly,
         ExitCode::MalformedBuiltinParams => InstructionResult::MalformedBuiltinParams,

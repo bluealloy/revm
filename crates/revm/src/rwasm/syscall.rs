@@ -81,12 +81,12 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     let mut local_gas = Gas::new(inputs.gas.remaining());
 
-    let is_frame = inputs.syscall_params.code_hash == SYSCALL_ID_CALL
-        || inputs.syscall_params.code_hash == SYSCALL_ID_STATIC_CALL
-        || inputs.syscall_params.code_hash == SYSCALL_ID_CALL_CODE
-        || inputs.syscall_params.code_hash == SYSCALL_ID_DELEGATE_CALL
-        || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE
-        || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE2;
+    // let is_frame = inputs.syscall_params.code_hash == SYSCALL_ID_CALL
+    //     || inputs.syscall_params.code_hash == SYSCALL_ID_STATIC_CALL
+    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CALL_CODE
+    //     || inputs.syscall_params.code_hash == SYSCALL_ID_DELEGATE_CALL
+    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE
+    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE2;
 
     macro_rules! return_result {
         ($output:expr) => {{
@@ -97,7 +97,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                     inputs,
                     result,
                     created_address: None,
-                    is_frame,
+                    is_frame: false,
                 }));
             return Ok(result);
         }};
@@ -105,21 +105,21 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
     macro_rules! return_error {
         ($error:ident) => {{
             let error = InstructionResult::$error;
-            if is_frame {
-                // in case of error for frame calls we need to burn all remaining gas
-                if error.is_revert() {
-                    local_gas.set_refund(0);
-                } else if error.is_error() {
-                    local_gas.spend_all();
-                }
-            }
+            // if is_frame {
+            //     // in case of error for frame calls we need to burn all remaining gas
+            //     if error.is_revert() {
+            //         local_gas.set_refund(0);
+            //     } else if error.is_error() {
+            //         local_gas.spend_all();
+            //     }
+            // }
             let result = InterpreterResult::new(error, Default::default(), local_gas);
             let result =
                 FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
                     inputs,
                     result,
                     created_address: None,
-                    is_frame,
+                    is_frame: false,
                 }));
             return Ok(result);
         }};
@@ -135,7 +135,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                     local_gas,
                 ),
                 created_address: frame.created_address(),
-                is_frame,
+                is_frame: true,
             });
             return Ok(frame);
         }};
@@ -425,6 +425,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 let init_code = inputs.syscall_params.input.slice(32..);
                 (CreateScheme::Create, value, init_code)
             };
+            println!(
+                "SYSCALL_CREATE/CREATE2: scheme={scheme:?} value={value} init_code_len={}",
+                init_code.len()
+            );
             // make sure we don't exceed max possible init code
             let max_initcode_size = context
                 .evm
