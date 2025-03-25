@@ -95,15 +95,15 @@ pub enum InstructionResult {
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
 
-    // fluentbase error codes
+    // Fluentbase error codes
     RootCallOnly = 0x80,
     MalformedBuiltinParams,
     CallDepthOverflow,
     NonNegativeExitCode,
     UnknownError,
     InputOutputOutOfBounds,
-    // trap error codes
-    UnreachableCodeReached,
+    // rWasm trap error codes
+    UnreachableCodeReached = 0x90,
     MemoryOutOfBounds,
     TableOutOfBounds,
     IndirectCallToNull,

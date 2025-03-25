@@ -22,15 +22,15 @@ pub struct Contract {
     /// Address of the account the bytecode was loaded from. This can be different from
     /// target_address in the case of DELEGATECALL or CALLCODE
     pub bytecode_address: Option<Address>,
+    /// Caller of the EVM.
+    pub caller: Address,
+    /// Value sent to contract from transaction or from CALL opcodes.
+    pub call_value: U256,
     /// An address of EIP-7702 resolved proxy.
     /// We should store this information because it doesn't
     /// always match to bytecode address.
     /// Especially when we have DELEGATE or CALLCODE proxied though EIP-7702.
     pub eip7702_address: Option<Address>,
-    /// Caller of the EVM.
-    pub caller: Address,
-    /// Value sent to contract from transaction or from CALL opcodes.
-    pub call_value: U256,
 }
 
 impl Contract {

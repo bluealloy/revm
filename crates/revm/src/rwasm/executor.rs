@@ -10,20 +10,20 @@ use crate::{
     primitives::{hex, Address, Bytecode, Bytes, EVMError, Spec, U256},
     Context,
     Database,
-    Frame,
 };
-use core::{mem, ops::Deref, str::from_utf8};
-use fluentbase_runtime::{instruction::resume::SyscallResume, RuntimeContext};
+use core::{ops::Deref, str::from_utf8};
+use fluentbase_runtime::{
+    instruction::{exec::SyscallExec, resume::SyscallResume},
+    RuntimeContext,
+};
 use fluentbase_sdk::{
     codec::CompactABI,
     is_self_gas_management_contract,
     keccak256,
-    runtime::RuntimeContextWrapper,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
     ExitCode,
-    NativeAPI,
     SharedContextInput,
     SharedContextInputV1,
     SyscallInvocationParams,
@@ -34,7 +34,6 @@ use fluentbase_sdk::{
     STATE_MAIN,
     SYSCALL_ID_SYNC_EVM_GAS,
 };
-use revm_interpreter::{opcode, opcode::InstructionTables, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -42,11 +41,12 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
-    // encode input with all related context info
     let bytecode_address = interpreter
         .contract
         .bytecode_address
         .unwrap_or(interpreter.contract.target_address);
+
+    // encode input with all related context info
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
         block: BlockContextV1::from(context.evm.env.deref()),
         tx: TxContextV1::from(context.evm.env.deref()),
@@ -80,20 +80,27 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     // fuel limit we denominate later to gas
     let fuel_limit = interpreter.gas.remaining() * FUEL_DENOM_RATE;
 
+    let is_gas_free = interpreter
+        .contract
+        .eip7702_address
+        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
+        .is_some();
+
     // execute function
     let mut runtime_context = RuntimeContext::root(fuel_limit);
-    if let Some(eip7702_address) = interpreter.contract.eip7702_address {
-        if is_self_gas_management_contract(&eip7702_address) {
-            runtime_context = runtime_context.without_fuel();
-        }
+    if is_gas_free {
+        runtime_context = runtime_context.without_fuel();
     }
-    let native_sdk = RuntimeContextWrapper::new(runtime_context);
-    let (fuel_consumed, fuel_refunded, exit_code) = native_sdk.exec(
+    let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
+        &mut runtime_context,
         bytecode_hash,
         &context_input,
-        Some(fuel_limit),
+        fuel_limit,
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
     );
+    if is_gas_free {
+        debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
+    }
 
     // make sure we have enough gas to charge from the call
     if !interpreter.gas.record_denominated_cost(fuel_consumed) {
@@ -108,7 +115,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter.gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
-    let return_data = native_sdk.return_data();
+    let return_data: Bytes = runtime_context.into_return_data().into();
 
     Ok(process_exec_result(
         interpreter.contract.target_address,
@@ -134,15 +141,25 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
     let fuel_refunded = result.gas.refunded() * FUEL_DENOM_RATE as i64;
 
+    // we can safely convert the result into i32 here,
+    // and we shouldn't worry about negative numbers
+    // since the constraints is applied only for resulting exit codes
     let exit_code = result.result as i32;
 
-    let mut runtime_context = RuntimeContext::root(0);
+    // we count a contract as gas-free if it's a special system precompiled contract
+    // that has self-gas management rules, for example, EVM/SVM runtimes
     let is_gas_free = inputs
         .eip7702_address
-        .and_then(|eip7702_address| Some(is_self_gas_management_contract(&eip7702_address)))
-        .unwrap_or(false);
+        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
+        .is_some();
+
+    // gas adjustment is needed
+    // to synchronize gas/fuel between root and self-gas management runtimes,
+    // this interruption can be made by EVM/SVM runtimes only
     let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
-    if is_gas_free && !is_gas_adjustment {
+
+    let mut runtime_context = RuntimeContext::root(0);
+    if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
@@ -155,6 +172,10 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         inputs.syscall_params.fuel16_ptr,
     );
     let return_data: Bytes = runtime_context.into_return_data().into();
+
+    if is_gas_free {
+        debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
+    }
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
@@ -174,6 +195,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
             },
         };
     }
+    // accumulate refunds (can be forwarded from an interrupted call)
     gas.record_denominated_refund(fuel_refunded);
 
     process_exec_result(
@@ -204,58 +226,10 @@ fn process_exec_result(
 ) -> InterpreterAction {
     // if we have success or failed exit code
     if exit_code <= 0 {
-        let exit_code = ExitCode::from(exit_code);
-        if exit_code == ExitCode::Panic {
-            let mut output = return_data.as_ref();
-            if output.starts_with(&[0x08, 0xc3, 0x79, 0xa0]) {
-                output = &output[68..];
-            }
-            println!(
-                "output: 0x{} ({})",
-                hex::encode(&output),
-                from_utf8(output)
-                    .unwrap_or("can't decode utf-8")
-                    .trim_end_matches("\0")
-            );
-        }
-        let result = match exit_code {
-            ExitCode::Ok => {
-                if is_create {
-                    InstructionResult::ReturnContract
-                } else if return_data.is_empty() {
-                    InstructionResult::Stop
-                } else {
-                    InstructionResult::Return
-                }
-            }
-            ExitCode::Panic => InstructionResult::Revert,
-            ExitCode::BadSignature => InstructionResult::Return,
-            ExitCode::OutOfFuel => InstructionResult::OutOfGas,
-            // rwasm failure codes
-            ExitCode::RootCallOnly => InstructionResult::RootCallOnly,
-            ExitCode::MalformedBuiltinParams => InstructionResult::MalformedBuiltinParams,
-            ExitCode::CallDepthOverflow => InstructionResult::CallDepthOverflow,
-            ExitCode::NonNegativeExitCode => InstructionResult::NonNegativeExitCode,
-            ExitCode::UnknownError => InstructionResult::UnknownError,
-            ExitCode::InputOutputOutOfBounds => InstructionResult::InputOutputOutOfBounds,
-            ExitCode::UnreachableCodeReached => InstructionResult::UnreachableCodeReached,
-            ExitCode::MemoryOutOfBounds => InstructionResult::MemoryOutOfBounds,
-            ExitCode::TableOutOfBounds => InstructionResult::TableOutOfBounds,
-            ExitCode::IndirectCallToNull => InstructionResult::IndirectCallToNull,
-            ExitCode::IntegerDivisionByZero => InstructionResult::IntegerDivisionByZero,
-            ExitCode::IntegerOverflow => InstructionResult::IntegerOverflow,
-            ExitCode::BadConversionToInteger => InstructionResult::BadConversionToInteger,
-            ExitCode::StackOverflow => InstructionResult::StackOverflow,
-            ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
-            ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
-        };
-        return InterpreterAction::Return {
-            result: InterpreterResult {
-                result,
-                output: return_data,
-                gas,
-            },
-        };
+        // let is_evm = eip7702_address
+        //     .filter(|eip7702_address| eip7702_address == &PRECOMPILE_EVM_RUNTIME)
+        //     .is_some();
+        return process_halt(exit_code, return_data.clone(), is_create, gas, false);
     }
 
     // otherwise, exit code is a "call_id" that identifies saved context
@@ -266,8 +240,12 @@ fn process_exec_result(
         unreachable!("revm: can't decode invocation params");
     };
 
+    let is_gas_free = eip7702_address
+        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
+        .is_some();
+
     // if there is no enough gas for execution, then fail fast
-    if params.fuel_limit / FUEL_DENOM_RATE > gas.remaining() {
+    if !is_gas_free && params.fuel_limit / FUEL_DENOM_RATE > gas.remaining() {
         return InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -293,69 +271,80 @@ fn process_exec_result(
     }
 }
 
-pub fn execute_evm_resume<SPEC: Spec, EXT, DB: Database>(
-    interrupted_outcome: SystemInterruptionOutcome,
-    frame: &mut Frame,
-    shared_memory: &mut SharedMemory,
-    instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
-    context: &mut Context<EXT, DB>,
+fn process_halt(
+    exit_code: i32,
+    return_data: Bytes,
+    is_create: bool,
+    gas: Gas,
+    is_evm: bool,
 ) -> InterpreterAction {
-    let interpreter = frame.interpreter_mut();
+    let trace_output = |mut output: &[u8]| {
+        if output.starts_with(&[0x08, 0xc3, 0x79, 0xa0]) {
+            output = &output[68..];
+        }
+        println!(
+            "output: 0x{} ({})",
+            hex::encode(&output),
+            from_utf8(output)
+                .unwrap_or("can't decode utf-8")
+                .trim_end_matches("\0")
+        );
+    };
 
-    debug_assert!(
-        interpreter.instruction_pointer > interpreter.bytecode.as_ptr(),
-        "revm: instruction pointer underflow"
-    );
-    let prev_opcode = unsafe { *interpreter.instruction_pointer.offset(-1) };
-
-    let InterpreterResult {
-        result,
-        output,
-        gas,
-    } = interrupted_outcome.result;
-
-    // if execution failed, then we must terminate execution of the contract
-    if !result.is_ok() {
-        interpreter.gas = gas;
+    if is_evm {
+        let result = InstructionResult::from(-exit_code);
+        if result == InstructionResult::Revert {
+            trace_output(return_data.as_ref());
+        }
         return InterpreterAction::Return {
-            result: InterpreterResult::new(result, output, gas),
+            result: InterpreterResult {
+                result,
+                output: return_data,
+                gas,
+            },
         };
     }
 
-    interpreter.gas = gas;
-
-    match prev_opcode {
-        opcode::BALANCE | opcode::SELFBALANCE | opcode::EXTCODESIZE | opcode::CODESIZE => {
-            assert_eq!(output.len(), 32);
-            let balance = U256::from_le_slice(output.as_ref());
-            if let Err(result) = interpreter.stack.push(balance) {
-                interpreter.instruction_result = result;
+    let exit_code = ExitCode::from(exit_code);
+    if exit_code == ExitCode::Panic {
+        trace_output(return_data.as_ref());
+    }
+    let result = match exit_code {
+        ExitCode::Ok => {
+            if is_create {
+                InstructionResult::ReturnContract
+            } else if return_data.is_empty() {
+                InstructionResult::Stop
+            } else {
+                InstructionResult::Return
             }
         }
-        opcode::EXTCODEHASH => {
-            assert_eq!(output.len(), 32);
-            let code_hash = B256::from_slice(output.as_ref());
-            if let Err(result) = interpreter.stack.push(code_hash.into()) {
-                interpreter.instruction_result = result;
-            }
-        }
-        _ => unreachable!(
-            "revm: not resumable opcode ({})",
-            interpreter.current_opcode()
-        ),
-    }
-
-    if interpreter.instruction_result == InstructionResult::CallOrCreate {
-        interpreter.instruction_result = InstructionResult::Continue;
-    }
-
-    let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
-    let next_action = match instruction_tables {
-        InstructionTables::Plain(table) => interpreter.run(memory, table, context),
-        InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
+        ExitCode::Panic => InstructionResult::Revert,
+        // rwasm failure codes
+        ExitCode::RootCallOnly => InstructionResult::RootCallOnly,
+        ExitCode::MalformedBuiltinParams => InstructionResult::MalformedBuiltinParams,
+        ExitCode::CallDepthOverflow => InstructionResult::CallDepthOverflow,
+        ExitCode::NonNegativeExitCode => InstructionResult::NonNegativeExitCode,
+        ExitCode::UnknownError => InstructionResult::UnknownError,
+        ExitCode::InputOutputOutOfBounds => InstructionResult::InputOutputOutOfBounds,
+        ExitCode::UnreachableCodeReached => InstructionResult::UnreachableCodeReached,
+        ExitCode::MemoryOutOfBounds => InstructionResult::MemoryOutOfBounds,
+        ExitCode::TableOutOfBounds => InstructionResult::TableOutOfBounds,
+        ExitCode::IndirectCallToNull => InstructionResult::IndirectCallToNull,
+        ExitCode::IntegerDivisionByZero => InstructionResult::IntegerDivisionByZero,
+        ExitCode::IntegerOverflow => InstructionResult::IntegerOverflow,
+        ExitCode::BadConversionToInteger => InstructionResult::BadConversionToInteger,
+        ExitCode::StackOverflow => InstructionResult::StackOverflow,
+        ExitCode::BadSignature => InstructionResult::BadSignature,
+        ExitCode::OutOfFuel => InstructionResult::OutOfFuel,
+        ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
+        ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
     };
-    // Take the shared memory back.
-    *shared_memory = interpreter.take_memory();
-
-    next_action
+    InterpreterAction::Return {
+        result: InterpreterResult {
+            result,
+            output: return_data,
+            gas,
+        },
+    }
 }

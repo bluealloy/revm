@@ -106,7 +106,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         ($error:ident) => {{
             let error = InstructionResult::$error;
             if is_frame {
-                // if case of error for frame calls we need to burn all remaining gas
+                // in case of error for frame calls we need to burn all remaining gas
                 if error.is_revert() {
                     local_gas.set_refund(0);
                 } else if error.is_error() {

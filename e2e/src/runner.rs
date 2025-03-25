@@ -545,6 +545,7 @@ pub fn execute_test_suite(
             let mut acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce,
+                code_hash: KECCAK_EMPTY,
                 ..Default::default()
             };
             let evm_code_hash = keccak256(&info.code);
@@ -553,26 +554,30 @@ pub fn execute_test_suite(
                 Into::<U256>::into(evm_code_hash), info.code.len(),
             );
             // write EVM code hash state
-            let evm_code_hash_slot: U256 = Into::<U256>::into(CODE_HASH_SLOT);
-            info.storage
-                .insert(evm_code_hash_slot, Into::<U256>::into(evm_code_hash));
-            // set account info bytecode to the proxy loader
-            let bytecode = Bytecode::Eip7702(Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME));
-            acc_info.code_hash = bytecode.hash_slow();
-            acc_info.code = Some(bytecode);
+            if info.code.len() > 0 {
+                let evm_code_hash_slot: U256 = Into::<U256>::into(CODE_HASH_SLOT);
+                info.storage
+                    .insert(evm_code_hash_slot, Into::<U256>::into(evm_code_hash));
+                // set account info bytecode to the proxy loader
+                let bytecode = Bytecode::Eip7702(Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME));
+                acc_info.code_hash = bytecode.hash_slow();
+                acc_info.code = Some(bytecode);
+            }
             // write evm account into state
             cache_state2.insert_account_with_storage(address, acc_info, info.storage);
-            // put EVM preimage inside
-            let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
-            cache_state2.insert_account(
-                preimage_address,
-                AccountInfo {
-                    nonce: 1,
-                    code_hash: evm_code_hash,
-                    code: Some(Bytecode::new_raw(info.code.clone())),
-                    ..Default::default()
-                },
-            );
+            // put EVM preimage as an account
+            if info.code.len() > 0 {
+                let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
+                cache_state2.insert_account(
+                    preimage_address,
+                    AccountInfo {
+                        nonce: 1,
+                        code_hash: evm_code_hash,
+                        code: Some(Bytecode::new_raw(info.code.clone())),
+                        ..Default::default()
+                    },
+                );
+            }
         }
 
         let mut env = Box::<Env>::default();
