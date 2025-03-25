@@ -18,7 +18,7 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
 fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileError> {
-    // TODO: maybe assert input_be is 32 bytes, then change panic note to _exactly_ 32 bytes?
+    assert_eq!(input_be.len(), FQ_LEN, "input must be {FQ_LEN} bytes");
 
     let mut input_le = [0u8; FQ_LEN];
     input_le.copy_from_slice(input_be);
