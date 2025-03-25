@@ -47,15 +47,14 @@ ripemd.workspace = true
 # modexp
 aurora-engine-modexp.workspace = true
 
-# ecAdd, ecMul, ecPairing
-bn.workspace = true
+# Optionally use substrate implementation for eip1962
+bn = { workspace = true, optional = true }
 
-# Optionally use arkworks implementation for eip1962
+# Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
 ark-ff = { workspace = true, features = ["asm"] }
 ark-serialize = { workspace = true }
-
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
@@ -125,8 +124,7 @@ libsecp256k1 = ["dep:libsecp256k1"]
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
 
-# Use the arkworks implementation for BN128 operations (EIP1962)
-arkworks = ["dep:ark-bn254", "dep:ark-ec", "dep:ark-ff", "dep:ark-serialize"]
+bn = ["dep:bn"]
 
 [[bench]]
 name = "bench"
