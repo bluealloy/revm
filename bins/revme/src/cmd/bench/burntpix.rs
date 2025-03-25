@@ -82,7 +82,7 @@ pub fn run(criterion: &mut Criterion) {
     // });
 }
 
-/// Actually generates the svg
+// Actually generates the svg
 // fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
 //     let current_dir = std::env::current_dir()?;
 //     let svg_dir = current_dir.join("burntpix").join("svgs");
