@@ -3464,7 +3464,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "20.0.0"
+version = "20.0.1"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3556,7 +3556,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3577,7 +3577,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3661,7 +3661,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",

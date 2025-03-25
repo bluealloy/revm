@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0...revm-handler-v1.0.1) - 2025-03-25
+
+### Other
+
+- add unit test for EIP-3860 initcode size limit ([#2302](https://github.com/bluealloy/revm/pull/2302))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0-alpha.7...revm-handler-v1.0.0) - 2025-03-24
 
 ### Other
