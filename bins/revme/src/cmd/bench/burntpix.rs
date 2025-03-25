@@ -1,6 +1,6 @@
 pub mod static_data;
 
-use criterion::{measurement::WallTime, BenchmarkGroup};
+use criterion::Criterion;
 use static_data::{
     BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
     BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
@@ -10,17 +10,19 @@ use static_data::{
 use alloy_sol_types::{sol, SolCall};
 use database::{CacheDB, BENCH_CALLER};
 use revm::{
-    context_interface::result::{ExecutionResult, Output},
+    // context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
     primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context,
+    ExecuteEvm,
+    MainBuilder,
+    MainContext,
 };
 
 use std::error::Error;
-use std::fs::File;
 
-use std::{io::Write, str::FromStr};
+use std::str::FromStr;
 
 sol! {
     #[derive(Debug, PartialEq, Eq)]
@@ -29,7 +31,7 @@ sol! {
     }
 }
 
-pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
+pub fn run(criterion: &mut Criterion) {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
     let run_call_data = IBURNTPIX::runCall { seed, iterations }.abi_encode();
@@ -46,48 +48,52 @@ pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
         })
         .build_mainnet();
 
-    criterion_group.bench_function("burntpix", |b| {
+    criterion.bench_function("burntpix", |b| {
         b.iter(|| {
-            let tx_result = evm.replay().unwrap().result;
-            let return_data = match tx_result {
-                ExecutionResult::Success {
-                    output, gas_used, ..
-                } => {
-                    println!("Gas used: {:?}", gas_used);
-                    match output {
-                        Output::Call(value) => value,
-                        _ => unreachable!("Unexpected output type"),
-                    }
-                }
-                _ => unreachable!("Execution failed: {:?}", tx_result),
-            };
-
-            // Remove returndata offset and length from output
-            let returndata_offset = 64;
-            let data = &return_data[returndata_offset..];
-
-            // Remove trailing zeros
-            let trimmed_data = data
-                .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
-                .0;
-            let file_name = format!("{}_{}", seed, iterations);
-
-            svg(file_name, trimmed_data).expect("Failed to store svg");
+            let _ = evm.replay();
         })
     });
+
+    // Collects the data and uses it to generate the svg after running the benchmark
+    //     let return_data = match tx_result {
+    //         ExecutionResult::Success {
+    //             output, gas_used, ..
+    //         } => {
+    //             println!("Gas used: {:?}", gas_used);
+    //             match output {
+    //                 Output::Call(value) => value,
+    //                 _ => unreachable!("Unexpected output type"),
+    //             }
+    //         }
+    //         _ => unreachable!("Execution failed: {:?}", tx_result),
+    //     };
+
+    //     // Remove returndata offset and length from output
+    //     let returndata_offset = 64;
+    //     let data = &return_data[returndata_offset..];
+
+    //     // Remove trailing zeros
+    //     let trimmed_data = data
+    //         .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
+    //         .0;
+    //     let file_name = format!("{}_{}", seed, iterations);
+
+    //     svg(file_name, trimmed_data).expect("Failed to store svg");
+    // });
 }
 
-fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
-    let current_dir = std::env::current_dir()?;
-    let svg_dir = current_dir.join("burntpix").join("svgs");
-    std::fs::create_dir_all(&svg_dir)?;
+/// Actually generates the svg
+// fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
+//     let current_dir = std::env::current_dir()?;
+//     let svg_dir = current_dir.join("burntpix").join("svgs");
+//     std::fs::create_dir_all(&svg_dir)?;
 
-    let file_path = svg_dir.join(format!("{}.svg", filename));
-    let mut file = File::create(file_path)?;
-    file.write_all(svg_data)?;
+//     let file_path = svg_dir.join(format!("{}.svg", filename));
+//     let mut file = File::create(file_path)?;
+//     file.write_all(svg_data)?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 const DEFAULT_SEED: &str = "0";
 const DEFAULT_ITERATIONS: &str = "0x7A120";

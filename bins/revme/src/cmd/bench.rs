@@ -36,12 +36,15 @@ impl BenchName {
 pub struct Cmd {
     #[arg(value_enum)]
     pub name: BenchName,
+    /// Warmup represents warm up time for benchmarks ran
     #[arg(short = 'w', long)]
     pub warmup: Option<f64>,
+    /// Samples represents default measurement time for benchmarks ran
     #[arg(short = 'm', long)]
     pub time: Option<f64>,
+    /// Samples represents size of the sample for benchmarks ran
     #[arg(short = 's', long)]
-    pub samples: usize,
+    pub samples: Option<usize>,
 }
 
 impl Cmd {
@@ -51,29 +54,21 @@ impl Cmd {
             .warm_up_time(std::time::Duration::from_secs_f64(
                 self.warmup.unwrap_or(0.1),
             ))
-            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(1.0)))
-            .sample_size(self.samples);
+            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(0.1)))
+            .sample_size(self.samples.unwrap_or(10));
 
         match self.name {
             BenchName::Analysis => {
-                let mut criterion_group = criterion.benchmark_group("revme");
-                analysis::run(&mut criterion_group);
-                criterion_group.finish();
+                analysis::run(&mut criterion);
             }
             BenchName::Burntpix => {
-                let mut criterion_group = criterion.benchmark_group("revme");
-                burntpix::run(&mut criterion_group);
-                criterion_group.finish();
+                burntpix::run(&mut criterion);
             }
             BenchName::Snailtracer => {
-                let mut criterion_group = criterion.benchmark_group("revme");
-                snailtracer::run(&mut criterion_group);
-                criterion_group.finish();
+                snailtracer::run(&mut criterion);
             }
             BenchName::Transfer => {
-                let mut criterion_group = criterion.benchmark_group("revme");
-                transfer::run(&mut criterion_group);
-                criterion_group.finish();
+                transfer::run(&mut criterion);
             }
         }
     }

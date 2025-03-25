@@ -1,4 +1,4 @@
-use criterion::{measurement::WallTime, BenchmarkGroup};
+use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
@@ -8,7 +8,7 @@ use revm::{
 
 const BYTES: &str = include_str!("analysis.hex");
 
-pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
+pub fn run(criterion: &mut Criterion) {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
     // BenchmarkDB is dummy state that implements Database trait.
     let context = Context::mainnet()
@@ -20,7 +20,7 @@ pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
             tx.data = bytes!("8035F0CE");
         });
     let mut evm = context.build_mainnet();
-    criterion_group.bench_function("analysis", |b| {
+    criterion.bench_function("analysis", |b| {
         b.iter(|| {
             let _ = evm.replay();
         });

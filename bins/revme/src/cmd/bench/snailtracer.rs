@@ -1,4 +1,4 @@
-use criterion::{measurement::WallTime, BenchmarkGroup};
+use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
@@ -6,7 +6,9 @@ use revm::{
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
-pub fn simple_example(bytecode: Bytecode) {
+pub fn run(criterion: &mut Criterion) {
+    let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
+
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_chained(|tx| {
@@ -17,14 +19,9 @@ pub fn simple_example(bytecode: Bytecode) {
             tx.gas_limit = 1_000_000_000;
         })
         .build_mainnet();
-    let _ = evm.replay().unwrap();
-}
-
-pub fn run(criterion_group: &mut BenchmarkGroup<'_, WallTime>) {
-    criterion_group.bench_function("snailtracer", |b| {
+    criterion.bench_function("snailtracer", |b| {
         b.iter(|| {
-            let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
-            simple_example(bytecode);
+            let _ = evm.replay().unwrap();
         })
     });
 }
