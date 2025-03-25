@@ -61,6 +61,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileError> {
     if px.is_zero() && py.is_zero() {
         Ok(G1Affine::zero())
     } else {
+        // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G1Affine::new_unchecked(px, py);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
             return Err(PrecompileError::Bn128AffineGFailedToCreate);
