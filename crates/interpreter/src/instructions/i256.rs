@@ -25,7 +25,7 @@ pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x8000000000000000,
 ]);
 
-const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
+const FLIPH_BITMASK_U64: u64 = 0x7FFF_FFFF_FFFF_FFFF;
 
 #[inline]
 pub fn i256_sign(val: &U256) -> Sign {
