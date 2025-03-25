@@ -7,9 +7,12 @@ pub use init::JournalInit;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
+    journaled_state::{self, AccountLoad, JournalCheckpoint, JournalTr, TransferError},
 };
-use core::mem;
+use core::{
+    mem,
+    ops::{Deref, DerefMut},
+};
 use database_interface::Database;
 use primitives::{
     hardfork::{SpecId, SpecId::*},
@@ -32,6 +35,33 @@ where
 {
     /// Database
     pub database: DB,
+    /// Inner journal state.
+    pub inner: JournalInner<ENTRY>,
+}
+
+impl<DB, ENTRY> Deref for Journal<DB, ENTRY>
+where
+    ENTRY: JournalEntryTr,
+{
+    type Target = JournalInner<ENTRY>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<DB, ENTRY> DerefMut for Journal<DB, ENTRY>
+where
+    ENTRY: JournalEntryTr,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct JournalInner<ENTRY> {
     /// The current state
     pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
@@ -78,7 +108,10 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type FinalOutput = JournalOutput;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
-        Self::new(SpecId::default(), database)
+        Self {
+            inner: JournalInner::new(SpecId::default()),
+            database,
+        }
     }
 
     fn db_ref(&self) -> &Self::Database {
@@ -132,8 +165,9 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn warm_precompiles(&mut self, address: HashSet<Address>) {
         self.precompiles = address;
-        self.warm_preloaded_addresses
-            .extend(self.precompiles.iter());
+        self.inner
+            .warm_preloaded_addresses
+            .extend(self.inner.precompiles.iter());
     }
 
     #[inline]
@@ -234,16 +268,19 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn finalize(&mut self) -> Self::FinalOutput {
         let Self {
-            state,
-            transient_storage,
-            logs,
-            depth,
-            journal,
-            // kept, see [Self::new]
-            spec: _,
+            inner:
+                JournalInner {
+                    state,
+                    transient_storage,
+                    logs,
+                    depth,
+                    journal,
+                    // kept, see [Self::new]
+                    spec: _,
+                    warm_preloaded_addresses: _,
+                    precompiles: _,
+                },
             database: _,
-            warm_preloaded_addresses: _,
-            precompiles: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -256,7 +293,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 }
 
-impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
+impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Creates new JournaledState.
     ///
     /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
@@ -265,9 +302,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     /// # Note
     /// This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(spec: SpecId, database: DB) -> Journal<DB, ENTRY> {
+    pub fn new(spec: SpecId) -> JournalInner<ENTRY> {
         Self {
-            database,
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
