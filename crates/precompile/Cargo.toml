@@ -97,6 +97,10 @@ std = [
 	"p256?/std",
 	"serde/std",
 	"serde_json/std",
+	"ark-bn254/std",
+	"ark-ec/std",
+	"ark-ff/std",
+	"ark-serialize/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
