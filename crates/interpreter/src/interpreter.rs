@@ -217,7 +217,7 @@ mod tests {
             },
             false,
             false,
-            SpecId::LATEST,
+            SpecId::default(),
             u64::MAX,
         );
 
