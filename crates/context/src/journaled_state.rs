@@ -78,7 +78,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type FinalOutput = JournalOutput;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
-        Self::new(SpecId::LATEST, database)
+        Self::new(SpecId::default(), database)
     }
 
     fn db_ref(&self) -> &Self::Database {

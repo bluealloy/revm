@@ -62,7 +62,7 @@ pub trait MainContext {
 
 impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, Journal<EmptyDB>, ()> {
     fn mainnet() -> Self {
-        Context::new(EmptyDB::new(), SpecId::LATEST)
+        Context::new(EmptyDB::new(), SpecId::default())
     }
 }
 

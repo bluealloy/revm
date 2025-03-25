@@ -82,7 +82,7 @@ where
     >,
     INSP: Inspector<CTX, EthInterpreter>,
 {
-    fn inspect_commit_previous(&mut self) -> Self::CommitOutput {
+    fn inspect_replay_commit(&mut self) -> Self::CommitOutput {
         self.inspect_replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result

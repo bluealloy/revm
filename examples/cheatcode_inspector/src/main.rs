@@ -2,42 +2,43 @@
 //!
 //! The code below mimics relevant parts of the implementation of the [`transact`](https://book.getfoundry.sh/cheatcodes/transact)
 //! and [`rollFork(uint256 forkId, bytes32 transaction)`](https://book.getfoundry.sh/cheatcodes/roll-fork#rollfork) cheatcodes.
-//! Both of these cheatcodes initiate transactions from a call step in the cheatcode inspector which is the most advanced cheatcode use-case.
+//! Both of these cheatcodes initiate transactions from a call step in the cheatcode inspector which is the most
+//! advanced cheatcode use-case.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use std::{convert::Infallible, fmt::Debug};
 
 use revm::{
-    bytecode::Bytecode,
-    context::{BlockEnv, Cfg, CfgEnv, TxEnv},
-    context_interface::{
-        host::{SStoreResult, SelfDestructResult},
-        journaled_state::{AccountLoad, JournalCheckpoint, StateLoad, TransferError},
-        result::{EVMError, InvalidTransaction},
-        Block, Journal, JournalGetter, Transaction,
+    context::{
+        result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput, TxEnv,
     },
-    handler::{EthPrecompiles, PrecompileProvider},
-    interpreter::{interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult},
-    precompile::{Address, HashSet, B256},
-    primitives::{Log, U256,hardfork::SpecId},
-    state::{Account, EvmState, TransientStorage},
-    Context, Database, DatabaseCommit, JournalEntry, JournaledState, MainBuilder,
-     database::InMemoryDB,
-inspector::{
-    exec::{inspect_main, InspectEvm},
-    inspector_context::InspectorContext,
-    inspectors::TracerEip3155,
-    journal::JournalExt,
-    GetInspector, Inspector,
-},
+    context_interface::{
+        journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
+        result::EVMError,
+        Block, JournalTr, Transaction,
+    },
+    database::InMemoryDB,
+    handler::{
+        instructions::{EthInstructions, InstructionProvider},
+        EthPrecompiles, PrecompileProvider,
+    },
+    inspector::{inspectors::TracerEip3155, JournalExt},
+    interpreter::{
+        interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
+        SelfDestructResult, StateLoad,
+    },
+    primitives::{hardfork::SpecId, Address, HashSet, Log, B256, U256},
+    state::{Account, Bytecode, EvmState},
+    Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
 
 /// Backend for cheatcodes.
-/// The problematic cheatcodes are only supported in fork mode, so we'll omit the non-fork behavior of the Foundry `Backend`.
+/// The problematic cheatcodes are only supported in fork mode, so we'll omit the non-fork behavior of the Foundry
+/// `Backend`.
 #[derive(Clone, Debug)]
 struct Backend {
     /// In fork mode, Foundry stores (`JournaledState`, `Database`) pairs for each fork.
-    journaled_state: JournaledState<InMemoryDB>,
+    journaled_state: Journal<InMemoryDB>,
     /// Counters to be able to assert that we mutated the object that we expected to mutate.
     method_with_inspector_counter: usize,
     method_without_inspector_counter: usize,
@@ -46,27 +47,27 @@ struct Backend {
 impl Backend {
     fn new(spec: SpecId, db: InMemoryDB) -> Self {
         Self {
-            journaled_state: JournaledState::new(spec, db),
+            journaled_state: Journal::new(spec, db),
             method_with_inspector_counter: 0,
             method_without_inspector_counter: 0,
         }
     }
 }
 
-impl Journal for Backend {
+impl JournalTr for Backend {
     type Database = InMemoryDB;
-    type FinalOutput = JournalOutputs;
+    type FinalOutput = JournalOutput;
 
     fn new(database: InMemoryDB) -> Self {
-        Self::new(SpecId::LATEST, database)
+        Self::new(SpecId::default(), database)
     }
 
     fn db_ref(&self) -> &Self::Database {
-        &self.journaled_state.database
+        self.journaled_state.db_ref()
     }
 
     fn db(&mut self) -> &mut Self::Database {
-        &mut self.journaled_state.database
+        self.journaled_state.db()
     }
 
     fn sload(
@@ -112,8 +113,7 @@ impl Journal for Backend {
         storage_keys: impl IntoIterator<Item = U256>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.journaled_state
-            .initial_account_load(address, storage_keys)?;
-        Ok(())
+            .warm_account_and_storage(address, storage_keys)
     }
 
     fn warm_account(&mut self, address: Address) {
@@ -131,25 +131,11 @@ impl Journal for Backend {
     }
 
     fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.journaled_state.spec = spec_id;
+        self.journaled_state.set_spec_id(spec_id);
     }
 
     fn touch_account(&mut self, address: Address) {
-        self.journaled_state.touch(&address);
-    }
-
-    fn code(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
-        self.journaled_state.code(address)
-    }
-
-    fn code_hash(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
-        self.journaled_state.code_hash(address)
+        self.journaled_state.touch_account(address);
     }
 
     fn transfer(
@@ -173,7 +159,7 @@ impl Journal for Backend {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, Infallible> {
-        self.journaled_state.load_code(address)
+        self.journaled_state.load_account_code(address)
     }
 
     fn load_account_delegated(
@@ -187,14 +173,22 @@ impl Journal for Backend {
         self.journaled_state.set_code_with_hash(address, code, hash);
     }
 
+    fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
+        self.journaled_state.code(address)
+    }
+
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+        self.journaled_state.code_hash(address)
+    }
+
     fn clear(&mut self) {
-        // Clears the JournaledState. Preserving only the spec.
-        self.journaled_state.state.clear();
-        self.journaled_state.transient_storage.clear();
-        self.journaled_state.logs.clear();
-        self.journaled_state.journal = vec![vec![]];
-        self.journaled_state.depth = 0;
-        self.journaled_state.warm_preloaded_addresses.clear();
+        self.journaled_state.clear();
     }
 
     fn checkpoint(&mut self) -> JournalCheckpoint {
@@ -216,7 +210,6 @@ impl Journal for Backend {
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
-        // Ignore error.
         self.journaled_state
             .create_account_checkpoint(caller, address, balance, spec_id)
     }
@@ -224,131 +217,142 @@ impl Journal for Backend {
     /// Returns call depth.
     #[inline]
     fn depth(&self) -> usize {
-        self.journaled_state.depth
+        self.journaled_state.depth()
     }
 
     fn finalize(&mut self) -> Self::FinalOutput {
-        let JournaledState {
-            state,
-            transient_storage,
-            logs,
-            depth,
-            journal,
-            database: _,
-            spec: _,
-            warm_preloaded_addresses: _,
-            precompiles: _,
-        } = &mut self.journaled_state;
-
-        *transient_storage = TransientStorage::default();
-        *journal = vec![vec![]];
-        *depth = 0;
-        let state = std::mem::take(state);
-        let logs = std::mem::take(logs);
-
-        (state, logs)
+        self.journaled_state.finalize()
     }
 }
 
 impl JournalExt for Backend {
     fn logs(&self) -> &[Log] {
-        &self.journaled_state.logs
+        self.journaled_state.logs()
     }
 
     fn last_journal(&self) -> &[JournalEntry] {
-        self.journaled_state
-            .journal
-            .last()
-            .expect("Journal is never empty")
+        self.journaled_state.last_journal()
     }
 
     fn evm_state(&self) -> &EvmState {
-        &self.journaled_state.state
+        self.journaled_state.evm_state()
     }
 
     fn evm_state_mut(&mut self) -> &mut EvmState {
-        &mut self.journaled_state.state
+        self.journaled_state.evm_state_mut()
     }
 }
 
 /// Used in Foundry to provide extended functionality to cheatcodes.
 /// The methods are called from the `Cheatcodes` inspector.
-trait DatabaseExt: Journal {
+trait DatabaseExt: JournalTr {
     /// Mimics `DatabaseExt::transact`
     /// See `commit_transaction` for the generics
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockTr TxT, CfgT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<
+        InspectorT,
+        BlockT,
+        TxT,
+        CfgT,
+        InstructionProviderT,
+        PrecompileT,
+    >(
         &mut self,
-        env: Env<BlockTr TxT, CfgT>,
+        env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
     ) -> anyhow::Result<()>
     where
-        InspectorT: Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-            + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+        InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
         BlockT: Block,
         TxT: Transaction,
         CfgT: Cfg,
+        InstructionProviderT: InstructionProvider<
+                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                InterpreterTypes = EthInterpreter,
+            > + Default,
         PrecompileT: PrecompileProvider<
-            Context = InspectorContext<InspectorT, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>,
-            Output = InterpreterResult,
-        >;
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default;
 
     /// Mimics `DatabaseExt::roll_fork_to_transaction`
-    fn method_that_constructs_inspector<BlockTy, TxT, CfgT /* PrecompileT */>(
+    fn method_that_constructs_inspector<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
         &mut self,
-        env: Env<BlockTy, TxT, CfgT>,
+        env: Env<BlockT, TxT, CfgT>,
     ) -> anyhow::Result<()>
     where
         BlockT: Block,
         TxT: Transaction,
-        CfgT: Cfg;
-    // Can't declare a method that takes the precompile provider as a generic parameter and constructs a
-    // new inspector, because the `PrecompileProvider` trait needs to know the inspector type
-    // due to its context being `InspectorContext` instead of `Context`.
-    // `DatabaseExt::roll_fork_to_transaction` actually creates a noop inspector, so this not working is not a hard
-    // blocker for multichain cheatcodes.
-    /*
+        CfgT: Cfg,
+        InstructionProviderT: InstructionProvider<
+                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                InterpreterTypes = EthInterpreter,
+            > + Default,
         PrecompileT: PrecompileProvider<
-            Context = InspectorContext<InspectorT, InMemoryDB, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>,
-            Output = InterpreterResult,
-            Error = EVMError<Infallible, InvalidTransaction>,
-        >;
-    */
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default;
 }
 
 impl DatabaseExt for Backend {
-    fn method_that_takes_inspector_as_argument<InspectorT, BlockTr TxT, CfgT, PrecompileT>(
+    fn method_that_takes_inspector_as_argument<
+        InspectorT,
+        BlockT,
+        TxT,
+        CfgT,
+        InstructionProviderT,
+        PrecompileT,
+    >(
         &mut self,
-        env: Env<BlockTr TxT, CfgT>,
+        env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
     ) -> anyhow::Result<()>
     where
-        InspectorT: Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-            + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+        InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
         BlockT: Block,
         TxT: Transaction,
         CfgT: Cfg,
+        InstructionProviderT: InstructionProvider<
+                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                InterpreterTypes = EthInterpreter,
+            > + Default,
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default,
     {
-        commit_transaction::<InspectorT, BlockTr TxT, CfgT>(self, env, inspector)?;
+        commit_transaction::<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+            self, env, inspector,
+        )?;
         self.method_with_inspector_counter += 1;
         Ok(())
     }
 
-    fn method_that_constructs_inspector<BlockTy, TxT, CfgT /* , PrecompileT */>(
+    fn method_that_constructs_inspector<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
         &mut self,
-        env: Env<BlockTy, TxT, CfgT>,
+        env: Env<BlockT, TxT, CfgT>,
     ) -> anyhow::Result<()>
     where
         BlockT: Block,
         TxT: Transaction,
         CfgT: Cfg,
+        InstructionProviderT: InstructionProvider<
+                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                InterpreterTypes = EthInterpreter,
+            > + Default,
+        PrecompileT: PrecompileProvider<
+                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+                Output = InterpreterResult,
+            > + Default,
     {
         let inspector = TracerEip3155::new(Box::new(std::io::sink()));
         commit_transaction::<
             // Generic interpreter types are not supported yet in the `Evm` implementation
-            TracerEip3155<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
-            BlockTr
+            TracerEip3155,
+            BlockT,
             TxT,
             CfgT,
+            InstructionProviderT,
+            PrecompileT,
         >(self, env, inspector)?;
 
         self.method_without_inspector_counter += 1;
@@ -359,20 +363,29 @@ impl DatabaseExt for Backend {
 /// An REVM inspector that intercepts calls to the cheatcode address and executes them with the help of the
 /// `DatabaseExt` trait.
 #[derive(Clone, Default)]
-struct Cheatcodes<BlockTr TxT, CfgT> {
+struct Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT> {
     call_count: usize,
-    phantom: core::marker::PhantomData<(BlockTr TxT, CfgT)>,
+    phantom: core::marker::PhantomData<(BlockT, TxT, CfgT, InstructionProviderT, PrecompileT)>,
 }
 
-impl<BlockTr TxT, CfgT> Cheatcodes<BlockTr TxT, CfgT>
+impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
+    Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
     CfgT: Cfg + Clone,
+    InstructionProviderT: InstructionProvider<
+            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            InterpreterTypes = EthInterpreter,
+        > + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
     fn apply_cheatcode(
         &mut self,
-        context: &mut Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
+        context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
     ) -> anyhow::Result<()> {
         // We cannot avoid cloning here, because we need to mutably borrow the context to get the journal.
         let block = context.block.clone();
@@ -382,9 +395,7 @@ where
         // `transact` cheatcode would do this
         context
             .journal()
-            .method_that_takes_inspector_as_argument::<&mut Self, BlockTr TxT, CfgT, EthPrecompiles<
-                InspectorContext<&mut Self, Context<BlockTr TxT, CfgT, InMemoryDB, Backend>>
-            >>(
+            .method_that_takes_inspector_as_argument::<_, _, _, _, InstructionProviderT, PrecompileT>(
                 Env {
                     block: block.clone(),
                     tx: tx.clone(),
@@ -396,29 +407,40 @@ where
         // `rollFork(bytes32 transaction)` cheatcode would do this
         context
             .journal()
-            .method_that_constructs_inspector::<BlockTr TxT, CfgT>(Env { block, tx, cfg })?;
-
+            .method_that_constructs_inspector::<_, _, _, InstructionProviderT, PrecompileT>(
+                Env { block, tx, cfg },
+            )?;
         Ok(())
     }
 }
 
-impl<BlockTr TxT, CfgT> Inspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>
-    for Cheatcodes<BlockTr TxT, CfgT>
+impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
+    Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
+    for Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
     CfgT: Cfg + Clone,
+    InstructionProviderT: InstructionProvider<
+            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            InterpreterTypes = EthInterpreter,
+        > + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
     /// Note that precompiles are no longer accessible via `EvmContext::precompiles`.
     fn call(
         &mut self,
-        context: &mut Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
+        context: &mut Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
         _inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         self.call_count += 1;
         // Don't apply cheatcodes recursively.
         if self.call_count == 1 {
-            // Instead of calling unwrap here, we would want to return an appropriate call outcome based on the result in a real project.
+            // Instead of calling unwrap here, we would want to return an appropriate call outcome based on the result
+            // in a real project.
             self.apply_cheatcode(context).unwrap();
         }
         None
@@ -427,8 +449,8 @@ where
 
 /// EVM environment
 #[derive(Clone, Debug)]
-struct Env<BlockTr TxT, CfgT> {
-    block: BlockTr
+struct Env<BlockT, TxT, CfgT> {
+    block: BlockT,
     tx: TxT,
     cfg: CfgT,
 }
@@ -449,20 +471,24 @@ impl Env<BlockEnv, TxEnv, CfgEnv> {
 
 /// Executes a transaction and runs the inspector using the `Backend` as the state.
 /// Mimics `commit_transaction` <https://github.com/foundry-rs/foundry/blob/25cc1ac68b5f6977f23d713c01ec455ad7f03d21/crates/evm/core/src/backend/mod.rs#L1931>
-fn commit_transaction<InspectorT, BlockTr TxT, CfgT>(
+fn commit_transaction<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
     backend: &mut Backend,
-    env: Env<BlockTr TxT, CfgT>,
+    env: Env<BlockT, TxT, CfgT>,
     inspector: InspectorT,
 ) -> Result<(), EVMError<Infallible, InvalidTransaction>>
 where
-    InspectorT: Inspector<
-            Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
-            // Generic interpreter types are not supported yet in the `Evm` implementation
-            EthInterpreter,
-        > + GetInspector<Context<BlockTr TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
+    InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
     BlockT: Block,
     TxT: Transaction,
     CfgT: Cfg,
+    InstructionProviderT: InstructionProvider<
+            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            InterpreterTypes = EthInterpreter,
+        > + Default,
+    PrecompileT: PrecompileProvider<
+            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
+            Output = InterpreterResult,
+        > + Default,
 {
     // Create new journaled state and backend with the same DB and journaled state as the original for the transaction.
     // This new backend and state will be discarded after the transaction is done and the changes are applied to the
@@ -478,14 +504,14 @@ where
         chain: (),
         error: Ok(()),
     };
-    let mut evm = context.build_mainnet();
 
-    // let mut inspector_context = InspectorContext::<
-    //     InspectorT,
-    //     Context<BlockTr TxT, CfgT, InMemoryDB, Backend>,
-    // >::new(context, inspector);
-    let result = evm.inspect_replay(inspector)?;
-    //let result = inspect_main(&mut inspector_context)?;
+    let mut evm = Evm::new_with_inspector(
+        context,
+        inspector,
+        InstructionProviderT::default(),
+        PrecompileT::default(),
+    );
+    let result = evm.inspect_replay()?;
 
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(result.state);
@@ -511,26 +537,37 @@ fn update_state<DB: Database>(state: &mut EvmState, db: &mut DB) -> Result<(), D
 }
 
 fn main() -> anyhow::Result<()> {
-    let backend = Backend::new(SpecId::LATEST, InMemoryDB::default());
-    let mut inspector = Cheatcodes::<BlockEnv, TxEnv, CfgEnv>::default();
+    let backend = Backend::new(SpecId::default(), InMemoryDB::default());
+    let mut inspector = Cheatcodes::<
+        BlockEnv,
+        TxEnv,
+        CfgEnv,
+        EthInstructions<EthInterpreter, Context<BlockEnv, TxEnv, CfgEnv, InMemoryDB, Backend>>,
+        EthPrecompiles,
+    >::default();
     let env = Env::mainnet();
 
-    let mut evm = Context {
+    let context = Context {
         tx: env.tx,
         block: env.block,
         cfg: env.cfg,
         journaled_state: backend,
         chain: (),
         error: Ok(()),
-    }
-    .build_mainnet();
+    };
 
-    evm.inspect_replay(&mut inspector)?;
+    let mut evm = Evm::new_with_inspector(
+        context,
+        &mut inspector,
+        EthInstructions::default(),
+        EthPrecompiles::default(),
+    );
+    evm.inspect_replay()?;
 
     // Sanity check
-    assert_eq!(inspector.call_count, 2);
-    assert_eq!(evm.ctx.journaled_state.method_with_inspector_counter, 1);
-    assert_eq!(evm.ctx.journaled_state.method_without_inspector_counter, 1);
+    assert_eq!(evm.data.inspector.call_count, 2);
+    assert_eq!(evm.journaled_state.method_with_inspector_counter, 1);
+    assert_eq!(evm.journaled_state.method_without_inspector_counter, 1);
 
     Ok(())
 }

@@ -47,9 +47,9 @@ The full list of projects that use Revm is available in the awesome-revm section
 
 ### How to, dev section
 
-Note that [book](https://bluealloy.github.io/revm/) and [code docs](https://docs.rs/revm/20.0.0-alpha.1/revm/index.html) are still in WIP stage and they are being updated!
+The [book](https://bluealloy.github.io/revm/) and [`Architecture and API`](https://bluealloy.github.io/revm/architecture.html) page is the best starting resource.
 
-Part of the links point to the code documentation or the book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
+Some quicklinks can be found here. Some pointto code documentation or book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
 
 * How to build and use revm can be found here. (code)
 * Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
@@ -58,7 +58,6 @@ Part of the links point to the code documentation or the book. code docs are the
 * Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
 * How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
 * How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/dev.html#running-eth-tests)
-* How to run examples and benchmark with `samply` to check performance. (book)
 * If there is more explanations please open PR request for it.
 
 ### Community:
@@ -71,4 +70,4 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ### Security
 
-For any security questions or findings, please reach out to me directly via email at dragan0rakita@gmail.com or contact me on Keybase under the username [draganrakita](https://keybase.io/draganrakita/).
+For any security questions or findings, please reach out to me directly via email at dragan0rakita@gmail.com or contact me on Keybase under the username @draganrakita.

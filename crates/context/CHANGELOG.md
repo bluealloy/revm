@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.6...revm-context-v1.0.0) - 2025-03-24
+
+### Other
+
+- updated the following local packages: revm-database
+
+## [1.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.5...revm-context-v1.0.0-alpha.6) - 2025-03-21
+
+### Added
+
+- InspectEvm fn renames, inspector docs, book cleanup ([#2275](https://github.com/bluealloy/revm/pull/2275))
+
+### Fixed
+
+- remove duplicated load_account() ([#2225](https://github.com/bluealloy/revm/pull/2225))
+
+### Other
+
+- remove wrong `&mut` and duplicated spec ([#2276](https://github.com/bluealloy/revm/pull/2276))
+- Add custom instruction example ([#2261](https://github.com/bluealloy/revm/pull/2261))
+- fix clippy ([#2238](https://github.com/bluealloy/revm/pull/2238))
+- use AccessListItem associated type instead of AccessList ([#2214](https://github.com/bluealloy/revm/pull/2214))
+
 ## [1.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.4...revm-context-v1.0.0-alpha.5) - 2025-03-16
 
 ### Added

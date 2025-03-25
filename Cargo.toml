@@ -25,7 +25,7 @@ members = [
 
     # examples
     "examples/block_traces",
-    #"examples/cheatcode_inspector",
+    "examples/cheatcode_inspector",
     "examples/contract_deployment",
     "examples/database_components",
     "examples/uniswap_get_reserves",
@@ -39,19 +39,19 @@ default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
-revm = { path = "crates/revm", version = "20.0.0-alpha.6", default-features = false }
-primitives = { path = "crates/primitives", package = "revm-primitives", version = "16.0.0-alpha.4", default-features = false }
-bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "1.0.0-alpha.4", default-features = false }
-database = { path = "crates/database", package = "revm-database", version = "1.0.0-alpha.4", default-features = false }
-database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "1.0.0-alpha.4", default-features = false }
-state = { path = "crates/state", package = "revm-state", version = "1.0.0-alpha.4", default-features = false }
-interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "16.0.0-alpha.6", default-features = false }
-inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0-alpha.6", default-features = false }
-precompile = { path = "crates/precompile", package = "revm-precompile", version = "17.0.0-alpha.6", default-features = false }
-statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "1.0.0-alpha.5", default-features = false }
-context = { path = "crates/context", package = "revm-context", version = "1.0.0-alpha.5", default-features = false }
-context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "1.0.0-alpha.5", default-features = false }
-handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0-alpha.6", default-features = false }
+revm = { path = "crates/revm", version = "20.0.0", default-features = false }
+primitives = { path = "crates/primitives", package = "revm-primitives", version = "16.0.0", default-features = false }
+bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "1.0.0", default-features = false }
+database = { path = "crates/database", package = "revm-database", version = "1.0.0", default-features = false }
+database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "1.0.0", default-features = false }
+state = { path = "crates/state", package = "revm-state", version = "1.0.0", default-features = false }
+interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "16.0.0", default-features = false }
+inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
+precompile = { path = "crates/precompile", package = "revm-precompile", version = "17.0.0", default-features = false }
+statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "1.0.0", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "1.0.0", default-features = false }
+context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "1.0.0", default-features = false }
+handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0", default-features = false }
 
 # alloy 
 alloy-eip2930 = { version = "0.1.0", default-features = false }
@@ -68,33 +68,41 @@ alloy-signer = { version = "0.12.4", default-features = false }
 alloy-signer-local = { version = "0.12.4", default-features = false }
 alloy-transport = { version = "0.12.4", default-features = false }
 
-# misc
+# precompiles
 aurora-engine-modexp = { version = "1.1", default-features = false }
-auto_impl = "1.2.0"
-bitflags = { version = "2.6.0", default-features = false }
-bitvec = { version = "1", default-features = false }
 blst = "0.3.13"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 c-kzg = { version = "1.0.0", default-features = false }
-cfg-if = { version = "1.0", default-features = false }
-clap = "4"
-criterion = { package = "codspeed-criterion-compat", version = "2.7" }
-derive-where = { version = "1.2.7", default-features = false }
 eth_pairings = { git = "https://github.com/matter-labs/eip1962", rev = "17ba98bdbdd7bdf239c09cd88ca46a486124f5e7", default-features = false }
-enumn = "0.1"
 k256 = { version = "0.13.3", default-features = false }
-kzg-rs = { version = "0.2.4", default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false }
-once_cell = { version = "1.19", default-features = false }
+kzg-rs = { version = "0.2.4", default-features = false }
+secp256k1 = { version = "0.30", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+ripemd = { version = "0.1", default-features = false }
 p256 = { version = "0.13.2", default-features = false }
+
+# bytecode
+bitvec = { version = "1", default-features = false }
 paste = "1.0"
 phf = { version = "0.11", default-features = false }
-rand = "0.8"
-ripemd = { version = "0.1", default-features = false }
-secp256k1 = { version = "0.30", default-features = false }
+
+# revme
+clap = { version = "4", features = ["derive"] }
+criterion = { package = "codspeed-criterion-compat", version = "2.7" }
+
+# serde
 serde = { version = "1.0", default-features = false }
 serde_json = { version = "1.0", default-features = false }
-sha2 = { version = "0.10", default-features = false }
+
+# misc
+auto_impl = "1.2.0"
+bitflags = { version = "2.6.0", default-features = false }
+cfg-if = { version = "1.0", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
+enumn = "0.1"
+once_cell = { version = "1.19", default-features = false }
+rand = "0.8"
 tokio = "1.40"
 
 # dev-dependencies

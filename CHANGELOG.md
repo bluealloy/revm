@@ -1,5 +1,46 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v66 tag
+date: 24.03.205
+
+Stable release of Revm new Execution API and Evm Framework.
+
+* `revm-primitives`: 16.0.0-alpha.5 -> 16.0.0
+* `revm-context-interface`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-context`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-database`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-interpreter`: 16.0.0-alpha.7 -> 16.0.0
+* `revm-precompile`: 17.0.0-alpha.7 -> 17.0.0
+* `revm-handler`: 1.0.0-alpha.7 -> 1.0.0
+* `revm-inspector`: 1.0.0-alpha.7 -> 1.0.0
+* `revme`: 3.0.0-alpha.6 -> 3.0.0
+* `op-revm`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-bytecode`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-state`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-database-interface`: 1.0.0-alpha.5 -> 1.0.0
+* `revm`: 20.0.0-alpha.7 -> 20.0.0
+
+# v65 tag
+date 23.03.2025
+
+Optimism fixes, preo for release v20.0.0 release.
+Breaking changes related to EVMError, more about this here: https://github.com/bluealloy/revm/pull/2280
+
+* `revm-primitives`: 16.0.0-alpha.4 -> 16.0.0-alpha.5 (⚠ API breaking changes)
+* `revm-context-interface`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-context`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-database`: 1.0.0-alpha.4 -> 1.0.0-alpha.5 (✓ API compatible changes)
+* `revm-interpreter`: 16.0.0-alpha.6 -> 16.0.0-alpha.7 (✓ API compatible changes)
+* `revm-precompile`: 17.0.0-alpha.6 -> 17.0.0-alpha.7 (⚠ API breaking changes)
+* `revm-handler`: 1.0.0-alpha.6 -> 1.0.0-alpha.7 (✓ API compatible changes)
+* `revm-inspector`: 1.0.0-alpha.6 -> 1.0.0-alpha.7 (⚠ API breaking changes)
+* `revme`: 3.0.0-alpha.6 -> 3.0.0-alpha.7 (✓ API compatible changes)
+* `op-revm`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-bytecode`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-state`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-database-interface`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm`: 20.0.0-alpha.6 -> 20.0.0-alpha.7
+
 # v63 tag
 date: 16.03.2025
 

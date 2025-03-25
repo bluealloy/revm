@@ -1,7 +1,7 @@
 use clap::Parser;
 use revm::{
-    bytecode::eof::{self, validate_eof_inner, CodeType, Eof, EofError},
-    primitives::{constants::MAX_INITCODE_SIZE, hex, Bytes},
+    bytecode::eof::{self, validate_raw_eof_inner, CodeType, EofError},
+    primitives::{hex, Bytes},
 };
 use std::io;
 
@@ -51,13 +51,14 @@ impl Cmd {
             };
 
             if bytes[0] == 0xEF {
-                match Eof::decode(bytes) {
+                match validate_raw_eof_inner(bytes, container_kind) {
                     Ok(eof) => {
                         println!("Decoding: {:#?}", eof);
-                        let res = validate_eof_inner(&eof, container_kind);
-                        println!("Validation: {:#?}", res);
+                        println!("Validation: OK");
                     }
-                    Err(e) => eprintln!("Decoding Error: {:#?}", e),
+                    Err(eof_error) => {
+                        eprintln!("err: {}", eof_error);
+                    }
                 }
             } else {
                 eof::printer::print(&bytes)
@@ -76,31 +77,24 @@ impl Cmd {
             let Some(bytes) = trim_decode(&input) else {
                 return;
             };
-
-            if bytes.len() > MAX_INITCODE_SIZE {
-                println!(
-                    "err: bytes exceeds max code size {} > {}",
-                    bytes.len(),
-                    MAX_INITCODE_SIZE
-                );
-                continue;
-            }
-            match Eof::decode(bytes) {
-                Ok(eof) => match validate_eof_inner(&eof, container_kind) {
-                    Ok(_) => {
-                        println!(
-                            "OK {}/{}/{}",
-                            eof.body.code_section.len(),
-                            eof.body.container_section.len(),
-                            eof.body.data_section.len()
-                        );
+            match validate_raw_eof_inner(bytes, container_kind) {
+                Ok(eof) => {
+                    println!(
+                        "OK {}/{}/{}",
+                        eof.body.code_section.len(),
+                        eof.body.container_section.len(),
+                        eof.body.data_section.len()
+                    );
+                }
+                Err(eof_error) => {
+                    if matches!(
+                        eof_error,
+                        EofError::Decode(eof::EofDecodeError::InvalidEOFSize)
+                    ) {
+                        continue;
                     }
-                    Err(eof_error) => match eof_error {
-                        EofError::Decode(e) => println!("err decode: {}", e),
-                        EofError::Validation(e) => println!("err validation: {}", e),
-                    },
-                },
-                Err(e) => println!("err: {:#?}", e),
+                    println!("err: {}", eof_error);
+                }
             }
         }
     }

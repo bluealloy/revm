@@ -59,7 +59,7 @@ impl Clone for EthPrecompiles {
 impl Default for EthPrecompiles {
     fn default() -> Self {
         Self {
-            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::LATEST)),
+            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::default())),
         }
     }
 }

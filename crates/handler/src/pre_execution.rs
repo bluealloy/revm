@@ -49,6 +49,9 @@ pub fn deduct_caller<CTX: ContextTr>(
     let basefee = context.block().basefee();
     let blob_price = context.block().blob_gasprice().unwrap_or_default();
     let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
+    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
+    let value = context.tx().value();
+
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
     let mut gas_cost = (context.tx().gas_limit() as u128).saturating_mul(effective_gas_price);
@@ -69,6 +72,11 @@ pub fn deduct_caller<CTX: ContextTr>(
         .info
         .balance
         .saturating_sub(U256::from(gas_cost));
+
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        caller_account.info.balance = value.max(caller_account.info.balance);
+    }
 
     // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
     if is_call {

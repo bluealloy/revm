@@ -39,16 +39,5 @@ jobs:
       - name: Install cross
         run: cargo install cross
 
-      - name: Statetests
-        run: |
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
-            ethtests/GeneralStateTests/ \
-            ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-            tests/eof/state_tests \
-            tests/stable/state_tests \
-            tests/develop/state_tests
-      - name: EOF validation
-        run: |
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
-          tests/eof/eof_tests
-
+      - name: Run tests
+        run: ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}

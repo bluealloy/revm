@@ -248,7 +248,7 @@ impl Precompiles {
 
         let inner = inner
             .iter()
-            .filter(|(a, _)| other.inner.get(*a).is_none())
+            .filter(|(a, _)| !other.inner.contains_key(*a))
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
@@ -265,7 +265,7 @@ impl Precompiles {
 
         let inner = inner
             .iter()
-            .filter(|(a, _)| other.inner.get(*a).is_some())
+            .filter(|(a, _)| other.inner.contains_key(*a))
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
@@ -334,7 +334,6 @@ impl PrecompileSpecId {
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             PRAGUE | OSAKA => Self::PRAGUE,
-            LATEST => Self::LATEST,
         }
     }
 }

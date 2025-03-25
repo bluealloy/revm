@@ -315,3 +315,39 @@ pub fn validate_initial_tx_gas(
 
     Ok(gas)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{ExecuteCommitEvm, MainBuilder, MainContext};
+    use bytecode::opcode;
+    use context::{
+        result::{EVMError, InvalidTransaction},
+        Context,
+    };
+    use database::{CacheDB, EmptyDB};
+    use primitives::{Bytes, TxKind};
+
+    #[test]
+    fn test_eip3860_initcode_size_limit() {
+        // Create a large bytecode that exceeds EIP-3860 limit (2x max_code_size)
+        let large_bytecode = vec![opcode::STOP; 100000]; // 60KB of STOP opcodes
+        let bytecode: Bytes = large_bytecode.into();
+        let ctx = Context::mainnet()
+            .modify_tx_chained(|tx| {
+                tx.kind = TxKind::Create;
+                tx.data = bytecode.clone();
+            })
+            .with_db(CacheDB::<EmptyDB>::default());
+
+        let mut evm = ctx.build_mainnet();
+        let result = evm.replay_commit();
+
+        // Verify that contract creation fails due to EIP-3860 size limit
+        assert!(matches!(
+            result,
+            Err(EVMError::Transaction(
+                InvalidTransaction::CreateInitCodeSizeLimit
+            ))
+        ));
+    }
+}
