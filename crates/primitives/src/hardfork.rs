@@ -30,7 +30,7 @@ pub enum SpecId {
     SHANGHAI,         // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN,           // Cancun                 19426587 (Timestamp: 1710338135)
     #[default]
-    PRAGUE,           // Prague                 TBD
+    PRAGUE, // PRAGUE                 TBD
     OSAKA,            // Osaka                  TBD
 }
 
