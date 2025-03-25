@@ -10,14 +10,10 @@ use static_data::{
 use alloy_sol_types::{sol, SolCall};
 use database::{CacheDB, BENCH_CALLER};
 use revm::{
-    // context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
     primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    Context,
-    ExecuteEvm,
-    MainBuilder,
-    MainContext,
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 use std::error::Error;
