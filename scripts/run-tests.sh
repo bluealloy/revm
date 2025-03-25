@@ -80,7 +80,7 @@ download_and_extract() {
     echo "Extracting ${label} fixtures..."
      # strip-components=1 removes the first top level directory from the flepath
      # This is needed because when we extract the tar, it is placed under an
-     # unecessary "fixtures/" directory.
+     # unnecessary "fixtures/" directory.
     tar -xzf "${FIXTURES_DIR}/${tar_file}" --strip-components=1 -C "$target_dir"
 }
 
