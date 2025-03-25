@@ -59,7 +59,7 @@ impl JournalTr for Backend {
     type FinalOutput = JournalOutput;
 
     fn new(database: InMemoryDB) -> Self {
-        Self::new(SpecId::LATEST, database)
+        Self::new(SpecId::default(), database)
     }
 
     fn db_ref(&self) -> &Self::Database {
@@ -537,7 +537,7 @@ fn update_state<DB: Database>(state: &mut EvmState, db: &mut DB) -> Result<(), D
 }
 
 fn main() -> anyhow::Result<()> {
-    let backend = Backend::new(SpecId::LATEST, InMemoryDB::default());
+    let backend = Backend::new(SpecId::default(), InMemoryDB::default());
     let mut inspector = Cheatcodes::<
         BlockEnv,
         TxEnv,

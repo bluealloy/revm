@@ -330,7 +330,6 @@ impl PrecompileSpecId {
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             PRAGUE | OSAKA => Self::PRAGUE,
-            LATEST => Self::LATEST,
         }
     }
 }
