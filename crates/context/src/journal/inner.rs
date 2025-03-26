@@ -15,6 +15,9 @@ use std::{vec, vec::Vec};
 
 use super::{JournalEntryTr, JournalOutput};
 
+/// Inner journal state that contains journal and state changes.
+///
+/// Spec Id is a essential information for the Journal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalInner<ENTRY> {
@@ -30,7 +33,10 @@ pub struct JournalInner<ENTRY> {
     pub depth: usize,
     /// The journal of state changes, one for each call
     pub journal: Vec<Vec<ENTRY>>,
-    /// The spec ID for the EVM
+    /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
+    /// JournalInner to be functional.
+    ///
+    /// If spec is set it it assumed that precompile addresses are set as well for this particular spec.
     ///
     /// This spec is used for two things:
     ///
@@ -39,7 +45,7 @@ pub struct JournalInner<ENTRY> {
     ///
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
-    pub spec: SpecId,
+    pub spec: Option<SpecId>,
     /// Warm loaded addresses are used to check if loaded address
     /// should be considered cold or warm loaded when the account
     /// is first accessed.
@@ -51,19 +57,24 @@ pub struct JournalInner<ENTRY> {
     pub precompiles: HashSet<Address>,
 }
 
+pub struct PrecompileAddresses {
+    pub precompiles: HashSet<Address>,
+    pub spec: Option<SpecId>,
+}
+
 impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Creates new [`JournalInner`].
     ///
     /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
     /// In ordinary case this is precompile or beneficiary.
-    pub fn new(spec: SpecId) -> JournalInner<ENTRY> {
+    pub fn new() -> JournalInner<ENTRY> {
         Self {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
-            spec,
+            spec: None,
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
         }
@@ -71,7 +82,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state.
     ///
-    /// Note: Precompile addresses and spec is preserved.
+    /// Note: Precompile addresses and spec are preserved and initial state of
+    /// warm_preloaded_addresses will contain precompiles addresses.
     #[inline]
     pub fn take_output_and_clear(&mut self) -> JournalOutput {
         // Clears all field from JournalInner. Doing it this way to avoid
@@ -95,8 +107,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
         journal.push(vec![]);
         *depth = 0;
-        warm_preloaded_addresses.clear();
-        precompiles.clear();
+        // Load precompiles into warm_preloaded_addresses
+        *warm_preloaded_addresses = precompiles.clone();
 
         JournalOutput { state, logs }
     }
@@ -110,7 +122,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Sets SpecId.
     #[inline]
     pub fn set_spec_id(&mut self, spec: SpecId) {
-        self.spec = spec;
+        self.spec = Some(spec);
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -337,7 +349,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = self
+            .spec
+            .expect("SpecId should be set")
+            .is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
@@ -378,6 +393,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let spec = self.spec;
         let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
+        let spec: SpecId = spec.expect("SpecId should be set");
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
         if address != target {
@@ -393,7 +409,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
         let previously_destroyed = acc.is_selfdestructed();
-        let is_cancun_enabled = self.spec.is_enabled_in(CANCUN);
+        let is_cancun_enabled = spec.is_enabled_in(CANCUN);
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created() || !is_cancun_enabled {
@@ -473,7 +489,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
-        let spec = self.spec;
+        let spec = self.spec.expect("SpecId should be set");
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
         let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
@@ -528,7 +544,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     Account::new_not_existing()
                 };
 
-                // precompiles are warm loaded so we need to take that into account
+                // Precompiles amont some other account are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
                 StateLoad {

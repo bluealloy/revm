@@ -17,6 +17,8 @@ use std::vec::Vec;
 
 /// A journal of state changes internal to the EVM
 ///
+/// Before it becomes operational, the journal needs to be initialized with a spec id.
+///
 /// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
 ///
 /// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
@@ -94,7 +96,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
-            inner: JournalInner::new(SpecId::default()),
+            inner: JournalInner::new(),
             database,
         }
     }
@@ -150,9 +152,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn warm_precompiles(&mut self, address: HashSet<Address>) {
         self.inner.precompiles = address;
-        self.inner
-            .warm_preloaded_addresses
-            .extend(self.inner.precompiles.iter());
+        self.inner.warm_preloaded_addresses = self.inner.precompiles.clone();
     }
 
     #[inline]
@@ -176,8 +176,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         Ok(())
     }
 
+    fn spec_id(&self) -> Option<SpecId> {
+        self.inner.spec
+    }
+
     fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.inner.spec = spec_id;
+        self.inner.spec = Some(spec_id);
     }
 
     fn transfer(
@@ -234,8 +238,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn clear(&mut self) {
         // Clears the inner journal state. Preserving only the spec.
-        let spec = self.inner.spec;
-        self.inner = JournalInner::new(spec);
+        let _ = self.inner.take_output_and_clear();
     }
 
     fn create_account_checkpoint(

@@ -22,7 +22,7 @@ pub trait EvmTr {
     /// The instruction set type that implements InstructionProvider to define available operations
     type Instructions: InstructionProvider;
     /// The type containing the available precompiled contracts
-    type Precompiles;
+    type Precompiles: PrecompileProvider<Self::Context>;
 
     /// Executes the interpreter loop for the given interpreter instance.
     /// Returns either a completion status or the next interpreter action to take.
@@ -97,6 +97,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
 {
     type Context = CTX;
     type Instructions = I;

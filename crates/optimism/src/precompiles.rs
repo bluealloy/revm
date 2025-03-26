@@ -19,20 +19,25 @@ use std::string::String;
 pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
+    spec: Option<OpSpecId>,
 }
 
 impl OpPrecompiles {
     /// Create a new [`OpPrecompiles`] with the given precompiles.
     pub fn new(precompiles: &'static Precompiles) -> Self {
         Self {
-            inner: EthPrecompiles { precompiles },
+            inner: EthPrecompiles {
+                precompiles,
+                spec: None,
+            },
+            spec: None,
         }
     }
 
     /// Create a new precompile provider with the given optimismispec.
     #[inline]
     pub fn new_with_spec(spec: OpSpecId) -> Self {
-        match spec {
+        let mut precompiles = match spec {
             spec @ (OpSpecId::BEDROCK
             | OpSpecId::REGOLITH
             | OpSpecId::CANYON
@@ -40,7 +45,9 @@ impl OpPrecompiles {
             OpSpecId::FJORD => Self::new(fjord()),
             OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
             OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => Self::new(isthmus()),
-        }
+        };
+        precompiles.spec = Some(spec);
+        precompiles
     }
 }
 
@@ -96,8 +103,12 @@ where
     type Output = InterpreterResult;
 
     #[inline]
-    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
+        if Some(spec) == self.spec {
+            return false;
+        }
         *self = Self::new_with_spec(spec);
+        true
     }
 
     #[inline]

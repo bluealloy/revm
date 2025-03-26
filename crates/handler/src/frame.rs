@@ -534,12 +534,6 @@ where
         frame_input: FrameInput,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
-        let (context, precompiles) = evm.ctx_precompiles();
-        precompiles.set_spec(context.cfg().spec());
-        context
-            .journal()
-            .warm_precompiles(precompiles.warm_addresses().collect());
-
         memory.borrow_mut().new_context();
         Self::init_with_context(evm, 0, frame_input, memory)
     }

@@ -12,7 +12,10 @@ use std::string::String;
 pub trait PrecompileProvider<CTX: ContextTr> {
     type Output;
 
-    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec);
+    /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will always return true.
+    ///
+    /// Returned booling will determine if precompile addresses should be injected into the journal.
+    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool;
 
     /// Run the precompile.
     fn run(
@@ -34,6 +37,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
 #[derive(Debug)]
 pub struct EthPrecompiles {
     pub precompiles: &'static Precompiles,
+    pub spec: Option<SpecId>,
 }
 
 impl EthPrecompiles {
@@ -52,6 +56,7 @@ impl Clone for EthPrecompiles {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
+            spec: self.spec,
         }
     }
 }
@@ -60,6 +65,7 @@ impl Default for EthPrecompiles {
     fn default() -> Self {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::default())),
+            spec: None,
         }
     }
 }
@@ -67,8 +73,15 @@ impl Default for EthPrecompiles {
 impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
     type Output = InterpreterResult;
 
-    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) {
-        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec.into()));
+    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
+        let spec = spec.into();
+        // generate new precompiles only on new spec
+        if Some(spec) == self.spec {
+            return false;
+        }
+        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec));
+        self.spec = Some(spec);
+        true
     }
 
     fn run(
