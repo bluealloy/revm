@@ -9,7 +9,7 @@ use revm::{
         self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
         Precompiles,
     },
-    primitives::{Address, Bytes},
+    primitives::Address,
 };
 use std::boxed::Box;
 use std::string::String;
