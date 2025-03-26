@@ -1,5 +1,5 @@
 use super::{
-    blst::map_fp2_to_g2 as blst_map_fp2_to_g2, g2::check_canonical_fp2, g2::encode_g2_point,
+    blst::{check_canonical_fp2, encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2},
     utils::remove_padding,
 };
 use crate::bls12_381_const::{
@@ -35,5 +35,8 @@ pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let p_aff = blst_map_fp2_to_g2(&fp2);
 
     let out = encode_g2_point(&p_aff);
-    Ok(PrecompileOutput::new(MAP_FP2_TO_G2_BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(
+        MAP_FP2_TO_G2_BASE_GAS_FEE,
+        out.into(),
+    ))
 }

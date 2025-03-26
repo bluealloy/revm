@@ -1,10 +1,8 @@
-use super::blst::p1_add_affine;
-use super::g1::{encode_g1_point, extract_g1_input_no_subgroup_check};
+use super::blst::{encode_g1_point, extract_g1_input_no_subgroup_check, p1_add_affine};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
-use crate::PrecompileWithAddress;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
@@ -36,5 +34,5 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let p_aff = p1_add_affine(a_aff, b_aff);
 
     let out = encode_g1_point(&p_aff);
-    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
 }
