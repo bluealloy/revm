@@ -57,9 +57,10 @@ pub struct JournalInner<ENTRY> {
     pub precompiles: HashSet<Address>,
 }
 
-pub struct PrecompileAddresses {
-    pub precompiles: HashSet<Address>,
-    pub spec: Option<SpecId>,
+impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
@@ -544,7 +545,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     Account::new_not_existing()
                 };
 
-                // Precompiles amont some other account are warm loaded so we need to take that into account
+                // Precompiles among some other account are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
                 StateLoad {

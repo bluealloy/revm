@@ -73,7 +73,7 @@ pub trait JournalTr {
     fn precompile_addresses(&self) -> &HashSet<Address>;
 
     /// Returns the spec id.
-    /// 
+    ///
     /// None means that spec id was not set
     fn spec_id(&self) -> Option<SpecId>;
 
