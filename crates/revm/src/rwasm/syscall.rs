@@ -186,7 +186,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if inputs.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
                 && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT)
             {
-                return_error!(Revert);
+                return_error!(MalformedBuiltinParams);
             }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
@@ -465,7 +465,13 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 init_code,
                 gas_limit,
             });
-            let frame = context.evm.make_create_frame(EVM_BASE_SPEC, &inputs)?;
+            let mut frame = context.evm.make_create_frame(EVM_BASE_SPEC, &inputs)?;
+            // nobody knows why, but EVM returns `Return`
+            // in case of nonce overflow instead of `NonceOverflow`
+            // that ruins a lot of flows
+            if let FrameOrResult::Result(result) = &mut frame {
+                result.interpreter_result_mut().output = Bytes::from_static(&[0u8; 20]);
+            }
             return_frame!(frame);
         }
 
@@ -520,6 +526,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let result = context.evm.selfdestruct(inputs.target_address, target)?;
+            println!("SYSCALL_DESTROY_ACCOUNT: target={target} result={result:?}",);
             // charge gas cost
             charge_gas!(gas::selfdestruct_cost(SPEC::SPEC_ID, result));
             // return value as bytes with success exit code
@@ -726,7 +733,15 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let Ok(account) = context.evm.load_code(address) else {
                 return_error!(FatalExternalError);
             };
-            charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
+            // don't charge gas for EVM_CODE_HASH_SLOT,
+            // because if we don't have enough fuel for EVM opcode execution
+            // that we shouldn't fail here, it affects state transition
+            // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
+            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
+                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            if !is_gas_free {
+                charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
+            }
             match &account.info.code {
                 Some(Bytecode::Eip7702(eip7702_bytecode)) => {
                     if eip7702_bytecode.delegated_address != eip7702_address {
