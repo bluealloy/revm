@@ -69,7 +69,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
     }
 
-    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state`
+    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state
     ///
     /// Note: Precompile addresses and spec is preserved.
     #[inline]
