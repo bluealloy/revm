@@ -37,10 +37,11 @@ use crate::{
 use core::cmp::min;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
+    calc_preimage_address,
     is_self_gas_management_contract,
     keccak256,
-    CODE_HASH_SLOT,
     EVM_BASE_SPEC,
+    EVM_CODE_HASH_SLOT,
     FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
@@ -166,12 +167,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             println!("SYSCALL_STORAGE_READ: slot={}", slot);
             // execute sload
             let value = context.evm.sload(inputs.target_address, slot)?;
-            // TODO(dmitry123): "is there better way how to solve the problem?"
-            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(CODE_HASH_SLOT);
-            if !is_gas_free {
-                charge_gas!(sload_cost(SPEC::SPEC_ID, value.is_cold));
-            }
+            charge_gas!(sload_cost(SPEC::SPEC_ID, value.is_cold));
             let output: [u8; 32] = value.to_le_bytes();
             return_result!(output)
         }
@@ -187,18 +183,18 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
-            // if inputs.bytecode_address != PRECOMPILE_EVM_RUNTIME
-            //     && slot == Into::<U256>::into(CODE_HASH_SLOT)
-            // {
-            //     return_error!(Revert);
-            // }
+            if inputs.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
+                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT)
+            {
+                return_error!(Revert);
+            }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
             let value = context.evm.sstore(inputs.target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(CODE_HASH_SLOT);
+                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
             if !is_gas_free {
                 if let Some(gas_cost) = sstore_cost(
                     SPEC::SPEC_ID,
@@ -670,6 +666,13 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let Ok(account_load) = context.evm.load_account_delegated(address) else {
                 return_error!(FatalExternalError);
             };
+            charge_gas!(if SPEC::enabled(BERLIN) {
+                warm_cold_cost(account_load.is_cold)
+            } else if SPEC::enabled(TANGERINE) {
+                700
+            } else {
+                20
+            });
             let preimage_size = if !account_load.is_empty {
                 let Some(code) = context.code(address) else {
                     return_error!(FatalExternalError);
@@ -688,34 +691,61 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 MalformedBuiltinParams
             );
             let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
-            let address = Address::from_slice(&preimage_hash[12..]);
+            let address = calc_preimage_address(&preimage_hash);
             println!("SYSCALL_PREIMAGE_COPY: preimage_hash={preimage_hash} address={address}");
             let Ok(account_load) = context.evm.code(address) else {
                 return_error!(FatalExternalError);
             };
+            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME);
+            if !is_gas_free {
+                let Some(gas_cost) = gas::extcodecopy_cost(
+                    SPEC::SPEC_ID,
+                    account_load.data.len() as u64,
+                    account_load.is_cold,
+                ) else {
+                    return_error!(OutOfGas);
+                };
+                charge_gas!(gas_cost);
+            }
             return_result!(account_load.data);
         }
 
         SYSCALL_ID_DELEGATED_STORAGE => {
             assert_return!(
-                inputs.syscall_params.input.len() == 32
+                inputs.syscall_params.input.len() == 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
             );
-            let slot = U256::from_le_slice(&inputs.syscall_params.input[..32]);
-            // execute sload
+            let address = Address::from_slice(&inputs.syscall_params.input[..20]);
+            let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
+            // delegated storage is allowed only for delegated accounts
             let Some(eip7702_address) = inputs.eip7702_address else {
                 return_error!(MalformedBuiltinParams);
             };
-            let value = context.evm.sload(inputs.bytecode_address, slot)?;
-            println!("SYSCALL_EXT_BYTECODE_HASH: slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}",
-                     inputs.target_address, inputs.bytecode_address, value.data);
-            // TODO(dmitry123): "is there better way how to solve the problem?"
-            let is_gas_free = eip7702_address == PRECOMPILE_EVM_RUNTIME
-                && slot == Into::<U256>::into(CODE_HASH_SLOT);
-            if !is_gas_free {
-                charge_gas!(sload_cost(SPEC::SPEC_ID, value.is_cold));
+            // make sure the provided address is delegated to the same runtime
+            let Ok(account) = context.evm.load_code(address) else {
+                return_error!(FatalExternalError);
+            };
+            charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
+            match &account.info.code {
+                Some(Bytecode::Eip7702(eip7702_bytecode)) => {
+                    if eip7702_bytecode.delegated_address != eip7702_address {
+                        println!(
+                            "SYSCALL_ID_DELEGATED_STORAGE: delegation mismatched {} != {}",
+                            eip7702_bytecode.delegated_address, eip7702_address
+                        );
+                        return_error!(Revert)
+                    }
+                }
+                _ => {
+                    println!("SYSCALL_ID_DELEGATED_STORAGE: {address} not EIP-7702");
+                    return_error!(Revert)
+                }
             }
+            // load slot from the storage
+            let value = context.evm.sload(address, slot)?;
+            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}",
+                     inputs.target_address, inputs.bytecode_address, value.data);
             let output: [u8; 32] = value.to_le_bytes();
             return_result!(output)
         }

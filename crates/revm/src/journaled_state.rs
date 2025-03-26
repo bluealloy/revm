@@ -636,6 +636,7 @@ impl JournaledState {
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::AccountWarmed { address });
+            println!("warmed account: {}", address)
         }
 
         Ok(load)
