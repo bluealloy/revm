@@ -142,8 +142,8 @@ impl JournalTr for Backend {
 
     fn transfer(
         &mut self,
-        from: &Address,
-        to: &Address,
+        from: Address,
+        to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, Infallible> {
         self.journaled_state.transfer(from, to, balance)

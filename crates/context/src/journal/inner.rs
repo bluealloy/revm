@@ -69,7 +69,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
     }
 
-    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state
+    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state.
     ///
     /// Note: Precompile addresses and spec is preserved.
     #[inline]
@@ -117,17 +117,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
     #[inline]
-    pub fn touch(&mut self, address: &Address) {
-        if let Some(account) = self.state.get_mut(address) {
+    pub fn touch(&mut self, address: Address) {
+        if let Some(account) = self.state.get_mut(&address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         }
     }
 
     /// Mark account as touched.
     #[inline]
-    fn touch_account(journal: &mut Vec<ENTRY>, address: &Address, account: &mut Account) {
+    fn touch_account(journal: &mut Vec<ENTRY>, address: Address, account: &mut Account) {
         if !account.is_touched() {
-            journal.push(ENTRY::account_touched(*address));
+            journal.push(ENTRY::account_touched(address));
             account.mark_touch();
         }
     }
@@ -152,7 +152,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         let account = self.state.get_mut(&address).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
+        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
 
         self.journal
             .last_mut()
@@ -179,7 +179,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if account.info.nonce == u64::MAX {
             return None;
         }
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
+        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         self.journal
             .last_mut()
             .unwrap()
@@ -194,23 +194,23 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
-        from: &Address,
-        to: &Address,
-        balance: U256,
         db: &mut DB,
+        from: Address,
+        to: Address,
+        balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
         if balance.is_zero() {
-            self.load_account(*to, db)?;
-            let to_account = self.state.get_mut(to).unwrap();
+            self.load_account(db, to)?;
+            let to_account = self.state.get_mut(&to).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
             return Ok(None);
         }
         // load accounts
-        self.load_account(*from, db)?;
-        self.load_account(*to, db)?;
+        self.load_account(db, from)?;
+        self.load_account(db, to)?;
 
         // sub balance from
-        let from_account = self.state.get_mut(from).unwrap();
+        let from_account = self.state.get_mut(&from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
 
@@ -220,7 +220,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *from_balance = from_balance_decr;
 
         // add balance to
-        let to_account = &mut self.state.get_mut(to).unwrap();
+        let to_account = &mut self.state.get_mut(&to).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
@@ -232,7 +232,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(ENTRY::balance_transfer(*from, *to, balance));
+            .push(ENTRY::balance_transfer(from, to, balance));
 
         Ok(None)
     }
@@ -298,7 +298,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // touch account. This is important as for pre SpuriousDragon account could be
         // saved even empty.
-        Self::touch_account(last_journal, &target_address, target_acc);
+        Self::touch_account(last_journal, target_address, target_acc);
 
         // Add balance to created account, as we already have target here.
         let Some(new_balance) = target_acc.info.balance.checked_add(balance) else {
@@ -371,12 +371,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn selfdestruct<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         target: Address,
-        db: &mut DB,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
         let spec = self.spec;
-        let account_load = self.load_account(target, db)?;
+        let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
@@ -386,7 +386,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
+            Self::touch_account(self.journal.last_mut().unwrap(), target, target_account);
             target_account.info.balance += acc_balance;
         }
 
@@ -434,9 +434,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn initial_account_load<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         storage_keys: impl IntoIterator<Item = U256>,
-        db: &mut DB,
     ) -> Result<&mut Account, DB::Error> {
         // load or get account.
         let account = match self.state.entry(address) {
@@ -461,21 +461,21 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn load_account<DB: Database>(
         &mut self,
-        address: Address,
         db: &mut DB,
+        address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(address, false, db)
+        self.load_account_optional(db, address, false)
     }
 
     #[inline]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
-        address: Address,
         db: &mut DB,
+        address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(address, is_eip7702_enabled, db)?;
+        let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -489,7 +489,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(address, db)?;
+            let delegate_account = self.load_account(db, address)?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
@@ -498,19 +498,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     pub fn load_code<DB: Database>(
         &mut self,
-        address: Address,
         db: &mut DB,
+        address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(address, true, db)
+        self.load_account_optional(db, address, true)
     }
 
     /// Loads code
     #[inline]
     pub fn load_account_optional<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         load_code: bool,
-        db: &mut DB,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
@@ -567,9 +567,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn sload<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         key: U256,
-        db: &mut DB,
     ) -> Result<StateLoad<U256>, DB::Error> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
@@ -614,13 +614,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn sstore<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         key: U256,
         new: U256,
-        db: &mut DB,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
-        let present = self.sload(address, key, db)?;
+        let present = self.sload(db, address, key)?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.

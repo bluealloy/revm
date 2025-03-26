@@ -112,7 +112,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         key: U256,
     ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
-        self.inner.sload(address, key, &mut self.database)
+        self.inner.sload(&mut self.database, address, key)
     }
 
     fn sstore(
@@ -121,7 +121,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         key: U256,
         value: U256,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
-        self.inner.sstore(address, key, value, &mut self.database)
+        self.inner.sstore(&mut self.database, address, key, value)
     }
 
     fn tload(&mut self, address: Address, key: U256) -> U256 {
@@ -141,7 +141,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        self.inner.selfdestruct(address, target, &mut self.database)
+        self.inner.selfdestruct(&mut self.database, address, target)
     }
 
     fn warm_account(&mut self, address: Address) {
@@ -172,7 +172,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         storage_keys: impl IntoIterator<Item = U256>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.inner
-            .initial_account_load(address, storage_keys, &mut self.database)?;
+            .initial_account_load(&mut self.database, address, storage_keys)?;
         Ok(())
     }
 
@@ -182,15 +182,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn transfer(
         &mut self,
-        from: &Address,
-        to: &Address,
+        from: Address,
+        to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        self.inner.transfer(from, to, balance, &mut self.database)
+        self.inner.transfer(&mut self.database, from, to, balance)
     }
 
     fn touch_account(&mut self, address: Address) {
-        self.inner.touch(&address);
+        self.inner.touch(address);
     }
 
     fn inc_account_nonce(&mut self, address: Address) -> Result<Option<u64>, DB::Error> {
@@ -198,14 +198,14 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_account(address, &mut self.database)
+        self.inner.load_account(&mut self.database, address)
     }
 
     fn load_account_code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_code(address, &mut self.database)
+        self.inner.load_code(&mut self.database, address)
     }
 
     fn load_account_delegated(
@@ -213,7 +213,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         self.inner
-            .load_account_delegated(address, &mut self.database)
+            .load_account_delegated(&mut self.database, address)
     }
 
     fn checkpoint(&mut self) -> JournalCheckpoint {
