@@ -35,7 +35,6 @@ use crate::{
     },
     JournalCheckpoint,
 };
-use fluentbase_sdk::{EVM_CODE_HASH_SLOT, PRECOMPILE_EVM_RUNTIME};
 use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
