@@ -321,17 +321,15 @@ mod tests {
     use crate::{ExecuteCommitEvm, MainBuilder, MainContext};
     use bytecode::opcode;
     use context::{
-        result::{EVMError, InvalidTransaction},
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Context,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{Bytes, TxKind};
+    use primitives::{Bytes, TxKind, MAX_INITCODE_SIZE};
 
-    #[test]
-    fn test_eip3860_initcode_size_limit() {
-        // Create a large bytecode that exceeds EIP-3860 limit (2x max_code_size)
-        let large_bytecode = vec![opcode::STOP; 100000]; // 60KB of STOP opcodes
-        let bytecode: Bytes = large_bytecode.into();
+    fn deploy_contract(
+        bytecode: Bytes,
+    ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
             .modify_tx_chained(|tx| {
                 tx.kind = TxKind::Create;
@@ -340,14 +338,65 @@ mod tests {
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        let result = evm.replay_commit();
+        evm.replay_commit()
+    }
 
-        // Verify that contract creation fails due to EIP-3860 size limit
+    #[test]
+    fn test_eip3860_initcode_size_limit_failure() {
+        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE + 1];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode);
         assert!(matches!(
             result,
             Err(EVMError::Transaction(
                 InvalidTransaction::CreateInitCodeSizeLimit
             ))
         ));
+    }
+
+    #[test]
+    fn test_eip3860_initcode_size_limit_success() {
+        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip170_code_size_limit_failure() {
+        // use the simplest method to return a contract code size greater than 0x6000
+        // PUSH3 0x6001 (greater than 0x6000) - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x00, 0x60, 0x01, // PUSH3 0x6001 (greater than 0x6000)
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::CreateContractSizeLimit,
+                ..
+            },)
+        ));
+    }
+
+    #[test]
+    fn test_eip170_code_size_limit_success() {
+        // use the  simplest method to return a contract code size equal to 0x6000
+        // PUSH3 0x6000 - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x00, 0x60, 0x00, // PUSH3 0x6000
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
     }
 }
