@@ -35,7 +35,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let mut g2_points: Vec<_> = Vec::with_capacity(k);
-    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars: Vec<_> = Vec::with_capacity(k);
     for i in 0..k {
         let encoded_g2_element =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
@@ -67,17 +67,19 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
-
-        scalars_bytes.extend_from_slice(&read_scalar(encoded_scalar)?.b);
+        scalars.push(read_scalar(encoded_scalar)?);
     }
 
     // Return infinity point if all points are infinity
     if g2_points.is_empty() {
-        return Ok(PrecompileOutput::new(required_gas, [0; 256].into()));
+        return Ok(PrecompileOutput::new(
+            required_gas,
+            [0; PADDED_G2_LENGTH].into(),
+        ));
     }
 
     // Perform multi-scalar multiplication using the safe wrapper
-    let multiexp_aff = p2_msm(g2_points, scalars_bytes, NBITS);
+    let multiexp_aff = p2_msm(g2_points, scalars, NBITS);
 
     let out = encode_g2_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out.into()))

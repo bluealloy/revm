@@ -100,14 +100,21 @@ pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_a
 ///
 /// Note: The scalar is expected to be in Big Endian format.
 #[inline]
-fn p1_scalar_mul(p: &blst_p1_affine, scalar: &[u8]) -> blst_p1_affine {
+fn p1_scalar_mul(p: &blst_p1_affine, scalar: &blst_scalar) -> blst_p1_affine {
     // Convert point to Jacobian coordinates
     let p_jacobian = p1_from_affine(p);
 
     let mut result = blst_p1::default();
 
     // SAFETY: all inputs are valid blst types
-    unsafe { blst_p1_mult(&mut result, &p_jacobian, scalar.as_ptr(), scalar.len() * 8) };
+    unsafe {
+        blst_p1_mult(
+            &mut result,
+            &p_jacobian,
+            scalar.b.as_ptr(),
+            scalar.b.len() * 8,
+        )
+    };
 
     // Convert result back to affine coordinates
     p1_to_affine(&result)
@@ -120,13 +127,20 @@ fn p1_scalar_mul(p: &blst_p1_affine, scalar: &[u8]) -> blst_p1_affine {
 ///
 /// Note: The scalar is expected to be in Big Endian format.
 #[inline]
-fn p2_scalar_mul(p: &blst_p2_affine, scalar: &[u8]) -> blst_p2_affine {
+fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
     // Convert point to Jacobian coordinates
     let p_jacobian = p2_from_affine(p);
 
     let mut result = blst_p2::default();
     // SAFETY: all inputs are valid blst types
-    unsafe { blst_p2_mult(&mut result, &p_jacobian, scalar.as_ptr(), scalar.len() * 8) };
+    unsafe {
+        blst_p2_mult(
+            &mut result,
+            &p_jacobian,
+            scalar.b.as_ptr(),
+            scalar.b.len() * 8,
+        )
+    };
 
     // Convert result back to affine coordinates
     p2_to_affine(&result)
@@ -136,21 +150,16 @@ fn p2_scalar_mul(p: &blst_p2_affine, scalar: &[u8]) -> blst_p2_affine {
 ///
 /// Takes a vector of G1 points and corresponding scalars, and returns their weighted sum
 ///
-/// Note: Scalars are expected to be in Big Endian format.
-/// This method assumes that `g1_points` does not contain any points at infinity.
+/// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
 pub(super) fn p1_msm(
     g1_points: Vec<blst_p1_affine>,
-    scalars_bytes: Vec<u8>,
+    scalars: Vec<blst_scalar>,
     nbits: usize,
 ) -> blst_p1_affine {
-    assert!(
-        scalars_bytes.len() % SCALAR_LENGTH == 0,
-        "Each scalar should be {SCALAR_LENGTH} bytes"
-    );
     assert_eq!(
         g1_points.len(),
-        scalars_bytes.len() / SCALAR_LENGTH,
+        scalars.len(),
         "number of scalars should equal the number of g1 points"
     );
 
@@ -167,9 +176,10 @@ pub(super) fn p1_msm(
     // When there is only a single point, we use a simpler scalar multiplication
     // procedure
     if g1_points.len() == 1 {
-        return p1_scalar_mul(&g1_points[0], &scalars_bytes);
+        return p1_scalar_mul(&g1_points[0], &scalars[0]);
     }
 
+    let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
     // Perform multi-scalar multiplication
     let multiexp = g1_points.mult(&scalars_bytes, nbits);
 
@@ -186,17 +196,12 @@ pub(super) fn p1_msm(
 #[inline]
 pub(super) fn p2_msm(
     g2_points: Vec<blst_p2_affine>,
-    scalars_bytes: Vec<u8>,
+    scalars: Vec<blst_scalar>,
     nbits: usize,
 ) -> blst_p2_affine {
-    assert!(
-        scalars_bytes.len() % SCALAR_LENGTH == 0,
-        "Each scalar should be {SCALAR_LENGTH} bytes"
-    );
-
     assert_eq!(
         g2_points.len(),
-        scalars_bytes.len() / SCALAR_LENGTH,
+        scalars.len(),
         "number of scalars should equal the number of g2 points"
     );
 
@@ -213,8 +218,10 @@ pub(super) fn p2_msm(
     // When there is only a single point, we use a simpler scalar multiplication
     // procedure
     if g2_points.len() == 1 {
-        return p2_scalar_mul(&g2_points[0], &scalars_bytes);
+        return p2_scalar_mul(&g2_points[0], &scalars[0]);
     }
+
+    let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
 
     // Perform multi-scalar multiplication
     let multiexp = g2_points.mult(&scalars_bytes, nbits);
@@ -330,7 +337,7 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
 }
 
 /// Encodes a G1 point in affine format into byte slice with padded elements.
-/// 
+///
 /// Note: The encoded bytes are in Big Endian format.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> [u8; PADDED_G1_LENGTH] {
     let mut out = [0u8; PADDED_G1_LENGTH];
@@ -343,7 +350,7 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> [u8; PADDED_G1_LE
 }
 
 /// Encodes a single finite field element into byte slice with padding.
-/// 
+///
 /// Note: The encoded bytes are in Big Endian format.
 fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
     if out.len() != PADDED_FP_LENGTH {
@@ -359,7 +366,7 @@ fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
 /// affine coordinates of the point.
 ///
 /// Note: Coordinates are expected to be in Big Endian format.
-/// 
+///
 /// - If the x or y coordinate do not represent a canonical field element, an error is returned.
 ///   See [read_fp] for more information.
 /// - If the point is not on the curve, an error is returned.
@@ -444,7 +451,7 @@ fn _extract_g1_input(
 }
 
 /// Encodes a G2 point in affine format into byte slice with padded elements.
-/// 
+///
 /// Note: The encoded bytes are in Big Endian format.
 pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; PADDED_G2_LENGTH] {
     let mut out = [0u8; PADDED_G2_LENGTH];
@@ -468,7 +475,7 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; PADDED_G2_LENGTH] 
 /// affine coordinates of the point.
 ///
 /// Note: Coordinates are expected to be in Big Endian format.
-/// 
+///
 /// - If the x or y coordinate do not represent a canonical field element, an error is returned.
 ///   See [read_fp2] for more information.
 /// - If the point is not on the curve, an error is returned.
@@ -500,7 +507,7 @@ fn decode_g2_on_curve(
 }
 
 /// Creates a blst_fp2 element from two field elements.
-/// 
+///
 /// Field elements are expected to be in Big Endian format.
 /// Returns an error if either of the input field elements is not canonical.
 pub(super) fn read_fp2(
@@ -516,7 +523,8 @@ pub(super) fn read_fp2(
 }
 /// Extracts a G2 point in Affine format from the x and y coordinates.
 ///
-/// Note: By default, subgroup checks are performed.
+/// Note: Coordinates are expected to be in Big Endian format.
+/// By default, subgroup checks are performed.
 pub(super) fn read_g2(
     a_x_0: &[u8; FP_LENGTH],
     a_x_1: &[u8; FP_LENGTH],
@@ -528,7 +536,8 @@ pub(super) fn read_g2(
 /// Extracts a G2 point in Affine format from the x and y coordinates
 /// without performing a subgroup check.
 ///
-/// Note: Skipping subgroup checks can introduce security issues.
+/// Note: Coordinates are expected to be in Big Endian format.
+/// Skipping subgroup checks can introduce security issues.
 /// This method should only be called if:
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.

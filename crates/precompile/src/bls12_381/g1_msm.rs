@@ -35,7 +35,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let mut g1_points: Vec<_> = Vec::with_capacity(k);
-    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut scalars: Vec<_> = Vec::with_capacity(k);
     for i in 0..k {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
@@ -65,8 +65,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         }
 
         g1_points.push(p0_aff);
-
-        scalars_bytes.extend_from_slice(&read_scalar(encoded_scalar)?.b);
+        scalars.push(read_scalar(encoded_scalar)?);
     }
 
     // Return the encoding for the point at the infinity according to EIP-2537
@@ -79,7 +78,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         ));
     }
 
-    let multiexp_aff = p1_msm(g1_points, scalars_bytes, NBITS);
+    let multiexp_aff = p1_msm(g1_points, scalars, NBITS);
 
     let out = encode_g1_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out.into()))
