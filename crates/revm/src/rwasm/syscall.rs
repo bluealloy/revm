@@ -737,11 +737,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
             // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
-            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
-            if !is_gas_free {
-                charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
-            }
+            // let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
+            //     && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            // if !is_gas_free {
+            charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
+            // }
             match &account.info.code {
                 Some(Bytecode::Eip7702(eip7702_bytecode)) => {
                     if eip7702_bytecode.delegated_address != eip7702_address {
