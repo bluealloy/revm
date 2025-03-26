@@ -55,7 +55,7 @@ impl Cmd {
                 self.warmup.unwrap_or(0.5),
             ))
             // Measurement_time of 0.1 will get 500+ iterations for analysis and transfer and will be extended if needed in order to test the given sample size (minimum sample size is 10 per criterion documentation) as is the case with burntpix and snailtracer benchmark tests
-            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(0.1)))
+            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(1.5)))
             .sample_size(self.samples.unwrap_or(10));
 
         match self.name {
