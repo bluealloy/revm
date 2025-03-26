@@ -1,6 +1,5 @@
 use crate::bls12_381_const::{FP_LENGTH, FP_PAD_BY, MODULUS_REPR, PADDED_FP_LENGTH};
 use crate::PrecompileError;
-use core::cmp::Ordering;
 
 /// Removes zeros with which the precompile inputs are left padded to 64 bytes.
 pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], PrecompileError> {
@@ -21,13 +20,5 @@ pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], Precompil
 
 /// Checks if the input is a valid big-endian representation of a field element.
 pub(super) fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
-        match i.cmp(modulo) {
-            Ordering::Greater => return false,
-            Ordering::Less => return true,
-            Ordering::Equal => continue,
-        }
-    }
-    // Return false if matching the modulus
-    false
+    *input < MODULUS_REPR
 }
