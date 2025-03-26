@@ -1,5 +1,6 @@
 use crate::PrecompileWithAddress;
 
+mod arkworks;
 mod blst;
 
 pub mod g1_add;
