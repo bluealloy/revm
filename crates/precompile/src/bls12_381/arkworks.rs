@@ -35,7 +35,7 @@ pub(super) fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
     input_le.reverse();
 
     Fq::deserialize_uncompressed(&input_le[..])
-        .map_err(|_| PrecompileError::Other("Failed to deserialize Fq element".to_string()))
+        .map_err(|_| PrecompileError::Other("non-canonical fp value".to_string()))
 }
 
 /// Reads a Fp2 (quadratic extension field element) from the input slices.
