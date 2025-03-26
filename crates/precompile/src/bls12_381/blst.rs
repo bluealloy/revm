@@ -1,9 +1,9 @@
 // This module contains a safe wrapper around the blst library.
 
 use crate::{
-    bls12_381::utils::is_valid_be,
     bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
+        FP_LENGTH, FP_PAD_BY, MODULUS_REPR, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
+        SCALAR_LENGTH,
     },
     PrecompileError,
 };
@@ -15,6 +15,7 @@ use blst::{
     blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve, blst_p2_from_affine,
     blst_p2_mult, blst_p2_to_affine, blst_scalar, blst_scalar_from_bendian, MultiPoint,
 };
+use core::cmp::Ordering;
 
 #[inline]
 fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
@@ -629,4 +630,17 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> 
     };
 
     Ok(out)
+}
+
+/// Checks if the input is a valid big-endian representation of a field element.
+fn is_valid_be(input: &[u8; 48]) -> bool {
+    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
+        match i.cmp(modulo) {
+            Ordering::Greater => return false,
+            Ordering::Less => return true,
+            Ordering::Equal => continue,
+        }
+    }
+    // Return false if matching the modulus
+    false
 }
