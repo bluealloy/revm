@@ -1,5 +1,6 @@
 pub mod analysis;
 pub mod burntpix;
+pub mod evm_build;
 pub mod snailtracer;
 pub mod transfer;
 
@@ -11,6 +12,7 @@ pub enum BenchName {
     Burntpix,
     Snailtracer,
     Transfer,
+    EvmBuild,
 }
 
 impl BenchName {
@@ -19,6 +21,7 @@ impl BenchName {
         BenchName::Burntpix,
         BenchName::Snailtracer,
         BenchName::Transfer,
+        BenchName::EvmBuild,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -27,6 +30,7 @@ impl BenchName {
             BenchName::Burntpix => "burntpix",
             BenchName::Snailtracer => "snailtracer",
             BenchName::Transfer => "transfer",
+            BenchName::EvmBuild => "evm_build",
         }
     }
 }
@@ -70,6 +74,9 @@ impl Cmd {
             }
             BenchName::Transfer => {
                 transfer::run(&mut criterion);
+            }
+            BenchName::EvmBuild => {
+                evm_build::run(&mut criterion);
             }
         }
     }
