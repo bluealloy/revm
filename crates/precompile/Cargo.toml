@@ -52,6 +52,7 @@ bn = { workspace = true, optional = true }
 
 # Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
+ark-bls12-381 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
 ark-ff = { workspace = true, features = ["asm"] }
 ark-serialize = { workspace = true }
