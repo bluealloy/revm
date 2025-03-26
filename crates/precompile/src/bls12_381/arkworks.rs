@@ -349,7 +349,9 @@ pub(super) fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>, _nbits: usize) 
 /// Takes a field element (Fq) and returns the corresponding G1 point in affine form
 #[inline]
 pub(super) fn map_fp_to_g1(fp: &Fq) -> G1Affine {
-    WBMap::map_to_curve(*fp).unwrap().clear_cofactor()
+    WBMap::map_to_curve(*fp)
+        .expect("map_to_curve is infallible")
+        .clear_cofactor()
 }
 
 /// Maps a field element to a G2 point
@@ -357,7 +359,9 @@ pub(super) fn map_fp_to_g1(fp: &Fq) -> G1Affine {
 /// Takes a field element (Fq2) and returns the corresponding G2 point in affine form
 #[inline]
 pub(super) fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
-    WBMap::map_to_curve(*fp2).unwrap().clear_cofactor()
+    WBMap::map_to_curve(*fp2)
+        .expect("map_to_curve is infallible")
+        .clear_cofactor()
 }
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
