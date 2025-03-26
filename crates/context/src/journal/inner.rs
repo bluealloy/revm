@@ -69,14 +69,34 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
     }
 
-    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial staet`
+    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state`
     ///
-    /// Journal is cleared by calling [`JournalInner::new`] where spec_id is preserved.
+    /// Note: Precompile addresses and spec is preserved.
     #[inline]
     pub fn take_output_and_clear(&mut self) -> JournalOutput {
-        let state = mem::take(&mut self.state);
-        let logs = mem::take(&mut self.logs);
-        *self = JournalInner::new(self.spec);
+        // Clears all field from JournalInner. Doing it this way to avoid
+        // missing any field.
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            spec,
+            warm_preloaded_addresses,
+            precompiles,
+        } = self;
+        // Precompiles and spec are not changed.
+        let _ = spec;
+
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+        transient_storage.clear();
+        journal.clear();
+        journal.push(vec![]);
+        *depth = 0;
+        warm_preloaded_addresses.clear();
+        precompiles.clear();
 
         JournalOutput { state, logs }
     }

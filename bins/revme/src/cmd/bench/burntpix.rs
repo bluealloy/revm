@@ -40,7 +40,7 @@ pub fn run(criterion: &mut Criterion) {
             tx.caller = BENCH_CALLER;
             tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
             tx.data = run_call_data.clone().into();
-            tx.gas_limit = 30_000_000;
+            tx.gas_limit = u64::MAX;
         })
         .build_mainnet();
 
