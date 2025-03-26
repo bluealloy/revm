@@ -1,4 +1,4 @@
-use super::blst::{pairing_check, read_g1, read_g2};
+use super::crypto_backend::{pairing_check, read_g1, read_g2};
 use super::utils::{remove_g1_padding, remove_g2_padding};
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,

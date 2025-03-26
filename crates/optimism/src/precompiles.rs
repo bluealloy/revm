@@ -72,19 +72,8 @@ pub fn isthmus() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let precompiles = granite().clone();
         // Prague bls12 precompiles
-        // Don't include BLS12-381 precompiles in no_std builds.
-        #[cfg(feature = "blst")]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381::precompiles());
-            precompiles
-        };
-        #[cfg(not(feature = "blst"))]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
-            precompiles
-        };
+        let mut precompiles = precompiles;
+        precompiles.extend(precompile::bls12_381::precompiles());
         Box::new(precompiles)
     })
 }

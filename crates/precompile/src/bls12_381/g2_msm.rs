@@ -1,4 +1,4 @@
-use super::blst::{encode_g2_point, p2_msm, read_g2, read_scalar};
+use super::crypto_backend::{encode_g2_point, p2_msm, read_g2, read_scalar};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH, NBITS,

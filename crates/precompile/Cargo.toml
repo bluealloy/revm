@@ -52,10 +52,10 @@ bn = { workspace = true, optional = true }
 
 # Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
-ark-bls12-381 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
 ark-ff = { workspace = true, features = ["asm"] }
 ark-serialize = { workspace = true }
+
 
 # KZG point evaluation precompile
 c-kzg = { workspace = true, optional = true, features = [
@@ -66,7 +66,10 @@ c-kzg = { workspace = true, optional = true, features = [
 kzg-rs = { workspace = true, optional = true }
 
 # BLS12-381 precompiles
-blst = { workspace = true, optional = true }
+blst = { workspace = true }
+
+# Optionally use the BLS12-381 implementation of arkworks for EIP2537
+ark-bls12-381 = { workspace = true, optional = true, features = ["curve"] }
 
 # p256verify precompile
 p256 = { workspace = true, optional = true, features = ["ecdsa"] }
@@ -84,7 +87,7 @@ serde_json.workspace = true
 serde_derive.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
 	"primitives/std",
 	"k256/std",
@@ -99,6 +102,7 @@ std = [
 	"serde/std",
 	"serde_json/std",
 	"ark-bn254/std",
+	"ark-bls12-381?/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
@@ -118,7 +122,7 @@ kzg-rs = ["dep:kzg-rs"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.
-portable = ["c-kzg?/portable", "blst?/portable"]
+portable = ["c-kzg?/portable", "blst/portable"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
@@ -126,8 +130,8 @@ portable = ["c-kzg?/portable", "blst?/portable"]
 secp256k1 = ["dep:secp256k1"]
 libsecp256k1 = ["dep:libsecp256k1"]
 
-# Enables the BLS12-381 precompiles.
-blst = ["dep:blst"]
+# Enables the arkworks implementation of the BLS12-381 precompile.
+arkworks-bls12-381 = ["dep:ark-bls12-381"]
 
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]

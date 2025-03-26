@@ -14,7 +14,6 @@ revm = { workspace = true, features = [
     "std",
     "hashbrown",
     "c-kzg",
-    "blst",
     "serde-json",
 ] }
 primitives.workspace = true

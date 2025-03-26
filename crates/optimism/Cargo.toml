@@ -41,7 +41,7 @@ sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
 	"serde?/std",
 	"revm/std",
@@ -72,5 +72,5 @@ secp256k1 = ["revm/secp256k1"]
 c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
-blst = ["revm/blst"]
+arkworks-bls12-381 = ["revm/arkworks-bls12-381"]
 bn = ["revm/bn"]

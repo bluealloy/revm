@@ -37,7 +37,7 @@ handler.workspace = true
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
 	"interpreter/std",
 	"precompile/std",
@@ -93,7 +93,7 @@ c-kzg = [
 	"precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
-blst = ["precompile/blst"]
+arkworks-bls12-381 = ["precompile/arkworks-bls12-381"]
 secp256r1 = ["precompile/secp256r1"]
 bn = ["precompile/bn"]
 
