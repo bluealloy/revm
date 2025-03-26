@@ -1,7 +1,7 @@
 // This module contains a safe wrapper around the blst library.
 
 use crate::{
-    bls12_381::utils::{is_valid_be, remove_padding},
+    bls12_381::utils::is_valid_be,
     bls12_381_const::{
         FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
     },
@@ -352,8 +352,8 @@ fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
 ///   See [fp_from_bendian] for more information.
 /// - If the point is not on the curve, an error is returned.
 fn decode_and_check_g1(
-    p0_x: &[u8; 48],
-    p0_y: &[u8; 48],
+    p0_x: &[u8; FP_LENGTH],
+    p0_y: &[u8; FP_LENGTH],
 ) -> Result<blst_p1_affine, PrecompileError> {
     let out = blst_p1_affine {
         x: fp_from_bendian(p0_x)?,
@@ -379,8 +379,11 @@ fn decode_and_check_g1(
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 ///
 /// Note: By default, subgroup checks are performed.
-pub(super) fn extract_g1_input(input: &[u8]) -> Result<blst_p1_affine, PrecompileError> {
-    _extract_g1_input(input, true)
+pub(super) fn extract_g1_input(
+    x: &[u8; FP_LENGTH],
+    y: &[u8; FP_LENGTH],
+) -> Result<blst_p1_affine, PrecompileError> {
+    _extract_g1_input(x, y, true)
 }
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 /// without performing a subgroup check.
@@ -390,27 +393,20 @@ pub(super) fn extract_g1_input(input: &[u8]) -> Result<blst_p1_affine, Precompil
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
 pub(super) fn extract_g1_input_no_subgroup_check(
-    input: &[u8],
+    x: &[u8; FP_LENGTH],
+    y: &[u8; FP_LENGTH],
 ) -> Result<blst_p1_affine, PrecompileError> {
-    _extract_g1_input(input, false)
+    _extract_g1_input(x, y, false)
 }
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 ///
 /// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
 fn _extract_g1_input(
-    input: &[u8],
+    x: &[u8; FP_LENGTH],
+    y: &[u8; FP_LENGTH],
     subgroup_check: bool,
 ) -> Result<blst_p1_affine, PrecompileError> {
-    if input.len() != PADDED_G1_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "Input should be {PADDED_G1_LENGTH} bytes, was {}",
-            input.len()
-        )));
-    }
-
-    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
-    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..PADDED_G1_LENGTH])?;
-    let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
+    let out = decode_and_check_g1(x, y)?;
 
     if subgroup_check {
         // NB: Subgroup checks
@@ -458,10 +454,10 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; PADDED_G2_LENGTH] 
 ///   See [check_canonical_fp2] for more information.
 /// - If the point is not on the curve, an error is returned.
 fn decode_and_check_g2(
-    x1: &[u8; 48],
-    x2: &[u8; 48],
-    y1: &[u8; 48],
-    y2: &[u8; 48],
+    x1: &[u8; FP_LENGTH],
+    x2: &[u8; FP_LENGTH],
+    y1: &[u8; FP_LENGTH],
+    y2: &[u8; FP_LENGTH],
 ) -> Result<blst_p2_affine, PrecompileError> {
     let out = blst_p2_affine {
         x: check_canonical_fp2(x1, x2)?,
@@ -487,8 +483,8 @@ fn decode_and_check_g2(
 /// Checks whether or not the input represents a canonical fp2 field element, returning the field
 /// element if successful.
 pub(super) fn check_canonical_fp2(
-    input_1: &[u8; 48],
-    input_2: &[u8; 48],
+    input_1: &[u8; FP_LENGTH],
+    input_2: &[u8; FP_LENGTH],
 ) -> Result<blst_fp2, PrecompileError> {
     let fp_1 = fp_from_bendian(input_1)?;
     let fp_2 = fp_from_bendian(input_2)?;
@@ -500,8 +496,13 @@ pub(super) fn check_canonical_fp2(
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
 /// Note: By default, no subgroup checks are performed.
-pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, PrecompileError> {
-    _extract_g2_input(input, true)
+pub(super) fn extract_g2_input(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+) -> Result<blst_p2_affine, PrecompileError> {
+    _extract_g2_input(a_x_0, a_x_1, a_y_0, a_y_1, true)
 }
 /// Extracts a G2 point in Affine format from a 256 byte slice representation
 /// without performing a subgroup check.
@@ -511,30 +512,24 @@ pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, Precompil
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
 pub(super) fn extract_g2_input_no_subgroup_check(
-    input: &[u8],
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
 ) -> Result<blst_p2_affine, PrecompileError> {
-    _extract_g2_input(input, false)
+    _extract_g2_input(a_x_0, a_x_1, a_y_0, a_y_1, false)
 }
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
 /// **Note**: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
 fn _extract_g2_input(
-    input: &[u8],
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
     subgroup_check: bool,
 ) -> Result<blst_p2_affine, PrecompileError> {
-    if input.len() != PADDED_G2_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "Input should be {PADDED_G2_LENGTH} bytes, was {}",
-            input.len()
-        )));
-    }
-
-    let mut input_fps = [&[0; FP_LENGTH]; 4];
-    for i in 0..4 {
-        input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
-    }
-
-    let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
+    let out = decode_and_check_g2(a_x_0, a_x_1, a_y_0, a_y_1)?;
 
     if subgroup_check {
         // NB: Subgroup checks
@@ -558,7 +553,7 @@ fn _extract_g2_input(
 
 /// Checks whether or not the input represents a canonical field element, returning the field
 /// element if successful.
-pub(super) fn fp_from_bendian(input: &[u8; 48]) -> Result<blst_fp, PrecompileError> {
+pub(super) fn fp_from_bendian(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileError> {
     if !is_valid_be(input) {
         return Err(PrecompileError::Other("non-canonical fp value".to_string()));
     }
