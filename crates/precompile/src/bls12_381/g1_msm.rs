@@ -1,4 +1,5 @@
 use super::blst::{encode_g1_point, extract_g1_input, extract_scalar_input, p1_msm};
+use crate::bls12_381::utils::remove_g1_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
@@ -48,8 +49,11 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         if encoded_g1_element.iter().all(|i| *i == 0) {
             continue;
         }
+
+        let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
+
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        let p0_aff = extract_g1_input(encoded_g1_element)?;
+        let p0_aff = extract_g1_input(a_x, a_y)?;
 
         // If the scalar is zero, then this is a no-op.
         //

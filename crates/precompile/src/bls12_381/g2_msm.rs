@@ -1,4 +1,5 @@
 use super::blst::{encode_g2_point, extract_g2_input, extract_scalar_input, p2_msm};
+use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH, NBITS,
     PADDED_G2_LENGTH, SCALAR_LENGTH,
@@ -36,7 +37,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<_> = Vec::with_capacity(k);
     let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let encoded_g2_elements =
+        let encoded_g2_element =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
         let encoded_scalar = &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
             ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH];
@@ -44,13 +45,16 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // Filter out points infinity as an optimization, since it is a no-op.
         // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
         // zero out all of the points. Since all points are in affine, this bug is avoided.
-        if encoded_g2_elements.iter().all(|i| *i == 0) {
+        if encoded_g2_element.iter().all(|i| *i == 0) {
             continue;
         }
+
+        let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
+
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = extract_g2_input(encoded_g2_elements)?;
+        let p0_aff = extract_g2_input(a_x_0, a_x_1, a_y_0, a_y_1)?;
 
         // If the scalar is zero, then this is a no-op.
         //
