@@ -1,4 +1,4 @@
-use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::Journal, tx::TxEnv};
+use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv};
 use context_interface::{
     context::{ContextError, ContextSetters},
     Block, Cfg, ContextTr, JournalTr, Transaction,
@@ -157,12 +157,14 @@ where
     }
 
     /// Creates a new context with a new database type.
+    ///
+    /// This will create a new [`Journal`] object.
     pub fn with_db<ODB: Database>(
         self,
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN> {
         let spec = self.cfg.spec().into();
-        let mut journaled_state = Journal::new(spec, db);
+        let mut journaled_state = Journal::new(db);
         journaled_state.set_spec_id(spec);
         Context {
             tx: self.tx,
@@ -180,7 +182,7 @@ where
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN> {
         let spec = self.cfg.spec().into();
-        let mut journaled_state = Journal::new(spec, WrapDatabaseRef(db));
+        let mut journaled_state = Journal::new(WrapDatabaseRef(db));
         journaled_state.set_spec_id(spec);
         Context {
             tx: self.tx,
