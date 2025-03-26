@@ -1,4 +1,4 @@
-use super::blst::{encode_g2_point, extract_g2_input, extract_scalar_input, p2_msm};
+use super::blst::{encode_g2_point, p2_msm, read_g2, read_scalar};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH, NBITS,
@@ -54,7 +54,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = extract_g2_input(a_x_0, a_x_1, a_y_0, a_y_1)?;
+        let p0_aff = read_g2(a_x_0, a_x_1, a_y_0, a_y_1)?;
 
         // If the scalar is zero, then this is a no-op.
         //
@@ -68,7 +68,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // Convert affine point to Jacobian coordinates using our helper function
         g2_points.push(p0_aff);
 
-        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
+        scalars_bytes.extend_from_slice(&read_scalar(encoded_scalar)?.b);
     }
 
     // Return infinity point if all points are infinity

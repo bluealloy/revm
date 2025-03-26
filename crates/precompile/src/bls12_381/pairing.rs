@@ -1,4 +1,4 @@
-use super::blst::{extract_g1_input, extract_g2_input, pairing_check};
+use super::blst::{pairing_check, read_g1, read_g2};
 use super::utils::{remove_g1_padding, remove_g2_padding};
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
@@ -61,8 +61,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         // extract_g1_input and extract_g2_input perform the necessary checks
-        let p1_aff = extract_g1_input(a_x, a_y)?;
-        let p2_aff = extract_g2_input(b_x_0, b_x_1, b_y_0, b_y_1)?;
+        let p1_aff = read_g1(a_x, a_y)?;
+        let p2_aff = read_g2(b_x_0, b_x_1, b_y_0, b_y_1)?;
 
         if !g1_is_zero & !g2_is_zero {
             pairs.push((p1_aff, p2_aff));

@@ -1,5 +1,5 @@
 use super::{
-    blst::{encode_g1_point, fp_from_bendian, map_fp_to_g1 as blst_map_fp_to_g1},
+    blst::{encode_g1_point, map_fp_to_g1 as blst_map_fp_to_g1, read_fp},
     utils::remove_fp_padding,
 };
 use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
@@ -26,7 +26,7 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let input_p0 = remove_fp_padding(input)?;
-    let fp = fp_from_bendian(input_p0)?;
+    let fp = read_fp(input_p0)?;
     let p_aff = blst_map_fp_to_g1(&fp);
 
     let out = encode_g1_point(&p_aff);
