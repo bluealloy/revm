@@ -7,6 +7,7 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
+use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);

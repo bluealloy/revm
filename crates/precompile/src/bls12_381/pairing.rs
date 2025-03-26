@@ -6,6 +6,7 @@ use crate::bls12_381_const::{
 };
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::{Bytes, B256};
+use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDRESS, pairing);
