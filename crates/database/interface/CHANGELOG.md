@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v1.0.0...revm-database-interface-v1.0.1) - 2025-03-27
+
+### Other
+
+- Propagate asyncdb feature flag from database-interface to revm  ([#2310](https://github.com/bluealloy/revm/pull/2310))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v1.0.0-alpha.54...revm-database-interface-v1.0.0) - 2025-03-24
 
 Stable version

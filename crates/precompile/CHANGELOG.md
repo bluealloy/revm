@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0...revm-precompile-v17.1.0) - 2025-03-27
+
+### Added
+
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Other
+
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+
 ## [17.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.7...revm-precompile-v17.0.0) - 2025-03-24
 
 ### Added
