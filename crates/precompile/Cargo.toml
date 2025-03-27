@@ -77,7 +77,6 @@ p256 = { workspace = true, optional = true, features = ["ecdsa"] }
 cfg-if.workspace = true
 
 [dev-dependencies]
-ark-bls12-381 = { workspace = true, features = ["curve"] }
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
 eyre.workspace = true
