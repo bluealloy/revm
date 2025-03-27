@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use context::Cfg;
 use context_interface::ContextTr;
-use interpreter::{Gas, InstructionResult, InterpreterResult};
+use interpreter::{Gas, InputsImpl, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
@@ -22,7 +22,8 @@ pub trait PrecompileProvider<CTX: ContextTr> {
         &mut self,
         context: &mut CTX,
         address: &Address,
-        bytes: &Bytes,
+        inputs: &InputsImpl,
+        is_static: bool,
         gas_limit: u64,
     ) -> Result<Option<Self::Output>, String>;
 
@@ -91,7 +92,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         &mut self,
         _context: &mut CTX,
         address: &Address,
-        bytes: &Bytes,
+        inputs: &InputsImpl,
+        _is_static: bool,
         gas_limit: u64,
     ) -> Result<Option<InterpreterResult>, String> {
         let Some(precompile) = self.precompiles.get(address) else {
@@ -104,7 +106,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             output: Bytes::new(),
         };
 
-        match (*precompile)(bytes, gas_limit) {
+        match (*precompile)(&inputs.input, gas_limit) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");

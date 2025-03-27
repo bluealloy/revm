@@ -65,7 +65,6 @@ pub trait Handler {
         FrameInit = FrameInput,
     >;
     /// The halt reason type included in the output
-    ///  TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTr;
 
     /// The main entry point for transaction execution.

@@ -1,10 +1,12 @@
-use super::{blst::pairing_check, g1::extract_g1_input, g2::extract_g2_input};
+use super::crypto_backend::{pairing_check, read_g1, read_g2};
+use super::utils::{remove_g1_padding, remove_g2_padding};
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
 };
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::{Bytes, B256};
+use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDRESS, pairing);
@@ -55,10 +57,13 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
         let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
 
+        let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
+        let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(encoded_g2_element)?;
+
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         // extract_g1_input and extract_g2_input perform the necessary checks
-        let p1_aff = extract_g1_input(encoded_g1_element)?;
-        let p2_aff = extract_g2_input(encoded_g2_element)?;
+        let p1_aff = read_g1(a_x, a_y)?;
+        let p2_aff = read_g2(b_x_0, b_x_1, b_y_0, b_y_1)?;
 
         if !g1_is_zero & !g2_is_zero {
             pairs.push((p1_aff, p2_aff));

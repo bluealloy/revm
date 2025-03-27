@@ -1,17 +1,13 @@
-use super::{
-    blst::p1_msm,
-    g1::{encode_g1_point, extract_g1_input},
-    utils::extract_scalar_input,
-};
+use super::crypto_backend::{encode_g1_point, p1_msm, read_g1, read_scalar};
+use crate::bls12_381::utils::remove_g1_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::PrecompileWithAddress;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::blst_p1_affine;
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
+use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
@@ -39,8 +35,8 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g1_points: Vec<blst_p1_affine> = Vec::with_capacity(k);
-    let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
+    let mut g1_points: Vec<_> = Vec::with_capacity(k);
+    let mut scalars = Vec::with_capacity(k);
     for i in 0..k {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
@@ -54,8 +50,11 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         if encoded_g1_element.iter().all(|i| *i == 0) {
             continue;
         }
+
+        let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
+
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        let p0_aff = extract_g1_input(encoded_g1_element)?;
+        let p0_aff = read_g1(a_x, a_y)?;
 
         // If the scalar is zero, then this is a no-op.
         //
@@ -67,8 +66,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         }
 
         g1_points.push(p0_aff);
-
-        scalars_bytes.extend_from_slice(&extract_scalar_input(encoded_scalar)?.b);
+        scalars.push(read_scalar(encoded_scalar)?);
     }
 
     // Return the encoding for the point at the infinity according to EIP-2537
@@ -81,10 +79,10 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         ));
     }
 
-    let multiexp_aff = p1_msm(g1_points, scalars_bytes, NBITS);
+    let multiexp_aff = p1_msm(g1_points, scalars, NBITS);
 
     let out = encode_g1_point(&multiexp_aff);
-    Ok(PrecompileOutput::new(required_gas, out))
+    Ok(PrecompileOutput::new(required_gas, out.into()))
 }
 
 #[cfg(test)]
