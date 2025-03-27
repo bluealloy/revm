@@ -256,7 +256,7 @@ where
         self.mainnet.reimburse_caller(evm, exec_result)?;
 
         let context = evm.ctx();
-        if matches!(context.tx().source_hash(), Some(source_hash) if source_hash.is_zero()) {
+        if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
             let caller = context.tx().caller();
             let spec = context.cfg().spec();
             let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
@@ -468,7 +468,7 @@ mod tests {
     use super::*;
     use crate::{api::default_ctx::OpContext, DefaultOp, OpBuilder};
     use revm::{
-        context::Context,
+        context::{Context, TransactionType},
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
@@ -477,6 +477,7 @@ mod tests {
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
     };
+    use rstest::rstest;
     use std::boxed::Box;
 
     /// Creates frame result.
@@ -866,5 +867,68 @@ mod tests {
                 OpTransactionError::HaltedDepositPostRegolith
             ))
         )
+    }
+
+    #[rstest]
+    #[case::deposit(true)]
+    #[case::dyn_fee(false)]
+    fn test_operator_fee_refund(#[case] is_deposit: bool) {
+        const SENDER: Address = Address::ZERO;
+        const GAS_PRICE: u128 = 0xFF;
+        const OP_FEE_MOCK_PARAM: u128 = 0xFFFF;
+
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = if is_deposit {
+                    DEPOSIT_TRANSACTION_TYPE
+                } else {
+                    TransactionType::Eip1559 as u8
+                };
+                tx.base.gas_price = GAS_PRICE;
+                tx.base.gas_priority_fee = None;
+                tx.base.caller = SENDER;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        // Set the operator fee scalar & constant to non-zero values in the L1 block info.
+        evm.ctx().chain.operator_fee_scalar = Some(U256::from(OP_FEE_MOCK_PARAM));
+        evm.ctx().chain.operator_fee_constant = Some(U256::from(OP_FEE_MOCK_PARAM));
+
+        let mut gas = Gas::new(100);
+        gas.set_spent(10);
+        let mut exec_result = FrameResult::Call(CallOutcome::new(
+            InterpreterResult {
+                result: InstructionResult::Return,
+                output: Default::default(),
+                gas,
+            },
+            0..0,
+        ));
+
+        // Reimburse the caller for the unspent portion of the fees.
+        handler
+            .reimburse_caller(&mut evm, &mut exec_result)
+            .unwrap();
+
+        // Compute the expected refund amount. If the transaction is a deposit, the operator fee refund never
+        // applies. If the transaction is not a deposit, the operator fee refund is added to the refund amount.
+        let mut expected_refund =
+            U256::from(GAS_PRICE * (gas.remaining() + gas.refunded() as u64) as u128);
+        let op_fee_refund = evm
+            .ctx()
+            .chain()
+            .operator_fee_refund(&gas, OpSpecId::ISTHMUS);
+        assert!(op_fee_refund > U256::ZERO);
+
+        if !is_deposit {
+            expected_refund += op_fee_refund;
+        }
+
+        // Check that the caller was reimbursed the correct amount of ETH.
+        let account = evm.ctx().journal().load_account(SENDER).unwrap();
+        assert_eq!(account.info.balance, expected_refund);
     }
 }
