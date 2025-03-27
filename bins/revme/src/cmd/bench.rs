@@ -30,7 +30,7 @@ impl BenchName {
             BenchName::Burntpix => "burntpix",
             BenchName::Snailtracer => "snailtracer",
             BenchName::Transfer => "transfer",
-            BenchName::EvmBuild => "evm_build",
+            BenchName::EvmBuild => "evm-build",
         }
     }
 }
