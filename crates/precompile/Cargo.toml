@@ -64,8 +64,11 @@ c-kzg = { workspace = true, optional = true, features = [
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
 kzg-rs = { workspace = true, optional = true }
 
-# BLS12-381 precompiles
+# Use the BLS12-381 implementation of blst for EIP2537
 blst = { workspace = true, optional = true }
+
+# Use the BLS12-381 implementation of arkworks for EIP2537
+ark-bls12-381 = { workspace = true, features = ["curve"] }
 
 # p256verify precompile
 p256 = { workspace = true, optional = true, features = ["ecdsa"] }
@@ -98,6 +101,7 @@ std = [
 	"serde/std",
 	"serde_json/std",
 	"ark-bn254/std",
+	"ark-bls12-381/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
@@ -125,7 +129,7 @@ portable = ["c-kzg?/portable", "blst?/portable"]
 secp256k1 = ["dep:secp256k1"]
 libsecp256k1 = ["dep:libsecp256k1"]
 
-# Enables the BLS12-381 precompiles.
+# Enables the blst implementation of the BLS12-381 precompile.
 blst = ["dep:blst"]
 
 # Enables the substrate implementation of eip1962

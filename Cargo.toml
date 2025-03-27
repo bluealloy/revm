@@ -70,6 +70,7 @@ alloy-transport = { version = "0.12.4", default-features = false }
 
 # precompiles
 ark-bn254 = { version = "0.5", default-features = false }
+ark-bls12-381 = { version = "0.5", default-features = false }
 ark-ec = { version = "0.5", default-features = false }
 ark-ff = { version = "0.5", default-features = false }
 ark-serialize = { version = "0.5", default-features = false }

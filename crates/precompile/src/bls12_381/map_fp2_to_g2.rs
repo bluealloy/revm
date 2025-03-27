@@ -1,5 +1,5 @@
 use super::{
-    blst::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
+    crypto_backend::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
     utils::remove_fp_padding,
 };
 use crate::bls12_381_const::{
