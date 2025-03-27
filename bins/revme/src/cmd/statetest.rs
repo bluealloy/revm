@@ -2,7 +2,7 @@ pub mod merkle_trie;
 mod runner;
 pub mod utils;
 
-pub use runner::TestError as Error;
+pub use runner::{TestError as Error, TestErrorKind};
 
 use clap::Parser;
 use runner::{find_all_json_tests, run, TestError};
@@ -42,8 +42,25 @@ impl Cmd {
     /// Runs `statetest` command.
     pub fn run(&self) -> Result<(), TestError> {
         for path in &self.paths {
+            if !path.exists() {
+                return Err(TestError {
+                    name: "Path validation".to_string(),
+                    path: path.display().to_string(),
+                    kind: TestErrorKind::InvalidPath,
+                });
+            }
+
             println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
+
+            if test_files.is_empty() {
+                return Err(TestError {
+                    name: "Path validation".to_string(),
+                    path: path.display().to_string(),
+                    kind: TestErrorKind::NoJsonFiles,
+                });
+            }
+
             run(
                 test_files,
                 self.single_thread,
