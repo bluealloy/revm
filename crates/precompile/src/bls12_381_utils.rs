@@ -1,9 +1,12 @@
-use crate::bls12_381_const::{
-    G1_ADD_ADDRESS, G1_MSM_ADDRESS, G2_ADD_ADDRESS, G2_MSM_ADDRESS, MAP_FP2_TO_G2_ADDRESS,
-    MAP_FP_TO_G1_ADDRESS, MSM_MULTIPLIER, PAIRING_ADDRESS,
+use crate::{
+    bls12_381_const::{
+        G1_ADD_ADDRESS, G1_MSM_ADDRESS, G2_ADD_ADDRESS, G2_MSM_ADDRESS, MAP_FP2_TO_G2_ADDRESS,
+        MAP_FP_TO_G1_ADDRESS, MSM_MULTIPLIER, PAIRING_ADDRESS,
+    },
+    PrecompileError, PrecompileWithAddress,
 };
-use crate::Vec;
-use crate::{PrecompileError, PrecompileWithAddress};
+use std::vec::Vec;
+
 /// Implements the gas schedule for G1/G2 Multiscalar-multiplication assuming 30
 /// MGas/second, see also: <https://eips.ethereum.org/EIPS/eip-2537#g1g2-multiexponentiation>
 #[inline]

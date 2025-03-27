@@ -1,4 +1,4 @@
-use super::blst::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
+use super::crypto_backend::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,

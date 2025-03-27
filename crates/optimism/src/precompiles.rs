@@ -4,12 +4,12 @@ use revm::{
     context::Cfg,
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
-    interpreter::InterpreterResult,
+    interpreter::{InputsImpl, InterpreterResult},
     precompile::{
-        self, bn128, secp256r1, PrecompileError, Precompiles,
-        {PrecompileResult, PrecompileWithAddress},
+        self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
+        Precompiles,
     },
-    primitives::{Address, Bytes},
+    primitives::Address,
 };
 use std::boxed::Box;
 use std::string::String;
@@ -70,21 +70,9 @@ pub fn granite() -> &'static Precompiles {
 pub fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = granite().clone();
+        let mut precompiles = granite().clone();
         // Prague bls12 precompiles
-        // Don't include BLS12-381 precompiles in no_std builds.
-        #[cfg(feature = "blst")]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381::precompiles());
-            precompiles
-        };
-        #[cfg(not(feature = "blst"))]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
-            precompiles
-        };
+        precompiles.extend(precompile::bls12_381::precompiles());
         Box::new(precompiles)
     })
 }
@@ -105,10 +93,12 @@ where
         &mut self,
         context: &mut CTX,
         address: &Address,
-        bytes: &Bytes,
+        inputs: &InputsImpl,
+        is_static: bool,
         gas_limit: u64,
     ) -> Result<Option<Self::Output>, String> {
-        self.inner.run(context, address, bytes, gas_limit)
+        self.inner
+            .run(context, address, inputs, is_static, gas_limit)
     }
 
     #[inline]
