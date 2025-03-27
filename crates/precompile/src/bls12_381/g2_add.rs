@@ -1,4 +1,5 @@
-use super::blst::{encode_g2_point, extract_g2_input_no_subgroup_check, p2_add_affine};
+use super::blst::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
+use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
@@ -26,12 +27,15 @@ pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
+    let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(&input[..PADDED_G2_LENGTH])?;
+    let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(&input[PADDED_G2_LENGTH..])?;
+
     // NB: There is no subgroup check for the G2 addition precompile because the time to do the subgroup
     // check would be more than the time it takes to to do the g1 addition.
     //
     // Users should be careful to note whether the points being added are indeed in the right subgroup.
-    let a_aff = &extract_g2_input_no_subgroup_check(&input[..PADDED_G2_LENGTH])?;
-    let b_aff = &extract_g2_input_no_subgroup_check(&input[PADDED_G2_LENGTH..])?;
+    let a_aff = &read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+    let b_aff = &read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
 
     // Use the safe wrapper for G2 point addition
     let p_aff = p2_add_affine(a_aff, b_aff);
