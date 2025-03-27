@@ -13,6 +13,8 @@ const RNG_SEED: u64 = 42;
 const MAX_MSM_SIZE: usize = 256;
 const MAX_PAIRING_PAIRS: usize = 16;
 
+type PrecompileInput = Vec<u8>;
+
 mod arkworks_general {
     use ark_bls12_381::Fq;
     use ark_ec::AffineRepr;
@@ -129,8 +131,6 @@ pub fn encode_bls12381_g2_point(input: &G2Affine) -> [u8; PADDED_G2_LENGTH] {
     output
 }
 
-type PrecompileInput = Vec<u8>;
-
 fn g1_add_test_vectors(num_test_vectors: usize, rng: &mut StdRng) -> Vec<PrecompileInput> {
     let num_g1_points = num_test_vectors * 2;
     let points: Vec<G1Affine> = random_points(num_g1_points, rng);
@@ -195,6 +195,7 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
 
 pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_msm::PRECOMPILE;
+
     let precompile = *PRECOMPILE.precompile();
 
     let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
@@ -238,6 +239,7 @@ fn g2_msm_test_vectors(msm_size: usize, rng: &mut StdRng) -> PrecompileInput {
 
 pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_msm::PRECOMPILE;
+
     let precompile = *PRECOMPILE.precompile();
 
     let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
@@ -258,7 +260,6 @@ fn pairing_test_vectors(num_pairs: usize, rng: &mut StdRng) -> PrecompileInput {
     let g1_points: Vec<G1Affine> = random_points(num_pairs, rng);
     let g2_points: Vec<G2Affine> = random_points(num_pairs, rng);
 
-    // Construct pairing input
     let mut input = Vec::new();
     for (g1, g2) in g1_points.iter().zip(g2_points.iter()) {
         input.extend(encode_bls12381_g1_point(g1));
@@ -270,6 +271,7 @@ fn pairing_test_vectors(num_pairs: usize, rng: &mut StdRng) -> PrecompileInput {
 
 pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::pairing::PRECOMPILE;
+
     let precompile = *PRECOMPILE.precompile();
 
     let sizes_to_bench = [MAX_PAIRING_PAIRS, MAX_PAIRING_PAIRS / 2, 2, 1];
@@ -308,10 +310,8 @@ fn map_fp2_to_g2_test_vectors(rng: &mut StdRng) -> PrecompileInput {
     let fp_c0: Fq = random_field(1, rng)[0];
     let fp_c1: Fq = random_field(1, rng)[0];
 
-    // Construct the input using the encode_base_field function
     let mut input = Vec::new();
 
-    // Encode and add both components
     input.extend(encode_base_field(&fp_c0));
     input.extend(encode_base_field(&fp_c1));
 
