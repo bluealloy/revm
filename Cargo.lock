@@ -663,6 +663,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
+ "rayon",
  "zeroize",
 ]
 
@@ -721,6 +722,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
  "paste",
+ "rayon",
  "zeroize",
 ]
 
@@ -868,6 +870,7 @@ dependencies = [
  "arrayvec",
  "digest 0.10.7",
  "num-bigint 0.4.6",
+ "rayon",
 ]
 
 [[package]]
@@ -909,6 +912,7 @@ checksum = "246a225cc6131e9ee4f24619af0f19d67761fff15d7ccc22e42b80846e69449a"
 dependencies = [
  "num-traits",
  "rand",
+ "rayon",
 ]
 
 [[package]]

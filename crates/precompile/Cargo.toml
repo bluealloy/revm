@@ -102,8 +102,11 @@ std = [
 	"serde_json/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
+	"ark-bls12-381/std",
 	"ark-ec/std",
+	"ark-ec/parallel",
 	"ark-ff/std",
+	"ark-ff/parallel",
 	"ark-serialize/std",
 ]
 hashbrown = ["primitives/hashbrown"]
