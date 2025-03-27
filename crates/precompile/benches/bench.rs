@@ -1,3 +1,5 @@
+pub mod eip2537;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex, keccak256, Bytes, U256};
 use revm_precompile::{
@@ -121,6 +123,14 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     let gas = 50000;
     let output = run(&kzg_input, gas).unwrap();
     println!("gas used by kzg precompile: {:?}", output.gas_used);
+
+    eip2537::add_g1_add_benches(&mut group);
+    eip2537::add_g2_add_benches(&mut group);
+    eip2537::add_g1_msm_benches(&mut group);
+    eip2537::add_g2_msm_benches(&mut group);
+    eip2537::add_pairing_benches(&mut group);
+    eip2537::add_map_fp_to_g1_benches(&mut group);
+    eip2537::add_map_fp2_to_g2_benches(&mut group);
 
     group.bench_function(group_name("ecrecover precompile"), |b| {
         b.iter(|| ec_recover_run(&message_and_signature, u64::MAX).unwrap())
