@@ -104,6 +104,26 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }};
     }
     macro_rules! return_error {
+        ($result:expr, $error:ident) => {{
+            let error = InstructionResult::$error;
+            // if is_frame {
+            //     // in case of error for frame calls we need to burn all remaining gas
+            //     if error.is_revert() {
+            //         local_gas.set_refund(0);
+            //     } else if error.is_error() {
+            //         local_gas.spend_all();
+            //     }
+            // }
+            let result = InterpreterResult::new(error, $result.into(), local_gas);
+            let result =
+                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
+                    inputs,
+                    result,
+                    created_address: None,
+                    is_frame: false,
+                }));
+            return Ok(result);
+        }};
         ($error:ident) => {{
             let error = InstructionResult::$error;
             // if is_frame {
@@ -733,35 +753,35 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let Ok(account) = context.evm.load_code(address) else {
                 return_error!(FatalExternalError);
             };
+            // inside output, we store information about slot,
+            // and also we forward info about cold/warm access
+            let mut output: [u8; U256::BYTES + 1] = [0u8; U256::BYTES + 1];
+            output[32] = account.is_cold as u8;
             // don't charge gas for EVM_CODE_HASH_SLOT,
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
             // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
-            // let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-            //     && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
-            // if !is_gas_free {
-            charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
-            // }
+            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
+                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            if !is_gas_free {
+                charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
+            }
+            // make sure both accounts are delegated to the same execution runtime
             match &account.info.code {
                 Some(Bytecode::Eip7702(eip7702_bytecode)) => {
                     if eip7702_bytecode.delegated_address != eip7702_address {
-                        println!(
-                            "SYSCALL_ID_DELEGATED_STORAGE: delegation mismatched {} != {}",
-                            eip7702_bytecode.delegated_address, eip7702_address
-                        );
-                        return_error!(Revert)
+                        return_error!(output, Revert)
                     }
                 }
                 _ => {
-                    println!("SYSCALL_ID_DELEGATED_STORAGE: {address} not EIP-7702");
-                    return_error!(Revert)
+                    return_error!(output, Revert)
                 }
             }
             // load slot from the storage
             let value = context.evm.sload(address, slot)?;
             println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}",
                      inputs.target_address, inputs.bytecode_address, value.data);
-            let output: [u8; 32] = value.to_le_bytes();
+            output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
             return_result!(output)
         }
 
