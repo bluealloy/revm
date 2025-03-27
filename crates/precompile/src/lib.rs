@@ -43,6 +43,7 @@ use kzg_rs as _;
 // silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
 cfg_if::cfg_if! {
     if #[cfg(feature = "blst")]{
+        use blst as _;
         use ark_bls12_381 as _;
         use ark_ff as _;
         use ark_ec as _;
