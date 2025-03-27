@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v16.0.0...revm-primitives-v17.0.0) - 2025-03-27
+
+### Other
+
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+- make number more readable ([#2300](https://github.com/bluealloy/revm/pull/2300))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v16.0.0-alpha.5...revm-primitives-v16.0.0) - 2025-03-24
 
 Stable version
