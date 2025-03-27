@@ -1,16 +1,10 @@
-use super::{
-    blst::p1_msm,
-    g1::{encode_g1_point, extract_g1_input},
-    utils::extract_scalar_input,
-};
+use super::blst::{encode_g1_point, extract_g1_input, extract_scalar_input, p1_msm};
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::PrecompileWithAddress;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::blst_p1_affine;
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
@@ -39,7 +33,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g1_points: Vec<blst_p1_affine> = Vec::with_capacity(k);
+    let mut g1_points: Vec<_> = Vec::with_capacity(k);
     let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let encoded_g1_element =
@@ -84,7 +78,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let multiexp_aff = p1_msm(g1_points, scalars_bytes, NBITS);
 
     let out = encode_g1_point(&multiexp_aff);
-    Ok(PrecompileOutput::new(required_gas, out))
+    Ok(PrecompileOutput::new(required_gas, out.into()))
 }
 
 #[cfg(test)]

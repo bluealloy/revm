@@ -1,4 +1,4 @@
-use super::{blst::pairing_check, g1::extract_g1_input, g2::extract_g2_input};
+use super::blst::{extract_g1_input, extract_g2_input, pairing_check};
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,

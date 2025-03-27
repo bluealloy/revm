@@ -1,16 +1,10 @@
-use super::{
-    blst::p2_msm,
-    g2::{encode_g2_point, extract_g2_input},
-    utils::extract_scalar_input,
-};
+use super::blst::{encode_g2_point, extract_g2_input, extract_scalar_input, p2_msm};
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH, NBITS,
     PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::PrecompileWithAddress;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
-use blst::blst_p2_affine;
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -39,7 +33,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g2_points: Vec<blst_p2_affine> = Vec::with_capacity(k);
+    let mut g2_points: Vec<_> = Vec::with_capacity(k);
     let mut scalars_bytes: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
         let encoded_g2_elements =
@@ -82,5 +76,5 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let multiexp_aff = p2_msm(g2_points, scalars_bytes, NBITS);
 
     let out = encode_g2_point(&multiexp_aff);
-    Ok(PrecompileOutput::new(required_gas, out))
+    Ok(PrecompileOutput::new(required_gas, out.into()))
 }
