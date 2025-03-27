@@ -197,8 +197,9 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_msm::PRECOMPILE;
     let precompile = *PRECOMPILE.precompile();
 
-    // Benchmark from MAX_MSM_SIZE down to 1
-    for size in (1..=MAX_MSM_SIZE).rev() {
+    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 1];
+
+    for size in sizes_to_bench {
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let test_vector = g1_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
@@ -239,8 +240,9 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_msm::PRECOMPILE;
     let precompile = *PRECOMPILE.precompile();
 
-    // Benchmark from MAX_MSM_SIZE down to 1
-    for size in (1..=MAX_MSM_SIZE).rev() {
+    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 1];
+
+    for size in sizes_to_bench {
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let test_vector = g2_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
