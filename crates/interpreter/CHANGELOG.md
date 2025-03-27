@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0...revm-interpreter-v16.0.1) - 2025-03-27
+
+### Other
+
+- remove redundant clone ([#2293](https://github.com/bluealloy/revm/pull/2293))
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+- make number more readable ([#2300](https://github.com/bluealloy/revm/pull/2300))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.7...revm-interpreter-v16.0.0) - 2025-03-24
 
 Stable version
