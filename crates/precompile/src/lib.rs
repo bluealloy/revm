@@ -40,13 +40,10 @@ cfg_if::cfg_if! {
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
 
-// silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
+// silence blst lint as arkworks-bls12-381 will be used as default if both are enabled.
 cfg_if::cfg_if! {
-    if #[cfg(feature = "blst")]{
-        use ark_bls12_381 as _;
-        use ark_ff as _;
-        use ark_ec as _;
-        use ark_serialize as _;
+    if #[cfg(feature = "arkworks-bls12-381")]{
+        use blst as _;
     }
 }
 

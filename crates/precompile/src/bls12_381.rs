@@ -1,12 +1,12 @@
 use crate::PrecompileWithAddress;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "blst")]{
-        mod blst;
-        use blst as crypto_backend;
-    } else {
+    if #[cfg(feature = "arkworks-bls12-381")]{
         mod arkworks;
         use arkworks as crypto_backend;
+    } else {
+        mod blst;
+        use blst as crypto_backend;
     }
 }
 
