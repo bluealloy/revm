@@ -1,9 +1,9 @@
 // This module contains a safe wrapper around the blst library.
 
 use crate::{
-    bls12_381::utils::is_valid_be,
     bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
+        FP_LENGTH, FP_PAD_BY, MODULUS_REPR, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
+        SCALAR_LENGTH,
     },
     PrecompileError,
 };
@@ -626,4 +626,9 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> 
     };
 
     Ok(out)
+}
+
+/// Checks if the input is a valid big-endian representation of a field element.
+fn is_valid_be(input: &[u8; 48]) -> bool {
+    *input < MODULUS_REPR
 }
