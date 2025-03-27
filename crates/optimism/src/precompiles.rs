@@ -1,4 +1,5 @@
 use crate::OpSpecId;
+use cfg_if::cfg_if;
 use once_cell::race::OnceBox;
 use revm::{
     context::Cfg,
@@ -70,10 +71,16 @@ pub fn granite() -> &'static Precompiles {
 pub fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = granite().clone();
+        let mut precompiles = granite().clone();
         // Prague bls12 precompiles
-        let mut precompiles = precompiles;
-        precompiles.extend(precompile::bls12_381::precompiles());
+        cfg_if! {
+            if #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))] {
+                let precompile = precompile::bls12_381::precompiles();
+            } else {
+                let precompile = precompile::bls12_381_utils:: bls12_381_precompiles_not_supported();
+            }
+        }
+        precompiles.extend(precompile);
         Box::new(precompiles)
     })
 }

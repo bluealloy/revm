@@ -3004,6 +3004,7 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "auto_impl",
+ "cfg-if",
  "indicatif",
  "once_cell",
  "revm",

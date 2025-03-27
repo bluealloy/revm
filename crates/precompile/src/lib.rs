@@ -9,6 +9,7 @@
 extern crate alloc as std;
 
 pub mod blake2;
+#[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
 pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
@@ -41,11 +42,8 @@ cfg_if::cfg_if! {
 use kzg_rs as _;
 
 // silence blst lint as arkworks-bls12-381 will be used as default if both are enabled.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "arkworks-bls12-381")]{
-        use blst as _;
-    }
-}
+#[cfg(all(feature = "blst", feature = "arkworks-bls12-381"))]
+use blst as _;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
@@ -179,7 +177,15 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::cancun().clone();
-            precompiles.extend(bls12_381::precompiles());
+
+            cfg_if! {
+                  if #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))] {
+                      let precompile = bls12_381::precompiles();
+                  } else {
+                      let precompile = bls12_381_utils:: bls12_381_precompiles_not_supported();
+                  }
+            }
+            precompiles.extend(precompile);
             Box::new(precompiles)
         })
     }

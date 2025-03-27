@@ -32,6 +32,9 @@ once_cell = { workspace = true, features = ["alloc"] }
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
+# misc
+cfg-if.workspace = true
+
 [dev-dependencies]
 anyhow.workspace = true
 indicatif.workspace = true
@@ -41,7 +44,7 @@ sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"serde?/std",
 	"revm/std",
@@ -73,4 +76,5 @@ c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
 arkworks-bls12-381 = ["revm/arkworks-bls12-381"]
+blst = ["revm/blst"]
 bn = ["revm/bn"]

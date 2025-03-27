@@ -65,8 +65,8 @@ c-kzg = { workspace = true, optional = true, features = [
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
 kzg-rs = { workspace = true, optional = true }
 
-# BLS12-381 precompiles
-blst = { workspace = true }
+# Use the BLS12-381 implementation of blst for EIP2537
+blst = { workspace = true, optional = true }
 
 # Use the BLS12-381 implementation of arkworks for EIP2537
 ark-bls12-381 = { workspace = true, optional = true, features = ["curve"] }
@@ -87,7 +87,7 @@ serde_json.workspace = true
 serde_derive.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"primitives/std",
 	"k256/std",
@@ -129,6 +129,9 @@ portable = ["c-kzg?/portable", "blst/portable"]
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
 libsecp256k1 = ["dep:libsecp256k1"]
+
+# Enables the blst implementation of the BLS12-381 precompile.
+blst = ["dep:blst"]
 
 # Enables the arkworks implementation of the BLS12-381 precompile.
 arkworks-bls12-381 = ["dep:ark-bls12-381"]
