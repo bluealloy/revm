@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revme-v3.0.0...revme-v4.0.0) - 2025-03-27
+
+### Added
+
+- Add JournalInner ([#2311](https://github.com/bluealloy/revm/pull/2311))
+- Add criterion to revme bench command ([#2295](https://github.com/bluealloy/revm/pull/2295))
+
+### Other
+
+- add check for path and existence existence ([#2320](https://github.com/bluealloy/revm/pull/2320))
+- bump bench time, and reduce burntpix iterations ([#2315](https://github.com/bluealloy/revm/pull/2315))
+- update EOF validation logic and improve error handling ([#2304](https://github.com/bluealloy/revm/pull/2304))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revme-v3.0.0-alpha.7...revme-v3.0.0) - 2025-03-24
 
 ### Other
