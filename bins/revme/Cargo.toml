@@ -9,6 +9,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+# revm
 revm = { workspace = true, features = [
     "std",
     "hashbrown",
@@ -16,7 +17,7 @@ revm = { workspace = true, features = [
     "blst",
     "serde-json",
     "hashbrown",
-] } # revm
+] }
 primitives.workspace = true
 database.workspace = true
 database-interface.workspace = true
