@@ -36,8 +36,10 @@ pub trait PrecompileProvider<CTX: ContextTr> {
 /// The [`PrecompileProvider`] for ethereum precompiles.
 #[derive(Debug)]
 pub struct EthPrecompiles {
+    /// Contains precompiles for the current spec.
     pub precompiles: &'static Precompiles,
-    pub spec: Option<SpecId>,
+    /// Current spec. None means that spec was not set yet.
+    pub spec: SpecId,
 }
 
 impl EthPrecompiles {
@@ -63,9 +65,10 @@ impl Clone for EthPrecompiles {
 
 impl Default for EthPrecompiles {
     fn default() -> Self {
+        let spec = SpecId::default();
         Self {
-            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(SpecId::default())),
-            spec: None,
+            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
+            spec,
         }
     }
 }
@@ -76,11 +79,11 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
         let spec = spec.into();
         // generate new precompiles only on new spec
-        if Some(spec) == self.spec {
+        if spec == self.spec {
             return false;
         }
         self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec));
-        self.spec = Some(spec);
+        self.spec = spec;
         true
     }
 

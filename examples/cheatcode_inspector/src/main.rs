@@ -132,10 +132,6 @@ impl JournalTr for Backend {
         self.journaled_state.precompile_addresses()
     }
 
-    fn spec_id(&self) -> Option<SpecId> {
-        self.journaled_state.spec_id()
-    }
-
     fn set_spec_id(&mut self, spec_id: SpecId) {
         self.journaled_state.set_spec_id(spec_id);
     }

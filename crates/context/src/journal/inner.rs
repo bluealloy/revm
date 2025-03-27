@@ -45,7 +45,7 @@ pub struct JournalInner<ENTRY> {
     ///
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
-    pub spec: Option<SpecId>,
+    pub spec: SpecId,
     /// Warm loaded addresses are used to check if loaded address
     /// should be considered cold or warm loaded when the account
     /// is first accessed.
@@ -75,7 +75,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
-            spec: None,
+            spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
         }
@@ -85,8 +85,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Note: Precompile addresses and spec are preserved and initial state of
     /// warm_preloaded_addresses will contain precompiles addresses.
+    /// Precompile addresses
     #[inline]
-    pub fn take_output_and_clear(&mut self) -> JournalOutput {
+    pub fn clear_and_take_output(&mut self) -> JournalOutput {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -99,8 +100,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             warm_preloaded_addresses,
             precompiles,
         } = self;
-        // Precompiles and spec are not changed.
+        // Spec is not changed. It is always set again execution.
         let _ = spec;
+        // Load precompiles into warm_preloaded_addresses. PrecompileProvider
+        *warm_preloaded_addresses = precompiles.clone();
 
         let state = mem::take(state);
         let logs = mem::take(logs);
@@ -108,8 +111,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
         journal.push(vec![]);
         *depth = 0;
-        // Load precompiles into warm_preloaded_addresses
-        *warm_preloaded_addresses = precompiles.clone();
 
         JournalOutput { state, logs }
     }
@@ -123,7 +124,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Sets SpecId.
     #[inline]
     pub fn set_spec_id(&mut self, spec: SpecId) {
-        self.spec = Some(spec);
+        self.spec = spec;
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -350,10 +351,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self
-            .spec
-            .expect("SpecId should be set")
-            .is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
@@ -394,7 +392,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let spec = self.spec;
         let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
-        let spec: SpecId = spec.expect("SpecId should be set");
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
         if address != target {
@@ -490,7 +487,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
-        let spec = self.spec.expect("SpecId should be set");
+        let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
         let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);

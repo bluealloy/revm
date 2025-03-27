@@ -6,10 +6,10 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::InterpreterResult,
     precompile::{
-        self, bn128, secp256r1, PrecompileError, Precompiles,
-        {PrecompileResult, PrecompileWithAddress},
+        self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
+        Precompiles,
     },
-    primitives::{Address, Bytes},
+    primitives::{hardfork::SpecId, Address, Bytes},
 };
 use std::boxed::Box;
 use std::string::String;
@@ -19,35 +19,30 @@ use std::string::String;
 pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
-    spec: Option<OpSpecId>,
+    spec: OpSpecId,
 }
 
 impl OpPrecompiles {
-    /// Create a new [`OpPrecompiles`] with the given precompiles.
-    pub fn new(precompiles: &'static Precompiles) -> Self {
-        Self {
-            inner: EthPrecompiles {
-                precompiles,
-                spec: None,
-            },
-            spec: None,
-        }
-    }
-
-    /// Create a new precompile provider with the given optimismispec.
+    /// Create a new precompile provider with the given OpSpec.
     #[inline]
     pub fn new_with_spec(spec: OpSpecId) -> Self {
-        let mut precompiles = match spec {
+        let precompiles = match spec {
             spec @ (OpSpecId::BEDROCK
             | OpSpecId::REGOLITH
             | OpSpecId::CANYON
-            | OpSpecId::ECOTONE) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
-            OpSpecId::FJORD => Self::new(fjord()),
-            OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
-            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => Self::new(isthmus()),
+            | OpSpecId::ECOTONE) => Precompiles::new(spec.into_eth_spec().into()),
+            OpSpecId::FJORD => fjord(),
+            OpSpecId::GRANITE | OpSpecId::HOLOCENE => granite(),
+            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => isthmus(),
         };
-        precompiles.spec = Some(spec);
-        precompiles
+
+        Self {
+            inner: EthPrecompiles {
+                precompiles,
+                spec: SpecId::default(),
+            },
+            spec,
+        }
     }
 }
 
@@ -104,7 +99,7 @@ where
 
     #[inline]
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
-        if Some(spec) == self.spec {
+        if spec == self.spec {
             return false;
         }
         *self = Self::new_with_spec(spec);

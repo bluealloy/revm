@@ -72,11 +72,6 @@ pub trait JournalTr {
     /// Returns the addresses of the precompiles.
     fn precompile_addresses(&self) -> &HashSet<Address>;
 
-    /// Returns the spec id.
-    ///
-    /// None means that spec id was not set
-    fn spec_id(&self) -> Option<SpecId>;
-
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);
 

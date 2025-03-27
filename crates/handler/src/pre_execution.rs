@@ -27,10 +27,12 @@ pub fn load_accounts<
     let spec = gen_spec.clone().into();
     // sets eth spec id in journal
     context.journal().set_spec_id(spec);
+    let precompiles_changed = precompiles.set_spec(gen_spec);
+    let empty_warmed_precompiles = context.journal().precompile_addresses().is_empty();
 
-    // returns true if spec has changed
-    if precompiles.set_spec(gen_spec) {
+    if precompiles_changed || empty_warmed_precompiles {
         // load new precompile addresses into journal.
+        // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
         context
             .journal()
             .warm_precompiles(precompiles.warm_addresses().collect());
