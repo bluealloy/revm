@@ -1,5 +1,4 @@
-use std::time::Instant;
-
+use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
@@ -9,9 +8,8 @@ use revm::{
 
 const BYTES: &str = include_str!("analysis.hex");
 
-pub fn run() {
+pub fn run(criterion: &mut Criterion) {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
-
     // BenchmarkDB is dummy state that implements Database trait.
     let context = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
@@ -21,14 +19,10 @@ pub fn run() {
             tx.kind = TxKind::Call(BENCH_TARGET);
             tx.data = bytes!("8035F0CE");
         });
-
     let mut evm = context.build_mainnet();
-
-    let time = Instant::now();
-    let _ = evm.replay();
-    println!("First init: {:?}", time.elapsed());
-
-    let time = Instant::now();
-    let _ = evm.replay();
-    println!("Run: {:?}", time.elapsed());
+    criterion.bench_function("analysis", |b| {
+        b.iter(|| {
+            let _ = evm.replay().unwrap();
+        });
+    });
 }

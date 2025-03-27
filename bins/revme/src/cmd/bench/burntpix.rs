@@ -1,5 +1,6 @@
 pub mod static_data;
 
+use criterion::Criterion;
 use static_data::{
     BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
     BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
@@ -9,17 +10,15 @@ use static_data::{
 use alloy_sol_types::{sol, SolCall};
 use database::{CacheDB, BENCH_CALLER};
 use revm::{
-    context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
     primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
-use std::fs::File;
-use std::{error::Error, time::Instant};
+use std::{error::Error, fs::File, io::Write};
 
-use std::{io::Write, str::FromStr};
+use std::str::FromStr;
 
 sol! {
     #[derive(Debug, PartialEq, Eq)]
@@ -28,7 +27,7 @@ sol! {
     }
 }
 
-pub fn run() {
+pub fn run(criterion: &mut Criterion) {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
     let run_call_data = IBURNTPIX::runCall { seed, iterations }.abi_encode();
@@ -45,16 +44,22 @@ pub fn run() {
         })
         .build_mainnet();
 
-    let started = Instant::now();
-    let tx_result = evm.replay().unwrap().result;
-    let return_data = match tx_result {
-        ExecutionResult::Success {
+    criterion.bench_function("burntpix", |b| {
+        b.iter(|| {
+            evm.replay().unwrap();
+        })
+    });
+
+    //Collects the data and uses it to generate the svg after running the benchmark
+    /*
+    let tx_result = evm.replay().unwrap();
+    let return_data = match tx_result.result {
+        context::result::ExecutionResult::Success {
             output, gas_used, ..
         } => {
             println!("Gas used: {:?}", gas_used);
-            println!("Time elapsed: {:?}", started.elapsed());
             match output {
-                Output::Call(value) => value,
+                context::result::Output::Call(value) => value,
                 _ => unreachable!("Unexpected output type"),
             }
         }
@@ -72,9 +77,11 @@ pub fn run() {
     let file_name = format!("{}_{}", seed, iterations);
 
     svg(file_name, trimmed_data).expect("Failed to store svg");
+    */
 }
 
-fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
+/// Actually generates the svg
+pub fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     let current_dir = std::env::current_dir()?;
     let svg_dir = current_dir.join("burntpix").join("svgs");
     std::fs::create_dir_all(&svg_dir)?;
@@ -87,7 +94,7 @@ fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
 }
 
 const DEFAULT_SEED: &str = "0";
-const DEFAULT_ITERATIONS: &str = "0x7A120";
+const DEFAULT_ITERATIONS: &str = "0x4E20"; // 20_000 iterations
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
     let seed: u32 = try_from_hex_to_u32(&seed_from_env)?;

@@ -21,7 +21,7 @@ pub(super) fn remove_fp_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], Precom
 }
 /// remove_g1_padding removes the padding applied to the Fp elements that constitute the
 /// encoded G1 element.
-pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; 48]; 2], PrecompileError> {
+pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 2], PrecompileError> {
     if input.len() != PADDED_G1_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {PADDED_G1_LENGTH} bytes, was {}",
@@ -36,7 +36,7 @@ pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; 48]; 2], Precompi
 
 /// remove_g2_padding removes the padding applied to the Fp elements that constitute the
 /// encoded G2 element.
-pub(super) fn remove_g2_padding(input: &[u8]) -> Result<[&[u8; 48]; 4], PrecompileError> {
+pub(super) fn remove_g2_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 4], PrecompileError> {
     if input.len() != PADDED_G2_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {PADDED_G2_LENGTH} bytes, was {}",

@@ -196,7 +196,7 @@ where
             if let Some(i) =
                 context
                     .journal()
-                    .transfer(&inputs.caller, &inputs.target_address, value)?
+                    .transfer(inputs.caller, inputs.target_address, value)?
             {
                 context.journal().checkpoint_revert(checkpoint);
                 return return_result(i.into());

@@ -340,20 +340,17 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
 /// Encodes a G1 point in affine format into byte slice with padded elements.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> [u8; PADDED_G1_LENGTH] {
+pub(super) fn encode_g1_point(input: &blst_p1_affine) -> [u8; PADDED_G1_LENGTH] {
     let mut out = [0u8; PADDED_G1_LENGTH];
-    // SAFETY: Out comes from fixed length array, input is a blst value.
-    unsafe {
-        fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &(*input).x);
-        fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &(*input).y);
-    }
+    fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x);
+    fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &input.y);
     out
 }
 
 /// Encodes a single finite field element into byte slice with padding.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
+fn fp_to_bytes(out: &mut [u8], input: &blst_fp) {
     if out.len() != PADDED_FP_LENGTH {
         return;
     }
@@ -634,13 +631,5 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> 
 
 /// Checks if the input is a valid big-endian representation of a field element.
 fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
-        match i.cmp(modulo) {
-            Ordering::Greater => return false,
-            Ordering::Less => return true,
-            Ordering::Equal => continue,
-        }
-    }
-    // Return false if matching the modulus
-    false
+    *input < MODULUS_REPR
 }

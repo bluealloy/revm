@@ -1,13 +1,7 @@
-mod entry;
-mod init;
-
-pub use entry::{JournalEntry, JournalEntryTr};
-pub use init::JournalInit;
-
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
+    journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -19,19 +13,11 @@ use primitives::{
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::{vec, vec::Vec};
 
-/// A journal of state changes internal to the EVM
-///
-/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
-///
-/// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
+use super::{JournalEntryTr, JournalOutput};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Journal<DB, ENTRY = JournalEntry>
-where
-    ENTRY: JournalEntryTr,
-{
-    /// Database
-    pub database: DB,
+pub struct JournalInner<ENTRY> {
     /// The current state
     pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
@@ -65,209 +51,13 @@ where
     pub precompiles: HashSet<Address>,
 }
 
-/// Output of the journal after finalizing.
-pub struct JournalOutput {
-    /// Changes or touched accounts that loads, created or changed in the journal.
-    pub state: EvmState,
-    /// Logs that were emitted by contract calls.
-    pub logs: Vec<Log>,
-}
-
-impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
-    type Database = DB;
-    type FinalOutput = JournalOutput;
-
-    fn new(database: DB) -> Journal<DB, ENTRY> {
-        Self::new(SpecId::default(), database)
-    }
-
-    fn db_ref(&self) -> &Self::Database {
-        &self.database
-    }
-
-    fn db(&mut self) -> &mut Self::Database {
-        &mut self.database
-    }
-
-    fn sload(
-        &mut self,
-        address: Address,
-        key: U256,
-    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
-        self.sload(address, key)
-    }
-
-    fn sstore(
-        &mut self,
-        address: Address,
-        key: U256,
-        value: U256,
-    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
-        self.sstore(address, key, value)
-    }
-
-    fn tload(&mut self, address: Address, key: U256) -> U256 {
-        self.tload(address, key)
-    }
-
-    fn tstore(&mut self, address: Address, key: U256, value: U256) {
-        self.tstore(address, key, value)
-    }
-
-    fn log(&mut self, log: Log) {
-        self.log(log)
-    }
-
-    fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        self.selfdestruct(address, target)
-    }
-
-    fn warm_account(&mut self, address: Address) {
-        self.warm_preloaded_addresses.insert(address);
-    }
-
-    fn warm_precompiles(&mut self, address: HashSet<Address>) {
-        self.precompiles = address;
-        self.warm_preloaded_addresses
-            .extend(self.precompiles.iter());
-    }
-
-    #[inline]
-    fn precompile_addresses(&self) -> &HashSet<Address> {
-        &self.precompiles
-    }
-
-    /// Returns call depth.
-    #[inline]
-    fn depth(&self) -> usize {
-        self.depth
-    }
-
-    fn warm_account_and_storage(
-        &mut self,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = U256>,
-    ) -> Result<(), <Self::Database as Database>::Error> {
-        self.initial_account_load(address, storage_keys)?;
-        Ok(())
-    }
-
-    fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.spec = spec_id;
-    }
-
-    fn transfer(
-        &mut self,
-        from: &Address,
-        to: &Address,
-        balance: U256,
-    ) -> Result<Option<TransferError>, DB::Error> {
-        self.transfer(from, to, balance)
-    }
-
-    fn touch_account(&mut self, address: Address) {
-        self.touch(&address);
-    }
-
-    fn inc_account_nonce(&mut self, address: Address) -> Result<Option<u64>, DB::Error> {
-        Ok(self.inc_nonce(address))
-    }
-
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account(address)
-    }
-
-    fn load_account_code(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_code(address)
-    }
-
-    fn load_account_delegated(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<AccountLoad>, DB::Error> {
-        self.load_account_delegated(address)
-    }
-
-    fn checkpoint(&mut self) -> JournalCheckpoint {
-        self.checkpoint()
-    }
-
-    fn checkpoint_commit(&mut self) {
-        self.checkpoint_commit()
-    }
-
-    fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        self.checkpoint_revert(checkpoint)
-    }
-
-    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
-        self.set_code_with_hash(address, code, hash);
-    }
-
-    fn clear(&mut self) {
-        // Clears the JournaledState. Preserving only the spec.
-        self.state.clear();
-        self.transient_storage.clear();
-        self.logs.clear();
-        self.journal = vec![vec![]];
-        self.depth = 0;
-        self.warm_preloaded_addresses.clear();
-    }
-
-    fn create_account_checkpoint(
-        &mut self,
-        caller: Address,
-        address: Address,
-        balance: U256,
-        spec_id: SpecId,
-    ) -> Result<JournalCheckpoint, TransferError> {
-        // Ignore error.
-        self.create_account_checkpoint(caller, address, balance, spec_id)
-    }
-
-    fn finalize(&mut self) -> Self::FinalOutput {
-        let Self {
-            state,
-            transient_storage,
-            logs,
-            depth,
-            journal,
-            // kept, see [Self::new]
-            spec: _,
-            database: _,
-            warm_preloaded_addresses: _,
-            precompiles: _,
-        } = self;
-
-        *transient_storage = TransientStorage::default();
-        *journal = vec![vec![]];
-        *depth = 0;
-        let state = mem::take(state);
-        let logs = mem::take(logs);
-
-        JournalOutput { state, logs }
-    }
-}
-
-impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
-    /// Creates new JournaledState.
+impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+    /// Creates new [`JournalInner`].
     ///
     /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
     /// In ordinary case this is precompile or beneficiary.
-    ///
-    /// # Note
-    /// This function will journal state after Spurious Dragon fork.
-    /// And will not take into account if account is not existing or empty.
-    pub fn new(spec: SpecId, database: DB) -> Journal<DB, ENTRY> {
+    pub fn new(spec: SpecId) -> JournalInner<ENTRY> {
         Self {
-            database,
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
@@ -277,6 +67,38 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
         }
+    }
+
+    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state.
+    ///
+    /// Note: Precompile addresses and spec is preserved.
+    #[inline]
+    pub fn take_output_and_clear(&mut self) -> JournalOutput {
+        // Clears all field from JournalInner. Doing it this way to avoid
+        // missing any field.
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            spec,
+            warm_preloaded_addresses,
+            precompiles,
+        } = self;
+        // Precompiles and spec are not changed.
+        let _ = spec;
+
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+        transient_storage.clear();
+        journal.clear();
+        journal.push(vec![]);
+        *depth = 0;
+        warm_preloaded_addresses.clear();
+        precompiles.clear();
+
+        JournalOutput { state, logs }
     }
 
     /// Return reference to state.
@@ -295,17 +117,17 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
     #[inline]
-    pub fn touch(&mut self, address: &Address) {
-        if let Some(account) = self.state.get_mut(address) {
+    pub fn touch(&mut self, address: Address) {
+        if let Some(account) = self.state.get_mut(&address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         }
     }
 
     /// Mark account as touched.
     #[inline]
-    fn touch_account(journal: &mut Vec<ENTRY>, address: &Address, account: &mut Account) {
+    fn touch_account(journal: &mut Vec<ENTRY>, address: Address, account: &mut Account) {
         if !account.is_touched() {
-            journal.push(ENTRY::account_touched(*address));
+            journal.push(ENTRY::account_touched(address));
             account.mark_touch();
         }
     }
@@ -330,7 +152,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     #[inline]
     pub fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         let account = self.state.get_mut(&address).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
+        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
 
         self.journal
             .last_mut()
@@ -357,7 +179,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         if account.info.nonce == u64::MAX {
             return None;
         }
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
+        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         self.journal
             .last_mut()
             .unwrap()
@@ -370,24 +192,25 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
-    pub fn transfer(
+    pub fn transfer<DB: Database>(
         &mut self,
-        from: &Address,
-        to: &Address,
+        db: &mut DB,
+        from: Address,
+        to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
         if balance.is_zero() {
-            self.load_account(*to)?;
-            let to_account = self.state.get_mut(to).unwrap();
+            self.load_account(db, to)?;
+            let to_account = self.state.get_mut(&to).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
             return Ok(None);
         }
         // load accounts
-        self.load_account(*from)?;
-        self.load_account(*to)?;
+        self.load_account(db, from)?;
+        self.load_account(db, to)?;
 
         // sub balance from
-        let from_account = self.state.get_mut(from).unwrap();
+        let from_account = self.state.get_mut(&from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
 
@@ -397,7 +220,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         *from_balance = from_balance_decr;
 
         // add balance to
-        let to_account = &mut self.state.get_mut(to).unwrap();
+        let to_account = &mut self.state.get_mut(&to).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
@@ -409,7 +232,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         self.journal
             .last_mut()
             .unwrap()
-            .push(ENTRY::balance_transfer(*from, *to, balance));
+            .push(ENTRY::balance_transfer(from, to, balance));
 
         Ok(None)
     }
@@ -475,7 +298,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
 
         // touch account. This is important as for pre SpuriousDragon account could be
         // saved even empty.
-        Self::touch_account(last_journal, &target_address, target_acc);
+        Self::touch_account(last_journal, target_address, target_acc);
 
         // Add balance to created account, as we already have target here.
         let Some(new_balance) = target_acc.info.balance.checked_add(balance) else {
@@ -546,13 +369,14 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449>
     ///  * <https://eips.ethereum.org/EIPS/eip-6780>
     #[inline]
-    pub fn selfdestruct(
+    pub fn selfdestruct<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
         let spec = self.spec;
-        let account_load = self.load_account(target)?;
+        let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
@@ -562,7 +386,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
             let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
+            Self::touch_account(self.journal.last_mut().unwrap(), target, target_account);
             target_account.info.balance += acc_balance;
         }
 
@@ -608,8 +432,9 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
 
     /// Initial load of account. This load will not be tracked inside journal
     #[inline]
-    pub fn initial_account_load(
+    pub fn initial_account_load<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         storage_keys: impl IntoIterator<Item = U256>,
     ) -> Result<&mut Account, DB::Error> {
@@ -617,8 +442,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         let account = match self.state.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(vac) => vac.insert(
-                self.database
-                    .basic(address)?
+                db.basic(address)?
                     .map(|i| i.into())
                     .unwrap_or(Account::new_not_existing()),
             ),
@@ -626,7 +450,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         // preload storages.
         for storage_key in storage_keys.into_iter() {
             if let Entry::Vacant(entry) = account.storage.entry(storage_key) {
-                let storage = self.database.storage(address, storage_key)?;
+                let storage = db.storage(address, storage_key)?;
                 entry.insert(EvmStorageSlot::new(storage));
             }
         }
@@ -635,18 +459,23 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
 
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
-    pub fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(address, false)
+    pub fn load_account<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        self.load_account_optional(db, address, false)
     }
 
     #[inline]
-    pub fn load_account_delegated(
+    pub fn load_account_delegated<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(address, is_eip7702_enabled)?;
+        let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -660,21 +489,26 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(address)?;
+            let delegate_account = self.load_account(db, address)?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
         Ok(account_load)
     }
 
-    pub fn load_code(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(address, true)
+    pub fn load_code<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        self.load_account_optional(db, address, true)
     }
 
     /// Loads code
     #[inline]
-    pub fn load_account_optional(
+    pub fn load_account_optional<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         load_code: bool,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
@@ -688,7 +522,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
                 }
             }
             Entry::Vacant(vac) => {
-                let account = if let Some(account) = self.database.basic(address)? {
+                let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
                     Account::new_not_existing()
@@ -716,7 +550,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
                 let code = if info.code_hash == KECCAK_EMPTY {
                     Bytecode::default()
                 } else {
-                    self.database.code_by_hash(info.code_hash)?
+                    db.code_by_hash(info.code_hash)?
                 };
                 info.code = Some(code);
             }
@@ -731,7 +565,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ///
     /// Panics if the account is not present in the state.
     #[inline]
-    pub fn sload(&mut self, address: Address, key: U256) -> Result<StateLoad<U256>, DB::Error> {
+    pub fn sload<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, DB::Error> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
@@ -747,7 +586,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
-                    self.database.storage(address, key)?
+                    db.storage(address, key)?
                 };
 
                 vac.insert(EvmStorageSlot::new(value));
@@ -773,14 +612,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     ///
     /// **Note**: Account should already be present in our state.
     #[inline]
-    pub fn sstore(
+    pub fn sstore<DB: Database>(
         &mut self,
+        db: &mut DB,
         address: Address,
         key: U256,
         new: U256,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
-        let present = self.sload(address, key)?;
+        let present = self.sload(db, address, key)?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
@@ -867,24 +707,5 @@ impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
-    }
-}
-
-impl<DB> Journal<DB> {
-    /// Creates a new JournaledState by copying state data from a JournalInit and provided database.
-    /// This allows reusing the state, logs, and other data from a previous execution context while
-    /// connecting it to a different database backend.
-    pub fn from_init(init: &JournalInit, database: DB) -> Self {
-        Self {
-            database,
-            state: init.state.clone(),
-            transient_storage: init.transient_storage.clone(),
-            logs: init.logs.clone(),
-            depth: init.depth,
-            journal: init.journal.clone(),
-            spec: init.spec,
-            warm_preloaded_addresses: init.warm_preloaded_addresses.clone(),
-            precompiles: init.precompiles.clone(),
-        }
     }
 }

@@ -36,7 +36,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let mut g2_points: Vec<_> = Vec::with_capacity(k);
-    let mut scalars: Vec<_> = Vec::with_capacity(k);
+    let mut scalars = Vec::with_capacity(k);
     for i in 0..k {
         let encoded_g2_element =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
