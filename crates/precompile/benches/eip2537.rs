@@ -10,8 +10,8 @@ use revm_precompile::bls12_381_const::{
 };
 
 const RNG_SEED: u64 = 42;
-const MAX_MSM_SIZE: usize = 16;
-const MAX_PAIRING_PAIRS: usize = 10;
+const MAX_MSM_SIZE: usize = 256;
+const MAX_PAIRING_PAIRS: usize = 16;
 
 mod arkworks_general {
     use ark_bls12_381::Fq;
@@ -174,7 +174,7 @@ pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
 
     let precompile = *PRECOMPILE.precompile();
 
-    group.bench_function("g1_add operation", |b| {
+    group.bench_function("g1_add", |b| {
         b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
@@ -188,7 +188,7 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
 
     let precompile = *PRECOMPILE.precompile();
 
-    group.bench_function("g2_add operation", |b| {
+    group.bench_function("g2_add", |b| {
         b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
@@ -197,14 +197,14 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_msm::PRECOMPILE;
     let precompile = *PRECOMPILE.precompile();
 
-    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 1];
+    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
 
     for size in sizes_to_bench {
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let test_vector = g1_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g1_msm operation (size {})", size), |b| {
+        group.bench_function(format!("g1_msm (size {})", size), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -240,14 +240,14 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_msm::PRECOMPILE;
     let precompile = *PRECOMPILE.precompile();
 
-    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 1];
+    let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
 
     for size in sizes_to_bench {
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let test_vector = g2_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g2_msm operation (size {})", size), |b| {
+        group.bench_function(format!("g2_msm (size {})", size), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -272,13 +272,14 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::pairing::PRECOMPILE;
     let precompile = *PRECOMPILE.precompile();
 
-    // Benchmark from MAX_PAIRING_PAIRS down to 1
-    for pairs in (1..=MAX_PAIRING_PAIRS).rev() {
+    let sizes_to_bench = [MAX_PAIRING_PAIRS, MAX_PAIRING_PAIRS / 2, 2, 1];
+
+    for pairs in sizes_to_bench {
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
         let test_vector = pairing_test_vectors(pairs, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("pairing operation ({} pairs)", pairs), |b| {
+        group.bench_function(format!("pairing ({} pairs)", pairs), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -298,7 +299,7 @@ pub fn add_map_fp_to_g1_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M
 
     let precompile = *PRECOMPILE.precompile();
 
-    group.bench_function("map_fp_to_g1 operation", |b| {
+    group.bench_function("map_fp_to_g1", |b| {
         b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
@@ -326,7 +327,7 @@ pub fn add_map_fp2_to_g2_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, 
 
     let precompile = *PRECOMPILE.precompile();
 
-    group.bench_function("map_fp2_to_g2 operation", |b| {
+    group.bench_function("map_fp2_to_g2", |b| {
         b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
