@@ -126,7 +126,6 @@ fn g1_add_test_vectors(num_test_vectors: usize, rng: &mut StdRng) -> Vec<Precomp
 
     points
         .chunks_exact(2)
-        .into_iter()
         .map(|chunk| {
             let lhs = chunk[0];
             let rhs = chunk[1];
@@ -144,7 +143,6 @@ fn g2_add_test_vectors(num_test_vectors: usize, rng: &mut StdRng) -> Vec<Precomp
 
     points
         .chunks_exact(2)
-        .into_iter()
         .map(|chunk| {
             let lhs = chunk[0];
             let rhs = chunk[1];
@@ -170,7 +168,7 @@ pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!("g1_add operation ({} test vectors)", G1_ADD_TEST_VECTORS),
+        format!("g1_add operation ({} test vectors)", G1_ADD_TEST_VECTORS),
         |b| {
             b.iter(|| {
                 for bytes in &prepared_inputs {
@@ -195,7 +193,7 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!("g2_add operation ({} test vectors)", G2_ADD_TEST_VECTORS),
+        format!("g2_add operation ({} test vectors)", G2_ADD_TEST_VECTORS),
         |b| {
             b.iter(|| {
                 for bytes in &prepared_inputs {
@@ -220,7 +218,7 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!(
+        format!(
             "g1_msm operation ({} test vectors, max size {})",
             G1_MSM_TEST_VECTORS, MAX_MSM_SIZE
         ),
@@ -310,7 +308,7 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!(
+        format!(
             "g2_msm operation ({} test vectors, max size {})",
             G2_MSM_TEST_VECTORS, MAX_MSM_SIZE
         ),
@@ -366,7 +364,7 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!(
+        format!(
             "pairing operation ({} test vectors, max {} pairs)",
             PAIRING_TEST_VECTORS, MAX_PAIRING_PAIRS
         ),
@@ -411,7 +409,7 @@ pub fn add_map_fp_to_g1_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!(
+        format!(
             "map_fp_to_g1 operation ({} test vectors)",
             MAP_FP_TO_G1_TEST_VECTORS
         ),
@@ -480,7 +478,7 @@ pub fn add_map_fp2_to_g2_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, 
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function(
-        &format!(
+        format!(
             "map_fp2_to_g2 operation ({} test vectors)",
             MAP_FP2_TO_G2_TEST_VECTORS
         ),
