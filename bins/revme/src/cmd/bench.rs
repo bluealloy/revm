@@ -36,16 +36,41 @@ impl BenchName {
 pub struct Cmd {
     #[arg(value_enum)]
     pub name: BenchName,
+    /// Warmup represents warm up time for benchmarks ran
+    #[arg(short = 'w', long)]
+    pub warmup: Option<f64>,
+    /// Samples represents default measurement time for benchmarks ran
+    #[arg(short = 'm', long)]
+    pub time: Option<f64>,
+    /// Samples represents size of the sample for benchmarks ran
+    #[arg(short = 's', long)]
+    pub samples: Option<usize>,
 }
 
 impl Cmd {
     /// Runs bench command.
     pub fn run(&self) {
+        let mut criterion = criterion::Criterion::default()
+            .warm_up_time(std::time::Duration::from_secs_f64(
+                self.warmup.unwrap_or(0.5),
+            ))
+            // Measurement_time of 0.1 will get 500+ iterations for analysis and transfer and will be extended if needed in order to test the given sample size (minimum sample size is 10 per criterion documentation) as is the case with burntpix and snailtracer benchmark tests
+            .measurement_time(std::time::Duration::from_secs_f64(self.time.unwrap_or(1.5)))
+            .sample_size(self.samples.unwrap_or(10));
+
         match self.name {
-            BenchName::Analysis => analysis::run(),
-            BenchName::Burntpix => burntpix::run(),
-            BenchName::Snailtracer => snailtracer::run(),
-            BenchName::Transfer => transfer::run(),
+            BenchName::Analysis => {
+                analysis::run(&mut criterion);
+            }
+            BenchName::Burntpix => {
+                burntpix::run(&mut criterion);
+            }
+            BenchName::Snailtracer => {
+                snailtracer::run(&mut criterion);
+            }
+            BenchName::Transfer => {
+                transfer::run(&mut criterion);
+            }
         }
     }
 }

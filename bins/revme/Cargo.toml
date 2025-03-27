@@ -16,6 +16,7 @@ revm = { workspace = true, features = [
     "c-kzg",
     "blst",
     "serde-json",
+    "hashbrown",
 ] }
 primitives.workspace = true
 database.workspace = true
@@ -27,6 +28,7 @@ context-interface.workspace = true
 handler.workspace = true
 inspector = { workspace = true, features = ["std", "serde-json"] }
 statetest-types.workspace = true
+criterion.workspace = true
 
 # alloy
 alloy-rlp = { workspace = true, features = ["arrayvec", "derive"] }
@@ -44,9 +46,6 @@ thiserror.workspace = true
 triehash.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
-
-[dev-dependencies]
-criterion.workspace = true
 
 [[bench]]
 name = "evm"
