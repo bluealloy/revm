@@ -38,6 +38,23 @@ pub(super) fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
         .map_err(|_| PrecompileError::Other("non-canonical fp value".to_string()))
 }
 
+/// Encodes an `Fp` field element into a padded, big-endian byte array.
+///
+/// # Panics
+///
+/// Panics if serialization fails, which should not occur for a valid field element.
+pub(super) fn encode_fp(fp: &Fq) -> [u8; PADDED_FP_LENGTH] {
+    let mut bytes = [0u8; FP_LENGTH];
+    fp.serialize_uncompressed(&mut bytes[..])
+        .expect("Failed to serialize field element");
+    bytes.reverse();
+
+    let mut padded_bytes = [0; PADDED_FP_LENGTH];
+    padded_bytes[FP_PAD_BY..PADDED_FP_LENGTH].copy_from_slice(&bytes);
+
+    padded_bytes
+}
+
 /// Reads a Fp2 (quadratic extension field element) from the input slices.
 ///
 /// Parses two Fp field elements in Big Endian format for the Fp2 element.
@@ -155,21 +172,12 @@ pub(super) fn encode_g1_point(input: &G1Affine) -> [u8; PADDED_G1_LENGTH] {
         return output; // Point at infinity, return all zeros
     };
 
-    let mut x_bytes = [0u8; FP_LENGTH];
-    x.serialize_uncompressed(&mut x_bytes[..])
-        .expect("Failed to serialize x coordinate");
+    let x_encoded = encode_fp(&x);
+    let y_encoded = encode_fp(&y);
 
-    let mut y_bytes = [0u8; FP_LENGTH];
-    y.serialize_uncompressed(&mut y_bytes[..])
-        .expect("Failed to serialize y coordinate");
-
-    // Convert to big endian by reversing the bytes.
-    x_bytes.reverse();
-    y_bytes.reverse();
-
-    // Add padding and place x in the first half, y in the second half.
-    output[FP_PAD_BY..PADDED_FP_LENGTH].copy_from_slice(&x_bytes);
-    output[PADDED_FP_LENGTH + FP_PAD_BY..].copy_from_slice(&y_bytes);
+    // Copy the encoded values to the output
+    output[..PADDED_FP_LENGTH].copy_from_slice(&x_encoded);
+    output[PADDED_FP_LENGTH..].copy_from_slice(&y_encoded);
 
     output
 }
@@ -225,32 +233,15 @@ pub(super) fn encode_g2_point(input: &G2Affine) -> [u8; PADDED_G2_LENGTH] {
         return output; // Point at infinity, return all zeros
     };
 
-    // Serialize coordinates
-    let mut x_c0_bytes = [0u8; FP_LENGTH];
-    let mut x_c1_bytes = [0u8; FP_LENGTH];
-    let mut y_c0_bytes = [0u8; FP_LENGTH];
-    let mut y_c1_bytes = [0u8; FP_LENGTH];
+    let x_c0_encoded = encode_fp(&x.c0);
+    let x_c1_encoded = encode_fp(&x.c1);
+    let y_c0_encoded = encode_fp(&y.c0);
+    let y_c1_encoded = encode_fp(&y.c1);
 
-    x.c0.serialize_uncompressed(&mut x_c0_bytes[..])
-        .expect("Failed to serialize x.c0 coordinate");
-    x.c1.serialize_uncompressed(&mut x_c1_bytes[..])
-        .expect("Failed to serialize x.c1 coordinate");
-    y.c0.serialize_uncompressed(&mut y_c0_bytes[..])
-        .expect("Failed to serialize y.c0 coordinate");
-    y.c1.serialize_uncompressed(&mut y_c1_bytes[..])
-        .expect("Failed to serialize y.c1 coordinate");
-
-    // Convert to big endian by reversing the bytes
-    x_c0_bytes.reverse();
-    x_c1_bytes.reverse();
-    y_c0_bytes.reverse();
-    y_c1_bytes.reverse();
-
-    // Add padding and copy to output
-    output[FP_PAD_BY..PADDED_FP_LENGTH].copy_from_slice(&x_c0_bytes);
-    output[PADDED_FP_LENGTH + FP_PAD_BY..2 * PADDED_FP_LENGTH].copy_from_slice(&x_c1_bytes);
-    output[2 * PADDED_FP_LENGTH + FP_PAD_BY..3 * PADDED_FP_LENGTH].copy_from_slice(&y_c0_bytes);
-    output[3 * PADDED_FP_LENGTH + FP_PAD_BY..4 * PADDED_FP_LENGTH].copy_from_slice(&y_c1_bytes);
+    output[..PADDED_FP_LENGTH].copy_from_slice(&x_c0_encoded);
+    output[PADDED_FP_LENGTH..2 * PADDED_FP_LENGTH].copy_from_slice(&x_c1_encoded);
+    output[2 * PADDED_FP_LENGTH..3 * PADDED_FP_LENGTH].copy_from_slice(&y_c0_encoded);
+    output[3 * PADDED_FP_LENGTH..4 * PADDED_FP_LENGTH].copy_from_slice(&y_c1_encoded);
 
     output
 }
