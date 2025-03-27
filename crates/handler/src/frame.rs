@@ -202,14 +202,25 @@ where
                 return return_result(i.into());
             }
         }
+
+        let interpreter_input = InputsImpl {
+            target_address: inputs.target_address,
+            caller_address: inputs.caller,
+            input: inputs.input.clone(),
+            call_value: inputs.value.get(),
+        };
+        let is_static = inputs.is_static;
+        let gas_limit = inputs.gas_limit;
+
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         if !is_ext_delegate_call {
             if let Some(result) = precompiles
                 .run(
                     context,
                     &inputs.bytecode_address,
-                    &inputs.input,
-                    inputs.gas_limit,
+                    &interpreter_input,
+                    is_static,
+                    gas_limit,
                 )
                 .map_err(ERROR::from_string)?
             {
@@ -253,14 +264,6 @@ where
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        let interpreter_input = InputsImpl {
-            target_address: inputs.target_address,
-            caller_address: inputs.caller,
-            input: inputs.input.clone(),
-            call_value: inputs.value.get(),
-        };
-        let is_static = inputs.is_static;
-        let gas_limit = inputs.gas_limit;
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
