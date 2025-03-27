@@ -94,7 +94,6 @@ c-kzg = [
 	"precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
-arkworks-bls12-381 = ["precompile/arkworks-bls12-381"]
 blst = ["precompile/blst"]
 secp256r1 = ["precompile/secp256r1"]
 bn = ["precompile/bn"]

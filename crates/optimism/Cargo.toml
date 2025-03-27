@@ -32,9 +32,6 @@ once_cell = { workspace = true, features = ["alloc"] }
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
-# misc
-cfg-if.workspace = true
-
 [dev-dependencies]
 anyhow.workspace = true
 indicatif.workspace = true
@@ -75,6 +72,5 @@ secp256k1 = ["revm/secp256k1"]
 c-kzg = ["revm/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["revm/kzg-rs"]
-arkworks-bls12-381 = ["revm/arkworks-bls12-381"]
 blst = ["revm/blst"]
 bn = ["revm/bn"]

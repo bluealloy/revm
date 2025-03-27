@@ -283,7 +283,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -311,7 +310,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -370,7 +368,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -388,7 +385,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -406,7 +402,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
         let ctx = g1_msm_test_tx();
 
@@ -424,7 +419,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -452,7 +446,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -512,7 +505,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -530,7 +522,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -548,7 +539,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
         let ctx = g2_msm_test_tx();
 
@@ -596,7 +586,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         let ctx = bl12_381_pairing_test_tx()
             .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
@@ -615,7 +604,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
         let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -633,7 +621,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
         let ctx = bl12_381_pairing_test_tx();
 
@@ -678,7 +665,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -696,7 +682,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -741,7 +726,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -759,7 +743,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "blst", feature = "arkworks-bls12-381"))]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
         let ctx =
             fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
