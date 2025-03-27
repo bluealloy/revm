@@ -42,5 +42,6 @@ mod failing_tests {
         fn create_results("tests/GeneralStateTests/stCreateTest/CreateResults.json");
         fn refund_tx_to_suicide_o_o_g("tests/GeneralStateTests/stRefundTest/refund_TxToSuicideOOG.json");
         fn call_to_suicide_then_extcodehash("tests/GeneralStateTests/stExtCodeHash/callToSuicideThenExtcodehash.json");
+        fn code_copy_zero_paris("tests/GeneralStateTests/stExtCodeHash/codeCopyZero_Paris.json");
     }
 }

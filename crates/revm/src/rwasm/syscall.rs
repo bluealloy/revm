@@ -617,18 +617,21 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
-            println!("SYSCALL_CODE_HASH: address={address}");
-            let Some(code) = context.code_hash(address) else {
+            let Some(code_hash) = context.code_hash(address) else {
                 return_error!(FatalExternalError);
             };
+            println!(
+                "SYSCALL_CODE_HASH: address={address} code_hash={}",
+                code_hash.data
+            );
             charge_gas!(if SPEC::enabled(BERLIN) {
-                warm_cold_cost(code.is_cold)
+                warm_cold_cost(code_hash.is_cold)
             } else if SPEC::enabled(TANGERINE) {
                 700
             } else {
                 400
             });
-            let code_hash = code.data;
+            let code_hash = code_hash.data;
             return_result!(code_hash);
         }
 
@@ -755,8 +758,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             // inside output, we store information about slot,
             // and also we forward info about cold/warm access
-            let mut output: [u8; U256::BYTES + 1] = [0u8; U256::BYTES + 1];
+            let mut output: [u8; U256::BYTES + 1 + 1] = [0u8; U256::BYTES + 1 + 1];
             output[32] = account.is_cold as u8;
+            output[33] = account.data.is_empty() as u8;
             // don't charge gas for EVM_CODE_HASH_SLOT,
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition

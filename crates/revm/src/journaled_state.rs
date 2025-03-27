@@ -735,6 +735,7 @@ impl JournaledState {
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::StorageWarmed { address, key });
+            println!("warmed storage: address={} key={}", address, key)
         }
 
         Ok(StateLoad::new(value, is_cold))
