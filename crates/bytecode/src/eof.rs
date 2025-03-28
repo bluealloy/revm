@@ -84,11 +84,13 @@ impl Eof {
     /// If offset is greater than the length of the raw bytes, an empty slice is returned.
     /// If len is greater than the length of the raw bytes, the slice is truncated to the length of the raw bytes.
     pub fn data_slice(&self, offset: usize, len: usize) -> &[u8] {
-        self.body
-            .data_section
-            .get(offset..)
-            .and_then(|bytes| bytes.get(..min(len, bytes.len())))
-            .unwrap_or(&[])
+        let data_len = self.body.data_section.len();
+        if len == 0 || offset >= data_len {
+            return &[];
+        }
+
+        let end = min(offset + len, data_len);
+        &self.body.data_section[offset..end]
     }
 
     /// Returns a slice of the data section.
