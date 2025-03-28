@@ -184,6 +184,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 MalformedBuiltinParams
             );
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_READ: slot={}", slot);
             // execute sload
             let value = context.evm.sload(inputs.target_address, slot)?;
@@ -209,6 +210,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 return_error!(MalformedBuiltinParams);
             }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
             let value = context.evm.sstore(inputs.target_address, slot, new_value)?;
@@ -240,6 +242,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_CALL: target_address={target_address}, value={value}",);
             // for static calls with value greater than 0 - revert
             let has_transfer = !value.is_zero();
@@ -326,6 +329,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_CALL_CODE: target_address={target_address}, value={value}");
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
                 return_error!(FatalExternalError);
@@ -352,9 +356,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
             }
             // create call inputs
-            println!(
-                "SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}",     inputs.target_address, inputs.target_address,
-            target_address, inputs.eip7702_address, );
+            #[cfg(feature = "debug-print")]
+            println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}", inputs.target_address, inputs.target_address, target_address, inputs.eip7702_address);
             let inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
@@ -379,6 +382,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let contract_input = inputs.syscall_params.input.slice(20..);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_DELEGATE_CALL: target_address={target_address}");
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
                 return_error!(FatalExternalError);
@@ -440,6 +444,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 let init_code = inputs.syscall_params.input.slice(32..);
                 (CreateScheme::Create, value, init_code)
             };
+            #[cfg(feature = "debug-print")]
             println!(
                 "SYSCALL_CREATE/CREATE2: scheme={scheme:?} value={value} init_code_len={}",
                 init_code.len()
@@ -545,6 +550,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let result = context.evm.selfdestruct(inputs.target_address, target)?;
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_DESTROY_ACCOUNT: target={target} result={result:?}",);
             // charge gas cost
             charge_gas!(gas::selfdestruct_cost(SPEC::SPEC_ID, result));
@@ -593,6 +599,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 MalformedBuiltinParams
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_CODE_SIZE: address={address}");
             let Some(code) = context.code(address) else {
                 return_error!(FatalExternalError);
@@ -619,6 +626,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let Some(code_hash) = context.code_hash(address) else {
                 return_error!(FatalExternalError);
             };
+            #[cfg(feature = "debug-print")]
             println!(
                 "SYSCALL_CODE_HASH: address={address} code_hash={}",
                 code_hash.data
@@ -642,11 +650,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let mut reader = inputs.syscall_params.input[20..].reader();
-            let code_offset = reader.read_u64::<LittleEndian>().unwrap();
+            let _code_offset = reader.read_u64::<LittleEndian>().unwrap();
             let code_length = reader.read_u64::<LittleEndian>().unwrap();
-            println!(
-                "SYSCALL_CODE_COPY: address={address} code_offset={code_offset} code_length={code_length}"
-            );
+            #[cfg(feature = "debug-print")]
+            println!("SYSCALL_CODE_COPY: address={address} code_offset={_code_offset} code_length={code_length}" );
             let Some(code) = context.code(address) else {
                 return_error!(FatalExternalError);
             };
@@ -671,6 +678,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // TODO(dmitry123): "better to have prefix"
             let preimage_hash = keccak256(inputs.syscall_params.input.as_ref());
             let address = Address::from_slice(&preimage_hash[12..]);
+            #[cfg(feature = "debug-print")]
             println!(
                 "SYSCALL_WRITE_PREIMAGE: preimage_hash={preimage_hash} preimage_address={address}"
             );
@@ -712,6 +720,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             } else {
                 0
             };
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_PREIMAGE_SIZE: preimage_hash={preimage_hash} address={address} preimage_size={preimage_size}");
             return_result!(preimage_size.to_le_bytes());
         }
@@ -723,6 +732,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
             let address = calc_preimage_address(&preimage_hash);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_PREIMAGE_COPY: preimage_hash={preimage_hash} address={address}");
             let Ok(account_load) = context.evm.code(address) else {
                 return_error!(FatalExternalError);
@@ -784,6 +794,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             // load slot from the storage
             let value = context.evm.sload(address, slot)?;
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}", inputs.target_address, inputs.bytecode_address, value.data);
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
             return_result!(output)
@@ -798,6 +809,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // read value from storage
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32].as_ref());
             let value = context.evm.tload(inputs.target_address, slot);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_TRANSIENT_READ: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
@@ -816,6 +828,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // read input
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_TRANSIENT_WRITE: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
@@ -847,9 +860,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if !local_gas.record_cost(gas_spent_diff) {
                 unreachable!("revm: gas adjustment must be successful")
             }
-            println!("local gas: {local_gas:?}");
             let gas_refund_diff = gas_refunded - local_gas.refunded();
             local_gas.record_refund(gas_refund_diff);
+            #[cfg(feature = "debug-print")]
             println!("SYSCALL_YIELD_SYNC_GAS: gas_remaining={gas_remaining}, gas_refunded={gas_refunded} spent_diff={gas_spent_diff} refund_diff={gas_refund_diff}");
             // returns nothing
             return_result!(Bytes::new());

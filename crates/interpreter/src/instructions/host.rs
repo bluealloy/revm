@@ -69,8 +69,6 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    #[cfg(feature = "std")]
-    println!("CODE HASH: address={address} code_hash={}", code_hash.data);
 
     if SPEC::enabled(BERLIN) {
         gas!(interpreter, warm_cold_cost(code_hash.is_cold))
@@ -141,8 +139,6 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    #[cfg(feature = "std")]
-    println!("SSTORE EVM: slot={index}, value={value}");
 
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();

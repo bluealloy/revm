@@ -7,11 +7,11 @@ use crate::{
         InterpreterAction,
         InterpreterResult,
     },
-    primitives::{hex, Address, Bytecode, Bytes, EVMError, Spec, U256},
+    primitives::{Address, Bytecode, Bytes, EVMError, Spec, U256},
     Context,
     Database,
 };
-use core::{ops::Deref, str::from_utf8};
+use core::ops::Deref;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -57,6 +57,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
             caller: interpreter.contract.caller,
             is_static: interpreter.is_static,
             value: interpreter.contract.call_value,
+            gas_limit: interpreter.gas.remaining(),
         },
     });
     let mut context_input = context_input
@@ -299,7 +300,10 @@ fn process_halt(
     is_create: bool,
     gas: Gas,
 ) -> InterpreterAction {
+    #[cfg(feature = "debug-print")]
     let trace_output = |mut output: &[u8]| {
+        use core::str::from_utf8;
+        use fluentbase_sdk::hex;
         if output.starts_with(&[0x08, 0xc3, 0x79, 0xa0]) {
             output = &output[68..];
         }
@@ -313,6 +317,7 @@ fn process_halt(
     };
     let exit_code = ExitCode::from(exit_code);
     if exit_code == ExitCode::Panic {
+        #[cfg(feature = "debug-print")]
         trace_output(return_data.as_ref());
     }
     let result = match exit_code {

@@ -636,7 +636,7 @@ impl JournaledState {
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::AccountWarmed { address });
-            println!("warmed account: {}", address)
+            // println!("warmed account: {}", address)
         }
 
         Ok(load)
@@ -735,7 +735,7 @@ impl JournaledState {
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::StorageWarmed { address, key });
-            println!("warmed storage: address={} key={}", address, key)
+            // println!("warmed storage: address={} key={}", address, key)
         }
 
         Ok(StateLoad::new(value, is_cold))

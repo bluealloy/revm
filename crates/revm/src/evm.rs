@@ -115,6 +115,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 self.handler
                     .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
 
+            #[cfg(feature = "debug-print")]
             println!("evm_next_action: {:?}", next_action);
 
             // Take error and break the loop, if any.
