@@ -1,7 +1,7 @@
 use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
-        use c_kzg::{Bytes32, Bytes48, KzgProof};
+        use c_kzg::{Bytes32, Bytes48};
     } else if #[cfg(feature = "kzg-rs")] {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
     }
@@ -71,13 +71,15 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
 pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
     cfg_if::cfg_if! {
         if #[cfg(feature = "c-kzg")] {
-            let kzg_settings = c_kzg::ethereum_kzg_settings();
+            let kzg_settings = c_kzg::ethereum_kzg_settings(0);
         } else if #[cfg(feature = "kzg-rs")] {
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
         }
     }
-    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+    kzg_settings
+        .verify_kzg_proof(commitment, z, y, proof)
+        .unwrap_or(false)
 }
 
 #[inline]
