@@ -57,7 +57,7 @@ impl Eof {
         validate_eof(self)
     }
 
-    pub fn valitate_raw(bytes: Bytes) -> Result<Eof, EofError> {
+    pub fn validate_raw(bytes: Bytes) -> Result<Eof, EofError> {
         validate_raw_eof(bytes)
     }
 
