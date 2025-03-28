@@ -353,9 +353,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             // create call inputs
             println!(
-                "SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}",
-                inputs.target_address, inputs.target_address, target_address, inputs.eip7702_address,
-            );
+                "SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}",     inputs.target_address, inputs.target_address,
+            target_address, inputs.eip7702_address, );
             let inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
@@ -645,7 +644,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let mut reader = inputs.syscall_params.input[20..].reader();
             let code_offset = reader.read_u64::<LittleEndian>().unwrap();
             let code_length = reader.read_u64::<LittleEndian>().unwrap();
-            println!("SYSCALL_CODE_COPY: address={address} code_offset={code_offset} code_length={code_length}");
+            println!(
+                "SYSCALL_CODE_COPY: address={address} code_offset={code_offset} code_length={code_length}"
+            );
             let Some(code) = context.code(address) else {
                 return_error!(FatalExternalError);
             };
@@ -783,8 +784,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             // load slot from the storage
             let value = context.evm.sload(address, slot)?;
-            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}",
-                     inputs.target_address, inputs.bytecode_address, value.data);
+            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}", inputs.target_address, inputs.bytecode_address, value.data);
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
             return_result!(output)
         }
@@ -847,10 +847,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if !local_gas.record_cost(gas_spent_diff) {
                 unreachable!("revm: gas adjustment must be successful")
             }
-            debug_assert_eq!(local_gas.remaining(), gas_remaining);
-            local_gas.record_refund(gas_refunded);
-            println!("SYSCALL_YIELD_SYNC_GAS: gas_remaining={gas_remaining}, gas_refunded={gas_refunded} spent_diff={gas_spent_diff}");
-            // the syscall returns nothing
+            println!("local gas: {local_gas:?}");
+            let gas_refund_diff = gas_refunded - local_gas.refunded();
+            local_gas.record_refund(gas_refund_diff);
+            println!("SYSCALL_YIELD_SYNC_GAS: gas_remaining={gas_remaining}, gas_refunded={gas_refunded} spent_diff={gas_spent_diff} refund_diff={gas_refund_diff}");
+            // returns nothing
             return_result!(Bytes::new());
         }
 

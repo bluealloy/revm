@@ -79,7 +79,11 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
     // fuel limit we denominate later to gas
-    let fuel_limit = interpreter.gas.remaining() * FUEL_DENOM_RATE;
+    let fuel_limit = interpreter
+        .gas
+        .remaining()
+        .checked_mul(FUEL_DENOM_RATE)
+        .unwrap_or(u64::MAX);
 
     let is_gas_free = interpreter
         .contract
@@ -140,12 +144,20 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         ..
     } = outcome;
 
-    println!(
-        "revm: resume execution: result={:?} gas={:?}",
-        result.result, result.gas
-    );
-    let fuel_consumed = result.gas.spent() * FUEL_DENOM_RATE;
-    let fuel_refunded = result.gas.refunded() * FUEL_DENOM_RATE as i64;
+    // println!(
+    //     "revm: resume execution: result={:?} gas={:?}",
+    //     result.result, result.gas
+    // );
+    let fuel_consumed = result
+        .gas
+        .spent()
+        .checked_mul(FUEL_DENOM_RATE)
+        .unwrap_or(u64::MAX);
+    let fuel_refunded = result
+        .gas
+        .refunded()
+        .checked_mul(FUEL_DENOM_RATE as i64)
+        .unwrap_or(i64::MAX);
 
     // we can safely convert the result into i32 here,
     // and we shouldn't worry about negative numbers
