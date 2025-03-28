@@ -3683,7 +3683,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "20.1.0"
+version = "21.0.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3726,7 +3726,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "1.1.0"
+version = "2.0.0"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -3739,7 +3739,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3760,7 +3760,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3796,7 +3796,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "1.1.0"
+version = "2.0.0"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3812,7 +3812,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "16.0.1"
+version = "17.0.0"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3866,7 +3866,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "bitflags",
  "revm-bytecode",
@@ -3876,7 +3876,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "revm",
  "serde",
