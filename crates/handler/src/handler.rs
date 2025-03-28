@@ -220,7 +220,7 @@ pub trait Handler {
     /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
     #[inline]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::load_accounts(evm.ctx())
+        pre_execution::load_accounts(evm)
     }
 
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.

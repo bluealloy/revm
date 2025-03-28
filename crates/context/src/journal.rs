@@ -94,7 +94,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
-            inner: JournalInner::new(SpecId::default()),
+            inner: JournalInner::new(),
             database,
         }
     }
@@ -150,9 +150,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn warm_precompiles(&mut self, address: HashSet<Address>) {
         self.inner.precompiles = address;
-        self.inner
-            .warm_preloaded_addresses
-            .extend(self.inner.precompiles.iter());
+        self.inner.warm_preloaded_addresses = self.inner.precompiles.clone();
     }
 
     #[inline]
@@ -166,6 +164,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.depth
     }
 
+    #[inline]
     fn warm_account_and_storage(
         &mut self,
         address: Address,
@@ -176,10 +175,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         Ok(())
     }
 
+    #[inline]
     fn set_spec_id(&mut self, spec_id: SpecId) {
         self.inner.spec = spec_id;
     }
 
+    #[inline]
     fn transfer(
         &mut self,
         from: Address,
@@ -189,18 +190,22 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.transfer(&mut self.database, from, to, balance)
     }
 
+    #[inline]
     fn touch_account(&mut self, address: Address) {
         self.inner.touch(address);
     }
 
+    #[inline]
     fn inc_account_nonce(&mut self, address: Address) -> Result<Option<u64>, DB::Error> {
         Ok(self.inner.inc_nonce(address))
     }
 
+    #[inline]
     fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
         self.inner.load_account(&mut self.database, address)
     }
 
+    #[inline]
     fn load_account_code(
         &mut self,
         address: Address,
@@ -208,6 +213,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.load_code(&mut self.database, address)
     }
 
+    #[inline]
     fn load_account_delegated(
         &mut self,
         address: Address,
@@ -216,28 +222,33 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .load_account_delegated(&mut self.database, address)
     }
 
+    #[inline]
     fn checkpoint(&mut self) -> JournalCheckpoint {
         self.inner.checkpoint()
     }
 
+    #[inline]
     fn checkpoint_commit(&mut self) {
         self.inner.checkpoint_commit()
     }
 
+    #[inline]
     fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         self.inner.checkpoint_revert(checkpoint)
     }
 
+    #[inline]
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         self.inner.set_code_with_hash(address, code, hash);
     }
 
+    #[inline]
     fn clear(&mut self) {
-        // Clears the inner journal state. Preserving only the spec.
-        let spec = self.inner.spec;
-        self.inner = JournalInner::new(spec);
+        // Clears the inner journal state. Preserving only the spec and precompile addresses.
+        let _ = self.inner.clear_and_take_output();
     }
 
+    #[inline]
     fn create_account_checkpoint(
         &mut self,
         caller: Address,
@@ -250,7 +261,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .create_account_checkpoint(caller, address, balance, spec_id)
     }
 
+    #[inline]
     fn finalize(&mut self) -> Self::FinalOutput {
-        self.inner.take_output_and_clear()
+        self.inner.clear_and_take_output()
     }
 }

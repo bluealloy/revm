@@ -2,8 +2,8 @@
 
 use crate::{
     bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, MODULUS_REPR, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
-        SCALAR_LENGTH,
+        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
+        SCALAR_LENGTH_BITS,
     },
     PrecompileError,
 };
@@ -17,6 +17,13 @@ use blst::{
 };
 use std::string::ToString;
 use std::vec::Vec;
+
+// Big-endian non-Montgomery form.
+const MODULUS_REPR: [u8; 48] = [
+    0x1a, 0x01, 0x11, 0xea, 0x39, 0x7f, 0xe6, 0x9a, 0x4b, 0x1b, 0xa7, 0xb6, 0x43, 0x4b, 0xac, 0xd7,
+    0x64, 0x77, 0x4b, 0x84, 0xf3, 0x85, 0x12, 0xbf, 0x67, 0x30, 0xd2, 0xa0, 0xf6, 0xb0, 0xf6, 0x24,
+    0x1e, 0xab, 0xff, 0xfe, 0xb1, 0x53, 0xff, 0xff, 0xb9, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xaa, 0xab,
+];
 
 #[inline]
 fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
@@ -154,11 +161,7 @@ fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p1_msm(
-    g1_points: Vec<blst_p1_affine>,
-    scalars: Vec<blst_scalar>,
-    nbits: usize,
-) -> blst_p1_affine {
+pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -183,7 +186,7 @@ pub(super) fn p1_msm(
 
     let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
     // Perform multi-scalar multiplication
-    let multiexp = g1_points.mult(&scalars_bytes, nbits);
+    let multiexp = g1_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p1_to_affine(&multiexp)
@@ -196,11 +199,7 @@ pub(super) fn p1_msm(
 /// Note: Scalars are expected to be in Big Endian format.
 /// This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p2_msm(
-    g2_points: Vec<blst_p2_affine>,
-    scalars: Vec<blst_scalar>,
-    nbits: usize,
-) -> blst_p2_affine {
+pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
@@ -226,7 +225,7 @@ pub(super) fn p2_msm(
     let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
 
     // Perform multi-scalar multiplication
-    let multiexp = g2_points.mult(&scalars_bytes, nbits);
+    let multiexp = g2_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p2_to_affine(&multiexp)

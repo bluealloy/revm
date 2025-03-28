@@ -285,7 +285,7 @@ pub(super) fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>, _nbits: usize) -> G1Affine {
+pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -313,7 +313,7 @@ pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>, _nbits: usize) 
 ///
 /// Note: This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>, _nbits: usize) -> G2Affine {
+pub(super) fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
