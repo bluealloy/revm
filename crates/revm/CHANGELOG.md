@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.1.0](https://github.com/bluealloy/revm/compare/revm-v20.0.0...revm-v20.1.0) - 2025-03-28
+
+### Added
+
+- Add JournalInner ([#2311](https://github.com/bluealloy/revm/pull/2311))
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Other
+
+- Propagate asyncdb feature flag from database-interface to revm  ([#2310](https://github.com/bluealloy/revm/pull/2310))
+
 ## [20.0.0](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.7...revm-v20.0.0) - 2025-03-24
 
 ### Other
