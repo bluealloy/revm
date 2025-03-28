@@ -120,11 +120,10 @@ pub const PADDED_FP2_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 /// This is an element in the scalar field of BLS12-381.
 ///
 /// Note: Since it is already 32 byte aligned, there is no padded version of this constant.
-/// TODO: Maybe change all _LENGTH to _LENGTH_BYTES and then NBITS to _LENGTH_BITS
 pub const SCALAR_LENGTH: usize = 32;
-/// NBITS specifies the number of bits needed to represent an Fr element.
+/// SCALAR_LENGTH_BITS specifies the number of bits needed to represent an Fr element.
 /// This is an element in the scalar field of BLS12-381.
-pub const NBITS: usize = 256;
+pub const SCALAR_LENGTH_BITS: usize = SCALAR_LENGTH * 8;
 
 /// G1_ADD_INPUT_LENGTH specifies the number of bytes that the input to G1ADD
 /// must use.
