@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0...revm-bytecode-v1.0.1) - 2025-03-28
+
+### Other
+
+- remove outdated TODO comments ([#2325](https://github.com/bluealloy/revm/pull/2325))
+
 ## [1.0.0 ](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0-alpha.5...revm-bytecode-v1.0.0) - 2025-03-24
 
 Stable version

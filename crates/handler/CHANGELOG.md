@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0...revm-handler-v2.0.0) - 2025-03-28
+
+### Added
+
+- provide more context to precompiles ([#2318](https://github.com/bluealloy/revm/pull/2318))
+- Add JournalInner ([#2311](https://github.com/bluealloy/revm/pull/2311))
+
+### Fixed
+
+- broken disable balance check ([#2286](https://github.com/bluealloy/revm/pull/2286))
+
+### Other
+
+- remove outdated TODO comments ([#2325](https://github.com/bluealloy/revm/pull/2325))
+- add EIP-170 contract code size limit tests ([#2312](https://github.com/bluealloy/revm/pull/2312))
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+- add unit test for EIP-3860 initcode size limit ([#2302](https://github.com/bluealloy/revm/pull/2302))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0-alpha.7...revm-handler-v1.0.0) - 2025-03-24
 
 ### Other

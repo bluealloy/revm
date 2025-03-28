@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0...revm-context-v2.0.0) - 2025-03-28
+
+### Added
+
+- Add JournalInner ([#2311](https://github.com/bluealloy/revm/pull/2311))
+
+### Other
+
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revm-context-v1.0.0-alpha.6...revm-context-v1.0.0) - 2025-03-24
 
 ### Other

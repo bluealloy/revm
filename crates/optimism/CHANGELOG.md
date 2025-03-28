@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0...op-revm-v1.1.0) - 2025-03-28
+
+### Added
+
+- Add arkworks wrapper for bls12-381 ([#2316](https://github.com/bluealloy/revm/pull/2316))
+- provide more context to precompiles ([#2318](https://github.com/bluealloy/revm/pull/2318))
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Fixed
+
+- *(isthmus)* Correctly filter refunds for deposit transactions ([#2330](https://github.com/bluealloy/revm/pull/2330))
+
+### Other
+
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0-alpha.6...op-revm-v1.0.0) - 2025-03-24
 
 ### Other

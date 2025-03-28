@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0...revm-precompile-v17.1.0) - 2025-03-28
+
+### Added
+
+- Add arkworks wrapper for bls12-381 ([#2316](https://github.com/bluealloy/revm/pull/2316))
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Other
+
+- Move all benchmarks into their own module like eip2537 ([#2335](https://github.com/bluealloy/revm/pull/2335))
+- add bls12-381 benchmarks ([#2327](https://github.com/bluealloy/revm/pull/2327))
+- add encode_fp function ([#2328](https://github.com/bluealloy/revm/pull/2328))
+- clean up blst wrapper doc comment and types ([#2314](https://github.com/bluealloy/revm/pull/2314))
+- Move all blst related methods into blst wrapper ([#2313](https://github.com/bluealloy/revm/pull/2313))
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+
 ## [17.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.7...revm-precompile-v17.0.0) - 2025-03-24
 
 ### Added
