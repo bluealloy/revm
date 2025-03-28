@@ -4,7 +4,7 @@ use revm::{
     context_interface::ContextTr,
     handler::{
         instructions::{EthInstructions, InstructionProvider},
-        EvmTr,
+        EvmTr, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterTypes},
@@ -32,6 +32,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Inspector = INSP;
@@ -62,6 +63,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
 {
     type Context = CTX;
     type Instructions = I;
