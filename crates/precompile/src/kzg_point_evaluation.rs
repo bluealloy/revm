@@ -72,14 +72,13 @@ pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &
     cfg_if::cfg_if! {
         if #[cfg(feature = "c-kzg")] {
             let kzg_settings = c_kzg::ethereum_kzg_settings(0);
+            kzg_settings.verify_kzg_proof(commitment, z, y, proof).unwrap_or(false)
         } else if #[cfg(feature = "kzg-rs")] {
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
+            KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
         }
     }
-    kzg_settings
-        .verify_kzg_proof(commitment, z, y, proof)
-        .unwrap_or(false)
 }
 
 #[inline]
