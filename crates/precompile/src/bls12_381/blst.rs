@@ -2,7 +2,8 @@
 
 use crate::{
     bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
+        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
+        SCALAR_LENGTH, SCALAR_LENGTH_BITS,
     },
     PrecompileError,
 };
@@ -160,11 +161,7 @@ fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p1_msm(
-    g1_points: Vec<blst_p1_affine>,
-    scalars: Vec<blst_scalar>,
-    nbits: usize,
-) -> blst_p1_affine {
+pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -189,7 +186,7 @@ pub(super) fn p1_msm(
 
     let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
     // Perform multi-scalar multiplication
-    let multiexp = g1_points.mult(&scalars_bytes, nbits);
+    let multiexp = g1_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p1_to_affine(&multiexp)
@@ -202,11 +199,7 @@ pub(super) fn p1_msm(
 /// Note: Scalars are expected to be in Big Endian format.
 /// This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p2_msm(
-    g2_points: Vec<blst_p2_affine>,
-    scalars: Vec<blst_scalar>,
-    nbits: usize,
-) -> blst_p2_affine {
+pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
@@ -232,7 +225,7 @@ pub(super) fn p2_msm(
     let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
 
     // Perform multi-scalar multiplication
-    let multiexp = g2_points.mult(&scalars_bytes, nbits);
+    let multiexp = g2_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p2_to_affine(&multiexp)

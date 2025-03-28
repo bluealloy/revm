@@ -1,7 +1,7 @@
 use super::crypto_backend::{encode_g1_point, p1_msm, read_g1, read_scalar};
 use crate::bls12_381::utils::remove_g1_padding;
 use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH, NBITS,
+    DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
@@ -79,7 +79,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         ));
     }
 
-    let multiexp_aff = p1_msm(g1_points, scalars, NBITS);
+    let multiexp_aff = p1_msm(g1_points, scalars);
 
     let out = encode_g1_point(&multiexp_aff);
     Ok(PrecompileOutput::new(required_gas, out.into()))
