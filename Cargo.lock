@@ -3751,7 +3751,6 @@ dependencies = [
  "alloy-sol-types",
  "alloy-transport",
  "anyhow",
- "auto_impl",
  "indicatif",
  "revm-bytecode",
  "revm-database-interface",

@@ -27,8 +27,6 @@ primitives.workspace = true
 database-interface.workspace = true
 bytecode.workspace = true
 
-auto_impl = "1.2"
-
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
