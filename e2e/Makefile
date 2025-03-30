@@ -9,7 +9,7 @@ sync_tests:
 
 .PHONY: run_general_state_tests
 run_general_state_tests:
-	cargo run --color=always --bin revm-rwasm-e2e statetest tests/GeneralStateTests #-s
+	cargo test --package revm-rwasm-e2e --bin revm-rwasm-e2e tests::good_coverage_tests
 
 .PHONY: help
 help:

@@ -22,7 +22,7 @@ use crate::{
     },
 };
 use core::mem;
-use fluentbase_sdk::is_self_gas_management_contract;
+use fluentbase_sdk::{is_self_gas_management_contract, is_system_precompile};
 use revm_interpreter::Eip7702CodeLoad;
 use std::vec::Vec;
 
@@ -509,6 +509,12 @@ impl JournaledState {
     ) -> Result<StateLoad<SelfDestructResult>, EVMError<DB::Error>> {
         let spec = self.spec;
         let account_load = self.load_account(target, db)?;
+        // for system precompiles always force to have KECCAK_EMPTY code hash,
+        // because such contracts might have real bytecode
+        // that is equal to their precompile code, it violates EVM state transition rules
+        if is_system_precompile(&target) {
+            account_load.data.info.code_hash = KECCAK_EMPTY;
+        }
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 

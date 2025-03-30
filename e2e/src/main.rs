@@ -3,8 +3,6 @@ pub mod models;
 mod runner;
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests2;
 pub mod utils;
 
 use runner::{find_all_json_tests, run, TestError};

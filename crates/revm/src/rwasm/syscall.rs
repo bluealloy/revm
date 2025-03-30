@@ -39,6 +39,7 @@ use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     calc_preimage_address,
     is_self_gas_management_contract,
+    is_system_precompile,
     keccak256,
     EVM_BASE_SPEC,
     EVM_CODE_HASH_SLOT,
@@ -249,9 +250,26 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if inputs.is_static && has_transfer {
                 return_error!(CallNotAllowedInsideStatic);
             }
-            let Ok(account_load) = context.evm.load_account_delegated(target_address) else {
+            let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
                 return_error!(FatalExternalError);
             };
+            // In EVM, there exists an issue with precompiled contracts.
+            // These contracts are preloaded and initially empty.
+            // However, a precompiled contract can also be explicitly added
+            // inside the genesis file, which affects its state and the gas
+            // price for the CALL opcode.
+            //
+            // Using the CALL opcode to invoke a precompiled contract typically
+            // has no practical use, as the contract is stateless.
+            // Despite this, there are unit tests that require this condition
+            // to be supported.
+            //
+            // While addressing this, improves compatibility with the EVM,
+            // it also breaks several unit tests.
+            // Nevertheless, the added compatibility is deemed to outweigh these issues.
+            if is_system_precompile(&target_address) {
+                account_load.is_empty = true;
+            }
             // EIP-150: gas cost changes for IO-heavy operations
             charge_gas!(gas::call_cost(SPEC::SPEC_ID, has_transfer, account_load));
             let mut gas_limit = min(
@@ -611,7 +629,13 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             } else {
                 20
             });
-            let code_size = U256::from(code.data.len() as u32);
+            let mut code_len = code.data.len() as u32;
+            // we store system precompile bytecode in the state trie,
+            // according to evm requirements, we should return empty code
+            if is_system_precompile(&address) {
+                code_len = 0;
+            }
+            let code_size = U256::from(code_len);
             let output = code_size.to_le_bytes::<32>();
             return_result!(output);
         }
@@ -628,8 +652,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             #[cfg(feature = "debug-print")]
             println!(
-                "SYSCALL_CODE_HASH: address={address} code_hash={}",
-                code_hash.data
+                "SYSCALL_CODE_HASH: address={address} code_hash={} is_precompile={}",
+                code_hash.data,
+                is_system_precompile(&address)
             );
             charge_gas!(if SPEC::enabled(BERLIN) {
                 warm_cold_cost(code_hash.is_cold)
@@ -638,7 +663,12 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             } else {
                 400
             });
-            let code_hash = code_hash.data;
+            let mut code_hash = code_hash.data;
+            // we store system precompile bytecode in the state trie,
+            // according to evm requirements, we should return empty code
+            if is_system_precompile(&address) {
+                code_hash = B256::ZERO;
+            }
             return_result!(code_hash);
         }
 
@@ -665,8 +695,14 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if code_length == 0 {
                 return_result!(Bytes::new());
             }
+            let mut bytecode = code.data;
+            // we store system precompile bytecode in the state trie,
+            // according to evm requirements, we should return empty code
+            if is_system_precompile(&address) {
+                bytecode = Bytes::new();
+            }
             // TODO(dmitry123): "add offset/length checks"
-            return_result!(code.data);
+            return_result!(bytecode);
         }
 
         // TODO(dmitry123): "rethink these system calls"

@@ -172,6 +172,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     stack_frame = call_stack.last_mut().unwrap();
                 }
                 FrameOrResult::Result(result) => {
+                    #[cfg(feature = "debug-print")]
+                    println!("evm_result: {result:?}");
                     let Some(top_frame) = call_stack.last_mut() else {
                         // Break the loop if there are no more frames.
                         return Ok(result);
