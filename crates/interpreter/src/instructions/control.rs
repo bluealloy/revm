@@ -80,7 +80,10 @@ pub fn jumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 #[inline]
-fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
+pub(crate) fn jump_inner<WIRE: InterpreterTypes>(
+    interpreter: &mut Interpreter<WIRE>,
+    target: U256,
+) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter
