@@ -86,8 +86,10 @@ pub const fn bool_to_bytes32(value: bool) -> Bytes {
 /// This is optimized to not allocate at runtime by using 2 static arrays.
 #[inline]
 pub const fn bool_to_b256(value: bool) -> &'static B256 {
-    const TRUE: &B256 = &b256!("0000000000000000000000000000000000000000000000000000000000000001");
-    const FALSE: &B256 = &b256!("0000000000000000000000000000000000000000000000000000000000000000");
+    const TRUE: &B256 =
+        &b256!("0x0000000000000000000000000000000000000000000000000000000000000001");
+    const FALSE: &B256 =
+        &b256!("0x0000000000000000000000000000000000000000000000000000000000000000");
     if value {
         TRUE
     } else {

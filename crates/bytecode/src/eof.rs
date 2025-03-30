@@ -16,7 +16,7 @@ use std::{fmt, vec, vec::Vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =
-    b256!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
+    b256!("0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
 
 /// EOF Magic in [u16] form
 pub const EOF_MAGIC: u16 = 0xEF00;

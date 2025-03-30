@@ -139,7 +139,7 @@ mod test {
         interp.step(&table, &mut host);
         assert_eq!(
             interp.stack.data(),
-            &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
+            &vec![b256!("0x0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
         interp.stack.pop().unwrap();
 
@@ -147,7 +147,7 @@ mod test {
         interp.step(&table, &mut host);
         assert_eq!(
             interp.stack.data(),
-            &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
+            &vec![b256!("0x0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
         interp.stack.pop().unwrap();
 

@@ -454,7 +454,7 @@ mod tests {
         };
 
         // call factory contract to create sub contract
-        let tx_caller = address!("0000000000000000000000000000000000100000");
+        let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
             .modify_tx_chained(|tx| {
                 tx.caller = tx_caller;
@@ -535,7 +535,7 @@ mod tests {
         };
 
         // call factory contract to create sub contract
-        let tx_caller = address!("0000000000000000000000000000000000100000");
+        let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
             .modify_tx_chained(|tx| {
                 tx.caller = tx_caller;
