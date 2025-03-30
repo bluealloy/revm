@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    instructions::utility::cast_slice_to_u256,
+    instructions::{control, utility::cast_slice_to_u256},
     interpreter::Interpreter,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
     Host,
@@ -33,6 +33,38 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
+
+    // Special optimization for PUSH2 followed by JUMP
+    //
+    // PUSH2 will push the jump destination onto the stack
+    if N == 2 {
+        // Try to read the immediate value (jump destination)
+        // TODO: check what happens if there is less than N bytes to read
+        // TODO: The if statement is here assuming it will read as much as it can
+        // TODO: so it is a boundary check
+        let imm = interpreter.bytecode.read_slice(N);
+        if imm.len() == N {
+            let jump_dest = ((imm[0] as usize) << 8) | (imm[1] as usize);
+
+            // Try to read the next opcode after PUSH2 and its immediate bytes
+            let next_op = interpreter.bytecode.read_offset_u16(N as isize);
+
+            if next_op == 0x56 {
+                // Apply gas cost for JUMP
+                gas!(interpreter, gas::MID);
+
+                // Skip the PUSH2 and JUMP instructions (total 4 bytes: PUSH2 + 2 immediate bytes(jump dest) + JUMP)
+                interpreter.bytecode.relative_jump(4);
+
+                // Use the jump_inner function from control module
+                let target = primitives::U256::from(jump_dest);
+                control::jump_inner(interpreter, target);
+                return;
+            }
+        }
+    }
+
+    // Regular PUSH implementation for all other cases
     push!(interpreter, U256::ZERO);
     popn_top!([], top, interpreter);
 
