@@ -542,12 +542,24 @@ pub fn execute_test_suite(
         }
 
         for (address, mut info) in unit.pre {
-            let mut acc_info = AccountInfo {
-                balance: info.balance,
-                nonce: info.nonce,
-                code_hash: KECCAK_EMPTY,
-                ..Default::default()
-            };
+            let mut acc_info = cache_state2
+                .accounts
+                .get(&address)
+                .and_then(|a| a.account.clone())
+                .map(|a| a.info)
+                .unwrap_or_else(AccountInfo::default);
+            if !acc_info.balance.is_zero() && !info.balance.is_zero() {
+                assert_eq!(
+                    acc_info.balance, info.balance,
+                    "genesis account balance mismatch, this test won't work"
+                );
+            }
+            acc_info.balance = info.balance;
+            acc_info.nonce = info.nonce;
+            let prev_code_len = acc_info.code.as_ref().map(|v| v.len()).unwrap_or_default();
+            if prev_code_len > 0 && info.code.len() > 0 {
+                unreachable!("code length collision for account ({address}), this test won't work");
+            }
             let evm_code_hash = keccak256(&info.code);
             println!(
                 " - address={address}, evm_code_hash={evm_code_hash}, evm_code_hash_u256={}, code_len={}",

@@ -244,7 +244,7 @@ impl<DB: Database> EvmContext<DB> {
 
         let is_ext_delegate = inputs.scheme.is_ext_delegate_call();
 
-        if !is_ext_delegate {
+        if !is_ext_delegate && !self.env.cfg.enable_rwasm_proxy {
             if let Some(result) =
                 self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)?
             {

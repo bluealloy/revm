@@ -89,6 +89,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     let is_gas_free = interpreter
         .contract
         .eip7702_address
+        .or_else(|| Some(bytecode_address))
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
         .is_some();
 
@@ -134,6 +135,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         return_data,
         is_create,
         interpreter.is_static,
+        is_gas_free,
     ))
 }
 
@@ -145,10 +147,6 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         ..
     } = outcome;
 
-    // println!(
-    //     "revm: resume execution: result={:?} gas={:?}",
-    //     result.result, result.gas
-    // );
     let fuel_consumed = result
         .gas
         .spent()
@@ -169,15 +167,13 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         // a special case for frame execution where we always return `Err` as a failed call/create
         _ if is_frame => ExitCode::Err,
         InstructionResult::OutOfGas => ExitCode::OutOfFuel,
-        _ => unreachable!("revm: not supported result code: {:?}", result.result),
+        // InstructionResult::MalformedBuiltinParams => ExitCode::MalformedBuiltinParams,
+        // InstructionResult::PrecompileError => ExitCode::PrecompileError,
+        // TODO(dmitry123): "don't panic here, for tests only"
+        _ => {
+            unreachable!("revm: not supported result code: {:?}", result.result)
+        }
     };
-
-    // we count a contract as gas-free if it's a special system precompiled contract
-    // that has self-gas management rules, for example, EVM/SVM runtimes
-    let is_gas_free = inputs
-        .eip7702_address
-        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
-        .is_some();
 
     // gas adjustment is needed
     // to synchronize gas/fuel between root and self-gas management runtimes,
@@ -185,7 +181,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
 
     let mut runtime_context = RuntimeContext::root(0);
-    if is_gas_free {
+    if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
@@ -199,13 +195,12 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     );
     let return_data: Bytes = runtime_context.into_return_data().into();
 
-    if is_gas_free {
-        debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
-    }
+    // make sure for gas-free mode we don't charge anything
+    debug_assert!(!inputs.is_gas_free || fuel_consumed == 0 && fuel_refunded == 0);
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
-    let mut gas = if is_gas_free && !is_gas_adjustment {
+    let mut gas = if inputs.is_gas_free && !is_gas_adjustment {
         inputs.gas
     } else {
         result.gas
@@ -235,6 +230,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         return_data,
         inputs.is_create,
         inputs.is_static,
+        inputs.is_gas_free,
     )
 }
 
@@ -249,6 +245,7 @@ fn process_exec_result(
     return_data: Bytes,
     is_create: bool,
     is_static: bool,
+    is_gas_free: bool,
 ) -> InterpreterAction {
     // if we have success or failed exit code
     if exit_code <= 0 {
@@ -262,10 +259,6 @@ fn process_exec_result(
     let Ok(params) = CompactABI::<SyscallInvocationParams>::decode(&return_data, 0) else {
         unreachable!("revm: can't decode invocation params");
     };
-
-    let is_gas_free = eip7702_address
-        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
-        .is_some();
 
     // if there is no enough gas for execution, then fail fast
     if !is_gas_free && params.fuel_limit / FUEL_DENOM_RATE > gas.remaining() {
@@ -290,6 +283,7 @@ fn process_exec_result(
             syscall_params: params,
             gas,
             is_static,
+            is_gas_free,
         }),
     }
 }
@@ -351,6 +345,7 @@ fn process_halt(
         ExitCode::OutOfFuel => InstructionResult::OutOfFuel,
         ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
         ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
+        ExitCode::PrecompileError => InstructionResult::PrecompileError,
     };
     InterpreterAction::Return {
         result: InterpreterResult {

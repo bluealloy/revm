@@ -83,13 +83,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     let mut local_gas = Gas::new(inputs.gas.remaining());
 
-    // let is_frame = inputs.syscall_params.code_hash == SYSCALL_ID_CALL
-    //     || inputs.syscall_params.code_hash == SYSCALL_ID_STATIC_CALL
-    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CALL_CODE
-    //     || inputs.syscall_params.code_hash == SYSCALL_ID_DELEGATE_CALL
-    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE
-    //     || inputs.syscall_params.code_hash == SYSCALL_ID_CREATE2;
-
     macro_rules! return_result {
         ($output:expr) => {{
             let result =
@@ -107,14 +100,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
     macro_rules! return_error {
         ($result:expr, $error:ident) => {{
             let error = InstructionResult::$error;
-            // if is_frame {
-            //     // in case of error for frame calls we need to burn all remaining gas
-            //     if error.is_revert() {
-            //         local_gas.set_refund(0);
-            //     } else if error.is_error() {
-            //         local_gas.spend_all();
-            //     }
-            // }
             let result = InterpreterResult::new(error, $result.into(), local_gas);
             let result =
                 FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
@@ -127,14 +112,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }};
         ($error:ident) => {{
             let error = InstructionResult::$error;
-            // if is_frame {
-            //     // in case of error for frame calls we need to burn all remaining gas
-            //     if error.is_revert() {
-            //         local_gas.set_refund(0);
-            //     } else if error.is_error() {
-            //         local_gas.spend_all();
-            //     }
-            // }
             let result = InterpreterResult::new(error, Default::default(), local_gas);
             let result =
                 FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
@@ -216,8 +193,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // execute sstore
             let value = context.evm.sstore(inputs.target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
-            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            let is_gas_free = inputs.is_gas_free && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
             if !is_gas_free {
                 if let Some(gas_cost) = sstore_cost(
                     SPEC::SPEC_ID,
@@ -773,8 +749,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let Ok(account_load) = context.evm.code(address) else {
                 return_error!(FatalExternalError);
             };
-            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME);
-            if !is_gas_free {
+            if !inputs.is_gas_free {
                 let Some(gas_cost) = gas::extcodecopy_cost(
                     SPEC::SPEC_ID,
                     account_load.data.len() as u64,
@@ -812,8 +787,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
             // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
-            let is_gas_free = inputs.eip7702_address == Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            let is_gas_free = inputs.is_gas_free && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
             if !is_gas_free {
                 charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
             }
@@ -881,11 +855,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             // allow this function only for delegated contracts
             // that has self-management gas policy like EVM or SVM runtimes
-            let Some(eip7702_address) = &inputs.eip7702_address else {
-                return_error!(MalformedBuiltinParams);
-            };
+            let bytecode_address = inputs.eip7702_address.unwrap_or(inputs.bytecode_address);
             assert_return!(
-                is_self_gas_management_contract(eip7702_address),
+                is_self_gas_management_contract(&bytecode_address),
                 MalformedBuiltinParams
             );
             // parse input gas params

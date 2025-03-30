@@ -16,6 +16,7 @@ pub struct SystemInterruptionInputs {
     pub gas: Gas,
     pub is_create: bool,
     pub is_static: bool,
+    pub is_gas_free: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

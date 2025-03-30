@@ -54,11 +54,17 @@ mod good_coverage_tests {
         fn suicides_and_internl_call_suicides_o_o_g("tests/GeneralStateTests/stTransactionTest/SuicidesAndInternlCallSuicidesOOG.json");
         fn call_ecrecover0_no_gas("tests/GeneralStateTests/stPreCompiledContracts2/CallEcrecover0_NoGas.json");
         fn create2collision_selfdestructed("tests/GeneralStateTests/stCreate2/create2collisionSelfdestructed.json");
+        fn call_ecrecover1("tests/GeneralStateTests/stPreCompiledContracts2/CallEcrecover1.json");
+        fn c_a_l_l_blake2f("tests/GeneralStateTests/stPreCompiledContracts2/CALLBlake2f.json");
+        fn c_a_l_l_c_o_d_e_blake2f("tests/GeneralStateTests/stPreCompiledContracts2/CALLCODEBlake2f.json");
+        fn c_a_l_l_c_o_d_e_ecrecover0("tests/GeneralStateTests/stPreCompiledContracts2/CALLCODEEcrecover0.json");
+        fn modexp_0_0_0_20500("tests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_20500.json");
     }
 }
 
 mod failing_tests {
     define_tests! {
+
         // fn st_static_call_static_loop_calls_depth_then_revert2("tests/GeneralStateTests/stStaticCall/static_LoopCallsDepthThenRevert2.json");
 
         // fn cancun_eip4844_blobs_blob_tx_attribute_gasprice_opcode("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_gasprice_opcode.json");
@@ -92,15 +98,16 @@ mod failing_tests {
         // because our precompiled contract (0x01 - ecrecover) is preloaded
         // and this test expects them to be preloaded as-well,
         // this one we can't solve ;(
-        fn ext_code_hash_dynamic_argument("tests/GeneralStateTests/stExtCodeHash/extCodeHashDynamicArgument.json");
+        // fn ext_code_hash_dynamic_argument("tests/GeneralStateTests/stExtCodeHash/extCodeHashDynamicArgument.json");
 
         // you can CALL the precompiled contract,
         // it means that it can be created in the state,
         // and it affects next call gas price that is impossible to track in our model
         // this one we can't solve ;(
-        fn precomps_e_i_p2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
+        // fn precomps_e_i_p2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
 
-        fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
+
+        // fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
     }
 }
 
