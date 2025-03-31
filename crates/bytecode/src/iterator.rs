@@ -1,4 +1,8 @@
 use crate::{opcode, Bytecode, OpCode};
+use std::cmp;
+use core::cmp;
+
+
 
 /// Iterator over opcodes in a bytecode, skipping immediates.
 ///
@@ -49,7 +53,7 @@ impl<'a> BytecodeIterator<'a> {
         if push_offset < 32 {
             // Skip the immediate bytes (push_offset + 1 bytes)
             let immediate_size = push_offset as usize + 1;
-            self.position = std::cmp::min(self.position + immediate_size, self.end);
+            self.position = cmp::min(self.position + immediate_size, self.end);
         }
     }
 
@@ -68,6 +72,7 @@ impl<'a> BytecodeIterator<'a> {
     }
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> Iterator for BytecodeIterator<'a> {
     type Item = u8;
 
