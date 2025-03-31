@@ -60,6 +60,20 @@ impl AccountInfo {
         }
     }
 
+    /// Creates a new [`AccountInfo`] with the given code.
+    ///
+    /// # Note
+    ///
+    /// As code hash is calculated with [`Bytecode::hash_slow`] there will be performance penalty if used frequently.
+    pub fn with_code(self, code: Bytecode) -> Self {
+        Self {
+            balance: self.balance,
+            nonce: self.nonce,
+            code_hash: code.hash_slow(),
+            code: Some(code),
+        }
+    }
+
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
     /// This is useful when creating journals or snapshots of the state, where it is
