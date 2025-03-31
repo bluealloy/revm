@@ -1,3 +1,4 @@
+use crate::interpreter_action::Box;
 use bytecode::Eof;
 use primitives::{Address, Bytes, U256};
 
