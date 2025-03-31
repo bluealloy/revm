@@ -84,7 +84,7 @@ impl<'a> BytecodeIterator<'a> {
     }
 }
 
-impl<'a> Iterator for BytecodeIterator<'a> {
+impl Iterator for BytecodeIterator<'_> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {

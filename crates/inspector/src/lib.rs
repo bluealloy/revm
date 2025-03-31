@@ -10,10 +10,6 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-// Import serde when the feature is enabled
-#[cfg(feature = "serde")]
-extern crate serde;
-
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
 mod gas;
