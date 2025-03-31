@@ -198,6 +198,37 @@ impl Bytecode {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
+    ///
+    /// This is useful if you want to ignore immediates and just see what opcodes are inside.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use revm_bytecode::{Bytecode, opcode, LegacyRawBytecode};
+    /// use primitives::Bytes;
+    ///
+    /// // Create a simple bytecode: PUSH1 0x01 PUSH1 0x02 ADD STOP
+    /// let bytecode_data = vec![
+    ///     opcode::PUSH1, 0x01,
+    ///     opcode::PUSH1, 0x02,
+    ///     opcode::ADD,
+    ///     opcode::STOP
+    /// ];
+    /// let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+    /// let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+    ///
+    /// // Iterate through opcodes, skipping immediates
+    /// let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+    ///
+    /// // We should only see the opcodes, not the immediates
+    /// assert_eq!(opcodes, vec![opcode::PUSH1, opcode::PUSH1, opcode::ADD, opcode::STOP]);
+    /// ```
+    #[inline]
+    pub fn iter_opcodes(&self) -> crate::iterator::BytecodeIterator<'_> {
+        crate::iterator::BytecodeIterator::new(self)
+    }
 }
 
 #[cfg(test)]
