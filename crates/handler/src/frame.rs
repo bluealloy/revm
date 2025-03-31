@@ -437,7 +437,7 @@ where
                 let tx = context.tx();
                 let create_address = tx.caller().create(tx.nonce());
 
-                (input, eof, Some(create_address))
+                (input, Box::new(eof), Some(create_address))
             }
         };
 
@@ -494,7 +494,7 @@ where
             depth,
             Interpreter::new(
                 memory.clone(),
-                ExtBytecode::new(Bytecode::Eof(Arc::new(initcode))),
+                ExtBytecode::new(Bytecode::Eof(Arc::new(*initcode))),
                 interpreter_input,
                 false,
                 true,

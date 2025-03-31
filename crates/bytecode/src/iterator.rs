@@ -117,6 +117,7 @@ impl BytecodeIteratorExt for Bytecode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)]
     use crate::{eof::Eof, LegacyRawBytecode};
     use primitives::{Address, Bytes};
 
@@ -174,7 +175,7 @@ mod tests {
         let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD, opcode::STOP];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
         let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
-
+        #[allow(unused_mut)]
         let mut iter = bytecode.iter_opcodes();
 
         assert_eq!(iter.peek(), Some(opcode::PUSH1));
@@ -204,8 +205,7 @@ mod tests {
         );
 
         // Verify peek returns None immediately
-        #[warn(unused_mut)]
-        let mut iter = bytecode.iter_opcodes();
+        let iter = bytecode.iter_opcodes();
         assert_eq!(
             iter.peek(),
             None,
@@ -231,8 +231,8 @@ mod tests {
             0x08, // Jump table with 2 entries (4 bytes)
             opcode::CALLF,
             0x09,
-            0x0A,         
-            opcode::STOP, 
+            0x0A,
+            opcode::STOP,
         ];
 
         // Create a mock bytecode with the data
@@ -248,7 +248,6 @@ mod tests {
         // Check DATALOADN
         assert_eq!(iter.next(), Some(opcode::DATALOADN));
 
-        // Check RJUMPV 
         assert_eq!(iter.next(), Some(opcode::RJUMPV));
 
         // Check CALLF

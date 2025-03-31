@@ -18,7 +18,7 @@ pub enum EOFCreateKind {
         initdata: Bytes,
     },
     Opcode {
-        initcode: Eof,
+        initcode: Box<Eof>,
         input: Bytes,
         created_address: Address,
     },
@@ -39,7 +39,7 @@ impl EOFCreateKind {
 impl Default for EOFCreateKind {
     fn default() -> Self {
         EOFCreateKind::Opcode {
-            initcode: Eof::default(),
+            initcode: Box::new(Eof::default()),
             input: Bytes::default(),
             created_address: Address::default(),
         }
@@ -88,7 +88,7 @@ impl EOFCreateInputs {
             value,
             gas_limit,
             EOFCreateKind::Opcode {
-                initcode: eof_init_code,
+                initcode: Box::new(eof_init_code),
                 input,
                 created_address,
             },
