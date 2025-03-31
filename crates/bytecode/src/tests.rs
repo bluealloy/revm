@@ -180,5 +180,4 @@ mod bytecode_iterator_tests {
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::STOP]);
     }
-
 }

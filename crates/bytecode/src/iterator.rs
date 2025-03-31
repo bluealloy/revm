@@ -1,8 +1,4 @@
 use crate::{opcode, Bytecode, OpCode};
-#[warn(unused_imports)]
-use core::cmp;
-
-
 
 /// Iterator over opcodes in a bytecode, skipping immediates.
 ///
@@ -53,7 +49,7 @@ impl<'a> BytecodeIterator<'a> {
         if push_offset < 32 {
             // Skip the immediate bytes (push_offset + 1 bytes)
             let immediate_size = push_offset as usize + 1;
-            self.position = cmp::min(self.position + immediate_size, self.end);
+            self.position = core::cmp::min(self.position + immediate_size, self.end);
         }
     }
 
@@ -118,9 +114,7 @@ mod tests {
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
         let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
-
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
-
         // We should only see the opcodes, not the immediates
         assert_eq!(
             opcodes,
