@@ -120,34 +120,18 @@ mod test {
 
     use super::*;
     use crate::{
-        host::DummyHost,
-        instruction_table,
-        interpreter::{EthInterpreter, ExtBytecode},
-        InputsImpl, InstructionResult, SharedMemory,
+        host::DummyHost, instruction_table, interpreter::EthInterpreter, InstructionResult,
     };
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};
     use bytecode::Bytecode;
-    use primitives::{hardfork::SpecId, Address, Bytes, U256};
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use primitives::{Bytes, U256};
 
     #[test]
     fn dupn() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[DUPN, 0x00, DUPN, 0x01, DUPN, 0x02, STOP]));
-        let mut interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
-            ExtBytecode::new(bytecode),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                input: Bytes::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        );
+
+        let mut interpreter = Interpreter::<EthInterpreter>::default();
+        let _ = interpreter.with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;
@@ -169,20 +153,8 @@ mod test {
     #[test]
     fn swapn() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[SWAPN, 0x00, SWAPN, 0x01, STOP]));
-        let mut interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
-            ExtBytecode::new(bytecode),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                input: Bytes::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        );
+        let mut interpreter = Interpreter::<EthInterpreter>::default();
+        let _ = interpreter.with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;
@@ -203,20 +175,8 @@ mod test {
     fn exchange() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[EXCHANGE, 0x00, EXCHANGE, 0x11, STOP]));
 
-        let mut interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
-            ExtBytecode::new(bytecode),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                input: Bytes::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        );
+        let mut interpreter = Interpreter::<EthInterpreter>::default();
+        let _ = interpreter.with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;
