@@ -69,9 +69,15 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             extend: EXT::default(),
         }
     }
+    pub fn with_bytecode(&mut self, bytecode: Bytecode) -> &Self {
+        self.bytecode = ExtBytecode::new(bytecode);
+        self
+    }
+}
 
-    pub fn default() -> Interpreter<EthInterpreter<(), SharedMemory>> {
-        let interpreter = Interpreter::<EthInterpreter>::new(
+impl Default for Interpreter<EthInterpreter> {
+    fn default() -> Self {
+        Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),
             ExtBytecode::new(Bytecode::default()),
             InputsImpl {
@@ -84,13 +90,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             false,
             SpecId::default(),
             u64::MAX,
-        );
-        interpreter
-    }
-
-    pub fn with_bytecode(&mut self, bytecode: Bytecode) -> &Self {
-        self.bytecode = ExtBytecode::new(bytecode);
-        self
+        )
     }
 }
 
