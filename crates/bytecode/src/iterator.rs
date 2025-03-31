@@ -20,6 +20,7 @@ impl<'a> BytecodeIterator<'a> {
         let bytes = bytecode.bytecode();
         let end = match bytecode {
             Bytecode::LegacyAnalyzed(analyzed) => analyzed.original_len(),
+            Bytecode::Eip7702(_) => 0,
             _ => bytes.len(),
         };
 
@@ -44,12 +45,30 @@ impl<'a> BytecodeIterator<'a> {
         let opcode = self.bytes[self.position];
         self.position += 1;
 
-        // If the opcode is PUSH1..PUSH32, skip the immediate bytes
-        let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-        if push_offset < 32 {
-            // Skip the immediate bytes (push_offset + 1 bytes)
-            let immediate_size = push_offset as usize + 1;
-            self.position = core::cmp::min(self.position + immediate_size, self.end);
+        if opcode::OpCode::new(opcode).is_none() {
+            // Unknown opcode, return in that case
+            return;
+        }
+
+        // Special case: RJUMPV has a variable number of immediates
+        if opcode == opcode::RJUMPV {
+            if self.position < self.end {
+                // The first immediate byte is the max_index
+                let max_index = self.bytes[self.position] as usize;
+                let rjumpv_additional_immediates = (max_index + 1) * 2; // Including the max_index byte itself
+
+                // Skip the immediate bytes
+                self.position =
+                    core::cmp::min(self.position + 1 + rjumpv_additional_immediates, self.end);
+            }
+        } else {
+            // For all other opcodes, use the immediate_size from OPCODE_INFO
+            if let Some(opcode_info) = opcode::OPCODE_INFO[opcode as usize] {
+                let immediate_size = opcode_info.immediate_size() as usize;
+                if immediate_size > 0 {
+                    self.position = core::cmp::min(self.position + immediate_size, self.end);
+                }
+            }
         }
     }
 
@@ -98,8 +117,8 @@ impl BytecodeIteratorExt for Bytecode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LegacyRawBytecode;
-    use primitives::Bytes;
+    use crate::{eof::Eof, LegacyRawBytecode};
+    use primitives::{Address, Bytes};
 
     #[test]
     fn test_simple_bytecode_iteration() {
@@ -168,6 +187,76 @@ mod tests {
         assert_eq!(iter.next(), Some(opcode::STOP));
 
         assert_eq!(iter.peek(), None);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_eip7702_bytecode_iteration() {
+        // Create a simple Eip7702 bytecode with address
+        let address = Address::new([0x42; 20]);
+        let bytecode = Bytecode::new_eip7702(address);
+
+        // Verify no opcodes are returned when iterating
+        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+        assert!(
+            opcodes.is_empty(),
+            "No opcodes should be returned for Eip7702 bytecode"
+        );
+
+        // Verify peek returns None immediately
+        #[warn(unused_mut)]
+        let mut iter = bytecode.iter_opcodes();
+        assert_eq!(
+            iter.peek(),
+            None,
+            "Peek should return None for Eip7702 bytecode"
+        );
+    }
+
+    #[test]
+    fn test_eof_opcodes_with_immediates() {
+        // Test with some EOF opcodes that have immediate values
+        let bytecode_data = vec![
+            opcode::RJUMP,
+            0x01,
+            0x02, // RJUMP with 2 immediate bytes
+            opcode::DATALOADN,
+            0x03,
+            0x04, // DATALOADN with 2 immediate bytes
+            opcode::RJUMPV,
+            0x01, // RJUMPV with max_index=1 (2 entries in table)
+            0x05,
+            0x06,
+            0x07,
+            0x08, // Jump table with 2 entries (4 bytes)
+            opcode::CALLF,
+            0x09,
+            0x0A,         
+            opcode::STOP, 
+        ];
+
+        // Create a mock bytecode with the data
+        let mut iter = BytecodeIterator {
+            bytes: &bytecode_data,
+            position: 0,
+            end: bytecode_data.len(),
+        };
+
+        // Check RJUMP
+        assert_eq!(iter.next(), Some(opcode::RJUMP));
+
+        // Check DATALOADN
+        assert_eq!(iter.next(), Some(opcode::DATALOADN));
+
+        // Check RJUMPV 
+        assert_eq!(iter.next(), Some(opcode::RJUMPV));
+
+        // Check CALLF
+        assert_eq!(iter.next(), Some(opcode::CALLF));
+
+        // Check STOP
+        assert_eq!(iter.next(), Some(opcode::STOP));
+
         assert_eq!(iter.next(), None);
     }
 }
