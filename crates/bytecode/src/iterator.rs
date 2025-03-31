@@ -1,5 +1,5 @@
 use crate::{opcode, Bytecode, OpCode};
-use std::cmp;
+#[warn(unused_imports)]
 use core::cmp;
 
 
