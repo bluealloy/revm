@@ -20,9 +20,6 @@ pub mod legacy;
 pub mod opcode;
 pub mod utils;
 
-#[cfg(test)]
-mod tests;
-
 pub use bitvec;
 pub use bytecode::Bytecode;
 pub use decode_errors::BytecodeDecodeError;

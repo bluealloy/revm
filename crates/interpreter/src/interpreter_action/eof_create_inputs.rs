@@ -1,4 +1,3 @@
-use crate::interpreter_action::Box;
 use bytecode::Eof;
 use primitives::{Address, Bytes, U256};
 
@@ -19,7 +18,7 @@ pub enum EOFCreateKind {
         initdata: Bytes,
     },
     Opcode {
-        initcode: Box<Eof>,
+        initcode: Eof,
         input: Bytes,
         created_address: Address,
     },
@@ -40,7 +39,7 @@ impl EOFCreateKind {
 impl Default for EOFCreateKind {
     fn default() -> Self {
         EOFCreateKind::Opcode {
-            initcode: Box::new(Eof::default()),
+            initcode: Eof::default(),
             input: Bytes::default(),
             created_address: Address::default(),
         }
@@ -89,7 +88,7 @@ impl EOFCreateInputs {
             value,
             gas_limit,
             EOFCreateKind::Opcode {
-                initcode: Box::new(eof_init_code),
+                initcode: eof_init_code,
                 input,
                 created_address,
             },

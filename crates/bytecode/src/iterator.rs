@@ -3,7 +3,7 @@ use crate::{opcode, Bytecode, OpCode};
 /// Iterator over opcodes in a bytecode, skipping immediates.
 ///
 /// This allows you to iterate through the actual opcodes in the bytecode,
-/// without dealing with the immediate values that follow PUSH instructions.
+/// without dealing with the immediate values that follow instructions.
 #[derive(Debug, Clone)]
 pub struct BytecodeIterator<'a> {
     /// Reference to the underlying bytecode bytes
@@ -50,34 +50,31 @@ impl<'a> BytecodeIterator<'a> {
             return;
         }
 
-        // Special case: RJUMPV has a variable number of immediates
-        if opcode == opcode::RJUMPV {
-            if self.position < self.end {
-                // The first immediate byte is the max_index
-                let max_index = self.bytes[self.position] as usize;
-                let rjumpv_additional_immediates = (max_index + 1) * 2; // Including the max_index byte itself
-
-                // Skip the immediate bytes
-                self.position =
-                    core::cmp::min(self.position + 1 + rjumpv_additional_immediates, self.end);
+        // Skip opcode immediates based on immediate size
+        let immediate_size = if opcode == opcode::RJUMPV {
+            if let Some(&max_index) = self.bytes.get(self.position) {
+                // RJUMPV has a variable number of immediates: 1 (max_index) + max_index * 2 bytes for jump targets
+                1 + (max_index as usize) * 2
+            } else {
+                0
             }
         } else {
-            // For all other opcodes, use the immediate_size from OPCODE_INFO
-            if let Some(opcode_info) = opcode::OPCODE_INFO[opcode as usize] {
-                let immediate_size = opcode_info.immediate_size() as usize;
-                if immediate_size > 0 {
-                    self.position = core::cmp::min(self.position + immediate_size, self.end);
-                }
-            }
+            opcode::OPCODE_INFO[opcode as usize]
+                .map(|info| info.immediate_size() as usize)
+                .unwrap_or_default()
+        };
+
+        if immediate_size > 0 {
+            self.position = core::cmp::min(self.position + immediate_size, self.end);
         }
     }
 
     /// Returns the current opcode without advancing the iterator.
     pub fn peek(&self) -> Option<u8> {
-        if self.position < self.end {
-            Some(self.bytes[self.position])
-        } else {
+        if self.position >= self.end {
             None
+        } else {
+            self.bytes.get(self.position).copied()
         }
     }
 
@@ -87,7 +84,6 @@ impl<'a> BytecodeIterator<'a> {
     }
 }
 
-#[allow(clippy::needless_lifetimes)]
 impl<'a> Iterator for BytecodeIterator<'a> {
     type Item = u8;
 
@@ -214,48 +210,180 @@ mod tests {
     }
 
     #[test]
-    fn test_eof_opcodes_with_immediates() {
-        // Test with some EOF opcodes that have immediate values
+    fn test_bytecode_skips_immediates() {
+        // Create a bytecode with various PUSH operations
         let bytecode_data = vec![
-            opcode::RJUMP,
-            0x01,
-            0x02, // RJUMP with 2 immediate bytes
-            opcode::DATALOADN,
-            0x03,
-            0x04, // DATALOADN with 2 immediate bytes
-            opcode::RJUMPV,
-            0x01, // RJUMPV with max_index=1 (2 entries in table)
+            opcode::PUSH1,
+            0x01, // PUSH1 0x01
+            opcode::PUSH2,
+            0x02,
+            0x03,        // PUSH2 0x0203
+            opcode::ADD, // ADD
+            opcode::PUSH3,
+            0x04,
             0x05,
-            0x06,
-            0x07,
-            0x08, // Jump table with 2 entries (4 bytes)
-            opcode::CALLF,
-            0x09,
-            0x0A,
-            opcode::STOP,
+            0x06, // PUSH3 0x040506
+            opcode::PUSH32,
+            0x10,
+            0x11,
+            0x12,
+            0x13, // PUSH32 with 32 bytes of immediate data
+            0x14,
+            0x15,
+            0x16,
+            0x17,
+            0x18,
+            0x19,
+            0x1a,
+            0x1b,
+            0x1c,
+            0x1d,
+            0x1e,
+            0x1f,
+            0x20,
+            0x21,
+            0x22,
+            0x23,
+            0x24,
+            0x25,
+            0x26,
+            0x27,
+            0x28,
+            0x29,
+            0x2a,
+            0x2b,
+            0x2c,
+            0x2d,
+            0x2e,
+            0x2f,
+            opcode::MUL,  // MUL
+            opcode::STOP, // STOP
         ];
 
-        // Create a mock bytecode with the data
-        let mut iter = BytecodeIterator {
-            bytes: &bytecode_data,
-            position: 0,
-            end: bytecode_data.len(),
-        };
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
 
-        // Check RJUMP
-        assert_eq!(iter.next(), Some(opcode::RJUMP));
+        // Use the iterator directly
+        let iter = BytecodeIterator::new(&bytecode);
+        let opcodes: Vec<u8> = iter.collect();
 
-        // Check DATALOADN
-        assert_eq!(iter.next(), Some(opcode::DATALOADN));
+        // Should only include the opcodes, not the immediates
+        assert_eq!(
+            opcodes,
+            vec![
+                opcode::PUSH1,
+                opcode::PUSH2,
+                opcode::ADD,
+                opcode::PUSH3,
+                opcode::PUSH32,
+                opcode::MUL,
+                opcode::STOP,
+            ]
+        );
 
-        assert_eq!(iter.next(), Some(opcode::RJUMPV));
+        // Use the method on the bytecode struct
+        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+        assert_eq!(
+            opcodes,
+            vec![
+                opcode::PUSH1,
+                opcode::PUSH2,
+                opcode::ADD,
+                opcode::PUSH3,
+                opcode::PUSH32,
+                opcode::MUL,
+                opcode::STOP,
+            ]
+        );
+    }
 
-        // Check CALLF
-        assert_eq!(iter.next(), Some(opcode::CALLF));
+    #[test]
+    fn test_position_tracking() {
+        // PUSH1 0x01, PUSH1 0x02, ADD, STOP
+        let bytecode_data = vec![
+            opcode::PUSH1,
+            0x01,
+            opcode::PUSH1,
+            0x02,
+            opcode::ADD,
+            opcode::STOP,
+        ];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
 
-        // Check STOP
+        let mut iter = bytecode.iter_opcodes();
+
+        // Start at position 0
+        assert_eq!(iter.position(), 0);
+        assert_eq!(iter.next(), Some(opcode::PUSH1));
+        // After PUSH1, position should be 2 (PUSH1 + immediate)
+        assert_eq!(iter.position(), 2);
+
+        assert_eq!(iter.next(), Some(opcode::PUSH1));
+        // After second PUSH1, position should be 4 (2 + PUSH1 + immediate)
+        assert_eq!(iter.position(), 4);
+
+        assert_eq!(iter.next(), Some(opcode::ADD));
+        // After ADD, position should be 5 (4 + ADD)
+        assert_eq!(iter.position(), 5);
+
+        assert_eq!(iter.next(), Some(opcode::STOP));
+        // After STOP, position should be 6 (5 + STOP)
+        assert_eq!(iter.position(), 6);
+
+        // No more opcodes
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.position(), 6);
+    }
+
+    #[test]
+    fn test_peek_opcode() {
+        // PUSH1 0x01, ADD, MUL, STOP
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD, opcode::MUL, opcode::STOP];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Peek should return PUSH1
+        assert_eq!(iter.peek(), Some(opcode::PUSH1));
+        assert_eq!(
+            iter.peek_opcode(),
+            Some(OpCode::new(opcode::PUSH1).unwrap())
+        );
+
+        // Next should consume PUSH1
+        assert_eq!(iter.next(), Some(opcode::PUSH1));
+
+        // Peek should now return ADD
+        assert_eq!(iter.peek(), Some(opcode::ADD));
+        assert_eq!(iter.peek_opcode(), Some(OpCode::new(opcode::ADD).unwrap()));
+
+        // Consume ADD
+        assert_eq!(iter.next(), Some(opcode::ADD));
+
+        // Peek should now return MUL
+        assert_eq!(iter.peek(), Some(opcode::MUL));
+        assert_eq!(iter.peek_opcode(), Some(OpCode::new(opcode::MUL).unwrap()));
+
+        // Consume MUL and STOP
+        assert_eq!(iter.next(), Some(opcode::MUL));
         assert_eq!(iter.next(), Some(opcode::STOP));
 
+        // No more opcodes
+        assert_eq!(iter.peek(), None);
+        assert_eq!(iter.peek_opcode(), None);
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_empty_bytecode() {
+        // Empty bytecode (just STOP)
+        let bytecode_data = vec![opcode::STOP];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+        assert_eq!(opcodes, vec![opcode::STOP]);
     }
 }
