@@ -130,8 +130,7 @@ mod test {
     fn dupn() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[DUPN, 0x00, DUPN, 0x01, DUPN, 0x02, STOP]));
 
-        let mut interpreter = Interpreter::<EthInterpreter>::default();
-        let _ = interpreter.with_bytecode(bytecode);
+        let mut interpreter = Interpreter::<EthInterpreter>::default().with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;
@@ -153,8 +152,7 @@ mod test {
     #[test]
     fn swapn() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[SWAPN, 0x00, SWAPN, 0x01, STOP]));
-        let mut interpreter = Interpreter::<EthInterpreter>::default();
-        let _ = interpreter.with_bytecode(bytecode);
+        let mut interpreter = Interpreter::<EthInterpreter>::default().with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;
@@ -175,8 +173,7 @@ mod test {
     fn exchange() {
         let bytecode = Bytecode::new_raw(Bytes::from(&[EXCHANGE, 0x00, EXCHANGE, 0x11, STOP]));
 
-        let mut interpreter = Interpreter::<EthInterpreter>::default();
-        let _ = interpreter.with_bytecode(bytecode);
+        let mut interpreter = Interpreter::<EthInterpreter>::default().with_bytecode(bytecode);
 
         let table = instruction_table();
         let mut host = DummyHost;

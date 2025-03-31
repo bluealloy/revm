@@ -69,7 +69,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             extend: EXT::default(),
         }
     }
-    pub fn with_bytecode(&mut self, bytecode: Bytecode) -> &Self {
+    pub fn with_bytecode(mut self, bytecode: Bytecode) -> Self {
         self.bytecode = ExtBytecode::new(bytecode);
         self
     }
