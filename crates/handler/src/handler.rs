@@ -85,6 +85,28 @@ pub trait Handler {
         }
     }
 
+    /// Runs the system call.
+    ///
+    /// System call is a special transaction where caller is a [`SYSTEM_ADDRESS`]`
+    ///
+    /// It is used to call a system contract and it skips all the validation and pre-execution and most of post-execution phases.
+    /// For example it will not deduct the caller or reward the beneficiary.
+    #[inline]
+    fn run_system_call(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        // dummy values that are not used.
+        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        match self
+            .execution(evm, &init_and_floor_gas)
+            .and_then(|exec_result| self.output(evm, exec_result))
+        {
+            Ok(output) => Ok(output),
+            Err(e) => self.catch_error(evm, e),
+        }
+    }
+
     /// Called by [`Handler::run`] to execute the core handler logic.
     ///
     /// Executes the four phases in sequence: [Handler::validate],
