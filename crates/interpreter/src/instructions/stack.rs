@@ -5,6 +5,7 @@ use crate::{
     interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
+use bytecode::opcode;
 use primitives::U256;
 
 pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -35,33 +36,31 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::VERYLOW);
 
     // Special optimization for PUSH2 followed by JUMP
-    //
-    // PUSH2 will push the jump destination onto the stack
     if N == 2 {
-        // Try to read the immediate value (jump destination)
-        // TODO: check what happens if there is less than N bytes to read
-        // TODO: The if statement is here assuming it will read as much as it can
-        // TODO: so it is a boundary check
-        let imm = interpreter.bytecode.read_slice(N);
-        if imm.len() == N {
-            let jump_dest = ((imm[0] as usize) << 8) | (imm[1] as usize);
+        // Read the immediate value (jump destination) directly as u16
+        let imm = interpreter.bytecode.read_u16() as usize;
 
-            // Try to read the next opcode after PUSH2 and its immediate bytes
-            let next_op = interpreter.bytecode.read_offset_u16(N as isize);
+        // Skip past the immediate bytes
+        interpreter.bytecode.relative_jump(N as isize);
 
-            if next_op == 0x56 {
-                // Apply gas cost for JUMP
-                gas!(interpreter, gas::MID);
+        // Read the next opcode
+        let next_op = interpreter.bytecode.read_u8();
 
-                // Skip the PUSH2 and JUMP instructions (total 4 bytes: PUSH2 + 2 immediate bytes(jump dest) + JUMP)
-                interpreter.bytecode.relative_jump(4);
+        if next_op == opcode::JUMP {
+            let jump_dest = imm;
 
-                // Use the jump_inner function from control module
-                let target = primitives::U256::from(jump_dest);
-                control::jump_inner(interpreter, target);
-                return;
-            }
+            // Apply gas cost for JUMP
+            gas!(interpreter, gas::MID);
+
+            // Skip the JUMP opcode
+            interpreter.bytecode.relative_jump(1);
+
+            let target = primitives::U256::from(jump_dest);
+            control::jump_inner(interpreter, target);
+        } else {
+            push!(interpreter, primitives::U256::from(imm));
         }
+        return;
     }
 
     // Regular PUSH implementation for all other cases
