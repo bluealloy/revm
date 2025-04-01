@@ -11,6 +11,7 @@ pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
+#[allow(unused_imports)]
 use crate::primitives::KECCAK_EMPTY;
 use bitflags::bitflags;
 use core::hash::Hash;
