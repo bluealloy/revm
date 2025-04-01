@@ -198,6 +198,13 @@ impl Bytecode {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
+    /// This is useful if you want to ignore immediates and just see what opcodes are inside.
+    #[inline]
+    pub fn iter_opcodes(&self) -> crate::iterator::BytecodeIterator<'_> {
+        crate::iterator::BytecodeIterator::new(self)
+    }
 }
 
 #[cfg(test)]
