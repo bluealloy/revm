@@ -11,11 +11,12 @@ use crate::{
     interpreter_types::*, Gas, Host, Instruction, InstructionResult, InstructionTable,
     InterpreterAction,
 };
+use bytecode::Bytecode;
 use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 use loop_control::LoopControl as LoopControlImpl;
-use primitives::{hardfork::SpecId, Bytes};
+use primitives::{hardfork::SpecId, Address, Bytes, U256};
 use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMORY};
@@ -67,6 +68,31 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             runtime_flag,
             extend: EXT::default(),
         }
+    }
+
+    /// Sets the bytecode that is going to be executed
+    pub fn with_bytecode(mut self, bytecode: Bytecode) -> Self {
+        self.bytecode = ExtBytecode::new(bytecode);
+        self
+    }
+}
+
+impl Default for Interpreter<EthInterpreter> {
+    fn default() -> Self {
+        Interpreter::new(
+            Rc::new(RefCell::new(SharedMemory::new())),
+            ExtBytecode::new(Bytecode::default()),
+            InputsImpl {
+                target_address: Address::ZERO,
+                caller_address: Address::ZERO,
+                input: Bytes::default(),
+                call_value: U256::ZERO,
+            },
+            false,
+            false,
+            SpecId::default(),
+            u64::MAX,
+        )
     }
 }
 
