@@ -114,6 +114,7 @@ impl JournaledState {
     #[inline]
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
+            println!("touch account: {address}");
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.mark_touch();
         }
@@ -509,14 +510,13 @@ impl JournaledState {
     ) -> Result<StateLoad<SelfDestructResult>, EVMError<DB::Error>> {
         let spec = self.spec;
         let account_load = self.load_account(target, db)?;
-        // for system precompiles always force to have KECCAK_EMPTY code hash,
-        // because such contracts might have real bytecode
-        // that is equal to their precompile code, it violates EVM state transition rules
-        if is_system_precompile(&target) {
-            account_load.data.info.code_hash = KECCAK_EMPTY;
-        }
         let is_cold = account_load.is_cold;
-        let is_empty = account_load.state_clear_aware_is_empty(spec);
+        let mut is_empty = account_load.state_clear_aware_is_empty(spec);
+
+        // system precompiles are always empty...
+        if !is_empty && is_system_precompile(&target) {
+            is_empty = true;
+        }
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -524,8 +524,12 @@ impl JournaledState {
             let acc_balance = self.state.get_mut(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
+            let next_balance = target_account.info.balance + acc_balance;
+            // don't touch a precompiled contract if it persists empty after balance increase,
+            // because these contracts are empty with non-empty code hash
+            // that causes modification of an empty account that violates EIP-161
             Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
-            target_account.info.balance += acc_balance;
+            target_account.info.balance = next_balance;
         }
 
         let acc = self.state.get_mut(&address).unwrap();

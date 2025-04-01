@@ -59,11 +59,20 @@ mod good_coverage_tests {
         fn c_a_l_l_c_o_d_e_blake2f("tests/GeneralStateTests/stPreCompiledContracts2/CALLCODEBlake2f.json");
         fn c_a_l_l_c_o_d_e_ecrecover0("tests/GeneralStateTests/stPreCompiledContracts2/CALLCODEEcrecover0.json");
         fn modexp_0_0_0_20500("tests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_20500.json");
+        fn ecadd_00_0_0_21000_0("tests/GeneralStateTests/stZeroKnowledge2/ecadd_0-0_0-0_21000_0.json");
+        fn frontier_opcodes_value_transfer_gas_calculation("tests/GeneralStateTests/Pyspecs/frontier/opcodes/value_transfer_gas_calculation.json");
+        fn c_r_e_a_t_e2_suicide("tests/GeneralStateTests/stCreate2/CREATE2_Suicide.json");
+        fn selfdestruct_e_i_p2929("tests/GeneralStateTests/stSpecialTest/selfdestructEIP2929.json");
     }
 }
 
 mod failing_tests {
     define_tests! {
+        fn c_r_e_a_t_e2_suicide("tests/GeneralStateTests/stCreate2/CREATE2_Suicide.json");
+        // fn selfdestruct_e_i_p2929("tests/GeneralStateTests/stSpecialTest/selfdestructEIP2929.json");
+        // fn id_precomps("tests/GeneralStateTests/stPreCompiledContracts/idPrecomps.json");
+        // fn precomps_e_i_p2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
+        // fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
 
         // fn st_static_call_static_loop_calls_depth_then_revert2("tests/GeneralStateTests/stStaticCall/static_LoopCallsDepthThenRevert2.json");
 

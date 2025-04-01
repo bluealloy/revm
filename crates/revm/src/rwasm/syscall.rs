@@ -628,9 +628,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             #[cfg(feature = "debug-print")]
             println!(
-                "SYSCALL_CODE_HASH: address={address} code_hash={} is_precompile={}",
+                "SYSCALL_CODE_HASH: address={address} code_hash={}",
                 code_hash.data,
-                is_system_precompile(&address)
             );
             charge_gas!(if SPEC::enabled(BERLIN) {
                 warm_cold_cost(code_hash.is_cold)

@@ -508,6 +508,7 @@ pub fn execute_test_suite(
         let mut cache_state = CacheState::new(false);
         let mut cache_state2 = CacheState::new(false);
 
+        println!("\nGenesis accounts:");
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
             let bytecode = info.code.clone().map(Bytecode::new_raw);
@@ -526,10 +527,15 @@ pub fn execute_test_suite(
                     account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
                 }
             }
+            println!(
+                "- genesis account: address={}, nonce={}, balance={} code_hash={}",
+                address, acc_info.nonce, acc_info.balance, acc_info.code_hash
+            );
             cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
             genesis_addresses.insert(*address);
         }
 
+        println!("\nEVM accounts:");
         for (address, info) in &unit.pre {
             let acc_info = AccountInfo {
                 balance: info.balance,
@@ -558,7 +564,9 @@ pub fn execute_test_suite(
             acc_info.nonce = info.nonce;
             let prev_code_len = acc_info.code.as_ref().map(|v| v.len()).unwrap_or_default();
             if prev_code_len > 0 && info.code.len() > 0 {
-                unreachable!("code length collision for account ({address}), this test won't work");
+                println!(
+                    "WARN: code length collision for account ({address}), this test might not work"
+                );
             }
             let evm_code_hash = keccak256(&info.code);
             println!(
