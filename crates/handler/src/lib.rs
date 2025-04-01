@@ -33,4 +33,4 @@ pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
-pub use system_call::{SystemCallTx, SYSTEM_ADDRESS};
+pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};

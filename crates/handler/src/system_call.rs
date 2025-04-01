@@ -16,7 +16,7 @@ pub const SYSTEM_ADDRESS: Address = address!("0xffffffffffffffffffffffffffffffff
 ///
 /// It is used inside [`SystemCallEvm`] and [`SystemCallCommitEvm`] traits to prepare EVM for system call execution.
 pub trait SystemCallTx {
-    /// Created new tranaction for system call.
+    /// Creates new transaction for system call.
     fn new_system_tx(data: Bytes, system_contract_address: Address) -> Self;
 }
 
@@ -35,7 +35,7 @@ impl SystemCallTx for TxEnv {
 /// API for executing the system calls. System calls dont deduct the caller or reward the
 /// beneficiary. They are used before and after block execution to insert or obtain blockchain state.
 ///
-/// It act similari to `transact` function and sets default Tx with data and system contract as a target.
+/// It act similar to `transact` function and sets default Tx with data and system contract as a target.
 pub trait SystemCallEvm: ExecuteEvm {
     /// System call is a special transaction call that is used to call a system contract.
     ///
