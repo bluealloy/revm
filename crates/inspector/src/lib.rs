@@ -4,8 +4,6 @@
 //! Implementing inspection is optional and it does not effect the core execution.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
-// Allow unused serde dependency as it's used only when the serde feature is enabled
-#![allow(unused_extern_crates)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;

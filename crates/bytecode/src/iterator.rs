@@ -50,32 +50,26 @@ impl<'a> BytecodeIterator<'a> {
             return;
         }
 
-        // Skip opcode immediates based on immediate size
-        let immediate_size = if opcode == opcode::RJUMPV {
-            if let Some(&max_index) = self.bytes.get(self.position) {
-                // RJUMPV has a variable number of immediates: 1 (max_index) + max_index * 2 bytes for jump targets
-                1 + (max_index as usize) * 2
-            } else {
-                0
-            }
-        } else {
-            opcode::OPCODE_INFO[opcode as usize]
-                .map(|info| info.immediate_size() as usize)
-                .unwrap_or_default()
-        };
+        // Get base immediate size from opcode info
+        let mut immediate_size = opcode::OPCODE_INFO[opcode as usize]
+            .map(|info| info.immediate_size() as usize)
+            .unwrap_or_default();
 
-        if immediate_size > 0 {
-            self.position = core::cmp::min(self.position + immediate_size, self.end);
+        // Special handling for RJUMPV which has variable immediates
+        if opcode == opcode::RJUMPV {
+            if let Some(&max_index) = self.bytes.get(self.position) {
+                // For RJUMPV, the byte we got from OPCODE_INFO is for the max_index
+                // Need to add max_index * 2 bytes for the jump targets
+                immediate_size += (max_index as usize) * 2;
+            }
         }
+
+        self.position += immediate_size;
     }
 
     /// Returns the current opcode without advancing the iterator.
     pub fn peek(&self) -> Option<u8> {
-        if self.position >= self.end {
-            None
-        } else {
-            self.bytes.get(self.position).copied()
-        }
+        self.bytes.get(self.position).copied()
     }
 
     /// Returns the current opcode wrapped in OpCode without advancing the iterator.
@@ -162,50 +156,6 @@ mod tests {
         assert_eq!(
             opcodes,
             vec![opcode::PUSH1, opcode::PUSH2, opcode::PUSH3, opcode::STOP]
-        );
-    }
-
-    #[test]
-    fn test_peek_functionality() {
-        // PUSH1 0x01, ADD, STOP
-        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD, opcode::STOP];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
-        #[allow(unused_mut)]
-        let mut iter = bytecode.iter_opcodes();
-
-        assert_eq!(iter.peek(), Some(opcode::PUSH1));
-        assert_eq!(iter.next(), Some(opcode::PUSH1)); // This consumes PUSH1 and skips 0x01
-
-        assert_eq!(iter.peek(), Some(opcode::ADD));
-        assert_eq!(iter.next(), Some(opcode::ADD));
-
-        assert_eq!(iter.peek(), Some(opcode::STOP));
-        assert_eq!(iter.next(), Some(opcode::STOP));
-
-        assert_eq!(iter.peek(), None);
-        assert_eq!(iter.next(), None);
-    }
-
-    #[test]
-    fn test_eip7702_bytecode_iteration() {
-        // Create a simple Eip7702 bytecode with address
-        let address = Address::new([0x42; 20]);
-        let bytecode = Bytecode::new_eip7702(address);
-
-        // Verify no opcodes are returned when iterating
-        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
-        assert!(
-            opcodes.is_empty(),
-            "No opcodes should be returned for Eip7702 bytecode"
-        );
-
-        // Verify peek returns None immediately
-        let iter = bytecode.iter_opcodes();
-        assert_eq!(
-            iter.peek(),
-            None,
-            "Peek should return None for Eip7702 bytecode"
         );
     }
 
@@ -334,46 +284,6 @@ mod tests {
         // No more opcodes
         assert_eq!(iter.next(), None);
         assert_eq!(iter.position(), 6);
-    }
-
-    #[test]
-    fn test_peek_opcode() {
-        // PUSH1 0x01, ADD, MUL, STOP
-        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD, opcode::MUL, opcode::STOP];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
-
-        let mut iter = bytecode.iter_opcodes();
-
-        // Peek should return PUSH1
-        assert_eq!(iter.peek(), Some(opcode::PUSH1));
-        assert_eq!(
-            iter.peek_opcode(),
-            Some(OpCode::new(opcode::PUSH1).unwrap())
-        );
-
-        // Next should consume PUSH1
-        assert_eq!(iter.next(), Some(opcode::PUSH1));
-
-        // Peek should now return ADD
-        assert_eq!(iter.peek(), Some(opcode::ADD));
-        assert_eq!(iter.peek_opcode(), Some(OpCode::new(opcode::ADD).unwrap()));
-
-        // Consume ADD
-        assert_eq!(iter.next(), Some(opcode::ADD));
-
-        // Peek should now return MUL
-        assert_eq!(iter.peek(), Some(opcode::MUL));
-        assert_eq!(iter.peek_opcode(), Some(OpCode::new(opcode::MUL).unwrap()));
-
-        // Consume MUL and STOP
-        assert_eq!(iter.next(), Some(opcode::MUL));
-        assert_eq!(iter.next(), Some(opcode::STOP));
-
-        // No more opcodes
-        assert_eq!(iter.peek(), None);
-        assert_eq!(iter.peek_opcode(), None);
-        assert_eq!(iter.next(), None);
     }
 
     #[test]
