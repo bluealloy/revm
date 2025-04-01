@@ -11,8 +11,6 @@ pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
-#[allow(unused_imports)]
-use crate::primitives::KECCAK_EMPTY;
 use bitflags::bitflags;
 use core::hash::Hash;
 use primitives::hardfork::SpecId;
@@ -286,6 +284,7 @@ impl EvmStorageSlot {
 mod tests {
     use super::*;
     use crate::EvmStorageSlot;
+    use primitives::KECCAK_EMPTY;
 
     #[test]
     fn account_is_empty_balance() {
