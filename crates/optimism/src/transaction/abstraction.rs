@@ -3,6 +3,7 @@ use auto_impl::auto_impl;
 use revm::{
     context::TxEnv,
     context_interface::transaction::Transaction,
+    handler::SystemCallTx,
     primitives::{Address, Bytes, TxKind, B256, U256},
 };
 use std::vec;
@@ -56,6 +57,12 @@ impl Default for OpTransaction<TxEnv> {
             enveloped_tx: Some(vec![0x00].into()),
             deposit: DepositTransactionParts::default(),
         }
+    }
+}
+
+impl<TX: Transaction + SystemCallTx> SystemCallTx for OpTransaction<TX> {
+    fn new_system_tx(data: Bytes, system_contract_address: Address) -> Self {
+        OpTransaction::new(TX::new_system_tx(data, system_contract_address))
     }
 }
 
