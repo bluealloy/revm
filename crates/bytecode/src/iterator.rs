@@ -109,6 +109,7 @@ mod tests {
     use super::*;
     #[allow(unused_imports)]
     use crate::{eof::Eof, LegacyRawBytecode};
+    #[allow(unused_imports)]
     use primitives::{Address, Bytes};
 
     #[test]
