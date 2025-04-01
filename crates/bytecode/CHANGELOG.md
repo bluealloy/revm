@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v2.0.0...revm-bytecode-v2.1.0) - 2025-04-01
+
+### Added
+
+- Iteration of bytecode opcodes ([#2349](https://github.com/bluealloy/revm/pull/2349))
+
+### Other
+
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0...revm-bytecode-v2.0.0) - 2025-03-28
 
 ### Fixed

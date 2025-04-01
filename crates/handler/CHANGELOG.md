@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v2.0.0...revm-handler-v2.0.1) - 2025-04-01
+
+### Other
+
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v1.0.0...revm-handler-v2.0.0) - 2025-03-28
 
 ### Added
