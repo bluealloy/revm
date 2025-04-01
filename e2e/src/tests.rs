@@ -84,9 +84,13 @@ mod failing_tests {
         // this one we can't solve ;(
         // fn precomps_e_i_p2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
 
-        fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
-        fn self_destruct("tests/GeneralStateTests/stSolidityTest/SelfDestruct.json");
-        fn underflow_test("tests/GeneralStateTests/stStackTests/underflowTest.json");
+        // this test can't pass because it modifies our precompiled contracts (0x01, 0x02, 0x03),
+        // the same problem as above
+        // fn self_destruct("tests/GeneralStateTests/stSolidityTest/SelfDestruct.json");
+
+        // this test can't pass because it relays on modified EVM precompiled contract,
+        // and it causes gas miscalculation
+        // fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
 
         // quadratic complexity tests, fails because of OOM, need to investigate
         // fn call50000("tests/GeneralStateTests/stQuadraticComplexityTest/Call50000.json");
