@@ -87,7 +87,7 @@ pub trait Handler {
 
     /// Runs the system call.
     ///
-    /// System call is a special transaction where caller is a [`SYSTEM_ADDRESS`]`
+    /// System call is a special transaction where caller is a [`crate::SYSTEM_ADDRESS`]
     ///
     /// It is used to call a system contracts and it skips all the `validation` and `pre-execution` and most of `post-execution` phases.
     /// For example it will not deduct the caller or reward the beneficiary.
