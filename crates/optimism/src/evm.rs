@@ -113,11 +113,14 @@ mod tests {
         },
         context_interface::result::HaltReason,
         database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        interpreter::gas::{calculate_initial_tx_gas, InitialAndFloorGas},
+        interpreter::{
+            gas::{calculate_initial_tx_gas, InitialAndFloorGas},
+            Interpreter, InterpreterTypes,
+        },
         precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
-        primitives::{Address, Bytes, TxKind, U256},
+        primitives::{Address, Bytes, Log, TxKind, U256},
         state::Bytecode,
-        Context, ExecuteEvm, Journal,
+        Context, ExecuteEvm, InspectEvm, Inspector, Journal,
     };
 
     #[test]
@@ -760,5 +763,39 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[derive(Default, Debug)]
+    struct LogInspector {
+        logs: Vec<Log>,
+    }
+
+    impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for LogInspector {
+        fn log(&mut self, _interp: &mut Interpreter<INTR>, _context: &mut CTX, log: Log) {
+            self.logs.push(log)
+        }
+    }
+
+    #[test]
+    fn test_gas_inspector() {
+        let contract_data: Bytes = Bytes::from(vec![
+            // todo: bytecode that emits event
+        ]);
+        let bytecode = Bytecode::new_raw(contract_data);
+
+        let ctx = Context::op()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(BENCH_TARGET);
+            });
+
+        let mut evm = ctx.build_op_with_inspector(LogInspector::default());
+
+        // Run evm.
+        let _ = evm.inspect_replay().unwrap();
+
+        let inspector = &evm.0.data.inspector;
+        assert!(!inspector.logs.is_empty());
     }
 }
