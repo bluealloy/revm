@@ -74,6 +74,49 @@ impl AccountInfo {
         }
     }
 
+    /// Creates a new [`AccountInfo`] with the given code hash.
+    ///
+    /// # Note
+    ///
+    /// Resets code to `None`. Not guaranteed to maintain invariant `code` and `code_hash`. See
+    /// also [Self::with_code_and_hash].
+    pub fn with_code_hash(self, code_hash: B256) -> Self {
+        Self {
+            balance: self.balance,
+            nonce: self.nonce,
+            code_hash,
+            code: None,
+        }
+    }
+
+    /// Creates a new [`AccountInfo`] with the given code and code hash.
+    ///
+    /// # Note
+    ///
+    /// In debug mode panics if [`Bytecode::hash_slow`] called on `code` is not equivalent to
+    /// `code_hash`. See also [`Self::with_code`].
+    pub fn with_code_and_hash(self, code: Bytecode, code_hash: B256) -> Self {
+        debug_assert_eq!(code.hash_slow(), code_hash);
+        Self {
+            balance: self.balance,
+            nonce: self.nonce,
+            code_hash,
+            code: Some(code),
+        }
+    }
+
+    /// Creates a new [`AccountInfo`] with the given balance.
+    pub fn with_balance(mut self, balance: U256) -> Self {
+        self.balance = balance;
+        self
+    }
+
+    /// Creates a new [`AccountInfo`] with the given nonce.
+    pub fn with_nonce(mut self, nonce: u64) -> Self {
+        self.nonce = nonce;
+        self
+    }
+
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
     /// This is useful when creating journals or snapshots of the state, where it is
