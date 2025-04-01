@@ -45,11 +45,6 @@ impl<'a> BytecodeIterator<'a> {
         let opcode = self.bytes[self.position];
         self.position += 1;
 
-        if opcode::OpCode::new(opcode).is_none() {
-            // Unknown opcode, return in that case
-            return;
-        }
-
         // Get base immediate size from opcode info
         let mut immediate_size = opcode::OPCODE_INFO[opcode as usize]
             .map(|info| info.immediate_size() as usize)
@@ -58,8 +53,6 @@ impl<'a> BytecodeIterator<'a> {
         // Special handling for RJUMPV which has variable immediates
         if opcode == opcode::RJUMPV {
             if let Some(&max_index) = self.bytes.get(self.position) {
-                // For RJUMPV, the byte we got from OPCODE_INFO is for the max_index
-                // Need to add max_index * 2 bytes for the jump targets
                 immediate_size += (max_index as usize) * 2;
             }
         }
@@ -86,7 +79,8 @@ impl Iterator for BytecodeIterator<'_> {
             return None;
         }
 
-        let opcode = self.bytes[self.position];
+        // Get the opcode first with bounds check
+        let opcode = *self.bytes.get(self.position)?;
         self.skip_to_next_opcode();
         Some(opcode)
     }
