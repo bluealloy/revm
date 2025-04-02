@@ -778,14 +778,19 @@ mod tests {
 
     #[test]
     fn test_log_inspector() {
+        // simple contract emits a log in constructor
+
+        /*object "Contract" {
+            code {
+                log0(0, 0)
+            }
+        }*/
+
         let contract_data: Bytes = Bytes::from([
             opcode::PUSH1,
             0x00,
-            opcode::PUSH1,
-            0x00,
-            opcode::PUSH1,
-            0x10,
-            opcode::LOG1,
+            opcode::DUP1,
+            opcode::LOG0,
             opcode::STOP,
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
