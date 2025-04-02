@@ -778,7 +778,7 @@ mod tests {
 
     #[test]
     fn test_gas_inspector() {
-        let contract_data: Bytes = Bytes::from(vec![
+        let contract_data: Bytes = Bytes::from([
             opcode::PUSH1,
             0x00,
             opcode::PUSH1,
