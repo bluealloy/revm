@@ -299,9 +299,7 @@ mod test {
         let table = instruction_table();
         let mut host = DummyHost;
 
-        println!("{:?}", interpreter.bytecode.pc());
         interpreter.step(&table, &mut host);
-        println!("{:?}", interpreter.bytecode.pc());
         assert_eq!(interpreter.bytecode.pc(), 5)
     }
 
@@ -316,20 +314,14 @@ mod test {
         let table = instruction_table();
         let mut host = DummyHost;
 
-        println!("{:?}", interpreter.bytecode.pc());
         let _ = interpreter.stack.push(U256::from(1));
         let _ = interpreter.stack.push(U256::from(0));
-        println!("{:?}", interpreter.bytecode.pc());
 
         // Dont jump
         interpreter.step(&table, &mut host);
-        println!("{:?}", interpreter.bytecode.pc());
-
         assert_eq!(interpreter.bytecode.pc(), 3);
         // Jumps to last opcode
         interpreter.step(&table, &mut host);
-        println!("{:?}", interpreter.bytecode.pc());
-
         assert_eq!(interpreter.bytecode.pc(), 7);
     }
 
@@ -340,7 +332,7 @@ mod test {
             0x01, // max index, 0 and 1
             0x00, // first x0001
             0x01,
-            0x00, // second 0x002
+            0x00, // second 0x0002
             0x02,
             NOP,
             NOP,
@@ -426,11 +418,11 @@ mod test {
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
         let bytes2 = Bytes::from([RETF]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        interpreter.runtime_flag.is_eof = true;
 
         // CALLF
         interpreter.step(&table, &mut host);
 
-        // fails after this line
         assert_eq!(interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
             interpreter.sub_routine.return_stack[0],
@@ -461,6 +453,7 @@ mod test {
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        interpreter.runtime_flag.is_eof = true;
 
         // CALLF
         interpreter.step(&table, &mut host);
@@ -489,6 +482,7 @@ mod test {
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter =
             eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+        interpreter.runtime_flag.is_eof = true;
 
         // CALLF
         interpreter.step(&table, &mut host);
@@ -508,6 +502,7 @@ mod test {
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        interpreter.runtime_flag.is_eof = true;
 
         // JUMPF
         interpreter.step(&table, &mut host);
@@ -534,6 +529,7 @@ mod test {
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter =
             eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+        interpreter.runtime_flag.is_eof = true;
 
         // JUMPF
         interpreter.step(&table, &mut host);
