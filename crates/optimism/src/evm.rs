@@ -779,7 +779,7 @@ mod tests {
 
     #[test]
     fn test_log_inspector() {
-        // simple contract emits a log in constructor
+        // simple yul contract emits a log in constructor
 
         /*object "Contract" {
             code {
