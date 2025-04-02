@@ -779,7 +779,14 @@ mod tests {
     #[test]
     fn test_gas_inspector() {
         let contract_data: Bytes = Bytes::from(vec![
-            // todo: bytecode that emits event
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x10,
+            opcode::LOG1,
+            opcode::STOP,
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
