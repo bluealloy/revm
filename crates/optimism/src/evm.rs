@@ -122,6 +122,7 @@ mod tests {
         state::Bytecode,
         Context, ExecuteEvm, InspectEvm, Inspector, Journal,
     };
+    use std::vec::Vec;
 
     #[test]
     fn test_deposit_tx() {
