@@ -7,11 +7,11 @@ use crate::{
         InterpreterAction,
         InterpreterResult,
     },
-    primitives::{Address, Bytecode, Bytes, EVMError, Spec, U256},
+    primitives::{Bytecode, Bytes, EVMError, Spec},
     Context,
     Database,
 };
-use core::ops::Deref;
+use core::{mem::take, ops::Deref};
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -34,7 +34,7 @@ use fluentbase_sdk::{
     STATE_MAIN,
     SYSCALL_ID_SYNC_EVM_GAS,
 };
-use revm_interpreter::{return_ok, return_revert};
+use revm_interpreter::{return_ok, return_revert, Contract};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
@@ -42,21 +42,20 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
-    let bytecode_address = interpreter
-        .contract
-        .bytecode_address
-        .unwrap_or(interpreter.contract.target_address);
+    let contract = take(&mut interpreter.contract);
+
+    let bytecode_address = contract.bytecode_address();
 
     // encode input with all related context info
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
         block: BlockContextV1::from(context.evm.env.deref()),
         tx: TxContextV1::from(context.evm.env.deref()),
         contract: ContractContextV1 {
-            address: interpreter.contract.target_address,
+            address: contract.target_address,
             bytecode_address,
-            caller: interpreter.contract.caller,
+            caller: contract.caller,
             is_static: interpreter.is_static,
-            value: interpreter.contract.call_value,
+            value: contract.call_value,
             gas_limit: interpreter.gas.remaining(),
         },
     });
@@ -64,16 +63,15 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .encode()
         .expect("revm: unable to encode shared context input")
         .to_vec();
-    context_input.extend_from_slice(interpreter.contract.input.as_ref());
+    context_input.extend_from_slice(contract.input.as_ref());
 
     // calculate bytecode hash
-    let rwasm_code_hash = interpreter
-        .contract
+    let rwasm_code_hash = contract
         .hash
         .filter(|v| v != &B256::ZERO)
         .unwrap_or_else(|| keccak256(&rwasm_bytecode));
     debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
-    let rwasm_bytecode = match &interpreter.contract.bytecode {
+    let rwasm_bytecode = match &contract.bytecode {
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
         _ => unreachable!("revm: unexpected bytecode type"),
     };
@@ -86,8 +84,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let is_gas_free = interpreter
-        .contract
+    let is_gas_free = contract
         .eip7702_address
         .or_else(|| Some(bytecode_address))
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
@@ -125,11 +122,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     let return_data: Bytes = runtime_context.into_return_data().into();
 
     Ok(process_exec_result(
-        interpreter.contract.target_address,
-        bytecode_address,
-        interpreter.contract.eip7702_address,
-        interpreter.contract.caller,
-        interpreter.contract.call_value,
+        contract,
         exit_code,
         interpreter.gas,
         return_data,
@@ -220,11 +213,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     gas.record_denominated_refund(fuel_refunded);
 
     process_exec_result(
-        inputs.target_address,
-        inputs.bytecode_address,
-        inputs.eip7702_address,
-        inputs.caller,
-        inputs.call_value,
+        inputs.contract,
         exit_code,
         gas,
         return_data,
@@ -235,11 +224,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
 }
 
 fn process_exec_result(
-    target_address: Address,
-    bytecode_address: Address,
-    eip7702_address: Option<Address>,
-    caller: Address,
-    call_value: U256,
+    contract: Contract,
     exit_code: i32,
     gas: Gas,
     return_data: Bytes,
@@ -273,11 +258,7 @@ fn process_exec_result(
 
     InterpreterAction::InterruptedCall {
         inputs: Box::new(SystemInterruptionInputs {
-            target_address,
-            bytecode_address,
-            eip7702_address,
-            caller,
-            call_value,
+            contract,
             call_id,
             is_create,
             syscall_params: params,

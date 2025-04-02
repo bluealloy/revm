@@ -6,7 +6,7 @@ use crate::{
 use revm_primitives::TxKind;
 
 /// EVM contract information.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Contract {
     /// Contracts data
@@ -107,5 +107,10 @@ impl Contract {
             .legacy_jump_table()
             .map(|i| i.is_valid(pos))
             .unwrap_or(false)
+    }
+
+    #[inline]
+    pub fn bytecode_address(&self) -> Address {
+        self.bytecode_address.unwrap_or(self.target_address)
     }
 }

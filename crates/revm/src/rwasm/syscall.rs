@@ -165,7 +165,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_READ: slot={}", slot);
             // execute sload
-            let value = context.evm.sload(inputs.target_address, slot)?;
+            let value = context.evm.sload(inputs.contract.target_address, slot)?;
             charge_gas!(sload_cost(SPEC::SPEC_ID, value.is_cold));
             let output: [u8; 32] = value.to_le_bytes();
             return_result!(output)
@@ -182,7 +182,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
-            if inputs.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
+            if inputs.contract.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
                 && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT)
             {
                 return_error!(MalformedBuiltinParams);
@@ -191,7 +191,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
-            let value = context.evm.sstore(inputs.target_address, slot, new_value)?;
+            let value = context
+                .evm
+                .sstore(inputs.contract.target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.is_gas_free && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
             if !is_gas_free {
@@ -261,7 +263,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 input: contract_input,
                 gas_limit,
                 target_address,
-                caller: inputs.target_address,
+                caller: inputs.contract.target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
@@ -302,7 +304,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 input: contract_input,
                 gas_limit,
                 target_address,
-                caller: inputs.target_address,
+                caller: inputs.contract.target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
@@ -355,8 +357,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
-                target_address: inputs.target_address,
-                caller: inputs.target_address,
+                target_address: inputs.contract.target_address,
+                caller: inputs.contract.target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
@@ -398,10 +400,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
-                target_address: inputs.target_address,
-                caller: inputs.caller,
+                target_address: inputs.contract.target_address,
+                caller: inputs.contract.caller,
                 bytecode_address: target_address,
-                value: CallValue::Apparent(inputs.call_value),
+                value: CallValue::Apparent(inputs.contract.call_value),
                 scheme: CallScheme::DelegateCall,
                 is_static: inputs.is_static,
                 is_eof: false,
@@ -477,7 +479,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas_limit);
             // create inputs
             let inputs = Box::new(CreateInputs {
-                caller: inputs.target_address,
+                caller: inputs.contract.target_address,
                 scheme,
                 value,
                 init_code,
@@ -526,7 +528,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas_cost);
             // write new log into the journal
             context.evm.journaled_state.log(Log {
-                address: inputs.target_address,
+                address: inputs.contract.target_address,
                 // it's safe to go unchecked here because we do topics check upper
                 data: LogData::new_unchecked(topics, data),
             });
@@ -543,7 +545,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
-            let result = context.evm.selfdestruct(inputs.target_address, target)?;
+            let result = context
+                .evm
+                .selfdestruct(inputs.contract.target_address, target)?;
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DESTROY_ACCOUNT: target={target} result={result:?}",);
             // charge gas cost
@@ -580,7 +584,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
             );
-            let value = context.evm.balance(inputs.target_address)?;
+            let value = context.evm.balance(inputs.contract.target_address)?;
             charge_gas!(gas::LOW);
             let output: [u8; 32] = value.data.to_le_bytes();
             return_result!(output);
@@ -770,7 +774,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let address = Address::from_slice(&inputs.syscall_params.input[..20]);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
             // delegated storage is allowed only for delegated accounts
-            let Some(eip7702_address) = inputs.eip7702_address else {
+            let Some(eip7702_address) = inputs.contract.eip7702_address else {
                 return_error!(MalformedBuiltinParams);
             };
             // make sure the provided address is delegated to the same runtime
@@ -817,7 +821,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             // read value from storage
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32].as_ref());
-            let value = context.evm.tload(inputs.target_address, slot);
+            let value = context.evm.tload(inputs.contract.target_address, slot);
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_TRANSIENT_READ: slot={slot} value={value}");
             // charge gas
@@ -841,7 +845,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             println!("SYSCALL_TRANSIENT_WRITE: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
-            context.evm.tstore(inputs.target_address, slot, value);
+            context
+                .evm
+                .tstore(inputs.contract.target_address, slot, value);
             // empty result
             return_result!(Bytes::new());
         }
@@ -854,7 +860,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             // allow this function only for delegated contracts
             // that has self-management gas policy like EVM or SVM runtimes
-            let bytecode_address = inputs.eip7702_address.unwrap_or(inputs.bytecode_address);
+            let bytecode_address = inputs
+                .contract
+                .eip7702_address
+                .or(inputs.contract.bytecode_address)
+                .unwrap_or(inputs.contract.target_address);
             assert_return!(
                 is_self_gas_management_contract(&bytecode_address),
                 MalformedBuiltinParams
@@ -869,8 +879,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             let gas_refund_diff = gas_refunded - local_gas.refunded();
             local_gas.record_refund(gas_refund_diff);
-            #[cfg(feature = "debug-print")]
-            println!("SYSCALL_YIELD_SYNC_GAS: gas_remaining={gas_remaining}, gas_refunded={gas_refunded} spent_diff={gas_spent_diff} refund_diff={gas_refund_diff}");
             // returns nothing
             return_result!(Bytes::new());
         }

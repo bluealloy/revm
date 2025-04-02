@@ -115,9 +115,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 self.handler
                     .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
 
-            #[cfg(feature = "debug-print")]
-            println!("evm_next_action: {:?}", next_action);
-
             // Take error and break the loop, if any.
             // This error can be set in the Interpreter when it interacts with the context.
             self.context.evm.take_error()?;
@@ -172,8 +169,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     stack_frame = call_stack.last_mut().unwrap();
                 }
                 FrameOrResult::Result(result) => {
-                    #[cfg(feature = "debug-print")]
-                    println!("evm_result: {result:?}");
                     let Some(top_frame) = call_stack.last_mut() else {
                         // Break the loop if there are no more frames.
                         return Ok(result);

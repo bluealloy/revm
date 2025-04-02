@@ -114,7 +114,6 @@ impl JournaledState {
     #[inline]
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
-            println!("touch account: {address}");
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.mark_touch();
         }
