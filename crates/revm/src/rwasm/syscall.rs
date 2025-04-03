@@ -353,7 +353,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             // create call inputs
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}", inputs.target_address, inputs.target_address, target_address, inputs.eip7702_address);
+            println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}", inputs.contract.target_address, inputs.contract.target_address, target_address, inputs.contract.eip7702_address);
             let inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
@@ -808,7 +808,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // load slot from the storage
             let value = context.evm.sload(address, slot)?;
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}", inputs.target_address, inputs.bytecode_address, value.data);
+            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}", inputs.contract.target_address, inputs.contract.bytecode_address(), value.data);
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
             return_result!(output)
         }
