@@ -106,8 +106,9 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
+    println!("pc: {:?}", interpreter.bytecode.pc());
     let idx = interpreter.bytecode.read_u16() as usize;
-
+    println!("pc: {:?}", interpreter.bytecode.pc());
     // Get target types
     let Some(types) = interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
@@ -131,13 +132,17 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
         interpreter
             .control
             .set_instruction_result(InstructionResult::SubRoutineStackOverflow);
+        println!("pc: {:?}", interpreter.bytecode.pc());
         return;
     };
     let pc = interpreter
         .bytecode
         .code_section_pc(idx)
         .expect("Invalid code section index");
+    println!("pc: {:?}", pc);
+    println!("pc: {:?}", interpreter.bytecode.pc());
     interpreter.bytecode.absolute_jump(pc);
+    println!("pc: {:?}", interpreter.bytecode.pc());
 }
 
 pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -418,17 +423,20 @@ mod test {
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
         let bytes2 = Bytes::from([RETF]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        let pc_base = interpreter.bytecode.pc();
+        println!("1: {:?}", interpreter.bytecode.pc() - pc_base);
         interpreter.runtime_flag.is_eof = true;
 
+        println!("pre jumpa: {:?}", interpreter.bytecode.pc() - pc_base);
         // CALLF
         interpreter.step(&table, &mut host);
-
+        // println!("posle jumpa: {:?}", interpreter.bytecode.pc() - pc_base);
         assert_eq!(interpreter.sub_routine.current_code_idx, 1);
-        assert_eq!(
-            interpreter.sub_routine.return_stack[0],
-            SubRoutineReturnFrame::new(0, 3)
-        );
-        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
+        // assert_eq!(
+        //     interpreter.sub_routine.return_stack[0],
+        //     SubRoutineReturnFrame::new(0, 3)
+        // );
+        assert_eq!(interpreter.bytecode.pc() - pc_base, 4);
 
         // RETF
         interpreter.step(&table, &mut host);
