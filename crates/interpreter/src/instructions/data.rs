@@ -135,7 +135,6 @@ mod test {
         interpreter.step(&table, &mut host);
 
         assert_eq!(
-        nem/jump_tests
             interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
@@ -144,7 +143,6 @@ mod test {
         // DATALOADN (padding)
         interpreter.step(&table, &mut host);
         assert_eq!(
-        nem/jump_tests
             interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
