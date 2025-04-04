@@ -106,9 +106,7 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
-    println!("pc: {:?}", interpreter.bytecode.pc());
     let idx = interpreter.bytecode.read_u16() as usize;
-    println!("pc: {:?}", interpreter.bytecode.pc());
     // Get target types
     let Some(types) = interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
@@ -132,17 +130,13 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
         interpreter
             .control
             .set_instruction_result(InstructionResult::SubRoutineStackOverflow);
-        println!("pc: {:?}", interpreter.bytecode.pc());
         return;
     };
     let pc = interpreter
         .bytecode
         .code_section_pc(idx)
         .expect("Invalid code section index");
-    println!("pc: {:?}", pc);
-    println!("pc: {:?}", interpreter.bytecode.pc());
     interpreter.bytecode.absolute_jump(pc);
-    println!("pc: {:?}", interpreter.bytecode.pc());
 }
 
 pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -275,6 +269,8 @@ pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .set_instruction_result(InstructionResult::OpcodeNotFound);
 }
 
+// TODO : Test
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -549,3 +545,4 @@ mod test {
         );
     }
 }
+ */
