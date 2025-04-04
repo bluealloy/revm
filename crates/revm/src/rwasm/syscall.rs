@@ -213,11 +213,13 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CALL => {
+            println!("SYSCALL_ID_CALL={}", SYSCALL_ID_CALL);
             assert_return!(
                 inputs.syscall_params.input.len() >= 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
             );
+            println!("check call is ok");
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
@@ -766,6 +768,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_DELEGATED_STORAGE => {
+            println!("executing delegated storage");
             assert_return!(
                 inputs.syscall_params.input.len() == 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -775,6 +778,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
             // delegated storage is allowed only for delegated accounts
             let Some(eip7702_address) = inputs.contract.eip7702_address else {
+                println!("address is invalid..");
+                dbg!(&inputs.contract);
                 return_error!(MalformedBuiltinParams);
             };
             // make sure the provided address is delegated to the same runtime

@@ -13,12 +13,16 @@ use crate::{
 };
 use core::{mem::take, ops::Deref};
 use fluentbase_runtime::{
+    execute_wasmtime,
+    resume_wasmtime,
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
 };
 use fluentbase_sdk::{
     codec::CompactABI,
+    get_precompile_wasm_bytecode,
     is_self_gas_management_contract,
+    is_system_precompile,
     keccak256,
     BlockContextV1,
     BytecodeOrHash,
@@ -33,6 +37,7 @@ use fluentbase_sdk::{
     STATE_DEPLOY,
     STATE_MAIN,
     SYSCALL_ID_SYNC_EVM_GAS,
+    PRECOMPILE_EVM_RUNTIME,
 };
 use revm_interpreter::{return_ok, return_revert, Contract};
 
@@ -44,15 +49,13 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let contract = take(&mut interpreter.contract);
 
-    let bytecode_address = contract.bytecode_address();
-
     // encode input with all related context info
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
         block: BlockContextV1::from(context.evm.env.deref()),
         tx: TxContextV1::from(context.evm.env.deref()),
         contract: ContractContextV1 {
             address: contract.target_address,
-            bytecode_address,
+            bytecode_address: contract.bytecode_address(),
             caller: contract.caller,
             is_static: interpreter.is_static,
             value: contract.call_value,
@@ -65,43 +68,56 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .to_vec();
     context_input.extend_from_slice(contract.input.as_ref());
 
-    // calculate bytecode hash
-    let rwasm_code_hash = contract
-        .hash
-        .filter(|v| v != &B256::ZERO)
-        .unwrap_or_else(|| keccak256(&rwasm_bytecode));
-    debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
-    let rwasm_bytecode = match &contract.bytecode {
-        Bytecode::Rwasm(bytecode) => bytecode.clone(),
-        _ => unreachable!("revm: unexpected bytecode type"),
+    let effective_bytecode_address = match contract.eip7702_address {
+        Some(PRECOMPILE_EVM_RUNTIME) => PRECOMPILE_EVM_RUNTIME,
+        _ => contract.bytecode_address(),
     };
-    let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
-    // fuel limit we denominate later to gas
-    let fuel_limit = interpreter
-        .gas
-        .remaining()
-        .checked_mul(FUEL_DENOM_RATE)
-        .unwrap_or(u64::MAX);
+    let (fuel_consumed, fuel_refunded, exit_code, return_data, is_gas_free) =
+        if is_system_precompile(&effective_bytecode_address) {
+            let wasm_bytecode = get_precompile_wasm_bytecode(&effective_bytecode_address).unwrap();
+            let (exit_code, return_data) = execute_wasmtime(wasm_bytecode, context_input);
+            (0, 0, exit_code, return_data.into(), true)
+        } else {
+            // calculate bytecode hash
+            let rwasm_code_hash = contract
+                .hash
+                .filter(|v| v != &B256::ZERO)
+                .unwrap_or_else(|| keccak256(&rwasm_bytecode));
+            debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
+            let rwasm_bytecode = match &contract.bytecode {
+                Bytecode::Rwasm(bytecode) => bytecode.clone(),
+                _ => unreachable!("revm: unexpected bytecode type"),
+            };
+            let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
-    let is_gas_free = contract
-        .eip7702_address
-        .or_else(|| Some(bytecode_address))
-        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
-        .is_some();
+            // fuel limit we denominate later to gas
+            let fuel_limit = interpreter
+                .gas
+                .remaining()
+                .checked_mul(FUEL_DENOM_RATE)
+                .unwrap_or(u64::MAX);
 
-    // execute function
-    let mut runtime_context = RuntimeContext::root(fuel_limit);
-    if is_gas_free {
-        runtime_context = runtime_context.without_fuel();
-    }
-    let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
-        &mut runtime_context,
-        bytecode_hash,
-        &context_input,
-        fuel_limit,
-        if is_create { STATE_DEPLOY } else { STATE_MAIN },
-    );
+            let mut runtime_context = RuntimeContext::root(fuel_limit);
+            let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
+                &mut runtime_context,
+                bytecode_hash,
+                &context_input,
+                fuel_limit,
+                if is_create { STATE_DEPLOY } else { STATE_MAIN },
+            );
+
+            // extract return data from the execution context
+            let return_data: Bytes = runtime_context.into_return_data().into();
+            (
+                fuel_consumed,
+                fuel_refunded,
+                exit_code,
+                return_data,
+                false,
+            )
+        };
+
     if is_gas_free {
         debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
     }
@@ -117,9 +133,6 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         });
     }
     interpreter.gas.record_denominated_refund(fuel_refunded);
-
-    // extract return data from the execution context
-    let return_data: Bytes = runtime_context.into_return_data().into();
 
     Ok(process_exec_result(
         contract,
@@ -168,26 +181,36 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         }
     };
 
+    let (fuel_consumed, fuel_refunded, exit_code, return_data) =
+        if inputs.is_gas_free {
+            let (exit_code, return_data) = resume_wasmtime(
+                inputs.call_id as i32,
+                result.output.into(),
+                exit_code.into_i32(),
+                fuel_consumed,
+                fuel_refunded,
+                inputs.syscall_params.fuel16_ptr,
+            );
+            (0, 0, exit_code, return_data.into())
+        } else {
+            let mut runtime_context = RuntimeContext::root(0);
+            let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
+                &mut runtime_context,
+                inputs.call_id,
+                result.output.into(),
+                exit_code.into_i32(),
+                fuel_consumed,
+                fuel_refunded,
+                inputs.syscall_params.fuel16_ptr,
+            );
+            let return_data: Bytes = runtime_context.into_return_data().into();
+            (fuel_consumed, fuel_refunded, exit_code, return_data)
+        };
+
     // gas adjustment is needed
     // to synchronize gas/fuel between root and self-gas management runtimes,
     // this interruption can be made by EVM/SVM runtimes only
     let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
-
-    let mut runtime_context = RuntimeContext::root(0);
-    if inputs.is_gas_free {
-        runtime_context = runtime_context.without_fuel();
-    }
-    let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
-        &mut runtime_context,
-        inputs.call_id,
-        result.output.into(),
-        exit_code.into_i32(),
-        fuel_consumed,
-        fuel_refunded,
-        inputs.syscall_params.fuel16_ptr,
-    );
-    let return_data: Bytes = runtime_context.into_return_data().into();
-
     // make sure for gas-free mode we don't charge anything
     debug_assert!(!inputs.is_gas_free || fuel_consumed == 0 && fuel_refunded == 0);
 
