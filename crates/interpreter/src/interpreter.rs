@@ -23,6 +23,7 @@ pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMO
 pub use stack::{Stack, STACK_LIMIT};
 use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
+pub use subroutine_stack::SubRoutineReturnFrame;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]

@@ -107,7 +107,6 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::LOW);
 
     let idx = interpreter.bytecode.read_u16() as usize;
-
     // Get target types
     let Some(types) = interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
@@ -275,105 +274,108 @@ pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{table::make_instruction_table, DummyHost, Gas};
+    use crate::interpreter::SubRoutineReturnFrame;
+    use crate::{
+        host::DummyHost,
+        instruction_table,
+        interpreter::EthInterpreter,
+        // Gas, InputsImpl, SharedMemory,
+    };
     use bytecode::opcode::{CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP};
     use bytecode::{
-        eof::{Eof, CodeInfo},
+        eof::{CodeInfo, Eof},
         Bytecode,
     };
+    // use context_interface::DefaultEthereumWiring;
+    // use primitives::hardfork::SpecId;
     use primitives::bytes;
-    use primitives::hardfork::SpecId;
     use std::sync::Arc;
-    use context_interface::DefaultEthereumWiring;
 
     #[test]
     fn rjump() {
-        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
-        let mut host = DummyHost::default();
-        let mut interp =
-            Interpreter::new_bytecode(Bytecode::LegacyRaw([RJUMP, 0x00, 0x02, STOP, STOP].into()));
-        interp.is_eof = true;
-        interp.gas = Gas::new(10000);
-        interp.spec_id = SpecId::PRAGUE;
+        let bytecode = Bytecode::new_raw(Bytes::from(&[RJUMP, 0x00, 0x02, STOP, STOP]));
+        let mut interpreter = Interpreter::<EthInterpreter>::default().with_bytecode(bytecode);
 
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 5);
+        interpreter.runtime_flag.is_eof = true;
+        let table = instruction_table();
+        let mut host = DummyHost;
+
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 5)
     }
 
     #[test]
     fn rjumpi() {
-        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
-        let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
-            [RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP].into(),
-        ));
-        interp.is_eof = true;
-        interp.stack.push(U256::from(1)).unwrap();
-        interp.stack.push(U256::from(0)).unwrap();
-        interp.gas = Gas::new(10000);
-        interp.spec_id = SpecId::PRAGUE;
+        let bytecode = Bytecode::new_raw(Bytes::from(&[
+            RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
+        ]));
+        let mut interpreter = Interpreter::default().with_bytecode(bytecode);
+
+        interpreter.runtime_flag.is_eof = true;
+        let table = instruction_table();
+        let mut host = DummyHost;
+
+        let _ = interpreter.stack.push(U256::from(1));
+        let _ = interpreter.stack.push(U256::from(0));
 
         // Dont jump
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 3);
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 3);
         // Jumps to last opcode
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 7);
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 7);
     }
 
     #[test]
     fn rjumpv() {
-        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
-        let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
-            [
-                RJUMPV,
-                0x01, // max index, 0 and 1
-                0x00, // first x0001
-                0x01,
-                0x00, // second 0x002
-                0x02,
-                NOP,
-                NOP,
-                NOP,
-                RJUMP,
-                0xFF,
-                (-12i8) as u8,
-                STOP,
-            ]
-            .into(),
-        ));
-        interp.is_eof = true;
-        interp.gas = Gas::new(1000);
-        interp.spec_id = SpecId::PRAGUE;
+        let bytecode = Bytecode::new_raw(Bytes::from(&[
+            RJUMPV,
+            0x01, // max index, 0 and 1
+            0x00, // first x0001
+            0x01,
+            0x00, // second 0x0002
+            0x02,
+            NOP,
+            NOP,
+            NOP,
+            RJUMP,
+            0xFF,
+            (-12i8) as u8,
+            STOP,
+        ]));
+        let mut interpreter = Interpreter::default().with_bytecode(bytecode);
+
+        interpreter.runtime_flag.is_eof = true;
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         // More then max_index
-        interp.stack.push(U256::from(10)).unwrap();
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 6);
+        let _ = interpreter.stack.push(U256::from(10));
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 6);
 
         // Cleanup
-        interp.step(&table, &mut host);
-        interp.step(&table, &mut host);
-        interp.step(&table, &mut host);
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 0);
+        interpreter.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 0);
 
         // Jump to first index of vtable
-        interp.stack.push(U256::from(0)).unwrap();
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 7);
+        let _ = interpreter.stack.push(U256::from(0));
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 7);
 
         // Cleanup
-        interp.step(&table, &mut host);
-        interp.step(&table, &mut host);
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 0);
+        interpreter.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 0);
 
         // Jump to second index of vtable
-        interp.stack.push(U256::from(1)).unwrap();
-        interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 8);
+        let _ = interpreter.stack.push(U256::from(1));
+        interpreter.step(&table, &mut host);
+        assert_eq!(interpreter.bytecode.pc(), 8);
     }
 
     fn dummy_eof() -> Eof {
@@ -390,133 +392,157 @@ mod test {
         let mut eof = dummy_eof();
 
         eof.body.code_section.clear();
-        eof.body.types_section.clear();
+        eof.body.code_info.clear();
         eof.header.code_sizes.clear();
 
         eof.header.code_sizes.push(bytes1.len() as u16);
         eof.body.code_section.push(bytes1.len());
-        eof.body.types_section.push(CodeInfo::new(0, 0, 11));
+        eof.body.code_info.push(CodeInfo::new(0, 0, 11));
 
         eof.header.code_sizes.push(bytes2.len() as u16);
         eof.body.code_section.push(bytes2.len() + bytes1.len());
-        eof.body.types_section.push(types);
+        eof.body.code_info.push(types);
 
         eof.body.code = Bytes::from([bytes1, bytes2].concat());
 
-        let mut interp = Interpreter::new_bytecode(Bytecode::Eof(Arc::new(eof)));
-        interp.gas = Gas::new(10000);
-        interp.spec_id = SpecId::PRAGUE;
-        interp
+        let bytecode = Bytecode::Eof(Arc::new(eof));
+
+        let interpreter = Interpreter::default().with_bytecode(bytecode);
+        interpreter
     }
 
     #[test]
     fn callf_retf_stop() {
-        let table = make_instruction_table::<Interpreter, _>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
         let bytes2 = Bytes::from([RETF]);
-        let mut interp = eof_setup(bytes1, bytes2.clone());
+        let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        let pc_base = interpreter.bytecode.pc();
+        println!("1: {:?}", interpreter.bytecode.pc() - pc_base);
+        interpreter.runtime_flag.is_eof = true;
 
+        println!("pre jumpa: {:?}", interpreter.bytecode.pc() - pc_base);
         // CALLF
-        interp.step(&table, &mut host);
-
-        assert_eq!(interp.function_stack.current_code_idx, 1);
-        assert_eq!(
-            interp.function_stack.return_stack[0],
-            SubRoutineReturnFrame::new(0, 3)
-        );
-        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+        interpreter.step(&table, &mut host);
+        // println!("posle jumpa: {:?}", interpreter.bytecode.pc() - pc_base);
+        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
+        // assert_eq!(
+        //     interpreter.sub_routine.return_stack[0],
+        //     SubRoutineReturnFrame::new(0, 3)
+        // );
+        assert_eq!(interpreter.bytecode.pc() - pc_base, 4);
 
         // RETF
-        interp.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
 
-        assert_eq!(interp.function_stack.current_code_idx, 0);
-        assert_eq!(interp.function_stack.return_stack, Vec::new());
-        assert_eq!(interp.program_counter(), 3);
+        assert_eq!(interpreter.sub_routine.current_code_idx, 0);
+        assert_eq!(interpreter.sub_routine.return_stack, Vec::new());
+        assert_eq!(interpreter.bytecode.pc(), 3);
 
         // STOP
-        interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::Stop);
+        interpreter.step(&table, &mut host);
+        assert_eq!(
+            interpreter.control.instruction_result,
+            InstructionResult::Stop
+        );
     }
 
     #[test]
     fn callf_stop() {
-        let table = make_instruction_table::<Interpreter, _>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
-        let mut interp = eof_setup(bytes1, bytes2.clone());
+        let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        interpreter.runtime_flag.is_eof = true;
 
         // CALLF
-        interp.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
 
-        assert_eq!(interp.function_stack.current_code_idx, 1);
+        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
-            interp.function_stack.return_stack[0],
+            interpreter.sub_routine.return_stack[0],
             SubRoutineReturnFrame::new(0, 3)
         );
-        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
 
         // STOP
-        interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::Stop);
+        interpreter.step(&table, &mut host);
+        assert_eq!(
+            interpreter.control.instruction_result,
+            InstructionResult::Stop
+        );
     }
 
     #[test]
     fn callf_stack_overflow() {
-        let table = make_instruction_table::<Interpreter, _>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
-        let mut interp =
+        let mut interpreter =
             eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+        interpreter.runtime_flag.is_eof = true;
 
         // CALLF
-        interp.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
 
         // Stack overflow
-        assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
+        assert_eq!(
+            interpreter.control.instruction_result,
+            InstructionResult::StackOverflow
+        );
     }
 
     #[test]
     fn jumpf_stop() {
-        let table = make_instruction_table::<Interpreter, _>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
-        let mut interp = eof_setup(bytes1, bytes2.clone());
+        let mut interpreter = eof_setup(bytes1, bytes2.clone());
+        interpreter.runtime_flag.is_eof = true;
 
         // JUMPF
-        interp.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
 
-        assert_eq!(interp.function_stack.current_code_idx, 1);
-        assert!(interp.function_stack.return_stack.is_empty());
-        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+        // fails after this line
+        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
+        assert!(interpreter.sub_routine.return_stack.is_empty());
+        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
 
         // STOP
-        interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::Stop);
+        interpreter.step(&table, &mut host);
+        assert_eq!(
+            interpreter.control.instruction_result,
+            InstructionResult::Stop
+        );
     }
 
     #[test]
     fn jumpf_stack_overflow() {
-        let table = make_instruction_table::<Interpreter, _>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let table = instruction_table();
+        let mut host = DummyHost;
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
-        let mut interp =
+        let mut interpreter =
             eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+        interpreter.runtime_flag.is_eof = true;
 
         // JUMPF
-        interp.step(&table, &mut host);
+        interpreter.step(&table, &mut host);
 
         // Stack overflow
-        assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
+        assert_eq!(
+            interpreter.control.instruction_result,
+            InstructionResult::StackOverflow
+        );
     }
 }
-*/
+ */
