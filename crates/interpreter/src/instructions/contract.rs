@@ -56,9 +56,6 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         panic!("Panic if data section is not full");
     }
 
-    // Deduct gas for hash that is needed to calculate address.
-    gas_or_fail!(interpreter, cost_per_word(container.len(), KECCAK256WORD));
-
     let created_address = interpreter
         .input
         .target_address()
