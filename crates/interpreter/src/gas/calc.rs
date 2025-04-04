@@ -357,6 +357,17 @@ pub struct InitialAndFloorGas {
     pub floor_gas: u64,
 }
 
+impl InitialAndFloorGas {
+    /// Create a new InitialAndFloorGas instance.
+    #[inline]
+    pub const fn new(initial_gas: u64, floor_gas: u64) -> Self {
+        Self {
+            initial_gas,
+            floor_gas,
+        }
+    }
+}
+
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 ///

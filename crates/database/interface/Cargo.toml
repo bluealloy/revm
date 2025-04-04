@@ -1,7 +1,7 @@
 [package]
 name = "revm-database-interface"
 description = "Revm Database interface"
-version = "1.0.0"
+version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -45,4 +45,4 @@ alloy-sol-types.workspace = true
 default = ["std"]
 std = ["serde?/std", "alloy-sol-types/std", "primitives/std", "state/std"]
 serde = ["dep:serde", "primitives/serde", "state/serde"]
-asyncdb = ["dep:tokio"]
+asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]

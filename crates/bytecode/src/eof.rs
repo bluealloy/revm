@@ -16,7 +16,7 @@ use std::{fmt, vec, vec::Vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =
-    b256!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
+    b256!("0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
 
 /// EOF Magic in [u16] form
 pub const EOF_MAGIC: u16 = 0xEF00;
@@ -53,21 +53,24 @@ impl Default for Eof {
 }
 
 impl Eof {
+    /// Creates a new EOF container from the given body.
+    pub fn new(body: EofBody) -> Self {
+        body.into_eof()
+    }
+
+    /// Validates the EOF container.
     pub fn validate(&self) -> Result<(), EofError> {
         validate_eof(self)
     }
 
-    pub fn valitate_raw(bytes: Bytes) -> Result<Eof, EofError> {
+    /// Validates the raw EOF bytes.
+    pub fn validate_raw(bytes: Bytes) -> Result<Eof, EofError> {
         validate_raw_eof(bytes)
     }
 
+    /// Validates the EOF container with the given code type.   
     pub fn validate_mode(&self, mode: CodeType) -> Result<(), EofError> {
         validate_eof_inner(self, Some(mode))
-    }
-
-    /// Creates a new EOF container from the given body.
-    pub fn new(body: EofBody) -> Self {
-        body.into_eof()
     }
 
     /// Returns len of the header and body in bytes.

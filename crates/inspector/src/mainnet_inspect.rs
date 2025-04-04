@@ -76,6 +76,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Inspector = INSP;

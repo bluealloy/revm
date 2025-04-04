@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v67 tag
+date: 28.03.2025
+
+op-revm isthum fix.
+
+* `revm-primitives`: 16.0.0 -> 17.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-context`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-database`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
+* `revm-precompile`: 17.0.0 -> 18.0.0 (⚠ API breaking changes)
+* `revm-handler`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm`: 20.0.0 -> 21.0.0 (✓ API compatible changes)
+* `revme`: 3.0.0 -> 4.0.0 (⚠ API breaking changes)
+* `op-revm`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-state`: 1.0.0 -> 2.0.0
+* `revm-statetest-types`: 1.0.0 -> 2.0.0
+
 # v66 tag
 date: 24.03.205
 

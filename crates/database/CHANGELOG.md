@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-database-v1.0.0...revm-database-v2.0.0) - 2025-03-28
+
+### Other
+
+- make number more readable ([#2300](https://github.com/bluealloy/revm/pull/2300))
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revm-database-v1.0.0-alpha.5...revm-database-v1.0.0) - 2025-03-24
 
 ### Other

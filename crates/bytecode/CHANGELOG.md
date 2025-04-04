@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0...revm-bytecode-v2.0.0) - 2025-03-28
+
+### Fixed
+
+- fix typo ([#2333](https://github.com/bluealloy/revm/pull/2333))
+
+### Other
+
+- move Eof::new to first place && add doc for some pub functions ([#2334](https://github.com/bluealloy/revm/pull/2334))
+- remove outdated TODO comments ([#2325](https://github.com/bluealloy/revm/pull/2325))
+
 ## [1.0.0 ](https://github.com/bluealloy/revm/compare/revm-bytecode-v1.0.0-alpha.5...revm-bytecode-v1.0.0) - 2025-03-24
 
 Stable version

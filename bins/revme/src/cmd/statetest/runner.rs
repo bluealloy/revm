@@ -66,6 +66,10 @@ pub enum TestErrorKind {
     SerdeDeserialize(#[from] serde_json::Error),
     #[error("thread panicked")]
     Panic,
+    #[error("path does not exist")]
+    InvalidPath,
+    #[error("no JSON test files found in path")]
+    NoJsonFiles,
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {

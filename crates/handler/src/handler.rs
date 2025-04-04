@@ -65,7 +65,6 @@ pub trait Handler {
         FrameInit = FrameInput,
     >;
     /// The halt reason type included in the output
-    ///  TODO `HaltReason` should be part of the output.
     type HaltReason: HaltReasonTr;
 
     /// The main entry point for transaction execution.
@@ -81,6 +80,29 @@ pub trait Handler {
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
+            Ok(output) => Ok(output),
+            Err(e) => self.catch_error(evm, e),
+        }
+    }
+
+    /// Runs the system call.
+    ///
+    /// System call is a special transaction where caller is a [`crate::SYSTEM_ADDRESS`]
+    ///
+    /// It is used to call a system contracts and it skips all the `validation` and `pre-execution` and most of `post-execution` phases.
+    /// For example it will not deduct the caller or reward the beneficiary.
+    #[inline]
+    fn run_system_call(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        // dummy values that are not used.
+        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        // call execution and than output.
+        match self
+            .execution(evm, &init_and_floor_gas)
+            .and_then(|exec_result| self.output(evm, exec_result))
+        {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
@@ -221,7 +243,7 @@ pub trait Handler {
     /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
     #[inline]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::load_accounts(evm.ctx())
+        pre_execution::load_accounts(evm)
     }
 
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.

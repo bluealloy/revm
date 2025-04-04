@@ -1,11 +1,9 @@
 use super::{
-    blst::map_fp_to_g1 as blst_map_fp_to_g1,
-    g1::encode_g1_point,
-    utils::{fp_from_bendian, remove_padding},
+    crypto_backend::{encode_g1_point, map_fp_to_g1 as blst_map_fp_to_g1, read_fp},
+    utils::remove_fp_padding,
 };
 use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
-use crate::PrecompileWithAddress;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
@@ -27,12 +25,12 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let input_p0 = remove_padding(input)?;
-    let fp = fp_from_bendian(input_p0)?;
+    let input_p0 = remove_fp_padding(input)?;
+    let fp = read_fp(input_p0)?;
     let p_aff = blst_map_fp_to_g1(&fp);
 
     let out = encode_g1_point(&p_aff);
-    Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out.into()))
 }
 
 #[cfg(test)]
