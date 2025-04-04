@@ -30,7 +30,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = interpreter.bytecode.read_u8();
 
-    popn!([value, salt, data_offset, data_size], interpreter);
+    popn!([salt, input_offset, input_size, value], interpreter);
 
     let container = interpreter
         .bytecode
@@ -39,7 +39,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .clone();
 
     // Resize memory and get return range.
-    let Some(input_range) = resize_memory(interpreter, data_offset, data_size) else {
+    let Some(input_range) = resize_memory(interpreter, input_offset, input_size) else {
         return;
     };
 
