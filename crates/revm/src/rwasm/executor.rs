@@ -76,7 +76,11 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     let (fuel_consumed, fuel_refunded, exit_code, return_data, is_gas_free) =
         if is_system_precompile(&effective_bytecode_address) {
             let wasm_bytecode = get_precompile_wasm_bytecode(&effective_bytecode_address).unwrap();
-            let (exit_code, return_data) = execute_wasmtime(wasm_bytecode, context_input);
+            let (exit_code, return_data) = execute_wasmtime(
+                wasm_bytecode,
+                context_input,
+                if is_create { STATE_DEPLOY } else { STATE_MAIN },
+            );
             (0, 0, exit_code, return_data.into(), true)
         } else {
             // calculate bytecode hash
