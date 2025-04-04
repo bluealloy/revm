@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/bluealloy/revm/compare/op-revm-v2.0.0...op-revm-v2.1.0) - 2025-04-04
+
+### Added
+
+- support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
+
+### Other
+
+- *(op-tx)* Cover DepositTransactionParts constructor in test ([#2358](https://github.com/bluealloy/revm/pull/2358))
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+
 ## [2.0.0](https://github.com/bluealloy/revm/compare/op-revm-v1.0.0...op-revm-v2.0.0) - 2025-03-28
 
 ### Added
