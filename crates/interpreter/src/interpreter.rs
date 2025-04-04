@@ -7,23 +7,25 @@ mod shared_memory;
 mod stack;
 mod subroutine_stack;
 
+// re-exports
+pub use ext_bytecode::ExtBytecode;
+pub use input::InputsImpl;
+pub use runtime_flags::RuntimeFlags;
+pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMORY};
+pub use stack::{Stack, STACK_LIMIT};
+pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
+
+// imports
 use crate::{
     interpreter_types::*, Gas, Host, Instruction, InstructionResult, InstructionTable,
     InterpreterAction,
 };
 use bytecode::Bytecode;
 use core::cell::RefCell;
-pub use ext_bytecode::ExtBytecode;
-pub use input::InputsImpl;
 use loop_control::LoopControl as LoopControlImpl;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
 use return_data::ReturnDataImpl;
-pub use runtime_flags::RuntimeFlags;
-pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMORY};
-pub use stack::{Stack, STACK_LIMIT};
 use std::rc::Rc;
-use subroutine_stack::SubRoutineImpl;
-pub use subroutine_stack::SubRoutineReturnFrame;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
