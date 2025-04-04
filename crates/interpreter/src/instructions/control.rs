@@ -274,19 +274,12 @@ pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
 mod test {
     use super::*;
     use crate::interpreter::SubRoutineReturnFrame;
-    use crate::{
-        host::DummyHost,
-        instruction_table,
-        interpreter::EthInterpreter,
-        // Gas, InputsImpl, SharedMemory,
-    };
+    use crate::{host::DummyHost, instruction_table, interpreter::EthInterpreter};
     use bytecode::opcode::{CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP};
     use bytecode::{
         eof::{CodeInfo, Eof},
         Bytecode,
     };
-    // use context_interface::DefaultEthereumWiring;
-    // use primitives::hardfork::SpecId;
     use primitives::bytes;
     use std::sync::Arc;
 
@@ -402,12 +395,18 @@ mod test {
         eof.body.code_section.push(bytes2.len() + bytes1.len());
         eof.body.code_info.push(types);
 
+        // added two code infos that are 4 bytes each.
+        eof.header.types_size = 2 * 4;
+
         eof.body.code = Bytes::from([bytes1, bytes2].concat());
 
-        let bytecode = Bytecode::Eof(Arc::new(eof));
+        // encoding EOF is done se we can generate a raw bytecode.
+        // raw bytecode is used to calculate program counter.
+        let encoded = eof.encode_slow();
 
-        let interpreter = Interpreter::default().with_bytecode(bytecode);
-        interpreter
+        let bytecode = Bytecode::Eof(Arc::new(Eof::decode(encoded).unwrap()));
+
+        Interpreter::default().with_bytecode(bytecode)
     }
 
     #[test]
@@ -419,6 +418,7 @@ mod test {
         let bytes2 = Bytes::from([RETF]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
         interpreter.runtime_flag.is_eof = true;
+        let base_pc = interpreter.bytecode.pc();
 
         // CALLF
         interpreter.step(&table, &mut host);
@@ -426,16 +426,18 @@ mod test {
         assert_eq!(interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
             interpreter.sub_routine.return_stack[0],
-            SubRoutineReturnFrame::new(0, 3)
+            SubRoutineReturnFrame::new(0, 3 + base_pc)
         );
-        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
+        // points to second code section, at RETF opcode
+        assert_eq!(interpreter.bytecode.pc() - base_pc, 4);
 
         // RETF
         interpreter.step(&table, &mut host);
 
         assert_eq!(interpreter.sub_routine.current_code_idx, 0);
         assert_eq!(interpreter.sub_routine.return_stack, Vec::new());
-        assert_eq!(interpreter.bytecode.pc(), 3);
+        // we have returned from the second code section and next opcode is STOP
+        assert_eq!(interpreter.bytecode.pc() - base_pc, 3);
 
         // STOP
         interpreter.step(&table, &mut host);
@@ -454,6 +456,7 @@ mod test {
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
         interpreter.runtime_flag.is_eof = true;
+        let base_pc = interpreter.bytecode.pc();
 
         // CALLF
         interpreter.step(&table, &mut host);
@@ -461,9 +464,10 @@ mod test {
         assert_eq!(interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
             interpreter.sub_routine.return_stack[0],
-            SubRoutineReturnFrame::new(0, 3)
+            SubRoutineReturnFrame::new(0, 3 + base_pc)
         );
-        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
+        // program counter points to STOP of second code section.
+        assert_eq!(interpreter.bytecode.pc(), 3 + base_pc);
 
         // STOP
         interpreter.step(&table, &mut host);
@@ -481,8 +485,13 @@ mod test {
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter =
-            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1023));
         interpreter.runtime_flag.is_eof = true;
+
+        // push two items so we can overflow the CALLF call.
+        // overflow happens if max_stack_size + stack.len is more than 1024
+        let _ = interpreter.stack.push(U256::from(0));
+        let _ = interpreter.stack.push(U256::from(0));
 
         // CALLF
         interpreter.step(&table, &mut host);
@@ -503,6 +512,7 @@ mod test {
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter = eof_setup(bytes1, bytes2.clone());
         interpreter.runtime_flag.is_eof = true;
+        let base_pc = interpreter.bytecode.pc();
 
         // JUMPF
         interpreter.step(&table, &mut host);
@@ -510,7 +520,8 @@ mod test {
         // fails after this line
         assert_eq!(interpreter.sub_routine.current_code_idx, 1);
         assert!(interpreter.sub_routine.return_stack.is_empty());
-        // assert_eq!(interpreter.instruction_pointer, bytes2.as_ptr());
+        // program counter points to STOP of second code section.
+        assert_eq!(interpreter.bytecode.pc(), 3 + base_pc);
 
         // STOP
         interpreter.step(&table, &mut host);
@@ -525,11 +536,16 @@ mod test {
         let table = instruction_table();
         let mut host = DummyHost;
 
-        let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
+        let bytes1 = Bytes::from([JUMPF, 0x00, 0x01, STOP]);
         let bytes2 = Bytes::from([STOP]);
         let mut interpreter =
-            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1025));
+            eof_setup_with_types(bytes1, bytes2.clone(), CodeInfo::new(0, 0, 1023));
         interpreter.runtime_flag.is_eof = true;
+
+        // push two items so we can overflow the JUMPF call.
+        // overflow happens if max_stack_size + stack.len is more than 1024
+        let _ = interpreter.stack.push(U256::from(0));
+        let _ = interpreter.stack.push(U256::from(0));
 
         // JUMPF
         interpreter.step(&table, &mut host);
