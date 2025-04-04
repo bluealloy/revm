@@ -1,21 +1,18 @@
-use crate::{return_ok, return_revert, Gas, InstructionResult, InterpreterResult};
+use crate::{return_ok, return_revert, Contract, Gas, InstructionResult, InterpreterResult};
 use fluentbase_types::SyscallInvocationParams;
-use revm_primitives::{Address, U256};
+use revm_primitives::Address;
 use std::boxed::Box;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SystemInterruptionInputs {
-    pub target_address: Address,
-    pub bytecode_address: Address,
-    pub eip7702_address: Option<Address>,
-    pub caller: Address,
-    pub call_value: U256,
+    pub contract: Contract,
     pub call_id: u32,
     pub syscall_params: SyscallInvocationParams,
     pub gas: Gas,
     pub is_create: bool,
     pub is_static: bool,
+    pub is_gas_free: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

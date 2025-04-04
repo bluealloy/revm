@@ -5,7 +5,12 @@ use super::{
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
 use revm_primitives::{
-    Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult, B256,
+    Bytes,
+    Precompile,
+    PrecompileError,
+    PrecompileOutput,
+    PrecompileResult,
+    B256,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
@@ -33,7 +38,7 @@ const INPUT_LENGTH: usize = 384;
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(

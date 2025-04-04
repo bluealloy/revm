@@ -1,7 +1,11 @@
 use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{
-    blst_p2, blst_p2_add_or_double_affine, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine,
+    blst_p2,
+    blst_p2_add_or_double_affine,
+    blst_p2_affine,
+    blst_p2_from_affine,
+    blst_p2_to_affine,
 };
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
 
@@ -22,7 +26,7 @@ const INPUT_LENGTH: usize = 512;
 /// Output is an encoding of addition operation result - single G2 point (`256`
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
-pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }

@@ -19,7 +19,6 @@ use crate::{
     Host,
     InstructionResult,
     InterpreterAction,
-    OpCode,
 };
 pub use contract::Contract;
 use core::cmp::min;
@@ -374,13 +373,13 @@ impl Interpreter {
         // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
-        #[cfg(feature = "std")]
-        println!(
-            "({:04X}) {} (0x{:02X})",
-            self.program_counter() - 1,
-            unsafe { core::mem::transmute::<u8, OpCode>(opcode) },
-            opcode,
-        );
+        // #[cfg(feature = "std")]
+        // println!(
+        //     "({:04X}) {} (0x{:02X})",
+        //     self.program_counter() - 1,
+        //     unsafe { core::mem::transmute::<u8, crate::OpCode>(opcode) },
+        //     opcode,
+        // );
 
         // execute instruction.
         (instruction_table[opcode as usize])(self, host)
@@ -445,7 +444,7 @@ pub struct InterpreterResult {
 
 impl InterpreterResult {
     /// Returns a new `InterpreterResult` with the given values.
-    pub fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+    pub const fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
         Self {
             result,
             output,

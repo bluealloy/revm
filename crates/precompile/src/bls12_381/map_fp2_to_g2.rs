@@ -1,6 +1,5 @@
 use super::{
-    g2::check_canonical_fp2,
-    g2::encode_g2_point,
+    g2::{check_canonical_fp2, encode_g2_point},
     utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
@@ -21,7 +20,7 @@ const BASE_GAS_FEE: u64 = 23800;
 /// an element of Fp2. Output of this call is 256 bytes and is an encoded G2
 /// point.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp2-element-to-g2-point>
-pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas.into());
     }
