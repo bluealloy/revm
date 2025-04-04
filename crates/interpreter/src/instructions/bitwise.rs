@@ -174,21 +174,21 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 }
 
-// TODO : Tests
-/*
 #[cfg(test)]
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
-    use crate::interpreter_wiring::StackTr;
-    use crate::{Contract, DummyHost, Interpreter};
+    use crate::interpreter::EthInterpreter;
+    // use crate::interpreter_wiring::StackTr;
+    use crate::interpreter_types::LoopControl;
+    use crate::{host::DummyHost, Interpreter};
+    // use context_interface::{default::Env, DefaultEthereumWiring};
+    // use primitives::hardfork::LatestSpec;
     use primitives::{uint, U256};
-    use primitives::hardfork::LatestSpec;
-    use context_interface::{default::Env, DefaultEthereumWiring};
 
     #[test]
     fn test_shift_left() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -257,10 +257,9 @@ mod tests {
         }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<Interpreter, DummyHost<DefaultEthereumWiring>>(&mut interpreter, &mut host);
+            shl::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -268,8 +267,8 @@ mod tests {
 
     #[test]
     fn test_logical_shift_right() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -338,10 +337,9 @@ mod tests {
         }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<Interpreter, DummyHost<DefaultEthereumWiring>>(&mut interpreter, &mut host);
+            shr::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -349,8 +347,8 @@ mod tests {
 
     #[test]
     fn test_arithmetic_shift_right() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -444,10 +442,9 @@ mod tests {
             }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<Interpreter, DummyHost<DefaultEthereumWiring>>(&mut interpreter, &mut host);
+            sar::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -461,8 +458,8 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::<DefaultEthereumWiring>::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);
         let test_cases = (0..32)
@@ -488,4 +485,3 @@ mod tests {
         }
     }
 }
-*/
