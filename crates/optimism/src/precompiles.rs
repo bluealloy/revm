@@ -4,12 +4,12 @@ use revm::{
     context::Cfg,
     context_interface::ContextTr,
     handler::{EthPrecompiles, PrecompileProvider},
-    interpreter::InterpreterResult,
+    interpreter::{InputsImpl, InterpreterResult},
     precompile::{
-        self, bn128, secp256r1, PrecompileError, Precompiles,
-        {PrecompileResult, PrecompileWithAddress},
+        self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
+        Precompiles,
     },
-    primitives::{Address, Bytes},
+    primitives::{hardfork::SpecId, Address},
 };
 use std::boxed::Box;
 use std::string::String;
@@ -19,27 +19,29 @@ use std::string::String;
 pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
+    spec: OpSpecId,
 }
 
 impl OpPrecompiles {
-    /// Create a new [`OpPrecompiles`] with the given precompiles.
-    pub fn new(precompiles: &'static Precompiles) -> Self {
-        Self {
-            inner: EthPrecompiles { precompiles },
-        }
-    }
-
-    /// Create a new precompile provider with the given optimismispec.
+    /// Create a new precompile provider with the given OpSpec.
     #[inline]
     pub fn new_with_spec(spec: OpSpecId) -> Self {
-        match spec {
+        let precompiles = match spec {
             spec @ (OpSpecId::BEDROCK
             | OpSpecId::REGOLITH
             | OpSpecId::CANYON
-            | OpSpecId::ECOTONE) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
-            OpSpecId::FJORD => Self::new(fjord()),
-            OpSpecId::GRANITE | OpSpecId::HOLOCENE => Self::new(granite()),
-            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => Self::new(isthmus()),
+            | OpSpecId::ECOTONE) => Precompiles::new(spec.into_eth_spec().into()),
+            OpSpecId::FJORD => fjord(),
+            OpSpecId::GRANITE | OpSpecId::HOLOCENE => granite(),
+            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => isthmus(),
+        };
+
+        Self {
+            inner: EthPrecompiles {
+                precompiles,
+                spec: SpecId::default(),
+            },
+            spec,
         }
     }
 }
@@ -70,21 +72,9 @@ pub fn granite() -> &'static Precompiles {
 pub fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
-        let precompiles = granite().clone();
+        let mut precompiles = granite().clone();
         // Prague bls12 precompiles
-        // Don't include BLS12-381 precompiles in no_std builds.
-        #[cfg(feature = "blst")]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381::precompiles());
-            precompiles
-        };
-        #[cfg(not(feature = "blst"))]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend(precompile::bls12_381_utils::bls12_381_precompiles_not_supported());
-            precompiles
-        };
+        precompiles.extend(precompile::bls12_381::precompiles());
         Box::new(precompiles)
     })
 }
@@ -96,8 +86,12 @@ where
     type Output = InterpreterResult;
 
     #[inline]
-    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
+        if spec == self.spec {
+            return false;
+        }
         *self = Self::new_with_spec(spec);
+        true
     }
 
     #[inline]
@@ -105,10 +99,12 @@ where
         &mut self,
         context: &mut CTX,
         address: &Address,
-        bytes: &Bytes,
+        inputs: &InputsImpl,
+        is_static: bool,
         gas_limit: u64,
     ) -> Result<Option<Self::Output>, String> {
-        self.inner.run(context, address, bytes, gas_limit)
+        self.inner
+            .run(context, address, inputs, is_static, gas_limit)
     }
 
     #[inline]

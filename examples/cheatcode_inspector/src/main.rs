@@ -46,8 +46,10 @@ struct Backend {
 
 impl Backend {
     fn new(spec: SpecId, db: InMemoryDB) -> Self {
+        let mut journaled_state = Journal::new(db);
+        journaled_state.set_spec_id(spec);
         Self {
-            journaled_state: Journal::new(spec, db),
+            journaled_state,
             method_with_inspector_counter: 0,
             method_without_inspector_counter: 0,
         }
@@ -140,8 +142,8 @@ impl JournalTr for Backend {
 
     fn transfer(
         &mut self,
-        from: &Address,
-        to: &Address,
+        from: Address,
+        to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, Infallible> {
         self.journaled_state.transfer(from, to, balance)
@@ -516,7 +518,7 @@ where
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(result.state);
     update_state(
-        &mut backend.journaled_state.state,
+        &mut backend.journaled_state.inner.state,
         &mut backend.journaled_state.database,
     )?;
 

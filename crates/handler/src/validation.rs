@@ -321,17 +321,15 @@ mod tests {
     use crate::{ExecuteCommitEvm, MainBuilder, MainContext};
     use bytecode::opcode;
     use context::{
-        result::{EVMError, InvalidTransaction},
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
         Context,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{Bytes, TxKind};
+    use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
 
-    #[test]
-    fn test_eip3860_initcode_size_limit() {
-        // Create a large bytecode that exceeds EIP-3860 limit (2x max_code_size)
-        let large_bytecode = vec![opcode::STOP; 100000]; // 60KB of STOP opcodes
-        let bytecode: Bytes = large_bytecode.into();
+    fn deploy_contract(
+        bytecode: Bytes,
+    ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
             .modify_tx_chained(|tx| {
                 tx.kind = TxKind::Create;
@@ -340,14 +338,228 @@ mod tests {
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        let result = evm.replay_commit();
+        evm.replay_commit()
+    }
 
-        // Verify that contract creation fails due to EIP-3860 size limit
+    #[test]
+    fn test_eip3860_initcode_size_limit_failure() {
+        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE + 1];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode);
         assert!(matches!(
             result,
             Err(EVMError::Transaction(
                 InvalidTransaction::CreateInitCodeSizeLimit
             ))
         ));
+    }
+
+    #[test]
+    fn test_eip3860_initcode_size_limit_success() {
+        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip170_code_size_limit_failure() {
+        // use the simplest method to return a contract code size greater than 0x6000
+        // PUSH3 0x6001 (greater than 0x6000) - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x00, 0x60, 0x01, // PUSH3 0x6001 (greater than 0x6000)
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::CreateContractSizeLimit,
+                ..
+            },)
+        ));
+    }
+
+    #[test]
+    fn test_eip170_code_size_limit_success() {
+        // use the  simplest method to return a contract code size equal to 0x6000
+        // PUSH3 0x6000 - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x00, 0x60, 0x00, // PUSH3 0x6000
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode);
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
+    }
+
+    #[test]
+    fn test_eip170_create_opcode_size_limit_failure() {
+        // 1. create a "factory" contract, which will use the CREATE opcode to create another large contract
+        // 2. because the sub contract exceeds the EIP-170 limit, the CREATE operation should fail
+
+        // the bytecode of the factory contract:
+        // PUSH1 0x01      - the value for MSTORE
+        // PUSH1 0x00      - the memory position
+        // MSTORE          - store a non-zero value at the beginning of memory
+
+        // PUSH3 0x6001    - the return size (exceeds 0x6000)
+        // PUSH1 0x00      - the memory offset
+        // PUSH1 0x00      - the amount of ETH sent
+        // CREATE          - create contract instruction (create contract from current memory)
+
+        // PUSH1 0x00      - the return value storage position
+        // MSTORE          - store the address returned by CREATE to the memory position 0
+        // PUSH1 0x20      - the return size (32 bytes)
+        // PUSH1 0x00      - the return offset
+        // RETURN          - return the result
+
+        let factory_code = vec![
+            // 1. store a non-zero value at the beginning of memory
+            0x60, 0x01, // PUSH1 0x01
+            0x60, 0x00, // PUSH1 0x00
+            0x52, // MSTORE
+            // 2. prepare to create a large contract
+            0x62, 0x00, 0x60, 0x01, // PUSH3 0x6001 (exceeds 0x6000)
+            0x60, 0x00, // PUSH1 0x00 (the memory offset)
+            0x60, 0x00, // PUSH1 0x00 (the amount of ETH sent)
+            0xf0, // CREATE
+            // 3. store the address returned by CREATE to the memory position 0
+            0x60, 0x00, // PUSH1 0x00
+            0x52, // MSTORE (store the address returned by CREATE to the memory position 0)
+            // 4. return the result
+            0x60, 0x20, // PUSH1 0x20 (32 bytes)
+            0x60, 0x00, // PUSH1 0x00
+            0xf3, // RETURN
+        ];
+
+        // deploy factory contract
+        let factory_bytecode: Bytes = factory_code.into();
+        let factory_result =
+            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+
+        // get factory contract address
+        let factory_address = match &factory_result {
+            ExecutionResult::Success { output, .. } => match output {
+                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
+            },
+            _ => panic!("factory contract deployment failed"),
+        };
+
+        // call factory contract to create sub contract
+        let tx_caller = address!("0x0000000000000000000000000000000000100000");
+        let call_result = Context::mainnet()
+            .modify_tx_chained(|tx| {
+                tx.caller = tx_caller;
+                tx.kind = TxKind::Call(factory_address);
+                tx.data = Bytes::new();
+            })
+            .with_db(CacheDB::<EmptyDB>::default())
+            .build_mainnet()
+            .replay_commit()
+            .expect("call factory contract failed");
+
+        match &call_result {
+            ExecutionResult::Success { output, .. } => match output {
+                Output::Call(bytes) => {
+                    if !bytes.is_empty() {
+                        assert!(
+                            bytes.iter().all(|&b| b == 0),
+                            "When CREATE operation failed, it should return all zero address"
+                        );
+                    }
+                }
+                _ => panic!("unexpected output type"),
+            },
+            _ => panic!("execution result is not Success"),
+        }
+    }
+
+    #[test]
+    fn test_eip170_create_opcode_size_limit_success() {
+        // 1. create a "factory" contract, which will use the CREATE opcode to create another contract
+        // 2. the sub contract generated by the factory contract does not exceed the EIP-170 limit, so it should be created successfully
+
+        // the bytecode of the factory contract:
+        // PUSH1 0x01      - the value for MSTORE
+        // PUSH1 0x00      - the memory position
+        // MSTORE          - store a non-zero value at the beginning of memory
+
+        // PUSH3 0x6000    - the return size (0x6000)
+        // PUSH1 0x00      - the memory offset
+        // PUSH1 0x00      - the amount of ETH sent
+        // CREATE          - create contract instruction (create contract from current memory)
+
+        // PUSH1 0x00      - the return value storage position
+        // MSTORE          - store the address returned by CREATE to the memory position 0
+        // PUSH1 0x20      - the return size (32 bytes)
+        // PUSH1 0x00      - the return offset
+        // RETURN          - return the result
+
+        let factory_code = vec![
+            // 1. store a non-zero value at the beginning of memory
+            0x60, 0x01, // PUSH1 0x01
+            0x60, 0x00, // PUSH1 0x00
+            0x52, // MSTORE
+            // 2. prepare to create a contract
+            0x62, 0x00, 0x60, 0x00, // PUSH3 0x6000 (0x6000)
+            0x60, 0x00, // PUSH1 0x00 (the memory offset)
+            0x60, 0x00, // PUSH1 0x00 (the amount of ETH sent)
+            0xf0, // CREATE
+            // 3. store the address returned by CREATE to the memory position 0
+            0x60, 0x00, // PUSH1 0x00
+            0x52, // MSTORE (store the address returned by CREATE to the memory position 0)
+            // 4. return the result
+            0x60, 0x20, // PUSH1 0x20 (32 bytes)
+            0x60, 0x00, // PUSH1 0x00
+            0xf3, // RETURN
+        ];
+
+        // deploy factory contract
+        let factory_bytecode: Bytes = factory_code.into();
+        let factory_result =
+            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+        // get factory contract address
+        let factory_address = match &factory_result {
+            ExecutionResult::Success { output, .. } => match output {
+                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
+            },
+            _ => panic!("factory contract deployment failed"),
+        };
+
+        // call factory contract to create sub contract
+        let tx_caller = address!("0x0000000000000000000000000000000000100000");
+        let call_result = Context::mainnet()
+            .modify_tx_chained(|tx| {
+                tx.caller = tx_caller;
+                tx.kind = TxKind::Call(factory_address);
+                tx.data = Bytes::new();
+            })
+            .with_db(CacheDB::<EmptyDB>::default())
+            .build_mainnet()
+            .replay_commit()
+            .expect("call factory contract failed");
+
+        match &call_result {
+            ExecutionResult::Success { output, .. } => {
+                match output {
+                    Output::Call(bytes) => {
+                        // check if CREATE operation is successful (return non-zero address)
+                        if !bytes.is_empty() {
+                            assert!(bytes.iter().any(|&b| b != 0), "create sub contract failed");
+                        }
+                    }
+                    _ => panic!("unexpected output type"),
+                }
+            }
+            _ => panic!("execution result is not Success"),
+        }
     }
 }

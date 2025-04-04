@@ -15,6 +15,7 @@ pub mod bytecode;
 pub mod decode_errors;
 pub mod eip7702;
 pub mod eof;
+pub mod iterator;
 pub mod legacy;
 pub mod opcode;
 pub mod utils;
@@ -29,4 +30,6 @@ pub use eof::{
     },
     Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
 };
+pub use iterator::{BytecodeIterator, BytecodeIteratorExt};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode};
+pub use opcode::OpCode;

@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_into_u256() {
-        let addr = address!("0000000000000000000000000000000000000001");
+        let addr = address!("0x0000000000000000000000000000000000000001");
         let u256 = addr.into_u256();
         assert_eq!(u256, U256::from(0x01));
         assert_eq!(u256.into_address(), addr);

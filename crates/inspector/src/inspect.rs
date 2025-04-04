@@ -1,4 +1,4 @@
-use handler::evm::{ExecuteCommitEvm, ExecuteEvm};
+use handler::{ExecuteCommitEvm, ExecuteEvm};
 
 /// InspectEvm is a API that allows inspecting the EVM.
 ///

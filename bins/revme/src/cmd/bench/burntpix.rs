@@ -16,7 +16,7 @@ use revm::{
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
-use std::error::Error;
+use std::{error::Error, fs::File, io::Write};
 
 use std::str::FromStr;
 
@@ -46,53 +46,55 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("burntpix", |b| {
         b.iter(|| {
-            let _ = evm.replay();
+            evm.replay().unwrap();
         })
     });
 
-    // Collects the data and uses it to generate the svg after running the benchmark
-    //     let return_data = match tx_result {
-    //         ExecutionResult::Success {
-    //             output, gas_used, ..
-    //         } => {
-    //             println!("Gas used: {:?}", gas_used);
-    //             match output {
-    //                 Output::Call(value) => value,
-    //                 _ => unreachable!("Unexpected output type"),
-    //             }
-    //         }
-    //         _ => unreachable!("Execution failed: {:?}", tx_result),
-    //     };
+    //Collects the data and uses it to generate the svg after running the benchmark
+    /*
+    let tx_result = evm.replay().unwrap();
+    let return_data = match tx_result.result {
+        context::result::ExecutionResult::Success {
+            output, gas_used, ..
+        } => {
+            println!("Gas used: {:?}", gas_used);
+            match output {
+                context::result::Output::Call(value) => value,
+                _ => unreachable!("Unexpected output type"),
+            }
+        }
+        _ => unreachable!("Execution failed: {:?}", tx_result),
+    };
 
-    //     // Remove returndata offset and length from output
-    //     let returndata_offset = 64;
-    //     let data = &return_data[returndata_offset..];
+    // Remove returndata offset and length from output
+    let returndata_offset = 64;
+    let data = &return_data[returndata_offset..];
 
-    //     // Remove trailing zeros
-    //     let trimmed_data = data
-    //         .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
-    //         .0;
-    //     let file_name = format!("{}_{}", seed, iterations);
+    // Remove trailing zeros
+    let trimmed_data = data
+        .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
+        .0;
+    let file_name = format!("{}_{}", seed, iterations);
 
-    //     svg(file_name, trimmed_data).expect("Failed to store svg");
-    // });
+    svg(file_name, trimmed_data).expect("Failed to store svg");
+    */
 }
 
-// Actually generates the svg
-// fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
-//     let current_dir = std::env::current_dir()?;
-//     let svg_dir = current_dir.join("burntpix").join("svgs");
-//     std::fs::create_dir_all(&svg_dir)?;
+/// Actually generates the svg
+pub fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
+    let current_dir = std::env::current_dir()?;
+    let svg_dir = current_dir.join("burntpix").join("svgs");
+    std::fs::create_dir_all(&svg_dir)?;
 
-//     let file_path = svg_dir.join(format!("{}.svg", filename));
-//     let mut file = File::create(file_path)?;
-//     file.write_all(svg_data)?;
+    let file_path = svg_dir.join(format!("{}.svg", filename));
+    let mut file = File::create(file_path)?;
+    file.write_all(svg_data)?;
 
-//     Ok(())
-// }
+    Ok(())
+}
 
 const DEFAULT_SEED: &str = "0";
-const DEFAULT_ITERATIONS: &str = "0x7A120";
+const DEFAULT_ITERATIONS: &str = "0x4E20"; // 20_000 iterations
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
     let seed: u32 = try_from_hex_to_u32(&seed_from_env)?;

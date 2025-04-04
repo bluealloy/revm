@@ -8,7 +8,10 @@ use revm::{
         result::{EVMError, ExecutionResult, ResultAndState},
         Cfg, ContextTr, Database, JournalTr,
     },
-    handler::{instructions::EthInstructions, EthFrame, EvmTr, Handler, PrecompileProvider},
+    handler::{
+        instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, EvmTr, Handler,
+        PrecompileProvider, SystemCallTx,
+    },
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
@@ -111,5 +114,22 @@ where
             self.ctx().db().commit(r.state);
             r.result
         })
+    }
+}
+
+impl<CTX, INSP, PRECOMPILE> SystemCallEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+where
+    CTX: OpContextTr<Tx: SystemCallTx> + ContextSetters,
+    PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
+{
+    fn transact_system_call(
+        &mut self,
+        data: revm::primitives::Bytes,
+        system_contract_address: revm::primitives::Address,
+    ) -> Self::Output {
+        self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
+        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        h.run_system_call(self)
     }
 }

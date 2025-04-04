@@ -1,7 +1,7 @@
 [package]
 name = "revm-database"
 description = "Revm Database implementations"
-version = "1.0.0"
+version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -26,8 +26,6 @@ state.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 bytecode.workspace = true
-
-auto_impl = "1.2"
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

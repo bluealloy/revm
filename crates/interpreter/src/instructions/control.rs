@@ -107,7 +107,6 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::LOW);
 
     let idx = interpreter.bytecode.read_u16() as usize;
-
     // Get target types
     let Some(types) = interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")

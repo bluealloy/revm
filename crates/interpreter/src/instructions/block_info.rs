@@ -13,7 +13,7 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.chain_id()));
+    push!(interpreter, host.chain_id());
 }
 
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -29,7 +29,7 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.timestamp()));
+    push!(interpreter, host.timestamp());
 }
 
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -58,7 +58,7 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.gas_limit()));
+    push!(interpreter, host.gas_limit());
 }
 
 /// EIP-3198: BASEFEE opcode
@@ -68,7 +68,7 @@ pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.basefee()));
+    push!(interpreter, host.basefee());
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
@@ -78,5 +78,5 @@ pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.blob_gasprice()));
+    push!(interpreter, host.blob_gasprice());
 }

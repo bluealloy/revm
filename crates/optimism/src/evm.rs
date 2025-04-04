@@ -4,7 +4,7 @@ use revm::{
     context_interface::ContextTr,
     handler::{
         instructions::{EthInstructions, InstructionProvider},
-        EvmTr,
+        EvmTr, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterTypes},
@@ -32,6 +32,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Inspector = INSP;
@@ -62,6 +63,7 @@ where
         Context = CTX,
         InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
     >,
+    P: PrecompileProvider<CTX>,
 {
     type Context = CTX;
     type Instructions = I;
@@ -111,12 +113,16 @@ mod tests {
         },
         context_interface::result::HaltReason,
         database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
-        interpreter::gas::{calculate_initial_tx_gas, InitialAndFloorGas},
+        interpreter::{
+            gas::{calculate_initial_tx_gas, InitialAndFloorGas},
+            Interpreter, InterpreterTypes,
+        },
         precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
-        primitives::{Address, Bytes, TxKind, U256},
+        primitives::{Address, Bytes, Log, TxKind, U256},
         state::Bytecode,
-        Context, ExecuteEvm, Journal,
+        Context, ExecuteEvm, InspectEvm, Inspector, Journal,
     };
+    use std::vec::Vec;
 
     #[test]
     fn test_deposit_tx() {
@@ -283,7 +289,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -311,7 +316,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -370,7 +374,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -388,7 +391,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -406,7 +408,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
         let ctx = g1_msm_test_tx();
 
@@ -424,7 +425,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -452,7 +452,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
@@ -512,7 +511,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -530,7 +528,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -548,7 +545,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
         let ctx = g2_msm_test_tx();
 
@@ -596,7 +592,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         let ctx = bl12_381_pairing_test_tx()
             .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
@@ -615,7 +610,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
         let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -633,7 +627,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
         let ctx = bl12_381_pairing_test_tx();
 
@@ -678,7 +671,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -696,7 +688,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
 
@@ -741,7 +732,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
 
@@ -759,7 +749,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "blst")]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
         let ctx =
             fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
@@ -775,5 +764,51 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[derive(Default, Debug)]
+    struct LogInspector {
+        logs: Vec<Log>,
+    }
+
+    impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for LogInspector {
+        fn log(&mut self, _interp: &mut Interpreter<INTR>, _context: &mut CTX, log: Log) {
+            self.logs.push(log)
+        }
+    }
+
+    #[test]
+    fn test_log_inspector() {
+        // simple yul contract emits a log in constructor
+
+        /*object "Contract" {
+            code {
+                log0(0, 0)
+            }
+        }*/
+
+        let contract_data: Bytes = Bytes::from([
+            opcode::PUSH1,
+            0x00,
+            opcode::DUP1,
+            opcode::LOG0,
+            opcode::STOP,
+        ]);
+        let bytecode = Bytecode::new_raw(contract_data);
+
+        let ctx = Context::op()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .modify_tx_chained(|tx| {
+                tx.base.caller = BENCH_CALLER;
+                tx.base.kind = TxKind::Call(BENCH_TARGET);
+            });
+
+        let mut evm = ctx.build_op_with_inspector(LogInspector::default());
+
+        // Run evm.
+        let _ = evm.inspect_replay().unwrap();
+
+        let inspector = &evm.0.data.inspector;
+        assert!(!inspector.logs.is_empty());
     }
 }
