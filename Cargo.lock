@@ -3004,7 +3004,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "op-revm"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3688,7 +3688,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "21.0.0"
+version = "21.1.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3705,7 +3705,7 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "bitvec",
  "paste",
@@ -3716,7 +3716,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "cfg-if",
  "derive-where",
@@ -3731,7 +3731,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -3744,7 +3744,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3764,7 +3764,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "alloy-sol-types",
  "anyhow",
@@ -3779,7 +3779,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "2.0.0"
+version = "3.0.0"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3800,7 +3800,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3816,7 +3816,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "17.0.0"
+version = "17.1.0"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3829,7 +3829,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "18.0.0"
+version = "18.0.1"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",
@@ -3861,7 +3861,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "17.0.0"
+version = "17.0.1"
 dependencies = [
  "alloy-primitives",
  "enumn",
@@ -3870,7 +3870,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "bitflags",
  "revm-bytecode",
@@ -3880,7 +3880,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "revm",
  "serde",
@@ -3889,7 +3889,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "4.0.0"
+version = "4.0.1"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
