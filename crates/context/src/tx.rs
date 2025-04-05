@@ -90,7 +90,7 @@ impl Default for TxEnv {
             nonce: 0,
             chain_id: Some(1), // Mainnet chain ID is 1
             access_list: Default::default(),
-            gas_priority_fee: Some(0),
+            gas_priority_fee: None,
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
