@@ -176,13 +176,12 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 #[cfg(test)]
 mod tests {
-    use crate::instructions::bitwise::{byte, sar, shl, shr};
-    use crate::interpreter::EthInterpreter;
-    // use crate::interpreter_wiring::StackTr;
-    use crate::interpreter_types::LoopControl;
-    use crate::{host::DummyHost, Interpreter};
-    // use context_interface::{default::Env, DefaultEthereumWiring};
-    // use primitives::hardfork::LatestSpec;
+    use crate::{
+        host::DummyHost,
+        instructions::bitwise::{byte, sar, shl, shr},
+        interpreter_types::LoopControl,
+        Interpreter,
+    };
     use primitives::{uint, U256};
 
     #[test]
@@ -259,7 +258,7 @@ mod tests {
         for test in test_cases {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
+            shl(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -339,7 +338,7 @@ mod tests {
         for test in test_cases {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
+            shr(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -444,7 +443,7 @@ mod tests {
         for test in test_cases {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<EthInterpreter, DummyHost>(&mut interpreter, &mut host);
+            sar(&mut interpreter, &mut host);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }

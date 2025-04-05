@@ -238,8 +238,7 @@ pub fn memory_resize(
 mod test {
     use super::*;
     use crate::{host::DummyHost, instruction_table, InstructionResult};
-    use bytecode::opcode::{RETURNDATACOPY, RETURNDATALOAD};
-    use bytecode::Bytecode;
+    use bytecode::{opcode::RETURNDATACOPY, opcode::RETURNDATALOAD, Bytecode};
     use primitives::{bytes, Bytes};
 
     #[test]
