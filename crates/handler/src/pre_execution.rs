@@ -12,6 +12,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use state::Account;
 
 use crate::{EvmTr, PrecompileProvider};
 
@@ -68,6 +69,7 @@ pub fn load_accounts<
 #[inline]
 pub fn deduct_caller<CTX: ContextTr>(
     context: &mut CTX,
+    caller_account: &mut Account
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee();
     let blob_price = context.block().blob_gasprice().unwrap_or_default();
@@ -86,10 +88,7 @@ pub fn deduct_caller<CTX: ContextTr>(
     }
 
     let is_call = context.tx().kind().is_call();
-    let caller = context.tx().caller();
 
-    // Load caller's account.
-    let caller_account = context.journal().load_account(caller)?.data;
     // Set new caller account balance.
     caller_account.info.balance = caller_account
         .info
