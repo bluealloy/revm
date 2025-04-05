@@ -54,8 +54,10 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
+        let mut account = self.get_account(evm)?;
+
+        let init_and_floor_gas = self.validate(evm, &account.info)?;
+        let eip7702_refund = self.pre_execution(evm, &mut account)? as i64;
         let exec_result = self.inspect_execution(evm, &init_and_floor_gas);
         self.post_execution(evm, exec_result?, init_and_floor_gas, eip7702_refund)
     }

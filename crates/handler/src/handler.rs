@@ -12,6 +12,7 @@ use context_interface::{
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
+use state::{Account, AccountInfo};
 use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
@@ -119,10 +120,21 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
+        let mut account = self.get_account(evm)?;
+
+        let init_and_floor_gas = self.validate(evm, &account.info)?;
+        let eip7702_refund = self.pre_execution(evm, &mut account)? as i64;
         let exec_result = self.execution(evm, &init_and_floor_gas)?;
         self.post_execution(evm, exec_result, init_and_floor_gas, eip7702_refund)
+    }
+
+    /// Loads the caller account once for use later in validation and pre-execution
+    #[inline]
+    fn get_account(&self, evm: &mut Self::Evm) -> Result<Account, Self::Error> {
+        let context = evm.ctx();
+        let caller = context.tx().caller();
+        let account = context.journal().load_account(caller)?.data.clone();
+        Ok(account)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -132,10 +144,10 @@ pub trait Handler {
     /// Loads the caller account and validates transaction fields against state,
     /// including nonce checks and balance verification for maximum gas costs.
     #[inline]
-    fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
+    fn validate(&self, evm: &mut Self::Evm, account_info: &AccountInfo) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
         let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
-        self.validate_tx_against_state(evm)?;
+        self.validate_tx_against_state(evm, account_info)?;
         Ok(initial_and_floor_gas)
     }
 
@@ -148,9 +160,9 @@ pub trait Handler {
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
-    fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+    fn pre_execution(&self, evm: &mut Self::Evm, caller_account: &mut Account) -> Result<u64, Self::Error> {
         self.load_accounts(evm)?;
-        self.deduct_caller(evm)?;
+        self.deduct_caller(evm, caller_account)?;
         let gas = self.apply_eip7702_auth_list(evm)?;
         Ok(gas)
     }
@@ -234,8 +246,8 @@ pub trait Handler {
     ///
     /// Calculates maximum possible transaction fee and verifies caller has sufficient balance.
     #[inline]
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        validation::validate_tx_against_state(evm.ctx())
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm, account_info: &AccountInfo) -> Result<(), Self::Error> {
+        validation::validate_tx_against_state(evm.ctx(), account_info)
     }
 
     /* PRE EXECUTION */
@@ -259,8 +271,8 @@ pub trait Handler {
     ///
     /// Unused fees are returned to caller after execution completes.
     #[inline]
-    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
+    fn deduct_caller(&self, evm: &mut Self::Evm, caller_account: &mut Account) -> Result<(), Self::Error> {
+        pre_execution::deduct_caller(evm.ctx(), caller_account).map_err(From::from)
     }
 
     /* EXECUTION */

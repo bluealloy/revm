@@ -1,5 +1,4 @@
 use context_interface::{
-    journaled_state::JournalTr,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
@@ -29,15 +28,10 @@ pub fn validate_tx_against_state<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
-    mut context: CTX,
+    context: CTX,
+    account_info: &AccountInfo
 ) -> Result<(), ERROR> {
-    let tx_caller = context.tx().caller();
-
-    // Load acc
-    let account = context.journal().load_account_code(tx_caller)?;
-    let account = account.data.info.clone();
-
-    validate_tx_against_account(&account, context, U256::ZERO)?;
+    validate_tx_against_account(account_info, context, U256::ZERO)?;
     Ok(())
 }
 
