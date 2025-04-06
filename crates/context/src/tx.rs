@@ -215,8 +215,10 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_legacy() {
-        let mut tx = TxEnv::default();
-        tx.gas_price = 100;
+        let tx = TxEnv {
+            gas_price: 100,
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -224,9 +226,11 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip2930() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip2930 as u8;
-        tx.gas_price = 100;
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip2930 as u8,
+            gas_price: 100,
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -234,10 +238,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip1559_priority_fee_0() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip1559 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(0);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip1559 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(0),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -245,10 +251,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip1559_base_fee_and_priority_fee_more_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip1559 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip1559 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -256,20 +264,24 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip1559_base_fee_and_priority_fee_less_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip1559 as u8;
-        tx.gas_price = 120;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip1559 as u8,
+            gas_price: 120,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 110);
     }
     #[test]
     fn test_effective_gas_price_eip1559_priority_none() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip1559 as u8;
-        tx.gas_priority_fee = None;
-        tx.gas_price = 100;
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip1559 as u8,
+            gas_priority_fee: None,
+            gas_price: 100,
+            ..Default::default()
+        };
         let base_fee = 110;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -277,10 +289,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip4844_priority_fee_0() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip4844 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(0);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip4844 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(0),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -288,10 +302,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip4844_base_fee_and_priority_fee_more_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip4844 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip4844 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -299,20 +315,24 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip4844_base_fee_and_priority_fee_less_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip4844 as u8;
-        tx.gas_price = 120;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip4844 as u8,
+            gas_price: 120,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 110);
     }
     #[test]
     fn test_effective_gas_price_eip4844_priority_none() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip4844 as u8;
-        tx.gas_priority_fee = None;
-        tx.gas_price = 100;
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip4844 as u8,
+            gas_priority_fee: None,
+            gas_price: 100,
+            ..Default::default()
+        };
         let base_fee = 110;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -320,10 +340,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip7702_priority_fee_0() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip7702 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(0);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip7702 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(0),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -331,10 +353,12 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip7702_base_fee_and_priority_fee_more_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip7702 as u8;
-        tx.gas_price = 100;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip7702 as u8,
+            gas_price: 100,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
@@ -342,20 +366,24 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price_eip7702_base_fee_and_priority_fee_less_than_gas_price() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip7702 as u8;
-        tx.gas_price = 120;
-        tx.gas_priority_fee = Some(10);
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip7702 as u8,
+            gas_price: 120,
+            gas_priority_fee: Some(10),
+            ..Default::default()
+        };
         let base_fee = 100;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 110);
     }
     #[test]
     fn test_effective_gas_price_eip7702_priority_none() {
-        let mut tx = TxEnv::default();
-        tx.tx_type = TransactionType::Eip7702 as u8;
-        tx.gas_priority_fee = None;
-        tx.gas_price = 100;
+        let tx = TxEnv {
+            tx_type: TransactionType::Eip7702 as u8,
+            gas_priority_fee: None,
+            gas_price: 100,
+            ..Default::default()
+        };
         let base_fee = 110;
         let effective_gas_price = tx.effective_gas_price(base_fee);
         assert_eq!(effective_gas_price, 100);
