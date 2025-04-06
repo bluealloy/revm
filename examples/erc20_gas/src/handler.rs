@@ -7,7 +7,7 @@ use revm::{
     },
     handler::{EvmTr, EvmTrError, Frame, FrameResult, Handler},
     interpreter::FrameInput,
-    primitives::{hardfork::SpecId, U256},
+    primitives::{hardfork::SpecId, U256}, state::{Account, AccountInfo},
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
@@ -41,7 +41,7 @@ where
     type Frame = FRAME;
     type HaltReason = HaltReason;
 
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm, account: &AccountInfo) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let caller = context.tx().caller();
         let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
@@ -98,7 +98,7 @@ where
         Ok(())
     }
 
-    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn deduct_caller(&self, evm: &mut Self::Evm, caller_account: &mut Account) -> Result<(), Self::Error> {
         let context = evm.ctx();
         // load and touch token account
         let _ = context.journal().load_account(TOKEN)?.data;

@@ -16,9 +16,8 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
-    primitives::hardfork::SpecId,
-    primitives::{HashMap, U256},
-    state::Account,
+    primitives::{hardfork::SpecId, HashMap, U256},
+    state::{Account, AccountInfo},
     Database,
 };
 
@@ -82,7 +81,7 @@ where
         self.mainnet.validate_env(evm)
     }
 
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm, account_info: &AccountInfo) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let spec = context.cfg().spec();
         let block_number = context.block().number();
@@ -115,20 +114,13 @@ where
             additional_cost = additional_cost.saturating_add(operator_fee_charge);
         }
 
-        let tx_caller = context.tx().caller();
-
-        // Load acc
-        let account = context.journal().load_account_code(tx_caller)?;
-        let account = account.data.info.clone();
-
-        validate_tx_against_account(&account, context, additional_cost)?;
+        validate_tx_against_account(account_info, context, additional_cost)?;
         Ok(())
     }
 
-    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn deduct_caller(&self, evm: &mut Self::Evm, caller_account: &mut Account) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
         let spec = ctx.cfg().spec();
-        let caller = ctx.tx().caller();
         let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // If the transaction is a deposit with a `mint` value, add the mint value
@@ -138,7 +130,6 @@ where
         if is_deposit {
             let tx = ctx.tx();
             if let Some(mint) = tx.mint() {
-                let mut caller_account = ctx.journal().load_account(caller)?;
                 caller_account.info.balance += U256::from(mint);
             }
         } else {
@@ -152,7 +143,7 @@ where
 
         // We deduct caller max balance after minting and before deducing the
         // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
-        self.mainnet.deduct_caller(evm)?;
+        self.mainnet.deduct_caller(evm, caller_account)?;
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
@@ -173,7 +164,6 @@ where
                 operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
             }
 
-            let mut caller_account = ctx.journal().load_account(caller)?;
             caller_account.info.balance = caller_account
                 .info
                 .balance
@@ -619,13 +609,13 @@ mod tests {
             tx.deposit.mint = Some(10);
         });
 
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.clone().build_op();
 
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
-        handler.deduct_caller(&mut evm).unwrap();
+        let account = ctx.journal().load_account(caller).unwrap().data;
+        handler.deduct_caller(&mut evm, account).unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1010));
     }
 
@@ -640,7 +630,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let ctx = Context::op()
+        let mut ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
                 l1_base_fee: U256::from(1_000),
@@ -657,13 +647,13 @@ mod tests {
                 tx.deposit.source_hash = B256::ZERO;
             });
 
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.clone().build_op();
 
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
-        handler.deduct_caller(&mut evm).unwrap();
-
+        let account = ctx.journal().load_account(caller).unwrap().data;
+        handler.deduct_caller(&mut evm, account).unwrap();
+    
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1010));
     }
 
@@ -678,7 +668,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let ctx = Context::op()
+        let mut ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
                 l1_base_fee: U256::from(1_000),
@@ -693,14 +683,13 @@ mod tests {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
 
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.clone().build_op();
+
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
-
-        // l1block cost is 1048 fee.
-        handler.deduct_caller(&mut evm).unwrap();
-
+        let account = ctx.journal().load_account(caller).unwrap().data;
+        handler.deduct_caller(&mut evm, account).unwrap();
+    
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1));
     }
 
@@ -715,7 +704,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let ctx = Context::op()
+        let mut ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
                 operator_fee_scalar: Some(U256::from(10_000_000)),
@@ -728,15 +717,16 @@ mod tests {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
 
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.clone().build_op();
+
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
         // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
         // 10_000_000 * 10 / 1_000_000 + 50 = 150
-        handler.deduct_caller(&mut evm).unwrap();
+        let account = ctx.journal().load_account(caller).unwrap().data;
+        handler.deduct_caller(&mut evm, account).unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1));
     }
 
@@ -751,7 +741,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let ctx = Context::op()
+        let mut ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
                 l1_base_fee: U256::from(1_000),
@@ -765,12 +755,14 @@ mod tests {
             });
 
         // l1block cost is 1048 fee.
-        let mut evm = ctx.build_op();
+        let mut evm = ctx.clone().build_op();
         let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
         // l1block cost is 1048 fee.
+
+        let account_info = ctx.journal().load_account(caller).unwrap().info.clone();
         assert_eq!(
-            handler.validate_tx_against_state(&mut evm),
+            handler.validate_tx_against_state(&mut evm, &account_info),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),

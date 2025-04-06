@@ -133,7 +133,7 @@ pub trait Handler {
     fn get_account(&self, evm: &mut Self::Evm) -> Result<Account, Self::Error> {
         let context = evm.ctx();
         let caller = context.tx().caller();
-        let account = context.journal().load_account(caller)?.data.clone();
+        let account = context.journal().load_account_code(caller)?.data.clone();
         Ok(account)
     }
 
