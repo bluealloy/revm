@@ -19,19 +19,19 @@ pub struct CodeInfo {
     ///
     /// Number of stack elements the code section returns or 0x80 for non-returning functions
     pub outputs: u8,
-    /// `max_stack_height` - 2 bytes - `0x0000-0x03FF`
+    /// `max_stack_increase` - 4 bytes - `0x000000-0x0003FF`
     ///
     /// Maximum number of elements ever placed onto the stack by the code section
-    pub max_stack_size: u16,
+    pub max_stack_increase: u16,
 }
 
 impl CodeInfo {
-    /// Returns new `CodeInfo` with the given inputs, outputs, and max_stack_size.
-    pub fn new(inputs: u8, outputs: u8, max_stack_size: u16) -> Self {
+    /// Returns new `CodeInfo` with the given inputs, outputs, and max_stack_increase.
+    pub fn new(inputs: u8, outputs: u8, max_stack_increase: u16) -> Self {
         Self {
             inputs,
             outputs,
-            max_stack_size,
+            max_stack_increase,
         }
     }
 
@@ -51,7 +51,7 @@ impl CodeInfo {
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         buffer.push(self.inputs);
         buffer.push(self.outputs);
-        buffer.extend_from_slice(&self.max_stack_size.to_be_bytes());
+        buffer.extend_from_slice(&self.max_stack_increase.to_be_bytes());
     }
 
     /// Decodes the section from the input.
@@ -59,11 +59,11 @@ impl CodeInfo {
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;
         let (input, outputs) = consume_u8(input)?;
-        let (input, max_stack_size) = consume_u16(input)?;
+        let (input, max_stack_increase) = consume_u16(input)?;
         let section = Self {
             inputs,
             outputs,
-            max_stack_size,
+            max_stack_increase,
         };
         section.validate()?;
         Ok((section, input))
@@ -71,10 +71,10 @@ impl CodeInfo {
 
     /// Validates the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
-        if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
+        if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_increase > 0x03FF {
             return Err(EofDecodeError::InvalidCodeInfo);
         }
-        if self.inputs as u16 > self.max_stack_size {
+        if self.inputs as u16 > self.max_stack_increase {
             return Err(EofDecodeError::InvalidCodeInfo);
         }
         Ok(())

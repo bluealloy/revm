@@ -1,14 +1,18 @@
 use crate::{keccak256, Address, B256};
 
-/// Calculated new EOF address from salt, address and init code hash.
+/// Calculated new EOF address from address and salt.
 ///
-/// Address is left padded with 12 zeroes.
+/// Buffer that is hashed is 65 bytes long. First bytes is magic number 0xFF,
+/// than comes 12 zeros, than 20 byte of address and in the end 32 bytes of salt.
+///
+///
+/// | 0xFF | zero padding (12 bytes) | Address (20 bytes) | salt (32 bytes).
 #[inline]
-pub fn new_address(address: Address, salt: B256) -> Address {
-    let mut buffer = [0; 85];
+pub fn new_eof_address(address: Address, salt: B256) -> Address {
+    let mut buffer = [0; 65];
     buffer[0] = 0xff;
     // 1..13 are padded zeroes
     buffer[13..].copy_from_slice(address.as_ref());
-    buffer[60..].copy_from_slice(salt.as_ref());
+    buffer[33..].copy_from_slice(salt.as_ref());
     Address::from_word(keccak256(buffer))
 }

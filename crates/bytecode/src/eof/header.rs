@@ -19,7 +19,7 @@ pub struct EofHeader {
     /// EOF Container size
     ///
     /// Container size can be zero.
-    pub container_sizes: Vec<u16>,
+    pub container_sizes: Vec<u32>,
     /// EOF data size
     pub data_size: u16,
     /// Sum of code sizes
@@ -32,10 +32,13 @@ const KIND_TERMINAL: u8 = 0;
 const KIND_CODE_INFO: u8 = 1;
 const KIND_CODE: u8 = 2;
 const KIND_CONTAINER: u8 = 3;
-const KIND_DATA: u8 = 4;
+const KIND_DATA: u8 = 0xFF;
 
+/// Consumes code section from Header.
+///
+/// It returnes rest of the input, list of sizes and sum of all sizes.
 #[inline]
-fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize), EofDecodeError> {
+fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize), EofDecodeError> {
     // `num_sections`   2 bytes 0x0001-0xFFFF
     // 16-bit unsigned big-endian integer denoting the number of the sections
     let (input, num_sections) = consume_u16(input)?;
@@ -53,6 +56,40 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
         // `code_size`  2 bytes 0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
+        if code_size == 0 {
+            return Err(EofDecodeError::ZeroSize);
+        }
+        sum += code_size as usize;
+        sizes.push(code_size);
+    }
+
+    Ok((&input[byte_size..], sizes, sum))
+}
+
+/// Consumes container section from Header.
+///
+/// Similar to
+#[inline]
+fn consume_header_container_section(
+    input: &[u8],
+) -> Result<(&[u8], Vec<u32>, usize), EofDecodeError> {
+    // `num_sections`   2 bytes 0x0001-0xFFFF
+    // 16-bit unsigned big-endian integer denoting the number of the sections
+    let (input, num_sections) = consume_u16(input)?;
+    if num_sections == 0 {
+        return Err(EofDecodeError::NonSizes);
+    }
+    let num_sections = num_sections as usize;
+    let byte_size = num_sections * 4;
+    if input.len() < byte_size {
+        return Err(EofDecodeError::ShortInputForSizes);
+    }
+    let mut sizes = Vec::with_capacity(num_sections);
+    let mut sum = 0;
+    for i in 0..num_sections {
+        // `section_size` is 4 bytes 0x00000001-0xFFFFFFFF
+        // 32-bit unsigned big-endian integer denoting the length of the section content
+        let code_size = u32::from_be_bytes(input[i * 4..(i + 1) * 4].try_into().unwrap());
         if code_size == 0 {
             return Err(EofDecodeError::ZeroSize);
         }
@@ -180,7 +217,7 @@ impl EofHeader {
         }
 
         // `code_sections_sizes`
-        let (input, sizes, sum) = consume_header_section_size(input)?;
+        let (input, sizes, sum) = consume_header_code_section(input)?;
 
         // more than 1024 code sections are not allowed
         if sizes.len() > 0x0400 {
@@ -203,7 +240,7 @@ impl EofHeader {
         let input = match kind_container_or_data {
             KIND_CONTAINER => {
                 // container_sections_sizes
-                let (input, sizes, sum) = consume_header_section_size(input)?;
+                let (input, sizes, sum) = consume_header_container_section(input)?;
                 // the number of container sections may not exceed 256
                 if sizes.len() > 0x0100 {
                     return Err(EofDecodeError::TooManyContainerSections);
@@ -249,7 +286,7 @@ mod tests {
         let (header, _) = EofHeader::decode(&input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
-        assert_eq!(header.container_sizes, Vec::<u16>::new());
+        assert_eq!(header.container_sizes, Vec::new());
         assert_eq!(header.data_size, 0);
     }
 

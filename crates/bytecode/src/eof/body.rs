@@ -50,7 +50,7 @@ impl EofBody {
             container_sizes: self
                 .container_section
                 .iter()
-                .map(|x| x.len() as u16)
+                .map(|x| x.len() as u32)
                 .collect(),
             data_size: self.data_section.len() as u16,
             sum_code_sizes: self.code.len(),

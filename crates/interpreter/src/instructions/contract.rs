@@ -3,7 +3,7 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 
 use crate::{
-    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
+    gas::{self, EOF_CREATE_GAS, MIN_CALLEE_GAS},
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_action::FrameInput,
@@ -17,7 +17,7 @@ use crate::{
 use bytecode::eof::{Eof, EofHeader};
 use context_interface::CreateScheme;
 use core::cmp::max;
-use primitives::{hardfork::SpecId, keccak256, Address, Bytes, B256, U256};
+use primitives::{eof::new_eof_address, hardfork::SpecId, Address, Bytes, B256, U256};
 use std::boxed::Box;
 
 /// EOF Create instruction
@@ -56,14 +56,16 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         panic!("Panic if data section is not full");
     }
 
-    let created_address = interpreter
-        .input
-        .target_address()
-        .create2(salt.to_be_bytes(), keccak256(container));
+    // Calculate new address
+    let created_address = new_eof_address(
+        interpreter.input.target_address(),
+        salt.to_be_bytes().into(),
+    );
 
     let gas_limit = interpreter.control.gas().remaining_63_of_64_parts();
     gas!(interpreter, gas_limit);
-    // Send container for execution container is preverified.
+
+    // Send container for execution as all deployed containers are preverified to be valid EOF.
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
             EOFCreateInputs::new_opcode(
@@ -78,6 +80,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         InstructionResult::CallOrCreate,
     );
 
+    // jump over initcontainer index.
     interpreter.bytecode.relative_jump(1);
 }
 

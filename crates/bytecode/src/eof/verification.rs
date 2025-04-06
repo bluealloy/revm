@@ -558,9 +558,7 @@ pub fn validate_eof_code(
                 // Mark called code as accessed.
                 tracker.access_code(section_i);
 
-                // We decrement by `types.inputs` as they are considered as send
-                // to the called code and included in types.max_stack_size.
-                if this_instruction.biggest - stack_requirement + target_types.max_stack_size as i32
+                if this_instruction.biggest + target_types.max_stack_increase as i32
                     > STACK_LIMIT as i32
                 {
                     // If stack max items + called code max stack size
@@ -575,10 +573,7 @@ pub fn validate_eof_code(
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                // We decrement types.inputs as they are considered send to the called code.
-                // And included in types.max_stack_size.
-                if this_instruction.biggest - target_types.inputs as i32
-                    + target_types.max_stack_size as i32
+                if this_instruction.biggest as i32 + target_types.max_stack_increase as i32
                     > STACK_LIMIT as i32
                 {
                     // stack overflow
@@ -744,7 +739,7 @@ pub fn validate_eof_code(
         max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
     }
 
-    if max_stack_requirement != types[this_types_index].max_stack_size as i32 {
+    if max_stack_requirement != types[this_types_index].max_stack_increase as i32 {
         // Stack overflow
         return Err(EofValidationError::MaxStackMismatch);
     }
