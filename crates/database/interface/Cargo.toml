@@ -37,7 +37,6 @@ tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 anyhow.workspace = true
-indicatif.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 
