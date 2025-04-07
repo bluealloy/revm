@@ -213,179 +213,87 @@ impl Transaction for TxEnv {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_effective_gas_price_legacy() {
+    fn effective_gas_setup(
+        tx_type: TransactionType,
+        gas_price: u128,
+        gas_priority_fee: Option<u128>,
+    ) -> u128 {
         let tx = TxEnv {
-            gas_price: 100,
+            tx_type: tx_type as u8,
+            gas_price,
+            gas_priority_fee,
             ..Default::default()
         };
         let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
+        tx.effective_gas_price(base_fee)
     }
 
     #[test]
-    fn test_effective_gas_price_eip2930() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip2930 as u8,
-            gas_price: 100,
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip1559_priority_fee_0() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip1559 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(0),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip1559_base_fee_and_priority_fee_more_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip1559 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip1559_base_fee_and_priority_fee_less_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip1559 as u8,
-            gas_price: 120,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 110);
-    }
-    #[test]
-    fn test_effective_gas_price_eip1559_priority_none() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip1559 as u8,
-            gas_priority_fee: None,
-            gas_price: 100,
-            ..Default::default()
-        };
-        let base_fee = 110;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip4844_priority_fee_0() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip4844 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(0),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip4844_base_fee_and_priority_fee_more_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip4844 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip4844_base_fee_and_priority_fee_less_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip4844 as u8,
-            gas_price: 120,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 110);
-    }
-    #[test]
-    fn test_effective_gas_price_eip4844_priority_none() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip4844 as u8,
-            gas_priority_fee: None,
-            gas_price: 100,
-            ..Default::default()
-        };
-        let base_fee = 110;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip7702_priority_fee_0() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip7702 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(0),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip7702_base_fee_and_priority_fee_more_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip7702 as u8,
-            gas_price: 100,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
-    }
-
-    #[test]
-    fn test_effective_gas_price_eip7702_base_fee_and_priority_fee_less_than_gas_price() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip7702 as u8,
-            gas_price: 120,
-            gas_priority_fee: Some(10),
-            ..Default::default()
-        };
-        let base_fee = 100;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 110);
-    }
-    #[test]
-    fn test_effective_gas_price_eip7702_priority_none() {
-        let tx = TxEnv {
-            tx_type: TransactionType::Eip7702 as u8,
-            gas_priority_fee: None,
-            gas_price: 100,
-            ..Default::default()
-        };
-        let base_fee = 110;
-        let effective_gas_price = tx.effective_gas_price(base_fee);
-        assert_eq!(effective_gas_price, 100);
+    fn test_effective_gas_price() {
+        assert_eq!(90, effective_gas_setup(TransactionType::Legacy, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Legacy, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Legacy, 90, Some(10))
+        );
+        assert_eq!(
+            120,
+            effective_gas_setup(TransactionType::Legacy, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip2930, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip2930, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip2930, 90, Some(10))
+        );
+        assert_eq!(
+            120,
+            effective_gas_setup(TransactionType::Eip2930, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip1559, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip1559, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip1559, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip1559, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip4844, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip4844, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip4844, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip4844, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip7702, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip7702, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip7702, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip7702, 120, Some(10))
+        );
     }
 }
