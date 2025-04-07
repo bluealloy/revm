@@ -79,11 +79,7 @@ cfg-if.workspace = true
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
-eyre.workspace = true
 rstest.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-serde_derive.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -98,8 +94,6 @@ std = [
 	"libsecp256k1?/std",
 	"aurora-engine-modexp/std",
 	"p256?/std",
-	"serde/std",
-	"serde_json/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
 	"ark-ec/std",
