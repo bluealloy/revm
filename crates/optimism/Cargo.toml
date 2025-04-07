@@ -34,7 +34,6 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 anyhow.workspace = true
-indicatif.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true

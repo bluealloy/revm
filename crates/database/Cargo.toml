@@ -42,7 +42,6 @@ alloy-transport = { workspace = true, optional = true }
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc"] }
 anyhow.workspace = true
-indicatif.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 
