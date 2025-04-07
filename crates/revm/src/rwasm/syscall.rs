@@ -156,6 +156,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
 
     match inputs.syscall_params.code_hash {
         SYSCALL_ID_STORAGE_READ => {
+            println!("SYSCALL_ID_STORAGE_READ={}", SYSCALL_ID_STORAGE_READ);
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -172,6 +173,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_STORAGE_WRITE => {
+            println!("SYSCALL_ID_STORAGE_WRITE={}", SYSCALL_ID_STORAGE_WRITE);
             assert_return!(
                 inputs.syscall_params.input.len() == 32 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -278,6 +280,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_STATIC_CALL => {
+            println!("SYSCALL_ID_STATIC_CALL={}", SYSCALL_ID_STATIC_CALL);
             assert_return!(
                 inputs.syscall_params.input.len() >= 20
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -319,6 +322,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CALL_CODE => {
+            println!("SYSCALL_ID_CALL_CODE={}", SYSCALL_ID_CALL_CODE);
             assert_return!(
                 inputs.syscall_params.input.len() >= 20 + 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -416,6 +420,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CREATE | SYSCALL_ID_CREATE2 => {
+            println!("SYSCALL_ID_CREATE={}", SYSCALL_ID_CREATE);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
@@ -498,6 +503,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_EMIT_LOG => {
+            println!("SYSCALL_ID_EMIT_LOG={}", SYSCALL_ID_EMIT_LOG);
             assert_return!(
                 inputs.syscall_params.input.len() >= 1 && inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
@@ -538,6 +544,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_DESTROY_ACCOUNT => {
+            println!("SYSCALL_ID_DESTROY_ACCOUNT={}", SYSCALL_ID_DESTROY_ACCOUNT);
             assert_return!(
                 inputs.syscall_params.input.len() == 20
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -559,6 +566,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_BALANCE => {
+            println!("SYSCALL_ID_BALANCE={}", SYSCALL_ID_BALANCE);
             assert_return!(
                 inputs.syscall_params.input.len() == 20
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -582,6 +590,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_SELF_BALANCE => {
+            println!("SYSCALL_ID_SELF_BALANCE={}", SYSCALL_ID_SELF_BALANCE);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
@@ -593,6 +602,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CODE_SIZE => {
+            println!("SYSCALL_ID_CODE_SIZE={}", SYSCALL_ID_CODE_SIZE);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20,
@@ -623,6 +633,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CODE_HASH => {
+            println!("SYSCALL_ID_CODE_HASH={}", SYSCALL_ID_CODE_HASH);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20,
@@ -654,6 +665,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_CODE_COPY => {
+            println!("SYSCALL_ID_CODE_COPY={}", SYSCALL_ID_CODE_COPY);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN
                     && inputs.syscall_params.input.len() == 20 + 8 * 2,
@@ -688,6 +700,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
 
         // TODO(dmitry123): "rethink these system calls"
         SYSCALL_ID_WRITE_PREIMAGE => {
+            println!("SYSCALL_ID_WRITE_PREIMAGE={}", SYSCALL_ID_WRITE_PREIMAGE);
             assert_return!(
                 inputs.syscall_params.state == STATE_MAIN,
                 MalformedBuiltinParams
@@ -712,6 +725,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             return_result!(preimage_hash);
         }
         SYSCALL_ID_PREIMAGE_SIZE => {
+            println!("SYSCALL_ID_PREIMAGE_SIZE={}", SYSCALL_ID_PREIMAGE_SIZE);
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -742,6 +756,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             return_result!(preimage_size.to_le_bytes());
         }
         SYSCALL_ID_PREIMAGE_COPY => {
+            println!("SYSCALL_ID_PREIMAGE_COPY={}", SYSCALL_ID_PREIMAGE_COPY);
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -768,6 +783,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_DELEGATED_STORAGE => {
+            println!("SYSCALL_ID_DELEGATED_STORAGE={}", SYSCALL_ID_DELEGATED_STORAGE);
             println!("executing delegated storage");
             assert_return!(
                 inputs.syscall_params.input.len() == 20 + 32
@@ -819,6 +835,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_TRANSIENT_READ => {
+            println!("SYSCALL_ID_TRANSIENT_READ={}", SYSCALL_ID_TRANSIENT_READ);
             assert_return!(
                 inputs.syscall_params.input.len() == 32
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -837,6 +854,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_TRANSIENT_WRITE => {
+            println!("SYSCALL_ID_TRANSIENT_WRITE={}", SYSCALL_ID_TRANSIENT_WRITE);
             assert_return!(
                 inputs.syscall_params.input.len() == 64
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -858,6 +876,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
         }
 
         SYSCALL_ID_SYNC_EVM_GAS => {
+            println!("SYSCALL_ID_SYNC_EVM_GAS={}", SYSCALL_ID_SYNC_EVM_GAS);
             assert_return!(
                 inputs.syscall_params.input.len() == 8 * 2
                     && inputs.syscall_params.state == STATE_MAIN,

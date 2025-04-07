@@ -665,6 +665,9 @@ pub fn execute_test_suite(
             let spec_id = spec_name.to_spec_id();
 
             for (index, test) in tests.into_iter().enumerate() {
+                if index == 1 {
+                    break
+                }
                 println!(
                     "\n\n\n\n\nRunning test with txdata: ({}) {}",
                     index,

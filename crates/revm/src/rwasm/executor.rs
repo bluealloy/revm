@@ -41,6 +41,8 @@ use fluentbase_sdk::{
 };
 use revm_interpreter::{return_ok, return_revert, Contract};
 
+const WASMTIME: bool = true;
+
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
     rwasm_bytecode: Bytes,
@@ -74,7 +76,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     };
 
     let (fuel_consumed, fuel_refunded, exit_code, return_data, is_gas_free) =
-        if is_system_precompile(&effective_bytecode_address) {
+        if is_system_precompile(&effective_bytecode_address) && WASMTIME {
             let wasm_bytecode = get_precompile_wasm_bytecode(&effective_bytecode_address).unwrap();
             let (exit_code, return_data) = execute_wasmtime(
                 wasm_bytecode,
@@ -103,6 +105,10 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
                 .unwrap_or(u64::MAX);
 
             let mut runtime_context = RuntimeContext::root(fuel_limit);
+            let is_gas_free = is_system_precompile(&effective_bytecode_address);
+            if is_gas_free {
+                runtime_context = runtime_context.without_fuel();
+            }
             let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
                 &mut runtime_context,
                 bytecode_hash,
@@ -118,7 +124,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
                 fuel_refunded,
                 exit_code,
                 return_data,
-                false,
+                is_gas_free,
             )
         };
 
@@ -186,7 +192,7 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     };
 
     let (fuel_consumed, fuel_refunded, exit_code, return_data) =
-        if inputs.is_gas_free {
+        if inputs.is_gas_free && WASMTIME {
             let (exit_code, return_data) = resume_wasmtime(
                 inputs.call_id as i32,
                 result.output.into(),
@@ -198,6 +204,9 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
             (0, 0, exit_code, return_data.into())
         } else {
             let mut runtime_context = RuntimeContext::root(0);
+            if inputs.is_gas_free {
+                runtime_context = runtime_context.without_fuel();
+            }
             let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
                 &mut runtime_context,
                 inputs.call_id,
@@ -225,6 +234,8 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     } else {
         result.gas
     };
+
+    dbg!(&gas.limit() - &gas.remaining());
 
     // make sure we have enough gas to charge from the call
     if !gas.record_denominated_cost(fuel_consumed) {
