@@ -107,8 +107,10 @@ async fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("traces").expect("Failed to create traces directory");
 
     // Fill in CfgEnv
-    let BlockTransactions::Full(transactions) = block.transactions else {
-        panic!("Wrong transaction type")
+    match block.transactions {
+        BlockTransactions::Full(transactions) => {
+        },
+        _ => panic!("Wrong transaction type"),
     };
 
     for tx in transactions {
