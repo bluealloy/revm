@@ -137,7 +137,9 @@ pub trait Transaction {
     ///
     /// While for transactions after Eip1559 it is minimum of max_fee and `base + max_priority_fee`.
     fn effective_gas_price(&self, base_fee: u128) -> u128 {
-        if self.tx_type() == 0 || self.tx_type() == TransactionType::Eip2930 as u8 {
+        if self.tx_type() == TransactionType::Legacy as u8
+            || self.tx_type() == TransactionType::Eip2930 as u8
+        {
             return self.gas_price();
         }
 
