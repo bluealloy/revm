@@ -2,6 +2,8 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use core::cmp::Ordering;
+
 use bytecode::Bytecode;
 use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
 use context_interface::ContextTr;
@@ -12,6 +14,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use state::AccountInfo;
 
 use crate::{EvmTr, PrecompileProvider};
 
@@ -66,9 +69,12 @@ pub fn load_accounts<
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextTr>(
+pub fn deduct_caller<
+    CTX: ContextTr,
+    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
+>(
     context: &mut CTX,
-) -> Result<(), <CTX::Db as Database>::Error> {
+) -> Result<(), ERROR> {
     let basefee = context.block().basefee();
     let blob_price = context.block().blob_gasprice().unwrap_or_default();
     let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
@@ -89,7 +95,9 @@ pub fn deduct_caller<CTX: ContextTr>(
     let caller = context.tx().caller();
 
     // Load caller's account.
-    let caller_account = context.journal().load_account(caller)?.data;
+    let mut caller_account = context.journal().load_account_code(caller)?.data.clone();
+    let account_info = caller_account.info.clone();
+    let _ = validate_before_deduction::<CTX, ERROR>(&account_info, context);
     // Set new caller account balance.
     caller_account.info.balance = caller_account
         .info
@@ -109,6 +117,70 @@ pub fn deduct_caller<CTX: ContextTr>(
 
     // Touch account so we know it is changed.
     caller_account.mark_touch();
+    Ok(())
+}
+
+#[inline]
+pub fn validate_before_deduction<
+    CTX: ContextTr,
+    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
+>(
+    account_info: &AccountInfo,
+    context: &mut CTX,
+) -> Result<(), ERROR> {
+    let tx = context.tx();
+    let tx_type = context.tx().tx_type();
+    // EIP-3607: Reject transactions from senders with deployed code
+    // This EIP is introduced after london but there was no collision in past
+    // so we can leave it enabled always
+    if !context.cfg().is_eip3607_disabled() {
+        let bytecode = &account_info.code.as_ref().unwrap();
+        // Allow EOAs whose code is a valid delegation designation,
+        // i.e. 0xef0100 || address, to continue to originate transactions.
+        if !bytecode.is_empty() && !bytecode.is_eip7702() {
+            return Err(InvalidTransaction::RejectCallerWithCode)?;
+        }
+    }
+
+    // Check that the transaction's nonce is correct
+    if !context.cfg().is_nonce_check_disabled() {
+        let tx = tx.nonce();
+        let state = account_info.nonce;
+        match tx.cmp(&state) {
+            Ordering::Greater => {
+                return Err(InvalidTransaction::NonceTooHigh { tx, state })?;
+            }
+            Ordering::Less => {
+                return Err(InvalidTransaction::NonceTooLow { tx, state })?;
+            }
+            _ => {}
+        }
+    }
+
+    // gas_limit * max_fee + value + additional_gas_cost
+    let mut balance_check = U256::from(tx.gas_limit())
+        .checked_mul(U256::from(tx.max_fee_per_gas()))
+        .and_then(|gas_cost| gas_cost.checked_add(tx.value()))
+        .and_then(|gas_cost| gas_cost.checked_add(U256::ZERO))
+        .ok_or(InvalidTransaction::OverflowPaymentInTransaction)
+        .unwrap();
+
+    if tx_type == TransactionType::Eip4844 {
+        let data_fee = tx.calc_max_data_fee();
+        balance_check = balance_check
+            .checked_add(data_fee)
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)
+            .unwrap();
+    }
+
+    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
+    // Transfer will be done inside `*_inner` functions.
+    if balance_check > account_info.balance && !context.cfg().is_balance_check_disabled() {
+        return Err(InvalidTransaction::LackOfFundForMaxFee {
+            fee: Box::new(balance_check),
+            balance: Box::new(account_info.balance),
+        })?;
+    }
     Ok(())
 }
 

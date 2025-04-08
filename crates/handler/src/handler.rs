@@ -135,7 +135,6 @@ pub trait Handler {
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
         let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
-        self.validate_tx_against_state(evm)?;
         Ok(initial_and_floor_gas)
     }
 
@@ -260,7 +259,7 @@ pub trait Handler {
     /// Unused fees are returned to caller after execution completes.
     #[inline]
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
+        pre_execution::deduct_caller(evm.ctx())
     }
 
     /* EXECUTION */
