@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/bluealloy/revm/compare/revm-state-v2.0.0...revm-state-v2.1.0) - 2025-04-08
+
+### Added
+
+- Account helper builder functions ([#2355](https://github.com/bluealloy/revm/pull/2355))
+- support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
+
+### Other
+
+- *(state)* Add AccountInfo builder util methods ([#2357](https://github.com/bluealloy/revm/pull/2357))
+
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-state-v1.0.0...revm-state-v2.0.0) - 2025-03-28
 
 ### Other
