@@ -4,7 +4,6 @@ use core::{
     fmt,
     ops::{Deref, Range},
 };
-use once_cell::sync::Lazy;
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
 
@@ -29,16 +28,16 @@ pub struct SharedMemory {
     memory_limit: u64,
 }
 
-/// Empty shared memory.
-///
-/// Used as placeholder inside Interpreter when it is not running.
-pub const EMPTY_SHARED_MEMORY: Lazy<SharedMemory> = SharedMemory {
-    buffer: Rc::new(RefCell::new(Vec::new())),
-    checkpoints: Vec::new(),
-    last_checkpoint: 0,
-    #[cfg(feature = "memory_limit")]
-    memory_limit: u64::MAX,
-};
+// /// Empty shared memory.
+// ///
+// /// Used as placeholder inside Interpreter when it is not running.
+// pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
+//     buffer: Rc::new(RefCell::new(Vec::new())),
+//     checkpoints: Vec::new(),
+//     last_checkpoint: 0,
+//     #[cfg(feature = "memory_limit")]
+//     memory_limit: u64::MAX,
+// };
 
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -81,7 +80,9 @@ impl<T: MemoryGetter> MemoryTr for Rc<RefCell<T>> {
     }
 
     fn set(&mut self, memory_offset: usize, data: &[u8]) {
-        self.borrow_mut().memory_mut().set(memory_offset, data);
+        unsafe {
+            self.borrow_mut().memory_mut().set(memory_offset, data);
+        }
     }
 
     fn size(&self) -> usize {
@@ -89,9 +90,11 @@ impl<T: MemoryGetter> MemoryTr for Rc<RefCell<T>> {
     }
 
     fn copy(&mut self, destination: usize, source: usize, len: usize) {
-        self.borrow_mut()
-            .memory_mut()
-            .copy(destination, source, len);
+        unsafe {
+            self.borrow_mut()
+                .memory_mut()
+                .copy(destination, source, len);
+        }
     }
 
     fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
@@ -216,7 +219,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+    pub unsafe fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
         let end = offset + size;
         match self.context_memory_mut().get_mut(offset..end) {
             Some(slice) => slice,
@@ -262,7 +265,9 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, offset: usize, byte: u8) {
-        self.set(offset, &[byte]);
+        unsafe {
+            self.set(offset, &[byte]);
+        }
     }
 
     /// Sets the given 32-byte `value` to the memory region at the given `offset`.
@@ -273,7 +278,9 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_word(&mut self, offset: usize, value: &B256) {
-        self.set(offset, &value[..]);
+        unsafe {
+            self.set(offset, &value[..]);
+        }
     }
 
     /// Sets the given U256 `value` to the memory region at the given `offset`.
@@ -284,7 +291,9 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_u256(&mut self, offset: usize, value: U256) {
-        self.set(offset, &value.to_be_bytes::<32>());
+        unsafe {
+            self.set(offset, &value.to_be_bytes::<32>());
+        }
     }
 
     /// Set memory region at given `offset`.
@@ -294,7 +303,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn set(&mut self, offset: usize, value: &[u8]) {
+    pub unsafe fn set(&mut self, offset: usize, value: &[u8]) {
         if !value.is_empty() {
             self.slice_mut(offset, value.len()).copy_from_slice(value);
         }
@@ -310,21 +319,28 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
-            // Nullify all memory slots
-            self.slice_mut(memory_offset, len).fill(0);
-            return;
+            unsafe {
+                // Nullify all memory slots
+                self.slice_mut(memory_offset, len).fill(0);
+                return;
+            }
         }
+
         let data_end = min(data_offset + len, data.len());
         let data_len = data_end - data_offset;
         debug_assert!(data_offset < data.len() && data_end <= data.len());
         let data = unsafe { data.get_unchecked(data_offset..data_end) };
-        self.slice_mut(memory_offset, data_len)
-            .copy_from_slice(data);
+        unsafe {
+            self.slice_mut(memory_offset, data_len)
+                .copy_from_slice(data);
+        }
 
-        // Nullify rest of memory slots
-        // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
-        self.slice_mut(memory_offset + data_len, len - data_len)
-            .fill(0);
+        unsafe {
+            // Nullify rest of memory slots
+            // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
+            self.slice_mut(memory_offset + data_len, len - data_len)
+                .fill(0);
+        }
     }
 
     /// Copies elements from one part of the memory to another part of itself.
@@ -334,7 +350,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
+    pub unsafe fn copy(&mut self, dst: usize, src: usize, len: usize) {
         self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
@@ -343,17 +359,16 @@ impl SharedMemory {
     pub fn context_memory(&self) -> &[u8] {
         // SAFETY: Access bounded by buffer length
         unsafe {
-            self.buffer
-                .get_unchecked(self.last_checkpoint..self.buffer.len())
+            let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
+            &*(&buffer[self.last_checkpoint..] as *const [u8]) // Extend the lifetime
         }
     }
 
     /// Returns a mutable reference to the memory of the current context.
     #[inline]
-    pub fn context_memory_mut(&mut self) -> &mut [u8] {
-        let buf_len = self.buffer.borrow().len();
-        // SAFETY: Access bounded by buffer length
-        unsafe { self.buffer.get_unchecked_mut(self.last_checkpoint..buf_len) }
+    pub unsafe fn context_memory_mut(&mut self) -> &mut [u8] {
+        let mut buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8>
+        &mut *(&mut buffer[self.last_checkpoint..] as *mut [u8]) // Extend the lifetime
     }
 }
 

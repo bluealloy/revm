@@ -665,9 +665,11 @@ where
                         .control
                         .gas_mut()
                         .erase_cost(out_gas.remaining());
-                    self.memory
-                        .borrow_mut()
-                        .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
+                    unsafe {
+                        self.memory
+                            .borrow_mut()
+                            .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
+                    }
                 }
 
                 if ins_result.is_ok() {
