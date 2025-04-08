@@ -10,7 +10,8 @@ use std::{convert::Infallible, fmt::Debug};
 
 use revm::{
     context::{
-        result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput, TxEnv,
+        result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput,
+        LocalContext, TxEnv,
     },
     context_interface::{
         journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
@@ -504,6 +505,7 @@ where
         cfg: env.cfg,
         journaled_state: new_backend,
         chain: (),
+        local: LocalContext::default(),
         error: Ok(()),
     };
 
@@ -555,6 +557,7 @@ fn main() -> anyhow::Result<()> {
         cfg: env.cfg,
         journaled_state: backend,
         chain: (),
+        local: LocalContext::default(),
         error: Ok(()),
     };
 

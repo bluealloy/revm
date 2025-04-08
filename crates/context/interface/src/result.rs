@@ -370,6 +370,8 @@ pub enum InvalidTransaction {
     Eip4844NotSupported,
     /// EIP-7702 is not supported.
     Eip7702NotSupported,
+    /// EIP-7873 is not supported.
+    Eip7873NotSupported,
 }
 
 impl TransactionError for InvalidTransaction {}
@@ -454,6 +456,7 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip1559NotSupported => write!(f, "Eip1559 is not supported"),
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
             Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
+            Self::Eip7873NotSupported => write!(f, "Eip7873 is not supported"),
         }
     }
 }

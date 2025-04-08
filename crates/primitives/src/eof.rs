@@ -1,5 +1,10 @@
 use crate::{keccak256, Address, B256};
 
+/// TXCREATE transaction type.
+pub const INITCODE_TX_TYPE: u8 = 0x06;
+/// Maximum number of initcode in TXCREATE transactions.
+pub const MAX_INITCODE_COUNT: usize = 256;
+
 /// Calculated new EOF address from address and salt.
 ///
 /// Buffer that is hashed is 65 bytes long. First bytes is magic number 0xFF,

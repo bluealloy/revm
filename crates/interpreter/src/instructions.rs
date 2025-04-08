@@ -195,7 +195,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[EXCHANGE as usize] = stack::exchange;
 
     table[EOFCREATE as usize] = contract::eofcreate;
-
+    table[TXCREATE as usize] = contract::txcreate;
     table[RETURNCONTRACT as usize] = contract::return_contract;
 
     table[CREATE as usize] = contract::create::<_, false, _>;

@@ -75,6 +75,11 @@ pub struct TxEnv {
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
     pub authorization_list: Vec<SignedAuthorization>,
+
+    /// List of initcodes that is part of Initcode transaction.
+    ///
+    /// [EIP-7873](https://eips.ethereum.org/EIPS/eip-7873)
+    pub initcodes: Vec<Bytes>,
 }
 
 impl Default for TxEnv {
@@ -94,6 +99,7 @@ impl Default for TxEnv {
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
+            initcodes: Vec::new(),
         }
     }
 }
@@ -206,5 +212,9 @@ impl Transaction for TxEnv {
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
         self.gas_priority_fee
+    }
+
+    fn initcodes(&self) -> impl Iterator<Item = &Bytes> {
+        self.initcodes.iter()
     }
 }

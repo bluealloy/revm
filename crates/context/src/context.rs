@@ -1,14 +1,14 @@
-use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv};
+use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
     context::{ContextError, ContextSetters},
-    Block, Cfg, ContextTr, JournalTr, Transaction,
+    Block, Cfg, ContextTr, JournalTr, LocalContextTr, Transaction,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
+#[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
 pub struct Context<
     BLOCK = BlockEnv,
     TX = TxEnv,
@@ -16,6 +16,7 @@ pub struct Context<
     DB: Database = EmptyDB,
     JOURNAL: JournalTr<Database = DB> = Journal<DB>,
     CHAIN = (),
+    LOCAL: LocalContextTr = LocalContext,
 > {
     /// Block information.
     pub block: BLOCK,
@@ -27,6 +28,8 @@ pub struct Context<
     pub journaled_state: JOURNAL,
     /// Inner context.
     pub chain: CHAIN,
+    /// Local context that is filled by execution.
+    pub local: LOCAL,
     /// Error that happened during execution.
     pub error: Result<(), ContextError<DB::Error>>,
 }
@@ -38,7 +41,8 @@ impl<
         CFG: Cfg,
         JOURNAL: JournalTr<Database = DB>,
         CHAIN,
-    > ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+        LOCAL: LocalContextTr,
+    > ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
     type Block = BLOCK;
     type Tx = TX;
@@ -46,6 +50,7 @@ impl<
     type Db = DB;
     type Journal = JOURNAL;
     type Chain = CHAIN;
+    type Local = LOCAL;
 
     fn tx(&self) -> &Self::Tx {
         &self.tx
@@ -77,6 +82,10 @@ impl<
 
     fn chain(&mut self) -> &mut Self::Chain {
         &mut self.chain
+    }
+
+    fn local(&mut self) -> &mut Self::Local {
+        &mut self.local
     }
 
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
@@ -126,6 +135,7 @@ impl<
                 spec,
                 ..Default::default()
             },
+            local: LocalContext::default(),
             journaled_state,
             chain: Default::default(),
             error: Ok(()),
@@ -151,6 +161,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: journal,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -171,6 +182,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -189,6 +201,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -201,6 +214,7 @@ where
             block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -215,6 +229,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -227,6 +242,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            local: self.local,
             chain,
             error: Ok(()),
         }
@@ -243,6 +259,7 @@ where
             block: self.block,
             cfg,
             journaled_state: self.journaled_state,
+            local: self.local,
             chain: self.chain,
             error: Ok(()),
         }

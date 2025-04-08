@@ -4,7 +4,7 @@ use crate::{
     FrameResult, ItemOrResult,
 };
 use context::result::FromStringError;
-use context::JournalOutput;
+use context::{JournalOutput, LocalContextTr, TransactionType};
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -200,6 +200,8 @@ pub trait Handler {
         self.refund(evm, &mut exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
         self.eip7623_check_gas_floor(evm, &mut exec_result, init_and_floor_gas);
+        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
+        self.apply_eip7873_eof_initcodes(evm)?;
         // Return unused gas to caller
         self.reimburse_caller(evm, &mut exec_result)?;
         // Pay transaction fees to beneficiary
@@ -253,6 +255,20 @@ pub trait Handler {
     #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
+    }
+
+    /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
+    /// Applies valid authorizations to accounts.
+    ///
+    /// Returns the gas refund amount specified by EIP-7702.
+    #[inline]
+    fn apply_eip7873_eof_initcodes(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
+            return Ok(());
+        }
+        let initcode = evm.ctx().tx().initcodes().cloned().collect::<Vec<_>>();
+        evm.ctx().local().insert_initcodes(&initcode);
+        Ok(())
     }
 
     /// Deducts maximum possible fee and transfer value from caller's balance.
