@@ -107,26 +107,22 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    // check if tx_initcode_hash is valid
+    // Get validated initcode with all its subcontainers validated recursively.
     let Some(initcode) = host.initcode_by_hash(tx_initcode_hash) else {
-        // fails (returns 0 on the stack) if such initcode does not exist in the transaction,
-        // or if called from a transaction of TransactionType other than INITCODE_TX_TYPE
+        // If initcode is not found or not valid, push 0 on the stack.
         push!(interpreter, U256::ZERO);
         return;
     };
 
+    // caller’s memory slice [input_offset:input_size] is used as calldata
     let input = if !input_range.is_empty() {
         interpreter.memory.slice(input_range).to_vec().into()
     } else {
         Bytes::new()
     };
 
+    // Decode initcode as EOF.
     let eof = Eof::decode(initcode).expect("Subcontainer is verified");
-
-    if !eof.body.is_data_filled {
-        // Should be always false as it is verified by eof verification.
-        panic!("Panic if data section is not full");
-    }
 
     // Calculate new address
     let created_address = new_eof_address(
