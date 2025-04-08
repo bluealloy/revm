@@ -1,4 +1,4 @@
-//! # EIP-7212 secp256r1 Precompile
+//! # RIP-7212 secp256r1 Precompile
 //!
 //! This module implements the [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md) precompile for
 //! secp256r1 curve support.
