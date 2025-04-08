@@ -23,7 +23,6 @@ all = "warn"
 
 [dependencies]
 revm = { workspace = true, features = ["std"] }
-database.workspace = true
 
-# mics
+# misc
 anyhow = "1.0.89"

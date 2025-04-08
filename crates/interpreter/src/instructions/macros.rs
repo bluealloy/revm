@@ -54,7 +54,7 @@ macro_rules! check {
         if !$interpreter
             .runtime_flag
             .spec_id()
-            .is_enabled_in(specification::hardfork::SpecId::$min)
+            .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
             $interpreter
                 .control
@@ -71,7 +71,7 @@ macro_rules! gas {
         $crate::gas!($interpreter, $gas, ())
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.control.gas().record_cost($gas) {
+        if !$interpreter.control.gas_mut().record_cost($gas) {
             $interpreter
                 .control
                 .set_instruction_result($crate::InstructionResult::OutOfGas);
@@ -110,7 +110,7 @@ macro_rules! resize_memory {
         let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
         match $interpreter
             .control
-            .gas()
+            .gas_mut()
             .record_memory_expansion(words_num)
         {
             $crate::gas::MemoryExtensionResult::Extended => {
@@ -127,6 +127,8 @@ macro_rules! resize_memory {
     };
 }
 
+/// Pops n values from the stack. Fails the instruction if n values can't be popped.
+#[macro_export]
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreterreter:expr $(,$ret:expr)? ) => {
         let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
@@ -136,6 +138,8 @@ macro_rules! popn {
     };
 }
 
+/// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
+#[macro_export]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreterreter:expr $(,$ret:expr)? ) => {
         let Some(([$( $x ),*], $top)) = $interpreterreter.stack.popn_top() else {

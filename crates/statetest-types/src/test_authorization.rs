@@ -1,44 +1,35 @@
-use revm::{
-    context_interface::transaction::AuthorizationItem,
-    primitives::{Address, U256},
-    specification::eip2::SECP256K1N_HALF,
-};
-use serde::{Deserialize, Serialize};
+use revm::context_interface::transaction::SignedAuthorization;
+use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// Struct for test authorization
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TestAuthorization {
-    /// The chain ID of the authorization.
-    pub chain_id: U256,
-    /// The address of the authorization.
-    pub address: Address,
-    /// The nonce for the authorization.
-    pub nonce: U256,
-    v: U256,
-    r: U256,
-    s: U256,
-    signer: Option<Address>,
+    #[serde(flatten)]
+    inner: SignedAuthorization,
 }
 
-impl From<TestAuthorization> for AuthorizationItem {
-    fn from(auth: TestAuthorization) -> AuthorizationItem {
-        let mut signer = auth.signer;
+impl From<TestAuthorization> for SignedAuthorization {
+    fn from(auth: TestAuthorization) -> Self {
+        auth.inner
+    }
+}
 
-        if auth.s > SECP256K1N_HALF {
-            signer = None
+impl<'de> Deserialize<'de> for TestAuthorization {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // This is a hack to remove duplicate yParity and v fields which can be used by the test files for cross client compat
+        let mut value: serde_json::Value = Deserialize::deserialize(deserializer)?;
+        if let Some(val) = value.as_object_mut() {
+            if val.contains_key("v") && val.contains_key("yParity") {
+                val.remove("v");
+            }
         }
-
-        if auth.v > U256::from(1) {
-            signer = None
-        }
-
-        (
-            signer,
-            auth.chain_id,
-            auth.nonce.try_into().unwrap_or(u64::MAX),
-            auth.address,
-        )
+        let inner: SignedAuthorization = serde_json::from_value(value).map_err(D::Error::custom)?;
+        Ok(Self { inner })
     }
 }
 
@@ -56,6 +47,23 @@ mod tests {
             "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "nonce": "0x00",
             "v": "0x01",
+            "r": "0x5a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837",
+            "s": "0x1c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f",
+            "signer": "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71"
+        }"#;
+
+        let auth: TestAuthorization = serde_json::from_str(auth).unwrap();
+        println!("{:?}", auth);
+    }
+
+    #[test]
+    fn recover_auth_duplicate_v_yparity() {
+        let auth = r#"{
+            "chainId": "0x00",
+            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "nonce": "0x00",
+            "v": "0x01",
+            "yParity": "0x01",
             "r": "0x5a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837",
             "s": "0x1c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f",
             "signer": "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71"

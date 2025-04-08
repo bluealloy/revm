@@ -3,7 +3,7 @@ use core::{fmt, ptr};
 use primitives::U256;
 use std::vec::Vec;
 
-use super::StackTrait;
+use super::StackTr;
 
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
@@ -47,7 +47,7 @@ impl Clone for Stack {
     }
 }
 
-impl StackTrait for Stack {
+impl StackTr for Stack {
     fn len(&self) -> usize {
         self.len()
     }
@@ -166,7 +166,7 @@ impl Stack {
             return [U256::ZERO; N];
         }
         let mut result = [U256::ZERO; N];
-        for v in result.iter_mut() {
+        for v in &mut result {
             *v = self.data.pop().unwrap_unchecked();
         }
         result
@@ -269,7 +269,7 @@ impl Stack {
         unsafe {
             // Note: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
             // because it operates under the assumption that the pointers do not overlap,
-            // eliminating an intemediate copy,
+            // eliminating an intermediate copy,
             // which is a condition we know to be true in this context.
             let top = self.data.as_mut_ptr().add(len - 1);
             core::ptr::swap_nonoverlapping(top.sub(n), top.sub(n_m_index), 1);
@@ -285,7 +285,7 @@ impl Stack {
             return Ok(());
         }
 
-        let n_words = (slice.len() + 31) / 32;
+        let n_words = slice.len().div_ceil(32);
         let new_len = self.data.len() + n_words;
         if new_len > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
@@ -330,7 +330,7 @@ impl Stack {
                 i += 1;
             }
 
-            debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
+            debug_assert_eq!(i.div_ceil(4), n_words, "wrote too much");
 
             // Zero out upper bytes of last word
             let m = i % 4; // 32 / 8

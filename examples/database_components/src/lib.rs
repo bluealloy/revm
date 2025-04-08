@@ -8,8 +8,6 @@ pub mod state;
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
 
-use core::{error::Error as StdError, fmt::Debug};
-use derive_more::Display;
 use revm::{
     database_interface::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef},
     primitives::{Address, HashMap, B256, U256},
@@ -22,13 +20,13 @@ pub struct DatabaseComponents<S, BH> {
     pub block_hash: BH,
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, thiserror::Error)]
 pub enum DatabaseComponentError<SE, BHE> {
+    #[error(transparent)]
     State(SE),
+    #[error(transparent)]
     BlockHash(BHE),
 }
-
-impl<SE: Debug + Display, BHE: Debug + Display> StdError for DatabaseComponentError<SE, BHE> {}
 
 impl<SE, BHE> DBErrorMarker for DatabaseComponentError<SE, BHE> {}
 

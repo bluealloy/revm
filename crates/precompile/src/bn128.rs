@@ -2,8 +2,23 @@ use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use std::vec::Vec;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "bn")]{
+        mod substrate;
+        use substrate::{
+            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+            read_scalar,
+        };
+    } else {
+        mod arkworks;
+        use arkworks::{
+            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
+            read_scalar,
+        };
+    }
+}
 
 pub mod add {
     use super::*;
@@ -71,87 +86,75 @@ pub mod pair {
         });
 }
 
+/// FQ_LEN specifies the number of bytes needed to represent an
+/// Fq element. This is an element in the base field of BN254.
+///
+/// Note: The base field is used to define G1 and G2 elements.
+const FQ_LEN: usize = 32;
+
+/// SCALAR_LEN specifies the number of bytes needed to represent an Fr element.
+/// This is an element in the scalar field of BN254.
+const SCALAR_LEN: usize = 32;
+
+/// FQ2_LEN specifies the number of bytes needed to represent an
+/// Fq^2 element.
+///
+/// Note: This is the quadratic extension of Fq, and by definition
+/// means we need 2 Fq elements.
+const FQ2_LEN: usize = 2 * FQ_LEN;
+
+/// G1_LEN specifies the number of bytes needed to represent a G1 element.
+///
+/// Note: A G1 element contains 2 Fq elements.
+const G1_LEN: usize = 2 * FQ_LEN;
+/// G2_LEN specifies the number of bytes needed to represent a G2 element.
+///
+/// Note: A G2 element contains 2 Fq^2 elements.
+const G2_LEN: usize = 2 * FQ2_LEN;
+
 /// Input length for the add operation.
 /// `ADD` takes two uncompressed G1 points (64 bytes each).
-pub const ADD_INPUT_LEN: usize = 64 + 64;
+pub const ADD_INPUT_LEN: usize = 2 * G1_LEN;
 
 /// Input length for the multiplication operation.
 /// `MUL` takes an uncompressed G1 point (64 bytes) and scalar (32 bytes).
-pub const MUL_INPUT_LEN: usize = 64 + 32;
+pub const MUL_INPUT_LEN: usize = G1_LEN + SCALAR_LEN;
 
 /// Pair element length.
 /// `PAIR` elements are composed of an uncompressed G1 point (64 bytes) and an uncompressed G2 point
 /// (128 bytes).
-pub const PAIR_ELEMENT_LEN: usize = 64 + 128;
-
-/// Reads a single `Fq` from the input slice.
-///
-/// # Panics
-///
-/// Panics if the input is not at least 32 bytes long.
-#[inline]
-pub fn read_fq(input: &[u8]) -> Result<Fq, PrecompileError> {
-    Fq::from_slice(&input[..32]).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
-}
-
-/// Reads the `x` and `y` points from the input slice.
-///
-/// # Panics
-///
-/// Panics if the input is not at least 64 bytes long.
-#[inline]
-pub fn read_point(input: &[u8]) -> Result<G1, PrecompileError> {
-    let px = read_fq(&input[0..32])?;
-    let py = read_fq(&input[32..64])?;
-    new_g1_point(px, py)
-}
-
-/// Creates a new `G1` point from the given `x` and `y` coordinates.
-pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
-    if px == Fq::zero() && py == Fq::zero() {
-        Ok(G1::zero())
-    } else {
-        AffineG1::new(px, py)
-            .map(Into::into)
-            .map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)
-    }
-}
+pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
-    let p1 = read_point(&input[..64])?;
-    let p2 = read_point(&input[64..])?;
+    let p1 = read_g1_point(&input[..G1_LEN])?;
+    let p2 = read_g1_point(&input[G1_LEN..])?;
+    let result = g1_point_add(p1, p2);
 
-    let mut output = [0u8; 64];
-    if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
-        sum.x().to_big_endian(&mut output[..32]).unwrap();
-        sum.y().to_big_endian(&mut output[32..]).unwrap();
-    }
+    let output = encode_g1_point(result);
+
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
-    let p = read_point(&input[..64])?;
+    let p = read_g1_point(&input[..G1_LEN])?;
 
-    // `Fr::from_slice` can only fail when the length is not 32.
-    let fr = bn::Fr::from_slice(&input[64..96]).unwrap();
+    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN]);
+    let result = g1_point_mul(p, scalar);
 
-    let mut output = [0u8; 64];
-    if let Some(mul) = AffineG1::from_jacobian(p * fr) {
-        mul.x().to_big_endian(&mut output[..32]).unwrap();
-        mul.y().to_big_endian(&mut output[32..]).unwrap();
-    }
+    let output = encode_g1_point(result);
+
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
@@ -163,59 +166,51 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(PrecompileError::Bn128PairLength.into());
+        return Err(PrecompileError::Bn128PairLength);
     }
 
-    let success = if input.is_empty() {
-        true
-    } else {
-        let elements = input.len() / PAIR_ELEMENT_LEN;
+    let elements = input.len() / PAIR_ELEMENT_LEN;
 
-        let mut points = Vec::with_capacity(elements);
+    let mut points = Vec::with_capacity(elements);
 
-        // Read points
-        for idx in 0..elements {
-            let read_fq_at = |n: usize| {
-                debug_assert!(n < PAIR_ELEMENT_LEN / 32);
-                let start = idx * PAIR_ELEMENT_LEN + n * 32;
-                // SAFETY: We're reading `6 * 32 == PAIR_ELEMENT_LEN` bytes from `input[idx..]`
-                // per iteration. This is guaranteed to be in-bounds.
-                let slice = unsafe { input.get_unchecked(start..start + 32) };
-                Fq::from_slice(slice).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
-            };
-            let ax = read_fq_at(0)?;
-            let ay = read_fq_at(1)?;
-            let bay = read_fq_at(2)?;
-            let bax = read_fq_at(3)?;
-            let bby = read_fq_at(4)?;
-            let bbx = read_fq_at(5)?;
+    for idx in 0..elements {
+        // Offset to the start of the pairing element at index `idx` in the byte slice
+        let start = idx * PAIR_ELEMENT_LEN;
+        let g1_start = start;
+        // Offset to the start of the G2 element in the pairing element
+        // This is where G1 ends.
+        let g2_start = start + G1_LEN;
 
-            let a = new_g1_point(ax, ay)?;
-            let b = {
-                let ba = Fq2::new(bax, bay);
-                let bb = Fq2::new(bbx, bby);
-                // TODO : Check whether or not we need these zero checks
-                if ba.is_zero() && bb.is_zero() {
-                    G2::zero()
-                } else {
-                    G2::from(
-                        AffineG2::new(ba, bb)
-                            .map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)?,
-                    )
-                }
-            };
+        let encoded_g1_element = &input[g1_start..g2_start];
+        let encoded_g2_element = &input[g2_start..g2_start + G2_LEN];
 
+        // If either the G1 or G2 element is the encoded representation
+        // of the point at infinity, then these two points are no-ops
+        // in the pairing computation.
+        //
+        // Note: we do not skip the validation of these two elements even if
+        // one of them is the point at infinity because we could have G1 be
+        // the point at infinity and G2 be an invalid element or vice versa.
+        // In that case, the precompile should error because one of the elements
+        // was invalid.
+        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
+        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
+
+        // Get G1 and G2 points from the input
+        let a = read_g1_point(encoded_g1_element)?;
+        let b = read_g2_point(encoded_g2_element)?;
+
+        if !g1_is_zero && !g2_is_zero {
             points.push((a, b));
         }
+    }
 
-        let mul = bn::pairing_batch(&points);
+    let success = pairing_check(&points);
 
-        mul == Gt::one()
-    };
     Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(success)))
 }
 
@@ -227,7 +222,7 @@ mod tests {
             mul::BYZANTIUM_MUL_GAS_COST,
             pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT},
         },
-        PrecompileError, PrecompileErrors,
+        PrecompileError,
     };
     use primitives::hex;
 
@@ -283,11 +278,8 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
-        println!("{:?}", res);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -314,9 +306,7 @@ mod tests {
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
     }
 
@@ -349,10 +339,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Zero multiplication test
         let input = hex::decode(
@@ -396,9 +383,7 @@ mod tests {
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
     }
 
@@ -457,10 +442,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
-        ));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -497,9 +479,7 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(
-                PrecompileError::Bn128AffineGFailedToCreate
-            ))
+            Err(PrecompileError::Bn128AffineGFailedToCreate)
         ));
 
         // Invalid input length
@@ -518,9 +498,6 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
-        ));
+        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
     }
 }

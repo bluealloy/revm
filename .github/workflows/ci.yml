@@ -46,7 +46,8 @@ jobs:
           targets: riscv32imac-unknown-none-elf
       - run: |
           cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
-          cargo check --target riscv32imac-unknown-none-elf -p revm-optimism --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p op-revm --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p revm-database --no-default-features
 
   check:
     name: check ${{ matrix.features }}
@@ -95,6 +96,18 @@ jobs:
         with:
           components: rustfmt
       - run: cargo fmt --all --check
+  
+  # Check crates correctly propagate features
+  feature-propagation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: run zepter
+        run: |
+          cargo install zepter -f --locked
+          zepter --version
+          time zepter run check
 
   typos-check:
     name: TyposCheck

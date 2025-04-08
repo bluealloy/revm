@@ -1,6 +1,6 @@
 use context_interface::{
     journaled_state::TransferError,
-    result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason},
+    result::{HaltReason, OutOfGasError, SuccessReason},
 };
 use core::fmt::Debug;
 
@@ -94,7 +94,7 @@ pub enum InstructionResult {
     SubRoutineStackOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
-    /// Aux data is smaller then already present data size.
+    /// Aux data is smaller than already present data size.
     EofAuxDataTooSmall,
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
@@ -109,8 +109,6 @@ impl From<TransferError> for InstructionResult {
         }
     }
 }
-
-impl InstructionResult {}
 
 impl From<SuccessReason> for InstructionResult {
     fn from(value: SuccessReason) -> Self {
@@ -248,7 +246,7 @@ impl InstructionResult {
     }
 }
 
-/// Internal result that are not ex
+/// Internal results that are not exposed externally
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum InternalResult {
     /// Internal instruction that signals Interpreter should continue running.
@@ -262,15 +260,15 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum SuccessOrHalt<HaltReasonT: HaltReasonTrait> {
+pub enum SuccessOrHalt<HaltReasonTr> {
     Success(SuccessReason),
     Revert,
-    Halt(HaltReasonT),
+    Halt(HaltReasonTr),
     FatalExternalError,
     Internal(InternalResult),
 }
 
-impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonTr> SuccessOrHalt<HaltReasonTr> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -300,7 +298,7 @@ impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
 
     /// Returns the [HaltReason] value the EVM has experienced an exceptional halt
     #[inline]
-    pub fn to_halt(self) -> Option<HaltReasonT> {
+    pub fn to_halt(self) -> Option<HaltReasonTr> {
         match self {
             SuccessOrHalt::Halt(reason) => Some(reason),
             _ => None,
@@ -308,13 +306,13 @@ impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
     }
 }
 
-impl<HALT: HaltReasonTrait> From<HaltReason> for SuccessOrHalt<HALT> {
+impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
     fn from(reason: HaltReason) -> Self {
         SuccessOrHalt::Halt(reason.into())
     }
 }
 
-impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
+impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonTr> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop

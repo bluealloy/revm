@@ -2,15 +2,15 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};
-use database::CacheDB;
 use revm::{
     bytecode::opcode,
     context::Context,
     context_interface::result::{ExecutionResult, Output},
+    database::CacheDB,
     database_interface::EmptyDB,
-    handler::EthHandler,
+    handler::EvmTr,
     primitives::{hex, Bytes, TxKind, U256},
-    EvmCommit, MainEvm,
+    ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 
 /// Load number parameter and set to storage with slot 0
@@ -48,18 +48,17 @@ const RUNTIME_BYTECODE: &[u8] = &[opcode::PUSH0, opcode::SLOAD];
 fn main() -> anyhow::Result<()> {
     let param = 0x42;
     let bytecode: Bytes = [INIT_CODE, RET, RUNTIME_BYTECODE, &[param]].concat().into();
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .modify_tx_chained(|tx| {
-                tx.kind = TxKind::Create;
-                tx.data = bytecode.clone();
-            })
-            .with_db(CacheDB::<EmptyDB>::default()),
-        EthHandler::default(),
-    );
+    let ctx = Context::mainnet()
+        .modify_tx_chained(|tx| {
+            tx.kind = TxKind::Create;
+            tx.data = bytecode.clone();
+        })
+        .with_db(CacheDB::<EmptyDB>::default());
+
+    let mut evm = ctx.build_mainnet();
 
     println!("bytecode: {}", hex::encode(bytecode));
-    let ref_tx = evm.exec_commit()?;
+    let ref_tx = evm.replay_commit()?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..
@@ -69,13 +68,13 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    evm.context.modify_tx(|tx| {
+    evm.ctx().modify_tx(|tx| {
         tx.kind = TxKind::Call(address);
         tx.data = Default::default();
         tx.nonce += 1;
     });
 
-    let result = evm.transact()?;
+    let result = evm.replay()?;
     let Some(storage0) = result
         .state
         .get(&address)

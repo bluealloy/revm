@@ -1,4 +1,4 @@
-//! EVM opcode definitions and utilities.
+//! EVM opcode definitions and utilities. It contains opcode information and utilities to work with opcodes.
 
 #[cfg(feature = "parse")]
 pub mod parse;
@@ -14,6 +14,7 @@ use core::{fmt, ptr::NonNull};
 pub struct OpCode(u8);
 
 impl fmt::Display for OpCode {
+    /// Formats the opcode as a string
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let n = self.get();
         if let Some(val) = OPCODE_INFO[n as usize] {
@@ -26,6 +27,8 @@ impl fmt::Display for OpCode {
 
 impl OpCode {
     /// Instantiates a new opcode from a u8.
+    ///
+    /// Returns None if the opcode is not valid.
     #[inline]
     pub const fn new(opcode: u8) -> Option<Self> {
         match OPCODE_INFO[opcode as usize] {
@@ -129,6 +132,7 @@ impl OpCode {
     }
 
     /// Returns the opcode information for the given opcode.
+    /// Check [OpCodeInfo] for more information.
     #[inline]
     pub const fn info_by_op(opcode: u8) -> Option<OpCodeInfo> {
         if let Some(opcode) = Self::new(opcode) {
@@ -258,8 +262,7 @@ impl OpCodeInfo {
     pub const fn name(&self) -> &'static str {
         // SAFETY: `self.name_*` can only be initialized with a valid `&'static str`.
         unsafe {
-            // TODO : Use `str::from_raw_parts` when it's stable.
-            let slice = core::slice::from_raw_parts(self.name_ptr.as_ptr(), self.name_len as usize);
+            let slice = std::slice::from_raw_parts(self.name_ptr.as_ptr(), self.name_len as usize);
             core::str::from_utf8_unchecked(slice)
         }
     }
@@ -308,7 +311,7 @@ pub const fn not_eof(mut op: OpCodeInfo) -> OpCodeInfo {
     op
 }
 
-/// Sets the immediate bytes number.
+/// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
 ///
 /// RJUMPV is special case where the bytes len is depending on bytecode value,
 /// for RJUMPV size will be set to one byte while minimum is two.
@@ -318,14 +321,14 @@ pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
     op
 }
 
-/// Sets the terminating flag to true.
+/// Use for [`OPCODE_INFO`] to set the terminating flag to true in the [`OpCodeInfo`].
 #[inline]
 pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
     op.terminating = true;
     op
 }
 
-/// Sets the number of stack inputs and outputs.
+/// Use for [`OPCODE_INFO`] to sets the number of stack inputs and outputs in the [`OpCodeInfo`].
 #[inline]
 pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo {
     op.inputs = inputs;
@@ -336,6 +339,9 @@ pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo
 /// Alias for the [`JUMPDEST`] opcode
 pub const NOP: u8 = JUMPDEST;
 
+/// Created all opcodes constants and two maps:
+///  * `OPCODE_INFO` maps opcode number to the opcode info
+///  * `NAME_TO_OPCODE` that maps opcode name to the opcode number.
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $($modifier:ident $(( $($modifier_arg:expr),* ))?),*);* $(;)?) => {
         // Constants for each opcode. This also takes care of duplicate names.
@@ -784,7 +790,7 @@ mod tests {
             assert_eq!(
                 opcode.map(|opcode| opcode.terminating).unwrap_or_default(),
                 opcodes[i],
-                "Opcode {:?} terminating chack failed.",
+                "Opcode {:?} terminating check failed.",
                 opcode
             );
         }

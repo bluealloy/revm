@@ -6,7 +6,8 @@ use revm::primitives::{Address, Bytes};
 
 /// Single test unit struct
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
+//#[serde(deny_unknown_fields)]
+// field config
 pub struct TestUnit {
     /// Test info is optional.
     #[serde(default, rename = "_info")]
@@ -18,4 +19,5 @@ pub struct TestUnit {
     pub transaction: TransactionParts,
     #[serde(default)]
     pub out: Option<Bytes>,
+    //pub config
 }

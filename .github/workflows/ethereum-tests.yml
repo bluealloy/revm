@@ -1,4 +1,4 @@
-name: Ethereum Tests
+name: Eth
 
 concurrency:
   cancel-in-progress: true
@@ -11,8 +11,7 @@ on:
     branches: [main, "release/**"]
 
 jobs:
-  tests-stable:
-    name: Ethereum Tests (Stable)
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -40,18 +39,9 @@ jobs:
       - name: Install cross
         run: cargo install cross
 
-      - name: Run Ethereum tests
+      - name: Run tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
-            ethtests/GeneralStateTests/ \
-            ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
-            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
-            ethtests/EIPTests/StateTests/stEOF \
-            tests/eof_suite/eest/state_tests \
-            tests/pectra_devnet5/state_tests/prague/eip7623_increase_calldata_cost
-      - name: Run EOF validation tests
-        run: |
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
-          tests/eof_suite/eest/eof_tests/osaka
-
+          ethtests/GeneralStateTests/ \
+          ethtests/LegacyTests/Constantinople/GeneralStateTests/
+          ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}

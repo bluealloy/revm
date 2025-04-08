@@ -7,7 +7,7 @@ use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 use std::sync::Arc;
 
-/// State of the [`Bytecode`] analysis
+/// Main bytecode structure with all variants.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Bytecode {
@@ -81,7 +81,7 @@ impl Bytecode {
     ///
     /// # Panics
     ///
-    /// Panics if bytecode is in incorrect format.
+    /// Panics if bytecode is in incorrect format. If you want to handle errors use [`Self::new_raw_checked`].
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
         Self::new_raw_checked(bytecode).expect("Expect correct EOF bytecode")
@@ -114,15 +114,10 @@ impl Bytecode {
 
     /// Create new checked bytecode.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// Bytecode needs to end with `STOP` (`0x00`) opcode as checked bytecode assumes
-    /// that it is safe to iterate over bytecode without checking lengths.
-    pub unsafe fn new_analyzed(
-        bytecode: Bytes,
-        original_len: usize,
-        jump_table: JumpTable,
-    ) -> Self {
+    /// For possible panics see [`LegacyAnalyzedBytecode::new`].
+    pub fn new_analyzed(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
         Self::LegacyAnalyzed(LegacyAnalyzedBytecode::new(
             bytecode,
             original_len,
@@ -142,25 +137,37 @@ impl Bytecode {
         }
     }
 
+    /// Pointer to the executable bytecode.
+    ///
+    /// Note: EOF will return the pointer to the start of the code section.
+    /// while legacy bytecode will point to the start of the bytes.
+    pub fn bytecode_ptr(&self) -> *const u8 {
+        self.bytecode().as_ptr()
+    }
+
     /// Returns bytes.
     #[inline]
     pub fn bytes(&self) -> Bytes {
-        match self {
-            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode().clone(),
-            _ => self.original_bytes(),
-        }
+        self.bytes_ref().clone()
     }
 
-    /// Returns bytes slice.
+    /// Returns raw bytes reference.
     #[inline]
-    pub fn bytes_slice(&self) -> &[u8] {
+    pub fn bytes_ref(&self) -> &Bytes {
         match self {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            _ => self.original_byte_slice(),
+            Self::Eof(eof) => &eof.raw,
+            Self::Eip7702(code) => code.raw(),
         }
     }
 
-    /// Returns a reference to the original bytecode.
+    /// Returns raw bytes slice.
+    #[inline]
+    pub fn bytes_slice(&self) -> &[u8] {
+        self.bytes_ref()
+    }
+
+    /// Returns the original bytecode.
     #[inline]
     pub fn original_bytes(&self) -> Bytes {
         match self {
@@ -190,6 +197,13 @@ impl Bytecode {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
+    /// This is useful if you want to ignore immediates and just see what opcodes are inside.
+    #[inline]
+    pub fn iter_opcodes(&self) -> crate::iterator::BytecodeIterator<'_> {
+        crate::iterator::BytecodeIterator::new(self)
     }
 }
 

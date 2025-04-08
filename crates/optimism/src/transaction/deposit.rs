@@ -2,14 +2,6 @@ use revm::primitives::B256;
 
 pub const DEPOSIT_TRANSACTION_TYPE: u8 = 0x7E;
 
-pub trait DepositTransaction {
-    fn source_hash(&self) -> B256;
-
-    fn mint(&self) -> Option<u128>;
-
-    fn is_system_transaction(&self) -> bool;
-}
-
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DepositTransactionParts {
@@ -25,5 +17,26 @@ impl DepositTransactionParts {
             mint,
             is_system_transaction,
         }
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+    use revm::primitives::b256;
+
+    #[test]
+    fn serialize_json_deposit_tx_parts() {
+        let response = r#"{"source_hash":"0xe927a1448525fb5d32cb50ee1408461a945ba6c39bd5cf5621407d500ecc8de9","mint":52,"is_system_transaction":false}"#;
+
+        let deposit_tx_parts: DepositTransactionParts = serde_json::from_str(response).unwrap();
+        assert_eq!(
+            deposit_tx_parts,
+            DepositTransactionParts::new(
+                b256!("0xe927a1448525fb5d32cb50ee1408461a945ba6c39bd5cf5621407d500ecc8de9"),
+                Some(0x34),
+                false,
+            )
+        );
     }
 }

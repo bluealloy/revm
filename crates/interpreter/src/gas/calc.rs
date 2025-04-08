@@ -1,9 +1,9 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
-use context_interface::journaled_state::AccountLoad;
-use handler_interface::InitialAndFloorGas;
-use primitives::U256;
-use specification::{eip7702, hardfork::SpecId};
+use context_interface::{
+    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction,
+};
+use primitives::{eip7702, hardfork::SpecId, U256};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -347,6 +347,27 @@ pub const fn memory_gas(num_words: usize) -> u64 {
         .saturating_add(num_words.saturating_mul(num_words) / 512)
 }
 
+/// Init and floor gas from transaction
+#[derive(Clone, Copy, Debug, Default)]
+pub struct InitialAndFloorGas {
+    /// Initial gas for transaction.
+    pub initial_gas: u64,
+    /// If transaction is a Call and Prague is enabled
+    /// floor_gas is at least amount of gas that is going to be spent.
+    pub floor_gas: u64,
+}
+
+impl InitialAndFloorGas {
+    /// Create a new InitialAndFloorGas instance.
+    #[inline]
+    pub const fn new(initial_gas: u64, floor_gas: u64) -> Self {
+        Self {
+            initial_gas,
+            floor_gas,
+        }
+    }
+}
+
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 ///
@@ -399,6 +420,36 @@ pub fn calculate_initial_tx_gas(
     }
 
     gas
+}
+
+/// Initial gas that is deducted for transaction to be included.
+/// Initial gas contains initial stipend gas, gas for access list and input data.
+///
+/// # Returns
+///
+/// - Intrinsic gas
+/// - Number of tokens in calldata
+pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
+    let (accounts, storages) = tx
+        .access_list()
+        .map(|al| {
+            al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                num_accounts += 1;
+                num_storage_slots += item.storage_slots().count();
+
+                (num_accounts, num_storage_slots)
+            })
+        })
+        .unwrap_or_default();
+
+    calculate_initial_tx_gas(
+        spec,
+        tx.input(),
+        tx.kind().is_create(),
+        accounts as u64,
+        storages as u64,
+        tx.authorization_list_len() as u64,
+    )
 }
 
 /// Retrieve the total number of tokens in calldata.

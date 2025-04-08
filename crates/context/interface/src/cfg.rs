@@ -1,12 +1,11 @@
 use auto_impl::auto_impl;
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{TxKind, U256};
-use specification::hardfork::SpecId;
+use primitives::{hardfork::SpecId, TxKind, U256};
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
-    type Spec: Into<SpecId>;
+    type Spec: Into<SpecId> + Clone;
 
     fn chain_id(&self) -> u64;
 
@@ -16,15 +15,13 @@ pub trait Cfg {
     /// Returns the blob target and max count for the given spec id.
     ///
     /// EIP-7840: Add blob schedule to execution client configuration files
-    fn blob_max_count(&self, spec_id: SpecId) -> u8;
+    fn blob_max_count(&self, spec_id: SpecId) -> u64;
 
     fn max_code_size(&self) -> usize;
 
     fn is_eip3607_disabled(&self) -> bool;
 
     fn is_balance_check_disabled(&self) -> bool;
-
-    fn is_gas_refund_disabled(&self) -> bool;
 
     fn is_block_gas_limit_disabled(&self) -> bool;
 
@@ -58,11 +55,4 @@ pub enum CreateScheme {
         /// Salt
         salt: U256,
     },
-}
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait CfgGetter {
-    type Cfg: Cfg;
-
-    fn cfg(&self) -> &Self::Cfg;
 }

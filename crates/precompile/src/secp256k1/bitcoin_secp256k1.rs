@@ -8,7 +8,7 @@ use secp256k1::{
 use k256 as _;
 
 pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
-    let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
+    let recid = RecoveryId::try_from(recid as i32).expect("recovery ID is valid");
     let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
 
     let msg = Message::from_digest(msg.0);

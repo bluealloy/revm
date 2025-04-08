@@ -16,25 +16,21 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter_types::InterpreterTypes, Host};
+use crate::{interpreter_types::InterpreterTypes, Host, Interpreter};
 
-/// Returns the instruction function for the given opcode and spec.
-pub const fn instruction<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    opcode: u8,
-) -> crate::table::Instruction<WIRE, H> {
-    let table = instruction_table::<WIRE, H>();
-    table[opcode as usize]
-}
+/// EVM opcode function signature.
+pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
 
+/// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
+pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
+
+/// Returns the instruction table for the given spec.
 pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
-) -> [crate::table::Instruction<WIRE, H>; 256] {
+) -> [Instruction<WIRE, H>; 256] {
     use bytecode::opcode::*;
-    let mut table = [control::unknown as crate::table::Instruction<WIRE, H>; 256];
+    let mut table = [control::unknown as Instruction<WIRE, H>; 256];
 
     table[STOP as usize] = control::stop;
-    table[ADD as usize] = arithmetic::add;
-    table[STOP as usize] = control::stop;
-
     table[ADD as usize] = arithmetic::add;
     table[MUL as usize] = arithmetic::mul;
     table[SUB as usize] = arithmetic::sub;
@@ -222,26 +218,26 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
-    // use crate::DummyHost;
-    // use bytecode::opcode::*;
+    use super::instruction_table;
+    use crate::{host::DummyHost, interpreter::EthInterpreter};
+    use bytecode::opcode::*;
 
-    // TODO : Define EthEthereumWire
-    // #[test]
-    // fn all_instructions_and_opcodes_used() {
-    //     // known unknown instruction we compare it with other instructions from table.
-    //     let unknown_instruction = 0x0C_usize;
-    //     let instr_table = instruction_table::<InterpreterTypes, DummyHost<DefaultEthereumWiring>>();
+    #[test]
+    fn all_instructions_and_opcodes_used() {
+        // known unknown instruction we compare it with other instructions from table.
+        let unknown_instruction = 0x0C_usize;
+        let instr_table = instruction_table::<EthInterpreter, DummyHost>();
 
-    //     let unknown_istr = instr_table[unknown_instruction];
-    //     for (i, instr) in instr_table.iter().enumerate() {
-    //         let is_opcode_unknown = OpCode::new(i as u8).is_none();
-    //         let is_instr_unknown = *instr == unknown_istr;
-    //         assert_eq!(
-    //             is_instr_unknown, is_opcode_unknown,
-    //             "Opcode 0x{:X?} is not handled",
-    //             i
-    //         );
-    //     }
-    // }
+        let unknown_istr = instr_table[unknown_instruction];
+        for (i, instr) in instr_table.iter().enumerate() {
+            let is_opcode_unknown = OpCode::new(i as u8).is_none();
+            //
+            let is_instr_unknown = std::ptr::fn_addr_eq(*instr, unknown_istr);
+            assert_eq!(
+                is_instr_unknown, is_opcode_unknown,
+                "Opcode 0x{:X?} is not handled",
+                i
+            );
+        }
+    }
 }

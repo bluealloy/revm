@@ -1,7 +1,13 @@
 //! Database implementations.
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
 #[cfg(feature = "alloydb")]
 mod alloydb;
+
+pub use database_interface::*;
 
 pub mod in_memory_db;
 pub mod states;

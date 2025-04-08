@@ -1,17 +1,12 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use revme::cmd::{
-    bench::{self, BenchName},
-    MainCmd,
-};
+use revme::cmd::bench;
 
 fn evm(c: &mut Criterion) {
-    for &bench_name in BenchName::ALL {
-        let cmd = MainCmd::Bench(bench::Cmd { name: bench_name });
-        c.bench_function(bench_name.as_str(), |b| {
-            b.iter(|| cmd.run().unwrap());
-        });
-    }
+    bench::analysis::run(c);
+    bench::burntpix::run(c);
+    bench::snailtracer::run(c);
+    bench::transfer::run(c);
+    bench::evm_build::run(c);
 }
-
 criterion_group!(benches, evm);
 criterion_main!(benches);

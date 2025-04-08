@@ -4,24 +4,24 @@ use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, Interprete
 use primitives::Address;
 
 /// Call Frame
-//#[derive(Debug)]
-//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
 }
 
 /// Create Frame
-//#[derive(Debug)]
-//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
 }
 
 /// Eof Create Frame
-//#[derive(Debug)]
-//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
 }
@@ -29,8 +29,8 @@ pub struct EOFCreateFrame {
 /// Frame Data
 ///
 /// [`FrameData`] bundles different types of frames.
-//#[derive(Debug)]
-//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameData {
     Call(CallFrame),
     Create(CreateFrame),

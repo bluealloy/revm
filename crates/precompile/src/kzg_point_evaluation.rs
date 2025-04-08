@@ -1,7 +1,7 @@
 use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
-        use c_kzg::{Bytes32, Bytes48, KzgProof};
+        use c_kzg::{Bytes32, Bytes48};
     } else if #[cfg(feature = "kzg-rs")] {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
     }
@@ -31,19 +31,19 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// with z and y being padded 32 byte big endian values
 pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if gas_limit < GAS_COST {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(PrecompileError::BlobInvalidInputLength.into());
+        return Err(PrecompileError::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(PrecompileError::BlobMismatchedVersion.into());
+        return Err(PrecompileError::BlobMismatchedVersion);
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -52,7 +52,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
     if !verify_kzg_proof(commitment, z, y, proof) {
-        return Err(PrecompileError::BlobVerifyKzgProofFailed.into());
+        return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
@@ -71,13 +71,14 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
 pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
     cfg_if::cfg_if! {
         if #[cfg(feature = "c-kzg")] {
-            let kzg_settings = c_kzg::ethereum_kzg_settings();
+            let kzg_settings = c_kzg::ethereum_kzg_settings(0);
+            kzg_settings.verify_kzg_proof(commitment, z, y, proof).unwrap_or(false)
         } else if #[cfg(feature = "kzg-rs")] {
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
+            KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
         }
     }
-    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
 #[inline]

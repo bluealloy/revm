@@ -1,6 +1,4 @@
-pub use crate::InstructionResult;
-pub use primitives::U256;
-use primitives::{Address, B256};
+use primitives::{Address, B256, U256};
 
 /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
 /// if necessary.
@@ -15,7 +13,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
     }
     assert!(slice.len() <= 32, "slice too long");
 
-    let n_words = (slice.len() + 31) / 32;
+    let n_words = slice.len().div_ceil(32);
 
     // SAFETY: Length checked above.
     unsafe {
@@ -57,7 +55,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
             i += 1;
         }
 
-        debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
+        debug_assert_eq!(i.div_ceil(4), n_words, "wrote too much");
 
         // Zero out upper bytes of last word
         let m = i % 4; // 32 / 8
@@ -101,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_into_u256() {
-        let addr = address!("0000000000000000000000000000000000000001");
+        let addr = address!("0x0000000000000000000000000000000000000001");
         let u256 = addr.into_u256();
         assert_eq!(u256, U256::from(0x01));
         assert_eq!(u256.into_address(), addr);

@@ -1,7 +1,7 @@
 use primitives::{HashMap, U256};
 use state::{AccountInfo, EvmStorageSlot};
 
-// TODO : Rename this to BundleAccount. As for the block level we have original state.
+// Plain account of StateDatabase.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PlainAccount {
     pub info: AccountInfo,

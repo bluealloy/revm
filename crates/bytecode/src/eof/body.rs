@@ -1,4 +1,4 @@
-use super::{Eof, EofDecodeError, EofHeader, TypesSection};
+use super::{CodeInfo, Eof, EofDecodeError, EofHeader};
 use primitives::Bytes;
 use std::vec::Vec;
 
@@ -11,10 +11,11 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofBody {
     /// Code information
-    pub types_section: Vec<TypesSection>,
+    pub code_info: Vec<CodeInfo>,
     /// Index of the last byte of each code section
     pub code_section: Vec<usize>,
     pub code: Bytes,
+    pub code_offset: usize,
     pub container_section: Vec<Bytes>,
     pub data_section: Bytes,
     pub is_data_filled: bool,
@@ -34,10 +35,9 @@ impl EofBody {
 
     /// Creates an EOF container from this body.
     pub fn into_eof(self) -> Eof {
-        // TODO : Add bounds checks.
         let mut prev_value = 0;
         let header = EofHeader {
-            types_size: self.types_section.len() as u16 * 4,
+            types_size: self.code_info.len() as u16 * 4,
             code_sizes: self
                 .code_section
                 .iter()
@@ -59,11 +59,7 @@ impl EofBody {
         let mut buffer = Vec::new();
         header.encode(&mut buffer);
         self.encode(&mut buffer);
-        Eof {
-            header,
-            body: self,
-            raw: buffer.into(),
-        }
+        Eof::decode(buffer.into()).expect("Failed to encode EOF")
     }
 
     /// Returns offset of the start of indexed code section.
@@ -71,16 +67,17 @@ impl EofBody {
     /// First code section starts at 0.
     pub fn eof_code_section_start(&self, idx: usize) -> Option<usize> {
         // Starting code section start with 0.
+        let code_offset = self.code_offset;
         if idx == 0 {
-            return Some(0);
+            return Some(code_offset);
         }
-        self.code_section.get(idx - 1).cloned()
+        self.code_section.get(idx - 1).map(|i| i + code_offset)
     }
 
     /// Encodes this body into the given buffer.
     pub fn encode(&self, buffer: &mut Vec<u8>) {
-        for types_section in &self.types_section {
-            types_section.encode(buffer);
+        for code_info in &self.code_info {
+            code_info.encode(buffer);
         }
 
         buffer.extend_from_slice(&self.code);
@@ -111,13 +108,14 @@ impl EofBody {
 
         let mut types_input = &input[header_len..];
         for _ in 0..header.types_count() {
-            let (types_section, local_input) = TypesSection::decode(types_input)?;
+            let (code_info, local_input) = CodeInfo::decode(types_input)?;
             types_input = local_input;
-            body.types_section.push(types_section);
+            body.code_info.push(code_info);
         }
 
         // Extract code section
         let start = header_len + header.types_size as usize;
+        body.code_offset = start;
         let mut code_end = 0;
         for size in header.code_sizes.iter().map(|x| *x as usize) {
             code_end += size;

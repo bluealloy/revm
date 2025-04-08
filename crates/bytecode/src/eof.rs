@@ -1,13 +1,13 @@
 mod body;
+mod code_info;
 mod decode_helpers;
 mod header;
 pub mod printer;
-mod types_section;
 pub mod verification;
 
 pub use body::EofBody;
+pub use code_info::CodeInfo;
 pub use header::EofHeader;
-pub use types_section::TypesSection;
 pub use verification::*;
 
 use core::cmp::min;
@@ -16,7 +16,7 @@ use std::{fmt, vec, vec::Vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =
-    b256!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
+    b256!("0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
 
 /// EOF Magic in [u16] form
 pub const EOF_MAGIC: u16 = 0xEF00;
@@ -39,10 +39,11 @@ impl Default for Eof {
     fn default() -> Self {
         let body = EofBody {
             // Types section with zero inputs, zero outputs and zero max stack size.
-            types_section: vec![TypesSection::default()],
+            code_info: vec![CodeInfo::default()],
             code_section: vec![1],
             // One code section with a STOP byte.
             code: Bytes::from_static(&[0x00]),
+            code_offset: 0,
             container_section: vec![],
             data_section: Bytes::new(),
             is_data_filled: true,
@@ -52,21 +53,24 @@ impl Default for Eof {
 }
 
 impl Eof {
+    /// Creates a new EOF container from the given body.
+    pub fn new(body: EofBody) -> Self {
+        body.into_eof()
+    }
+
+    /// Validates the EOF container.
     pub fn validate(&self) -> Result<(), EofError> {
         validate_eof(self)
     }
 
-    pub fn valitate_raw(bytes: Bytes) -> Result<Eof, EofError> {
+    /// Validates the raw EOF bytes.
+    pub fn validate_raw(bytes: Bytes) -> Result<Eof, EofError> {
         validate_raw_eof(bytes)
     }
 
+    /// Validates the EOF container with the given code type.   
     pub fn validate_mode(&self, mode: CodeType) -> Result<(), EofError> {
         validate_eof_inner(self, Some(mode))
-    }
-
-    /// Creates a new EOF container from the given body.
-    pub fn new(body: EofBody) -> Self {
-        body.into_eof()
     }
 
     /// Returns len of the header and body in bytes.
@@ -135,10 +139,10 @@ pub enum EofDecodeError {
     MissingBodyWithoutData,
     /// Body size is more than specified in the header
     DanglingData,
-    /// Invalid types section data
-    InvalidTypesSection,
-    /// Invalid types section size
-    InvalidTypesSectionSize,
+    /// Invalid code info data
+    InvalidCodeInfo,
+    /// Invalid code info size
+    InvalidCodeInfoSize,
     /// Invalid EOF magic number
     InvalidEOFMagicNumber,
     /// Invalid EOF version
@@ -153,8 +157,8 @@ pub enum EofDecodeError {
     InvalidDataKind,
     /// Invalid kind after code
     InvalidKindAfterCode,
-    /// Mismatch of code and types sizes
-    MismatchCodeAndTypesSize,
+    /// Mismatch of code and info sizes
+    MismatchCodeAndInfoSize,
     /// There should be at least one size
     NonSizes,
     /// Missing size
@@ -177,8 +181,8 @@ impl fmt::Display for EofDecodeError {
             Self::MissingInput => "Short input while processing EOF",
             Self::MissingBodyWithoutData => "Short body while processing EOF",
             Self::DanglingData => "Body size is more than specified in the header",
-            Self::InvalidTypesSection => "Invalid types section data",
-            Self::InvalidTypesSectionSize => "Invalid types section size",
+            Self::InvalidCodeInfo => "Invalid types section data",
+            Self::InvalidCodeInfoSize => "Invalid types section size",
             Self::InvalidEOFMagicNumber => "Invalid EOF magic number",
             Self::InvalidEOFVersion => "Invalid EOF version",
             Self::InvalidTypesKind => "Invalid number for types kind",
@@ -186,7 +190,7 @@ impl fmt::Display for EofDecodeError {
             Self::InvalidTerminalByte => "Invalid terminal code",
             Self::InvalidDataKind => "Invalid data kind",
             Self::InvalidKindAfterCode => "Invalid kind after code",
-            Self::MismatchCodeAndTypesSize => "Mismatch of code and types sizes",
+            Self::MismatchCodeAndInfoSize => "Mismatch of code and types sizes",
             Self::NonSizes => "There should be at least one size",
             Self::ShortInputForSizes => "Missing size",
             Self::ZeroSize => "Size cant be zero",

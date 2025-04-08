@@ -16,14 +16,13 @@ use std::string::String;
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
 pub mod empty_db;
+pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
+pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
-pub trait BytecodeTrait {
-    fn code(&self) -> &[u8];
-}
 /// Database error marker is needed to implement From conversion for Error type.
 pub trait DBErrorMarker {}
 
@@ -37,7 +36,6 @@ impl DBErrorMarker for String {}
 pub trait Database {
     /// The database error type.
     type Error: DBErrorMarker + Error;
-    //type Bytecode: BytecodeTrait;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -84,7 +82,7 @@ pub trait DatabaseRef {
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WrapDatabaseRef<T: DatabaseRef>(pub T);
 
 impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
@@ -123,13 +121,4 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         self.0.commit(changes)
     }
-}
-
-#[auto_impl(&mut, Box)]
-pub trait DatabaseGetter {
-    type Database: Database;
-
-    fn db(&mut self) -> &mut Self::Database;
-
-    fn db_ref(&self) -> &Self::Database;
 }

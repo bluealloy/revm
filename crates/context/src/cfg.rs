@@ -1,14 +1,13 @@
 pub use context_interface::Cfg;
 
-use interpreter::MAX_CODE_SIZE;
-use specification::hardfork::SpecId;
+use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
 use std::{vec, vec::Vec};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
-pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
+pub struct CfgEnv<SPEC = SpecId> {
     /// Chain ID of the EVM
     ///
     /// `chain_id` will be compared to the transaction's Chain ID.
@@ -28,7 +27,7 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     /// Blob target count. EIP-7840 Add blob schedule to EL config files.
     ///
     /// Note : Items must be sorted by `SpecId`.
-    pub blob_target_and_max_count: Vec<(SpecId, u8, u8)>,
+    pub blob_target_and_max_count: Vec<(SpecId, u64, u64)>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -59,15 +58,6 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
     pub disable_eip3607: bool,
-    /// Disables all gas refunds
-    ///
-    /// This is useful when using chains that have gas refunds disabled, e.g. Avalanche.
-    ///
-    /// Reasoning behind removing gas refunds can be found in EIP-3298.
-    ///
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_gas_refund")]
-    pub disable_gas_refund: bool,
     /// Disables base fee checks for EIP-1559 transactions
     ///
     /// This is useful for testing method calls with zero gas price.
@@ -78,15 +68,68 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
 }
 
 impl CfgEnv {
+    /// Creates new `CfgEnv` with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<SPEC> CfgEnv<SPEC> {
+    pub fn new_with_spec(spec: SPEC) -> Self {
+        Self {
+            chain_id: 1,
+            limit_contract_code_size: None,
+            spec,
+            disable_nonce_check: false,
+            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
+            #[cfg(feature = "memory_limit")]
+            memory_limit: (1 << 32) - 1,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: false,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: false,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: false,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: false,
+        }
+    }
+
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
     }
 
+    pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
+        CfgEnv {
+            chain_id: self.chain_id,
+            limit_contract_code_size: self.limit_contract_code_size,
+            spec,
+            disable_nonce_check: self.disable_nonce_check,
+            blob_target_and_max_count: self.blob_target_and_max_count,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: self.memory_limit,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: self.disable_balance_check,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: self.disable_block_gas_limit,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: self.disable_eip3607,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: self.disable_base_fee,
+        }
+    }
+
     /// Sets the blob target and max count over hardforks.
-    pub fn set_blob_max_and_target_count(&mut self, mut vec: Vec<(SpecId, u8, u8)>) {
-        vec.sort_by_key(|(id, _, _)| *id);
-        self.blob_target_and_max_count = vec;
+    pub fn with_blob_max_and_target_count(mut self, blob_params: Vec<(SpecId, u64, u64)>) -> Self {
+        self.set_blob_max_and_target_count(blob_params);
+        self
+    }
+
+    /// Sets the blob target and max count over hardforks.
+    pub fn set_blob_max_and_target_count(&mut self, mut blob_params: Vec<(SpecId, u64, u64)>) {
+        blob_params.sort_by_key(|(id, _, _)| *id);
+        self.blob_target_and_max_count = blob_params;
     }
 }
 
@@ -102,7 +145,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     #[inline]
-    fn blob_max_count(&self, spec_id: SpecId) -> u8 {
+    fn blob_max_count(&self, spec_id: SpecId) -> u64 {
         self.blob_target_and_max_count
             .iter()
             .rev()
@@ -139,16 +182,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
         }
     }
 
-    fn is_gas_refund_disabled(&self) -> bool {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "optional_gas_refund")] {
-                self.disable_gas_refund
-            } else {
-                false
-            }
-        }
-    }
-
+    /// Returns `true` if the block gas limit is disabled.
     fn is_block_gas_limit_disabled(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optional_block_gas_limit")] {
@@ -174,27 +208,9 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl Default for CfgEnv {
+impl<SPEC: Default> Default for CfgEnv<SPEC> {
     fn default() -> Self {
-        Self {
-            chain_id: 1,
-            limit_contract_code_size: None,
-            spec: SpecId::PRAGUE,
-            disable_nonce_check: false,
-            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
-            #[cfg(feature = "memory_limit")]
-            memory_limit: (1 << 32) - 1,
-            #[cfg(feature = "optional_balance_check")]
-            disable_balance_check: false,
-            #[cfg(feature = "optional_block_gas_limit")]
-            disable_block_gas_limit: false,
-            #[cfg(feature = "optional_eip3607")]
-            disable_eip3607: false,
-            #[cfg(feature = "optional_gas_refund")]
-            disable_gas_refund: false,
-            #[cfg(feature = "optional_no_base_fee")]
-            disable_base_fee: false,
-        }
+        Self::new_with_spec(SPEC::default())
     }
 }
 
@@ -204,7 +220,7 @@ mod test {
 
     #[test]
     fn blob_max_and_target_count() {
-        let cfg = CfgEnv::default();
+        let cfg: CfgEnv = Default::default();
         assert_eq!(cfg.blob_max_count(SpecId::BERLIN), (6));
         assert_eq!(cfg.blob_max_count(SpecId::CANCUN), (6));
         assert_eq!(cfg.blob_max_count(SpecId::PRAGUE), (9));

@@ -1,12 +1,11 @@
-use context_interface::result::EVMError;
 use core::fmt;
 use primitives::Bytes;
-use std::string::{String, ToString};
+use std::string::String;
 
 /// A precompile operation result type
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
-pub type PrecompileResult = Result<PrecompileOutput, PrecompileErrors>;
+pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 
 /// Precompile execution output
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -25,30 +24,6 @@ impl PrecompileOutput {
 }
 
 pub type PrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
-
-/// Precompile errors.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum PrecompileErrors {
-    Error(PrecompileError),
-    Fatal { msg: String },
-}
-
-impl<DB, TXERROR> From<PrecompileErrors> for EVMError<DB, TXERROR> {
-    fn from(value: PrecompileErrors) -> Self {
-        Self::Precompile(value.to_string())
-    }
-}
-
-impl core::error::Error for PrecompileErrors {}
-
-impl fmt::Display for PrecompileErrors {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Error(e) => e.fmt(f),
-            Self::Fatal { msg } => f.write_str(msg),
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrecompileError {
@@ -72,12 +47,14 @@ pub enum PrecompileError {
     BlobMismatchedVersion,
     /// The proof verification failed
     BlobVerifyKzgProofFailed,
+    /// Fatal error with a custom error message
+    Fatal(String),
     /// Catch-all variant for other errors
     Other(String),
 }
 
 impl PrecompileError {
-    /// Returns an other error with the given message.
+    /// Returns another error with the given message.
     pub fn other(err: impl Into<String>) -> Self {
         Self::Other(err.into())
     }
@@ -85,12 +62,6 @@ impl PrecompileError {
     /// Returns `true` if the error is out of gas.
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
-    }
-}
-
-impl From<PrecompileError> for PrecompileErrors {
-    fn from(err: PrecompileError) -> Self {
-        PrecompileErrors::Error(err)
     }
 }
 
@@ -111,6 +82,7 @@ impl fmt::Display for PrecompileError {
             Self::BlobInvalidInputLength => "invalid blob input length",
             Self::BlobMismatchedVersion => "mismatched blob version",
             Self::BlobVerifyKzgProofFailed => "verifying blob kzg proof failed",
+            Self::Fatal(s) => s,
             Self::Other(s) => s,
         };
         f.write_str(s)

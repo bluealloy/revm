@@ -2,35 +2,29 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_eips::BlockId;
-use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
+use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
 use alloy_sol_types::{sol, SolCall, SolValue};
-use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
-use database::{AlloyDB, CacheDB};
-use reqwest::Client;
 use revm::{
     context_interface::result::{ExecutionResult, Output},
+    database::{AlloyDB, CacheDB},
     database_interface::WrapDatabaseAsync,
-    handler::EthHandler,
-    primitives::{address, keccak256, Address, Bytes, TxKind, U256},
+    primitives::{address, keccak256, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
     state::AccountInfo,
-    Context, EvmCommit, EvmExec, MainEvm,
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::ops::Div;
 
-type AlloyCacheDB =
-    CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
+type AlloyCacheDB = CacheDB<WrapDatabaseAsync<AlloyDB<Ethereum, DynProvider>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+    // Initialize the Alloy provider and database
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
+    let provider = ProviderBuilder::new().connect(rpc_url).await?.erased();
 
-    // Create ethers client and wrap it in Arc<M>
-    let client = ProviderBuilder::new().on_http(rpc_url);
-
-    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
-    let mut cache_db = CacheDB::new(alloy);
+    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let mut cache_db = CacheDB::new(alloy_db);
 
     // Random empty account
     let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
@@ -51,7 +45,7 @@ async fn main() -> Result<()> {
     let acc_info = AccountInfo {
         nonce: 0_u64,
         balance: one_ether,
-        code_hash: keccak256(Bytes::new()),
+        code_hash: KECCAK_EMPTY,
         code: None,
     };
     cache_db.insert_account_info(account, acc_info);
@@ -97,20 +91,18 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(alloy_db)
-            .modify_tx_chained(|tx| {
-                // 0x1 because calling USDC proxy from zero address fails
-                tx.caller = address!("0000000000000000000000000000000000000001");
-                tx.kind = TxKind::Call(token);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(alloy_db)
+        .modify_tx_chained(|tx| {
+            // 0x1 because calling USDC proxy from zero address fails
+            tx.caller = address!("0000000000000000000000000000000000000001");
+            tx.kind = TxKind::Call(token);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+        })
+        .build_mainnet();
 
-    let ref_tx = evm.exec().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -144,19 +136,17 @@ async fn get_amount_out(
     }
     .abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                tx.caller = address!("0000000000000000000000000000000000000000");
-                tx.kind = TxKind::Call(uniswap_v2_router);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            tx.caller = address!("0000000000000000000000000000000000000000");
+            tx.kind = TxKind::Call(uniswap_v2_router);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+        })
+        .build_mainnet();
 
-    let ref_tx = evm.transact().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -179,19 +169,17 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
 
     let encoded = getReservesCall {}.abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                tx.caller = address!("0000000000000000000000000000000000000000");
-                tx.kind = TxKind::Call(pair_address);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            tx.caller = address!("0000000000000000000000000000000000000000");
+            tx.kind = TxKind::Call(pair_address);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+        })
+        .build_mainnet();
 
-    let ref_tx = evm.transact().unwrap();
+    let ref_tx = evm.replay().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -230,20 +218,18 @@ fn swap(
     }
     .abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                tx.caller = from;
-                tx.kind = TxKind::Call(pool_address);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-                tx.nonce = 1;
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            tx.caller = from;
+            tx.kind = TxKind::Call(pool_address);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+            tx.nonce = 1;
+        })
+        .build_mainnet();
 
-    let ref_tx = evm.exec_commit().unwrap();
+    let ref_tx = evm.replay_commit().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -266,19 +252,17 @@ fn transfer(
 
     let encoded = transferCall { to, amount }.abi_encode();
 
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                tx.caller = from;
-                tx.kind = TxKind::Call(token);
-                tx.data = encoded.into();
-                tx.value = U256::from(0);
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            tx.caller = from;
+            tx.kind = TxKind::Call(token);
+            tx.data = encoded.into();
+            tx.value = U256::from(0);
+        })
+        .build_mainnet();
 
-    let ref_tx = evm.exec_commit().unwrap();
+    let ref_tx = evm.replay_commit().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

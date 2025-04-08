@@ -1,15 +1,8 @@
-use revm::specification::hardfork::SpecId;
+use core::str::FromStr;
+use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum OpSpec {
-    Eth(SpecId),
-    Op(OpSpecId),
-}
-
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, Hash)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum OpSpecId {
@@ -20,50 +13,51 @@ pub enum OpSpecId {
     FJORD,
     GRANITE,
     HOLOCENE,
+    #[default]
     ISTHMUS,
+    INTEROP,
+    OSAKA,
 }
 
 impl OpSpecId {
-    /// Converts the [`OpSpec`] into a [`SpecId`].
+    /// Converts the [`OpSpecId`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
-            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE | Self::ISTHMUS => {
-                SpecId::CANCUN
-            }
+            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
+            Self::ISTHMUS | Self::INTEROP => SpecId::PRAGUE,
+            Self::OSAKA => SpecId::OSAKA,
         }
     }
 
     pub const fn is_enabled_in(self, other: OpSpecId) -> bool {
-        self as u8 <= other as u8
+        other as u8 <= self as u8
     }
 }
 
-impl From<OpSpecId> for OpSpec {
+impl From<OpSpecId> for SpecId {
     fn from(spec: OpSpecId) -> Self {
-        OpSpec::Op(spec)
+        spec.into_eth_spec()
     }
 }
 
-impl From<SpecId> for OpSpec {
-    fn from(spec: SpecId) -> Self {
-        OpSpec::Eth(spec)
-    }
-}
+impl FromStr for OpSpecId {
+    type Err = UnknownHardfork;
 
-impl TryFrom<&str> for OpSpecId {
-    type Error = ();
-
-    fn try_from(name: &str) -> Result<Self, Self::Error> {
-        match name {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
             name::BEDROCK => Ok(OpSpecId::BEDROCK),
             name::REGOLITH => Ok(OpSpecId::REGOLITH),
             name::CANYON => Ok(OpSpecId::CANYON),
             name::ECOTONE => Ok(OpSpecId::ECOTONE),
             name::FJORD => Ok(OpSpecId::FJORD),
             name::GRANITE => Ok(OpSpecId::GRANITE),
-            _ => Err(()),
+            name::HOLOCENE => Ok(OpSpecId::HOLOCENE),
+            name::ISTHMUS => Ok(OpSpecId::ISTHMUS),
+            name::INTEROP => Ok(OpSpecId::INTEROP),
+            eth_name::OSAKA => Ok(OpSpecId::OSAKA),
+            _ => Err(UnknownHardfork),
         }
     }
 }
@@ -79,6 +73,8 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::GRANITE => name::GRANITE,
             OpSpecId::HOLOCENE => name::HOLOCENE,
             OpSpecId::ISTHMUS => name::ISTHMUS,
+            OpSpecId::INTEROP => name::INTEROP,
+            OpSpecId::OSAKA => eth_name::OSAKA,
         }
     }
 }
@@ -93,108 +89,109 @@ pub mod name {
     pub const GRANITE: &str = "Granite";
     pub const HOLOCENE: &str = "Holocene";
     pub const ISTHMUS: &str = "Isthmus";
-}
-
-impl OpSpec {
-    /// Returns `true` if the given specification ID is enabled in this spec.
-    #[inline]
-    pub fn is_enabled_in(self, other: impl Into<Self>) -> bool {
-        match (self, other.into()) {
-            (OpSpec::Eth(this), OpSpec::Eth(other)) => other as u8 <= this as u8,
-            (OpSpec::Op(this), OpSpec::Op(other)) => other as u8 <= this as u8,
-            (OpSpec::Eth(this), OpSpec::Op(other)) => other.into_eth_spec() as u8 <= this as u8,
-            (OpSpec::Op(this), OpSpec::Eth(other)) => other as u8 <= this.into_eth_spec() as u8,
-        }
-    }
-
-    /// Converts the [`OpSpec`] into a [`SpecId`].
-    pub const fn into_eth_spec(self) -> SpecId {
-        match self {
-            OpSpec::Eth(spec) => spec,
-            OpSpec::Op(spec) => spec.into_eth_spec(),
-        }
-    }
-}
-
-impl From<&str> for OpSpec {
-    fn from(name: &str) -> Self {
-        let eth = SpecId::from(name);
-        if eth != SpecId::LATEST {
-            return Self::Eth(eth);
-        }
-        match OpSpecId::try_from(name) {
-            Ok(op) => Self::Op(op),
-            Err(_) => Self::Eth(SpecId::LATEST),
-        }
-    }
-}
-
-impl From<OpSpec> for &'static str {
-    fn from(value: OpSpec) -> Self {
-        match value {
-            OpSpec::Eth(eth) => eth.into(),
-            OpSpec::Op(op) => op.into(),
-        }
-    }
+    pub const INTEROP: &str = "Interop";
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::vec;
 
     #[test]
-    fn test_bedrock_post_merge_hardforks() {
-        assert!(OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(SpecId::MERGE));
-        assert!(!OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(SpecId::LATEST));
-        assert!(OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(OpSpecId::BEDROCK));
-        assert!(!OpSpec::Op(OpSpecId::BEDROCK).is_enabled_in(OpSpecId::REGOLITH));
-    }
+    fn test_op_spec_id_eth_spec_compatibility() {
+        // Define test cases: (OpSpecId, enabled in ETH specs, enabled in OP specs)
+        let test_cases = [
+            (
+                OpSpecId::BEDROCK,
+                vec![
+                    (SpecId::MERGE, true),
+                    (SpecId::SHANGHAI, false),
+                    (SpecId::CANCUN, false),
+                    (SpecId::default(), false),
+                ],
+                vec![(OpSpecId::BEDROCK, true), (OpSpecId::REGOLITH, false)],
+            ),
+            (
+                OpSpecId::REGOLITH,
+                vec![
+                    (SpecId::MERGE, true),
+                    (SpecId::SHANGHAI, false),
+                    (SpecId::CANCUN, false),
+                    (SpecId::default(), false),
+                ],
+                vec![(OpSpecId::BEDROCK, true), (OpSpecId::REGOLITH, true)],
+            ),
+            (
+                OpSpecId::CANYON,
+                vec![
+                    (SpecId::MERGE, true),
+                    (SpecId::SHANGHAI, true),
+                    (SpecId::CANCUN, false),
+                    (SpecId::default(), false),
+                ],
+                vec![
+                    (OpSpecId::BEDROCK, true),
+                    (OpSpecId::REGOLITH, true),
+                    (OpSpecId::CANYON, true),
+                ],
+            ),
+            (
+                OpSpecId::ECOTONE,
+                vec![
+                    (SpecId::MERGE, true),
+                    (SpecId::SHANGHAI, true),
+                    (SpecId::CANCUN, true),
+                    (SpecId::default(), false),
+                ],
+                vec![
+                    (OpSpecId::BEDROCK, true),
+                    (OpSpecId::REGOLITH, true),
+                    (OpSpecId::CANYON, true),
+                    (OpSpecId::ECOTONE, true),
+                ],
+            ),
+            (
+                OpSpecId::FJORD,
+                vec![
+                    (SpecId::MERGE, true),
+                    (SpecId::SHANGHAI, true),
+                    (SpecId::CANCUN, true),
+                    (SpecId::default(), false),
+                ],
+                vec![
+                    (OpSpecId::BEDROCK, true),
+                    (OpSpecId::REGOLITH, true),
+                    (OpSpecId::CANYON, true),
+                    (OpSpecId::ECOTONE, true),
+                    (OpSpecId::FJORD, true),
+                ],
+            ),
+        ];
 
-    #[test]
-    fn test_regolith_post_merge_hardforks() {
-        assert!(OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(SpecId::MERGE));
-        assert!(!OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(SpecId::LATEST));
-        assert!(OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(OpSpecId::BEDROCK));
-        assert!(OpSpec::Op(OpSpecId::REGOLITH).is_enabled_in(OpSpecId::REGOLITH));
-    }
+        for (op_spec, eth_tests, op_tests) in test_cases {
+            // Test ETH spec compatibility
+            for (eth_spec, expected) in eth_tests {
+                assert_eq!(
+                    op_spec.into_eth_spec().is_enabled_in(eth_spec),
+                    expected,
+                    "{:?} should {} be enabled in ETH {:?}",
+                    op_spec,
+                    if expected { "" } else { "not " },
+                    eth_spec
+                );
+            }
 
-    #[test]
-    fn test_canyon_post_merge_hardforks() {
-        assert!(OpSpec::Op(OpSpecId::CANYON).is_enabled_in(SpecId::MERGE));
-        assert!(OpSpec::Op(OpSpecId::CANYON).is_enabled_in(SpecId::SHANGHAI));
-        assert!(!OpSpec::Op(OpSpecId::CANYON).is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpec::Op(OpSpecId::CANYON).is_enabled_in(SpecId::LATEST));
-        assert!(OpSpec::Op(OpSpecId::CANYON).is_enabled_in(OpSpecId::BEDROCK));
-        assert!(OpSpec::Op(OpSpecId::CANYON).is_enabled_in(OpSpecId::REGOLITH));
-        assert!(OpSpec::Op(OpSpecId::CANYON).is_enabled_in(OpSpecId::CANYON));
-    }
-
-    #[test]
-    fn test_ecotone_post_merge_hardforks() {
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(SpecId::MERGE));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(SpecId::SHANGHAI));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(SpecId::LATEST));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(OpSpecId::BEDROCK));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(OpSpecId::REGOLITH));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(OpSpecId::CANYON));
-        assert!(OpSpec::Op(OpSpecId::ECOTONE).is_enabled_in(OpSpecId::ECOTONE));
-    }
-
-    #[test]
-    fn test_fjord_post_merge_hardforks() {
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(SpecId::MERGE));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(SpecId::SHANGHAI));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(SpecId::CANCUN));
-        assert!(!OpSpec::Op(OpSpecId::FJORD).is_enabled_in(SpecId::LATEST));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(OpSpecId::BEDROCK));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(OpSpecId::REGOLITH));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(OpSpecId::CANYON));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(OpSpecId::ECOTONE));
-        assert!(OpSpec::Op(OpSpecId::FJORD).is_enabled_in(OpSpecId::FJORD));
+            // Test OP spec compatibility
+            for (other_op_spec, expected) in op_tests {
+                assert_eq!(
+                    op_spec.is_enabled_in(other_op_spec),
+                    expected,
+                    "{:?} should {} be enabled in OP {:?}",
+                    op_spec,
+                    if expected { "" } else { "not " },
+                    other_op_spec
+                );
+            }
+        }
     }
 }

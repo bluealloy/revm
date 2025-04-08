@@ -1,5 +1,302 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v67 tag
+date: 28.03.2025
+
+op-revm isthum fix.
+
+* `revm-primitives`: 16.0.0 -> 17.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-context`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-database`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
+* `revm-precompile`: 17.0.0 -> 18.0.0 (⚠ API breaking changes)
+* `revm-handler`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 1.0.0 -> 2.0.0 (✓ API compatible changes)
+* `revm`: 20.0.0 -> 21.0.0 (✓ API compatible changes)
+* `revme`: 3.0.0 -> 4.0.0 (⚠ API breaking changes)
+* `op-revm`: 1.0.0 -> 2.0.0 (⚠ API breaking changes)
+* `revm-state`: 1.0.0 -> 2.0.0
+* `revm-statetest-types`: 1.0.0 -> 2.0.0
+
+# v66 tag
+date: 24.03.205
+
+Stable release of Revm new Execution API and Evm Framework.
+
+* `revm-primitives`: 16.0.0-alpha.5 -> 16.0.0
+* `revm-context-interface`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-context`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-database`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-interpreter`: 16.0.0-alpha.7 -> 16.0.0
+* `revm-precompile`: 17.0.0-alpha.7 -> 17.0.0
+* `revm-handler`: 1.0.0-alpha.7 -> 1.0.0
+* `revm-inspector`: 1.0.0-alpha.7 -> 1.0.0
+* `revme`: 3.0.0-alpha.6 -> 3.0.0
+* `op-revm`: 1.0.0-alpha.6 -> 1.0.0
+* `revm-bytecode`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-state`: 1.0.0-alpha.5 -> 1.0.0
+* `revm-database-interface`: 1.0.0-alpha.5 -> 1.0.0
+* `revm`: 20.0.0-alpha.7 -> 20.0.0
+
+# v65 tag
+date 23.03.2025
+
+Optimism fixes, preo for release v20.0.0 release.
+Breaking changes related to EVMError, more about this here: https://github.com/bluealloy/revm/pull/2280
+
+* `revm-primitives`: 16.0.0-alpha.4 -> 16.0.0-alpha.5 (⚠ API breaking changes)
+* `revm-context-interface`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-context`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-database`: 1.0.0-alpha.4 -> 1.0.0-alpha.5 (✓ API compatible changes)
+* `revm-interpreter`: 16.0.0-alpha.6 -> 16.0.0-alpha.7 (✓ API compatible changes)
+* `revm-precompile`: 17.0.0-alpha.6 -> 17.0.0-alpha.7 (⚠ API breaking changes)
+* `revm-handler`: 1.0.0-alpha.6 -> 1.0.0-alpha.7 (✓ API compatible changes)
+* `revm-inspector`: 1.0.0-alpha.6 -> 1.0.0-alpha.7 (⚠ API breaking changes)
+* `revme`: 3.0.0-alpha.6 -> 3.0.0-alpha.7 (✓ API compatible changes)
+* `op-revm`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (⚠ API breaking changes)
+* `revm-bytecode`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-state`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-database-interface`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm`: 20.0.0-alpha.6 -> 20.0.0-alpha.7
+
+# v63 tag
+date: 16.03.2025
+
+Docs, prep for v20.0.0 release.
+
+* `revm-primitives`: 16.0.0-alpha.3 -> 16.0.0-alpha.4 (✓ API compatible changes)
+* `revm-bytecode`: 1.0.0-alpha.3 -> 1.0.0-alpha.4 (⚠️ API breaking changes)
+* `revm-context-interface`: 1.0.0-alpha.4 -> 1.0.0-alpha.5 (✓ API compatible changes)
+* `revm-context`: 1.0.0-alpha.4 -> 1.0.0-alpha.5 (✓ API compatible changes)
+* `revm-precompile`: 17.0.0-alpha.5 -> 17.0.0-alpha.6 (✓ API compatible changes)
+* `revm-handler`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (✓ API compatible changes)
+* `revm-inspector`: 1.0.0-alpha.5 -> 1.0.0-alpha.6 (✓ API compatible changes)
+* `op-revm`: 1.0.0-alpha.4 -> 1.0.0-alpha.5 (⚠️ API breaking changes)
+* `revm-state`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-database-interface`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-database`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-interpreter`: 16.0.0-alpha.5 -> 16.0.0-alpha.6
+* `revm`: 20.0.0-alpha.5 -> 20.0.0-alpha.6
+* `revme`: 3.0.0-alpha.5 -> 3.0.0-alpha.6
+
+# v62 tag
+date: 12.03.2025
+
+A few small breaking changed in preparation for v20.0.0.
+
+* `revm-context-interface`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-context`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-interpreter`: 16.0.0-alpha.4 -> 16.0.0-alpha.5
+* `revm-handler`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revm-inspector`: 1.0.0-alpha.4 -> 1.0.0-alpha.5
+* `revme`: 3.0.0-alpha.4 -> 3.0.0-alpha.5
+* `op-revm`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-precompile`: 17.0.0-alpha.4 -> 17.0.0-alpha.5
+* `revm`: 20.0.0-alpha.4 -> 20.0.0-alpha.5
+
+# v61 tag
+date: 11.03.2025
+
+Bug fixes for op-revm.
+
+* `revm-primitives`: 16.0.0-alpha.2 -> 16.0.0-alpha.3
+* `revm-bytecode`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-state`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-database-interface`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-context-interface`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-context`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-database`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-interpreter`: 16.0.0-alpha.3 -> 16.0.0-alpha.4
+* `revm-precompile`: 17.0.0-alpha.3 -> 17.0.0-alpha.4
+* `revm-handler`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm-inspector`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+* `revm`: 20.0.0-alpha.3 -> 20.0.0-alpha.4
+* `revme`: 3.0.0-alpha.3 -> 3.0.0-alpha.4
+* `op-revm`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-statetest-types`: 1.0.0-alpha.3 -> 1.0.0-alpha.4
+
+# v60 tag
+date: 10.03.2025
+
+Bug fix on blockhash opcode.
+
+* `revm-interpreter`: 16.0.0-alpha.2 -> 16.0.0-alpha.3
+* `revm-precompile`: 17.0.0-alpha.2 -> 17.0.0-alpha.3
+* `revm`: 20.0.0-alpha.2 -> 20.0.0-alpha.3
+* `revm-handler`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-inspector`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revm-statetest-types`: 1.0.0-alpha.2 -> 1.0.0-alpha.3
+* `revme`: 3.0.0-alpha.2 -> 3.0.0-alpha.3
+* `op-revm`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+
+
+# v59 tag
+date: 10.03.2025
+
+* Few bugs fixes mostly for optimism crate.
+* remv-optimism renamed to op-revm.
+* revm-specification files moved to revm-primitives
+* docs, initial book and cleanup.
+
+Versions:
+
+* `revm-primitives`: 16.0.0-alpha.1 -> 16.0.0-alpha.2
+* `revm-bytecode`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-state`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-database-interface`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-context-interface`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-context`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-database`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-interpreter`: 16.0.0-alpha.1 -> 16.0.0-alpha.2
+* `revm-precompile`: 17.0.0-alpha.1 -> 17.0.0-alpha.2
+* `revm-handler`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm-inspector`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revm`: 20.0.0-alpha.1 -> 20.0.0-alpha.2
+* `revm-statetest-types`: 1.0.0-alpha.1 -> 1.0.0-alpha.2
+* `revme`: 3.0.0-alpha.1 -> 3.0.0-alpha.2
+* `op-revm`: 1.0.0-alpha.1
+
+# v57 tag
+date 16.02.2025
+
+Big refactor of the code.
+Introduction of Revm Framework a way to extend evm without forking.
+
+* `revm` = 19.5.0 -> 20.0.0-alpha.1
+* `revm-primitives` = 15.2.0 -> 16.0.0-alpha.1
+* `revm-interpreter` = 15.2.0 -> 16.0.0-alpha.1
+* `revm-precompile` = 16.1.0 -> 17.0.0-alpha.1
+* `revme` = 2.5.0 -> 3.0.0-alpha.1
+
+New crates:
+* `revm-bytecode` = 1.0.0-alpha.1
+* `revm-database` = 1.0.0-alpha.1
+* `revm-database-interface` = 1.0.0-alpha.1
+* `revm-specification` = 1.0.0-alpha.1
+* `revm-state` = 1.0.0-alpha.1
+* `revm-inspector` = 1.0.0-alpha.1
+* `revm-statetest-types` = 1.0.0-alpha.1
+* `revm-context` = 1.0.0-alpha.1
+* `revm-context-interface` = 1.0.0-alpha.1
+* `revm-handler` = 1.0.0-alpha.1
+
+
+
+# v56 tag
+date: 11.02.2025
+
+Optimism fixes and improvements.
+
+* `revm`: 19.4.0 -> 19.5.0
+* `revm-interpreter`: 15.1.0 -> 15.2.0
+* `revm-primitives`: 15.1.0 -> 15.2.0
+* `revm-precompile`: 16.0.0 -> 16.1.0
+* `revme`: 2.4.0 -> 2.5.0
+
+# v55 tag
+
+date: 28.01.2025
+
+Small release for Prague devnet-6 network.
+
+* `revme`: 2.3.0 -> 2.4.0
+* `revm`: 19.3.0 -> 19.4.0
+
+# v54 tag
+
+date: 13.01.2025
+
+Changes for Prague devnet-5 network.
+
+* `revme`: 2.2.0 -> 2.3.0
+* `revm`: 19.2.0 -> 19.3.0
+
+# v53 tag
+
+date: 06.01.2025
+
+Fix for previous release related to Optimism.
+
+* `revm`: 19.1.0 -> 19.2.0
+
+# v52 tag
+
+date: 06.01.2025
+
+Optimism isthmus spec added.
+
+* `revm`: 19.0.0 -> 19.1.0
+
+# v51 tag
+date 26.12.2024
+devnet-5 release.
+
+* `revme`: 2.1.0 -> 2.2.0
+* `revm`: 18.0.0 -> 19.0.0
+* `revm-interpreter`: 14.0.0 -> 15.0.0
+* `revm-primitives`: 14.0.0 -> 15.1.0
+* `revm-precompile`: 15.0.0 -> 16.0.0
+
+# v50 tag
+date 06.11.2024
+Maintenance release. Bump alloy-primitives deps, few utilities.
+
+* `revme`: 2.0.0 -> 2.1.0
+* `revm`: 17.1.0 -> 18.0.0
+* `revm-interpreter`: 13.0.0 -> 14.0.0
+* `revm-primitives`: 13.0.0 -> 14.0.0
+* `revm-precompile`: 14.0.0 -> 15.0.0
+
+# v49 tag
+date 23.10.2024
+Maintenance release. Bump alloydb deps.
+
+* `revm`: 17.0.0 -> 17.1.0 (✓ API compatible changes)
+
+# v48 tag
+date 23.10.2024
+Maintenance release. Bug fix for EIP-7702.
+
+* `revm`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
+* `revm-primitives`: 12.0.0 -> 13.0.0 (✓ API compatible changes)
+* `revme`: 1.0.0 -> 2.0.0
+* `revm-interpreter`: 12.0.0 -> 13.0.0
+* `revm-precompile`: 13.0.0 -> 14.0.0
+
+# v47 tag
+date: 17.10.2024
+Maintenance release. bumping new alloy-eip7702
+
+* `revme`: 0.11.0 -> 1.0.0
+* `revm`: 15.0.0 -> 16.0.0 
+* `revm-primitives`: 11.0.0 -> 12.0.0
+* `revm-precompile`: 12.0.0 -> 13.0.0
+* `revm-interpreter`: 11.0.0 -> 12.0.0
+
+# v46 tag
+date: 17.10.2024
+Maintenance release. EIP-7702 newest changes, alloy-primitives bump.
+
+* `revme`: 0.10.3 -> 0.11.0
+* `revm`: 14.0.3 -> 15.0.0 
+* `revm-primitives`: 10.0.0 -> 11.0.0
+* `revm-precompile`: 11.0.3 -> 12.0.0
+* `revm-interpreter`: 10.0.3 -> 11.0.0
+
+# v45 tag
+date: 26.09.2024
+
+Maintenance release.
+
+* `revme`: 0.10.2 -> 0.10.3 
+* `revm`: 14.0.2 -> 14.0.3 
+* `revm-primitives`: 9.0.2 -> 10.0.0
+* `revm-interpreter`: 10.0.2 -> 10.0.3
+* `revm-precompile`: 11.0.2 -> 11.0.3
+
 # v44 tag
 date: 18.09.2024
 

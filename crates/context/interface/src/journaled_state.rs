@@ -1,13 +1,14 @@
+use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
-use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, HashSet, Log, B256, U256};
-use specification::hardfork::SpecId;
-use state::{Account, Bytecode};
-use std::boxed::Box;
+use database_interface::Database;
+use primitives::{hardfork::SpecId, Address, Bytes, HashSet, Log, B256, U256};
+use state::{
+    bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+    Account, Bytecode,
+};
 
-use crate::host::{SStoreResult, SelfDestructResult};
-
-pub trait Journal {
+/// Trait that contains database and journal of all changes that were made to the state.
+pub trait JournalTr {
     type Database: Database;
     type FinalOutput;
 
@@ -55,45 +56,55 @@ pub trait Journal {
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
+    /// Warms the account and storage.
     fn warm_account_and_storage(
         &mut self,
         address: Address,
         storage_keys: impl IntoIterator<Item = U256>,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
+    /// Warms the account.
     fn warm_account(&mut self, address: Address);
 
+    /// Warms the precompiles.
     fn warm_precompiles(&mut self, addresses: HashSet<Address>);
 
+    /// Returns the addresses of the precompiles.
     fn precompile_addresses(&self) -> &HashSet<Address>;
 
+    /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);
 
+    /// Touches the account.
     fn touch_account(&mut self, address: Address);
 
-    // TODO : Instruction result is not known
+    /// Transfers the balance from one account to another.
     fn transfer(
         &mut self,
-        from: &Address,
-        to: &Address,
+        from: Address,
+        to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
+    /// Increments the nonce of the account.
     fn inc_account_nonce(
         &mut self,
         address: Address,
     ) -> Result<Option<u64>, <Self::Database as Database>::Error>;
 
+    /// Loads the account.
     fn load_account(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
+    /// Loads the account code.
     fn load_account_code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
+    /// Loads the account delegated.
     fn load_account_delegated(
         &mut self,
         address: Address,
@@ -111,15 +122,65 @@ pub trait Journal {
         self.set_code_with_hash(address, code, hash);
     }
 
+    /// Returns account code bytes and if address is cold loaded.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
+    #[inline]
+    fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
+        let a = self.load_account_code(address)?;
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+        let code = a.info.code.as_ref().unwrap();
+
+        let code = if code.is_eof() {
+            EOF_MAGIC_BYTES.clone()
+        } else {
+            code.original_bytes()
+        };
+
+        Ok(StateLoad::new(code, a.is_cold))
+    }
+
+    /// Gets code hash of account.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC_HASH`
+    /// (the hash of `0xEF00`).
+    fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+        let acc = self.load_account_code(address)?;
+        if acc.is_empty() {
+            return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
+        }
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+        let code = acc.info.code.as_ref().unwrap();
+
+        let hash = if code.is_eof() {
+            EOF_MAGIC_HASH
+        } else {
+            acc.info.code_hash
+        };
+
+        Ok(StateLoad::new(hash, acc.is_cold))
+    }
+
     /// Called at the end of the transaction to clean all residue data from journal.
     fn clear(&mut self);
 
+    /// Creates a checkpoint of the current state. State can be revert to this point
+    /// if needed.
     fn checkpoint(&mut self) -> JournalCheckpoint;
 
+    /// Commits the changes made since the last checkpoint.
     fn checkpoint_commit(&mut self);
 
+    /// Reverts the changes made since the last checkpoint.
     fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint);
 
+    /// Creates a checkpoint of the account creation.
     fn create_account_checkpoint(
         &mut self,
         caller: Address,
@@ -128,12 +189,13 @@ pub trait Journal {
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError>;
 
+    /// Returns the depth of the journal.
     fn depth(&self) -> usize;
 
     /// Does cleanup and returns modified state.
     ///
-    /// This resets the [Journal] to its initial state.
-    fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
+    /// This resets the [JournalTr] to its initial state.
+    fn finalize(&mut self) -> Self::FinalOutput;
 }
 
 /// Transfer and creation result
@@ -204,40 +266,4 @@ pub struct AccountLoad {
     pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
-}
-
-/// Helper that extracts database error from [`JournalGetter`].
-pub type JournalDBError<CTX> =
-    <<<CTX as JournalGetter>::Journal as Journal>::Database as Database>::Error;
-
-pub trait JournalGetter: DatabaseGetter {
-    type Journal: Journal<Database = <Self as DatabaseGetter>::Database>;
-
-    fn journal(&mut self) -> &mut Self::Journal;
-
-    fn journal_ref(&self) -> &Self::Journal;
-}
-
-impl<T: JournalGetter> JournalGetter for &mut T {
-    type Journal = T::Journal;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        T::journal(*self)
-    }
-
-    fn journal_ref(&self) -> &Self::Journal {
-        T::journal_ref(*self)
-    }
-}
-
-impl<T: JournalGetter> JournalGetter for Box<T> {
-    type Journal = T::Journal;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        T::journal(self.as_mut())
-    }
-
-    fn journal_ref(&self) -> &Self::Journal {
-        T::journal_ref(self.as_ref())
-    }
 }

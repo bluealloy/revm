@@ -40,17 +40,16 @@ pub enum Error {
 impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
-            Self::Statetest(cmd) => cmd.run().map_err(Into::into),
-            Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
-            Self::Evm(cmd) => cmd.run().map_err(Into::into),
+            Self::Statetest(cmd) => cmd.run()?,
+            Self::EofValidation(cmd) => cmd.run()?,
+            Self::Evm(cmd) => cmd.run()?,
             Self::Bytecode(cmd) => {
                 cmd.run();
-                Ok(())
             }
             Self::Bench(cmd) => {
                 cmd.run();
-                Ok(())
             }
         }
+        Ok(())
     }
 }

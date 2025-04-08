@@ -1,19 +1,23 @@
+mod alloy_types;
+pub mod eip2930;
+pub mod eip7702;
 pub mod transaction_type;
 
-use specification::eip4844::GAS_PER_BLOB;
+pub use alloy_types::{
+    AccessList, AccessListItem, Authorization, RecoveredAuthority, RecoveredAuthorization,
+    SignedAuthorization,
+};
+pub use eip2930::AccessListItemTr;
+pub use eip7702::AuthorizationTr;
 pub use transaction_type::TransactionType;
 
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
-use primitives::{Address, Bytes, TxKind, B256, U256};
-use std::boxed::Box;
+use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
-
-/// (Optional signer, chain id, nonce, address)
-pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
 
 /// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum
 ///
@@ -23,6 +27,9 @@ pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
+    type AccessListItem: AccessListItemTr;
+    type Authorization: AuthorizationTr;
+
     /// Returns the transaction type.
     ///
     /// Depending on this field other functions should be called.
@@ -69,20 +76,11 @@ pub trait Transaction {
     /// For Eip1559 it is max_fee_per_gas.
     fn gas_price(&self) -> u128;
 
-    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>>;
+    /// Access list for the transaction.
+    ///
+    /// Introduced in EIP-2930.
+    fn access_list(&self) -> Option<impl Iterator<Item = &Self::AccessListItem>>;
 
-    fn access_list_nums(&self) -> Option<(usize, usize)> {
-        self.access_list().map(|al| {
-            let mut accounts_num = 0;
-            let mut storage_num = 0;
-            for (_, storage) in al {
-                accounts_num += 1;
-                storage_num += storage.len();
-            }
-
-            (accounts_num, storage_num)
-        })
-    }
     /// Returns vector of fixed size hash(32 bytes)
     ///
     /// Note : EIP-4844 transaction field.
@@ -95,8 +93,6 @@ pub trait Transaction {
 
     /// Total gas for all blobs. Max number of blocks is already checked
     /// so we dont need to check for overflow.
-    ///
-    /// TODO remove this
     fn total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_versioned_hashes().len() as u64
     }
@@ -108,8 +104,6 @@ pub trait Transaction {
     ///
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
-    ///
-    /// TODO remove it, make a utility trait.
     fn calc_max_data_fee(&self) -> U256 {
         let blob_gas = U256::from(self.total_blob_gas());
         let max_blob_fee = U256::from(self.max_fee_per_blob_gas());
@@ -119,6 +113,7 @@ pub trait Transaction {
     /// Returns length of the authorization list.
     ///
     /// # Note
+    ///
     /// Transaction is considered invalid if list is empty.
     fn authorization_list_len(&self) -> usize;
 
@@ -128,7 +123,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem>;
+    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization>;
 
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {
@@ -142,11 +137,18 @@ pub trait Transaction {
     ///
     /// While for transactions after Eip1559 it is minimum of max_fee and `base + max_priority_fee`.
     fn effective_gas_price(&self, base_fee: u128) -> u128 {
-        let max_fee = self.gas_price();
+        if self.tx_type() == TransactionType::Legacy as u8
+            || self.tx_type() == TransactionType::Eip2930 as u8
+        {
+            return self.gas_price();
+        }
+
+        // for EIP-1559 tx and onwards gas_price represents maximum price.
+        let max_price = self.gas_price();
         let Some(max_priority_fee) = self.max_priority_fee_per_gas() else {
-            return max_fee;
+            return max_price;
         };
-        min(max_fee, base_fee.saturating_add(max_priority_fee))
+        min(max_price, base_fee.saturating_add(max_priority_fee))
     }
 }
 
@@ -155,20 +157,4 @@ pub trait TransactionGetter {
     type Transaction: Transaction;
 
     fn tx(&self) -> &Self::Transaction;
-}
-
-pub trait TransactionSetter: TransactionGetter {
-    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction);
-}
-
-impl<T: TransactionSetter> TransactionSetter for &mut T {
-    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
-        (**self).set_tx(block)
-    }
-}
-
-impl<T: TransactionSetter> TransactionSetter for Box<T> {
-    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
-        (**self).set_tx(block)
-    }
 }

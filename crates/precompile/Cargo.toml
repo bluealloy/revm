@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "16.0.0"
+version = "18.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -24,73 +24,81 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-context-interface.workspace = true
-specification.workspace = true
 
 # static precompile sets.
-once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
+once_cell = { workspace = true, features = ["alloc"] }
 
 # ecRecover
-k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-secp256k1 = { version = ">=0.28, <=0.29", default-features = false, features = [
-    "alloc",
-    "recovery",
-    "rand",
-    "global-context",
+k256 = { workspace = true, features = ["ecdsa"] }
+secp256k1 = { workspace = true, features = [
+	"alloc",
+	"recovery",
+	"rand",
+	"global-context",
 ], optional = true }
-libsecp256k1 = { version = "0.7", default-features = false, package = "libsecp256k1", features = [
-    "static-context",
+libsecp256k1 = { workspace = true, features = [
+	"static-context",
 ], optional = true }
 
 # SHA2-256 and RIPEMD-160
-sha2 = { version = "0.10", default-features = false }
-ripemd = { version = "0.1", default-features = false }
+sha2.workspace = true
+ripemd.workspace = true
 
 # modexp
-aurora-engine-modexp = { version = "1.1", default-features = false }
+aurora-engine-modexp.workspace = true
 
-# ecAdd, ecMul, ecPairing
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
+# Optionally use substrate implementation for eip1962
+bn = { workspace = true, optional = true }
+
+# Use arkworks implementation for eip1962
+ark-bn254 = { workspace = true, features = ["curve"] }
+ark-ec = { workspace = true }
+ark-ff = { workspace = true, features = ["asm"] }
+ark-serialize = { workspace = true }
 
 # KZG point evaluation precompile
-c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
-    "ethereum_kzg_settings",
+c-kzg = { workspace = true, optional = true, features = [
+	"ethereum_kzg_settings",
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
-kzg-rs = { version = "0.2.3", default-features = false, optional = true }
+kzg-rs = { workspace = true, optional = true }
 
-# BLS12-381 precompiles
-blst = { version = "0.3.13", optional = true }
+# Use the BLS12-381 implementation of blst for EIP2537
+blst = { workspace = true, optional = true }
+
+# Use the BLS12-381 implementation of arkworks for EIP2537
+ark-bls12-381 = { workspace = true, features = ["curve"] }
 
 # p256verify precompile
-p256 = { version = "0.13.2", optional = true, default-features = false, features = [
-    "ecdsa",
-] }
+p256 = { workspace = true, optional = true, features = ["ecdsa"] }
 
 # utils
-cfg-if = { version = "1.0", default-features = false }
+cfg-if.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
-rand = { version = "0.8", features = ["std"] }
-eyre = "0.6.12"
-rstest = "0.22.0"
-serde = "1.0"
-serde_json = "1.0"
-serde_derive = "1.0"
+rand = { workspace = true, features = ["std"] }
+rstest.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-    "primitives/std",
-    "k256/std",
-    "once_cell/std",
-    "ripemd/std",
-    "sha2/std",
-    "c-kzg?/std",
-    "secp256k1?/std",
-    "libsecp256k1?/std",
+	"primitives/std",
+	"k256/std",
+	"once_cell/std",
+	"ripemd/std",
+	"sha2/std",
+	"c-kzg?/std",
+	"secp256k1?/std",
+	"libsecp256k1?/std",
+	"aurora-engine-modexp/std",
+	"p256?/std",
+	"ark-bn254/std",
+	"ark-bls12-381/std",
+	"ark-ec/std",
+	"ark-ff/std",
+	"ark-serialize/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -105,7 +113,9 @@ c-kzg = ["dep:c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["dep:kzg-rs"]
 
-portable = ["c-kzg"]
+# Compile in portable mode, without ISA extensions.
+# Binary can be executed on all systems.
+portable = ["c-kzg?/portable", "blst?/portable"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
@@ -113,10 +123,14 @@ portable = ["c-kzg"]
 secp256k1 = ["dep:secp256k1"]
 libsecp256k1 = ["dep:libsecp256k1"]
 
-# Enables the BLS12-381 precompiles.
+# Enables the blst implementation of the BLS12-381 precompile.
 blst = ["dep:blst"]
+
+# Enables the substrate implementation of eip1962
+bn = ["dep:bn"]
 
 [[bench]]
 name = "bench"
 path = "benches/bench.rs"
 harness = false
+required-features = ["secp256k1"]

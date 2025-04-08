@@ -1,12 +1,9 @@
 pub use alloy_eips::BlockId;
 use alloy_provider::{
-    network::{
-        primitives::{BlockTransactionsKind, HeaderResponse},
-        BlockResponse,
-    },
+    network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
 };
-use alloy_transport::{Transport, TransportError};
+use alloy_transport::TransportError;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
 use primitives::{Address, B256, U256};
@@ -36,15 +33,15 @@ impl From<TransportError> for DBTransportError {
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
 #[derive(Debug)]
-pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
+pub struct AlloyDB<N: Network, P: Provider<N>> {
     /// The provider to fetch the data from.
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: BlockId,
-    _marker: core::marker::PhantomData<fn() -> (T, N)>,
+    _marker: core::marker::PhantomData<fn() -> N>,
 }
 
-impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
+impl<N: Network, P: Provider<N>> AlloyDB<N, P> {
     /// Creates a new AlloyDB instance, with a [Provider] and a block.
     pub fn new(provider: P, block_number: BlockId) -> Self {
         Self {
@@ -60,7 +57,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
     }
 }
 
-impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseAsyncRef for AlloyDB<T, N, P> {
+impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
     type Error = DBTransportError;
 
     async fn basic_async_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
@@ -91,7 +88,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseAsyncRef for A
         let block = self
             .provider
             // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
-            .get_block_by_number(number.into(), BlockTransactionsKind::Hashes)
+            .get_block_by_number(number.into())
             .await?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
         Ok(B256::new(*block.unwrap().header().hash()))

@@ -9,7 +9,6 @@ license.workspace = true
 repository.workspace = true
 readme.workspace = true
 
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
@@ -23,17 +22,12 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm.workspace = true
-database = { workspace = true, features = ["std", "alloydb"] }
+revm = { workspace = true, features = ["std", "alloydb"] }
 
 # tokio
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 # alloy
-alloy-sol-types = { version = "0.8.2", default-features = false, features = [
-    "std",
-] }
-alloy-transport-http = "0.6"
-alloy-provider = "0.6"
-reqwest = { version = "0.12" }
-anyhow = "1.0.89"
+alloy-sol-types = { workspace = true, features = ["std"] }
+alloy-provider = { workspace = true, default-features = true }
+anyhow.workspace = true

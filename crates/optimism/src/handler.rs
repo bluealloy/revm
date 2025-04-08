@@ -1,222 +1,197 @@
-//! Handler related to Optimism chain
-
-pub mod precompiles;
-
+//!Handler related to Optimism chain
 use crate::{
-    transaction::{
-        abstraction::OpTxGetter,
-        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
-        OpTransactionError, OpTxTrait,
-    },
-    L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    api::exec::OpContextTr,
+    constants::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT},
+    transaction::{deposit::DEPOSIT_TRANSACTION_TYPE, OpTransactionError, OpTxTr},
+    L1BlockInfo, OpHaltReason, OpSpecId,
 };
-use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
-        result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
-        Block, Cfg, CfgGetter, DatabaseGetter, Journal, Transaction, TransactionGetter,
+        result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
+        Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        EthExecution, EthExecutionContext, EthExecutionError, EthFrame, EthFrameContext,
-        EthFrameError, EthHandler, EthPostExecution, EthPostExecutionContext,
-        EthPostExecutionError, EthPreExecution, EthPreExecutionContext, EthPreExecutionError,
-        EthValidation, EthValidationContext, EthValidationError, FrameResult,
+        handler::EvmTrError, validation::validate_tx_against_account, EvmTr, Frame, FrameResult,
+        Handler, MainnetHandler,
     },
-    handler_interface::{
-        util::FrameOrFrameResult, ExecutionHandler, Frame, InitialAndFloorGas,
-        PostExecutionHandler, PreExecutionHandler, ValidationHandler,
-    },
-    interpreter::{
-        interpreter::{EthInstructionProvider, EthInterpreter},
-        FrameInput, Gas,
-    },
-    primitives::{hash_map::HashMap, U256},
-    specification::hardfork::SpecId,
+    inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
+    interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
+    primitives::hardfork::SpecId,
+    primitives::{HashMap, U256},
     state::Account,
     Database,
 };
 
-pub type OpHandler<
-    CTX,
-    ERROR,
-    VAL = OpValidation<CTX, ERROR>,
-    PREEXEC = OpPreExecution<CTX, ERROR>,
-    EXEC = OpExecution<CTX, ERROR>,
-    POSTEXEC = OpPostExecution<CTX, ERROR>,
-> = EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>;
-
-pub struct OpValidation<CTX, ERROR> {
-    pub eth: EthValidation<CTX, ERROR>,
+pub struct OpHandler<EVM, ERROR, FRAME> {
+    pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
+    pub _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
-impl<CTX, ERROR> ValidationHandler for OpValidation<CTX, ERROR>
-where
-    CTX: EthValidationContext + OpTxGetter,
-    // Have Cfg with OpSpec
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    // Have transaction with OpTransactionType
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-    // Add additional error type.
-    ERROR: EthValidationError<CTX> + From<OpTransactionError>,
-{
-    type Context = CTX;
-    type Error = ERROR;
+impl<EVM, ERROR, FRAME> OpHandler<EVM, ERROR, FRAME> {
+    pub fn new() -> Self {
+        Self {
+            mainnet: MainnetHandler::default(),
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
 
-    /// Validate env.
-    fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
+impl<EVM, ERROR, FRAME> Default for OpHandler<EVM, ERROR, FRAME> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub trait IsTxError {
+    fn is_tx_error(&self) -> bool;
+}
+
+impl<DB, TX> IsTxError for EVMError<DB, TX> {
+    fn is_tx_error(&self) -> bool {
+        matches!(self, EVMError::Transaction(_))
+    }
+}
+
+impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
+where
+    EVM: EvmTr<Context: OpContextTr>,
+    ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    // TODO `FrameResult` should be a generic trait.
+    // TODO `FrameInit` should be a generic.
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+{
+    type Evm = EVM;
+    type Error = ERROR;
+    type Frame = FRAME;
+    type HaltReason = OpHaltReason;
+
+    fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
-        let tx_type = context.tx().tx_type();
+        let ctx = evm.ctx();
+        let tx = ctx.tx();
+        let tx_type = tx.tx_type();
         if tx_type == DEPOSIT_TRANSACTION_TYPE {
-            let tx = context.op_tx();
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if tx.is_system_transaction() && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
+            if tx.is_system_transaction()
+                && evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
             }
             return Ok(());
         }
-        self.eth.validate_env(context)
+        self.mainnet.validate_env(evm)
     }
 
-    /// Validate transactions against state.
-    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        let context = evm.ctx();
+        let spec = context.cfg().spec();
+        let block_number = context.block().number();
         if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
-        }
-        self.eth.validate_tx_against_state(context)
-    }
-
-    /// Validate initial gas.
-    fn validate_initial_tx_gas(
-        &self,
-        context: &Self::Context,
-    ) -> Result<InitialAndFloorGas, Self::Error> {
-        self.eth.validate_initial_tx_gas(context)
-    }
-}
-
-pub struct OpPreExecution<CTX, ERROR> {
-    pub eth: EthPreExecution<CTX, ERROR>,
-}
-
-impl<CTX, ERROR> PreExecutionHandler for OpPreExecution<CTX, ERROR>
-where
-    CTX: EthPreExecutionContext + DatabaseGetter + OpTxGetter + L1BlockInfoGetter,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    ERROR: EthPreExecutionError<CTX> + From<<<CTX as DatabaseGetter>::Database as Database>::Error>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-
-    fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        let spec = context.cfg().spec();
-        if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            let l1_block_info: crate::L1BlockInfo =
-                super::L1BlockInfo::try_fetch(context.db(), spec)?;
-
-            // Storage L1 block info for later use.
-            *context.l1_block_info_mut() = l1_block_info;
+        } else {
+            // The L1-cost fee is only computed for Optimism non-deposit transactions.
+            if context.chain().l2_block != block_number {
+                // L1 block info is stored in the context for later use.
+                // and it will be reloaded from the database if it is not for the current block.
+                *context.chain() = L1BlockInfo::try_fetch(context.db(), block_number, spec)?;
+            }
         }
 
-        self.eth.load_accounts(context)
+        let enveloped_tx = context
+            .tx()
+            .enveloped_tx()
+            .expect("all not deposit tx have enveloped tx")
+            .clone();
+
+        // compute L1 cost
+        let mut additional_cost = context.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
+
+        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            let gas_limit = U256::from(context.tx().gas_limit());
+            let operator_fee_charge = context
+                .chain()
+                .operator_fee_charge(&enveloped_tx, gas_limit);
+
+            additional_cost = additional_cost.saturating_add(operator_fee_charge);
+        }
+
+        let tx_caller = context.tx().caller();
+
+        // Load acc
+        let account = context.journal().load_account_code(tx_caller)?;
+        let account = account.data.info.clone();
+
+        validate_tx_against_account(&account, context, additional_cost)?;
+        Ok(())
     }
 
-    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        self.eth.apply_eip7702_auth_list(context)
-    }
-
-    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller = context.tx().caller();
-        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
+    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        let ctx = evm.ctx();
+        let spec = ctx.cfg().spec();
+        let caller = ctx.tx().caller();
+        let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
         let mut tx_l1_cost = U256::ZERO;
         if is_deposit {
-            let tx = context.op_tx();
+            let tx = ctx.tx();
             if let Some(mint) = tx.mint() {
-                let mut caller_account = context.journal().load_account(caller)?;
+                let mut caller_account = ctx.journal().load_account(caller)?;
                 caller_account.info.balance += U256::from(mint);
             }
         } else {
-            let enveloped_tx = context
-                .op_tx()
+            let enveloped_tx = ctx
+                .tx()
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            tx_l1_cost = context
-                .l1_block_info()
-                .calculate_tx_l1_cost(&enveloped_tx, context.cfg().spec());
+            tx_l1_cost = ctx.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
         }
 
         // We deduct caller max balance after minting and before deducing the
         // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
-        self.eth.deduct_caller(context)?;
+        self.mainnet.deduct_caller(evm)?;
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
+        // Additionally deduct the operator fee from the caller's account.
         if !is_deposit {
-            let mut caller_account = context.journal().load_account(caller)?;
+            let ctx = evm.ctx();
 
-            if tx_l1_cost > caller_account.info.balance {
-                return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: tx_l1_cost.into(),
-                    balance: caller_account.info.balance.into(),
-                }
-                .into());
+            // Deduct the operator fee from the caller's account.
+            let gas_limit = U256::from(ctx.tx().gas_limit());
+            let enveloped_tx = ctx
+                .tx()
+                .enveloped_tx()
+                .expect("all not deposit tx have enveloped tx")
+                .clone();
+
+            let mut operator_fee_charge = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
             }
-            caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+            let mut caller_account = ctx.journal().load_account(caller)?;
+            caller_account.info.balance = caller_account
+                .info
+                .balance
+                .saturating_sub(tx_l1_cost.saturating_add(operator_fee_charge));
         }
         Ok(())
-    }
-}
-
-pub struct OpExecution<
-    CTX,
-    ERROR,
-    FRAME = EthFrame<
-        CTX,
-        ERROR,
-        EthInterpreter<()>,
-        OpPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter<()>, CTX>,
-    >,
-> {
-    pub eth: EthExecution<CTX, ERROR, FRAME>,
-}
-
-impl<CTX, ERROR, FRAME> ExecutionHandler for OpExecution<CTX, ERROR, FRAME>
-where
-    CTX: EthExecutionContext<ERROR> + EthFrameContext + OpTxGetter,
-    ERROR: EthExecutionError<CTX> + EthFrameError<CTX>,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-    FRAME: Frame<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-    type Frame = FRAME;
-    type ExecResult = FrameResult;
-
-    fn init_first_frame(
-        &mut self,
-        context: &mut Self::Context,
-        gas_limit: u64,
-    ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
-        self.eth.init_first_frame(context, gas_limit)
     }
 
     fn last_frame_result(
         &self,
-        context: &mut Self::Context,
-        mut frame_result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<Self::ExecResult, Self::Error> {
-        let tx = context.tx();
+        evm: &mut Self::Evm,
+        frame_result: &mut <Self::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        let ctx = evm.ctx();
+        let tx = ctx.tx();
         let is_deposit = tx.tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let tx_gas_limit = tx.gas_limit();
-        let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
+        let is_regolith = ctx.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
 
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
@@ -246,7 +221,7 @@ where
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
             } else if is_deposit {
-                let tx = context.op_tx();
+                let tx = ctx.tx();
                 if tx.is_system_transaction() {
                     // System transactions were a special type of deposit transaction in
                     // the Bedrock hardfork that did not incur any gas costs.
@@ -270,552 +245,690 @@ where
                 gas.erase_cost(remaining);
             }
         }
-        Ok(frame_result)
-    }
-}
-
-pub struct OpPostExecution<CTX, ERROR> {
-    pub eth: EthPostExecution<CTX, ERROR, OptimismHaltReason>,
-}
-
-pub trait IsTxError {
-    fn is_tx_error(&self) -> bool;
-}
-
-impl<CTX, ERROR> PostExecutionHandler for OpPostExecution<CTX, ERROR>
-where
-    CTX: EthPostExecutionContext + OpTxGetter + L1BlockInfoGetter + DatabaseGetter,
-    ERROR: EthPostExecutionError<CTX>
-        + EthFrameError<CTX>
-        + From<OpTransactionError>
-        + FromStringError
-        + IsTxError,
-    <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
-{
-    type Context = CTX;
-    type Error = ERROR;
-    type ExecResult = FrameResult;
-    type Output = ResultAndState<OptimismHaltReason>;
-
-    fn eip7623_check_gas_floor(
-        &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
-        init_and_floor_gas: InitialAndFloorGas,
-    ) {
-        self.eth
-            .eip7623_check_gas_floor(context, exec_result, init_and_floor_gas);
-    }
-
-    fn refund(
-        &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
-        eip7702_refund: i64,
-    ) {
-        exec_result.gas_mut().record_refund(eip7702_refund);
-
-        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
-
-        // Prior to Regolith, deposit transactions did not receive gas refunds.
-        let is_gas_refund_disabled = is_deposit && !is_regolith;
-        if !is_gas_refund_disabled {
-            exec_result
-                .gas_mut()
-                .set_final_refund(context.cfg().spec().is_enabled_in(SpecId::LONDON));
-        }
+        Ok(())
     }
 
     fn reimburse_caller(
         &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
+        evm: &mut Self::Evm,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.eth.reimburse_caller(context, exec_result)
+        self.mainnet.reimburse_caller(evm, exec_result)?;
+
+        let context = evm.ctx();
+        if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
+            let caller = context.tx().caller();
+            let spec = context.cfg().spec();
+            let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
+
+            let caller_account = context.journal().load_account(caller)?;
+
+            // In additional to the normal transaction fee, additionally refund the caller
+            // for the operator fee.
+            caller_account.data.info.balance = caller_account
+                .data
+                .info
+                .balance
+                .saturating_add(operator_fee_refund);
+        }
+
+        Ok(())
+    }
+
+    fn refund(
+        &self,
+        evm: &mut Self::Evm,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        eip7702_refund: i64,
+    ) {
+        exec_result.gas_mut().record_refund(eip7702_refund);
+
+        let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
+        let is_regolith = evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
+
+        // Prior to Regolith, deposit transactions did not receive gas refunds.
+        let is_gas_refund_disabled = is_deposit && !is_regolith;
+        if !is_gas_refund_disabled {
+            exec_result.gas_mut().set_final_refund(
+                evm.ctx()
+                    .cfg()
+                    .spec()
+                    .into_eth_spec()
+                    .is_enabled_in(SpecId::LONDON),
+            );
+        }
     }
 
     fn reward_beneficiary(
         &self,
-        context: &mut Self::Context,
-        exec_result: &mut Self::ExecResult,
+        evm: &mut Self::Evm,
+        exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.eth.reward_beneficiary(context, exec_result)?;
-
-        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
+        let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // Transfer fee to coinbase/beneficiary.
         if !is_deposit {
-            self.eth.reward_beneficiary(context, exec_result)?;
-            let basefee = context.block().basefee() as u128;
+            self.mainnet.reward_beneficiary(evm, exec_result)?;
+            let basefee = evm.ctx().block().basefee() as u128;
 
             // If the transaction is not a deposit transaction, fees are paid out
             // to both the Base Fee Vault as well as the L1 Fee Vault.
-            let l1_block_info = context.l1_block_info();
+            let ctx = evm.ctx();
+            let enveloped = ctx.tx().enveloped_tx().cloned();
+            let spec = ctx.cfg().spec();
+            let l1_block_info = ctx.chain();
 
-            let Some(enveloped_tx) = &context.op_tx().enveloped_tx() else {
+            let Some(enveloped_tx) = &enveloped else {
                 return Err(ERROR::from_string(
                     "[OPTIMISM] Failed to load enveloped transaction.".into(),
                 ));
             };
 
-            let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, context.cfg().spec());
-
+            let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
+            let mut operator_fee_cost = U256::ZERO;
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                operator_fee_cost = l1_block_info.operator_fee_charge(
+                    enveloped_tx,
+                    U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+                );
+            }
             // Send the L1 cost of the transaction to the L1 Fee Vault.
-            let mut l1_fee_vault_account = context.journal().load_account(L1_FEE_RECIPIENT)?;
+            let mut l1_fee_vault_account = ctx.journal().load_account(L1_FEE_RECIPIENT)?;
             l1_fee_vault_account.mark_touch();
             l1_fee_vault_account.info.balance += l1_cost;
 
             // Send the base fee of the transaction to the Base Fee Vault.
-            let mut base_fee_vault_account = context.journal().load_account(BASE_FEE_RECIPIENT)?;
+            let mut base_fee_vault_account =
+                evm.ctx().journal().load_account(BASE_FEE_RECIPIENT)?;
             base_fee_vault_account.mark_touch();
             base_fee_vault_account.info.balance += U256::from(basefee.saturating_mul(
                 (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
             ));
+
+            // Send the operator fee of the transaction to the coinbase.
+            let mut operator_fee_vault_account =
+                evm.ctx().journal().load_account(OPERATOR_FEE_RECIPIENT)?;
+            operator_fee_vault_account.mark_touch();
+            operator_fee_vault_account.data.info.balance += operator_fee_cost;
         }
         Ok(())
     }
 
     fn output(
         &self,
-        context: &mut Self::Context,
-        result: Self::ExecResult,
-    ) -> Result<Self::Output, Self::Error> {
-        let result = self.eth.output(context, result)?;
+        evm: &mut Self::Evm,
+        result: <Self::Frame as Frame>::FrameResult,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        let result = self.mainnet.output(evm, result)?;
+        let result = result.map_haltreason(OpHaltReason::Base);
         if result.result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
             // and the caller nonce will be incremented there.
-            let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-            if is_deposit && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH) {
+            let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
+            if is_deposit && evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH) {
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
         }
+        evm.ctx().chain().clear_tx_l1_cost();
         Ok(result)
     }
 
-    fn clear(&self, context: &mut Self::Context) {
-        self.eth.clear(context);
-    }
-
-    fn end(
+    fn catch_error(
         &self,
-        context: &mut Self::Context,
-        end_output: Result<Self::Output, Self::Error>,
-    ) -> Result<Self::Output, Self::Error> {
-        //end_output
+        evm: &mut Self::Evm,
+        error: Self::Error,
+    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
+        let output = if error.is_tx_error() && is_deposit {
+            let ctx = evm.ctx();
+            let spec = ctx.cfg().spec();
+            let tx = ctx.tx();
+            let caller = tx.caller();
+            let mint = tx.mint();
+            let is_system_tx = tx.is_system_transaction();
+            let gas_limit = tx.gas_limit();
+            // If the transaction is a deposit transaction and it failed
+            // for any reason, the caller nonce must be bumped, and the
+            // gas reported must be altered depending on the Hardfork. This is
+            // also returned as a special Halt variant so that consumers can more
+            // easily distinguish between a failed deposit and a failed
+            // normal transaction.
 
-        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        end_output.or_else(|err| {
-            if err.is_tx_error() && is_deposit {
-                let spec = context.cfg().spec();
-                let tx = context.op_tx();
-                let caller = tx.caller();
-                let mint = tx.mint();
-                let is_system_tx = tx.is_system_transaction();
-                let gas_limit = tx.gas_limit();
-                // If the transaction is a deposit transaction and it failed
-                // for any reason, the caller nonce must be bumped, and the
-                // gas reported must be altered depending on the Hardfork. This is
-                // also returned as a special Halt variant so that consumers can more
-                // easily distinguish between a failed deposit and a failed
-                // normal transaction.
+            // Increment sender nonce and account balance for the mint amount. Deposits
+            // always persist the mint amount, even if the transaction fails.
+            let account = {
+                let mut acc = Account::from(
+                    evm.ctx()
+                        .db()
+                        .basic(caller)
+                        .unwrap_or_default()
+                        .unwrap_or_default(),
+                );
+                acc.info.nonce = acc.info.nonce.saturating_add(1);
+                acc.info.balance = acc
+                    .info
+                    .balance
+                    .saturating_add(U256::from(mint.unwrap_or_default()));
+                acc.mark_touch();
+                acc
+            };
+            let state = HashMap::from_iter([(caller, account)]);
 
-                // Increment sender nonce and account balance for the mint amount. Deposits
-                // always persist the mint amount, even if the transaction fails.
-                let account = {
-                    let mut acc = Account::from(
-                        context
-                            .db()
-                            .basic(caller)
-                            .unwrap_or_default()
-                            .unwrap_or_default(),
-                    );
-                    acc.info.nonce = acc.info.nonce.saturating_add(1);
-                    acc.info.balance = acc
-                        .info
-                        .balance
-                        .saturating_add(U256::from(mint.unwrap_or_default()));
-                    acc.mark_touch();
-                    acc
-                };
-                let state = HashMap::from_iter([(caller, account)]);
-
-                // The gas used of a failed deposit post-regolith is the gas
-                // limit of the transaction. pre-regolith, it is the gas limit
-                // of the transaction for non system transactions and 0 for system
-                // transactions.
-                let gas_used = if spec.is_enabled_in(OpSpecId::REGOLITH) || !is_system_tx {
-                    gas_limit
-                } else {
-                    0
-                };
-
-                Ok(ResultAndState {
-                    result: ExecutionResult::Halt {
-                        reason: OptimismHaltReason::FailedDeposit,
-                        gas_used,
-                    },
-                    state,
-                })
+            // The gas used of a failed deposit post-regolith is the gas
+            // limit of the transaction. pre-regolith, it is the gas limit
+            // of the transaction for non system transactions and 0 for system
+            // transactions.
+            let gas_used = if spec.is_enabled_in(OpSpecId::REGOLITH) || !is_system_tx {
+                gas_limit
             } else {
-                Err(err)
-            }
-        })
+                0
+            };
+            // clear the journal
+            Ok(ResultAndState {
+                result: ExecutionResult::Halt {
+                    reason: OpHaltReason::FailedDeposit,
+                    gas_used,
+                },
+                state,
+            })
+        } else {
+            Err(error)
+        };
+        // do cleanup
+        evm.ctx().chain().clear_tx_l1_cost();
+        evm.ctx().journal().clear();
+
+        output
     }
 }
 
-// /// Optimism end handle changes output if the transaction is a deposit transaction.
-// /// Deposit transaction can't be reverted and is always successful.
-// #[inline]
-// pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
-//     context: &mut Context<EvmWiringT>,
-//     evm_output: EVMResult<EvmWiringT>,
-// ) -> EVMResult<EvmWiringT> {
+impl<EVM, ERROR, FRAME> InspectorHandler for OpHandler<EVM, ERROR, FRAME>
+where
+    EVM: InspectorEvmTr<
+        Context: OpContextTr,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+    >,
+    ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
+    // TODO `FrameResult` should be a generic trait.
+    // TODO `FrameInit` should be a generic.
+    FRAME: InspectorFrame<
+        Evm = EVM,
+        Error = ERROR,
+        FrameResult = FrameResult,
+        FrameInit = FrameInput,
+        IT = EthInterpreter,
+    >,
+{
+    type IT = EthInterpreter;
+}
 
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{api::default_ctx::OpContext, DefaultOp, OpBuilder};
+    use revm::{
+        context::{Context, TransactionType},
+        context_interface::result::InvalidTransaction,
+        database::InMemoryDB,
+        database_interface::EmptyDB,
+        handler::EthFrame,
+        interpreter::{CallOutcome, InstructionResult, InterpreterResult},
+        primitives::{bytes, Address, Bytes, B256},
+        state::AccountInfo,
+    };
+    use rstest::rstest;
+    use std::boxed::Box;
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::{
-//         context_interface::OptimismEvmWiring, transaction::deposit::TxDeposit, BedrockSpec,
-//         L1BlockInfo, LatestSpec, OpTransaction, RegolithSpec,
-//     };
-//     use database::InMemoryDB;
-//     use revm::{
-//         context_interface::default::{block::BlockEnv, Env, TxEnv},
-//         database_interface::EmptyDB,
-//         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
-//         primitives::{bytes, Address, Bytes, B256},
-//         state::AccountInfo,
-//     };
-//     use std::boxed::Box;
+    /// Creates frame result.
+    fn call_last_frame_return(
+        ctx: OpContext<EmptyDB>,
+        instruction_result: InstructionResult,
+        gas: Gas,
+    ) -> Gas {
+        let mut evm = ctx.build_op();
 
-//     type TestEmptyOpWiring = OptimismEvmWiring<EmptyDB, ()>;
-//     type TestMemOpWiring = OptimismEvmWiring<InMemoryDB, ()>;
+        let mut exec_result = FrameResult::Call(CallOutcome::new(
+            InterpreterResult {
+                result: instruction_result,
+                output: Bytes::new(),
+                gas,
+            },
+            0..0,
+        ));
 
-//     /// Creates frame result.
-//     fn call_last_frame_return<SPEC>(
-//         env: EnvWiring<TestEmptyOpWiring>,
-//         instruction_result: InstructionResult,
-//         gas: Gas,
-//     ) -> Gas
-//     where
-//         SPEC: OptimismSpec,
-//     {
-//         let mut context = Context::<TestEmptyOpWiring>::new_with_db(EmptyDB::default());
-//         context.evm.inner.env = Box::new(env);
-//         let mut first_frame = FrameResult::Call(CallOutcome::new(
-//             InterpreterResult {
-//                 result: instruction_result,
-//                 output: Bytes::new(),
-//                 gas,
-//             },
-//             0..0,
-//         ));
-//         last_frame_return::<TestEmptyOpWiring, SPEC>(&mut context, &mut first_frame).unwrap();
-//         refund::<TestEmptyOpWiring, SPEC>(&mut context, first_frame.gas_mut(), 0);
-//         *first_frame.gas()
-//     }
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
-//     #[test]
-//     fn test_revert_gas() {
-//         let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
-//         let tx = TxEnv {
-//             gas_limit: 100,
-//             ..Default::default()
-//         };
-//         env.tx = OpTransaction::Base {
-//             tx,
-//             enveloped_tx: None,
-//         };
+        handler
+            .last_frame_result(&mut evm, &mut exec_result)
+            .unwrap();
+        handler.refund(&mut evm, &mut exec_result, 0);
+        *exec_result.gas()
+    }
 
-//         let gas =
-//             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
-//         assert_eq!(gas.remaining(), 90);
-//         assert_eq!(gas.spent(), 10);
-//         assert_eq!(gas.refunded(), 0);
-//     }
+    #[test]
+    fn test_revert_gas() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 100;
+                tx.enveloped_tx = None;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
-//     #[test]
-//     fn test_consume_gas() {
-//         let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
-//         //env.tx.base.gas_limit = 100;
-//         //env.tx.source_hash = Some(B256::ZERO);
+        let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spent(), 10);
+        assert_eq!(gas.refunded(), 0);
+    }
 
-//         let deposit = TxDeposit {
-//             gas_limit: 100,
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         env.tx = OpTransaction::Deposit(deposit);
+    #[test]
+    fn test_consume_gas() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
-//         let gas =
-//             call_last_frame_return::<RegolithSpec>(env, InstructionResult::Stop, Gas::new(90));
-//         assert_eq!(gas.remaining(), 90);
-//         assert_eq!(gas.spent(), 10);
-//         assert_eq!(gas.refunded(), 0);
-//     }
+        let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spent(), 10);
+        assert_eq!(gas.refunded(), 0);
+    }
 
-//     #[test]
-//     fn test_consume_gas_with_refund() {
-//         let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
-//         //env.tx.base.gas_limit = 100;
-//         //env.tx.source_hash = Some(B256::ZERO);
-//         let deposit = TxDeposit {
-//             gas_limit: 100,
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         env.tx = OpTransaction::Deposit(deposit);
+    #[test]
+    fn test_consume_gas_with_refund() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 100;
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.source_hash = B256::ZERO;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
-//         let mut ret_gas = Gas::new(90);
-//         ret_gas.record_refund(20);
+        let mut ret_gas = Gas::new(90);
+        ret_gas.record_refund(20);
 
-//         let gas =
-//             call_last_frame_return::<RegolithSpec>(env.clone(), InstructionResult::Stop, ret_gas);
-//         assert_eq!(gas.remaining(), 90);
-//         assert_eq!(gas.spent(), 10);
-//         assert_eq!(gas.refunded(), 2); // min(20, 10/5)
+        let gas = call_last_frame_return(ctx.clone(), InstructionResult::Stop, ret_gas);
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spent(), 10);
+        assert_eq!(gas.refunded(), 2); // min(20, 10/5)
 
-//         let gas = call_last_frame_return::<RegolithSpec>(env, InstructionResult::Revert, ret_gas);
-//         assert_eq!(gas.remaining(), 90);
-//         assert_eq!(gas.spent(), 10);
-//         assert_eq!(gas.refunded(), 0);
-//     }
+        let gas = call_last_frame_return(ctx, InstructionResult::Revert, ret_gas);
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spent(), 10);
+        assert_eq!(gas.refunded(), 0);
+    }
 
-//     #[test]
-//     fn test_consume_gas_sys_deposit_tx() {
-//         let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
-//         //env.tx.base.gas_limit = 100;
-//         //env.tx.source_hash = Some(B256::ZERO);
+    #[test]
+    fn test_consume_gas_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
+        let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 0);
+        assert_eq!(gas.spent(), 100);
+        assert_eq!(gas.refunded(), 0);
+    }
 
-//         let deposit = TxDeposit {
-//             gas_limit: 100,
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         env.tx = OpTransaction::Deposit(deposit);
+    #[test]
+    fn test_consume_gas_sys_deposit_tx() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+                tx.deposit.is_system_transaction = true;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
+        let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.spent(), 0);
+        assert_eq!(gas.refunded(), 0);
+    }
 
-//         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
-//         assert_eq!(gas.remaining(), 0);
-//         assert_eq!(gas.spent(), 100);
-//         assert_eq!(gas.refunded(), 0);
-//     }
+    #[test]
+    fn test_commit_mint_value() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1000),
+                ..Default::default()
+            },
+        );
 
-//     #[test]
-//     fn test_commit_mint_value() {
-//         let caller = Address::ZERO;
-//         let mut db = InMemoryDB::default();
-//         db.insert_account_info(
-//             caller,
-//             AccountInfo {
-//                 balance: U256::from(1000),
-//                 ..Default::default()
-//             },
-//         );
+        let mut ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+        ctx.modify_tx(|tx| {
+            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            tx.deposit.source_hash = B256::ZERO;
+            tx.deposit.mint = Some(10);
+        });
 
-//         let mut context = Context::<TestMemOpWiring>::new_with_db(db);
-//         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
-//             l1_base_fee: U256::from(1_000),
-//             l1_fee_overhead: Some(U256::from(1_000)),
-//             l1_base_fee_scalar: U256::from(1_000),
-//             ..Default::default()
-//         });
-//         // // Enveloped needs to be some but it will deduce zero fee.
-//         // context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
-//         // // added mint value is 10.
-//         // context.evm.inner.env.tx.mint = Some(10);
+        let mut evm = ctx.build_op();
 
-//         let deposit = TxDeposit {
-//             gas_limit: 100,
-//             mint: Some(10),
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        handler.deduct_caller(&mut evm).unwrap();
 
-//         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
+        // Check the account balance is updated.
+        let account = evm.ctx().journal().load_account(caller).unwrap();
+        assert_eq!(account.info.balance, U256::from(1010));
+    }
 
-//         // Check the account balance is updated.
-//         let account = context
-//             .evm
-//             .inner
-//             .journaled_state
-//             .load_account(caller, &mut context.evm.inner.db)
-//             .unwrap();
-//         assert_eq!(account.info.balance, U256::from(1010));
-//     }
+    #[test]
+    fn test_remove_l1_cost_non_deposit() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1000),
+                ..Default::default()
+            },
+        );
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 100;
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.mint = Some(10);
+                tx.enveloped_tx = Some(bytes!("FACADE"));
+                tx.deposit.source_hash = B256::ZERO;
+            });
 
-//     #[test]
-//     fn test_remove_l1_cost_non_deposit() {
-//         let caller = Address::ZERO;
-//         let mut db = InMemoryDB::default();
-//         db.insert_account_info(
-//             caller,
-//             AccountInfo {
-//                 balance: U256::from(1000),
-//                 ..Default::default()
-//             },
-//         );
-//         let mut context = Context::<TestMemOpWiring>::new_with_db(db);
-//         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
-//             l1_base_fee: U256::from(1_000),
-//             l1_fee_overhead: Some(U256::from(1_000)),
-//             l1_base_fee_scalar: U256::from(1_000),
-//             ..Default::default()
-//         });
-//         // // l1block cost is 1048 fee.
-//         // context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
-//         // // added mint value is 10.
-//         // context.evm.inner.env.tx.mint = Some(10);
-//         // // Putting source_hash to some makes it a deposit transaction.
-//         // // so enveloped_tx gas cost is ignored.
-//         // context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
+        let mut evm = ctx.build_op();
 
-//         let deposit = TxDeposit {
-//             mint: Some(10),
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        handler.deduct_caller(&mut evm).unwrap();
 
-//         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
+        // Check the account balance is updated.
+        let account = evm.ctx().journal().load_account(caller).unwrap();
+        assert_eq!(account.info.balance, U256::from(1010));
+    }
 
-//         // Check the account balance is updated.
-//         let account = context
-//             .evm
-//             .inner
-//             .journaled_state
-//             .load_account(caller, &mut context.evm.inner.db)
-//             .unwrap();
-//         assert_eq!(account.info.balance, U256::from(1010));
-//     }
+    #[test]
+    fn test_remove_l1_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1049),
+                ..Default::default()
+            },
+        );
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 100;
+                tx.deposit.source_hash = B256::ZERO;
+                tx.enveloped_tx = Some(bytes!("FACADE"));
+            });
 
-//     #[test]
-//     fn test_remove_l1_cost() {
-//         let caller = Address::ZERO;
-//         let mut db = InMemoryDB::default();
-//         db.insert_account_info(
-//             caller,
-//             AccountInfo {
-//                 balance: U256::from(1049),
-//                 ..Default::default()
-//             },
-//         );
-//         let mut context = Context::<TestMemOpWiring>::new_with_db(db);
-//         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
-//             l1_base_fee: U256::from(1_000),
-//             l1_fee_overhead: Some(U256::from(1_000)),
-//             l1_base_fee_scalar: U256::from(1_000),
-//             ..Default::default()
-//         });
-//         // l1block cost is 1048 fee.
-//         context.evm.inner.env.tx = OpTransaction::Base {
-//             tx: TxEnv::default(),
-//             enveloped_tx: Some(bytes!("FACADE")),
-//         };
-//         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
-//         // Check the account balance is updated.
-//         let account = context
-//             .evm
-//             .inner
-//             .journaled_state
-//             .load_account(caller, &mut context.evm.inner.db)
-//             .unwrap();
-//         assert_eq!(account.info.balance, U256::from(1));
-//     }
+        // l1block cost is 1048 fee.
+        handler.deduct_caller(&mut evm).unwrap();
 
-//     #[test]
-//     fn test_remove_l1_cost_lack_of_funds() {
-//         let caller = Address::ZERO;
-//         let mut db = InMemoryDB::default();
-//         db.insert_account_info(
-//             caller,
-//             AccountInfo {
-//                 balance: U256::from(48),
-//                 ..Default::default()
-//             },
-//         );
-//         let mut context = Context::<TestMemOpWiring>::new_with_db(db);
-//         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
-//             l1_base_fee: U256::from(1_000),
-//             l1_fee_overhead: Some(U256::from(1_000)),
-//             l1_base_fee_scalar: U256::from(1_000),
-//             ..Default::default()
-//         });
-//         // l1block cost is 1048 fee.
-//         context.evm.inner.env.tx = OpTransaction::Base {
-//             tx: TxEnv::default(),
-//             enveloped_tx: Some(bytes!("FACADE")),
-//         };
+        // Check the account balance is updated.
+        let account = evm.ctx().journal().load_account(caller).unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
 
-//         assert_eq!(
-//             deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context),
-//             Err(EVMError::Transaction(
-//                 InvalidTransaction::LackOfFundForMaxFee {
-//                     fee: Box::new(U256::from(1048)),
-//                     balance: Box::new(U256::from(48)),
-//                 }
-//                 .into(),
-//             ))
-//         );
-//     }
+    #[test]
+    fn test_remove_operator_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(151),
+                ..Default::default()
+            },
+        );
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                operator_fee_scalar: Some(U256::from(10_000_000)),
+                operator_fee_constant: Some(U256::from(50)),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
+            .modify_tx_chained(|tx| {
+                tx.base.gas_limit = 10;
+                tx.enveloped_tx = Some(bytes!("FACADE"));
+            });
 
-//     #[test]
-//     fn test_validate_sys_tx() {
-//         // mark the tx as a system transaction.
-//         // Set source hash.
-//         let tx = TxDeposit {
-//             is_system_transaction: true,
-//             ..Default::default()
-//         };
-//         let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
-//             tx: OpTransaction::Deposit(tx),
-//             ..Default::default()
-//         };
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
-//         assert_eq!(
-//             validate_env::<TestEmptyOpWiring, RegolithSpec>(&env),
-//             Err(EVMError::Transaction(
-//                 OpTransactionError::DepositSystemTxPostRegolith
-//             ))
-//         );
+        // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
+        // 10_000_000 * 10 / 1_000_000 + 50 = 150
+        handler.deduct_caller(&mut evm).unwrap();
 
-//         // Pre-regolith system transactions should be allowed.
-//         assert!(validate_env::<TestEmptyOpWiring, BedrockSpec>(&env).is_ok());
-//     }
+        // Check the account balance is updated.
+        let account = evm.ctx().journal().load_account(caller).unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
 
-//     #[test]
-//     fn test_validate_deposit_tx() {
-//         // Set source hash.
-//         let tx = TxDeposit {
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
-//             tx: OpTransaction::Deposit(tx),
-//             ..Default::default()
-//         };
-//         assert!(validate_env::<TestEmptyOpWiring, RegolithSpec>(&env).is_ok());
-//     }
+    #[test]
+    fn test_remove_l1_cost_lack_of_funds() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(48),
+                ..Default::default()
+            },
+        );
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
+            .modify_tx_chained(|tx| {
+                tx.enveloped_tx = Some(bytes!("FACADE"));
+            });
 
-//     #[test]
-//     fn test_validate_tx_against_state_deposit_tx() {
-//         // Set source hash.
-//         let tx = TxDeposit {
-//             source_hash: B256::ZERO,
-//             ..Default::default()
-//         };
-//         let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
-//             tx: OpTransaction::Deposit(tx),
-//             ..Default::default()
-//         };
+        // l1block cost is 1048 fee.
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
-//         // Nonce and balance checks should be skipped for deposit transactions.
-//         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());
-//     }
-// }
+        // l1block cost is 1048 fee.
+        assert_eq!(
+            handler.validate_tx_against_state(&mut evm),
+            Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: Box::new(U256::from(1048)),
+                    balance: Box::new(U256::from(48)),
+                }
+                .into(),
+            ))
+        );
+    }
+
+    #[test]
+    fn test_validate_sys_tx() {
+        // mark the tx as a system transaction.
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.is_system_transaction = true;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        assert_eq!(
+            handler.validate_env(&mut evm),
+            Err(EVMError::Transaction(
+                OpTransactionError::DepositSystemTxPostRegolith
+            ))
+        );
+
+        evm.ctx().modify_cfg(|cfg| cfg.spec = OpSpecId::BEDROCK);
+
+        // Pre-regolith system transactions should be allowed.
+        assert!(handler.validate_env(&mut evm).is_ok());
+    }
+
+    #[test]
+    fn test_validate_deposit_tx() {
+        // Set source hash.
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.source_hash = B256::ZERO;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        assert!(handler.validate_env(&mut evm).is_ok());
+    }
+
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set source hash.
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.source_hash = B256::ZERO;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(handler.validate_env(&mut evm).is_ok());
+    }
+
+    #[test]
+    fn test_halted_deposit_tx_post_regolith() {
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        assert_eq!(
+            handler.output(
+                &mut evm,
+                FrameResult::Call(CallOutcome {
+                    result: InterpreterResult {
+                        result: InstructionResult::OutOfGas,
+                        output: Default::default(),
+                        gas: Default::default(),
+                    },
+                    memory_offset: Default::default(),
+                })
+            ),
+            Err(EVMError::Transaction(
+                OpTransactionError::HaltedDepositPostRegolith
+            ))
+        )
+    }
+
+    #[rstest]
+    #[case::deposit(true)]
+    #[case::dyn_fee(false)]
+    fn test_operator_fee_refund(#[case] is_deposit: bool) {
+        const SENDER: Address = Address::ZERO;
+        const GAS_PRICE: u128 = 0xFF;
+        const OP_FEE_MOCK_PARAM: u128 = 0xFFFF;
+
+        let ctx = Context::op()
+            .modify_tx_chained(|tx| {
+                tx.base.tx_type = if is_deposit {
+                    DEPOSIT_TRANSACTION_TYPE
+                } else {
+                    TransactionType::Eip1559 as u8
+                };
+                tx.base.gas_price = GAS_PRICE;
+                tx.base.gas_priority_fee = None;
+                tx.base.caller = SENDER;
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+
+        // Set the operator fee scalar & constant to non-zero values in the L1 block info.
+        evm.ctx().chain.operator_fee_scalar = Some(U256::from(OP_FEE_MOCK_PARAM));
+        evm.ctx().chain.operator_fee_constant = Some(U256::from(OP_FEE_MOCK_PARAM));
+
+        let mut gas = Gas::new(100);
+        gas.set_spent(10);
+        let mut exec_result = FrameResult::Call(CallOutcome::new(
+            InterpreterResult {
+                result: InstructionResult::Return,
+                output: Default::default(),
+                gas,
+            },
+            0..0,
+        ));
+
+        // Reimburse the caller for the unspent portion of the fees.
+        handler
+            .reimburse_caller(&mut evm, &mut exec_result)
+            .unwrap();
+
+        // Compute the expected refund amount. If the transaction is a deposit, the operator fee refund never
+        // applies. If the transaction is not a deposit, the operator fee refund is added to the refund amount.
+        let mut expected_refund =
+            U256::from(GAS_PRICE * (gas.remaining() + gas.refunded() as u64) as u128);
+        let op_fee_refund = evm
+            .ctx()
+            .chain()
+            .operator_fee_refund(&gas, OpSpecId::ISTHMUS);
+        assert!(op_fee_refund > U256::ZERO);
+
+        if !is_deposit {
+            expected_refund += op_fee_refund;
+        }
+
+        // Check that the caller was reimbursed the correct amount of ETH.
+        let account = evm.ctx().journal().load_account(SENDER).unwrap();
+        assert_eq!(account.info.balance, expected_refund);
+    }
+}

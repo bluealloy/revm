@@ -1,10 +1,9 @@
+use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
 use revm::{
-    context_interface::transaction::TransactionType,
+    context_interface::transaction::{AccessList, TransactionType},
     primitives::{Address, Bytes, B256, U256},
 };
 use serde::{Deserialize, Serialize};
-
-use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
 
 /// Transaction parts.
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,7 +24,7 @@ pub struct TransactionParts {
     pub max_priority_fee_per_gas: Option<U256>,
 
     #[serde(default)]
-    pub access_lists: Vec<Option<Vec<AccessListItem>>>,
+    pub access_lists: Vec<Option<AccessList>>,
     pub authorization_list: Option<Vec<TestAuthorization>>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
@@ -80,13 +79,6 @@ pub struct TxPartIndices {
     pub data: usize,
     pub gas: usize,
     pub value: usize,
-}
-
-#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct AccessListItem {
-    pub address: Address,
-    pub storage_keys: Vec<B256>,
 }
 
 #[cfg(test)]

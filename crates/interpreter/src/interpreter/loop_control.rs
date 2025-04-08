@@ -1,4 +1,4 @@
-use crate::interpreter_types::LoopControl as LoopControlTrait;
+use crate::interpreter_types::LoopControl as LoopControlTr;
 use crate::{Gas, InstructionResult, InterpreterAction};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ impl LoopControl {
     }
 }
 
-impl LoopControlTrait for LoopControl {
+impl LoopControlTr for LoopControl {
     fn set_instruction_result(&mut self, result: InstructionResult) {
         self.instruction_result = result;
     }
@@ -40,7 +40,11 @@ impl LoopControlTrait for LoopControl {
         self.instruction_result = result;
     }
 
-    fn gas(&mut self) -> &mut Gas {
+    fn gas(&self) -> &Gas {
+        &self.gas
+    }
+
+    fn gas_mut(&mut self) -> &mut Gas {
         &mut self.gas
     }
 

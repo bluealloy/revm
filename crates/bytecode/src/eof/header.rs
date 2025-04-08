@@ -4,7 +4,7 @@ use super::{
 };
 use std::vec::Vec;
 
-/// EOF Header containing
+/// EOF header structure that contains section sizes and metadata
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofHeader {
@@ -22,14 +22,14 @@ pub struct EofHeader {
     pub container_sizes: Vec<u16>,
     /// EOF data size
     pub data_size: u16,
-    /// Sum code sizes
+    /// Sum of code sizes
     pub sum_code_sizes: usize,
-    /// Sum container sizes
+    /// Sum of container sizes
     pub sum_container_sizes: usize,
 }
 
 const KIND_TERMINAL: u8 = 0;
-const KIND_TYPES: u8 = 1;
+const KIND_CODE_INFO: u8 = 1;
 const KIND_CODE: u8 = 2;
 const KIND_CONTAINER: u8 = 3;
 const KIND_DATA: u8 = 4;
@@ -113,7 +113,7 @@ impl EofHeader {
         // `version`	1 byte	0x01	EOF version
         buffer.push(0x01);
         // `kind_types`	1 byte	0x01	kind marker for types size section
-        buffer.push(KIND_TYPES);
+        buffer.push(KIND_CODE_INFO);
         // `types_size`	2 bytes	0x0004-0xFFFF
         buffer.extend_from_slice(&self.types_size.to_be_bytes());
         // `kind_code`	1 byte	0x02	kind marker for code size section
@@ -159,8 +159,8 @@ impl EofHeader {
         }
 
         // `kind_types`	1 byte	0x01	kind marker for types size section
-        let (input, kind_types) = consume_u8(input)?;
-        if kind_types != KIND_TYPES {
+        let (input, kind_code_info) = consume_u8(input)?;
+        if kind_code_info != KIND_CODE_INFO {
             return Err(EofDecodeError::InvalidTypesKind);
         }
 
@@ -170,12 +170,12 @@ impl EofHeader {
         header.types_size = types_size;
 
         if header.types_size % 4 != 0 {
-            return Err(EofDecodeError::InvalidTypesSection);
+            return Err(EofDecodeError::InvalidCodeInfo);
         }
 
         // `kind_code`	1 byte	0x02	kind marker for code size section
-        let (input, kind_types) = consume_u8(input)?;
-        if kind_types != KIND_CODE {
+        let (input, kind_code) = consume_u8(input)?;
+        if kind_code != KIND_CODE {
             return Err(EofDecodeError::InvalidCodeKind);
         }
 
@@ -192,7 +192,7 @@ impl EofHeader {
         }
 
         if sizes.len() != (types_size / 4) as usize {
-            return Err(EofDecodeError::MismatchCodeAndTypesSize);
+            return Err(EofDecodeError::MismatchCodeAndInfoSize);
         }
 
         header.code_sizes = sizes;

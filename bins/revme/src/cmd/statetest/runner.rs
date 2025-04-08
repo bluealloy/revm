@@ -4,10 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{
-    inspector_context::InspectorContext, inspector_handler, inspectors::TracerEip3155,
-    InspectorMainEvm,
-};
+use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -17,10 +14,10 @@ use revm::{
         Cfg,
     },
     database_interface::EmptyDB,
-    handler::EthHandler,
-    primitives::{keccak256, Bytes, TxKind, B256},
-    specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, DatabaseCommit, EvmCommit, MainEvm,
+    primitives::{
+        eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Bytes, TxKind, B256,
+    },
+    Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -69,6 +66,10 @@ pub enum TestErrorKind {
     SerdeDeserialize(#[from] serde_json::Error),
     #[error("thread panicked")]
     Panic,
+    #[error("path does not exist")]
+    InvalidPath,
+    #[error("no JSON test files found in path")]
+    NoJsonFiles,
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -361,7 +362,6 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                // TODO : TX TYPE needs to be set
                 let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
                     if test.expect_exception.is_some() {
                         continue;
@@ -388,13 +388,8 @@ pub fn execute_test_suite(
                     .transaction
                     .access_lists
                     .get(test.indexes.data)
-                    .and_then(Option::as_deref)
-                    .map(|access_list| {
-                        access_list
-                            .iter()
-                            .map(|item| (item.address, item.storage_keys.clone()))
-                            .collect::<Vec<_>>()
-                    })
+                    .cloned()
+                    .flatten()
                     .unwrap_or_default();
 
                 tx.authorization_list = unit
@@ -416,35 +411,30 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = MainEvm::new(
-                    Context::builder()
-                        .with_block(&block)
-                        .with_tx(&tx)
-                        .with_cfg(&cfg)
-                        .with_db(&mut state),
-                    EthHandler::default(),
-                );
+                let mut evm = Context::mainnet()
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg)
+                    .with_db(&mut state)
+                    .build_mainnet();
 
                 // Do the deed
                 let (e, exec_result) = if trace {
-                    let mut evm = InspectorMainEvm::new(
-                        InspectorContext::new(
-                            Context::builder()
-                                .with_block(&block)
-                                .with_tx(&tx)
-                                .with_cfg(&cfg)
-                                .with_db(&mut state),
-                            TracerEip3155::new(Box::new(stderr())),
-                        ),
-                        inspector_handler(),
-                    );
+                    let mut evm = Context::mainnet()
+                        .with_block(&block)
+                        .with_tx(&tx)
+                        .with_cfg(&cfg)
+                        .with_db(&mut state)
+                        .build_mainnet_with_inspector(
+                            TracerEip3155::buffered(stderr()).without_summary(),
+                        );
 
                     let timer = Instant::now();
-                    let res = evm.exec_commit();
+                    let res = evm.inspect_replay_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = evm.context.inner.journaled_state.database;
+                    let db = &mut evm.data.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -461,11 +451,11 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = evm.exec_commit();
+                    let res = evm.replay_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = evm.context.journaled_state.database;
+                    let db = evm.data.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -482,10 +472,10 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // Print only once or
-                // if we are already in trace mode, just return error
+                // Print only once or if we are already in trace mode, just return error
+                // If trace is true that print_json_outcome will be also true.
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if trace || FAILED.swap(true, Ordering::SeqCst) {
+                if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(TestError {
                         name: name.clone(),
                         path: path.clone(),
@@ -503,30 +493,23 @@ pub fn execute_test_suite(
 
                 println!("\nTraces:");
 
-                let mut evm = InspectorMainEvm::new(
-                    InspectorContext::new(
-                        Context::builder()
-                            .with_db(&mut state)
-                            .with_block(&block)
-                            .with_tx(&tx)
-                            .with_cfg(&cfg),
-                        TracerEip3155::new(Box::new(stderr())),
-                    ),
-                    inspector_handler(),
-                );
+                let mut evm = Context::mainnet()
+                    .with_db(&mut state)
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg)
+                    .build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
+                    );
 
-                let res = evm.transact();
-                let _ = res.map(|r| {
-                    evm.context.inner.journaled_state.database.commit(r.state);
-                    r.result
-                });
+                let _ = evm.inspect_replay_commit();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
                 println!(
                     "\nState after: {:#?}",
-                    evm.context.inner.journaled_state.database.cache
+                    evm.data.ctx.journaled_state.database.cache
                 );
                 println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");

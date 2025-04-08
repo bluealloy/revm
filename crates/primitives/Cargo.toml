@@ -1,7 +1,7 @@
 [package]
 name = "revm-primitives"
 description = "Revm primitives types"
-version = "15.1.0"
+version = "17.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -22,15 +22,23 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.8", default-features = false, features = [
-    "rlp",
-    "map",
-] }
+# alloy
+alloy-primitives = { workspace = true, features = ["rlp", "map"] }
+
+# mics
+enumn.workspace = true
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
 
 [features]
 default = ["std"]
-std = ["alloy-primitives/std"]
-serde = ["alloy-primitives/serde"]
+std = [
+	"alloy-primitives/std",
+	"serde?/std"
+]
+serde = ["dep:serde", "alloy-primitives/serde"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]

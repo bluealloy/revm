@@ -5,16 +5,18 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub use context_interface::*;
+
 pub mod block;
 pub mod cfg;
 pub mod context;
-mod journal_init;
-pub mod journaled_state;
+pub mod evm;
+pub mod journal;
 pub mod tx;
 
 pub use block::BlockEnv;
 pub use cfg::{Cfg, CfgEnv};
 pub use context::*;
-pub use journal_init::JournalInit;
-pub use journaled_state::*;
+pub use evm::{Evm, EvmData};
+pub use journal::*;
 pub use tx::TxEnv;

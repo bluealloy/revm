@@ -13,8 +13,8 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use core::hash::Hash;
+use primitives::hardfork::SpecId;
 use primitives::{HashMap, U256};
-use specification::hardfork::SpecId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -128,6 +128,60 @@ impl Account {
     pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
+
+    /// Sets account info and returns self for method chaining.
+    pub fn with_info(mut self, info: AccountInfo) -> Self {
+        self.info = info;
+        self
+    }
+
+    /// Populates storage from an iterator of storage slots and returns self for method chaining.
+    pub fn with_storage<I>(mut self, storage_iter: I) -> Self
+    where
+        I: Iterator<Item = (U256, EvmStorageSlot)>,
+    {
+        for (key, slot) in storage_iter {
+            self.storage.insert(key, slot);
+        }
+        self
+    }
+
+    /// Marks the account as self destructed and returns self for method chaining.
+    pub fn with_selfdestruct_mark(mut self) -> Self {
+        self.mark_selfdestruct();
+        self
+    }
+
+    /// Marks the account as touched and returns self for method chaining.
+    pub fn with_touched_mark(mut self) -> Self {
+        self.mark_touch();
+        self
+    }
+
+    /// Marks the account as newly created and returns self for method chaining.
+    pub fn with_created_mark(mut self) -> Self {
+        self.mark_created();
+        self
+    }
+
+    /// Marks the account as cold and returns self for method chaining.
+    pub fn with_cold_mark(mut self) -> Self {
+        self.mark_cold();
+        self
+    }
+
+    /// Marks the account as warm (not cold) and returns self for method chaining.
+    /// Also returns whether the account was previously cold.
+    pub fn with_warm_mark(mut self) -> (Self, bool) {
+        let was_cold = self.mark_warm();
+        (self, was_cold)
+    }
+
+    /// Variant of with_warm_mark that doesn't return the previous state.
+    pub fn with_warm(mut self) -> Self {
+        self.mark_warm();
+        self
+    }
 }
 
 impl From<AccountInfo> for Account {
@@ -228,8 +282,9 @@ impl EvmStorageSlot {
 
 #[cfg(test)]
 mod tests {
-    use crate::Account;
-    use primitives::{KECCAK_EMPTY, U256};
+    use super::*;
+    use crate::EvmStorageSlot;
+    use primitives::KECCAK_EMPTY;
 
     #[test]
     fn account_is_empty_balance() {
@@ -308,5 +363,128 @@ mod tests {
 
         // When marking cold account as warm, it should return true
         assert!(account.mark_warm());
+    }
+
+    #[test]
+    fn test_account_with_info() {
+        let info = AccountInfo::default();
+        let account = Account::default().with_info(info.clone());
+
+        assert_eq!(account.info, info);
+        assert_eq!(account.storage, HashMap::default());
+        assert_eq!(account.status, AccountStatus::Loaded);
+    }
+
+    #[test]
+    fn test_account_with_storage() {
+        let mut storage = HashMap::new();
+        let key1 = U256::from(1);
+        let key2 = U256::from(2);
+        let slot1 = EvmStorageSlot::new(U256::from(10));
+        let slot2 = EvmStorageSlot::new(U256::from(20));
+
+        storage.insert(key1, slot1.clone());
+        storage.insert(key2, slot2.clone());
+
+        let account = Account::default().with_storage(storage.clone().into_iter());
+
+        assert_eq!(account.storage.len(), 2);
+        assert_eq!(account.storage.get(&key1), Some(&slot1));
+        assert_eq!(account.storage.get(&key2), Some(&slot2));
+    }
+
+    #[test]
+    fn test_account_with_selfdestruct_mark() {
+        let account = Account::default().with_selfdestruct_mark();
+
+        assert!(account.is_selfdestructed());
+        assert!(!account.is_touched());
+        assert!(!account.is_created());
+    }
+
+    #[test]
+    fn test_account_with_touched_mark() {
+        let account = Account::default().with_touched_mark();
+
+        assert!(!account.is_selfdestructed());
+        assert!(account.is_touched());
+        assert!(!account.is_created());
+    }
+
+    #[test]
+    fn test_account_with_created_mark() {
+        let account = Account::default().with_created_mark();
+
+        assert!(!account.is_selfdestructed());
+        assert!(!account.is_touched());
+        assert!(account.is_created());
+    }
+
+    #[test]
+    fn test_account_with_cold_mark() {
+        let account = Account::default().with_cold_mark();
+
+        assert!(account.status.contains(AccountStatus::Cold));
+    }
+
+    #[test]
+    fn test_account_with_warm_mark() {
+        // Start with a cold account
+        let cold_account = Account::default().with_cold_mark();
+        assert!(cold_account.status.contains(AccountStatus::Cold));
+
+        // Use with_warm_mark to warm it
+        let (warm_account, was_cold) = cold_account.with_warm_mark();
+
+        // Check that it's now warm and previously was cold
+        assert!(!warm_account.status.contains(AccountStatus::Cold));
+        assert!(was_cold);
+
+        // Try with an already warm account
+        let (still_warm_account, was_cold) = warm_account.with_warm_mark();
+        assert!(!still_warm_account.status.contains(AccountStatus::Cold));
+        assert!(!was_cold);
+    }
+
+    #[test]
+    fn test_account_with_warm() {
+        // Start with a cold account
+        let cold_account = Account::default().with_cold_mark();
+        assert!(cold_account.status.contains(AccountStatus::Cold));
+
+        // Use with_warm to warm it
+        let warm_account = cold_account.with_warm();
+
+        // Check that it's now warm
+        assert!(!warm_account.status.contains(AccountStatus::Cold));
+    }
+
+    #[test]
+    fn test_account_builder_chaining() {
+        let info = AccountInfo {
+            nonce: 5,
+            ..AccountInfo::default()
+        };
+
+        let slot_key = U256::from(42);
+        let slot_value = EvmStorageSlot::new(U256::from(123));
+        let mut storage = HashMap::new();
+        storage.insert(slot_key, slot_value.clone());
+
+        // Chain multiple builder methods together
+        let account = Account::default()
+            .with_info(info.clone())
+            .with_storage(storage.into_iter())
+            .with_created_mark()
+            .with_touched_mark()
+            .with_cold_mark()
+            .with_warm();
+
+        // Verify all modifications were applied
+        assert_eq!(account.info, info);
+        assert_eq!(account.storage.get(&slot_key), Some(&slot_value));
+        assert!(account.is_created());
+        assert!(account.is_touched());
+        assert!(!account.status.contains(AccountStatus::Cold));
     }
 }

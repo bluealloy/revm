@@ -3,29 +3,23 @@
 
 use alloy_eips::BlockId;
 use alloy_provider::ProviderBuilder;
-use alloy_sol_types::sol;
-use alloy_sol_types::SolCall;
-use database::{AlloyDB, CacheDB};
-use revm::database_interface::WrapDatabaseAsync;
-use revm::handler::EthHandler;
-use revm::Context;
-use revm::EvmExec;
+use alloy_sol_types::{sol, SolCall};
 use revm::{
     context_interface::result::{ExecutionResult, Output},
-    database_interface::DatabaseRef,
-    database_interface::EmptyDB,
+    database::{AlloyDB, CacheDB},
+    database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
     primitives::{address, TxKind, U256},
-    MainEvm,
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+    // Initialize the Alloy provider and database
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
+    let provider = ProviderBuilder::new().connect(rpc_url).await?;
 
-    // Create ethers client and wrap it in Arc<M>
-    let client = ProviderBuilder::new().on_http(rpc_url);
-    let client = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
+    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let cache_db = CacheDB::new(alloy_db);
 
     // ----------------------------------------------------------- //
     //             Storage slots of UniV2Pair contract             //
@@ -54,10 +48,10 @@ async fn main() -> anyhow::Result<()> {
     let encoded = getReservesCall::new(()).abi_encode();
 
     // Query basic properties of an account incl bytecode
-    let acc_info = client.basic_ref(pool_address).unwrap().unwrap();
+    let acc_info = cache_db.basic_ref(pool_address).unwrap().unwrap();
 
     // Query value of storage slot at account address
-    let value = client.storage_ref(pool_address, slot).unwrap();
+    let value = cache_db.storage_ref(pool_address, slot).unwrap();
 
     // Initialise empty in-memory-db
     let mut cache_db = CacheDB::new(EmptyDB::default());
@@ -71,25 +65,23 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // Initialise an empty (default) EVM
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .with_db(cache_db)
-            .modify_tx_chained(|tx| {
-                // fill in missing bits of env struct
-                // change that to whatever caller you want to be
-                tx.caller = address!("0000000000000000000000000000000000000000");
-                // account you want to transact with
-                tx.kind = TxKind::Call(pool_address);
-                // calldata formed via abigen
-                tx.data = encoded.into();
-                // transaction value in wei
-                tx.value = U256::from(0);
-            }),
-        EthHandler::default(),
-    );
+    let mut evm = Context::mainnet()
+        .with_db(cache_db)
+        .modify_tx_chained(|tx| {
+            // fill in missing bits of env struct
+            // change that to whatever caller you want to be
+            tx.caller = address!("0000000000000000000000000000000000000000");
+            // account you want to transact with
+            tx.kind = TxKind::Call(pool_address);
+            // calldata formed via abigen
+            tx.data = encoded.into();
+            // transaction value in wei
+            tx.value = U256::from(0);
+        })
+        .build_mainnet();
 
     // Execute transaction without writing to the DB
-    let ref_tx = evm.exec().unwrap();
+    let ref_tx = evm.replay().unwrap();
     // Select ExecutionResult struct
     let result = ref_tx.result;
 

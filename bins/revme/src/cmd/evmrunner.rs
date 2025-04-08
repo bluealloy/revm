@@ -1,14 +1,10 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{
-    inspector_context::InspectorContext, inspector_handler, inspectors::TracerEip3155,
-    InspectorMainEvm,
-};
+use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    handler::EthHandler,
     primitives::{address, hex, Address, TxKind},
-    Context, Database, EvmExec, MainEvm,
+    Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -86,36 +82,31 @@ impl Cmd {
 
         // BenchmarkDB is dummy state that implements Database trait.
         // The bytecode is deployed at zero address.
-        let mut evm = MainEvm::new(
-            Context::builder().with_db(db).modify_tx_chained(|tx| {
+        let mut evm = Context::mainnet()
+            .with_db(db)
+            .modify_tx_chained(|tx| {
                 tx.caller = CALLER;
                 tx.kind = TxKind::Call(Address::ZERO);
                 tx.data = input;
                 tx.nonce = nonce;
-            }),
-            EthHandler::default(),
-        );
+            })
+            .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
             // Microbenchmark
             let bench_options = microbench::Options::default().time(Duration::from_secs(3));
 
             microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.transact().unwrap();
+                let _ = evm.replay().unwrap();
             });
 
             return Ok(());
         }
 
         let out = if self.trace {
-            let mut evm = InspectorMainEvm::new(
-                InspectorContext::new(evm.context, TracerEip3155::new(Box::new(std::io::stdout()))),
-                inspector_handler(),
-            );
-
-            evm.exec().map_err(|_| Errors::EVMError)?
+            evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
-            let out = evm.transact().map_err(|_| Errors::EVMError)?;
+            let out = evm.replay().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out
         };

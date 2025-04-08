@@ -1,7 +1,7 @@
 [package]
 name = "revm-database-interface"
 description = "Revm Database interface"
-version = "1.0.0"
+version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -26,27 +26,22 @@ all = "warn"
 state.workspace = true
 primitives.workspace = true
 
-# mics
+# misc
 auto_impl.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 # asyncdb
-tokio = { version = "1.40", optional = true }
-
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
-anyhow = "1.0.83"
-indicatif = "0.17"
-rstest = "0.22.0"
-alloy-sol-types = "0.8"
+anyhow.workspace = true
+rstest.workspace = true
+alloy-sol-types.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde"]
-asyncdb = ["dep:tokio"]
+std = ["serde?/std", "alloy-sol-types/std", "primitives/std", "state/std"]
+serde = ["dep:serde", "primitives/serde", "state/serde"]
+asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]

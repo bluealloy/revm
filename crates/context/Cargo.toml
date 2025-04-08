@@ -1,7 +1,7 @@
 [package]
 name = "revm-context"
 description = "Revm context crates"
-version = "1.0.0"
+version = "2.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -23,12 +23,10 @@ all = "warn"
 
 [dependencies]
 # revm
-interpreter.workspace = true
 context-interface.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
-specification.workspace = true
 bytecode.workspace = true
 
 # misc
@@ -36,29 +34,40 @@ derive-where.workspace = true
 cfg-if.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 database.workspace = true
 
 [features]
-# Implementation-specific features
 default = ["std"]
-std = []
+std = [
+	"serde?/std",
+	"bytecode/std",
+	"context-interface/std",
+	"database/std",
+	"database-interface/std",
+	"primitives/std",
+	"state/std",
+]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"context-interface/serde",
+	"bytecode/serde",
+	"database/serde",
+	"database-interface/serde",
+]
 dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
+	"memory_limit",
+	"optional_balance_check",
+	"optional_block_gas_limit",
+	"optional_eip3607",
+	"optional_no_base_fee",
 ]
 memory_limit = []
 optional_balance_check = []
 optional_block_gas_limit = []
 optional_eip3607 = []
-optional_gas_refund = []
 optional_no_base_fee = []
