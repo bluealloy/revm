@@ -51,7 +51,7 @@ pub fn fjord() -> &'static Precompiles {
     static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
-        // EIP-7212: secp256r1 P256verify
+        // RIP-7212: secp256r1 P256verify
         precompiles.extend([secp256r1::P256VERIFY]);
         Box::new(precompiles)
     })
