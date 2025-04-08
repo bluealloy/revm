@@ -17,6 +17,7 @@ use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 
 use crate::{EvmTr, PrecompileProvider};
+use std::boxed::Box;
 
 pub fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
@@ -138,7 +139,7 @@ pub fn validate_before_deduction<
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode)?;
+            Err(InvalidTransaction::RejectCallerWithCode)?;
         }
     }
 
@@ -148,10 +149,10 @@ pub fn validate_before_deduction<
         let state = account_info.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
-                return Err(InvalidTransaction::NonceTooHigh { tx, state })?;
+                Err(InvalidTransaction::NonceTooHigh { tx, state })?;
             }
             Ordering::Less => {
-                return Err(InvalidTransaction::NonceTooLow { tx, state })?;
+                Err(InvalidTransaction::NonceTooLow { tx, state })?;
             }
             _ => {}
         }
@@ -176,7 +177,7 @@ pub fn validate_before_deduction<
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
     if balance_check > account_info.balance && !context.cfg().is_balance_check_disabled() {
-        return Err(InvalidTransaction::LackOfFundForMaxFee {
+        Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(balance_check),
             balance: Box::new(account_info.balance),
         })?;
