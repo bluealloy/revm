@@ -27,7 +27,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Blob target count. EIP-7840 Add blob schedule to EL config files.
     ///
     /// Note : Items must be sorted by `SpecId`.
-    pub blob_target_and_max_count: Vec<(SpecId, u8, u8)>,
+    pub blob_target_and_max_count: Vec<(SpecId, u64, u64)>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -121,9 +121,15 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Sets the blob target and max count over hardforks.
-    pub fn set_blob_max_and_target_count(&mut self, mut vec: Vec<(SpecId, u8, u8)>) {
-        vec.sort_by_key(|(id, _, _)| *id);
-        self.blob_target_and_max_count = vec;
+    pub fn with_blob_max_and_target_count(mut self, blob_params: Vec<(SpecId, u64, u64)>) -> Self {
+        self.set_blob_max_and_target_count(blob_params);
+        self
+    }
+
+    /// Sets the blob target and max count over hardforks.
+    pub fn set_blob_max_and_target_count(&mut self, mut blob_params: Vec<(SpecId, u64, u64)>) {
+        blob_params.sort_by_key(|(id, _, _)| *id);
+        self.blob_target_and_max_count = blob_params;
     }
 }
 
@@ -139,7 +145,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     #[inline]
-    fn blob_max_count(&self, spec_id: SpecId) -> u8 {
+    fn blob_max_count(&self, spec_id: SpecId) -> u64 {
         self.blob_target_and_max_count
             .iter()
             .rev()
