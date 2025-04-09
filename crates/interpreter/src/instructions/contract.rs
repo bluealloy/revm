@@ -147,9 +147,6 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))),
         InstructionResult::CallOrCreate,
     );
-
-    // jump over initcontainer index.
-    interpreter.bytecode.relative_jump(1);
 }
 
 pub fn return_contract<H: Host + ?Sized>(
