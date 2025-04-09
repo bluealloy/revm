@@ -63,6 +63,17 @@ pub struct State<DB> {
     ///
     /// The fork block is different or some blocks are not saved inside database.
     pub block_hashes: BTreeMap<u64, B256>,
+    /// Global counter for tracking transitions
+    ///
+    /// This counter is incremented whenever transitions are merged or the bundle is taken.
+    /// It can be used by the cache state to detect when transitions have been dropped,
+    /// allowing more efficient cache management by knowing when certain cached values
+    /// are no longer needed or when they need to be refreshed.
+    /// 
+    /// For example, the cache can store the last seen transition counter value and compare it
+    /// with the current one to determine if any transitions have been merged or dropped since 
+    /// the last check.
+    pub transition_counter: usize,
 }
 
 // Have ability to call State::builder without having to specify the type.
@@ -79,6 +90,14 @@ impl<DB: Database> State<DB> {
     /// See [BundleState::size_hint] for more info.
     pub fn bundle_size_hint(&self) -> usize {
         self.bundle_state.size_hint()
+    }
+
+    /// Returns the current transition counter value.
+    ///
+    /// This can be used by cache implementations to detect when transitions have been
+    /// merged or dropped.
+    pub fn transition_counter(&self) -> usize {
+        self.transition_counter
     }
 
     /// Iterates over received balances and increment all account balances.
@@ -176,6 +195,7 @@ impl<DB: Database> State<DB> {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .apply_transitions_and_create_reverts(transition_state, retention);
+            self.transition_counter += 1;
         }
     }
 
@@ -209,7 +229,6 @@ impl<DB: Database> State<DB> {
         }
     }
 
-    // TODO : Make cache aware of transitions dropping by having global transition counter.
     /// Takess the [`BundleState`] changeset from the [`State`], replacing it
     /// with an empty one.
     ///
@@ -221,6 +240,7 @@ impl<DB: Database> State<DB> {
     /// [`StateBuilder::with_bundle_prestate`] option, the pre-state will be
     /// taken along with any changes made by [`State::merge_transitions`].
     pub fn take_bundle(&mut self) -> BundleState {
+        self.transition_counter += 1;
         core::mem::take(&mut self.bundle_state)
     }
 }
