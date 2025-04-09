@@ -375,7 +375,6 @@ fn process_halt(
         ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
         ExitCode::PrecompileError => InstructionResult::PrecompileError,
     };
-    dbg!(&result);
     InterpreterAction::Return {
         result: InterpreterResult {
             result,
