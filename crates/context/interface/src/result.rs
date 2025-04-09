@@ -1,7 +1,7 @@
 use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
-use primitives::{Address, Bytes, Log, U256};
+use primitives::{eof::MAX_INITCODE_COUNT, Address, Bytes, Log, MAX_INITCODE_SIZE, U256};
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
@@ -372,13 +372,23 @@ pub enum InvalidTransaction {
     Eip7702NotSupported,
     /// EIP-7873 is not supported.
     Eip7873NotSupported,
-    /// EIP-7873 initcodes can't be zero lenght.
-    Eip7873EmptyInitcodes,
-    /// EIP-7873 initcodes can't be more than MAX_INITCODE_COUNT.
-    Eip7873TooManyInitcodes {
-        max: usize,
-        have: usize,
+    /// EIP-7873 needs to have at least one initcode.
+    Eip7873EmptyInitcodeList,
+    /// EIP-7873 initcode can't be zero lenght.
+    Eip7873EmptyInitcode {
+        i: usize,
     },
+    /// EIP-7873 initcodes can't be more than [`MAX_INITCODE_COUNT`].
+    Eip7873TooManyInitcodes {
+        size: usize,
+    },
+    /// EIP-7873 initcodes can't be more than [`MAX_INITCODE_SIZE`].
+    Eip7873InitcodeTooLarge {
+        i: usize,
+        size: usize,
+    },
+    /// EIP-7873 initcode transaction should have `to` address.
+    Eip7873MissingTarget,
 }
 
 impl TransactionError for InvalidTransaction {}
@@ -464,9 +474,26 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
             Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
             Self::Eip7873NotSupported => write!(f, "Eip7873 is not supported"),
-            Self::Eip7873EmptyInitcodes => write!(f, "Eip7873 initcodes can't be zero lenght"),
-            Self::Eip7873TooManyInitcodes { max, have } => {
-                write!(f, "Eip7873 initcodes can't be more than {max}, have {have}")
+            Self::Eip7873EmptyInitcodeList => {
+                write!(f, "Eip7873 initcode list should have at least one initcode")
+            }
+            Self::Eip7873EmptyInitcode { i } => {
+                write!(f, "Eip7873 initcode {i} can't be zero lenght")
+            }
+            Self::Eip7873TooManyInitcodes { size } => {
+                write!(
+                    f,
+                    "Eip7873 initcodes can't be more than {MAX_INITCODE_COUNT}, have {size}"
+                )
+            }
+            Self::Eip7873InitcodeTooLarge { i, size } => {
+                write!(
+                    f,
+                    "Eip7873 initcode {i} can't be more than {MAX_INITCODE_SIZE}, have {size}"
+                )
+            }
+            Self::Eip7873MissingTarget => {
+                write!(f, "Eip7873 initcode transaction should have `to` address")
             }
         }
     }

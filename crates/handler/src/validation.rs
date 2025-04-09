@@ -6,7 +6,9 @@ use context_interface::{
 };
 use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
-use primitives::{eip4844, eof::MAX_INITCODE_COUNT, hardfork::SpecId, B256, U256};
+use primitives::{
+    eip4844, eof::MAX_INITCODE_COUNT, hardfork::SpecId, B256, MAX_INITCODE_SIZE, U256,
+};
 use state::AccountInfo;
 use std::boxed::Box;
 
@@ -216,22 +218,38 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::InvalidChainId);
             }
 
+            let mut i = 0;
+            for initcode in tx.initcodes() {
+                // InitcodeTransaction is invalid if any entry in initcodes is zero length
+                if initcode.is_empty() {
+                    return Err(InvalidTransaction::Eip7873EmptyInitcode { i });
+                }
+
+                // , or if any entry exceeds MAX_INITCODE_SIZE.
+                if initcode.len() > MAX_INITCODE_SIZE {
+                    return Err(InvalidTransaction::Eip7873InitcodeTooLarge {
+                        i,
+                        size: initcode.len(),
+                    });
+                }
+
+                i += 1;
+            }
+
             // InitcodeTransaction is invalid if there are zero entries in initcodes,
-            // if tx.initcodes().len() == 0 {
-            //     return Err(InvalidTransaction::Eip7873EmptyInitcodes);
-            // }
+            if i == 0 {
+                return Err(InvalidTransaction::Eip7873EmptyInitcodeList);
+            }
 
-            // // or if there are more than MAX_INITCODE_COUNT entries.
-            // if tx.initcodes().len() > MAX_INITCODE_COUNT {
-            //     return Err(InvalidTransaction::Eip7873TooManyInitcodes {
-            //         max: MAX_INITCODE_COUNT,
-            //         have: tx.initcodes().len(),
-            //     });
-            // }
+            // or if there are more than MAX_INITCODE_COUNT entries.
+            if i > MAX_INITCODE_COUNT {
+                return Err(InvalidTransaction::Eip7873TooManyInitcodes { size: i });
+            }
 
-            // TODO few more checks needed.
-            // InitcodeTransaction is invalid if any entry in initcodes is zero length, or if any entry exceeds MAX_INITCODE_SIZE.
             // InitcodeTransaction is invalid if the to is nil.
+            if tx.kind().is_create() {
+                return Err(InvalidTransaction::Eip7873MissingTarget);
+            }
 
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
