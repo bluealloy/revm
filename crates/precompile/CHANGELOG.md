@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [18.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v18.0.0...revm-precompile-v18.0.1) - 2025-04-09
+
+### Other
+
+- fixed `EIP` to `RIP` ([#2388](https://github.com/bluealloy/revm/pull/2388))
+- *(precompile)* remove unused dependencies ([#2378](https://github.com/bluealloy/revm/pull/2378))
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+- alloy 0.13 and kzg v2.1.0 ([#2342](https://github.com/bluealloy/revm/pull/2342))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0...revm-precompile-v18.0.0) - 2025-03-28
 
 ### Added
