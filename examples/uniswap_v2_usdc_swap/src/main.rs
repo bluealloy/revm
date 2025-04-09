@@ -113,7 +113,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
         result => return Err(anyhow!("'balanceOf' execution failed: {result:?}")),
     };
 
-    let balance = <U256>::abi_decode(&value, false)?;
+    let balance = <U256>::abi_decode(&value)?;
 
     Ok(balance)
 }
@@ -157,7 +157,7 @@ async fn get_amount_out(
         result => return Err(anyhow!("'getAmountOut' execution failed: {result:?}")),
     };
 
-    let amount_out = <U256>::abi_decode(&value, false)?;
+    let amount_out = <U256>::abi_decode(&value)?;
 
     Ok(amount_out)
 }
@@ -190,7 +190,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
         result => return Err(anyhow!("'getReserves' execution failed: {result:?}")),
     };
 
-    let (reserve0, reserve1, _) = <(U256, U256, u32)>::abi_decode(&value, false)?;
+    let (reserve0, reserve1, _) = <(U256, U256, u32)>::abi_decode(&value)?;
 
     Ok((reserve0, reserve1))
 }
@@ -267,7 +267,7 @@ fn transfer(
         ExecutionResult::Success {
             output: Output::Call(value),
             ..
-        } => <bool>::abi_decode(&value, false)?,
+        } => <bool>::abi_decode(&value)?,
         result => return Err(anyhow!("'transfer' execution failed: {result:?}")),
     };
 

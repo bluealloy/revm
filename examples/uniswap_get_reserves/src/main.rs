@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // Decode bytes to reserves + ts via alloy's abi decode
-    let return_vals = getReservesCall::abi_decode_returns(&value, true)?;
+    let return_vals = getReservesCall::abi_decode_returns(&value)?;
 
     // Print emulated getReserves() call output
     println!("Reserve0: {:#?}", return_vals.reserve0);
