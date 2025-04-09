@@ -3,8 +3,8 @@ use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
-    InterpreterTypes, Stack,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+    InterpreterResult, InterpreterTypes, Stack,
 };
 use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;
@@ -292,6 +292,22 @@ where
     }
 
     fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
+        self.gas_inspector.create_end(outcome);
+
+        if context.journal().depth() == 0 {
+            self.print_summary(&outcome.result, context);
+            let _ = self.output.flush();
+            // Clear the state if we are at the top level.
+            self.clear();
+        }
+    }
+
+    fn eofcreate_end(
+        &mut self,
+        context: &mut CTX,
+        _: &EOFCreateInputs,
+        outcome: &mut CreateOutcome,
+    ) {
         self.gas_inspector.create_end(outcome);
 
         if context.journal().depth() == 0 {
