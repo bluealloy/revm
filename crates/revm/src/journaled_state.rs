@@ -22,7 +22,7 @@ use crate::{
     },
 };
 use core::mem;
-use fluentbase_sdk::{is_self_gas_management_contract, is_system_precompile};
+use fluentbase_precompile::{is_self_gas_management_contract, is_system_precompile};
 use revm_interpreter::Eip7702CodeLoad;
 use std::vec::Vec;
 

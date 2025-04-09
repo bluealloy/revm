@@ -12,14 +12,13 @@ use crate::{
     Database,
 };
 use core::{mem::take, ops::Deref};
+use fluentbase_precompile::{get_precompile_wasm_bytecode, is_system_precompile};
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
 };
 use fluentbase_sdk::{
     codec::CompactABI,
-    get_precompile_wasm_bytecode,
-    is_system_precompile,
     keccak256,
     BlockContextV1,
     BytecodeOrHash,

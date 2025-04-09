@@ -35,11 +35,10 @@ use crate::{
     FrameResult,
 };
 use core::cmp::min;
+use fluentbase_precompile::{is_self_gas_management_contract, is_system_precompile};
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     calc_preimage_address,
-    is_self_gas_management_contract,
-    is_system_precompile,
     keccak256,
     EVM_BASE_SPEC,
     EVM_CODE_HASH_SLOT,
