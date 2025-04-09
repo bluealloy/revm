@@ -1,5 +1,28 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v68 tag
+date: 09.04.2025
+
+Bump to alloy-primitives, this warants major bump on all libs. No breaking changes
+
+* `revm-primitives`: 17.0.0 -> 18.0.0 (✓ API compatible changes)
+* `revm-bytecode`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-state`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-context`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-database`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 17.0.0 -> 18.0.0 (✓ API compatible changes)
+* `revm-precompile`: 18.0.0 -> 19.0.0 (✓ API compatible changes)
+* `revm-handler`: 2.0.0 -> 3.0.0 (⚠️ API breaking changes)
+    * Two traits reexported in different mod
+* `revm-inspector`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm`: 21.0.0 -> 22.0.0 (✓ API compatible changes)
+* `revme`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+* `op-revm`: 2.0.0 -> 3.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 2.0.0 -> 3.0.0
+
+
 # v67 tag
 date: 28.03.2025
 
