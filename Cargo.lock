@@ -128,12 +128,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-eip2930"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbe3e16484669964c26ac48390245d84c410b1a5f968976076c17184725ef235"
+dependencies = [
+ "alloy-primitives 1.0.0",
+ "alloy-rlp",
+ "serde",
+]
+
+[[package]]
 name = "alloy-eip7702"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b15b13d38b366d01e818fe8e710d4d702ef7499eacd44926a06171dd9585d0c"
 dependencies = [
  "alloy-primitives 0.8.23",
+ "alloy-rlp",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "alloy-eip7702"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "804cefe429015b4244966c006d25bda5545fa9db5990e9c9079faf255052f50a"
+dependencies = [
+ "alloy-primitives 1.0.0",
  "alloy-rlp",
  "k256",
  "serde",
@@ -147,8 +170,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10b11c382ca8075128d1ae6822b60921cf484c911d9a5831797a01218f98125f"
 dependencies = [
  "alloy-eip2124",
- "alloy-eip2930",
- "alloy-eip7702",
+ "alloy-eip2930 0.1.0",
+ "alloy-eip7702 0.5.1",
  "alloy-primitives 0.8.23",
  "alloy-rlp",
  "alloy-serde",
@@ -3858,8 +3881,8 @@ dependencies = [
 name = "revm-context-interface"
 version = "2.0.0"
 dependencies = [
- "alloy-eip2930",
- "alloy-eip7702",
+ "alloy-eip2930 0.2.0",
+ "alloy-eip7702 0.6.0",
  "auto_impl",
  "revm-database-interface",
  "revm-primitives",
@@ -3904,7 +3927,7 @@ dependencies = [
 name = "revm-handler"
 version = "2.0.0"
 dependencies = [
- "alloy-eip7702",
+ "alloy-eip7702 0.6.0",
  "alloy-provider",
  "alloy-signer",
  "alloy-signer-local",

@@ -54,8 +54,8 @@ context-interface = { path = "crates/context/interface", package = "revm-context
 handler = { path = "crates/handler", package = "revm-handler", version = "2.0.0", default-features = false }
 
 # alloy 
-alloy-eip2930 = { version = "0.1.0", default-features = false }
-alloy-eip7702 = { version = "0.5.0", default-features = false }
+alloy-eip2930 = { version = "0.2.0", default-features = false }
+alloy-eip7702 = { version = "0.6.0", default-features = false }
 alloy-primitives = { version = "1.0.0", default-features = false }
 
 # alloy in examples, revme or feature flagged.
