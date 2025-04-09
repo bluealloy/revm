@@ -32,7 +32,7 @@ const KIND_TERMINAL: u8 = 0;
 const KIND_CODE_INFO: u8 = 1;
 const KIND_CODE: u8 = 2;
 const KIND_CONTAINER: u8 = 3;
-const KIND_DATA: u8 = 0xFF;
+const KIND_DATA: u8 = 0xff;
 
 /// Consumes code section from Header.
 ///
