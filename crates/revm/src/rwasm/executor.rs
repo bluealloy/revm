@@ -49,6 +49,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
+    println!("GAS BEFORE={}", &interpreter.gas.remaining());
     let contract = take(&mut interpreter.contract);
 
     // encode input with all related context info
@@ -75,12 +76,22 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         _ => contract.bytecode_address(),
     };
 
+
+    let fuel_limit = interpreter
+        .gas
+        .remaining()
+        .checked_mul(FUEL_DENOM_RATE)
+        .unwrap_or(u64::MAX);
+
+    println!("_____________NEW EXEC");
+    dbg!(&effective_bytecode_address);
     let (fuel_consumed, fuel_refunded, exit_code, return_data, is_gas_free) =
         if is_system_precompile(&effective_bytecode_address) && WASMTIME {
             let wasm_bytecode = get_precompile_wasm_bytecode(&effective_bytecode_address).unwrap();
             let (exit_code, return_data) = execute_wasmtime(
                 wasm_bytecode,
                 context_input,
+                fuel_limit,
                 if is_create { STATE_DEPLOY } else { STATE_MAIN },
             );
             (0, 0, exit_code, return_data.into(), true)
@@ -98,17 +109,15 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
             let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
             // fuel limit we denominate later to gas
-            let fuel_limit = interpreter
-                .gas
-                .remaining()
-                .checked_mul(FUEL_DENOM_RATE)
-                .unwrap_or(u64::MAX);
 
             let mut runtime_context = RuntimeContext::root(fuel_limit);
             let is_gas_free = is_system_precompile(&effective_bytecode_address);
             if is_gas_free {
+                dbg!(&contract.hash);
+                dbg!(is_gas_free);
                 runtime_context = runtime_context.without_fuel();
             }
+            println!("SyscallExec::fn_impl");
             let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
                 &mut runtime_context,
                 bytecode_hash,
@@ -116,6 +125,8 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
                 fuel_limit,
                 if is_create { STATE_DEPLOY } else { STATE_MAIN },
             );
+
+            dbg!(exit_code);
 
             // extract return data from the execution context
             let return_data: Bytes = runtime_context.into_return_data().into();
@@ -144,6 +155,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     }
     interpreter.gas.record_denominated_refund(fuel_refunded);
 
+    println!("GAS AFTER={}", &interpreter.gas.remaining());
     Ok(process_exec_result(
         contract,
         exit_code,
@@ -235,7 +247,8 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         result.gas
     };
 
-    dbg!(&gas.limit() - &gas.remaining());
+
+    println!("GAS BEFORE={} (RESUME)", &gas.remaining());
 
     // make sure we have enough gas to charge from the call
     if !gas.record_denominated_cost(fuel_consumed) {
@@ -249,6 +262,8 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     }
     // accumulate refunds (can be forwarded from an interrupted call)
     gas.record_denominated_refund(fuel_refunded);
+
+    println!("GAS AFTER={} (RESUME)", &gas.remaining());
 
     process_exec_result(
         inputs.contract,
@@ -366,6 +381,7 @@ fn process_halt(
         ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
         ExitCode::PrecompileError => InstructionResult::PrecompileError,
     };
+    dbg!(&result);
     InterpreterAction::Return {
         result: InterpreterResult {
             result,
