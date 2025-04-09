@@ -69,9 +69,9 @@ pub struct State<DB> {
     /// It can be used by the cache state to detect when transitions have been dropped,
     /// allowing more efficient cache management by knowing when certain cached values
     /// are no longer needed or when they need to be refreshed.
-    /// 
+    ///
     /// For example, the cache can store the last seen transition counter value and compare it
-    /// with the current one to determine if any transitions have been merged or dropped since 
+    /// with the current one to determine if any transitions have been merged or dropped since
     /// the last check.
     pub transition_counter: usize,
 }
