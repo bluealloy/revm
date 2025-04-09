@@ -372,6 +372,13 @@ pub enum InvalidTransaction {
     Eip7702NotSupported,
     /// EIP-7873 is not supported.
     Eip7873NotSupported,
+    /// EIP-7873 initcodes can't be zero lenght.
+    Eip7873EmptyInitcodes,
+    /// EIP-7873 initcodes can't be more than MAX_INITCODE_COUNT.
+    Eip7873TooManyInitcodes {
+        max: usize,
+        have: usize,
+    },
 }
 
 impl TransactionError for InvalidTransaction {}
@@ -457,6 +464,10 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
             Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
             Self::Eip7873NotSupported => write!(f, "Eip7873 is not supported"),
+            Self::Eip7873EmptyInitcodes => write!(f, "Eip7873 initcodes can't be zero lenght"),
+            Self::Eip7873TooManyInitcodes { max, have } => {
+                write!(f, "Eip7873 initcodes can't be more than {max}, have {have}")
+            }
         }
     }
 }

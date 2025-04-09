@@ -28,11 +28,20 @@ pub struct EofHeader {
     pub sum_container_sizes: usize,
 }
 
-const KIND_TERMINAL: u8 = 0;
-const KIND_CODE_INFO: u8 = 1;
-const KIND_CODE: u8 = 2;
-const KIND_CONTAINER: u8 = 3;
-const KIND_DATA: u8 = 0xff;
+/// EOF header terminal kind, marking end of header.
+pub const KIND_TERMINAL: u8 = 0;
+/// EOF header code info kind, marking code info section.
+pub const KIND_CODE_INFO: u8 = 1;
+/// EOF header code kind, marking code section.
+pub const KIND_CODE: u8 = 2;
+/// EOF header container kind, marking container section.
+pub const KIND_CONTAINER: u8 = 3;
+/// EOF header data kind, marking data section.
+pub const KIND_DATA: u8 = 0xff;
+/// EOF header code section size length.
+pub const CODE_SECTION_SIZE: usize = 2;
+/// EOF header container section size length.
+pub const CONTAINER_SECTION_SIZE: usize = 4;
 
 /// Consumes code section from Header.
 ///
@@ -46,7 +55,7 @@ fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
         return Err(EofDecodeError::NonSizes);
     }
     let num_sections = num_sections as usize;
-    let byte_size = num_sections * 2;
+    let byte_size = num_sections * CODE_SECTION_SIZE;
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
@@ -55,7 +64,10 @@ fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     for i in 0..num_sections {
         // `code_size`  2 bytes 0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
-        let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
+        let code_size = u16::from_be_bytes([
+            input[i * CODE_SECTION_SIZE],
+            input[(i + 1) * CODE_SECTION_SIZE],
+        ]);
         if code_size == 0 {
             return Err(EofDecodeError::ZeroSize);
         }
@@ -68,7 +80,7 @@ fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
 
 /// Consumes container section from Header.
 ///
-/// Similar to
+/// Similar to [`consume_header_code_section`] but it takes u32 bytes for containers size.
 #[inline]
 fn consume_header_container_section(
     input: &[u8],
@@ -80,7 +92,7 @@ fn consume_header_container_section(
         return Err(EofDecodeError::NonSizes);
     }
     let num_sections = num_sections as usize;
-    let byte_size = num_sections * 4;
+    let byte_size = num_sections * CONTAINER_SECTION_SIZE;
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
@@ -89,12 +101,17 @@ fn consume_header_container_section(
     for i in 0..num_sections {
         // `section_size` is 4 bytes 0x00000001-0xFFFFFFFF
         // 32-bit unsigned big-endian integer denoting the length of the section content
-        let code_size = u32::from_be_bytes(input[i * 4..(i + 1) * 4].try_into().unwrap());
-        if code_size == 0 {
+        let container_size = u32::from_be_bytes(
+            input[i * CONTAINER_SECTION_SIZE..(i + 1) * CONTAINER_SECTION_SIZE]
+                .try_into()
+                .unwrap(),
+        );
+
+        if container_size == 0 {
             return Err(EofDecodeError::ZeroSize);
         }
-        sum += code_size as usize;
-        sizes.push(code_size);
+        sum += container_size as usize;
+        sizes.push(container_size);
     }
 
     Ok((&input[byte_size..], sizes, sum))

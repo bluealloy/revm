@@ -71,20 +71,23 @@ impl Initcode {
     ///
     /// If initcode is not pending validation it will return None.
     pub fn validate(&mut self) -> Option<&Bytes> {
-        if self.status != InitcodeStatus::PendingValidation {
-            return Some(&self.bytes);
-        };
-
+        match self.status {
+            InitcodeStatus::Valid => return Some(&self.bytes),
+            InitcodeStatus::Invalid => return None,
+            InitcodeStatus::PendingValidation => (),
+        }
+        // pending validation
         let Ok(eof) = Eof::decode(self.bytes.clone()) else {
             self.status = InitcodeStatus::Invalid;
             return None;
         };
 
+        // validate in Initcode mode, data section should be filled and it should not contain RETURN or STOP
         if eof.validate_mode(CodeType::Initcode).is_err() {
             self.status = InitcodeStatus::Invalid;
             return None;
         }
-
+        // mark initcode as valid so we can skip this validation next time.
         self.status = InitcodeStatus::Valid;
         Some(&self.bytes)
     }

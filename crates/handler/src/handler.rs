@@ -478,6 +478,8 @@ pub trait Handler {
 
         let output = post_execution::output(evm.ctx(), result);
 
+        // Clear local context
+        evm.ctx().local().clear();
         // Clear journal
         evm.ctx().journal().clear();
         Ok(output)
@@ -493,6 +495,8 @@ pub trait Handler {
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+        // clean up local context. Initcode cache needs to be discarded.
+        evm.ctx().local().clear();
         // Clean up journal state if error occurs
         evm.ctx().journal().clear();
         Err(error)
