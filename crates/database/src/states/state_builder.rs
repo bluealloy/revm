@@ -173,6 +173,7 @@ impl<DB: Database> StateBuilder<DB> {
             bundle_state: self.with_bundle_prestate.unwrap_or_default(),
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
+            transition_counter: 0,
         }
     }
 }
