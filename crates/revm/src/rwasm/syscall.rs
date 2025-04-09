@@ -795,7 +795,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // delegated storage is allowed only for delegated accounts
             let Some(eip7702_address) = inputs.contract.eip7702_address else {
                 println!("address is invalid..");
-                dbg!(&inputs.contract);
                 return_error!(MalformedBuiltinParams);
             };
             // make sure the provided address is delegated to the same runtime

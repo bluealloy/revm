@@ -46,3 +46,7 @@ debug_use_fluent_storage = []
 debug-print = [
     "revm/debug-print",
 ]
+disable-wasmtime = [
+    "revm/disable-wasmtime",
+]
+

@@ -114,7 +114,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             let next_action =
                 self.handler
                     .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
-            dbg!(&next_action);
 
             // Take error and break the loop, if any.
             // This error can be set in the Interpreter when it interacts with the context.

@@ -163,6 +163,7 @@ debug-print = [
     "revm-interpreter/debug-print",
     "fluentbase-runtime/debug-print",
 ]
+disable-wasmtime = []
 
 [[example]]
 name = "fork_ref_transact"
@@ -188,3 +189,4 @@ required-features = ["std", "serde-json"]
 name = "bench"
 path = "benches/bench.rs"
 harness = false
+
