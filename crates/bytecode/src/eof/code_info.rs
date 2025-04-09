@@ -19,7 +19,7 @@ pub struct CodeInfo {
     ///
     /// Number of stack elements the code section returns or 0x80 for non-returning functions
     pub outputs: u8,
-    /// `max_stack_increase` - 4 bytes - `0x000000-0x0003FF`
+    /// `max_stack_increase` - 2 bytes - `0x0000-0x03FF`
     ///
     /// Maximum number of elements ever placed onto the stack by the code section
     pub max_stack_increase: u16,
