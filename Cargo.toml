@@ -107,7 +107,7 @@ derive-where = { version = "1.2.7", default-features = false }
 enumn = "0.1"
 once_cell = { version = "1.19", default-features = false }
 rand = "0.8"
-tokio = "1.40"
+tokio = "1.44"
 
 # dev-dependencies
 anyhow = "1.0.89"
