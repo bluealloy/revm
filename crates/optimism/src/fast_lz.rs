@@ -180,9 +180,7 @@ mod tests {
         let result_and_state = evm.replay().unwrap();
 
         let output = result_and_state.result.output().unwrap();
-        let evm_val = FastLz::fastLzCall::abi_decode_returns(output, true)
-            .unwrap()
-            ._0;
+        let evm_val = FastLz::fastLzCall::abi_decode_returns(output).unwrap();
 
         assert_eq!(U256::from(native_val), evm_val);
     }
