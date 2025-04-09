@@ -25,6 +25,23 @@ impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>
     }
 }
 
+impl<CTX, INSP, I, P> OpEvm<CTX, INSP, I, P> {
+    /// Consumed self and returns a new Evm type with given Inspector.
+    pub fn with_inspector<OINSP>(self, inspector: OINSP) -> OpEvm<CTX, OINSP, I, P> {
+        OpEvm(self.0.with_inspector(inspector))
+    }
+
+    /// Consumes self and returns a new Evm type with given Precompiles.
+    pub fn with_precompiles<OP>(self, precompiles: OP) -> OpEvm<CTX, INSP, I, OP> {
+        OpEvm(self.0.with_precompiles(precompiles))
+    }
+
+    /// Consumes self and returns the inner Inspector.
+    pub fn into_inspector(self) -> INSP {
+        self.0.into_inspector()
+    }
+}
+
 impl<CTX, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
