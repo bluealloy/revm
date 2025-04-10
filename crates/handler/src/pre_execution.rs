@@ -47,17 +47,20 @@ pub fn load_accounts<
 
     // Load access list
     let (tx, journal) = context.tx_journal();
-    if let Some(access_list) = tx.access_list() {
-        for item in access_list {
-            let address = item.address();
-            let mut storage = item.storage_slots().peekable();
-            if storage.peek().is_none() {
-                journal.warm_account(*address);
-            } else {
-                journal.warm_account_and_storage(
-                    *address,
-                    storage.map(|i| U256::from_be_bytes(i.0)),
-                )?;
+    // Legacy transaction does not have access list.
+    if tx.tx_type() != TransactionType::Legacy {
+        if let Some(access_list) = tx.access_list() {
+            for item in access_list {
+                let address = item.address();
+                let mut storage = item.storage_slots().peekable();
+                if storage.peek().is_none() {
+                    journal.warm_account(*address);
+                } else {
+                    journal.warm_account_and_storage(
+                        *address,
+                        storage.map(|i| U256::from_be_bytes(i.0)),
+                    )?;
+                }
             }
         }
     }
