@@ -22,11 +22,9 @@ use crate::{
     InterpreterAction,
 };
 use bytecode::Bytecode;
-use core::cell::RefCell;
 use loop_control::LoopControl as LoopControlImpl;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
 use return_data::ReturnDataImpl;
-use std::rc::Rc;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
@@ -43,10 +41,10 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub extend: WIRE::Extend,
 }
 
-impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
+impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     /// Create new interpreter
     pub fn new(
-        memory: Rc<RefCell<MG>>,
+        memory: SharedMemory,
         bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
@@ -84,7 +82,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
 impl Default for Interpreter<EthInterpreter> {
     fn default() -> Self {
         Interpreter::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
+            SharedMemory::new(),
             ExtBytecode::new(Bytecode::default()),
             InputsImpl {
                 target_address: Address::ZERO,
@@ -105,9 +103,9 @@ pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }
 
-impl<EXT, MG: MemoryGetter> InterpreterTypes for EthInterpreter<EXT, MG> {
+impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Stack = Stack;
-    type Memory = Rc<RefCell<MG>>;
+    type Memory = SharedMemory;
     type Bytecode = ExtBytecode;
     type ReturnData = ReturnDataImpl;
     type Input = InputsImpl;
@@ -237,7 +235,7 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
+            SharedMemory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl {
                 target_address: Address::ZERO,

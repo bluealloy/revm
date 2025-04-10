@@ -263,6 +263,7 @@ where
             code_hash = account.code_hash();
         }
 
+        let interpreter_memory = memory.borrow().clone();
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
@@ -271,7 +272,7 @@ where
             FrameInput::Call(inputs),
             depth,
             Interpreter::new(
-                memory.clone(),
+                interpreter_memory,
                 ExtBytecode::new_with_hash(bytecode, code_hash),
                 interpreter_input,
                 is_static,
@@ -372,12 +373,14 @@ where
             call_value: inputs.value,
         };
         let gas_limit = inputs.gas_limit;
+
+        let interpreter_memory = memory.borrow().clone();
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
             Interpreter::new(
-                memory.clone(),
+                interpreter_memory,
                 bytecode,
                 interpreter_input,
                 false,
@@ -488,12 +491,13 @@ where
         };
 
         let gas_limit = inputs.gas_limit;
+        let interpreter_memory = memory.borrow().clone();
         Ok(ItemOrResult::Item(Self::new(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             FrameInput::EOFCreate(inputs),
             depth,
             Interpreter::new(
-                memory.clone(),
+                interpreter_memory,
                 ExtBytecode::new(Bytecode::Eof(Arc::new(initcode))),
                 interpreter_input,
                 false,
@@ -665,11 +669,9 @@ where
                         .control
                         .gas_mut()
                         .erase_cost(out_gas.remaining());
-                    unsafe {
-                        self.memory
-                            .borrow_mut()
-                            .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
-                    }
+                    self.memory
+                        .borrow_mut()
+                        .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
                 if ins_result.is_ok() {

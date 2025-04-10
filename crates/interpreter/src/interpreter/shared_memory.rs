@@ -1,5 +1,5 @@
 use core::{
-    cell::{Ref, RefCell},
+    cell::{Ref, RefCell, RefMut},
     cmp::min,
     fmt,
     ops::{Deref, Range},
@@ -20,8 +20,8 @@ pub struct SharedMemory {
     buffer: Rc<RefCell<Vec<u8>>>,
     /// Memory checkpoints for each depth.
     /// Invariant: these are always in bounds of `data`.
-    checkpoints: Vec<usize>,
-    /// Invariant: equals `self.checkpoints.last()`
+    my_checkpoint: usize,
+    /// The last checkpoint for the current context.
     last_checkpoint: usize,
     /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
@@ -34,7 +34,7 @@ pub struct SharedMemory {
 // pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
 //     buffer: Rc::new(RefCell::new(Vec::new())),
 //     checkpoints: Vec::new(),
-//     last_checkpoint: 0,
+//     my_checkpoint: 0,
 //     #[cfg(feature = "memory_limit")]
 //     memory_limit: u64::MAX,
 // };
@@ -43,7 +43,10 @@ impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")
             .field("current_len", &self.len())
-            .field("context_memory", &hex::encode(self.context_memory()))
+            .field(
+                "context_memory",
+                &hex::encode(self.context_memory().deref()),
+            )
             .finish_non_exhaustive()
     }
 }
@@ -72,37 +75,30 @@ impl MemoryGetter for SharedMemory {
     }
 }
 
-impl<T: MemoryGetter> MemoryTr for Rc<RefCell<T>> {
+impl MemoryTr for SharedMemory {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
-        self.borrow_mut()
-            .memory_mut()
+        self.memory_mut()
             .set_data(memory_offset, data_offset, len, data);
     }
 
     fn set(&mut self, memory_offset: usize, data: &[u8]) {
-        unsafe {
-            self.borrow_mut().memory_mut().set(memory_offset, data);
-        }
+        self.memory_mut().set(memory_offset, data);
     }
 
     fn size(&self) -> usize {
-        self.borrow().memory().len()
+        self.memory().len()
     }
 
     fn copy(&mut self, destination: usize, source: usize, len: usize) {
-        unsafe {
-            self.borrow_mut()
-                .memory_mut()
-                .copy(destination, source, len);
-        }
+        self.memory_mut().copy(destination, source, len);
     }
 
-    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
-        Ref::map(self.borrow(), |i| i.memory().slice_range(range))
+    fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
+        self.slice_range(range)
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
-        self.borrow_mut().memory_mut().resize(new_size);
+        self.memory_mut().resize(new_size);
         true
     }
 }
@@ -121,7 +117,7 @@ impl SharedMemory {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             buffer: Rc::new(RefCell::new(Vec::with_capacity(capacity))),
-            checkpoints: Vec::with_capacity(32),
+            my_checkpoint: 0,
             last_checkpoint: 0,
             #[cfg(feature = "memory_limit")]
             memory_limit: u64::MAX,
@@ -146,31 +142,31 @@ impl SharedMemory {
     #[cfg(feature = "memory_limit")]
     #[inline]
     pub fn limit_reached(&self, new_size: usize) -> bool {
-        self.last_checkpoint.saturating_add(new_size) as u64 > self.memory_limit
+        self.my_checkpoint.saturating_add(new_size) as u64 > self.memory_limit
     }
 
     /// Prepares the shared memory for a new context.
     #[inline]
-    pub fn new_context(&mut self) {
-        let new_checkpoint = self.buffer.borrow().len();
-        self.checkpoints.push(new_checkpoint);
-        self.last_checkpoint = new_checkpoint;
+    pub fn new_context(self: &mut SharedMemory) {
+        self.buffer = self.buffer.clone();
+        self.last_checkpoint = self.my_checkpoint;
+        self.my_checkpoint = self.buffer.borrow().len();
     }
 
     /// Prepares the shared memory for returning to the previous context.
     #[inline]
-    pub fn free_context(&mut self) {
-        if let Some(old_checkpoint) = self.checkpoints.pop() {
-            self.last_checkpoint = self.checkpoints.last().cloned().unwrap_or_default();
-            // SAFETY: `buffer` length is less than or equal `old_checkpoint`
-            unsafe { self.buffer.borrow_mut().set_len(old_checkpoint) };
+    pub fn free_context(self: &mut SharedMemory) {
+        unsafe {
+            self.buffer.borrow_mut().set_len(self.my_checkpoint);
+            self.my_checkpoint = self.last_checkpoint;
+            self.last_checkpoint = self.my_checkpoint - self.last_checkpoint
         }
     }
 
     /// Returns the length of the current memory range.
     #[inline]
     pub fn len(&self) -> usize {
-        self.buffer.borrow().len() - self.last_checkpoint
+        self.buffer.borrow().len() - self.my_checkpoint
     }
 
     /// Returns `true` if the current memory range is empty.
@@ -184,7 +180,7 @@ impl SharedMemory {
     pub fn resize(&mut self, new_size: usize) {
         self.buffer
             .borrow_mut()
-            .resize(self.last_checkpoint + new_size, 0);
+            .resize(self.my_checkpoint + new_size, 0);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -194,7 +190,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_len(&self, offset: usize, size: usize) -> &[u8] {
+    pub fn slice_len(&self, offset: usize, size: usize) -> Ref<'_, [u8]> {
         self.slice_range(offset..offset + size)
     }
 
@@ -205,11 +201,11 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_range(&self, range @ Range { start, end }: Range<usize>) -> &[u8] {
-        match self.context_memory().get(range) {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {start}..{end}; len: {}", self.len()),
-        }
+    pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
+        let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
+        Ref::map(buffer, |b| {
+            &b[self.my_checkpoint..][range] // Map the borrow to the desired slice
+        })
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -219,12 +215,12 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub unsafe fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+    pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
         let end = offset + size;
-        match self.context_memory_mut().get_mut(offset..end) {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{end}"),
-        }
+        let buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
+        RefMut::map(buffer, |b| {
+            &mut b[self.my_checkpoint..][offset..end] // Map the mutable borrow to the desired slice
+        })
     }
 
     /// Returns the byte at the given offset.
@@ -244,7 +240,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
-        self.slice_len(offset, 32).try_into().unwrap()
+        self.slice_len(offset, 32).deref().try_into().unwrap()
     }
 
     /// Returns a U256 of the memory region at the given offset.
@@ -265,9 +261,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, offset: usize, byte: u8) {
-        unsafe {
-            self.set(offset, &[byte]);
-        }
+        self.set(offset, &[byte]);
     }
 
     /// Sets the given 32-byte `value` to the memory region at the given `offset`.
@@ -278,9 +272,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_word(&mut self, offset: usize, value: &B256) {
-        unsafe {
-            self.set(offset, &value[..]);
-        }
+        self.set(offset, &value[..]);
     }
 
     /// Sets the given U256 `value` to the memory region at the given `offset`.
@@ -291,9 +283,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_u256(&mut self, offset: usize, value: U256) {
-        unsafe {
-            self.set(offset, &value.to_be_bytes::<32>());
-        }
+        self.set(offset, &value.to_be_bytes::<32>());
     }
 
     /// Set memory region at given `offset`.
@@ -303,7 +293,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub unsafe fn set(&mut self, offset: usize, value: &[u8]) {
+    pub fn set(&mut self, offset: usize, value: &[u8]) {
         if !value.is_empty() {
             self.slice_mut(offset, value.len()).copy_from_slice(value);
         }
@@ -319,28 +309,21 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
-            unsafe {
-                // Nullify all memory slots
-                self.slice_mut(memory_offset, len).fill(0);
-                return;
-            }
+            // Nullify all memory slots
+            self.slice_mut(memory_offset, len).fill(0);
+            return;
         }
-
         let data_end = min(data_offset + len, data.len());
         let data_len = data_end - data_offset;
         debug_assert!(data_offset < data.len() && data_end <= data.len());
         let data = unsafe { data.get_unchecked(data_offset..data_end) };
-        unsafe {
-            self.slice_mut(memory_offset, data_len)
-                .copy_from_slice(data);
-        }
+        self.slice_mut(memory_offset, data_len)
+            .copy_from_slice(data);
 
-        unsafe {
-            // Nullify rest of memory slots
-            // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
-            self.slice_mut(memory_offset + data_len, len - data_len)
-                .fill(0);
-        }
+        // Nullify rest of memory slots
+        // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
+        self.slice_mut(memory_offset + data_len, len - data_len)
+            .fill(0);
     }
 
     /// Copies elements from one part of the memory to another part of itself.
@@ -350,25 +333,22 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub unsafe fn copy(&mut self, dst: usize, src: usize, len: usize) {
+    pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
         self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
     /// Returns a reference to the memory of the current context, the active memory.
     #[inline]
-    pub fn context_memory(&self) -> &[u8] {
-        // SAFETY: Access bounded by buffer length
-        unsafe {
-            let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
-            &*(&buffer[self.last_checkpoint..] as *const [u8]) // Extend the lifetime
-        }
+    pub fn context_memory(&self) -> Ref<'_, [u8]> {
+        let buffer = self.buffer.borrow();
+        Ref::map(buffer, |b| &b[self.my_checkpoint..])
     }
 
     /// Returns a mutable reference to the memory of the current context.
     #[inline]
-    pub unsafe fn context_memory_mut(&mut self) -> &mut [u8] {
-        let mut buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8>
-        &mut *(&mut buffer[self.last_checkpoint..] as *mut [u8]) // Extend the lifetime
+    pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
+        let buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
+        RefMut::map(buffer, |b| &mut b[self.my_checkpoint..]) // Map the mutable borrow to the slice
     }
 }
 
@@ -402,16 +382,16 @@ mod tests {
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 0);
-        assert_eq!(shared_memory.checkpoints.len(), 1);
         assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.my_checkpoint, 0);
 
         unsafe { shared_memory.buffer.borrow_mut().set_len(32) };
         assert_eq!(shared_memory.len(), 32);
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 32);
-        assert_eq!(shared_memory.checkpoints.len(), 2);
-        assert_eq!(shared_memory.last_checkpoint, 32);
+        assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.my_checkpoint, 32);
         assert_eq!(shared_memory.len(), 0);
 
         unsafe { shared_memory.buffer.borrow_mut().set_len(96) };
@@ -419,27 +399,24 @@ mod tests {
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 96);
-        assert_eq!(shared_memory.checkpoints.len(), 3);
-        assert_eq!(shared_memory.last_checkpoint, 96);
+        assert_eq!(shared_memory.last_checkpoint, 32);
+        assert_eq!(shared_memory.my_checkpoint, 96);
         assert_eq!(shared_memory.len(), 0);
 
         // Free contexts
         shared_memory.free_context();
         assert_eq!(shared_memory.buffer.borrow().len(), 96);
-        assert_eq!(shared_memory.checkpoints.len(), 2);
-        assert_eq!(shared_memory.last_checkpoint, 32);
+        assert_eq!(shared_memory.my_checkpoint, 32);
         assert_eq!(shared_memory.len(), 64);
 
         shared_memory.free_context();
         assert_eq!(shared_memory.buffer.borrow().len(), 32);
-        assert_eq!(shared_memory.checkpoints.len(), 1);
-        assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.my_checkpoint, 0);
         assert_eq!(shared_memory.len(), 32);
 
         shared_memory.free_context();
         assert_eq!(shared_memory.buffer.borrow().len(), 0);
-        assert_eq!(shared_memory.checkpoints.len(), 0);
-        assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.my_checkpoint, 0);
         assert_eq!(shared_memory.len(), 0);
     }
 
