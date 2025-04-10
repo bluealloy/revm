@@ -12,7 +12,7 @@ use crate::{
     Database,
 };
 use core::{mem::take, ops::Deref};
-use fluentbase_precompile::{get_precompile_wasm_bytecode, is_system_precompile};
+use fluentbase_genesis::is_system_precompile;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -30,7 +30,6 @@ use fluentbase_sdk::{
     TxContextV1,
     B256,
     FUEL_DENOM_RATE,
-    PRECOMPILE_EVM_RUNTIME,
     STATE_DEPLOY,
     STATE_MAIN,
     SYSCALL_ID_SYNC_EVM_GAS,
@@ -88,7 +87,9 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     {
         #[cfg(not(feature = "disable-wasmtime"))]
         let result = {
-            let wasm_bytecode = get_precompile_wasm_bytecode(&effective_bytecode_address).unwrap();
+            let wasm_bytecode =
+                fluentbase_genesis::get_precompile_wasm_bytecode(&effective_bytecode_address)
+                    .unwrap();
             let (exit_code, return_data) = fluentbase_runtime::execute_wasmtime(
                 wasm_bytecode,
                 context_input,
