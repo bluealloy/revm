@@ -401,7 +401,8 @@ impl<DB: Database> EvmContext<DB> {
             };
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
-            self.journaled_state
+            init_code_hash = self
+                .journaled_state
                 .set_code(created_address, bytecode.clone());
             (bytecode, compilation_result.constructor_params, None)
         } else if self.env.cfg.enable_rwasm_proxy {

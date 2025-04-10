@@ -18,8 +18,6 @@ use fluentbase_runtime::{
 };
 use fluentbase_sdk::{
     codec::CompactABI,
-    is_self_gas_management_contract,
-    keccak256,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
@@ -38,7 +36,6 @@ use revm_interpreter::{return_ok, return_revert, Contract};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
-    rwasm_bytecode: Bytes,
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
@@ -69,8 +66,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     let rwasm_code_hash = contract
         .hash
         .filter(|v| v != &B256::ZERO)
-        .unwrap_or_else(|| keccak256(&rwasm_bytecode));
-    debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
+        .unwrap_or_else(|| unreachable!("revm: missing rwasm bytecode hash"));
     let rwasm_bytecode = match &contract.bytecode {
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
         _ => unreachable!("revm: unexpected bytecode type"),
