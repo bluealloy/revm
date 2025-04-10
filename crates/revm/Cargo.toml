@@ -29,7 +29,6 @@ revm-precompile = { path = "../precompile", version = "16.0.0", default-features
 # fluentbase
 fluentbase-sdk = { workspace = true }
 fluentbase-runtime = { workspace = true }
-fluentbase-precompile = { workspace = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
