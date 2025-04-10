@@ -110,6 +110,12 @@ impl Contract {
     }
 
     #[inline]
+    pub fn effective_bytecode_address(&self) -> Address {
+        self.eip7702_address
+            .unwrap_or_else(|| self.bytecode_address())
+    }
+
+    #[inline]
     pub fn bytecode_address(&self) -> Address {
         self.bytecode_address.unwrap_or(self.target_address)
     }

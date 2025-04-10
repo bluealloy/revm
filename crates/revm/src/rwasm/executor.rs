@@ -64,10 +64,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .to_vec();
     context_input.extend_from_slice(contract.input.as_ref());
 
-    let effective_bytecode_address = match contract.eip7702_address {
-        Some(PRECOMPILE_EVM_RUNTIME) => PRECOMPILE_EVM_RUNTIME,
-        _ => contract.bytecode_address(),
-    };
+    let effective_bytecode_address = contract.effective_bytecode_address();
 
     let fuel_limit = interpreter
         .gas
