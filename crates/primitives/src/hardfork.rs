@@ -1,4 +1,6 @@
 #![allow(non_camel_case_types)]
+// enumn has missing docs. Should be replaced in the future https://github.com/bluealloy/revm/issues/2402
+#![allow(missing_docs)]
 
 use core::str::FromStr;
 pub use std::string::{String, ToString};
@@ -11,27 +13,67 @@ pub use SpecId::*;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
-    FRONTIER = 0,     // Frontier               0
-    FRONTIER_THAWING, // Frontier Thawing       200000
-    HOMESTEAD,        // Homestead              1150000
-    DAO_FORK,         // DAO Fork               1920000
-    TANGERINE,        // Tangerine Whistle      2463000
-    SPURIOUS_DRAGON,  // Spurious Dragon        2675000
-    BYZANTIUM,        // Byzantium              4370000
-    CONSTANTINOPLE,   // Constantinople         7280000 is overwritten with PETERSBURG
-    PETERSBURG,       // Petersburg             7280000
-    ISTANBUL,         // Istanbul	            9069000
-    MUIR_GLACIER,     // Muir Glacier           9200000
-    BERLIN,           // Berlin	                12244000
-    LONDON,           // London	                12965000
-    ARROW_GLACIER,    // Arrow Glacier          13773000
-    GRAY_GLACIER,     // Gray Glacier           15050000
-    MERGE,            // Paris/Merge            15537394 (TTD: 58750000000000000000000)
-    SHANGHAI,         // Shanghai               17034870 (Timestamp: 1681338455)
-    CANCUN,           // Cancun                 19426587 (Timestamp: 1710338135)
+    /// Frontier hard fork
+    /// Activated at block 0
+    FRONTIER = 0,
+    /// Frontier Thawing hard fork
+    /// Activated at block 200000
+    FRONTIER_THAWING,
+    /// Homestead hard fork
+    /// Activated at block 1150000
+    HOMESTEAD,
+    /// DAO Fork hard fork
+    /// Activated at block 1920000
+    DAO_FORK,
+    /// Tangerine Whistle hard fork
+    /// Activated at block 2463000
+    TANGERINE,
+    /// Spurious Dragon hard fork
+    /// Activated at block 2675000
+    SPURIOUS_DRAGON,
+    /// Byzantium hard fork
+    /// Activated at block 4370000
+    BYZANTIUM,
+    /// Constantinople hard fork
+    /// Activated at block 7280000 is overwritten with PETERSBURG
+    CONSTANTINOPLE,
+    /// Petersburg hard fork
+    /// Activated at block 7280000
+    PETERSBURG,
+    /// Istanbul hard fork
+    /// Activated at block 9069000
+    ISTANBUL,
+    /// Muir Glacier hard fork
+    /// Activated at block 9200000
+    MUIR_GLACIER,
+    /// Berlin hard fork
+    /// Activated at block 12244000
+    BERLIN,
+    /// London hard fork
+    /// Activated at block 12965000
+    LONDON,
+    /// Arrow Glacier hard fork
+    /// Activated at block 13773000
+    ARROW_GLACIER,
+    /// Gray Glacier hard fork
+    /// Activated at block 15050000
+    GRAY_GLACIER,
+    /// Paris/Merge hard fork
+    /// Activated at block 15537394 (TTD: 58750000000000000000000)
+    MERGE,
+    /// Shanghai hard fork
+    /// Activated at block 17034870 (Timestamp: 1681338455)
+    SHANGHAI,
+    /// Cancun hard fork
+    /// Activated at block 19426587 (Timestamp: 1710338135)
+    CANCUN,
+    /// Prague hard fork
+    /// Activated at block TBD
     #[default]
-    PRAGUE, // PRAGUE                 TBD
-    OSAKA,            // Osaka                  TBD
+    PRAGUE,
+    /// Osaka hard fork
+    /// Activated at block TBD
+    OSAKA,
 }
 
 impl SpecId {
@@ -50,29 +92,52 @@ impl SpecId {
 
 /// String identifiers for hardforks.
 pub mod name {
+    /// String identifier for the Frontier hardfork
     pub const FRONTIER: &str = "Frontier";
+    /// String identifier for the Frontier Thawing hardfork
     pub const FRONTIER_THAWING: &str = "Frontier Thawing";
+    /// String identifier for the Homestead hardfork
     pub const HOMESTEAD: &str = "Homestead";
+    /// String identifier for the DAO Fork hardfork
     pub const DAO_FORK: &str = "DAO Fork";
+    /// String identifier for the Tangerine Whistle hardfork
     pub const TANGERINE: &str = "Tangerine";
+    /// String identifier for the Spurious Dragon hardfork
     pub const SPURIOUS_DRAGON: &str = "Spurious";
+    /// String identifier for the Byzantium hardfork
     pub const BYZANTIUM: &str = "Byzantium";
+    /// String identifier for the Constantinople hardfork
     pub const CONSTANTINOPLE: &str = "Constantinople";
+    /// String identifier for the Petersburg hardfork
     pub const PETERSBURG: &str = "Petersburg";
+    /// String identifier for the Istanbul hardfork
     pub const ISTANBUL: &str = "Istanbul";
+    /// String identifier for the Muir Glacier hardfork
     pub const MUIR_GLACIER: &str = "MuirGlacier";
+    /// String identifier for the Berlin hardfork
     pub const BERLIN: &str = "Berlin";
+    /// String identifier for the London hardfork
     pub const LONDON: &str = "London";
+    /// String identifier for the Arrow Glacier hardfork
     pub const ARROW_GLACIER: &str = "Arrow Glacier";
+    /// String identifier for the Gray Glacier hardfork
     pub const GRAY_GLACIER: &str = "Gray Glacier";
+    /// String identifier for the Paris/Merge hardfork
     pub const MERGE: &str = "Merge";
+    /// String identifier for the Shanghai hardfork
     pub const SHANGHAI: &str = "Shanghai";
+    /// String identifier for the Cancun hardfork
     pub const CANCUN: &str = "Cancun";
+    /// String identifier for the Prague hardfork
     pub const PRAGUE: &str = "Prague";
+    /// String identifier for the Osaka hardfork (Prague with EOF)
     pub const OSAKA: &str = "PragueEOF";
+    /// String identifier for the latest hardfork
     pub const LATEST: &str = "Latest";
 }
 
+/// Error type for unknown hardfork names. Returned by [`SpecId::from_str`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UnknownHardfork;
 
 impl FromStr for SpecId {
