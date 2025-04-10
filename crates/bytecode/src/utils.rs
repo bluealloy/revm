@@ -1,3 +1,5 @@
+//! Various utilities for the bytecode
+
 /// Reads big-endian i16 from u8 pointer.
 ///
 /// # Safety

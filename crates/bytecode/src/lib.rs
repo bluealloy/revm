@@ -12,14 +12,18 @@
 extern crate alloc as std;
 
 pub mod bytecode;
-pub mod decode_errors;
+mod decode_errors;
+/// EIP-7702 bytecode.
 pub mod eip7702;
 pub mod eof;
+/// Iterator for the bytecode.
 pub mod iterator;
+/// Legacy bytecode.
 pub mod legacy;
 pub mod opcode;
 pub mod utils;
 
+/// Re-export of bitvec crate, used to store legacy bytecode jump table.
 pub use bitvec;
 pub use bytecode::Bytecode;
 pub use decode_errors::BytecodeDecodeError;
