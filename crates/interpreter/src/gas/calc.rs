@@ -432,7 +432,7 @@ pub fn calculate_initial_tx_gas(
 pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
     let mut accounts = 0;
     let mut storages = 0;
-    // legact is only tx type that does not have access list.
+    // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         (accounts, storages) = tx
             .access_list()
