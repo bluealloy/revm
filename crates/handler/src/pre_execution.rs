@@ -47,7 +47,7 @@ pub fn load_accounts<
 
     // Load access list
     let (tx, journal) = context.tx_journal();
-    // Legacy transaction does not have access list.
+    // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
             for item in access_list {
