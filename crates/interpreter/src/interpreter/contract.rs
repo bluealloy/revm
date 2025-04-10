@@ -1,13 +1,12 @@
-use revm_primitives::TxKind;
-
 use super::analysis::to_analysed;
 use crate::{
     primitives::{Address, Bytecode, Bytes, Env, B256, U256},
     CallInputs,
 };
+use revm_primitives::TxKind;
 
 /// EVM contract information.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Contract {
     /// Contracts data
@@ -20,13 +19,18 @@ pub struct Contract {
     pub hash: Option<B256>,
     /// Target address of the account. Storage of this address is going to be modified.
     pub target_address: Address,
-    /// Address of the account the bytecode was loaded from. This can be different from target_address
-    /// in the case of DELEGATECALL or CALLCODE
+    /// Address of the account the bytecode was loaded from. This can be different from
+    /// target_address in the case of DELEGATECALL or CALLCODE
     pub bytecode_address: Option<Address>,
     /// Caller of the EVM.
     pub caller: Address,
     /// Value sent to contract from transaction or from CALL opcodes.
     pub call_value: U256,
+    /// An address of EIP-7702 resolved proxy.
+    /// We should store this information because it doesn't
+    /// always match to bytecode address.
+    /// Especially when we have DELEGATE or CALLCODE proxied though EIP-7702.
+    pub eip7702_address: Option<Address>,
 }
 
 impl Contract {
@@ -49,6 +53,7 @@ impl Contract {
             hash,
             target_address,
             bytecode_address,
+            eip7702_address: None,
             caller,
             call_value,
         }
@@ -102,5 +107,10 @@ impl Contract {
             .legacy_jump_table()
             .map(|i| i.is_valid(pos))
             .unwrap_or(false)
+    }
+
+    #[inline]
+    pub fn bytecode_address(&self) -> Address {
+        self.bytecode_address.unwrap_or(self.target_address)
     }
 }

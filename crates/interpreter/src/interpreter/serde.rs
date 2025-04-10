@@ -1,6 +1,12 @@
 use super::Interpreter;
 use crate::{
-    Contract, FunctionStack, Gas, InstructionResult, InterpreterAction, SharedMemory, Stack,
+    Contract,
+    FunctionStack,
+    Gas,
+    InstructionResult,
+    InterpreterAction,
+    SharedMemory,
+    Stack,
 };
 use revm_primitives::Bytes;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

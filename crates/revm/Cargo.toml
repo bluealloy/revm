@@ -161,7 +161,8 @@ blst = ["revm-precompile/blst"]
 
 alloydb = []
 debug-print = [
-    "revm-interpreter/debug-print"
+    "revm-interpreter/debug-print",
+    "fluentbase-runtime/debug-print",
 ]
 
 [[example]]

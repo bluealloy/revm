@@ -21,6 +21,7 @@ use crate::{
         Bytes,
         CreateScheme,
         EVMError,
+        Eip7702Bytecode,
         Env,
         Eof,
         SpecId::{self, *},
@@ -36,7 +37,11 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use fluentbase_sdk::{compile_wasm_to_rwasm, try_resolve_precompile_account_from_input};
+use fluentbase_sdk::{
+    compile_wasm_to_rwasm,
+    try_resolve_precompile_account_from_input,
+    PRECOMPILE_EVM_RUNTIME,
+};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -239,7 +244,7 @@ impl<DB: Database> EvmContext<DB> {
 
         let is_ext_delegate = inputs.scheme.is_ext_delegate_call();
 
-        if !is_ext_delegate {
+        if !is_ext_delegate && !self.env.cfg.enable_rwasm_proxy {
             if let Some(result) =
                 self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)?
             {
@@ -260,7 +265,7 @@ impl<DB: Database> EvmContext<DB> {
             .journaled_state
             .load_code(inputs.bytecode_address, &mut self.inner.db)?;
 
-        let code_hash = account.info.code_hash();
+        let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -273,19 +278,22 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::Stop);
         }
 
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            bytecode = self
+        let eip7702_address = if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            let delegated_account = self
                 .inner
                 .journaled_state
-                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
-                .info
-                .code
-                .clone()
-                .unwrap_or_default();
-        }
+                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?;
+            // TODO(dmitry123): "do we eligible to rewrite code hash for delegate contract here?"
+            code_hash = delegated_account.info.code_hash;
+            bytecode = delegated_account.info.code.clone().unwrap_or_default();
+            Some(eip7702_bytecode.delegated_address)
+        } else {
+            None
+        };
 
         let mut contract =
             Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+        contract.eip7702_address = eip7702_address;
 
         if let Some(precompiled_address) =
             try_resolve_precompile_account_from_input(inputs.input.as_ref())
@@ -340,7 +348,7 @@ impl<DB: Database> EvmContext<DB> {
         // Fetch balance of caller.
         let caller_balance = self.balance(inputs.caller)?;
 
-        // Check if caller has enough balance to send to the created contract.
+        // Check if the caller has enough balances to send to the created contract.
         if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
@@ -384,25 +392,46 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let (bytecode, constructor_params) = if inputs.init_code.len() > WASM_MAGIC_BYTES.len()
+        let (bytecode, constructor_params, eip7702_address) = if inputs.init_code.len()
+            > WASM_MAGIC_BYTES.len()
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
-            let Some(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
+            let Ok(compilation_result) = compile_wasm_to_rwasm(inputs.init_code.as_ref()) else {
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
             self.journaled_state
                 .set_code(created_address, bytecode.clone());
-            (bytecode, compilation_result.constructor_params)
+            (bytecode, compilation_result.constructor_params, None)
+        } else if self.env.cfg.enable_rwasm_proxy {
+            // create a new EIP-7702 account that points to the EVM runtime system precompile
+            let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
+            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+            self.journaled_state.set_code(created_address, bytecode);
+            // an original init code we pass as an input inside the runtime
+            // to execute deployment logic
+            let input = inputs.init_code.clone();
+            // we should reload bytecode here since it's an EIP-7702 account
+            let bytecode = self.code(PRECOMPILE_EVM_RUNTIME)?;
+            // if it's a CREATE or CREATE2 call, then we should
+            // to recalculate init code hash to make sure it matches runtime hash
+            let code_hash = self.code_hash(PRECOMPILE_EVM_RUNTIME)?;
+            init_code_hash = code_hash.data;
+            (
+                Bytecode::new_raw(bytecode.data),
+                input,
+                Some(PRECOMPILE_EVM_RUNTIME),
+            )
         } else {
             (
                 Bytecode::new_raw(inputs.init_code.clone()),
-                Bytes::default(),
+                Default::default(),
+                None,
             )
         };
 
-        let contract = Contract::new(
+        let mut contract = Contract::new(
             constructor_params,
             bytecode,
             Some(init_code_hash),
@@ -411,6 +440,7 @@ impl<DB: Database> EvmContext<DB> {
             inputs.caller,
             inputs.value,
         );
+        contract.eip7702_address = eip7702_address;
 
         Ok(FrameOrResult::new_create_frame(
             created_address,

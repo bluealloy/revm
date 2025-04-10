@@ -25,21 +25,6 @@ pub fn state_merkle_trie_root<'a>(
     }))
 }
 
-pub fn state_merkle_trie_root2<'a>(
-    accounts: impl IntoIterator<Item = (Address, &'a PlainAccount)>,
-) -> B256 {
-    trie_root(accounts.into_iter().map(|(address, acc)| {
-        // println!(
-        //     "state_merkle_trie_root2: address {} acc {:?}",
-        //     &address, acc
-        // );
-        (
-            address,
-            alloy_rlp::encode_fixed_size(&TrieAccount::new2(acc)),
-        )
-    }))
-}
-
 #[derive(RlpEncodable, RlpMaxEncodedLen)]
 struct TrieAccount {
     nonce: u64,
@@ -50,19 +35,6 @@ struct TrieAccount {
 
 impl TrieAccount {
     fn new(acc: &PlainAccount) -> Self {
-        Self {
-            nonce: acc.info.nonce,
-            balance: acc.info.balance,
-            root_hash: sec_trie_root::<KeccakHasher, _, _, _>(
-                acc.storage
-                    .iter()
-                    .filter(|(_k, &v)| v != U256::ZERO)
-                    .map(|(k, v)| (k.to_be_bytes::<32>(), alloy_rlp::encode_fixed_size(v))),
-            ),
-            code_hash: acc.info.code_hash,
-        }
-    }
-    fn new2(acc: &PlainAccount) -> Self {
         Self {
             nonce: acc.info.nonce,
             balance: acc.info.balance,
@@ -133,6 +105,6 @@ fn compute_state_merkle_trie_root_test() {
     let accounts = vec![(address, &plain_acc)];
     let accounts2 = vec![(address, &plain_acc2)];
     let state_root = state_merkle_trie_root(accounts);
-    let state_root2 = state_merkle_trie_root2(accounts2);
+    let state_root2 = state_merkle_trie_root(accounts2);
     assert_eq!(state_root, state_root2);
 }

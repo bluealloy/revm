@@ -480,6 +480,24 @@ pub enum HaltReason {
     /// Check for target address validity is only done inside subcall.
     InvalidEXTCALLTarget,
 
+    RootCallOnly,
+    MalformedBuiltinParams,
+    CallDepthOverflow,
+    NonNegativeExitCode,
+    UnknownError,
+    InputOutputOutOfBounds,
+    UnreachableCodeReached,
+    MemoryOutOfBounds,
+    TableOutOfBounds,
+    IndirectCallToNull,
+    IntegerDivisionByZero,
+    IntegerOverflow,
+    BadConversionToInteger,
+    BadSignature,
+    OutOfFuel,
+    GrowthOperationLimited,
+    UnresolvedFunction,
+
     /* Optimism errors */
     #[cfg(feature = "optimism")]
     FailedDeposit,

@@ -45,7 +45,7 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
         return Ok(execute_rwasm_resume(interrupted_outcome));
-    }
+    };
 
     let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
@@ -111,9 +111,10 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
 #[inline]
 pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    inputs: &mut Box<SystemInterruptionInputs>,
+    inputs: Box<SystemInterruptionInputs>,
+    stack_frame: &mut Frame,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs)
+    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs, stack_frame)
 }
 
 #[inline]

@@ -31,7 +31,7 @@ use crate::{
     FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{gas::InitialAndFloorGas, interpreter_action::SystemInterruptionOutcome};
+use revm_interpreter::gas::InitialAndFloorGas;
 use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
@@ -122,19 +122,12 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
-                InterpreterAction::InterruptedCall { mut inputs } => {
+                InterpreterAction::InterruptedCall { inputs } => {
                     // execute system interruption,
                     // in inputs we store updated info about the call,
                     // for example, new gas info
-                    let gas_remaining = inputs.gas.remaining();
                     let frame_or_result =
-                        exec.system_interruption(&mut self.context, &mut inputs)?;
-                    let is_frame = frame_or_result.is_frame();
-                    stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome::new(
-                        inputs,
-                        gas_remaining,
-                        is_frame,
-                    ));
+                        exec.system_interruption(&mut self.context, inputs, stack_frame)?;
                     frame_or_result
                 }
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
@@ -194,6 +187,9 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                         FrameResult::Call(outcome) => {
                             // return_call
                             exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
+                        }
+                        FrameResult::InterruptedResult(outcome) => {
+                            stack_frame.insert_interrupted_outcome(outcome);
                         }
                         FrameResult::Create(outcome) => {
                             // return_create
@@ -389,7 +385,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
             TxKind::Create => {
-                // if first byte of data is magic 0xEF00, then it is EOFCreate.
+                // if the first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec_id.is_enabled_in(SpecId::OSAKA)
                     && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
                 {
@@ -422,7 +418,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let post_exec = self.handler.post_execution();
 
-        // calculate final refund and add EIP-7702 refund to gas.
+        // calculate the final refund and add EIP-7702 refund to gas.
         post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
 
         // EIP-7623: Increase calldata cost

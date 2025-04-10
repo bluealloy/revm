@@ -30,8 +30,6 @@ pub enum InterpreterAction {
     InterruptedCall {
         inputs: Box<SystemInterruptionInputs>,
     },
-    /// Resume Rwasm call after system interruption.
-    // ResumeRwasm { result: SystemInterruptionResult },
     /// No action
     #[default]
     None,

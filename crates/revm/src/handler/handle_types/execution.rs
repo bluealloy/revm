@@ -51,7 +51,8 @@ pub type FrameCallHandle<'a, EXT, DB> = Arc<
 pub type FrameSystemInterruptionHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            &mut Box<SystemInterruptionInputs>,
+            Box<SystemInterruptionInputs>,
+            &mut Frame,
         ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
@@ -144,6 +145,7 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub execute_frame: ExecuteFrameHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
+    /// System interruption call
     pub system_interruption: FrameSystemInterruptionHandle<'a, EXT, DB>,
     /// Call return
     pub call_return: FrameCallReturnHandle<'a, EXT, DB>,
@@ -221,9 +223,10 @@ impl<EXT, DB: Database> ExecutionHandler<'_, EXT, DB> {
     pub fn system_interruption(
         &self,
         context: &mut Context<EXT, DB>,
-        inputs: &mut Box<SystemInterruptionInputs>,
+        inputs: Box<SystemInterruptionInputs>,
+        stack_frame: &mut Frame,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        (self.system_interruption)(context, inputs)
+        (self.system_interruption)(context, inputs, stack_frame)
     }
 
     /// Call registered handler for call return.

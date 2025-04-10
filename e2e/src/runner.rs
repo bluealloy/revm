@@ -4,10 +4,9 @@ use super::{
     utils::recover_address,
 };
 use fluentbase_genesis::devnet_genesis_from_file;
-use fluentbase_sdk::Address;
+use fluentbase_sdk::{Address, EVM_CODE_HASH_SLOT, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use lazy_static::lazy_static;
 use revm::{
     db::{states::plain_account::PlainStorage, EmptyDB},
     inspector_handle_register,
@@ -20,6 +19,7 @@ use revm::{
         Bytecode,
         Bytes,
         EVMResultGeneric,
+        Eip7702Bytecode,
         Env,
         ExecutionResult,
         SpecId,
@@ -141,29 +141,29 @@ fn check_evm_execution<EXT1>(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result1: &EVMResultGeneric<ExecutionResult, Infallible>,
-    // exec_result2: &EVMResultGeneric<ExecutionResult, ExitCode>,
+    exec_result2: &EVMResultGeneric<ExecutionResult, Infallible>,
     evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    // evm2: &Evm<'_, EXT1, &mut State<EmptyDB>>,
+    evm2: &Evm<'_, EXT1, &mut State<EmptyDB>>,
     print_json_outcome: bool,
-    _genesis_addresses: &HashSet<Address>,
+    genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
-    // if !exec_result1.is_err() && exec_result2.is_err() {
-    //     exec_result2.as_ref().unwrap();
-    // }
+    if !exec_result1.is_err() && exec_result2.is_err() {
+        exec_result2.as_ref().unwrap();
+    }
 
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
-    // let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
+    let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
 
     let state_root1 = state_merkle_trie_root(evm.context.evm.db.cache.trie_account().into_iter());
-    // let state_root2 = state_merkle_trie_root2(
-    //     evm2.context
-    //         .evm
-    //         .db
-    //         .cache
-    //         .trie_account()
-    //         .into_iter()
-    //         .filter(|(addr, _)| !genesis_addresses.contains(addr)),
-    // );
+    let _state_root2 = state_merkle_trie_root(
+        evm2.context
+            .evm
+            .db
+            .cache
+            .trie_account()
+            .into_iter()
+            .filter(|(addr, _)| !genesis_addresses.contains(addr)),
+    );
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -256,6 +256,213 @@ fn check_evm_execution<EXT1>(
     // print_json_output(None);
     // return Ok(());
 
+    let mut error_list: Vec<String> = vec![];
+
+    macro_rules! error_eq {
+        ($left:expr, $right:expr, $msg:literal $(,)?) => {
+            if $left != $right {
+                error_list.push(format!("{}: {} <> {}", $msg, $left, $right));
+            }
+        };
+        ($left:expr, $right:expr, $msg:literal, $($arg:tt)+) => {
+            if $left != $right {
+                error_list.push(format!("{}: {} <> {}", format!($msg, $($arg)+), $left, $right));
+            }
+        };
+    }
+
+    if logs_root1 != logs_root2 {
+        let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
+        println!("ORIGINAL logs ({}):", logs1.len());
+        for log in logs1 {
+            println!(
+                " - {}: {}",
+                hex::encode(log.address),
+                log.topics()
+                    .get(0)
+                    .map(|v| hex::encode(&v))
+                    .unwrap_or_default()
+            )
+        }
+        let logs2 = exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default();
+        println!("FLUENT logs ({}):", logs2.len());
+        for log in logs2 {
+            println!(
+                " - {}: {}",
+                hex::encode(log.address),
+                log.topics()
+                    .get(0)
+                    .map(|v| hex::encode(&v))
+                    .unwrap_or_default()
+            )
+        }
+        error_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
+    }
+
+    let exec_result1_res = exec_result1.as_ref().unwrap();
+    let exec_result2_res = exec_result2.as_ref().unwrap();
+    error_eq!(
+        exec_result1_res.gas_used(),
+        exec_result2_res.gas_used(),
+        "EVM <> FLUENT gas used mismatch"
+    );
+
+    // compare contracts
+    for (k, v) in evm.context.evm.db.cache.contracts.iter() {
+        let v2 = evm2
+            .context
+            .evm
+            .db
+            .cache
+            .contracts
+            .get(k)
+            .expect("missing fluent contract");
+        // we compare only evm bytecode
+        error_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
+    }
+    let mut account_keys = evm.context.evm.db.cache.accounts.keys().collect::<Vec<_>>();
+    account_keys.sort();
+    for address in account_keys {
+        let v1 = evm.context.evm.db.cache.accounts.get(address).unwrap();
+        if cfg!(feature = "debug-print") {
+            println!("comparing account (0x{})...", hex::encode(address));
+        }
+        let v2 = evm2.context.evm.db.cache.accounts.get(address);
+        if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
+            let a2 = v2
+                .expect("missing FLUENT account")
+                .account
+                .as_ref()
+                .map(|v| &v.info)
+                .expect("missing FLUENT account");
+            if cfg!(feature = "debug-print") {
+                println!(" - status: {:?}", v1.status);
+            }
+            // error_eq!(
+            //     format!("{:?}", v1.status),
+            //     format!("{:?}", v2.unwrap().status),
+            //     "EVM account status mismatch"
+            // );
+            if cfg!(feature = "debug-print") {
+                println!(" - balance: {}", a1.balance);
+            }
+            error_eq!(
+                a1.balance,
+                a2.balance,
+                "EVM <> FLUENT account ({}) balance mismatch",
+                address,
+            );
+            if cfg!(feature = "debug-print") {
+                println!(" - nonce: {}", a1.nonce);
+            }
+            error_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
+            if cfg!(feature = "debug-print") {
+                println!(" - code_hash: {}", hex::encode(a1.code_hash));
+            }
+            // assert_eq!(
+            //     a1.code_hash, a2.code_hash,
+            //     "EVM <> FLUENT account code_hash mismatch",
+            // );
+            // assert_eq!(
+            //     a1.code.as_ref().map(|b| b.original_bytes()),
+            //     a2.code.as_ref().map(|b| b.original_bytes()),
+            //     "EVM <> FLUENT account code mismatch",
+            // );
+            if cfg!(feature = "debug-print") {
+                println!(" - storage:");
+            }
+            if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
+                let mut sorted_keys = s1.keys().collect::<Vec<_>>();
+                sorted_keys.sort();
+                for slot in sorted_keys {
+                    let value1 = s1.get(slot).unwrap();
+                    if cfg!(feature = "debug-print") {
+                        println!(
+                            " - + slot ({}) => ({})",
+                            hex::encode(&slot.to_be_bytes::<32>()),
+                            hex::encode(&value1.to_be_bytes::<32>())
+                        );
+                    }
+                    // let storage_key = calc_storage_key(address, slot.as_le_bytes().as_ptr());
+                    // let fluent_evm_storage = evm2
+                    //     .context
+                    //     .evm
+                    //     .db
+                    //     .cache
+                    //     .accounts
+                    //     .get(&EVM_STORAGE_ADDRESS)
+                    //     .expect("missing special EVM storage account");
+                    // let value2 = fluent_evm_storage
+                    //     .storage_slot(U256::from_le_bytes(storage_key))
+                    //     .unwrap_or_else(|| panic!("missing storage key {}",
+                    // hex::encode(storage_key)));
+                    let value2 = v2
+                        .expect("missing FLUENT account (cache)")
+                        .account
+                        .as_ref()
+                        .map(|v| &v.storage);
+                    let value2 = value2
+                        .expect("missing FLUENT account (storage)")
+                        .get(slot)
+                        .unwrap_or_else(|| {
+                            error_list.push(format!(
+                                "missing storage key {}",
+                                hex::encode(slot.to_be_bytes::<32>())
+                            ));
+                            &U256::ZERO
+                        });
+                    error_eq!(
+                        *value1,
+                        *value2,
+                        "EVM <> FLUENT storage value ({}) mismatch",
+                        hex::encode(&slot.to_be_bytes::<32>()),
+                    );
+                }
+            }
+        }
+    }
+
+    for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
+        if cfg!(feature = "debug-print") {
+            println!("comparing balances (0x{})...", hex::encode(address));
+        }
+        let v2 = evm2.context.evm.db.cache.accounts.get(address);
+        if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
+            let a2 = v2
+                .expect("missing FLUENT account")
+                .account
+                .as_ref()
+                .map(|v| &v.info)
+                .expect("missing FLUENT account");
+            if cfg!(feature = "debug-print") {
+                println!(" - balance1: {}", a1.balance);
+                println!(" - balance2: {}", a2.balance);
+            }
+            let balance_diff = if a1.balance > a2.balance {
+                a1.balance - a2.balance
+            } else {
+                a2.balance - a1.balance
+            };
+            if balance_diff != U256::from(0) {
+                error_eq!(
+                    a1.balance,
+                    a2.balance,
+                    "EVM <> FLUENT account balance mismatch"
+                );
+            }
+        }
+    }
+
+    if error_list.len() > 0 {
+        assert!(
+            false,
+            "----------------------\n{}\n----------------------\n",
+            error_list.join("\n")
+        );
+    }
+
+    print_json_output(None);
+
     // if state_root1 != state_root2 {
     //     let kind = TestErrorKind::StateRootMismatch2 {
     //         expected: state_root1,
@@ -268,195 +475,7 @@ fn check_evm_execution<EXT1>(
     //     });
     // }
 
-    // if logs_root1 != logs_root2 {
-    //     let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
-    //     println!("ORIGINAL logs ({}):", logs1.len());
-    //     for log in logs1 {
-    //         println!(
-    //             " - {}: {}",
-    //             hex::encode(log.address),
-    //             log.topics()
-    //                 .get(0)
-    //                 .map(|v| hex::encode(&v))
-    //                 .unwrap_or_default()
-    //         )
-    //     }
-    //     let logs2 = exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default();
-    //     println!("FLUENT logs ({}):", logs2.len());
-    //     for log in logs2 {
-    //         println!(
-    //             " - {}: {}",
-    //             hex::encode(log.address),
-    //             log.topics()
-    //                 .get(0)
-    //                 .map(|v| hex::encode(&v))
-    //                 .unwrap_or_default()
-    //         )
-    //     }
-    //     assert_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
-    // }
-
-    // // compare contracts
-    // for (k, v) in evm.context.evm.db.cache.contracts.iter() {
-    //     let v2 = evm2
-    //         .context
-    //         .evm
-    //         .db
-    //         .cache
-    //         .contracts
-    //         .get(k)
-    //         .expect("missing fluent contract");
-    //     // we compare only evm bytecode
-    //     assert_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
-    // }
-    // let mut account_keys = evm.context.evm.db.cache.accounts.keys().collect::<Vec<_>>();
-    // account_keys.sort();
-    // for address in account_keys {
-    //     let v1 = evm.context.evm.db.cache.accounts.get(address).unwrap();
-    //     if cfg!(feature = "debug-print") {
-    //         println!("comparing account (0x{})...", hex::encode(address));
-    //     }
-    //     let v2 = evm2.context.evm.db.cache.accounts.get(address);
-    //     if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
-    //         let a2 = v2
-    //             .expect("missing FLUENT account")
-    //             .account
-    //             .as_ref()
-    //             .map(|v| &v.info)
-    //             .expect("missing FLUENT account");
-    //         // assert_eq!(
-    //         //     format!("{:?}", v1.status),
-    //         //     format!("{:?}", v2.unwrap().status),
-    //         //     "EVM account status mismatch ({:?}) <> ({:?})",
-    //         //     v1,
-    //         //     v2.unwrap()
-    //         // );
-    //         // assert_eq!(
-    //         //     a1.balance, a2.balance,
-    //         //     "EVM <> FLUENT account balance mismatch"
-    //         // );
-    //         if cfg!(feature = "debug-print") {
-    //             println!(" - nonce: {}", a1.nonce);
-    //         }
-    //         assert_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
-    //         if cfg!(feature = "debug-print") {
-    //             println!(" - code_hash: {}", hex::encode(a1.code_hash));
-    //         }
-    //         // assert_eq!(
-    //         //     a1.code_hash, a2.code_hash,
-    //         //     "EVM <> FLUENT account code_hash mismatch",
-    //         // );
-    //         // assert_eq!(
-    //         //     a1.code.as_ref().map(|b| b.original_bytes()),
-    //         //     a2.code.as_ref().map(|b| b.original_bytes()),
-    //         //     "EVM <> FLUENT account code mismatch",
-    //         // );
-    //         if cfg!(feature = "debug-print") {
-    //             println!(" - storage:");
-    //         }
-    //         if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
-    //             let mut sorted_keys = s1.keys().collect::<Vec<_>>();
-    //             sorted_keys.sort();
-    //             for slot in sorted_keys {
-    //                 let value1 = s1.get(slot).unwrap();
-    //                 if cfg!(feature = "debug-print") {
-    //                     println!(
-    //                         " - + slot ({}) => ({})",
-    //                         hex::encode(&slot.to_be_bytes::<32>()),
-    //                         hex::encode(&value1.to_be_bytes::<32>())
-    //                     );
-    //                 }
-    //                 // let storage_key = calc_storage_key(address, slot.as_le_bytes().as_ptr());
-    //                 // let fluent_evm_storage = evm2
-    //                 //     .context
-    //                 //     .evm
-    //                 //     .db
-    //                 //     .cache
-    //                 //     .accounts
-    //                 //     .get(&EVM_STORAGE_ADDRESS)
-    //                 //     .expect("missing special EVM storage account");
-    //                 // let value2 = fluent_evm_storage
-    //                 //     .storage_slot(U256::from_le_bytes(storage_key))
-    //                 //     .unwrap_or_else(|| panic!("missing storage key {}",
-    //                 // hex::encode(storage_key)));
-    //                 let value2 = v2
-    //                     .expect("missing FLUENT account (cache)")
-    //                     .account
-    //                     .as_ref()
-    //                     .map(|v| &v.storage);
-    //                 let value2 = value2
-    //                     .expect("missing FLUENT account (storage)")
-    //                     .get(slot)
-    //                     .unwrap_or_else(|| {
-    //                         panic!(
-    //                             "missing storage key {}",
-    //                             hex::encode(slot.to_be_bytes::<32>())
-    //                         )
-    //                     });
-    //                 assert_eq!(
-    //                     *value1,
-    //                     *value2,
-    //                     "EVM <> FLUENT storage value ({}) mismatch. Test: {:?}",
-    //                     hex::encode(&slot.to_be_bytes::<32>()),
-    //                     test_name
-    //                 );
-    //             }
-    //         }
-    //     }
-    // }
-    //
-    // let _exec_result1_res = exec_result1.as_ref().unwrap();
-    // let _exec_result2_res = exec_result2.as_ref().unwrap();
-    // // assert_eq!(
-    // //     exec_result1_res.gas_used(),
-    // //     exec_result2_res.gas_used(),
-    // //     "EVM <> FLUENT gas used mismatch ({})",
-    // //     exec_result2.as_ref().unwrap().gas_used() as i64
-    // //         - exec_result1.as_ref().unwrap().gas_used() as i64
-    // // );
-    //
-    // for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
-    //     if cfg!(feature = "debug-print") {
-    //         println!("comparing balances (0x{})...", hex::encode(address));
-    //     }
-    //     let v2 = evm2.context.evm.db.cache.accounts.get(address);
-    //     if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
-    //         let a2 = v2
-    //             .expect("missing FLUENT account")
-    //             .account
-    //             .as_ref()
-    //             .map(|v| &v.info)
-    //             .expect("missing FLUENT account");
-    //         if cfg!(feature = "debug-print") {
-    //             println!(" - balance1: {}", a1.balance);
-    //             println!(" - balance2: {}", a2.balance);
-    //         }
-    //         let balance_diff = if a1.balance > a2.balance {
-    //             a1.balance - a2.balance
-    //         } else {
-    //             a2.balance - a1.balance
-    //         };
-    //         if balance_diff != U256::from(0) {
-    //             // assert_eq!(
-    //             //     a1.balance, a2.balance,
-    //             //     "EVM <> FLUENT account balance mismatch"
-    //             // );
-    //         }
-    //     }
-    // }
-
-    print_json_output(None);
-
     Ok(())
-}
-
-lazy_static! {
-    // static ref EVM_LOADER: (Bytes, B256) = {
-    //     let rwasm_bytecode: Bytes =
-    //         include_bytes!("../../../contracts/assets/loader_contract.rwasm").into();
-    //     let rwasm_hash = B256::from(poseidon_hash(&rwasm_bytecode));
-    //     (rwasm_bytecode, rwasm_hash)
-    // };
 }
 
 pub fn execute_test_suite(
@@ -478,13 +497,6 @@ pub fn execute_test_suite(
     })?;
 
     let devnet_genesis = devnet_genesis_from_file();
-    // let (proxy_bytecode, proxy_bytecode_hash) = if ENABLE_EVM_PROXY_CONTRACT {
-    //     let proxy_bytecode = create_delegate_proxy_bytecode(PRECOMPILE_EVM);
-    //     let code_hash = B256::from(poseidon_hash(proxy_bytecode.as_ref()));
-    //     (proxy_bytecode, code_hash)
-    // } else {
-    //     (Bytes::default(), B256::ZERO)
-    // };
 
     let selected_test_cases = vec![];
     for (name, unit) in suite.0 {
@@ -496,18 +508,18 @@ pub fn execute_test_suite(
         let mut cache_state = CacheState::new(false);
         let mut cache_state2 = CacheState::new(false);
 
+        println!("\nGenesis accounts:");
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
-            let code_hash = info
-                .code
-                .as_ref()
-                .map(|v| keccak256(&v))
-                .unwrap_or(KECCAK_EMPTY);
+            let bytecode = info.code.clone().map(Bytecode::new_raw);
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash,
-                code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
+                code_hash: bytecode
+                    .as_ref()
+                    .map(|v| v.hash_slow())
+                    .unwrap_or(KECCAK_EMPTY),
+                code: bytecode,
             };
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
@@ -515,10 +527,15 @@ pub fn execute_test_suite(
                     account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
                 }
             }
+            println!(
+                "- genesis account: address={}, nonce={}, balance={} code_hash={}",
+                address, acc_info.nonce, acc_info.balance, acc_info.code_hash
+            );
             cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
             genesis_addresses.insert(*address);
         }
 
+        println!("\nEVM accounts:");
         for (address, info) in &unit.pre {
             let acc_info = AccountInfo {
                 balance: info.balance,
@@ -530,40 +547,57 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }
 
-        for (address, info) in unit.pre {
-            let mut acc_info = AccountInfo {
-                balance: info.balance,
-                nonce: info.nonce,
-                ..Default::default()
-            };
+        for (address, mut info) in unit.pre {
+            let mut acc_info = cache_state2
+                .accounts
+                .get(&address)
+                .and_then(|a| a.account.clone())
+                .map(|a| a.info)
+                .unwrap_or_else(AccountInfo::default);
+            if !acc_info.balance.is_zero() && !info.balance.is_zero() {
+                assert_eq!(
+                    acc_info.balance, info.balance,
+                    "genesis account balance mismatch, this test won't work"
+                );
+            }
+            acc_info.balance = info.balance;
+            acc_info.nonce = info.nonce;
+            let prev_code_len = acc_info.code.as_ref().map(|v| v.len()).unwrap_or_default();
+            if prev_code_len > 0 && info.code.len() > 0 {
+                println!(
+                    "WARN: code length collision for account ({address}), this test might not work"
+                );
+            }
             let evm_code_hash = keccak256(&info.code);
-            // if ENABLE_EVM_PROXY_CONTRACT {
-            //     // write EVM code hash state
-            //     const EVM_CODE_HASH_SLOT: U256 =
-            //         U256::from_le_bytes(derive_keccak256!("_evm_bytecode_hash"));
-            //     info.storage
-            //         .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
-            //     // set account info bytecode to the proxy loader
-            //     acc_info.code_hash = proxy_bytecode_hash;
-            //     acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
-            //     // put EVM preimage inside
-            //     let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
-            //     cache_state2.insert_account(
-            //         preimage_address,
-            //         AccountInfo {
-            //             nonce: 1,
-            //             code_hash: evm_code_hash,
-            //             code: Some(Bytecode::new_raw(info.code.clone())),
-            //             ..Default::default()
-            //         },
-            //     );
-            // } else {
-            // in non-proxy mode, we store EVM bytecode in code
-            acc_info.code_hash = evm_code_hash;
-            acc_info.code = Some(Bytecode::new_raw(info.code.clone()));
-            // }
+            println!(
+                " - address={address}, evm_code_hash={evm_code_hash}, evm_code_hash_u256={}, code_len={}",
+                Into::<U256>::into(evm_code_hash), info.code.len(),
+            );
+            // write EVM code hash state
+            if info.code.len() > 0 {
+                let evm_code_hash_slot: U256 = Into::<U256>::into(EVM_CODE_HASH_SLOT);
+                info.storage
+                    .insert(evm_code_hash_slot, Into::<U256>::into(evm_code_hash));
+                // set account info bytecode to the proxy loader
+                let bytecode = Bytecode::Eip7702(Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME));
+                acc_info.code_hash = bytecode.hash_slow();
+                acc_info.code = Some(bytecode);
+            }
             // write evm account into state
             cache_state2.insert_account_with_storage(address, acc_info, info.storage);
+            // put EVM preimage as an account
+            if info.code.len() > 0 {
+                let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
+                cache_state2.insert_account(
+                    preimage_address,
+                    AccountInfo {
+                        nonce: 1,
+                        code_hash: evm_code_hash,
+                        code: Some(Bytecode::new_raw(info.code.clone())),
+                        ..Default::default()
+                    },
+                );
+            }
         }
 
         let mut env = Box::<Env>::default();
@@ -680,15 +714,19 @@ pub fn execute_test_suite(
                     .with_spec_id(spec_id)
                     .build();
 
-                // let mut state2 = StateBuilder::default()
-                //     .with_cached_prestate(cache2)
-                //     .with_bundle_update()
-                //     .build();
-                // let mut evm2 = Evm::builder()
-                //     .with_db(&mut state2)
-                //     .modify_env(|e| *e = env.clone())
-                //     .with_spec_id(spec_id)
-                //     .build();
+                let mut state2 = State::builder()
+                    .with_cached_prestate(cache2)
+                    .with_bundle_update()
+                    .build();
+                let mut evm2 = Evm::builder()
+                    .with_db(&mut state2)
+                    .modify_env(|e| {
+                        let mut new_env = env.clone();
+                        new_env.cfg.enable_rwasm_proxy = true;
+                        *e = new_env
+                    })
+                    .with_spec_id(spec_id)
+                    .build();
 
                 // do the deed
                 let (e, exec_result) = if trace {
@@ -699,18 +737,18 @@ pub fn execute_test_suite(
                         )
                         .append_handler_register(inspector_handle_register)
                         .build();
-                    // let mut evm2 = evm2
-                    //     .modify()
-                    //     .reset_handler_with_external_context(
-                    //         TracerEip3155::new(Box::new(stderr())).without_summary(),
-                    //     )
-                    //     .append_handler_register(inspector_handle_register)
-                    //     .build();
+                    let mut evm2 = evm2
+                        .modify()
+                        .reset_handler_with_external_context(
+                            TracerEip3155::new(Box::new(stderr())).without_summary(),
+                        )
+                        .append_handler_register(inspector_handle_register)
+                        .build();
 
                     let timer = Instant::now();
                     let res = evm.transact_commit();
 
-                    // let res2 = evm2.transact_commit();
+                    let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let Err(e) = check_evm_execution(
@@ -719,9 +757,9 @@ pub fn execute_test_suite(
                         unit.out.as_ref(),
                         &name,
                         &res,
-                        // &res2,
+                        &res2,
                         &evm,
-                        // &evm2,
+                        &evm2,
                         print_json_outcome,
                         &genesis_addresses,
                     ) else {
@@ -731,8 +769,10 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
+                    println!("RUNNING EVM!!!");
                     let res = evm.transact_commit();
-                    // let res2 = evm2.transact_commit();
+                    println!("\n\nRUNNING FLUENT!!!");
+                    let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     // dump state and traces if test failed
@@ -742,9 +782,9 @@ pub fn execute_test_suite(
                         unit.out.as_ref(),
                         &name,
                         &res,
-                        // &res2,
+                        &res2,
                         &evm,
-                        // &evm2,
+                        &evm2,
                         print_json_outcome,
                         &genesis_addresses,
                     );
