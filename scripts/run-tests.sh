@@ -4,7 +4,7 @@
 set -e
 
 # Version for the execution spec tests
-VERSION="v4.1.0"
+VERSION="v4.2.0"
 
 # Directories
 FIXTURES_DIR="test-fixtures"

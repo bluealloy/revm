@@ -327,7 +327,7 @@ pub fn execute_test_suite(
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
             // so we don't support it and skip right to Petersburg.
-            if spec_name == SpecName::Constantinople {
+            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
                 continue;
             }
 

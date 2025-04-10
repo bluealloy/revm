@@ -7,6 +7,11 @@ use secp256k1::{
 // Silence the unused crate dependency warning.
 use k256 as _;
 
+
+
+/// Recover the public key from a signature and a message.
+/// 
+/// This function is using the `secp256k1` crate, it is enabled by `libsecp256k1` feature and it is in default.
 pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
     let recid = RecoveryId::try_from(recid as i32).expect("recovery ID is valid");
     let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
