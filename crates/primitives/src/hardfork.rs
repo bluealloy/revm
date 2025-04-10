@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-// enumn has missing docs. Should be replaced in nead future https://github.com/bluealloy/revm/issues/2402
+// enumn has missing docs. Should be replaced in the future https://github.com/bluealloy/revm/issues/2402
 #![allow(missing_docs)]
 
 use core::str::FromStr;

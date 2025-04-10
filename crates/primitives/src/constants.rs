@@ -1,5 +1,5 @@
 //! Global constants for the EVM
-//! 
+//!
 //! Here you can find constants that dont belong to any EIP and are there for the genesis.
 
 use crate::eip170;

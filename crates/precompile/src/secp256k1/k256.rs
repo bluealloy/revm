@@ -2,7 +2,7 @@ use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
 use primitives::{alloy_primitives::B512, keccak256, B256};
 
 /// Recover the public key from a signature and a message.
-/// 
+///
 /// This function is using the `k256` crate.
 pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
     // parse signature
