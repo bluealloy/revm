@@ -56,7 +56,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
             caller: contract.caller,
             is_static: interpreter.is_static,
             value: contract.call_value,
-            gas_limit: interpreter.gas.remaining(),
+            // gas_limit: interpreter.gas.remaining(),
         },
     });
     let mut context_input = context_input
