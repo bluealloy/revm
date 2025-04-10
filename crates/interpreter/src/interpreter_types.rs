@@ -1,8 +1,8 @@
 use crate::{Gas, InstructionResult, InterpreterAction};
 use bytecode::eof::CodeInfo;
+use core::cell::Ref;
 use core::ops::{Deref, Range};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
-use std::cell::Ref;
 
 /// Helper function to read immediates data from the bytecode
 pub trait Immediates {
