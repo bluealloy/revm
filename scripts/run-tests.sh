@@ -4,7 +4,9 @@
 set -e
 
 # Version for the execution spec tests
-VERSION="v4.1.0"
+VERSION="v4.2.0"
+# Version for the EOF spec tests, it is currently upgrading to eof devnet-1 so we will will use devnet-0 suite.
+EOF_VERSION="v4.1.0"
 
 # Directories
 FIXTURES_DIR="test-fixtures"
@@ -13,7 +15,7 @@ DEVELOP_DIR="$FIXTURES_DIR/develop"
 EOF_DIR="$FIXTURES_DIR/eof"
 
 # URL and filenames
-FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download/$VERSION"
+FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 STABLE_TAR="fixtures_stable.tar.gz"
 DEVELOP_TAR="fixtures_develop.tar.gz"
 EOF_TAR="fixtures_eip7692.tar.gz"
@@ -74,9 +76,10 @@ download_and_extract() {
     local target_dir="$1"
     local tar_file="$2"
     local label="$3"
+    local version="$4"
 
     echo "Downloading ${label} fixtures..."
-    curl -L "${FIXTURES_URL}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
+    curl -L "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
     echo "Extracting ${label} fixtures..."
      # strip-components=1 removes the first top level directory from the flepath
      # This is needed because when we extract the tar, it is placed under an
@@ -89,9 +92,9 @@ download_fixtures() {
     echo "Creating fixtures directory structure..."
     mkdir -p "$STABLE_DIR" "$DEVELOP_DIR" "$EOF_DIR"
 
-    download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable"
-    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop"
-    download_and_extract "$EOF_DIR" "$EOF_TAR" "EOF"
+    download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
+    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$VERSION"
+    download_and_extract "$EOF_DIR" "$EOF_TAR" "EOF" "$EOF_VERSION"
 
     echo "Cleaning up tar files..."
     rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}" "${FIXTURES_DIR}/${EOF_TAR}"
