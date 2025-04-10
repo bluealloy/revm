@@ -13,8 +13,13 @@ readme.workspace = true
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints]
-workspace = true
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
 
 [dependencies]
 # revm
