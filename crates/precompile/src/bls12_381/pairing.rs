@@ -23,7 +23,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDR
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
