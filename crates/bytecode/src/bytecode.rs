@@ -1,3 +1,10 @@
+//! Module that contains the bytecode enum with all variants supported by Ethereum mainnet.
+//!
+//! Those are:
+//! - Legacy bytecode with jump table analysis. Found in [`LegacyAnalyzedBytecode`]
+//! - EOF ( EMV Object Format) bytecode introduced in Osaka that.
+//! - EIP-7702 bytecode, introduces in Prague and contains address to delegated account.
+
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
     BytecodeDecodeError, Eof, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,

@@ -153,7 +153,7 @@ mod tests {
         // Run evm.
         evm.inspect_replay().unwrap();
 
-        let inspector = &evm.data.inspector;
+        let inspector = &evm.inspector;
 
         // Starting from 100gas
         let steps = vec![

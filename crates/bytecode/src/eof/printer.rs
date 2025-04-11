@@ -1,5 +1,11 @@
+//! Module that contains the printer for the EOF bytecode.
+//!
+//! It is used to print the bytecode in a human readable format.
+//!
+//! It is enabled by the `std` feature.
 #![cfg(feature = "std")]
 
+/// Pretty print the EOF bytecode in human readable format.
 pub fn print(code: &[u8]) {
     use crate::{opcode::*, utils::read_i16};
     use primitives::hex;

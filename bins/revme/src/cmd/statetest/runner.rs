@@ -434,7 +434,7 @@ pub fn execute_test_suite(
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = &mut evm.data.ctx.journaled_state.database;
+                    let db = &mut evm.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -455,7 +455,7 @@ pub fn execute_test_suite(
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = evm.data.ctx.journaled_state.database;
+                    let db = evm.ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
@@ -509,7 +509,7 @@ pub fn execute_test_suite(
                 println!("\nState before: {cache_state:#?}");
                 println!(
                     "\nState after: {:#?}",
-                    evm.data.ctx.journaled_state.database.cache
+                    evm.ctx.journaled_state.database.cache
                 );
                 println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");

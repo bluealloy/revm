@@ -1,3 +1,4 @@
+//! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
 use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
@@ -75,6 +76,7 @@ impl CfgEnv {
 }
 
 impl<SPEC> CfgEnv<SPEC> {
+    /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
             chain_id: 1,
@@ -95,11 +97,13 @@ impl<SPEC> CfgEnv<SPEC> {
         }
     }
 
+    /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
     }
 
+    /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,

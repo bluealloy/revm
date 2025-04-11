@@ -1,3 +1,4 @@
+//! This module contains [`TxEnv`] struct and implements [`Transaction`] trait for it.
 use crate::TransactionType;
 use context_interface::transaction::{
     AccessList, AccessListItem, SignedAuthorization, Transaction,
@@ -10,12 +11,15 @@ use std::vec::Vec;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
+    /// Transaction type
     pub tx_type: u8,
     /// Caller aka Author aka transaction signer
     pub caller: Address,
-    /// The gas limit of the transaction
+    /// The gas limit of the transaction.
     pub gas_limit: u64,
-    /// The gas price of the transaction
+    /// The gas price of the transaction.
+    ///
+    /// For EIP-1559 transaction this represent max_gas_fee.
     pub gas_price: u128,
     /// The destination of the transaction
     pub kind: TxKind,
@@ -98,10 +102,13 @@ impl Default for TxEnv {
     }
 }
 
+/// Error type for deriving transaction type used as error in [`TxEnv::derive_tx_type`] function.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DeriveTxTypeError {
+    /// Missing target for EIP-4844
     MissingTargetForEip4844,
+    /// Missing target for EIP-7702
     MissingTargetForEip7702,
 }
 
