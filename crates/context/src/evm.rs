@@ -10,9 +10,11 @@ pub struct Evm<CTX, INSP, I, P> {
     /// Inspector of the EVM it is used to inspect the EVM.
     /// Its trait are defined in revm-inspector crate.
     pub inspector: INSP,
-    /// [`context_interface::InstructionProvider`] of the EVM it is used to execute instructions.
+    /// Instructions provider of the EVM it is used to execute instructions.
+    /// `InstructionProvider` trait is defined in revm-handler crate.
     pub instruction: I,
-    /// [`PrecompileProvider`] of the EVM it is used to execute precompiles.
+    /// Precompile provider of the EVM it is used to execute precompiles.
+    /// `PrecompileProvider` trait is defined in revm-handler crate.
     pub precompiles: P,
 }
 

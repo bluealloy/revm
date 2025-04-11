@@ -41,7 +41,7 @@ pub struct Eof {
     pub header: EofHeader,
     /// Body of the EOF container
     pub body: EofBody,
-    /// Raw bytes of the EOF container. Chunks of raw Bytes are used in Body to referenc
+    /// Raw bytes of the EOF container. Chunks of raw Bytes are used in Body to reference
     /// parts of code, data and container sections.
     pub raw: Bytes,
 }

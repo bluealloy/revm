@@ -1,4 +1,4 @@
-//! This moduels contains [`CfgEnv`] and implements [`Cfg`] trait for it.
+//! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
 use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
