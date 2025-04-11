@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v19.0.0...revm-precompile-v19.0.1) - 2025-04-11
+
+### Other
+
+- bump stable tests, introduce lints ([#2403](https://github.com/bluealloy/revm/pull/2403))
+
 ## [19.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v18.0.0...revm-precompile-v19.0.0) - 2025-04-09
 
 ### Other
