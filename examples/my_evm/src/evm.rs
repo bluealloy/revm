@@ -1,5 +1,5 @@
 use revm::{
-    context::{ContextSetters, ContextTr, Evm, EvmData},
+    context::{ContextSetters, ContextTr, Evm},
     handler::{
         instructions::{EthInstructions, InstructionProvider},
         EthPrecompiles, EvmTr,
@@ -17,7 +17,8 @@ pub struct MyEvm<CTX, INSP>(
 impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
-            data: EvmData { ctx, inspector },
+            ctx,
+            inspector,
             instruction: EthInstructions::new_mainnet(),
             precompiles: EthPrecompiles::default(),
         })
@@ -33,7 +34,7 @@ where
     type Precompiles = EthPrecompiles;
 
     fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.0.data.ctx
+        &mut self.0.ctx
     }
 
     fn ctx_ref(&self) -> &Self::Context {
@@ -81,9 +82,9 @@ where
         >,
     ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
     {
-        let context = &mut self.0.data.ctx;
+        let context = &mut self.0.ctx;
         let instructions = &mut self.0.instruction;
-        let inspector = &mut self.0.data.inspector;
+        let inspector = &mut self.0.inspector;
 
         inspect_instructions(
             context,

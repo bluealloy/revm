@@ -39,7 +39,7 @@ where
     type Inspector = INSP;
 
     fn set_inspector(&mut self, inspector: Self::Inspector) {
-        self.data.inspector = inspector;
+        self.inspector = inspector;
     }
 
     fn inspect_replay(&mut self) -> Self::Output {
@@ -82,11 +82,11 @@ where
     type Inspector = INSP;
 
     fn inspector(&mut self) -> &mut Self::Inspector {
-        &mut self.data.inspector
+        &mut self.inspector
     }
 
     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.data.ctx, &mut self.data.inspector)
+        (&mut self.ctx, &mut self.inspector)
     }
 
     fn run_inspect_interpreter(
@@ -96,9 +96,9 @@ where
         >,
     ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
     {
-        let context = &mut self.data.ctx;
+        let context = &mut self.ctx;
         let instructions = &mut self.instruction;
-        let inspector = &mut self.data.inspector;
+        let inspector = &mut self.inspector;
 
         inspect_instructions(
             context,

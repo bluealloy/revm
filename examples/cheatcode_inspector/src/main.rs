@@ -567,7 +567,7 @@ fn main() -> anyhow::Result<()> {
     evm.inspect_replay()?;
 
     // Sanity check
-    assert_eq!(evm.data.inspector.call_count, 2);
+    assert_eq!(evm.inspector.call_count, 2);
     assert_eq!(evm.journaled_state.method_with_inspector_counter, 1);
     assert_eq!(evm.journaled_state.method_without_inspector_counter, 1);
 
