@@ -38,11 +38,11 @@ use core::cmp::min;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     calc_preimage_address,
+    is_protected_storage_slot,
     is_self_gas_management_contract,
     is_system_precompile,
     keccak256,
     EVM_BASE_SPEC,
-    EVM_CODE_HASH_SLOT,
     FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
@@ -183,7 +183,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
             if inputs.contract.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
-                && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT)
+                && is_protected_storage_slot(slot)
             {
                 return_error!(MalformedBuiltinParams);
             }
@@ -195,7 +195,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 .evm
                 .sstore(inputs.contract.target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
-            let is_gas_free = inputs.is_gas_free && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
                 if let Some(gas_cost) = sstore_cost(
                     SPEC::SPEC_ID,
@@ -790,7 +790,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
             // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
-            let is_gas_free = inputs.is_gas_free && slot == Into::<U256>::into(EVM_CODE_HASH_SLOT);
+            let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
                 charge_gas!(sload_cost(SPEC::SPEC_ID, account.is_cold));
             }

@@ -4,7 +4,7 @@ use super::{
     utils::recover_address,
 };
 use fluentbase_genesis::devnet_genesis_from_file;
-use fluentbase_sdk::{Address, EVM_CODE_HASH_SLOT, PRECOMPILE_EVM_RUNTIME};
+use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME, PROTECTED_STORAGE_SLOT_0};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
@@ -575,7 +575,7 @@ pub fn execute_test_suite(
             );
             // write EVM code hash state
             if info.code.len() > 0 {
-                let evm_code_hash_slot: U256 = Into::<U256>::into(EVM_CODE_HASH_SLOT);
+                let evm_code_hash_slot: U256 = Into::<U256>::into(PROTECTED_STORAGE_SLOT_0);
                 info.storage
                     .insert(evm_code_hash_slot, Into::<U256>::into(evm_code_hash));
                 // set account info bytecode to the proxy loader

@@ -18,6 +18,7 @@ use fluentbase_runtime::{
 };
 use fluentbase_sdk::{
     codec::CompactABI,
+    is_self_gas_management_contract,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
