@@ -11,7 +11,10 @@ use crate::{
     Context,
     Database,
 };
-use core::{mem::take, ops::Deref};
+use core::{
+    mem::{replace, take},
+    ops::Deref,
+};
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -32,10 +35,11 @@ use fluentbase_sdk::{
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{return_ok, return_revert, Contract};
+use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
+    return_shared_memory: &mut SharedMemory,
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
@@ -86,11 +90,14 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
         .is_some();
 
+    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
+
     // execute function
-    let mut runtime_context = RuntimeContext::root(fuel_limit);
+    let mut runtime_context = RuntimeContext::root(fuel_limit).with_shared_memory(shared_memory);
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
+
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
         &mut runtime_context,
         bytecode_hash,
@@ -112,7 +119,9 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter.gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
-    let return_data: Bytes = runtime_context.into_return_data().into();
+    let (return_data, shared_memory) = runtime_context.into_return_data();
+
+    *return_shared_memory = shared_memory;
 
     Ok(process_exec_result(
         contract,
@@ -125,7 +134,10 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     ))
 }
 
-pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAction {
+pub fn execute_rwasm_resume(
+    return_shared_memory: &mut SharedMemory,
+    outcome: SystemInterruptionOutcome,
+) -> InterpreterAction {
     let SystemInterruptionOutcome {
         inputs,
         result,
@@ -161,7 +173,9 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         }
     };
 
-    let mut runtime_context = RuntimeContext::root(0);
+    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
+
+    let mut runtime_context = RuntimeContext::root(0).with_shared_memory(shared_memory);
     if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -174,7 +188,10 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         fuel_refunded,
         inputs.syscall_params.fuel16_ptr,
     );
-    let return_data: Bytes = runtime_context.into_return_data().into();
+
+    let (return_data, shared_memory) = runtime_context.into_return_data();
+
+    *return_shared_memory = shared_memory;
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything

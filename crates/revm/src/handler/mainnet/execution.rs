@@ -44,14 +44,19 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
-        return Ok(execute_rwasm_resume(interrupted_outcome));
+        return Ok(execute_rwasm_resume(shared_memory, interrupted_outcome));
     };
 
     let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
 
     if let Bytecode::Rwasm(_) = &interpreter.contract.bytecode {
-        return execute_rwasm_frame::<SPEC, EXT, DB>(interpreter, context, is_create);
+        return execute_rwasm_frame::<SPEC, EXT, DB>(
+            interpreter,
+            shared_memory,
+            context,
+            is_create,
+        );
     }
 
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
