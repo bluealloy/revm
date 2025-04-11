@@ -7,7 +7,10 @@ pub mod verification;
 
 pub use body::EofBody;
 pub use code_info::CodeInfo;
-pub use header::EofHeader;
+pub use header::{
+    EofHeader, CODE_SECTION_SIZE, CONTAINER_SECTION_SIZE, KIND_CODE, KIND_CODE_INFO,
+    KIND_CONTAINER, KIND_DATA, KIND_TERMINAL,
+};
 pub use verification::*;
 
 use core::cmp::min;

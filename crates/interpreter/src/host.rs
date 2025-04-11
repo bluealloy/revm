@@ -1,7 +1,7 @@
 use context_interface::{
     context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
-    Block, Cfg, Database, JournalTr, Transaction, TransactionType,
+    Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
 use primitives::{Address, Bytes, Log, B256, U256};
 
@@ -42,6 +42,8 @@ pub trait Host {
     fn caller(&self) -> Address;
     /// Transaction blob hash, calls `ContextTr::tx().blob_hash(number)`
     fn blob_hash(&self, number: usize) -> Option<U256>;
+    /// Initcodes mapped to the hash.
+    fn initcode_by_hash(&mut self, hash: B256) -> Option<Bytes>;
 
     /* Config */
 
@@ -146,6 +148,10 @@ impl<CTX: ContextTr> Host for CTX {
         tx.blob_versioned_hashes()
             .get(number)
             .map(|t| U256::from_be_bytes(t.0))
+    }
+
+    fn initcode_by_hash(&mut self, hash: B256) -> Option<Bytes> {
+        self.local().get_validated_initcode(hash)
     }
 
     /* Config */
@@ -311,6 +317,10 @@ impl Host for DummyHost {
 
     fn caller(&self) -> Address {
         Address::ZERO
+    }
+
+    fn initcode_by_hash(&mut self, _hash: B256) -> Option<Bytes> {
+        None
     }
 
     fn blob_hash(&self, _number: usize) -> Option<U256> {

@@ -9,6 +9,7 @@ pub mod block;
 pub mod cfg;
 pub mod context;
 pub mod journaled_state;
+pub mod local;
 pub mod result;
 pub mod transaction;
 
@@ -17,4 +18,5 @@ pub use cfg::{Cfg, CreateScheme, TransactTo};
 pub use context::{ContextSetters, ContextTr};
 pub use database_interface::{DBErrorMarker, Database};
 pub use journaled_state::JournalTr;
+pub use local::LocalContextTr;
 pub use transaction::{Transaction, TransactionType};
