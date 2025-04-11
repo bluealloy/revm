@@ -31,7 +31,6 @@ use fluentbase_sdk::{
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
-    SYSCALL_ID_SYNC_EVM_GAS,
 };
 use revm_interpreter::{return_ok, return_revert, Contract};
 
@@ -99,9 +98,6 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         fuel_limit,
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
     );
-    if is_gas_free {
-        debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
-    }
 
     // make sure we have enough gas to charge from the call
     if !interpreter.gas.record_denominated_cost(fuel_consumed) {
@@ -165,11 +161,6 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         }
     };
 
-    // gas adjustment is needed
-    // to synchronize gas/fuel between root and self-gas management runtimes,
-    // this interruption can be made by EVM/SVM runtimes only
-    let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
-
     let mut runtime_context = RuntimeContext::root(0);
     if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
@@ -185,12 +176,9 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
     );
     let return_data: Bytes = runtime_context.into_return_data().into();
 
-    // make sure for gas-free mode we don't charge anything
-    debug_assert!(!inputs.is_gas_free || fuel_consumed == 0 && fuel_refunded == 0);
-
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
-    let mut gas = if inputs.is_gas_free && !is_gas_adjustment {
+    let mut gas = if inputs.is_gas_free {
         inputs.gas
     } else {
         result.gas

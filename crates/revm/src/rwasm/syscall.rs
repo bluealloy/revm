@@ -36,10 +36,9 @@ use crate::{
 };
 use core::cmp::min;
 use fluentbase_sdk::{
-    byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
+    byteorder::{LittleEndian, ReadBytesExt},
     calc_preimage_address,
     is_protected_storage_slot,
-    is_self_gas_management_contract,
     is_system_precompile,
     keccak256,
     EVM_BASE_SPEC,
@@ -64,7 +63,6 @@ use fluentbase_sdk::{
     SYSCALL_ID_STATIC_CALL,
     SYSCALL_ID_STORAGE_READ,
     SYSCALL_ID_STORAGE_WRITE,
-    SYSCALL_ID_SYNC_EVM_GAS,
     SYSCALL_ID_TRANSIENT_READ,
     SYSCALL_ID_TRANSIENT_WRITE,
     SYSCALL_ID_WRITE_PREIMAGE,
@@ -207,8 +205,8 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 } else {
                     return_error!(OutOfGas);
                 }
+                local_gas.record_refund(sstore_refund(SPEC::SPEC_ID, &value.data));
             }
-            local_gas.record_refund(sstore_refund(SPEC::SPEC_ID, &value.data));
             return_result!(Bytes::default())
         }
 
@@ -849,37 +847,6 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 .evm
                 .tstore(inputs.contract.target_address, slot, value);
             // empty result
-            return_result!(Bytes::new());
-        }
-
-        SYSCALL_ID_SYNC_EVM_GAS => {
-            assert_return!(
-                inputs.syscall_params.input.len() == 8 * 2
-                    && inputs.syscall_params.state == STATE_MAIN,
-                MalformedBuiltinParams
-            );
-            // allow this function only for delegated contracts
-            // that has self-management gas policy like EVM or SVM runtimes
-            let bytecode_address = inputs
-                .contract
-                .eip7702_address
-                .or(inputs.contract.bytecode_address)
-                .unwrap_or(inputs.contract.target_address);
-            assert_return!(
-                is_self_gas_management_contract(&bytecode_address),
-                MalformedBuiltinParams
-            );
-            // parse input gas params
-            let gas_remaining = LittleEndian::read_u64(&inputs.syscall_params.input[..8]);
-            let gas_refunded = LittleEndian::read_i64(&inputs.syscall_params.input[8..]);
-            // upgrade gas values
-            let gas_spent_diff = local_gas.remaining() - gas_remaining;
-            if !local_gas.record_cost(gas_spent_diff) {
-                unreachable!("revm: gas adjustment must be successful")
-            }
-            let gas_refund_diff = gas_refunded - local_gas.refunded();
-            local_gas.record_refund(gas_refund_diff);
-            // returns nothing
             return_result!(Bytes::new());
         }
 

@@ -14,7 +14,6 @@ revm = { package = "revm", path = "../crates/revm", default-features = false, fe
     "serde-json",
     "c-kzg",
     "blst",
-    "e2e",
 ] }
 
 hash-db = "=0.15"
@@ -38,11 +37,6 @@ k256 = { version = "0.13.3", features = ["ecdsa"] }
 default = [
     #    "debug-print",
 ]
-
-e2e = [
-    "revm/e2e",
-]
-debug_use_fluent_storage = []
 debug-print = [
     "revm/debug-print",
 ]
