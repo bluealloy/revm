@@ -1,5 +1,6 @@
 use crate::{Gas, InstructionResult, InterpreterAction};
 use bytecode::eof::CodeInfo;
+use core::cell::Ref;
 use core::ops::{Deref, Range};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
@@ -79,8 +80,7 @@ pub trait MemoryTr {
     /// # Panics
     ///
     /// Panics if range is out of scope of allocated memory.
-    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_;
-
+    fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
     /// Memory slice len
     ///
     /// Uses [`slice`][MemoryTr::slice] internally.
