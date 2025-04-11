@@ -90,10 +90,6 @@ std = [
     "revm-precompile/std",
     "fluentbase-sdk/std",
 ]
-e2e = [
-    "revm-precompile/e2e",
-    "revm-interpreter/e2e",
-]
 hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
 serde = ["dep:serde", "revm-interpreter/serde"]
 serde-json = ["serde", "dep:serde_json"]
@@ -107,6 +103,7 @@ optimism = [
     "revm-interpreter/optimism",
     "revm-precompile/optimism",
     "dep:once_cell",
+    "fluentbase-runtime/optimism"
 ]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [

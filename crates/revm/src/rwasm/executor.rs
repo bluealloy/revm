@@ -19,7 +19,6 @@ use fluentbase_runtime::{
 };
 use fluentbase_sdk::{
     codec::CompactABI,
-    keccak256,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
@@ -32,17 +31,17 @@ use fluentbase_sdk::{
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
-    SYSCALL_ID_SYNC_EVM_GAS,
 };
 use revm_interpreter::{return_ok, return_revert, Contract};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
-    rwasm_bytecode: Bytes,
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let contract = take(&mut interpreter.contract);
+
+    let bytecode_address = contract.bytecode_address();
 
     // encode input with all related context info
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
@@ -50,7 +49,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         tx: TxContextV1::from(context.evm.env.deref()),
         contract: ContractContextV1 {
             address: contract.target_address,
-            bytecode_address: contract.bytecode_address(),
+            bytecode_address,
             caller: contract.caller,
             is_static: interpreter.is_static,
             value: contract.call_value,
@@ -63,24 +62,25 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .to_vec();
     context_input.extend_from_slice(contract.input.as_ref());
 
-    let effective_bytecode_address = contract.effective_bytecode_address();
+    // calculate bytecode hash
+    let rwasm_code_hash = contract
+        .hash
+        .filter(|v| v != &B256::ZERO)
+        .unwrap_or_else(|| unreachable!("revm: missing rwasm bytecode hash"));
+    let rwasm_bytecode = match &contract.bytecode {
+        Bytecode::Rwasm(bytecode) => bytecode.clone(),
+        _ => unreachable!("revm: unexpected bytecode type"),
+    };
+    let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
+    // fuel limit we denominate later to gas
     let fuel_limit = interpreter
         .gas
         .remaining()
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let rwasm_code_hash = contract
-        .hash
-        .filter(|v| v != &B256::ZERO)
-        .unwrap_or_else(|| keccak256(&rwasm_bytecode));
-    debug_assert_eq!(rwasm_code_hash, keccak256(&rwasm_bytecode));
-    let rwasm_bytecode = match &contract.bytecode {
-        Bytecode::Rwasm(bytecode) => bytecode.clone(),
-        _ => unreachable!("revm: unexpected bytecode type"),
-    };
-    let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
+    let effective_bytecode_address = contract.effective_bytecode_address();
     let state = if is_create { STATE_DEPLOY } else { STATE_MAIN };
 
     let (exit_code, return_data, is_gas_free) = if is_system_precompile(&effective_bytecode_address)
@@ -184,14 +184,11 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         }
     };
 
-    // gas adjustment is needed
-    // to synchronize gas/fuel between root and self-gas management runtimes,
-    // this interruption can be made by EVM/SVM runtimes only
-    let is_gas_adjustment = inputs.syscall_params.code_hash == SYSCALL_ID_SYNC_EVM_GAS;
+
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
-    let mut gas = if inputs.is_gas_free && !is_gas_adjustment {
+    let mut gas = if inputs.is_gas_free {
         inputs.gas
     } else {
         result.gas

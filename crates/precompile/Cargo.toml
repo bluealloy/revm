@@ -118,10 +118,6 @@ secp256k1 = [
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
 
-e2e = [
-    "revm-primitives/e2e"
-]
-
 [[bench]]
 name = "bench"
 path = "benches/bench.rs"

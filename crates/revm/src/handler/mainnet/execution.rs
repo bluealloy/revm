@@ -50,13 +50,8 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     let is_create = frame.is_create();
     let interpreter = frame.interpreter_mut();
 
-    if let Bytecode::Rwasm(rwasm_bytecode) = &interpreter.contract.bytecode {
-        return execute_rwasm_frame::<SPEC, EXT, DB>(
-            interpreter,
-            rwasm_bytecode.clone(),
-            context,
-            is_create,
-        );
+    if let Bytecode::Rwasm(_) = &interpreter.contract.bytecode {
+        return execute_rwasm_frame::<SPEC, EXT, DB>(interpreter, context, is_create);
     }
 
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
