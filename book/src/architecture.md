@@ -35,8 +35,8 @@ And [`Context`](https://docs.rs/revm-context/latest/revm_context/context/struct.
 
 REVM provides four ways to execute transactions through traits (API):
 
-* `transact(tx)` and `replay()` are function of [`ExecuteEvm`](https://docs.rs/revm-handler/latest/revm_handler/evm/trait.ExecuteEvm.html) trait that allow execution transactions. They return the status of execution with reason, changed state and in case of failed execution an error.
-* `transact_commit(tx)` and `replay_commit()` are part of [`ExecuteCommitEvm`](https://docs.rs/revm-handler/latest/revm_handler/evm/trait.ExecuteCommitEvm.html) that internally commits the state diff to the database and returns status of execution. Database is required to support `DatabaseCommit` trait.
+* `transact(tx)` and `replay()` are function of [`ExecuteEvm`](https://docs.rs/revm-handler/latest/revm_handler/api/trait.ExecuteEvm.html) trait that allow execution transactions. They return the status of execution with reason, changed state and in case of failed execution an error.
+* `transact_commit(tx)` and `replay_commit()` are part of [`ExecuteCommitEvm`](https://docs.rs/revm-handler/latest/revm_handler/api/trait.ExecuteCommitEvm.html) that internally commits the state diff to the database and returns status of execution. Database is required to support `DatabaseCommit` trait.
 * `inspect()`, `inspect_replay(tx)` and a few others are part of [`InspectEvm`](https://docs.rs/revm-inspector/latest/revm_inspector/trait.InspectEvm.html) trait that allow execution with inspection. This is how tracers are called.
 * `inspect_commit()`,`inspect_replay_commit(tx)` are part of the [`InspectCommitEvm`](https://docs.rs/revm-inspector/latest/revm_inspector/trait.InspectCommitEvm.html) trait that extends `InspectEvm` to allow committing state diff after tracing.
 
