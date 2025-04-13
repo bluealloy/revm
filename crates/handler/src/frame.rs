@@ -42,7 +42,7 @@ pub trait Frame: Sized {
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
     fn init(
-        &self,
+        &mut self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
@@ -92,17 +92,18 @@ where
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        EthFrame::init_first(evm, frame_input)
+        let mut memory = SharedMemory::new();
+        memory.new_context();
+        Self::init_with_context(evm, 0, frame_input, memory)
     }
 
     fn init(
-        &self,
+        &mut self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         // Perform the initialization logic here
-        let mut memory = SharedMemory::new();
-        memory.new_context();
+        let memory = self.memory.new_context();
         EthFrame::init_with_context(evm, 0, frame_input, memory)
     }
 
@@ -539,24 +540,6 @@ where
     >,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
-    pub fn init_first(
-        evm: &mut EVM,
-        frame_input: FrameInput,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        let mut memory = SharedMemory::new();
-        memory.new_context();
-        Self::init_with_context(evm, 0, frame_input, memory)
-    }
-
-    fn _init(
-        &mut self,
-        evm: &mut EVM,
-        frame_init: FrameInput,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        self.memory.new_context();
-        Self::init_with_context(evm, self._depth + 1, frame_init, self.memory.clone())
-    }
-
     pub fn process_next_action(
         &mut self,
         evm: &mut EVM,

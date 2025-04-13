@@ -21,8 +21,7 @@ pub struct SharedMemory {
     /// Memory checkpoints for each depth.
     /// Invariant: these are always in bounds of `data`.
     my_checkpoint: usize,
-    /// The last checkpoint for the current context.
-    last_checkpoint: usize,
+    checkpoints: Vec<usize>,
     /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
@@ -118,7 +117,7 @@ impl SharedMemory {
         Self {
             buffer: Rc::new(RefCell::new(Vec::with_capacity(capacity))),
             my_checkpoint: 0,
-            last_checkpoint: 0,
+            checkpoints: Vec::new(),
             #[cfg(feature = "memory_limit")]
             memory_limit: u64::MAX,
         }
@@ -147,10 +146,22 @@ impl SharedMemory {
 
     /// Prepares the shared memory for a new context.
     #[inline]
-    pub fn new_context(self: &mut SharedMemory) {
-        self.buffer = self.buffer.clone();
-        self.last_checkpoint = self.my_checkpoint;
+    pub fn new_context(self: &mut SharedMemory) -> SharedMemory {
         self.my_checkpoint = self.buffer.borrow().len();
+        self.checkpoints.push(self.my_checkpoint);
+        #[cfg(feature = "memory_limit")]
+        {
+            if self.my_checkpoint as u64 > self.memory_limit {
+                panic!("Memory limit exceeded");
+            }
+        }
+        SharedMemory {
+            buffer: self.buffer.clone(),
+            my_checkpoint: self.buffer.borrow().len(),
+            checkpoints: self.checkpoints.clone(),
+            #[cfg(feature = "memory_limit")]
+            memory_limit: self.memory_limit,
+        }
     }
 
     /// Prepares the shared memory for returning to the previous context.
@@ -158,9 +169,9 @@ impl SharedMemory {
     pub fn free_context(self: &mut SharedMemory) {
         unsafe {
             self.buffer.borrow_mut().set_len(self.my_checkpoint);
-            self.my_checkpoint = self.last_checkpoint;
-            self.last_checkpoint = self.my_checkpoint - self.last_checkpoint
         }
+        self.checkpoints.pop();
+        self.my_checkpoint = *self.checkpoints.last().unwrap_or(&0);
     }
 
     /// Returns the length of the current memory range.
@@ -361,6 +372,8 @@ pub const fn num_words(len: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use primitives::bytes::BufMut;
+
     use super::*;
 
     #[test]
@@ -382,28 +395,51 @@ mod tests {
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 0);
-        assert_eq!(shared_memory.last_checkpoint, 0);
         assert_eq!(shared_memory.my_checkpoint, 0);
 
-        unsafe { shared_memory.buffer.borrow_mut().set_len(32) };
+        shared_memory.buffer.borrow_mut().put_slice(&[0_u8; 32]);
+        // unsafe { shared_memory.buffer.borrow_mut().set_len(32) };
         assert_eq!(shared_memory.len(), 32);
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 32);
-        assert_eq!(shared_memory.last_checkpoint, 0);
         assert_eq!(shared_memory.my_checkpoint, 32);
         assert_eq!(shared_memory.len(), 0);
 
-        unsafe { shared_memory.buffer.borrow_mut().set_len(96) };
+        shared_memory.buffer.borrow_mut().put_slice(&[0_u8; 64]);
+        // unsafe { shared_memory.buffer.borrow_mut().set_len(96) };
         assert_eq!(shared_memory.len(), 64);
         shared_memory.new_context();
 
         assert_eq!(shared_memory.buffer.borrow().len(), 96);
-        assert_eq!(shared_memory.last_checkpoint, 32);
         assert_eq!(shared_memory.my_checkpoint, 96);
         assert_eq!(shared_memory.len(), 0);
 
+        shared_memory.buffer.borrow_mut().put_slice(&[0_u8; 32]);
+        // unsafe { shared_memory.buffer.borrow_mut().set_len(128) };
+        shared_memory.new_context();
+        assert_eq!(shared_memory.buffer.borrow().len(), 128);
+        assert_eq!(shared_memory.my_checkpoint, 128);
+        assert_eq!(shared_memory.len(), 0);
+
+        shared_memory.buffer.borrow_mut().put_slice(&[0_u8; 128]);
+        // unsafe { shared_memory.buffer.borrow_mut().set_len(128) };
+        shared_memory.new_context();
+        assert_eq!(shared_memory.buffer.borrow().len(), 256);
+        assert_eq!(shared_memory.my_checkpoint, 256);
+        assert_eq!(shared_memory.len(), 0);
+
         // Free contexts
+        shared_memory.free_context();
+        assert_eq!(shared_memory.buffer.borrow().len(), 256);
+        assert_eq!(shared_memory.my_checkpoint, 128);
+        assert_eq!(shared_memory.len(), 128);
+
+        shared_memory.free_context();
+        assert_eq!(shared_memory.buffer.borrow().len(), 128);
+        assert_eq!(shared_memory.my_checkpoint, 96);
+        assert_eq!(shared_memory.len(), 32);
+
         shared_memory.free_context();
         assert_eq!(shared_memory.buffer.borrow().len(), 96);
         assert_eq!(shared_memory.my_checkpoint, 32);

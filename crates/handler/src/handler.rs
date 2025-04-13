@@ -323,7 +323,7 @@ pub trait Handler {
     #[inline]
     fn frame_init(
         &mut self,
-        frame: &Self::Frame,
+        frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
