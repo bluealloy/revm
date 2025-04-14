@@ -63,13 +63,11 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     /// Input data for the frame.
     pub input: FrameInput,
     /// Depth of the call frame.
-    _depth: usize,
+    depth: usize,
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
     pub interpreter: Interpreter<IW>,
-    // This is worth making as a generic type FrameSharedContext.
-    pub memory: SharedMemory,
 }
 
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
@@ -92,8 +90,7 @@ where
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        let mut memory = SharedMemory::new();
-        memory.new_context();
+        let memory = SharedMemory::new();
         Self::init_with_context(evm, 0, frame_input, memory)
     }
 
@@ -102,9 +99,9 @@ where
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        // Perform the initialization logic here
-        let memory = self.memory.new_context();
-        EthFrame::init_with_context(evm, 0, frame_input, memory)
+        // Create new context from shared memory.
+        let memory = self.interpreter.memory.new_child_context();
+        EthFrame::init_with_context(evm, self.depth + 1, frame_input, memory)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
@@ -130,19 +127,17 @@ where
     pub fn new(
         data: FrameData,
         input: FrameInput,
-        _depth: usize,
+        depth: usize,
         interpreter: Interpreter<IW>,
         checkpoint: JournalCheckpoint,
-        memory: SharedMemory,
     ) -> Self {
         Self {
             phantom: Default::default(),
             input,
             data,
-            _depth,
+            depth,
             interpreter,
             checkpoint,
-            memory,
         }
     }
 }
@@ -266,8 +261,6 @@ where
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
         }
-
-        let interpreter_memory = memory.clone();
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
@@ -276,7 +269,7 @@ where
             FrameInput::Call(inputs),
             depth,
             Interpreter::new(
-                interpreter_memory,
+                memory,
                 ExtBytecode::new_with_hash(bytecode, code_hash),
                 interpreter_input,
                 is_static,
@@ -285,7 +278,6 @@ where
                 gas_limit,
             ),
             checkpoint,
-            memory,
         )))
     }
 
@@ -378,13 +370,12 @@ where
         };
         let gas_limit = inputs.gas_limit;
 
-        let interpreter_memory = memory.clone();
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
             Interpreter::new(
-                interpreter_memory,
+                memory,
                 bytecode,
                 interpreter_input,
                 false,
@@ -393,7 +384,6 @@ where
                 gas_limit,
             ),
             checkpoint,
-            memory,
         )))
     }
 
@@ -495,13 +485,12 @@ where
         };
 
         let gas_limit = inputs.gas_limit;
-        let interpreter_memory = memory.clone();
         Ok(ItemOrResult::Item(Self::new(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             FrameInput::EOFCreate(inputs),
             depth,
             Interpreter::new(
-                interpreter_memory,
+                memory,
                 ExtBytecode::new(Bytecode::Eof(Arc::new(initcode))),
                 interpreter_input,
                 false,
@@ -510,7 +499,6 @@ where
                 gas_limit,
             ),
             checkpoint,
-            memory,
         )))
     }
 
@@ -608,7 +596,7 @@ where
     }
 
     fn return_result(&mut self, evm: &mut EVM, result: FrameResult) -> Result<(), ERROR> {
-        self.memory.free_context();
+        self.interpreter.memory.free_child_context();
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(ERROR::from_string(e)),
@@ -655,7 +643,8 @@ where
                         .control
                         .gas_mut()
                         .erase_cost(out_gas.remaining());
-                    self.memory
+                    interpreter
+                        .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 

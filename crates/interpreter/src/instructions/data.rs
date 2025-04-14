@@ -90,7 +90,7 @@ mod test {
     use std::sync::Arc;
 
     use super::*;
-    use crate::{host::DummyHost, instruction_table, MemoryGetter};
+    use crate::{host::DummyHost, instruction_table};
     use bytecode::opcode::{DATACOPY, DATALOAD, DATALOADN, DATASIZE};
 
     fn dummy_eof(code_bytes: Bytes) -> Bytecode {
@@ -181,7 +181,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.memory().context_memory().deref(),
+            interpreter.memory.context_memory().deref(),
             &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
@@ -192,7 +192,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.memory().context_memory().deref(),
+            interpreter.memory.context_memory().deref(),
             &bytes!("0005000000000000000000000000000000000000000000000000000000000001")
         );
 
@@ -203,7 +203,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.memory().context_memory().deref(),
+            interpreter.memory.context_memory().deref(),
             &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
@@ -214,7 +214,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.memory().context_memory().deref(),
+            interpreter.memory.context_memory().deref(),
             &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
     }
