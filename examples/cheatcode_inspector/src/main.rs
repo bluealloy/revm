@@ -6,7 +6,7 @@
 //! advanced cheatcode use-case.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
-use std::{convert::Infallible, fmt::Debug};
+use std::{cell::RefCell, convert::Infallible, fmt::Debug, rc::Rc};
 
 use revm::{
     context::{
@@ -503,6 +503,7 @@ where
         block: env.block,
         cfg: env.cfg,
         journaled_state: new_backend,
+        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         error: Ok(()),
     };
@@ -554,6 +555,7 @@ fn main() -> anyhow::Result<()> {
         block: env.block,
         cfg: env.cfg,
         journaled_state: backend,
+        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         error: Ok(()),
     };
