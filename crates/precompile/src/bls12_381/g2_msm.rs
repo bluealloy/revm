@@ -1,3 +1,4 @@
+//! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
 use super::crypto_backend::{encode_g2_point, p2_msm, read_g2, read_scalar};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{

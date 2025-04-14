@@ -1,11 +1,15 @@
+//! Hash precompiles, it contains SHA-256 and RIPEMD-160 hash precompiles
+//! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 use sha2::Digest;
 
+/// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(2), sha256_run);
 
+/// RIPEMD-160 precompile
 pub const RIPEMD160: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(3), ripemd160_run);
 

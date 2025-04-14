@@ -1,14 +1,21 @@
+//! Constants specifying the precompile addresses for each precompile in EIP-2537
+
 use crate::u64_to_address;
 use primitives::Address;
 
-// Constants specifying the precompile addresses for each precompile
-// in EIP-2537
+/// G1 add precompile address
 pub const G1_ADD_ADDRESS: Address = u64_to_address(0x0b);
+/// G1 msm precompile address
 pub const G1_MSM_ADDRESS: Address = u64_to_address(0x0c);
+/// G2 add precompile address
 pub const G2_ADD_ADDRESS: Address = u64_to_address(0x0d);
+/// G2 msm precompile address
 pub const G2_MSM_ADDRESS: Address = u64_to_address(0x0e);
+/// Pairing precompile address
 pub const PAIRING_ADDRESS: Address = u64_to_address(0x0f);
+/// Map fp to g1 precompile address
 pub const MAP_FP_TO_G1_ADDRESS: Address = u64_to_address(0x10);
+/// Map fp2 to g2 precompile address
 pub const MAP_FP2_TO_G2_ADDRESS: Address = u64_to_address(0x11);
 
 /// G1_ADD_BASE_GAS_FEE specifies the amount of gas needed
