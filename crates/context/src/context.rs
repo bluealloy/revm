@@ -1,3 +1,6 @@
+use core::cell::RefCell;
+use std::rc::Rc;
+
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv};
 use context_interface::{
     context::{ContextError, ContextSetters},
@@ -27,6 +30,8 @@ pub struct Context<
     pub journaled_state: JOURNAL,
     /// Inner context.
     pub chain: CHAIN,
+    /// Interpreter shared memory buffer.
+    pub memory_buffer: Rc<RefCell<Vec<u8>>>,
     /// Error that happened during execution.
     pub error: Result<(), ContextError<DB::Error>>,
 }
@@ -79,6 +84,10 @@ impl<
         &mut self.chain
     }
 
+    fn memory_buffer(&mut self) -> &Rc<RefCell<Vec<u8>>> {
+        &self.memory_buffer
+    }
+
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
@@ -127,6 +136,8 @@ impl<
                 ..Default::default()
             },
             journaled_state,
+            // TODO use constants.
+            memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
             chain: Default::default(),
             error: Ok(()),
         }
@@ -151,6 +162,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: journal,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }
@@ -171,6 +183,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }
@@ -189,6 +202,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }
@@ -201,6 +215,7 @@ where
             block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }
@@ -215,6 +230,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }
@@ -227,6 +243,7 @@ where
             block: self.block,
             cfg: self.cfg,
             journaled_state: self.journaled_state,
+            memory_buffer: self.memory_buffer,
             chain,
             error: Ok(()),
         }
@@ -243,6 +260,7 @@ where
             block: self.block,
             cfg,
             journaled_state: self.journaled_state,
+            memory_buffer: self.memory_buffer,
             chain: self.chain,
             error: Ok(()),
         }

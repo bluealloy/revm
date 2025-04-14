@@ -464,6 +464,9 @@ pub trait Handler {
 
         // Clear journal
         evm.ctx().journal().clear();
+        unsafe {
+            evm.ctx().memory_buffer().borrow_mut().set_len(0);
+        }
         Ok(output)
     }
 
@@ -479,6 +482,9 @@ pub trait Handler {
     ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
         // Clean up journal state if error occurs
         evm.ctx().journal().clear();
+        unsafe {
+            evm.ctx().memory_buffer().borrow_mut().set_len(0);
+        }
         Err(error)
     }
 }

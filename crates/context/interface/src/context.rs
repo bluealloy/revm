@@ -2,7 +2,8 @@ pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
 use primitives::U256;
-use std::string::String;
+use core::cell::RefCell;
+use std::{rc::Rc, string::String};
 
 /// Trait that defines the context of the EVM execution.
 ///
@@ -40,6 +41,8 @@ pub trait ContextTr {
     fn db_ref(&self) -> &Self::Db;
     /// Get the chain
     fn chain(&mut self) -> &mut Self::Chain;
+    /// Interpreter shared memory buffer. A reused memory buffer for calls.
+    fn memory_buffer(&mut self) -> &Rc<RefCell<Vec<u8>>>;
     /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     /// Get the transaction and journal. It is used to efficiently load access list

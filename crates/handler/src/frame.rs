@@ -90,7 +90,7 @@ where
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        let memory = SharedMemory::new();
+        let memory = SharedMemory::new_with_buffer(evm.ctx().memory_buffer().clone());
         Self::init_with_context(evm, 0, frame_input, memory)
     }
 

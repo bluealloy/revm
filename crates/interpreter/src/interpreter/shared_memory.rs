@@ -80,6 +80,17 @@ impl SharedMemory {
         Self::with_capacity(4 * 1024) // from evmone
     }
 
+    /// Creates a new memory instance with a given shared buffer.
+    pub fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
+        Self {
+            buffer,
+            my_checkpoint: 0,
+            child_checkpoint: None,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: u64::MAX,
+        }
+    }
+
     /// Creates a new memory instance that can be shared between calls with the given `capacity`.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
@@ -435,7 +446,7 @@ mod tests {
         assert_eq!(sm2.len(), 96);
         assert_eq!(sm2.buffer.borrow().get(32..128), Some(&[0_u8; 96] as &[u8]));
 
-        sm2.free_child_context();
+        sm1.free_child_context();
         assert_eq!(sm1.buffer.borrow().len(), 32);
         assert_eq!(sm1.len(), 32);
         assert_eq!(sm1.buffer.borrow().get(0..32), Some(&[0_u8; 32] as &[u8]));
