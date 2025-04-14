@@ -43,14 +43,12 @@ alloy-transport = { workspace = true, optional = true }
 serde_json = { workspace = true, features = ["alloc"] }
 anyhow.workspace = true
 rstest.workspace = true
-alloy-sol-types.workspace = true
 
 [features]
 default = ["std"]
 std = [
 	"serde?/std",
 	"alloy-eips?/std",
-	"alloy-sol-types/std",
 	"bytecode/std",
 	"database-interface/std",
 	"primitives/std",
