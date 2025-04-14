@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [18.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v18.0.0...revm-interpreter-v18.0.1) - 2025-04-14
+
+### Fixed
+
+- skip account list for legacy ([#2400](https://github.com/bluealloy/revm/pull/2400))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v17.0.0...revm-interpreter-v18.0.0) - 2025-04-09
 
 ### Added

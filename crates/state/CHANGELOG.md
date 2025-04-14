@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1](https://github.com/bluealloy/revm/compare/revm-state-v3.0.0...revm-state-v3.0.1) - 2025-04-14
+
+### Other
+
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-state-v2.0.0...revm-state-v3.0.0) - 2025-04-09
 
 ### Added
