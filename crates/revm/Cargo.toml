@@ -29,6 +29,7 @@ revm-precompile = { path = "../precompile", version = "16.0.0", default-features
 # fluentbase
 fluentbase-sdk = { workspace = true }
 fluentbase-runtime = { workspace = true }
+fluentbase-genesis = { workspace = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -80,6 +81,7 @@ default = [
     "secp256k1",
     "portable",
     "blst",
+    "wasmtime"
 ]
 std = [
     "serde?/std",
@@ -160,6 +162,9 @@ debug-print = [
     "revm-interpreter/debug-print",
     "fluentbase-runtime/debug-print",
 ]
+wasmtime = [
+    "fluentbase-runtime/wasmtime"
+]
 
 [[example]]
 name = "fork_ref_transact"
@@ -185,3 +190,4 @@ required-features = ["std", "serde-json"]
 name = "bench"
 path = "benches/bench.rs"
 harness = false
+

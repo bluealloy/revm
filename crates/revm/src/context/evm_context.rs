@@ -37,11 +37,8 @@ use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use fluentbase_sdk::{
-    compile_wasm_to_rwasm,
-    try_resolve_precompile_account_from_input,
-    PRECOMPILE_EVM_RUNTIME,
-};
+use fluentbase_genesis::try_resolve_precompile_account_from_input;
+use fluentbase_sdk::{compile_wasm_to_rwasm, PRECOMPILE_EVM_RUNTIME};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};

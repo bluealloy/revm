@@ -35,11 +35,11 @@ use crate::{
     FrameResult,
 };
 use core::cmp::min;
+use fluentbase_genesis::is_system_precompile;
 use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
     calc_preimage_address,
     is_protected_storage_slot,
-    is_system_precompile,
     keccak256,
     EVM_BASE_SPEC,
     FUEL_DENOM_RATE,
