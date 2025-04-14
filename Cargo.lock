@@ -3763,7 +3763,6 @@ version = "3.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
- "alloy-sol-types",
  "alloy-transport",
  "anyhow",
  "revm-bytecode",
@@ -3780,7 +3779,6 @@ dependencies = [
 name = "revm-database-interface"
 version = "3.0.0"
 dependencies = [
- "alloy-sol-types",
  "anyhow",
  "auto_impl",
  "revm-primitives",
