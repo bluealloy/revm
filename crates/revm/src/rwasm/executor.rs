@@ -11,8 +11,10 @@ use crate::{
     Context,
     Database,
 };
-use core::{mem::take, ops::Deref};
-use fluentbase_genesis::is_system_precompile;
+use core::{
+    mem::{replace, take},
+    ops::Deref,
+};
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -32,10 +34,11 @@ use fluentbase_sdk::{
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{return_ok, return_revert, Contract};
+use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter: &mut Interpreter,
+    return_shared_memory: &mut SharedMemory,
     context: &mut Context<EXT, DB>,
     is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
@@ -80,75 +83,51 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let effective_bytecode_address = contract.effective_bytecode_address();
-    let state = if is_create { STATE_DEPLOY } else { STATE_MAIN };
+    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
 
-    let (exit_code, return_data, is_gas_free) = if is_system_precompile(&effective_bytecode_address)
-    {
-        #[cfg(not(feature = "disable-wasmtime"))]
-        let result = {
-            let wasm_bytecode =
-                fluentbase_genesis::get_precompile_wasm_bytecode(&effective_bytecode_address)
-                    .unwrap();
-            let (exit_code, return_data) = fluentbase_runtime::execute_wasmtime(
-                wasm_bytecode,
-                context_input,
-                fuel_limit,
-                state,
-            );
-            (exit_code, return_data, true)
-        };
-        #[cfg(feature = "disable-wasmtime")]
-        let result = {
-            let mut runtime_context = RuntimeContext::root(fuel_limit);
-            runtime_context = runtime_context.without_fuel();
-            let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
-                &mut runtime_context,
-                bytecode_hash,
-                &context_input,
-                fuel_limit,
-                state,
-            );
-            debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
-            let return_data = runtime_context.into_return_data();
-            (exit_code, return_data, true)
-        };
-        result
-    } else {
-        let mut runtime_context = RuntimeContext::root(fuel_limit);
-        let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
-            &mut runtime_context,
-            bytecode_hash,
-            &context_input,
-            fuel_limit,
-            state,
-        );
-        let return_data = runtime_context.into_return_data();
-        if !interpreter.gas.record_denominated_cost(fuel_consumed) {
-            return Ok(InterpreterAction::Return {
-                result: InterpreterResult {
-                    result: InstructionResult::OutOfGas,
-                    output: Bytes::default(),
-                    gas: interpreter.gas,
-                },
-            });
-        }
-        interpreter.gas.record_denominated_refund(fuel_refunded);
-        (exit_code, return_data, false)
-    };
+    // execute function
+    let mut runtime_context = RuntimeContext::root(fuel_limit).with_shared_memory(shared_memory);
+
+    let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
+        &mut runtime_context,
+        bytecode_hash,
+        &context_input,
+        fuel_limit,
+        if is_create { STATE_DEPLOY } else { STATE_MAIN },
+    );
+
+    // make sure we have enough gas to charge from the call
+    if !interpreter.gas.record_denominated_cost(fuel_consumed) {
+        return Ok(InterpreterAction::Return {
+            result: InterpreterResult {
+                result: InstructionResult::OutOfGas,
+                output: Bytes::default(),
+                gas: interpreter.gas,
+            },
+        });
+    }
+    interpreter.gas.record_denominated_refund(fuel_refunded);
+
+    // extract return data from the execution context
+    let (return_data, shared_memory) = runtime_context.into_return_data();
+
+    *return_shared_memory = shared_memory;
 
     Ok(process_exec_result(
         contract,
         exit_code,
         interpreter.gas,
-        return_data.into(),
+        return_data,
         is_create,
         interpreter.is_static,
-        is_gas_free,
+        false,
     ))
 }
 
-pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAction {
+pub fn execute_rwasm_resume(
+    return_shared_memory: &mut SharedMemory,
+    outcome: SystemInterruptionOutcome,
+) -> InterpreterAction {
     let SystemInterruptionOutcome {
         inputs,
         result,
@@ -184,7 +163,25 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         }
     };
 
+    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
 
+    let mut runtime_context = RuntimeContext::root(0).with_shared_memory(shared_memory);
+    if inputs.is_gas_free {
+        runtime_context = runtime_context.without_fuel();
+    }
+    let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
+        &mut runtime_context,
+        inputs.call_id,
+        result.output.into(),
+        exit_code.into_i32(),
+        fuel_consumed,
+        fuel_refunded,
+        inputs.syscall_params.fuel16_ptr,
+    );
+
+    let (return_data, shared_memory) = runtime_context.into_return_data();
+
+    *return_shared_memory = shared_memory;
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
@@ -194,70 +191,24 @@ pub fn execute_rwasm_resume(outcome: SystemInterruptionOutcome) -> InterpreterAc
         result.gas
     };
 
-    let (exit_code, return_data) = if inputs.is_gas_free {
-        #[cfg(not(feature = "disable-wasmtime"))]
-        let result = {
-            let (exit_code, return_data) = fluentbase_runtime::resume_wasmtime(
-                inputs.call_id as i32,
-                result.output.into(),
-                exit_code.into_i32(),
-                fuel_consumed,
-                fuel_refunded,
-                inputs.syscall_params.fuel16_ptr,
-            );
-            (exit_code, return_data)
+    // make sure we have enough gas to charge from the call
+    if !gas.record_denominated_cost(fuel_consumed) {
+        return InterpreterAction::Return {
+            result: InterpreterResult {
+                result: InstructionResult::OutOfGas,
+                output: Bytes::default(),
+                gas,
+            },
         };
-        #[cfg(feature = "disable-wasmtime")]
-        let result = {
-            let mut runtime_context = RuntimeContext::root(0);
-            runtime_context = runtime_context.without_fuel();
-            let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
-                &mut runtime_context,
-                inputs.call_id,
-                result.output.into(),
-                exit_code.into_i32(),
-                fuel_consumed,
-                fuel_refunded,
-                inputs.syscall_params.fuel16_ptr,
-            );
-            debug_assert!(fuel_consumed == 0 && fuel_refunded == 0);
-            let return_data = runtime_context.into_return_data();
-            (exit_code, return_data)
-        };
-        result
-    } else {
-        let mut runtime_context = RuntimeContext::root(0);
-        let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
-            &mut runtime_context,
-            inputs.call_id,
-            result.output.into(),
-            exit_code.into_i32(),
-            fuel_consumed,
-            fuel_refunded,
-            inputs.syscall_params.fuel16_ptr,
-        );
-        // make sure we have enough gas to charge from the call
-        if !gas.record_denominated_cost(fuel_consumed) {
-            return InterpreterAction::Return {
-                result: InterpreterResult {
-                    result: InstructionResult::OutOfGas,
-                    output: Bytes::default(),
-                    gas,
-                },
-            };
-        }
-        // accumulate refunds (can be forwarded from an interrupted call)
-        gas.record_denominated_refund(fuel_refunded);
-
-        let return_data = runtime_context.into_return_data();
-        (exit_code, return_data)
-    };
+    }
+    // accumulate refunds (can be forwarded from an interrupted call)
+    gas.record_denominated_refund(fuel_refunded);
 
     process_exec_result(
         inputs.contract,
         exit_code,
         gas,
-        return_data.into(),
+        return_data,
         inputs.is_create,
         inputs.is_static,
         inputs.is_gas_free,
