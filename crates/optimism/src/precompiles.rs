@@ -301,7 +301,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_G1_MSM_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = run_g1_msm(&Bytes::from(input), 260_000);
+        let res = run_g1_msm(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
@@ -312,7 +312,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_G2_MSM_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = run_g2_msm(&Bytes::from(input), 260_000);
+        let res = run_g2_msm(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
@@ -323,7 +323,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_PAIRING_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = bls12_381::run_pair(&Bytes::from(input), 260_000);
+        let res = bls12_381::run_pair(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
