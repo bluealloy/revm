@@ -12,7 +12,6 @@ pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
-// pub use shared_memory::EMPTY_SHARED_MEMORY;
 pub use stack::{Stack, STACK_LIMIT};
 pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 

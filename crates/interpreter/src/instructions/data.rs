@@ -85,7 +85,6 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 #[cfg(test)]
 mod test {
     use bytecode::{Bytecode, Eof};
-    use core::ops::Deref;
     use primitives::{b256, bytes, Bytes};
     use std::sync::Arc;
 
@@ -181,8 +180,8 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.context_memory().deref(),
-            &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
+            *interpreter.memory.context_memory(),
+            bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Padding)
@@ -192,8 +191,8 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.context_memory().deref(),
-            &bytes!("0005000000000000000000000000000000000000000000000000000000000001")
+            *interpreter.memory.context_memory(),
+            bytes!("0005000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Out of bounds)
@@ -203,8 +202,8 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.context_memory().deref(),
-            &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
+            *interpreter.memory.context_memory(),
+            bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Size == 0)
@@ -214,8 +213,8 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         interpreter.step(&table, &mut host);
         assert_eq!(
-            interpreter.memory.context_memory().deref(),
-            &bytes!("0000000000000000000000000000000000000000000000000000000000000001")
+            *interpreter.memory.context_memory(),
+            bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
     }
 }

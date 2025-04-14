@@ -2,7 +2,7 @@ use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,
     fmt,
-    ops::{Deref, Range},
+    ops::Range,
 };
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
@@ -22,31 +22,17 @@ pub struct SharedMemory {
     /// Invariant: these are always in bounds of `data`.
     my_checkpoint: usize,
     /// Child checkpoint that we need to free context to.
-    child_checkpoint: usize,
+    child_checkpoint: Option<usize>,
     /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }
 
-// /// Empty shared memory.
-// ///
-// /// Used as placeholder inside Interpreter when it is not running.
-// pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
-//     buffer: Rc::new(RefCell::new(Vec::new())),
-//     checkpoints: Vec::new(),
-//     my_checkpoint: 0,
-//     #[cfg(feature = "memory_limit")]
-//     memory_limit: u64::MAX,
-// };
-
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")
             .field("current_len", &self.len())
-            .field(
-                "context_memory",
-                &hex::encode(self.context_memory().deref()),
-            )
+            .field("context_memory", &hex::encode(&*self.context_memory()))
             .finish_non_exhaustive()
     }
 }
@@ -100,7 +86,7 @@ impl SharedMemory {
         Self {
             buffer: Rc::new(RefCell::new(Vec::with_capacity(capacity))),
             my_checkpoint: 0,
-            child_checkpoint: 0,
+            child_checkpoint: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: u64::MAX,
         }
@@ -128,24 +114,39 @@ impl SharedMemory {
     }
 
     /// Prepares the shared memory for a new child context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if this function was already called without freeing child context.
     #[inline]
     pub fn new_child_context(&mut self) -> SharedMemory {
-        self.child_checkpoint = self.buffer.borrow().len();
+        if self.child_checkpoint.is_some() {
+            panic!("new_child_context was already called without freeing child context");
+        }
+        let new_checkpoint = self.buffer.borrow().len();
+        self.child_checkpoint = Some(new_checkpoint);
         SharedMemory {
             buffer: self.buffer.clone(),
-            my_checkpoint: self.child_checkpoint,
+            my_checkpoint: new_checkpoint,
             // child_checkpoint is same as my_checkpoint
-            child_checkpoint: self.child_checkpoint,
+            child_checkpoint: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
         }
     }
 
     /// Prepares the shared memory for returning from child context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `new_child_context` was not called before.
     #[inline]
     pub fn free_child_context(&mut self) {
+        let Some(child_checkpoint) = self.child_checkpoint.take() else {
+            panic!("free_child_context was called without new_child_context");
+        };
         unsafe {
-            self.buffer.borrow_mut().set_len(self.child_checkpoint);
+            self.buffer.borrow_mut().set_len(child_checkpoint);
         }
     }
 
@@ -190,7 +191,10 @@ impl SharedMemory {
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
         let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
         Ref::map(buffer, |b| {
-            &b[self.my_checkpoint..][range] // Map the borrow to the desired slice
+            match b.get(range.start + self.my_checkpoint..range.end + self.my_checkpoint) {
+                Some(slice) => slice,
+                None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+            }
         })
     }
 
@@ -202,10 +206,12 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
-        let end = offset + size;
         let buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
         RefMut::map(buffer, |b| {
-            &mut b[self.my_checkpoint..][offset..end] // Map the mutable borrow to the desired slice
+            match b.get_mut(self.my_checkpoint + offset..self.my_checkpoint + offset + size) {
+                Some(slice) => slice,
+                None => debug_unreachable!("slice OOB: {offset}..{}", offset + size),
+            }
         })
     }
 
@@ -226,7 +232,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
-        self.slice_len(offset, 32).deref().try_into().unwrap()
+        (*self.slice_len(offset, 32)).try_into().unwrap()
     }
 
     /// Returns a U256 of the memory region at the given offset.
@@ -327,14 +333,20 @@ impl SharedMemory {
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
         let buffer = self.buffer.borrow();
-        Ref::map(buffer, |b| &b[self.my_checkpoint..])
+        Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
+            Some(slice) => slice,
+            None => debug_unreachable!("Context memory should be always valid"),
+        })
     }
 
     /// Returns a mutable reference to the memory of the current context.
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
         let buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
-        RefMut::map(buffer, |b| &mut b[self.my_checkpoint..]) // Map the mutable borrow to the slice
+        RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
+            Some(slice) => slice,
+            None => debug_unreachable!("Context memory should be always valid"),
+        })
     }
 }
 

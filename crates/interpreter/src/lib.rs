@@ -27,7 +27,6 @@ pub use gas::{Gas, InitialAndFloorGas};
 pub use host::Host;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
-// pub use interpreter::EMPTY_SHARED_MEMORY;
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
 };
