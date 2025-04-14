@@ -203,8 +203,16 @@ pub mod bls12_381 {
 
 #[cfg(test)]
 mod tests {
+    use crate::precompiles::bls12_381::{
+        run_g1_msm, run_g2_msm, ISTHMUS_G1_MSM_MAX_INPUT_SIZE, ISTHMUS_G2_MSM_MAX_INPUT_SIZE,
+        ISTHMUS_PAIRING_MAX_INPUT_SIZE,
+    };
+
     use super::*;
-    use revm::{precompile::PrecompileError, primitives::hex};
+    use revm::{
+        precompile::PrecompileError,
+        primitives::{hex, Bytes},
+    };
     use std::vec;
 
     #[test]
@@ -286,5 +294,39 @@ mod tests {
 
         let intersection = default.intersection(latest);
         assert_eq!(intersection.len(), latest.len())
+    }
+
+    #[test]
+    fn test_g1_isthmus_max_size() {
+        let oversized_input = vec![0u8; ISTHMUS_G1_MSM_MAX_INPUT_SIZE + 1];
+        let input = Bytes::from(oversized_input);
+
+        let res = run_g1_msm(&Bytes::from(input), 260_000);
+
+        assert!(
+            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+        );
+    }
+    #[test]
+    fn test_g2_isthmus_max_size() {
+        let oversized_input = vec![0u8; ISTHMUS_G2_MSM_MAX_INPUT_SIZE + 1];
+        let input = Bytes::from(oversized_input);
+
+        let res = run_g2_msm(&Bytes::from(input), 260_000);
+
+        assert!(
+            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+        );
+    }
+    #[test]
+    fn test_pair_isthmus_max_size() {
+        let oversized_input = vec![0u8; ISTHMUS_PAIRING_MAX_INPUT_SIZE + 1];
+        let input = Bytes::from(oversized_input);
+
+        let res = bls12_381::run_pair(&Bytes::from(input), 260_000);
+
+        assert!(
+            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+        );
     }
 }
