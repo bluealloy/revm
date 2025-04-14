@@ -78,6 +78,15 @@ impl LegacyAnalyzedBytecode {
             panic!("last bytecode byte should be STOP (0x00)");
         }
 
+        if bytecode.len() <= 33 {
+            panic!("bytecode length must greater than 33");
+        }
+
+        let last_33_bytes = &bytecode[bytecode.len() - 33..];
+        if !last_33_bytes.iter().all(|&byte| byte == 0) {
+            panic!("last 33 bytes must be zero");
+        }
+
         Self {
             bytecode,
             original_len,
@@ -115,7 +124,7 @@ impl LegacyAnalyzedBytecode {
 
 #[cfg(test)]
 mod tests {
-    use crate::{opcode, LegacyRawBytecode};
+    use crate::{legacy::analyze_legacy, opcode, LegacyRawBytecode};
 
     use super::*;
 
@@ -128,6 +137,25 @@ mod tests {
             bytecode.original_len,
             bytecode.jump_table,
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "bytecode length must greater than 33")]
+    fn test_panic_on_bytecode_length_less_than_33() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01, 0x00]);
+        let jump_table = analyze_legacy(&bytecode);
+        let _ = LegacyAnalyzedBytecode::new(bytecode, 3, jump_table);
+    }
+
+    #[test]
+    #[should_panic(expected = "last 33 bytes must be zero")]
+    fn test_panic_on_last_33_bytes_not_zero() {
+        let mut bytecode = [0x00; 40].to_vec();
+        bytecode[37] = 0x01;
+
+        let bytecode = Bytes::from(bytecode);
+        let jump_table = analyze_legacy(&bytecode);
+        let _ = LegacyAnalyzedBytecode::new(bytecode, 40, jump_table);
     }
 
     #[test]
