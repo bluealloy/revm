@@ -149,7 +149,7 @@ pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: 
 }
 
 /// Calculate gas cost according to EIP 2565:
-/// https://eips.ethereum.org/EIPS/eip-2565
+/// <https://eips.ethereum.org/EIPS/eip-2565>
 pub fn berlin_gas_calc(
     base_length: u64,
     exp_length: u64,
