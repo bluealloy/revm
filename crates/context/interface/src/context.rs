@@ -3,7 +3,7 @@ use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
 use core::cell::RefCell;
 use primitives::U256;
-use std::{rc::Rc, string::String};
+use std::{rc::Rc, string::String, vec::Vec};
 
 /// Trait that defines the context of the EVM execution.
 ///
