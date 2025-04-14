@@ -15,13 +15,13 @@ use core::{
     mem::{replace, take},
     ops::Deref,
 };
+use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
 };
 use fluentbase_sdk::{
     codec::CompactABI,
-    is_self_gas_management_contract,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
@@ -84,6 +84,12 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
+    let is_gas_free = contract
+        .eip7702_address
+        .or_else(|| Some(bytecode_address))
+        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
+        .is_some();
+
     let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
 
     // execute function
@@ -124,7 +130,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         return_data,
         is_create,
         interpreter.is_static,
-        false,
+        is_gas_free,
     ))
 }
 

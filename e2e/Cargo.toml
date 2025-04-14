@@ -36,12 +36,11 @@ k256 = { version = "0.13.3", features = ["ecdsa"] }
 [features]
 default = [
     #    "debug-print",
-    #    "disable-wasmtime"
 ]
 debug-print = [
     "revm/debug-print",
 ]
-disable-wasmtime = [
-    "revm/disable-wasmtime",
+wasmtime = [
+    "revm/wasmtime",
 ]
 

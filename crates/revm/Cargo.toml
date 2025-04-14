@@ -81,6 +81,7 @@ default = [
     "secp256k1",
     "portable",
     "blst",
+    "wasmtime"
 ]
 std = [
     "serde?/std",
@@ -161,7 +162,9 @@ debug-print = [
     "revm-interpreter/debug-print",
     "fluentbase-runtime/debug-print",
 ]
-disable-wasmtime = []
+wasmtime = [
+    "fluentbase-runtime/wasmtime"
+]
 
 [[example]]
 name = "fork_ref_transact"
