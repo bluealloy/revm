@@ -33,7 +33,6 @@ pub struct Contract {
     pub eip7702_address: Option<Address>,
 }
 
-
 impl Contract {
     /// Instantiates a new contract by analyzing the given bytecode.
     #[inline]
