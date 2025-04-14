@@ -21,6 +21,7 @@ use fluentbase_runtime::{
 };
 use fluentbase_sdk::{
     codec::CompactABI,
+    is_self_gas_management_contract,
     BlockContextV1,
     BytecodeOrHash,
     ContractContextV1,
@@ -87,6 +88,9 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     // execute function
     let mut runtime_context = RuntimeContext::root(fuel_limit).with_shared_memory(shared_memory);
+    if is_gas_free {
+        runtime_context = runtime_context.without_fuel();
+    }
 
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
         &mut runtime_context,

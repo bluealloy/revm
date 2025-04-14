@@ -102,7 +102,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let mut shared_memory =
             SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
+        let mut shared_memory = SharedMemory::with_capacity(256 * 1024);
 
         shared_memory.new_context();
 
