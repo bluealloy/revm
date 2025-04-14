@@ -1,7 +1,7 @@
 [package]
 name = "revm-primitives"
 description = "Revm primitives types"
-version = "17.0.0"
+version = "18.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -13,13 +13,8 @@ readme.workspace = true
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unreachable_pub = "warn"
-unused_must_use = "deny"
-rust_2018_idioms = "deny"
-
-[lints.rustdoc]
-all = "warn"
+[lints]
+workspace = true
 
 [dependencies]
 # alloy
@@ -34,10 +29,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = [
-	"alloy-primitives/std",
-	"serde?/std"
-]
+std = ["alloy-primitives/std", "serde?/std"]
 serde = ["dep:serde", "alloy-primitives/serde"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]

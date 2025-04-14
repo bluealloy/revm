@@ -39,34 +39,34 @@ default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
-revm = { path = "crates/revm", version = "21.0.0", default-features = false }
-primitives = { path = "crates/primitives", package = "revm-primitives", version = "17.0.0", default-features = false }
-bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "2.0.0", default-features = false }
-database = { path = "crates/database", package = "revm-database", version = "2.0.0", default-features = false }
-database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "2.0.0", default-features = false }
-state = { path = "crates/state", package = "revm-state", version = "2.0.0", default-features = false }
-interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "17.0.0", default-features = false }
-inspector = { path = "crates/inspector", package = "revm-inspector", version = "2.0.0", default-features = false }
-precompile = { path = "crates/precompile", package = "revm-precompile", version = "18.0.0", default-features = false }
-statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "2.0.0", default-features = false }
-context = { path = "crates/context", package = "revm-context", version = "2.0.0", default-features = false }
-context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "2.0.0", default-features = false }
-handler = { path = "crates/handler", package = "revm-handler", version = "2.0.0", default-features = false }
+revm = { path = "crates/revm", version = "22.0.0", default-features = false }
+primitives = { path = "crates/primitives", package = "revm-primitives", version = "18.0.0", default-features = false }
+bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "3.0.0", default-features = false }
+database = { path = "crates/database", package = "revm-database", version = "3.0.0", default-features = false }
+database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "3.0.0", default-features = false }
+state = { path = "crates/state", package = "revm-state", version = "3.0.0", default-features = false }
+interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "18.0.0", default-features = false }
+inspector = { path = "crates/inspector", package = "revm-inspector", version = "3.0.0", default-features = false }
+precompile = { path = "crates/precompile", package = "revm-precompile", version = "19.0.0", default-features = false }
+statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "3.0.0", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "3.0.0", default-features = false }
+context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "3.0.0", default-features = false }
+handler = { path = "crates/handler", package = "revm-handler", version = "3.0.0", default-features = false }
 
 # alloy 
-alloy-eip2930 = { version = "0.1.0", default-features = false }
-alloy-eip7702 = { version = "0.5.0", default-features = false }
-alloy-primitives = { version = "0.8", default-features = false }
+alloy-eip2930 = { version = "0.2.0", default-features = false }
+alloy-eip7702 = { version = "0.6.0", default-features = false }
+alloy-primitives = { version = "1.0", default-features = false }
 
 # alloy in examples, revme or feature flagged.
 alloy-rlp = { version = "0.3", default-features = false }
-alloy-sol-types = { version = "0.8.2", default-features = false }
-alloy-consensus = { version = "0.13.0", default-features = false }
-alloy-eips = { version = "0.13.0", default-features = false }
-alloy-provider = { version = "0.13.0", default-features = false }
-alloy-signer = { version = "0.13.0", default-features = false }
-alloy-signer-local = { version = "0.13.0", default-features = false }
-alloy-transport = { version = "0.13.0", default-features = false }
+alloy-sol-types = { version = "1.0.0", default-features = false }
+alloy-consensus = { version = "0.14.0", default-features = false }
+alloy-eips = { version = "0.14.0", default-features = false }
+alloy-provider = { version = "0.14.0", default-features = false }
+alloy-signer = { version = "0.14.0", default-features = false }
+alloy-signer-local = { version = "0.14.0", default-features = false }
+alloy-transport = { version = "0.14.0", default-features = false }
 
 # precompiles
 ark-bls12-381 = { version = "0.5", default-features = false }
@@ -107,7 +107,7 @@ derive-where = { version = "1.2.7", default-features = false }
 enumn = "0.1"
 once_cell = { version = "1.19", default-features = false }
 rand = "0.8"
-tokio = "1.40"
+tokio = "1.44"
 
 # dev-dependencies
 anyhow = "1.0.89"
@@ -132,6 +132,14 @@ repository = "https://github.com/bluealloy/revm"
 documentation = "https://bluealloy.github.io/revm/"
 homepage = ""
 edition = "2021"
+
+[workspace.lints]
+rust.missing_debug_implementations = "warn"
+rust.missing_docs = "warn"
+rust.rust_2018_idioms = { level = "deny", priority = -1 }
+rust.unreachable_pub = "warn"
+rust.unused_must_use = "deny"
+rustdoc.all = "warn"
 
 [workspace.metadata.docs.rs]
 all-features = true

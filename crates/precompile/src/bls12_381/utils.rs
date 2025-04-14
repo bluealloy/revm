@@ -1,3 +1,4 @@
+//! BLS12-381 utilities for padding and unpadding of input.
 use crate::bls12_381_const::{
     FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
 };

@@ -1,3 +1,4 @@
+//! Utility function that precompiles use, padding and converting between types.
 use primitives::{b256, Bytes, B256};
 use std::borrow::Cow;
 

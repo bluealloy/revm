@@ -1,3 +1,4 @@
+//! BN128 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
@@ -20,49 +21,72 @@ cfg_if::cfg_if! {
     }
 }
 
+/// Bn128 add precompile
 pub mod add {
     use super::*;
 
-    const ADDRESS: Address = crate::u64_to_address(6);
+    /// Bn128 add precompile address
+    pub const ADDRESS: Address = crate::u64_to_address(6);
 
+    /// Bn128 add precompile with ISTANBUL gas rules
     pub const ISTANBUL_ADD_GAS_COST: u64 = 150;
+
+    /// Bn128 add precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
         });
 
+    /// Bn128 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
+
+    /// Bn128 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
         });
 }
 
+/// Bn128 mul precompile
 pub mod mul {
     use super::*;
 
-    const ADDRESS: Address = crate::u64_to_address(7);
+    /// Bn128 mul precompile address
+    pub const ADDRESS: Address = crate::u64_to_address(7);
 
+    /// Bn128 mul precompile with ISTANBUL gas rules
     pub const ISTANBUL_MUL_GAS_COST: u64 = 6_000;
+
+    /// Bn128 mul precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
         });
 
+    /// Bn128 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;
+
+    /// Bn128 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
         });
 }
 
+/// Bn128 pair precompile
 pub mod pair {
     use super::*;
 
+    /// Bn128 pair precompile address
     pub const ADDRESS: Address = crate::u64_to_address(8);
 
+    /// Bn128 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
+
+    /// Bn128 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL_PAIR_BASE: u64 = 45_000;
+
+    /// Bn128 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_pair(
@@ -73,8 +97,13 @@ pub mod pair {
             )
         });
 
+    /// Bn128 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
+
+    /// Bn128 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_PAIR_BASE: u64 = 100_000;
+
+    /// Bn128 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_pair(
@@ -125,6 +154,7 @@ pub const MUL_INPUT_LEN: usize = G1_LEN + SCALAR_LEN;
 /// (128 bytes).
 pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 
+/// Run the Bn128 add precompile
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -141,6 +171,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
+/// Run the Bn128 mul precompile
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -158,6 +189,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
+/// Run the Bn128 pair precompile
 pub fn run_pair(
     input: &[u8],
     pair_per_point_cost: u64,

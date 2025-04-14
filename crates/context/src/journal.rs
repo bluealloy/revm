@@ -1,3 +1,7 @@
+//! This module contains [`Journal`] struct and implements [`JournalTr`] trait for it.
+//!
+//! Entry submodule contains [`JournalEntry`] and [`JournalEntryTr`] traits.
+//! and inner submodule contains [`JournalInner`] struct that contains state.
 pub mod entry;
 pub mod inner;
 
@@ -81,6 +85,8 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
 }
 
 /// Output of the journal after finalizing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalOutput {
     /// Changes or touched accounts that loads, created or changed in the journal.
     pub state: EvmState,

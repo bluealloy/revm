@@ -1,8 +1,10 @@
+//! Benchmarks for the KZG point evaluation precompile
 use criterion::{measurement::Measurement, BenchmarkGroup};
 use primitives::{eip4844::VERSIONED_HASH_VERSION_KZG, hex};
 use revm_precompile::kzg_point_evaluation::run;
 use sha2::{Digest, Sha256};
 
+/// Add benches for the KZG point evaluation precompile
 pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     // KZG Point Evaluation Precompile
     let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();

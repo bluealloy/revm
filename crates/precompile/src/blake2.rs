@@ -1,9 +1,11 @@
+//! Blake2 precompile. More details in [`run`]
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
+/// Blake2 precompile
 pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(9), run);
 
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
@@ -53,6 +55,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     Ok(PrecompileOutput::new(gas_used, out.into()))
 }
 
+/// Blake2 algorithm
 pub mod algo {
     /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
     pub const SIGMA: [[usize; 16]; 10] = [
@@ -94,12 +97,12 @@ pub mod algo {
         v[b] = (v[b] ^ v[c]).rotate_right(63);
     }
 
-    // Compression function F takes as an argument the state vector "h",
-    // message block vector "m" (last block is padded with zeros to full
-    // block size, if required), 2w-bit offset counter "t", and final block
-    // indicator flag "f".  Local vector v[0..15] is used in processing.  F
-    // returns a new state vector.  The number of rounds, "r", is 12 for
-    // BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
+    /// Compression function F takes as an argument the state vector "h",
+    /// message block vector "m" (last block is padded with zeros to full
+    /// block size, if required), 2w-bit offset counter "t", and final block
+    /// indicator flag "f".  Local vector v[0..15] is used in processing.  F
+    /// returns a new state vector.  The number of rounds, "r", is 12 for
+    /// BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
     #[allow(clippy::many_single_char_names)]
     pub fn compress(rounds: usize, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
         let mut v = [0u64; 16];

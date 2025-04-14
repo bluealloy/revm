@@ -1,3 +1,4 @@
+//! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
@@ -186,6 +187,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.set_code_with_hash(address, code, hash)
     }
 
+    /// Increments the nonce of the account.
+    ///
+    /// # Returns
+    ///
+    /// Returns the new nonce if it did not overflow, otherwise returns `None`.
     #[inline]
     pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
         let account = self.state.get_mut(&address).unwrap();
@@ -481,6 +487,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.load_account_optional(db, address, false)
     }
 
+    /// Loads account into memory. If account is EIP-7702 type it will additionally
+    /// load delegated account.
+    ///
+    /// It will mark both this and delegated account as warm loaded.
+    ///
+    /// Returns information about the account (If it is empty or cold loaded) and if present the information
+    /// about the delegated account (If it is cold loaded).
     #[inline]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
@@ -510,6 +523,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(account_load)
     }
 
+    /// Loads account and its code. If account is already loaded it will load its code.
+    ///
+    /// It will mark account as warm loaded. If not existing Database will be queried for data.
+    ///
+    /// In case of EIP-7702 delegated account will not be loaded,
+    /// [`Self::load_account_delegated`] should be used instead.
+    #[inline]
     pub fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -518,7 +538,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.load_account_optional(db, address, true)
     }
 
-    /// Loads code
+    /// Loads account. If account is already loaded it will be marked as warm.
     #[inline]
     pub fn load_account_optional<DB: Database>(
         &mut self,

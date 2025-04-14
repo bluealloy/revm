@@ -1,3 +1,4 @@
+//! Benchmarks for the BLS12-381 precompiles
 use ark_bls12_381::{Fq, Fr, G1Affine, G2Affine};
 use ark_ec::AffineRepr;
 use arkworks_general::{encode_base_field, encode_field_32_bytes, random_field, random_points};
@@ -64,6 +65,7 @@ mod arkworks_general {
     }
 }
 
+/// Encode a BLS12-381 G1 point
 // Note: This has been copied in from precompile/src/bls12_381 since
 // those are not public
 pub fn encode_bls12381_g1_point(input: &G1Affine) -> [u8; PADDED_G1_LENGTH] {
@@ -82,6 +84,8 @@ pub fn encode_bls12381_g1_point(input: &G1Affine) -> [u8; PADDED_G1_LENGTH] {
 
     output
 }
+
+/// Encode a BLS12-381 G2 point
 pub fn encode_bls12381_g2_point(input: &G2Affine) -> [u8; PADDED_G2_LENGTH] {
     let mut output = [0u8; PADDED_G2_LENGTH];
 
@@ -137,6 +141,7 @@ fn g2_add_test_vectors(num_test_vectors: usize, rng: &mut StdRng) -> Vec<Precomp
         .collect()
 }
 
+/// Add benches for the BLS12-381 G1 add precompile
 pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_add::PRECOMPILE;
 
@@ -151,6 +156,7 @@ pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     });
 }
 
+/// Add benches for the BLS12-381 G2 add precompile
 pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_add::PRECOMPILE;
 
@@ -165,6 +171,7 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     });
 }
 
+/// Add benches for the BLS12-381 G1 msm precompile
 pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_msm::PRECOMPILE;
 
@@ -209,6 +216,7 @@ fn g2_msm_test_vectors(msm_size: usize, rng: &mut StdRng) -> PrecompileInput {
     input
 }
 
+/// Add benches for the BLS12-381 G2 msm precompile
 pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_msm::PRECOMPILE;
 
@@ -241,6 +249,7 @@ fn pairing_test_vectors(num_pairs: usize, rng: &mut StdRng) -> PrecompileInput {
     input
 }
 
+/// Add benches for the BLS12-381 pairing precompile
 pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::pairing::PRECOMPILE;
 
@@ -264,6 +273,7 @@ fn map_fp_to_g1_test_vectors(rng: &mut StdRng) -> PrecompileInput {
     encode_base_field(&fp)
 }
 
+/// Add benches for the BLS12-381 map fp to g1 precompiles
 pub fn add_map_fp_to_g1_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::map_fp_to_g1::PRECOMPILE;
 
@@ -290,6 +300,7 @@ fn map_fp2_to_g2_test_vectors(rng: &mut StdRng) -> PrecompileInput {
     input
 }
 
+/// Add benches for the BLS12-381 map fp2 to g2 precompiles
 pub fn add_map_fp2_to_g2_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::map_fp2_to_g2::PRECOMPILE;
 

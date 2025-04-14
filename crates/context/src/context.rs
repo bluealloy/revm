@@ -1,14 +1,14 @@
-use core::cell::RefCell;
-use std::rc::Rc;
-
+//! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv};
 use context_interface::{
     context::{ContextError, ContextSetters},
     Block, Cfg, ContextTr, JournalTr, Transaction,
 };
+use core::cell::RefCell;
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
+use std::rc::Rc;
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
@@ -125,6 +125,9 @@ impl<
         CHAIN: Default,
     > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN>
 {
+    /// Creates a new context with a new database type.
+    ///
+    /// This will create a new [`Journal`] object.
     pub fn new(db: DB, spec: SpecId) -> Self {
         let mut journaled_state = JOURNAL::new(db);
         journaled_state.set_spec_id(spec);
@@ -152,6 +155,7 @@ where
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
 {
+    /// Creates a new context with a new journal type. New journal needs to have the same database type.
     pub fn with_new_journal<OJOURNAL: JournalTr<Database = DB>>(
         self,
         mut journal: OJOURNAL,
@@ -335,6 +339,7 @@ where
         f(&mut self.block);
     }
 
+    /// Modifies the context transaction.
     pub fn modify_tx<F>(&mut self, f: F)
     where
         F: FnOnce(&mut TX),
@@ -342,6 +347,7 @@ where
         f(&mut self.tx);
     }
 
+    /// Modifies the context configuration.
     pub fn modify_cfg<F>(&mut self, f: F)
     where
         F: FnOnce(&mut CFG),
@@ -350,6 +356,7 @@ where
         self.journaled_state.set_spec_id(self.cfg.spec().into());
     }
 
+    /// Modifies the context chain.
     pub fn modify_chain<F>(&mut self, f: F)
     where
         F: FnOnce(&mut CHAIN),
@@ -357,6 +364,7 @@ where
         f(&mut self.chain);
     }
 
+    /// Modifies the context database.
     pub fn modify_db<F>(&mut self, f: F)
     where
         F: FnOnce(&mut DB),
@@ -364,6 +372,7 @@ where
         f(self.journaled_state.db());
     }
 
+    /// Modifies the context journal.
     pub fn modify_journal<F>(&mut self, f: F)
     where
         F: FnOnce(&mut JOURNAL),

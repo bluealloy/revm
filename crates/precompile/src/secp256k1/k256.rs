@@ -1,6 +1,10 @@
+//! k256 implementation of `ecrecover`. More about it in [`crate::secp256k1`].
 use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
 use primitives::{alloy_primitives::B512, keccak256, B256};
 
+/// Recover the public key from a signature and a message.
+///
+/// This function is using the `k256` crate.
 pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
     // parse signature
     let mut sig = Signature::from_slice(sig.as_slice())?;

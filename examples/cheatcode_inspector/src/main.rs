@@ -6,7 +6,7 @@
 //! advanced cheatcode use-case.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
-use std::{convert::Infallible, fmt::Debug};
+use std::{cell::RefCell, convert::Infallible, fmt::Debug, rc::Rc};
 
 use revm::{
     context::{
@@ -503,6 +503,7 @@ where
         block: env.block,
         cfg: env.cfg,
         journaled_state: new_backend,
+        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         error: Ok(()),
     };
@@ -554,6 +555,7 @@ fn main() -> anyhow::Result<()> {
         block: env.block,
         cfg: env.cfg,
         journaled_state: backend,
+        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         error: Ok(()),
     };
@@ -567,7 +569,7 @@ fn main() -> anyhow::Result<()> {
     evm.inspect_replay()?;
 
     // Sanity check
-    assert_eq!(evm.data.inspector.call_count, 2);
+    assert_eq!(evm.inspector.call_count, 2);
     assert_eq!(evm.journaled_state.method_with_inspector_counter, 1);
     assert_eq!(evm.journaled_state.method_without_inspector_counter, 1);
 

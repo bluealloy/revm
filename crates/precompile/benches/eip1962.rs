@@ -1,3 +1,4 @@
+//! Benchmarks for the BN128 precompiles
 use criterion::{measurement::Measurement, BenchmarkGroup};
 use primitives::hex;
 use primitives::Bytes;
@@ -8,6 +9,7 @@ use revm_precompile::bn128::{
     run_add, run_mul, run_pair,
 };
 
+/// Add benches for the BN128 add precompile
 pub fn add_bn128_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecadd_input = hex::decode(
         "\
@@ -24,6 +26,7 @@ pub fn add_bn128_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     });
 }
 
+/// Add benches for the BN128 mul precompile
 pub fn add_bn128_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecmul_input = hex::decode(
         "\
@@ -39,6 +42,7 @@ pub fn add_bn128_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     });
 }
 
+/// Add benches for the BN128 pair precompile
 pub fn add_bn128_pair_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecpair_input = hex::decode(
         "\

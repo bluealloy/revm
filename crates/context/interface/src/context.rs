@@ -1,8 +1,8 @@
 pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, Transaction};
 use auto_impl::auto_impl;
-use primitives::U256;
 use core::cell::RefCell;
+use primitives::U256;
 use std::{rc::Rc, string::String};
 
 /// Trait that defines the context of the EVM execution.
