@@ -1,3 +1,4 @@
+//! Blake2 precompile. More details in [`run`]
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 

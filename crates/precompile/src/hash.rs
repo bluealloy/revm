@@ -1,3 +1,5 @@
+//! Hash precompiles, it contains SHA-256 and RIPEMD-160 hash precompiles
+//! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;

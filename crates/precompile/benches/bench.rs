@@ -37,7 +37,6 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     eip4844::add_benches(&mut group);
 }
 
-
 criterion_group! {
     name = benches;
     config = Criterion::default();

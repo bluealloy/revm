@@ -1,3 +1,4 @@
+//! BN128 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,

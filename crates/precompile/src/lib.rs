@@ -326,7 +326,7 @@ pub enum PrecompileSpecId {
     /// Istanbul spec introduced
     /// * [`EIP-152: Add BLAKE2 compression function`](https://eips.ethereum.org/EIPS/eip-152) `F` precompile (at 0x09 address).
     /// * [`EIP-1108: Reduce alt_bn128 precompile gas costs`](https://eips.ethereum.org/EIPS/eip-1108). It reduced the
-    ///     gas cost of the bn_add, bn_mul, and bn_pair precompiles.
+    ///   gas cost of the bn_add, bn_mul, and bn_pair precompiles.
     ISTANBUL,
     /// Berlin spec made a change to:
     /// * [`EIP-2565: ModExp Gas Cost`](https://eips.ethereum.org/EIPS/eip-2565). It changed the gas cost of the modexp precompile.

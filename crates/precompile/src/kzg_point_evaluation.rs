@@ -1,3 +1,5 @@
+//! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
+//! For more details check [`run`] function.
 use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {

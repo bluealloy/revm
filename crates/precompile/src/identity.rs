@@ -1,3 +1,4 @@
+//! Identity precompile returns
 use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;

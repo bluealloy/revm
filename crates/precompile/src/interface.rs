@@ -1,3 +1,5 @@
+//! Interface for the precompiles. It contains the precompile result type,
+//! the precompile output type, and the precompile error type.
 use core::fmt;
 use primitives::Bytes;
 use std::string::String;
