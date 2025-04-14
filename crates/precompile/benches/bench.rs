@@ -1,6 +1,13 @@
+// `criterion_group!` throws the missing docs error.
+#![allow(missing_docs)]
+//! Benchmarks for the crypto precompiles
+/// `ecrecover` benchmarks
 pub mod ecrecover;
+/// `eip1962` benchmarks
 pub mod eip1962;
+/// `eip2537` benchmarks
 pub mod eip2537;
+/// `eip4844` benchmarks
 pub mod eip4844;
 
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -30,9 +37,11 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     eip4844::add_benches(&mut group);
 }
 
+
 criterion_group! {
     name = benches;
     config = Criterion::default();
     targets = benchmark_crypto_precompiles
 }
+
 criterion_main!(benches);

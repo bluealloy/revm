@@ -7,9 +7,11 @@ use core::cmp::{max, min};
 use primitives::Bytes;
 use primitives::U256;
 
+/// `modexp` precompile with BYZANTIUM gas rules.
 pub const BYZANTIUM: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);
 
+/// `modexp` precompile with BERLIN gas rules.
 pub const BERLIN: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
 
@@ -21,12 +23,15 @@ pub fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     })
 }
 
+/// See: <https://eips.ethereum.org/EIPS/eip-2565>
+/// Gas cost of berlin is modified from byzantium.
 pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
 }
 
+/// Calculate the iteration count for the modexp precompile.
 pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     let mut iteration_count: u64 = 0;
 
@@ -42,6 +47,7 @@ pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     max(iteration_count, 1)
 }
 
+/// Run the modexp precompile.
 pub fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> PrecompileResult
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
@@ -117,6 +123,7 @@ where
     ))
 }
 
+/// Calculate the gas cost for the modexp precompile with BYZANTIUM gas rules.
 pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
     // Output of this function is bounded by 2^128
     fn mul_complexity(x: u64) -> U256 {
@@ -139,8 +146,8 @@ pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: 
     gas.saturating_to()
 }
 
-// Calculate gas cost according to EIP 2565:
-// https://eips.ethereum.org/EIPS/eip-2565
+/// Calculate gas cost according to EIP 2565:
+/// https://eips.ethereum.org/EIPS/eip-2565
 pub fn berlin_gas_calc(
     base_length: u64,
     exp_length: u64,

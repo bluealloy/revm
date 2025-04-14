@@ -1,3 +1,4 @@
+//! bitcoin_secp256k1 implementation of `ecrecover`. More about it in [`crate::secp256k1`].
 use primitives::{alloy_primitives::B512, keccak256, B256};
 use secp256k1::{
     ecdsa::{RecoverableSignature, RecoveryId},

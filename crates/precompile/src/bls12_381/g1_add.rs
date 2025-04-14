@@ -1,3 +1,4 @@
+//! BLS12-381 G1 add precompile. More details in [`g1_add`]
 use super::crypto_backend::{encode_g1_point, p1_add_affine, read_g1_no_subgroup_check};
 use super::utils::remove_g1_padding;
 use crate::bls12_381_const::{

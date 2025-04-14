@@ -1,3 +1,4 @@
+//! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
 use super::crypto_backend::{encode_g1_point, p1_msm, read_g1, read_scalar};
 use crate::bls12_381::utils::remove_g1_padding;
 use crate::bls12_381_const::{

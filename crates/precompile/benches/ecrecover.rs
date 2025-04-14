@@ -1,8 +1,10 @@
+//! Benchmarks for the ecrecover precompile
 use criterion::{measurement::Measurement, BenchmarkGroup};
 use primitives::{hex, keccak256, Bytes, U256};
 use revm_precompile::secp256k1::ec_recover_run;
 use secp256k1::{Message, SecretKey, SECP256K1};
 
+/// Add benches for the ecrecover precompile
 pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     // Generate secp256k1 signature
     let data = hex::decode("1337133713371337").unwrap();

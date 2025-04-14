@@ -1,3 +1,4 @@
+//! k256 implementation of `ecrecover`. More about it in [`crate::secp256k1`].
 use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
 use primitives::{alloy_primitives::B512, keccak256, B256};
 

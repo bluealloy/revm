@@ -1,3 +1,4 @@
+//! BLS12-381 pairing precompile. More details in [`pairing`]
 use super::crypto_backend::{pairing_check, read_g1, read_g2};
 use super::utils::{remove_g1_padding, remove_g2_padding};
 use crate::bls12_381_const::{

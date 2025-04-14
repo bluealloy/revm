@@ -3,9 +3,11 @@ use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithA
 use primitives::Bytes;
 use sha2::Digest;
 
+/// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(2), sha256_run);
 
+/// RIPEMD-160 precompile
 pub const RIPEMD160: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(3), ripemd160_run);
 

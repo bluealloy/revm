@@ -1,3 +1,4 @@
+//! BLS12-381 map fp2 to g2 precompile. More details in [`map_fp2_to_g2`]
 use super::{
     crypto_backend::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
     utils::remove_fp_padding,

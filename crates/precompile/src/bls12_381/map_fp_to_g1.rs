@@ -1,3 +1,4 @@
+//! BLS12-381 map fp to g1 precompile. More details in [`map_fp_to_g1`]
 use super::{
     crypto_backend::{encode_g1_point, map_fp_to_g1 as blst_map_fp_to_g1, read_fp},
     utils::remove_fp_padding,

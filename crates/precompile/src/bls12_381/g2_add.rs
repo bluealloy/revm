@@ -1,3 +1,4 @@
+//! BLS12-381 G2 add precompile. More details in [`g2_add`]
 use super::crypto_backend::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{

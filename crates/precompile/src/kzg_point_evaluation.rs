@@ -9,10 +9,16 @@ cfg_if::cfg_if! {
 use primitives::{hex_literal::hex, Bytes};
 use sha2::{Digest, Sha256};
 
+/// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
 
+/// Address of the KZG point evaluation precompile.
 pub const ADDRESS: Address = crate::u64_to_address(0x0A);
+
+/// Gas cost of the KZG point evaluation precompile.
 pub const GAS_COST: u64 = 50_000;
+
+/// Versioned hash version for KZG.
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
 
 /// `U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes() ++ BLS_MODULUS.to_bytes32()`
@@ -67,6 +73,7 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     hash
 }
 
+/// Verify KZG proof.
 #[inline]
 pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
     cfg_if::cfg_if! {
@@ -81,12 +88,14 @@ pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &
     }
 }
 
+/// Convert a slice to an array of a specific size.
 #[inline]
 #[track_caller]
 pub fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
     bytes.try_into().expect("slice with incorrect length")
 }
 
+/// Convert a slice to a 32 byte big endian array.
 #[inline]
 #[track_caller]
 pub fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
@@ -94,6 +103,7 @@ pub fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
 
+/// Convert a slice to a 48 byte big endian array.
 #[inline]
 #[track_caller]
 pub fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
