@@ -31,8 +31,6 @@ use crate::{
     Context,
     Database,
     Frame,
-    FrameOrResult,
-    FrameResult,
 };
 use core::cmp::min;
 use fluentbase_genesis::is_system_precompile;
@@ -41,7 +39,6 @@ use fluentbase_sdk::{
     calc_preimage_address,
     is_protected_storage_slot,
     keccak256,
-    EVM_BASE_SPEC,
     FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
@@ -72,82 +69,65 @@ use revm_interpreter::{
     interpreter_action::SystemInterruptionOutcome,
     Gas,
     Host,
+    InterpreterAction,
 };
 
 pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    inputs: Box<SystemInterruptionInputs>,
+    inputs: SystemInterruptionInputs,
     stack_frame: &mut Frame,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
+) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let mut local_gas = Gas::new(inputs.gas.remaining());
 
     macro_rules! return_result {
-        ($output:expr) => {{
-            let result =
-                InterpreterResult::new(InstructionResult::Return, $output.into(), local_gas);
-            let result =
-                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
-                    inputs,
-                    result,
-                    created_address: None,
-                    is_frame: false,
-                }));
-            return Ok(result);
-        }};
-    }
-    macro_rules! return_error {
         ($result:expr, $error:ident) => {{
-            let error = InstructionResult::$error;
-            let result = InterpreterResult::new(error, $result.into(), local_gas);
             let result =
-                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
-                    inputs,
-                    result,
-                    created_address: None,
-                    is_frame: false,
-                }));
-            return Ok(result);
+                InterpreterResult::new(InstructionResult::$error, $result.into(), local_gas);
+            stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
+                inputs: Box::new(inputs),
+                // we have to clone result, because we don't know do we need to resume or not
+                result: result.clone(),
+                is_frame: false,
+            });
+            return Ok(InterpreterAction::Return { result });
         }};
         ($error:ident) => {{
-            let error = InstructionResult::$error;
-            let result = InterpreterResult::new(error, Default::default(), local_gas);
             let result =
-                FrameOrResult::Result(FrameResult::InterruptedResult(SystemInterruptionOutcome {
-                    inputs,
-                    result,
-                    created_address: None,
-                    is_frame: false,
-                }));
-            return Ok(result);
+                InterpreterResult::new(InstructionResult::$error, Default::default(), local_gas);
+            stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
+                inputs: Box::new(inputs),
+                // we have to clone result, because we don't know do we need to resume or not
+                result: result.clone(),
+                is_frame: false,
+            });
+            return Ok(InterpreterAction::Return { result });
         }};
     }
     macro_rules! return_frame {
-        ($frame:expr) => {{
-            let mut frame = $frame;
+        ($action:expr) => {{
             stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
-                inputs,
+                inputs: Box::new(inputs),
                 result: InterpreterResult::new(
                     InstructionResult::Continue,
                     Bytes::default(),
                     local_gas,
                 ),
-                created_address: frame.created_address(),
                 is_frame: true,
             });
-            return Ok(frame);
+            return Ok($action);
         }};
     }
     macro_rules! assert_return {
         ($cond:expr, $error:ident) => {
             if !($cond) {
-                return_error!($error);
+                return_result!($error);
             }
         };
     }
     macro_rules! charge_gas {
         ($value:expr) => {{
             if !local_gas.record_cost($value) {
-                return_error!(OutOfGas);
+                return_result!(OutOfGas);
             }
         }};
     }
@@ -166,7 +146,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let value = context.evm.sload(inputs.contract.target_address, slot)?;
             charge_gas!(sload_cost(SPEC::SPEC_ID, value.is_cold));
             let output: [u8; 32] = value.to_le_bytes();
-            return_result!(output)
+            return_result!(output, Return)
         }
 
         SYSCALL_ID_STORAGE_WRITE => {
@@ -183,7 +163,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if inputs.contract.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
                 && is_protected_storage_slot(slot)
             {
-                return_error!(MalformedBuiltinParams);
+                return_result!(MalformedBuiltinParams);
             }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             #[cfg(feature = "debug-print")]
@@ -203,11 +183,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 ) {
                     charge_gas!(gas_cost);
                 } else {
-                    return_error!(OutOfGas);
+                    return_result!(OutOfGas);
                 }
                 local_gas.record_refund(sstore_refund(SPEC::SPEC_ID, &value.data));
             }
-            return_result!(Bytes::default())
+            return_result!(Bytes::default(), Return)
         }
 
         SYSCALL_ID_CALL => {
@@ -224,10 +204,10 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // for static calls with value greater than 0 - revert
             let has_transfer = !value.is_zero();
             if inputs.is_static && has_transfer {
-                return_error!(CallNotAllowedInsideStatic);
+                return_result!(CallNotAllowedInsideStatic);
             }
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             // In EVM, there exists an issue with precompiled contracts.
             // These contracts are preloaded and initially empty.
@@ -269,8 +249,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 is_eof: false,
                 return_memory_offset: Default::default(),
             });
-            let frame = context.evm.make_call_frame(&call_inputs)?;
-            return_frame!(frame);
+            return_frame!(InterpreterAction::Call {
+                inputs: call_inputs
+            });
         }
 
         SYSCALL_ID_STATIC_CALL => {
@@ -282,7 +263,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let target_address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let contract_input = inputs.syscall_params.input.slice(20..);
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             // set is_empty to false as we are not creating this account.
             account_load.is_empty = false;
@@ -298,7 +279,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             charge_gas!(gas_limit);
             // create call inputs
-            let inputs = Box::new(CallInputs {
+            let call_inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
                 target_address,
@@ -310,8 +291,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 is_eof: false,
                 return_memory_offset: Default::default(),
             });
-            let frame = context.evm.make_call_frame(&inputs)?;
-            return_frame!(frame);
+            return_frame!(InterpreterAction::Call {
+                inputs: call_inputs
+            });
         }
 
         SYSCALL_ID_CALL_CODE => {
@@ -326,7 +308,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_CALL_CODE: target_address={target_address}, value={value}");
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             // set is_empty to false as we are not creating this account
             account_load.is_empty = false;
@@ -352,7 +334,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // create call inputs
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={} eip7702_address={:?}", inputs.contract.target_address, inputs.contract.target_address, target_address, inputs.contract.eip7702_address);
-            let inputs = Box::new(CallInputs {
+            let call_inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
                 target_address: inputs.contract.target_address,
@@ -364,8 +346,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 is_eof: false,
                 return_memory_offset: Default::default(),
             });
-            let frame = context.evm.make_call_frame(&inputs)?;
-            return_frame!(frame);
+            return_frame!(InterpreterAction::Call {
+                inputs: call_inputs
+            });
         }
 
         SYSCALL_ID_DELEGATE_CALL => {
@@ -379,7 +362,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DELEGATE_CALL: target_address={target_address}");
             let Ok(mut account_load) = context.evm.load_account_delegated(target_address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             // set is_empty to false as we are not creating this account.
             account_load.is_empty = false;
@@ -395,7 +378,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             charge_gas!(gas_limit);
             // create call inputs
-            let inputs = Box::new(CallInputs {
+            let call_inputs = Box::new(CallInputs {
                 input: contract_input,
                 gas_limit,
                 target_address: inputs.contract.target_address,
@@ -407,8 +390,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 is_eof: false,
                 return_memory_offset: Default::default(),
             });
-            let frame = context.evm.make_call_frame(&inputs)?;
-            return_frame!(frame);
+            return_frame!(InterpreterAction::Call {
+                inputs: call_inputs
+            });
         }
 
         SYSCALL_ID_CREATE | SYSCALL_ID_CREATE2 => {
@@ -466,7 +450,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             if is_create2 {
                 let Some(gas) = gas::create2_cost(init_code.len().try_into().unwrap()) else {
-                    return_error!(OutOfGas);
+                    return_result!(OutOfGas);
                 };
                 charge_gas!(gas);
             } else {
@@ -476,21 +460,25 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             gas_limit -= gas_limit / 64;
             charge_gas!(gas_limit);
             // create inputs
-            let inputs = Box::new(CreateInputs {
+            let create_inputs = Box::new(CreateInputs {
                 caller: inputs.contract.target_address,
                 scheme,
                 value,
                 init_code,
                 gas_limit,
             });
-            let mut frame = context.evm.make_create_frame(EVM_BASE_SPEC, &inputs)?;
-            // nobody knows why, but EVM returns `Return`
-            // in case of nonce overflow instead of `NonceOverflow`
-            // that ruins a lot of flows
-            if let FrameOrResult::Result(result) = &mut frame {
-                result.interpreter_result_mut().output = Bytes::from_static(&[0u8; 20]);
-            }
-            return_frame!(frame);
+            stack_frame.insert_interrupted_outcome(SystemInterruptionOutcome {
+                inputs: Box::new(inputs),
+                result: InterpreterResult::new(
+                    InstructionResult::Continue,
+                    Bytes::default(),
+                    local_gas,
+                ),
+                is_frame: true,
+            });
+            Ok(InterpreterAction::Create {
+                inputs: create_inputs,
+            })
         }
 
         SYSCALL_ID_EMIT_LOG => {
@@ -521,7 +509,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 .slice((1 + topics_len * B256::len_bytes())..);
             // make sure we have enough gas to cover this operation
             let Some(gas_cost) = gas::log_cost(topics_len as u8, data.len() as u64) else {
-                return_error!(OutOfGas);
+                return_result!(OutOfGas);
             };
             charge_gas!(gas_cost);
             // write new log into the journal
@@ -530,7 +518,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 // it's safe to go unchecked here because we do topics check upper
                 data: LogData::new_unchecked(topics, data),
             });
-            return_result!(Bytes::new());
+            return_result!(Bytes::new(), Return);
         }
 
         SYSCALL_ID_DESTROY_ACCOUNT => {
@@ -551,7 +539,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             // charge gas cost
             charge_gas!(gas::selfdestruct_cost(SPEC::SPEC_ID, result));
             // return value as bytes with success exit code
-            return_result!(Bytes::new());
+            return_result!(Bytes::new(), Return);
         }
 
         SYSCALL_ID_BALANCE => {
@@ -574,7 +562,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             });
             // write the result
             let output: [u8; 32] = value.data.to_le_bytes();
-            return_result!(output);
+            return_result!(output, Return);
         }
 
         SYSCALL_ID_SELF_BALANCE => {
@@ -585,7 +573,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let value = context.evm.balance(inputs.contract.target_address)?;
             charge_gas!(gas::LOW);
             let output: [u8; 32] = value.data.to_le_bytes();
-            return_result!(output);
+            return_result!(output, Return)
         }
 
         SYSCALL_ID_CODE_SIZE => {
@@ -598,7 +586,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_CODE_SIZE: address={address}");
             let Some(code) = context.code(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             charge_gas!(if SPEC::enabled(BERLIN) {
                 warm_cold_cost(code.is_cold)
@@ -615,7 +603,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             }
             let code_size = U256::from(code_len);
             let output = code_size.to_le_bytes::<32>();
-            return_result!(output);
+            return_result!(output, Return);
         }
 
         SYSCALL_ID_CODE_HASH => {
@@ -626,7 +614,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             );
             let address = Address::from_slice(&inputs.syscall_params.input[0..20]);
             let Some(code_hash) = context.code_hash(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             #[cfg(feature = "debug-print")]
             println!(
@@ -646,7 +634,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             if is_system_precompile(&address) {
                 code_hash = B256::ZERO;
             }
-            return_result!(code_hash);
+            return_result!(code_hash, Return);
         }
 
         SYSCALL_ID_CODE_COPY => {
@@ -662,15 +650,15 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_CODE_COPY: address={address} code_offset={_code_offset} code_length={code_length}" );
             let Some(code) = context.code(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             let Some(gas_cost) = gas::extcodecopy_cost(SPEC::SPEC_ID, code_length, code.is_cold)
             else {
-                return_error!(OutOfGas);
+                return_result!(OutOfGas);
             };
             charge_gas!(gas_cost);
             if code_length == 0 {
-                return_result!(Bytes::new());
+                return_result!(Bytes::new(), Return);
             }
             let mut bytecode = code.data;
             // we store system precompile bytecode in the state trie,
@@ -679,7 +667,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 bytecode = Bytes::new();
             }
             // TODO(dmitry123): "add offset/length checks"
-            return_result!(bytecode);
+            return_result!(bytecode, Return);
         }
 
         // TODO(dmitry123): "rethink these system calls"
@@ -696,7 +684,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 "SYSCALL_WRITE_PREIMAGE: preimage_hash={preimage_hash} preimage_address={address}"
             );
             let Ok(account_load) = context.evm.load_account_delegated(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             if account_load.is_empty {
                 context.evm.journaled_state.set_code_with_hash(
@@ -705,7 +693,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                     preimage_hash,
                 );
             }
-            return_result!(preimage_hash);
+            return_result!(preimage_hash, Return);
         }
         SYSCALL_ID_PREIMAGE_SIZE => {
             assert_return!(
@@ -716,7 +704,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
             let address = Address::from_slice(&preimage_hash[12..]);
             let Ok(account_load) = context.evm.load_account_delegated(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             charge_gas!(if SPEC::enabled(BERLIN) {
                 warm_cold_cost(account_load.is_cold)
@@ -727,7 +715,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             });
             let preimage_size = if !account_load.is_empty {
                 let Some(code) = context.code(address) else {
-                    return_error!(FatalExternalError);
+                    return_result!(FatalExternalError);
                 };
                 code.data.len() as u32
             } else {
@@ -735,7 +723,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             };
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_PREIMAGE_SIZE: preimage_hash={preimage_hash} address={address} preimage_size={preimage_size}");
-            return_result!(preimage_size.to_le_bytes());
+            return_result!(preimage_size.to_le_bytes(), Return);
         }
         SYSCALL_ID_PREIMAGE_COPY => {
             assert_return!(
@@ -748,7 +736,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_PREIMAGE_COPY: preimage_hash={preimage_hash} address={address}");
             let Ok(account_load) = context.evm.code(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             if !inputs.is_gas_free {
                 let Some(gas_cost) = gas::extcodecopy_cost(
@@ -756,11 +744,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                     account_load.data.len() as u64,
                     account_load.is_cold,
                 ) else {
-                    return_error!(OutOfGas);
+                    return_result!(OutOfGas);
                 };
                 charge_gas!(gas_cost);
             }
-            return_result!(account_load.data);
+            return_result!(account_load.data, Return);
         }
 
         SYSCALL_ID_DELEGATED_STORAGE => {
@@ -773,11 +761,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
             // delegated storage is allowed only for delegated accounts
             let Some(eip7702_address) = inputs.contract.eip7702_address else {
-                return_error!(MalformedBuiltinParams);
+                return_result!(MalformedBuiltinParams);
             };
             // make sure the provided address is delegated to the same runtime
             let Ok(account) = context.evm.load_code(address) else {
-                return_error!(FatalExternalError);
+                return_result!(FatalExternalError);
             };
             // inside output, we store information about slot,
             // and also we forward info about cold/warm access
@@ -796,11 +784,11 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             match &account.info.code {
                 Some(Bytecode::Eip7702(eip7702_bytecode)) => {
                     if eip7702_bytecode.delegated_address != eip7702_address {
-                        return_error!(output, Revert)
+                        return_result!(output, Revert)
                     }
                 }
                 _ => {
-                    return_error!(output, Revert)
+                    return_result!(output, Revert)
                 }
             }
             // load slot from the storage
@@ -808,7 +796,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} target_address={} bytecode_address={} eip7702_address={eip7702_address}, value={}", inputs.contract.target_address, inputs.contract.bytecode_address(), value.data);
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
-            return_result!(output)
+            return_result!(output, Return)
         }
 
         SYSCALL_ID_TRANSIENT_READ => {
@@ -826,7 +814,7 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
             charge_gas!(gas::WARM_STORAGE_READ_COST);
             // return value
             let output: [u8; 32] = value.to_le_bytes();
-            return_result!(output);
+            return_result!(output, Return);
         }
 
         SYSCALL_ID_TRANSIENT_WRITE => {
@@ -847,9 +835,9 @@ pub(crate) fn execute_rwasm_interruption<SPEC: Spec, EXT, DB: Database>(
                 .evm
                 .tstore(inputs.contract.target_address, slot, value);
             // empty result
-            return_result!(Bytes::new());
+            return_result!(Bytes::new(), Return);
         }
 
-        _ => return_error!(MalformedBuiltinParams),
+        _ => return_result!(MalformedBuiltinParams),
     }
 }

@@ -11,7 +11,6 @@ use crate::{
     FrameResult,
 };
 use revm_interpreter::{
-    interpreter_action::SystemInterruptionInputs,
     opcode::InstructionTables,
     CallOutcome,
     CreateOutcome,
@@ -43,16 +42,6 @@ pub type FrameCallHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
             Box<CallInputs>,
-        ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
-        + 'a,
->;
-
-/// Handle system interruption.
-pub type FrameSystemInterruptionHandle<'a, EXT, DB> = Arc<
-    dyn Fn(
-            &mut Context<EXT, DB>,
-            Box<SystemInterruptionInputs>,
-            &mut Frame,
         ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
@@ -145,8 +134,6 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub execute_frame: ExecuteFrameHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
-    /// System interruption call
-    pub system_interruption: FrameSystemInterruptionHandle<'a, EXT, DB>,
     /// Call return
     pub call_return: FrameCallReturnHandle<'a, EXT, DB>,
     /// Insert call outcome
@@ -172,7 +159,6 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
             last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
             execute_frame: Arc::new(mainnet::execute_frame::<SPEC, EXT, DB>),
             call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
-            system_interruption: Arc::new(mainnet::system_interruption::<SPEC, EXT, DB>),
             call_return: Arc::new(mainnet::call_return::<EXT, DB>),
             insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
             create: Arc::new(mainnet::create::<SPEC, EXT, DB>),
@@ -216,17 +202,6 @@ impl<EXT, DB: Database> ExecutionHandler<'_, EXT, DB> {
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         (self.call)(context, inputs)
-    }
-
-    /// Call frame call handler.
-    #[inline]
-    pub fn system_interruption(
-        &self,
-        context: &mut Context<EXT, DB>,
-        inputs: Box<SystemInterruptionInputs>,
-        stack_frame: &mut Frame,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        (self.system_interruption)(context, inputs, stack_frame)
     }
 
     /// Call registered handler for call return.

@@ -3,13 +3,14 @@ use crate::{
         interpreter_action::{SystemInterruptionInputs, SystemInterruptionOutcome},
         Gas,
         InstructionResult,
-        Interpreter,
         InterpreterAction,
         InterpreterResult,
     },
     primitives::{Bytecode, Bytes, EVMError, Spec},
+    rwasm::syscall::execute_rwasm_interruption,
     Context,
     Database,
+    Frame,
 };
 use core::{
     mem::{replace, take},
@@ -38,11 +39,12 @@ use fluentbase_sdk::{
 use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory, EMPTY_SHARED_MEMORY};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
-    interpreter: &mut Interpreter,
-    return_shared_memory: &mut SharedMemory,
+    stack_frame: &mut Frame,
+    shared_memory: &mut SharedMemory,
     context: &mut Context<EXT, DB>,
-    is_create: bool,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
+    let is_create: bool = stack_frame.is_create();
+    let interpreter = stack_frame.interpreter_mut();
     let contract = take(&mut interpreter.contract);
 
     let bytecode_address = contract.bytecode_address();
@@ -90,10 +92,9 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
         .is_some();
 
-    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
-
     // execute function
-    let mut runtime_context = RuntimeContext::root(fuel_limit).with_shared_memory(shared_memory);
+    let mut runtime_context = RuntimeContext::root(fuel_limit)
+        .with_shared_memory(replace(shared_memory, EMPTY_SHARED_MEMORY));
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -119,25 +120,31 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     interpreter.gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
-    let (return_data, shared_memory) = runtime_context.into_return_data();
+    let return_data: Bytes;
+    (return_data, *shared_memory) = runtime_context.into_return_data();
 
-    *return_shared_memory = shared_memory;
+    let is_static = interpreter.is_static;
+    let gas = interpreter.gas;
 
-    Ok(process_exec_result(
+    process_exec_result::<SPEC, EXT, DB>(
+        stack_frame,
+        context,
         contract,
         exit_code,
-        interpreter.gas,
+        gas,
         return_data,
         is_create,
-        interpreter.is_static,
+        is_static,
         is_gas_free,
-    ))
+    )
 }
 
-pub fn execute_rwasm_resume(
-    return_shared_memory: &mut SharedMemory,
+pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
+    stack_frame: &mut Frame,
+    shared_memory: &mut SharedMemory,
+    context: &mut Context<EXT, DB>,
     outcome: SystemInterruptionOutcome,
-) -> InterpreterAction {
+) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let SystemInterruptionOutcome {
         inputs,
         result,
@@ -173,9 +180,8 @@ pub fn execute_rwasm_resume(
         }
     };
 
-    let shared_memory = replace(return_shared_memory, EMPTY_SHARED_MEMORY);
-
-    let mut runtime_context = RuntimeContext::root(0).with_shared_memory(shared_memory);
+    let mut runtime_context =
+        RuntimeContext::root(0).with_shared_memory(replace(shared_memory, EMPTY_SHARED_MEMORY));
     if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -189,9 +195,8 @@ pub fn execute_rwasm_resume(
         inputs.syscall_params.fuel16_ptr,
     );
 
-    let (return_data, shared_memory) = runtime_context.into_return_data();
-
-    *return_shared_memory = shared_memory;
+    let return_data: Bytes;
+    (return_data, *shared_memory) = runtime_context.into_return_data();
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
@@ -203,18 +208,20 @@ pub fn execute_rwasm_resume(
 
     // make sure we have enough gas to charge from the call
     if !gas.record_denominated_cost(fuel_consumed) {
-        return InterpreterAction::Return {
+        return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
                 output: Bytes::default(),
                 gas,
             },
-        };
+        });
     }
     // accumulate refunds (can be forwarded from an interrupted call)
     gas.record_denominated_refund(fuel_refunded);
 
-    process_exec_result(
+    process_exec_result::<SPEC, EXT, DB>(
+        stack_frame,
+        context,
         inputs.contract,
         exit_code,
         gas,
@@ -225,7 +232,9 @@ pub fn execute_rwasm_resume(
     )
 }
 
-fn process_exec_result(
+fn process_exec_result<SPEC: Spec, EXT, DB: Database>(
+    stack_frame: &mut Frame,
+    context: &mut Context<EXT, DB>,
     contract: Contract,
     exit_code: i32,
     gas: Gas,
@@ -233,10 +242,10 @@ fn process_exec_result(
     is_create: bool,
     is_static: bool,
     is_gas_free: bool,
-) -> InterpreterAction {
+) -> Result<InterpreterAction, EVMError<DB::Error>> {
     // if we have success or failed exit code
     if exit_code <= 0 {
-        return process_halt(exit_code, return_data.clone(), is_create, gas);
+        return Ok(process_halt(exit_code, return_data.clone(), is_create, gas));
     }
 
     // otherwise, exit code is a "call_id" that identifies saved context
@@ -249,26 +258,26 @@ fn process_exec_result(
 
     // if there is no enough gas for execution, then fail fast
     if !is_gas_free && params.fuel_limit / FUEL_DENOM_RATE > gas.remaining() {
-        return InterpreterAction::Return {
+        return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
                 output: Bytes::default(),
                 gas,
             },
-        };
+        });
     }
 
-    InterpreterAction::InterruptedCall {
-        inputs: Box::new(SystemInterruptionInputs {
-            contract,
-            call_id,
-            is_create,
-            syscall_params: params,
-            gas,
-            is_static,
-            is_gas_free,
-        }),
-    }
+    let inputs = SystemInterruptionInputs {
+        contract,
+        call_id,
+        is_create,
+        syscall_params: params,
+        gas,
+        is_static,
+        is_gas_free,
+    };
+
+    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs, stack_frame)
 }
 
 fn process_halt(
