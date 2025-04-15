@@ -122,14 +122,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
-                InterpreterAction::InterruptedCall { inputs } => {
-                    // execute system interruption,
-                    // in inputs we store updated info about the call,
-                    // for example, new gas info
-                    let frame_or_result =
-                        exec.system_interruption(&mut self.context, inputs, stack_frame)?;
-                    frame_or_result
-                }
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
                 InterpreterAction::EOFCreate { inputs } => {
                     exec.eofcreate(&mut self.context, inputs)?
@@ -178,7 +170,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     // the execution can be continued
                     // since the state is updated already
                     if stack_frame.is_interrupted_call() {
-                        stack_frame.insert_interrupted_result(result.into_interpreter_result());
+                        stack_frame.insert_interrupted_result(result);
                         continue;
                     }
                     let ctx = &mut self.context;
@@ -187,9 +179,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                         FrameResult::Call(outcome) => {
                             // return_call
                             exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
-                        }
-                        FrameResult::InterruptedResult(outcome) => {
-                            stack_frame.insert_interrupted_outcome(outcome);
                         }
                         FrameResult::Create(outcome) => {
                             // return_create

@@ -26,10 +26,6 @@ pub enum InterpreterAction {
     EOFCreate { inputs: Box<EOFCreateInputs> },
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
-    /// A system interruption indicating system resource access.
-    InterruptedCall {
-        inputs: Box<SystemInterruptionInputs>,
-    },
     /// No action
     #[default]
     None,
