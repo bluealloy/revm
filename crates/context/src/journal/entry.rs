@@ -247,10 +247,6 @@ impl JournalEntryTr for JournalEntry {
             JournalEntry::AccountCreated { address } => {
                 let account = &mut state.get_mut(&address).unwrap();
                 account.unmark_created();
-                account
-                    .storage
-                    .values_mut()
-                    .for_each(|slot| slot.mark_cold());
                 account.info.nonce = 0;
             }
             JournalEntry::StorageWarmed { address, key } => {
