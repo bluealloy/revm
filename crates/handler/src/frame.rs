@@ -242,17 +242,6 @@ where
         let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
-            context.journal().checkpoint_revert(checkpoint);
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-        }
-
-        if bytecode.is_empty() {
-            context.journal().checkpoint_commit();
-            return return_result(InstructionResult::Stop);
-        }
-
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
             let account = &context
                 .journal()
@@ -261,6 +250,19 @@ where
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
         }
+
+        // ExtDelegateCall is not allowed to call non-EOF contracts.
+        if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+            context.journal().checkpoint_revert(checkpoint);
+            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+        }
+
+        // Returns success if bytecode is empty.
+        if bytecode.is_empty() {
+            context.journal().checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
             FrameData::Call(CallFrame {
