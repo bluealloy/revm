@@ -99,7 +99,7 @@ pub fn deduct_caller<CTX: ContextTr>(
     let caller_account = journal.load_account(caller)?.data;
 
     let _ = validate_tx_against_account(
-        &mut caller_account.info,
+        &caller_account.info,
         tx,
         is_eip3607_disabled,
         is_nonce_check_disabled,

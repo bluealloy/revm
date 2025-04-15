@@ -120,8 +120,17 @@ where
         // Load acc
         let account = context.journal().load_account_code(tx_caller)?;
         let account = account.data.info.clone();
-
-        validate_tx_against_account(&account, context, additional_cost)?;
+        let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
+        let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
+        let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+        validate_tx_against_account(
+            &account,
+            context.tx(),
+            is_eip3607_disabled,
+            is_nonce_check_disabled,
+            is_balance_check_disabled,
+            additional_cost,
+        )?;
         Ok(())
     }
 
