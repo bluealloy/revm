@@ -47,7 +47,7 @@ pub trait ContextTr {
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
-    fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
+    fn tx_journal(&mut self) -> (&Self::Tx, &mut Self::Journal);
 }
 
 /// Inner Context error used for Interpreter to set error without returning it frm instruction

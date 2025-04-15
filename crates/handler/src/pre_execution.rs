@@ -2,6 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use super::validation::validate_tx_against_account;
 use bytecode::Bytecode;
 use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
 use context_interface::ContextTr;
@@ -12,8 +13,6 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
-use state::AccountInfo;
-use std::cmp::Ordering;
 
 use crate::{EvmTr, PrecompileProvider};
 
@@ -99,7 +98,7 @@ pub fn deduct_caller<CTX: ContextTr>(
     let (tx, journal) = context.tx_journal();
     let caller_account = journal.load_account(caller)?.data;
 
-    let _ = validate_tx_against_account_info::<CTX>(
+    let _ = validate_tx_against_account(
         &mut caller_account.info,
         tx,
         is_eip3607_disabled,
@@ -127,71 +126,6 @@ pub fn deduct_caller<CTX: ContextTr>(
 
     // Touch account so we know it is changed.
     caller_account.mark_touch();
-    Ok(())
-}
-
-/// Validate account against the transaction.
-#[inline]
-pub fn validate_tx_against_account_info<CTX: ContextTr>(
-    account: &mut AccountInfo,
-    tx: &mut <CTX as ContextTr>::Tx,
-    is_eip3607_disabled: bool,
-    is_nonce_check_disabled: bool,
-    is_balance_check_disabled: bool,
-    additional_cost: U256,
-) -> Result<(), InvalidTransaction> {
-    let tx = tx;
-    let tx_type = tx.tx_type();
-    // EIP-3607: Reject transactions from senders with deployed code
-    // This EIP is introduced after london but there was no collision in past
-    // so we can leave it enabled always
-    if !is_eip3607_disabled {
-        let bytecode = &account.code.as_ref().unwrap();
-        // Allow EOAs whose code is a valid delegation designation,
-        // i.e. 0xef0100 || address, to continue to originate transactions.
-        if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode);
-        }
-    }
-
-    // Check that the transaction's nonce is correct
-    if !is_nonce_check_disabled {
-        let tx = tx.nonce();
-        let state = account.nonce;
-        match tx.cmp(&state) {
-            Ordering::Greater => {
-                return Err(InvalidTransaction::NonceTooHigh { tx, state });
-            }
-            Ordering::Less => {
-                return Err(InvalidTransaction::NonceTooLow { tx, state });
-            }
-            _ => {}
-        }
-    }
-
-    // gas_limit * max_fee + value + additional_gas_cost
-    let mut balance_check = U256::from(tx.gas_limit())
-        .checked_mul(U256::from(tx.max_fee_per_gas()))
-        .and_then(|gas_cost| gas_cost.checked_add(tx.value()))
-        .and_then(|gas_cost| gas_cost.checked_add(additional_cost))
-        .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-
-    if tx_type == TransactionType::Eip4844 {
-        let data_fee = tx.calc_max_data_fee();
-        balance_check = balance_check
-            .checked_add(data_fee)
-            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-    }
-
-    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-    // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.balance && !is_balance_check_disabled {
-        return Err(InvalidTransaction::LackOfFundForMaxFee {
-            fee: Box::new(balance_check),
-            balance: Box::new(account.balance),
-        });
-    }
-
     Ok(())
 }
 

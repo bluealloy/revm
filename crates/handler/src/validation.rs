@@ -26,18 +26,27 @@ pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTra
 }
 
 pub fn validate_tx_against_state<
-    CTX: ContextTr,
+    CTX: ContextTr + Transaction,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     mut context: CTX,
 ) -> Result<(), ERROR> {
     let tx_caller = context.tx().caller();
-
+    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
+    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
+    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
     // Load acc
     let account = context.journal().load_account_code(tx_caller)?;
     let account = account.data.info.clone();
 
-    validate_tx_against_account(&account, context, U256::ZERO)?;
+    validate_tx_against_account(
+        &account,
+        context,
+        is_eip3607_disabled,
+        is_nonce_check_disabled,
+        is_balance_check_disabled,
+        U256::ZERO,
+    )?;
     Ok(())
 }
 
@@ -227,19 +236,84 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
     Ok(())
 }
 
+// /// Validate account against the transaction.
+// #[inline]
+// pub fn validate_tx_against_account<CTX: ContextTr>(
+//     account: &AccountInfo,
+//     context: CTX,
+//     additional_cost: U256,
+// ) -> Result<(), InvalidTransaction> {
+//     let tx = context.tx();
+//     let tx_type = context.tx().tx_type();
+//     // EIP-3607: Reject transactions from senders with deployed code
+//     // This EIP is introduced after london but there was no collision in past
+//     // so we can leave it enabled always
+//     if !context.cfg().is_eip3607_disabled() {
+//         let bytecode = &account.code.as_ref().unwrap();
+//         // Allow EOAs whose code is a valid delegation designation,
+//         // i.e. 0xef0100 || address, to continue to originate transactions.
+//         if !bytecode.is_empty() && !bytecode.is_eip7702() {
+//             return Err(InvalidTransaction::RejectCallerWithCode);
+//         }
+//     }
+
+//     // Check that the transaction's nonce is correct
+//     if !context.cfg().is_nonce_check_disabled() {
+//         let tx = tx.nonce();
+//         let state = account.nonce;
+//         match tx.cmp(&state) {
+//             Ordering::Greater => {
+//                 return Err(InvalidTransaction::NonceTooHigh { tx, state });
+//             }
+//             Ordering::Less => {
+//                 return Err(InvalidTransaction::NonceTooLow { tx, state });
+//             }
+//             _ => {}
+//         }
+//     }
+
+//     // gas_limit * max_fee + value + additional_gas_cost
+//     let mut balance_check = U256::from(tx.gas_limit())
+//         .checked_mul(U256::from(tx.max_fee_per_gas()))
+//         .and_then(|gas_cost| gas_cost.checked_add(tx.value()))
+//         .and_then(|gas_cost| gas_cost.checked_add(additional_cost))
+//         .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+//     if tx_type == TransactionType::Eip4844 {
+//         let data_fee = tx.calc_max_data_fee();
+//         balance_check = balance_check
+//             .checked_add(data_fee)
+//             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+//     }
+
+//     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
+//     // Transfer will be done inside `*_inner` functions.
+//     if balance_check > account.balance && !context.cfg().is_balance_check_disabled() {
+//         return Err(InvalidTransaction::LackOfFundForMaxFee {
+//             fee: Box::new(balance_check),
+//             balance: Box::new(account.balance),
+//         });
+//     }
+
+//     Ok(())
+// }
+
 /// Validate account against the transaction.
 #[inline]
-pub fn validate_tx_against_account<CTX: ContextTr>(
+pub fn validate_tx_against_account(
     account: &AccountInfo,
-    context: CTX,
+    tx: impl Transaction,
+    is_eip3607_disabled: bool,
+    is_nonce_check_disabled: bool,
+    is_balance_check_disabled: bool,
     additional_cost: U256,
 ) -> Result<(), InvalidTransaction> {
-    let tx = context.tx();
-    let tx_type = context.tx().tx_type();
+    let tx = tx;
+    let tx_type = tx.tx_type();
     // EIP-3607: Reject transactions from senders with deployed code
     // This EIP is introduced after london but there was no collision in past
     // so we can leave it enabled always
-    if !context.cfg().is_eip3607_disabled() {
+    if !is_eip3607_disabled {
         let bytecode = &account.code.as_ref().unwrap();
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
@@ -249,7 +323,7 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
     }
 
     // Check that the transaction's nonce is correct
-    if !context.cfg().is_nonce_check_disabled() {
+    if !is_nonce_check_disabled {
         let tx = tx.nonce();
         let state = account.nonce;
         match tx.cmp(&state) {
@@ -279,7 +353,7 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.balance && !context.cfg().is_balance_check_disabled() {
+    if balance_check > account.balance && !is_balance_check_disabled {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(balance_check),
             balance: Box::new(account.balance),
