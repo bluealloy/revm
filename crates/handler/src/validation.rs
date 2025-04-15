@@ -8,6 +8,7 @@ use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256, U256};
 use state::AccountInfo;
+use state::Bytecode;
 use std::boxed::Box;
 
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
@@ -252,7 +253,10 @@ pub fn validate_tx_against_account(
     // This EIP is introduced after london but there was no collision in past
     // so we can leave it enabled always
     if !is_eip3607_disabled {
-        let bytecode = &account.code.as_ref().unwrap();
+        let bytecode = match account.code.as_ref() {
+            Some(code) => code,
+            None => &Bytecode::default(),
+        };
         // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
