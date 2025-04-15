@@ -1,9 +1,9 @@
-use core::cell::RefCell;
-use std::rc::Rc;
-
+//! Local context that is filled by execution.
 use bytecode::{CodeType, Eof};
 use context_interface::LocalContextTr;
+use core::cell::RefCell;
 use primitives::{keccak256, Bytes, HashMap, B256};
+use std::rc::Rc;
 
 /// Local context that is filled by execution.
 #[derive(Clone, Debug)]
@@ -35,6 +35,8 @@ impl LocalContextTr for LocalContext {
 
     fn clear(&mut self) {
         self.initcode_mapping.clear();
+        // Internaly sets len to 0 but it will not shrink or free the inner capacity.
+        self.shared_memory_buffer.borrow_mut().clear();
     }
 
     fn get_validated_initcode(&mut self, hash: B256) -> Option<Bytes> {

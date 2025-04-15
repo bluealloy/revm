@@ -1,9 +1,8 @@
 pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, LocalContextTr, Transaction};
 use auto_impl::auto_impl;
-use core::cell::RefCell;
 use primitives::U256;
-use std::{rc::Rc, string::String, vec::Vec};
+use std::string::String;
 
 /// Trait that defines the context of the EVM execution.
 ///
@@ -42,9 +41,9 @@ pub trait ContextTr {
     /// Get the database reference
     fn db_ref(&self) -> &Self::Db;
     /// Get the chain
-    fn chain(&mut self) -> &mut Self::Chain; 
+    fn chain(&mut self) -> &mut Self::Chain;
     /// Get the local context
-    fn local(&mut self) -> &mut Self::Local; 
+    fn local(&mut self) -> &mut Self::Local;
     /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     /// Get the transaction and journal. It is used to efficiently load access list

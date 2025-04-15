@@ -6,8 +6,6 @@
 //! advanced cheatcode use-case.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
-use std::{cell::RefCell, convert::Infallible, fmt::Debug, rc::Rc};
-
 use revm::{
     context::{
         result::InvalidTransaction, BlockEnv, Cfg, CfgEnv, ContextTr, Evm, JournalOutput,
@@ -32,6 +30,7 @@ use revm::{
     state::{Account, Bytecode, EvmState},
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
+use std::{convert::Infallible, fmt::Debug};
 
 /// Backend for cheatcodes.
 /// The problematic cheatcodes are only supported in fork mode, so we'll omit the non-fork behavior of the Foundry
@@ -504,7 +503,6 @@ where
         block: env.block,
         cfg: env.cfg,
         journaled_state: new_backend,
-        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         local: LocalContext::default(),
         error: Ok(()),
@@ -557,7 +555,6 @@ fn main() -> anyhow::Result<()> {
         block: env.block,
         cfg: env.cfg,
         journaled_state: backend,
-        memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(4064))),
         chain: (),
         local: LocalContext::default(),
         error: Ok(()),

@@ -482,9 +482,6 @@ pub trait Handler {
         evm.ctx().local().clear();
         // Clear journal
         evm.ctx().journal().clear();
-        unsafe {
-            evm.ctx().memory_buffer().borrow_mut().set_len(0);
-        }
         Ok(output)
     }
 
@@ -502,9 +499,6 @@ pub trait Handler {
         evm.ctx().local().clear();
         // Clean up journal state if error occurs
         evm.ctx().journal().clear();
-        unsafe {
-            evm.ctx().memory_buffer().borrow_mut().set_len(0);
-        }
         Err(error)
     }
 }

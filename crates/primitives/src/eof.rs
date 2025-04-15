@@ -1,3 +1,4 @@
+//! EOF related constants and functions.
 use crate::{keccak256, Address, B256};
 
 /// TXCREATE transaction type.

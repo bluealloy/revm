@@ -4,11 +4,9 @@ use context_interface::{
     context::{ContextError, ContextSetters},
     Block, Cfg, ContextTr, JournalTr, LocalContextTr, Transaction,
 };
-use core::cell::RefCell;
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::hardfork::SpecId;
-use std::{rc::Rc, vec::Vec};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
