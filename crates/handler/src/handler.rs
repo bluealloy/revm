@@ -339,7 +339,7 @@ pub trait Handler {
     #[inline]
     fn frame_init(
         &mut self,
-        frame: &Self::Frame,
+        frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
@@ -482,6 +482,9 @@ pub trait Handler {
         evm.ctx().local().clear();
         // Clear journal
         evm.ctx().journal().clear();
+        unsafe {
+            evm.ctx().memory_buffer().borrow_mut().set_len(0);
+        }
         Ok(output)
     }
 
@@ -499,6 +502,9 @@ pub trait Handler {
         evm.ctx().local().clear();
         // Clean up journal state if error occurs
         evm.ctx().journal().clear();
+        unsafe {
+            evm.ctx().memory_buffer().borrow_mut().set_len(0);
+        }
         Err(error)
     }
 }

@@ -1,3 +1,5 @@
+//! Module that contains the verification logic for the EOF bytecode.
+
 use crate::{
     eof::{CodeInfo, Eof, EofDecodeError},
     opcode::{self, OPCODE_INFO},
@@ -41,6 +43,8 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
     validate_eof_inner(eof, Some(CodeType::Initcode))
 }
 
+/// Fully validates an [`Eof`] container. If first_code_type is None it will be auto deduced
+/// in verification process.
 #[inline]
 pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
     // Data needs to be filled first first container.
@@ -139,7 +143,9 @@ pub fn validate_eof_codes(
 /// EOF Error
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofError {
+    /// Decoding error.
     Decode(EofDecodeError),
+    /// Validation Error.
     Validation(EofValidationError),
 }
 
@@ -169,6 +175,7 @@ impl core::error::Error for EofError {}
 /// EOF Validation Error
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofValidationError {
+    /// Used in testing to indicate that the bytecode validation is different from expected.
     FalsePositive,
     /// Opcode is not known. It is not defined in the opcode table.
     UnknownOpcode,
@@ -246,6 +253,8 @@ pub enum EofValidationError {
     NonReturningSectionIsReturning,
 }
 
+/// Tracker status of verification of code sections and subcontainers.
+/// Used in validating EOF container.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AccessTracker {
     /// This code type
@@ -301,6 +310,12 @@ impl AccessTracker {
         }
     }
 
+    /// Sets the code type for a subcontainer. If code type is already set check if it is the same.
+    /// In case of mismatch return error.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is out of bounds.
     pub fn set_subcontainer_type(
         &mut self,
         index: usize,

@@ -57,7 +57,7 @@ Some quicklinks can be found here. Some pointto code documentation or book. code
 * How to use Revm Framework can be foud in MyEvm example. [book](https://github.com/bluealloy/revm/tree/main/examples/my_evm)
 * Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
 * How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
-* How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/dev.html#running-eth-tests)
+* How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
 * If there is more explanations please open PR request for it.
 
 ### Community:

@@ -1,3 +1,4 @@
+//! This module contains [`BlockEnv`] and it implements [`Block`] trait.
 use context_interface::block::{BlobExcessGasAndPrice, Block};
 use primitives::{Address, B256, U256};
 

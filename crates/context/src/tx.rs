@@ -1,3 +1,4 @@
+//! This module contains [`TxEnv`] struct and implements [`Transaction`] trait for it.
 use crate::TransactionType;
 use context_interface::transaction::{
     AccessList, AccessListItem, SignedAuthorization, Transaction,
@@ -10,12 +11,15 @@ use std::vec::Vec;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
+    /// Transaction type
     pub tx_type: u8,
     /// Caller aka Author aka transaction signer
     pub caller: Address,
-    /// The gas limit of the transaction
+    /// The gas limit of the transaction.
     pub gas_limit: u64,
-    /// The gas price of the transaction
+    /// The gas price of the transaction.
+    ///
+    /// For EIP-1559 transaction this represent max_gas_fee.
     pub gas_price: u128,
     /// The destination of the transaction
     pub kind: TxKind,
@@ -104,10 +108,13 @@ impl Default for TxEnv {
     }
 }
 
+/// Error type for deriving transaction type used as error in [`TxEnv::derive_tx_type`] function.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DeriveTxTypeError {
+    /// Missing target for EIP-4844
     MissingTargetForEip4844,
+    /// Missing target for EIP-7702
     MissingTargetForEip7702,
 }
 
@@ -216,5 +223,94 @@ impl Transaction for TxEnv {
 
     fn initcodes(&self) -> impl Iterator<Item = &Bytes> {
         self.initcodes.iter()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn effective_gas_setup(
+        tx_type: TransactionType,
+        gas_price: u128,
+        gas_priority_fee: Option<u128>,
+    ) -> u128 {
+        let tx = TxEnv {
+            tx_type: tx_type as u8,
+            gas_price,
+            gas_priority_fee,
+            ..Default::default()
+        };
+        let base_fee = 100;
+        tx.effective_gas_price(base_fee)
+    }
+
+    #[test]
+    fn test_effective_gas_price() {
+        assert_eq!(90, effective_gas_setup(TransactionType::Legacy, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Legacy, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Legacy, 90, Some(10))
+        );
+        assert_eq!(
+            120,
+            effective_gas_setup(TransactionType::Legacy, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip2930, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip2930, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip2930, 90, Some(10))
+        );
+        assert_eq!(
+            120,
+            effective_gas_setup(TransactionType::Eip2930, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip1559, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip1559, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip1559, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip1559, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip4844, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip4844, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip4844, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip4844, 120, Some(10))
+        );
+        assert_eq!(90, effective_gas_setup(TransactionType::Eip7702, 90, None));
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip7702, 90, Some(0))
+        );
+        assert_eq!(
+            90,
+            effective_gas_setup(TransactionType::Eip7702, 90, Some(10))
+        );
+        assert_eq!(
+            110,
+            effective_gas_setup(TransactionType::Eip7702, 120, Some(10))
+        );
     }
 }

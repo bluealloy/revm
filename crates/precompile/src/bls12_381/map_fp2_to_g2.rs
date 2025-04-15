@@ -1,3 +1,4 @@
+//! BLS12-381 map fp2 to g2 precompile. More details in [`map_fp2_to_g2`]
 use super::{
     crypto_backend::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
     utils::remove_fp_padding,
@@ -17,7 +18,7 @@ pub const PRECOMPILE: PrecompileWithAddress =
 /// an element of Fp2. Output of this call is 256 bytes and is an encoded G2
 /// point.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp2-element-to-g2-point>
-pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP2_TO_G2_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

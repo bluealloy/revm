@@ -1,8 +1,15 @@
+//! EOF bytecode.
+//!
+//! Contains body, header and raw bytes.
+//!
+//! Also contains verification logic and pretty printer.
 mod body;
 mod code_info;
 mod decode_helpers;
 mod header;
+/// Pritty printer for the EOF bytecode. Enabled by `std` feature.
 pub mod printer;
+/// Verification logic for the EOF bytecode.
 pub mod verification;
 
 pub use body::EofBody;
@@ -33,8 +40,12 @@ pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
+    /// Header of the EOF container
     pub header: EofHeader,
+    /// Body of the EOF container
     pub body: EofBody,
+    /// Raw bytes of the EOF container. Chunks of raw Bytes are used in Body to reference
+    /// parts of code, data and container sections.
     pub raw: Bytes,
 }
 

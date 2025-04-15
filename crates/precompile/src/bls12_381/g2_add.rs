@@ -1,3 +1,4 @@
+//! BLS12-381 G2 add precompile. More details in [`g2_add`]
 use super::crypto_backend::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
@@ -15,7 +16,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_ADD_ADDRE
 /// Output is an encoding of addition operation result - single G2 point (`256`
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
-pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

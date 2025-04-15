@@ -1,5 +1,5 @@
 use crate::{instructions::EthInstructions, EthPrecompiles};
-use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, EvmData, Journal, TxEnv};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
@@ -31,10 +31,8 @@ where
 
     fn build_mainnet(self) -> MainnetEvm<Self::Context> {
         Evm {
-            data: EvmData {
-                ctx: self,
-                inspector: (),
-            },
+            ctx: self,
+            inspector: (),
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
         }
@@ -45,10 +43,8 @@ where
         inspector: INSP,
     ) -> MainnetEvm<Self::Context, INSP> {
         Evm {
-            data: EvmData {
-                ctx: self,
-                inspector,
-            },
+            ctx: self,
+            inspector,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
         }

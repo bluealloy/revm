@@ -70,7 +70,7 @@ pub fn validate_eip4844_tx(
     blobs: &[B256],
     max_blob_fee: u128,
     block_blob_gas_price: u128,
-    max_blobs: u8,
+    max_blobs: u64,
 ) -> Result<(), InvalidTransaction> {
     // Ensure that the user was willing to at least pay the current blob gasprice
     if block_blob_gas_price > max_blob_fee {

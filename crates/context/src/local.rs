@@ -1,14 +1,28 @@
+use core::cell::RefCell;
+use std::rc::Rc;
+
 use bytecode::{CodeType, Eof};
 use context_interface::LocalContextTr;
 use primitives::{keccak256, Bytes, HashMap, B256};
 
 /// Local context that is filled by execution.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct LocalContext {
     /// Mapping of initcode hash that contains raw bytes ready for validation or status of validation.
     ///
     /// Used in EIP-7873 EOF - TXCREATE to fetch initcode by hash and cache its validation.
     pub initcode_mapping: HashMap<B256, Initcode>,
+    /// Interpreter shared memory buffer. A reused memory buffer for calls.
+    pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
+}
+
+impl Default for LocalContext {
+    fn default() -> Self {
+        Self {
+            initcode_mapping: HashMap::new(),
+            shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
+        }
+    }
 }
 
 impl LocalContextTr for LocalContext {
@@ -26,6 +40,10 @@ impl LocalContextTr for LocalContext {
     fn get_validated_initcode(&mut self, hash: B256) -> Option<Bytes> {
         let initcode = self.initcode_mapping.get_mut(&hash)?;
         initcode.validate().cloned()
+    }
+
+    fn shared_memory_buffer(&mut self) -> &Rc<RefCell<Vec<u8>>> {
+        &self.shared_memory_buffer
     }
 }
 

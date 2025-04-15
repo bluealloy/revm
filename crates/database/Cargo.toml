@@ -1,7 +1,7 @@
 [package]
 name = "revm-database"
 description = "Revm Database implementations"
-version = "2.0.0"
+version = "3.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -42,16 +42,13 @@ alloy-transport = { workspace = true, optional = true }
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc"] }
 anyhow.workspace = true
-indicatif.workspace = true
 rstest.workspace = true
-alloy-sol-types.workspace = true
 
 [features]
 default = ["std"]
 std = [
 	"serde?/std",
 	"alloy-eips?/std",
-	"alloy-sol-types/std",
 	"bytecode/std",
 	"database-interface/std",
 	"primitives/std",

@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [18.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v17.0.0...revm-interpreter-v18.0.0) - 2025-04-09
+
+### Added
+
+- *(tests)* Add dupn, swapn and exhange tests ([#2343](https://github.com/bluealloy/revm/pull/2343))
+- support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
+
+### Other
+
+- *(test)* uncommented bitwise.rs and system.rs tests ([#2370](https://github.com/bluealloy/revm/pull/2370))
+- *(tests)* fix program counter for eof jump instructions ([#2368](https://github.com/bluealloy/revm/pull/2368))
+- fix tests in data.rs file ([#2365](https://github.com/bluealloy/revm/pull/2365))
+- remove redundant U256 conversions in instructions ([#2364](https://github.com/bluealloy/revm/pull/2364))
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+
 ## [17.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0...revm-interpreter-v17.0.0) - 2025-03-28
 
 ### Other

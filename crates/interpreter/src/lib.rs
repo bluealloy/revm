@@ -28,8 +28,7 @@ pub use host::Host;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
-    num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,
-    EMPTY_SHARED_MEMORY, STACK_LIMIT,
+    num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,

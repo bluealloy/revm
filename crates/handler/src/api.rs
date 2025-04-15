@@ -71,11 +71,11 @@ where
     }
 
     fn set_tx(&mut self, tx: Self::Tx) {
-        self.data.ctx.set_tx(tx);
+        self.ctx.set_tx(tx);
     }
 
     fn set_block(&mut self, block: Self::Block) {
-        self.data.ctx.set_block(block);
+        self.ctx.set_block(block);
     }
 }
 

@@ -14,10 +14,21 @@ pub struct EofBody {
     pub code_info: Vec<CodeInfo>,
     /// Index of the last byte of each code section
     pub code_section: Vec<usize>,
+    /// Code byte, it is a concatenation of all code sections.
+    /// Interpreter uses this bytecode to execute the opcodes.
     pub code: Bytes,
+    /// Offset of the code section in the bytecode.
     pub code_offset: usize,
+    /// Container sections
     pub container_section: Vec<Bytes>,
+    /// Data section
     pub data_section: Bytes,
+    /// Indicates if the data section is filled.
+    ///
+    /// Unfilled data section are used in EOFCREATE/TXCREATE to
+    /// append data before deploying that contract to state.
+    ///
+    /// EOF containers that are in state and can be executed are required to have filled data section.
     pub is_data_filled: bool,
 }
 
