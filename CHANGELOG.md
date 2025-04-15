@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v70 tag
+date: 15.04.2025
+
+# v69 tag
+date: 14.04.2025
+
+op-revm bug fix for bls precompiles
+
+* `op-revm`: 3.0.0 -> 3.0.1 (✓ API compatible changes)
+
 # v68 tag
 date: 09.04.2025
 
