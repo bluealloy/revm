@@ -116,6 +116,8 @@ pub enum DeriveTxTypeError {
     MissingTargetForEip4844,
     /// Missing target for EIP-7702
     MissingTargetForEip7702,
+    /// Missing target for EIP-7873
+    MissingTargetForEip7873,
 }
 
 impl TxEnv {
@@ -145,6 +147,14 @@ impl TxEnv {
                 tx_type = TransactionType::Eip7702;
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip7702);
+            }
+        }
+
+        if !self.initcodes.is_empty() {
+            if let TxKind::Call(_) = self.kind {
+                tx_type = TransactionType::Eip7873;
+            } else {
+                return Err(DeriveTxTypeError::MissingTargetForEip7873);
             }
         }
 

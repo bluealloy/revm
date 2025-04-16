@@ -151,7 +151,10 @@ pub trait Handler {
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.load_accounts(evm)?;
         self.deduct_caller(evm)?;
+        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
+        self.apply_eip7873_eof_initcodes(evm)?;
         let gas = self.apply_eip7702_auth_list(evm)?;
+
         Ok(gas)
     }
 
@@ -200,8 +203,6 @@ pub trait Handler {
         self.refund(evm, &mut exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
         self.eip7623_check_gas_floor(evm, &mut exec_result, init_and_floor_gas);
-        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
-        self.apply_eip7873_eof_initcodes(evm)?;
         // Return unused gas to caller
         self.reimburse_caller(evm, &mut exec_result)?;
         // Pay transaction fees to beneficiary

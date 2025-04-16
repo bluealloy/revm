@@ -96,6 +96,7 @@ impl Initcode {
             InitcodeStatus::Invalid => return None,
             InitcodeStatus::PendingValidation => (),
         }
+
         // pending validation
         let Ok(eof) = Eof::decode(self.bytes.clone()) else {
             self.status = InitcodeStatus::Invalid;

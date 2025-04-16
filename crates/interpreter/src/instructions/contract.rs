@@ -109,6 +109,7 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     // Get validated initcode with all its subcontainers validated recursively.
     let Some(initcode) = host.initcode_by_hash(tx_initcode_hash) else {
+        println!("initcode not found");
         // If initcode is not found or not valid, push 0 on the stack.
         push!(interpreter, U256::ZERO);
         return;
