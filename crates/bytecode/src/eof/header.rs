@@ -66,7 +66,7 @@ fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([
             input[i * CODE_SECTION_SIZE],
-            input[(i + 1) * CODE_SECTION_SIZE],
+            input[i * CODE_SECTION_SIZE + 1],
         ]);
         if code_size == 0 {
             return Err(EofDecodeError::ZeroSize);
@@ -223,7 +223,8 @@ impl EofHeader {
         let (input, types_size) = consume_u16(input)?;
         header.types_size = types_size;
 
-        if header.types_size % 4 != 0 {
+        // types size
+        if header.types_size % CODE_SECTION_SIZE as u16 != 0 {
             return Err(EofDecodeError::InvalidCodeInfo);
         }
 

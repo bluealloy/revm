@@ -74,9 +74,6 @@ impl CodeInfo {
         if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_increase > 0x03FF {
             return Err(EofDecodeError::InvalidCodeInfo);
         }
-        if self.inputs as u16 > self.max_stack_increase {
-            return Err(EofDecodeError::InvalidCodeInfo);
-        }
         Ok(())
     }
 }
