@@ -21,7 +21,7 @@ workspace = true
 alloy-primitives = { workspace = true, features = ["rlp", "map"] }
 
 # mics
-num_enum = { version = "0.7.3", default-features = false, features = [] }
+num_enum = { version = "0.7.3", default-features = false }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
