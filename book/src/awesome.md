@@ -19,7 +19,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 - [**Trin**](https://github.com/ethereum/trin) is a Rust implementation of a Portal Network client.
 
 #### EVM Variants
-- [**Optimism**](https://github.com/bluealloy/revm/tree/main/crates/optimism) is a ethereum L2 network.
+- [**Optimism**](https://github.com/bluealloy/revm/tree/main/crates/op-revm) is a ethereum L2 network.
 - [**Base**](https://www.base.org/) is an Ethereum Layer 2 (L2) chain that offers a safe, low-cost, developer-friendly way to build on-chain
 - [**Scroll**](https://github.com/scroll-tech/revm) is its own Layer 2 network built on Ethereum (more specifically, a “zero-knowledge rollup”).
 
