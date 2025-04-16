@@ -24,6 +24,7 @@ use bytecode::Bytecode;
 use loop_control::LoopControl as LoopControlImpl;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
 use return_data::ReturnDataImpl;
+use std::convert::From;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
@@ -115,7 +116,6 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Output = InterpreterAction;
 }
 
-// TODO InterpreterAction should be replaces with InterpreterTypes::Output.
 impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
@@ -144,13 +144,15 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
     }
+}
 
+impl<IW: InterpreterTypes<Output = InterpreterAction>> Interpreter<IW> {
     /// Takes the next action from the control and returns it.
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
         let action = self.control.take_next_action();
-        if action.is_some() {
+        if action != InterpreterAction::None {
             return action;
         }
         // If not, return action without output as it is a halt.
