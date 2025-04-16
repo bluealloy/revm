@@ -21,7 +21,7 @@ workspace = true
 alloy-primitives = { workspace = true, features = ["rlp", "map"] }
 
 # mics
-enumn.workspace = true
+num_enum = { version = "0.7.3", default-features = false, features = [] }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -29,7 +29,11 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = ["alloy-primitives/std", "serde?/std"]
+std = [
+	"alloy-primitives/std",
+	"serde?/std",
+	"num_enum/std"
+]
 serde = ["dep:serde", "alloy-primitives/serde"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]
