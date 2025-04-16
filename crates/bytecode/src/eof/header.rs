@@ -126,8 +126,8 @@ impl EofHeader {
         1 + // Version
         3 + // Types section
         3 + // Code section
-        2 * self.code_sizes.len() + // `num_code_sections`
-        if self.container_sizes.is_empty() { 0 } else { 3 + 2 * self.container_sizes.len() } + // Container
+        CODE_SECTION_SIZE * self.code_sizes.len() + // `num_code_sections`
+        if self.container_sizes.is_empty() { 0 } else { 3 + CONTAINER_SECTION_SIZE * self.container_sizes.len() } + // Container
         3 + // Data section.
         1 // Terminator
     }

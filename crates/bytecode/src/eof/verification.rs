@@ -749,12 +749,16 @@ pub fn validate_eof_code(
         return Err(EofValidationError::LastInstructionNotTerminating);
     }
     // TODO : Integrate max so we dont need to iterate again
+    let this_code_info = &types[this_types_index];
     let mut max_stack_requirement = 0;
     for opcode in jumps {
-        max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
+        max_stack_requirement = core::cmp::max(
+            opcode.biggest.saturating_sub(this_code_info.inputs as i32),
+            max_stack_requirement,
+        );
     }
 
-    if max_stack_requirement != types[this_types_index].max_stack_increase as i32 {
+    if max_stack_requirement != this_code_info.max_stack_increase as i32 {
         // Stack overflow
         return Err(EofValidationError::MaxStackMismatch);
     }
