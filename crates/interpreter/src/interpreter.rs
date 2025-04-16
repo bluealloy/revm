@@ -116,9 +116,9 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Output = InterpreterAction;
 }
 
-impl<IW: InterpreterTypes> Interpreter<IW> 
+impl<IW: InterpreterTypes> Interpreter<IW>
 where
-    IW::Output: From<InterpreterAction>
+    IW::Output: From<InterpreterAction>,
 {
     /// Executes the instruction at the current instruction pointer.
     ///
