@@ -18,7 +18,24 @@ pub fn new_eof_address(address: Address, salt: B256) -> Address {
     let mut buffer = [0; 65];
     buffer[0] = 0xff;
     // 1..13 are padded zeroes
-    buffer[13..].copy_from_slice(address.as_ref());
+    buffer[13..33].copy_from_slice(address.as_ref());
     buffer[33..].copy_from_slice(salt.as_ref());
     Address::from_word(keccak256(buffer))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy_primitives::{address, b256};
+
+    #[test]
+    fn test_new_eof_address() {
+        let address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+        let salt = b256!("0x0000000000000000000000000000000000000000000000000000000000000000");
+        let eof_address = new_eof_address(address, salt);
+        assert_eq!(
+            eof_address,
+            address!("0x02b6826e9392ee6bf6479e413c570846ab0107ec")
+        );
+    }
 }
