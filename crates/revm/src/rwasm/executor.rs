@@ -12,10 +12,7 @@ use crate::{
     Database,
     Frame,
 };
-use core::{
-    mem::{replace, take},
-    ops::Deref,
-};
+use core::{mem::take, ops::Deref};
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
@@ -36,11 +33,11 @@ use fluentbase_sdk::{
     STATE_DEPLOY,
     STATE_MAIN,
 };
-use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory, EMPTY_SHARED_MEMORY};
+use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory};
 
 pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     stack_frame: &mut Frame,
-    shared_memory: &mut SharedMemory,
+    _shared_memory: &mut SharedMemory,
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let is_create: bool = stack_frame.is_create();
@@ -93,8 +90,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         .is_some();
 
     // execute function
-    let mut runtime_context = RuntimeContext::root(fuel_limit)
-        .with_shared_memory(replace(shared_memory, EMPTY_SHARED_MEMORY));
+    let mut runtime_context = RuntimeContext::root(fuel_limit);
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -121,7 +117,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
     // extract return data from the execution context
     let return_data: Bytes;
-    (return_data, *shared_memory) = runtime_context.into_return_data();
+    return_data = runtime_context.into_return_data();
 
     let is_static = interpreter.is_static;
     let gas = interpreter.gas;
@@ -141,7 +137,7 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
 
 pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
     stack_frame: &mut Frame,
-    shared_memory: &mut SharedMemory,
+    _shared_memory: &mut SharedMemory,
     context: &mut Context<EXT, DB>,
     outcome: SystemInterruptionOutcome,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
@@ -180,8 +176,7 @@ pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
         }
     };
 
-    let mut runtime_context =
-        RuntimeContext::root(0).with_shared_memory(replace(shared_memory, EMPTY_SHARED_MEMORY));
+    let mut runtime_context = RuntimeContext::root(0);
     if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
@@ -196,7 +191,7 @@ pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
     );
 
     let return_data: Bytes;
-    (return_data, *shared_memory) = runtime_context.into_return_data();
+    return_data = runtime_context.into_return_data();
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything
