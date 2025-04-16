@@ -116,10 +116,7 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Output = InterpreterAction;
 }
 
-impl<IW: InterpreterTypes> Interpreter<IW>
-where
-    IW::Output: From<InterpreterAction>,
-{
+impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
@@ -147,24 +144,26 @@ where
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
     }
+}
 
+impl<IW: InterpreterTypes<Output = InterpreterAction>> Interpreter<IW> {
     /// Takes the next action from the control and returns it.
     #[inline]
-    pub fn take_next_action(&mut self) -> IW::Output {
+    pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
         let action = self.control.take_next_action();
         if action != InterpreterAction::None {
-            return From::from(action);
+            return action;
         }
         // If not, return action without output as it is a halt.
-        From::from(InterpreterAction::Return {
+        InterpreterAction::Return {
             result: InterpreterResult {
                 result: self.control.instruction_result(),
                 // Return empty bytecode
                 output: Bytes::new(),
                 gas: *self.control.gas(),
             },
-        })
+        }
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -173,7 +172,7 @@ where
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
-    ) -> IW::Output {
+    ) -> InterpreterAction {
         self.reset_control();
 
         // Main loop
