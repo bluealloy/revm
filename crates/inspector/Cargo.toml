@@ -1,7 +1,7 @@
 [package]
 name = "revm-inspector"
 description = "Revm inspector interface"
-version = "3.0.1"
+version = "3.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
