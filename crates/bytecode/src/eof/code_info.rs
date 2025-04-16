@@ -1,3 +1,5 @@
+use primitives::STACK_LIMIT;
+
 use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,
@@ -21,7 +23,7 @@ pub struct CodeInfo {
     pub outputs: u8,
     /// `max_stack_increase` - 2 bytes - `0x0000-0x03FF`
     ///
-    /// Maximum number of elements ever placed onto the stack by the code section
+    /// Maximum number of elements that got added to the stack by this code section.
     pub max_stack_increase: u16,
 }
 
@@ -71,8 +73,27 @@ impl CodeInfo {
 
     /// Validates the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
-        if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_increase > 0x03FF {
-            return Err(EofDecodeError::InvalidCodeInfo);
+        if self.inputs > 0x7f {
+            return Err(EofDecodeError::InvalidCodeInfoInputValue { value: self.inputs });
+        }
+
+        if self.outputs > 0x80 {
+            return Err(EofDecodeError::InvalidCodeInfoOutputValue {
+                value: self.outputs,
+            });
+        }
+
+        if self.max_stack_increase > 0x03FF {
+            return Err(EofDecodeError::InvalidCodeInfoMaxIncrementValue {
+                value: self.max_stack_increase,
+            });
+        }
+
+        if self.inputs as usize + self.max_stack_increase as usize >= STACK_LIMIT {
+            return Err(EofDecodeError::InvalidCodeInfoStackOverflow {
+                inputs: self.inputs,
+                max_stack_increment: self.max_stack_increase,
+            });
         }
         Ok(())
     }

@@ -155,6 +155,28 @@ pub enum EofDecodeError {
     DanglingData,
     /// Invalid code info data
     InvalidCodeInfo,
+    /// Invalid code info input value
+    InvalidCodeInfoInputValue {
+        /// Number of inputs
+        value: u8,
+    },
+    /// Invalid code info input value
+    InvalidCodeInfoOutputValue {
+        /// Number of outputs
+        value: u8,
+    },
+    /// Invalid code info input value
+    InvalidCodeInfoMaxIncrementValue {
+        /// MaxIncrementValue
+        value: u16,
+    },
+    /// Invalid code info input value can't be greater than [`primitives::STACK_LIMIT`]
+    InvalidCodeInfoStackOverflow {
+        /// Number of inputs
+        inputs: u8,
+        /// Max stack increment
+        max_stack_increment: u16,
+    },
     /// Invalid code info size
     InvalidCodeInfoSize,
     /// Invalid EOF magic number
@@ -196,6 +218,25 @@ impl fmt::Display for EofDecodeError {
             Self::MissingBodyWithoutData => "Short body while processing EOF",
             Self::DanglingData => "Body size is more than specified in the header",
             Self::InvalidCodeInfo => "Invalid types section data",
+            Self::InvalidCodeInfoInputValue { value } => {
+                return write!(f, "Invalid code info input value: {}", value);
+            }
+            Self::InvalidCodeInfoOutputValue { value } => {
+                return write!(f, "Invalid code info output value: {}", value);
+            }
+            Self::InvalidCodeInfoMaxIncrementValue { value } => {
+                return write!(f, "Invalid code info max increment value: {}", value);
+            }
+            Self::InvalidCodeInfoStackOverflow {
+                inputs,
+                max_stack_increment,
+            } => {
+                return write!(
+                    f,
+                    "Invalid code info stack overflow: inputs: {}, max_stack_increment: {}",
+                    inputs, max_stack_increment
+                );
+            }
             Self::InvalidCodeInfoSize => "Invalid types section size",
             Self::InvalidEOFMagicNumber => "Invalid EOF magic number",
             Self::InvalidEOFVersion => "Invalid EOF version",
