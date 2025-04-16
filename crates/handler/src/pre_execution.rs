@@ -2,6 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use super::validation::validate_tx_against_account;
 use bytecode::Bytecode;
 use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
 use context_interface::ContextTr;
@@ -92,8 +93,19 @@ pub fn deduct_caller<CTX: ContextTr>(
     let caller = context.tx().caller();
 
     // Load caller's account.
-    let journal = context.journal();
+    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
+    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+    let (tx, journal) = context.tx_journal();
     let caller_account = journal.load_account(caller)?.data;
+
+    let _ = validate_tx_against_account(
+        &caller_account.info,
+        tx,
+        is_eip3607_disabled,
+        is_nonce_check_disabled,
+        is_balance_check_disabled,
+        U256::from(gas_cost),
+    );
 
     // Set new caller account balance.
     caller_account.info.balance = caller_account

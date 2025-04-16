@@ -33,16 +33,21 @@ pub fn validate_tx_against_state<
     mut context: CTX,
 ) -> Result<(), ERROR> {
     let tx_caller = context.tx().caller();
-    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
-    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+
     // Load acc
     let account = context.journal().load_account_code(tx_caller)?;
     let account = account.data.info.clone();
+    let cfg = context.cfg();
+    let (is_balance_check_disabled, is_eip3607_disabled, is_nonce_check_disabled) = (
+        cfg.is_balance_check_disabled(),
+        cfg.is_eip3607_disabled(),
+        cfg.is_nonce_check_disabled(),
+    );
+    let tx = context.tx();
 
     validate_tx_against_account(
         &account,
-        context.tx(),
+        tx,
         is_eip3607_disabled,
         is_nonce_check_disabled,
         is_balance_check_disabled,

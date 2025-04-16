@@ -118,14 +118,17 @@ where
         let tx_caller = context.tx().caller();
 
         // Load acc
-        let account = context.journal().load_account_code(tx_caller)?;
-        let account = account.data.info.clone();
-        let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-        let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
-        let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+        let account = &context.journal().load_account_code(tx_caller)?.info.clone();
+        let cfg = context.cfg();
+        let (is_balance_check_disabled, is_eip3607_disabled, is_nonce_check_disabled) = (
+            cfg.is_balance_check_disabled(),
+            cfg.is_eip3607_disabled(),
+            cfg.is_nonce_check_disabled(),
+        );
+        let tx = context.tx();
         validate_tx_against_account(
-            &account,
-            context.tx(),
+            account,
+            tx,
             is_eip3607_disabled,
             is_nonce_check_disabled,
             is_balance_check_disabled,
@@ -182,7 +185,21 @@ where
                 operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
             }
 
-            let mut caller_account = ctx.journal().load_account(caller)?;
+            let is_eip_3607_disabled = ctx.cfg().is_eip3607_disabled();
+            let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
+            let is_balance_check_disabled = ctx.cfg().is_balance_check_disabled();
+            let (tx, journal) = ctx.tx_journal();
+            let caller_account = journal.load_account(caller)?.data;
+            let account_info = &caller_account.info;
+
+            validate_tx_against_account(
+                account_info,
+                tx,
+                is_eip_3607_disabled,
+                is_nonce_check_disabled,
+                is_balance_check_disabled,
+                U256::ZERO,
+            )?;
             caller_account.info.balance = caller_account
                 .info
                 .balance
