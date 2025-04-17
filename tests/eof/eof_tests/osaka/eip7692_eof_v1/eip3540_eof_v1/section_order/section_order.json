@@ -1,0 +1,434 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.MISSING-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff00010000800001ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc8ceb78fa9eed7bb536c3a6c98e5b57c431f14aebdc0d37863fb6b92ac117faa",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.MISSING-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff00010000800001305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.TOPLEVEL_CONTAINER_TRUNCATED",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbda4ddd3529c3b04e09a5b942af229db84b6814b4a26956c89f82bade913824a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.MISSING-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff000100305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE|EOFException.INVALID_FIRST_SECTION_TYPE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcba0927f25b537335791c111e7efe9a04bb1b3bbb73fb4db8f3ed65eb7eabdfd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.WRONG_ORDER-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff00010000800001ef305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.UNDEFINED_INSTRUCTION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x08f56883a0094181c3a62c11b922f7cb4e89d90444a56778ce7801cc7aa2672f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.WRONG_ORDER-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff000100ef00800001305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_FIRST_SECTION_TYPE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xe5c728542d3fa5b4da38e68bf15efe99a8c61f9ec596131b7c00200cd94dff86",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY-section_test_SectionTest.WRONG_ORDER-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010003ff00010030500000800001ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_FIRST_SECTION_TYPE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd7a5809aef01e5a60e950bbc28ea91c90b77ad2a431909b95ec3ce68d47ea724",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.MISSING-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff00010000800001ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x42ff4d81c783d763f0f3815b01fb33a0509fc21029b56e56de29e526a860e7d7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.MISSING-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000402000100030000800001305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x48b86a74f5ab1b7a3501498c8e65818485fb869b19b7c3093b5831add9b62e3f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.MISSING-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010200010003ff000100305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xa9b09332cd62269809e6127d6ca66434c3de2057eb87abd798e0bf6ff1b47f50",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff000102000100030000800001ef305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x33f7ff86e29f4eb1cd70f0bcfcf91d3d64c52d2c983cdfd78ad0aff33c101703",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001ff0001010004020001000300ef00800001305000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x65be1d3fe8a303d23d35feb62323ff76764f4c37a520388b980d288afa105a62",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.BODY_AND_HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010200010003010004ff00010030500000800001ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd341d782392915463aebe1aefdb18c1f3e81bf7f15c772e55ec75a47b3b470e5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.MISSING-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff00010000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x50edb8ea103d16a1b62c56a028cfb89e78cbb37fa54360c287b324faa34d0554",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.MISSING-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000402000100030000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xb49b5b5ae66e22496fdb0ff6a58c0875a23ff9ef88227eb0495b718bb2a2901b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.MISSING-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010200010003ff00010000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x1f14409e5b119e49182570a38fbfea4831b2cbb78448bd97ce8878f09c3cd5a7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_CODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff000102000100030000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x0969b645c0b98a9cdf82c43a0c166bfa6d9ee2fb385dbf1ca52de530406df43b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_DATA]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001ff000101000402000100030000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbd13cec4fe11cb2f57fb020e39a30ff0f61efe1315509d5664c34c2496683ece",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py::test_section_order[fork_Osaka-eof_test-test_position_CasePosition.HEADER-section_test_SectionTest.WRONG_ORDER-section_kind_TYPE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010200010003010004ff00010000800001305000ef",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x8c65448d8fbd38a782f137257fafd9068890b4ca9378226be40f36ce58f22fa9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest sections order and it appearance in body and header.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_order.py#L140",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    }
+}

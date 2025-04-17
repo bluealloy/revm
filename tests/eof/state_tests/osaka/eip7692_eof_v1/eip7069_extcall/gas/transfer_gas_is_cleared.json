@@ -1,0 +1,914 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_0-opcode_EXTCALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001000bff00000000800004600060006000611000f800",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x3d07ffc8b73b5588c1df2d107ffd6b3c9d6e851e23fe653d90f41834d2c47879",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001000bff00000000800004600060006000611000f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x145c",
+                                "0x01": "0xd4"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037df4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945c28",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x17a744812282869d1b9de0de02dc3fe27b4080c706b706a46a4d3be1343892ff",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_0-opcode_EXTDELEGATECALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010009ff0000000080000360006000611000f900",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x06026200850334a97f689508923d84fce422b95708a9e72d1bde593f7ee42ba4",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010009ff0000000080000360006000611000f900",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x1459",
+                                "0x01": "0xd1"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037de2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945c64",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xc08498a10b376e6ab6747398ed5ae9eb59727bb1ab15020df5a22f86885f5b93",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_0-opcode_EXTSTATICCALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010009ff0000000080000360006000611000fb00",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xc8c8effab32cfa07fc5fee68f92a59e7dcf32f7068bb5f86c576d31f18deeb44",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010009ff0000000080000360006000611000fb00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460005f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001bff0000000080000460005f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x1459",
+                                "0x01": "0xd1"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037de2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945c64",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x6ba133f76ead890530c7300ca6583c4433cd6b75c072b93d8ee547476ebc7a36",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_1-opcode_EXTCALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001000bff00000000800004600060006000611000f800",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x05",
+                "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xa5148bcd3141ee384b160c79dba996e66105f140db6e154839d3502c45c2f721",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0xef0001010004020001000bff00000000800004600060006000611000f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x03",
+                            "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x3784",
+                                "0x01": "0x23fc"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0450e4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de919d08",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x7b67f221d98bf57cd27f4bfee9123d2872ee9db7794860d9bf7641f33c94d30f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_1-opcode_EXTDELEGATECALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010009ff0000000080000360006000611000f900",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x05",
+                "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x7e50a09be32f84641821e0c9affab6a68f7ed203fabfafd816efca05315d0c25",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0xef00010100040200010009ff0000000080000360006000611000f900",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x03",
+                            "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x3781",
+                                "0x01": "0x23f9"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0450d2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de919d44",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xd4f6dacf812849f62e947da9dc35dc41e34fbfdcab7f21b4c621643b7663bf5f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py::test_transfer_gas_is_cleared[fork_Osaka-state_test-value_1-opcode_EXTSTATICCALL]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010001ff0000000080000000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010009ff0000000080000360006000611000fb00",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001200": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001300": {
+                "nonce": "0x01",
+                "balance": "0x05",
+                "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001400": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x016345785d8a0000"
+            ],
+            "to": "0x0000000000000000000000000000000000001400",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbb4c744a966ebf24de28f70869bfe77796ac108ddf32b2ba8c3b3f013d4c4662",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001400808026a0e50672e6e0101f4f153802eae88f051a1415a7b3a8a99be1992a949c39d6c52fa0575149870c0482045199b69a3bb74c9a32dceff6f1630f2cf958fc1f55cb2adf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x02",
+                            "code": "0xef00010100040200010009ff0000000080000360006000611000fb00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001aff0000000080000460015f5f73000000000000000000000000000000000000110000",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x03",
+                            "code": "0xef0001010004020001001bff0000000080000460015f5f730000000000000000000000000000000000001100f800",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x611300315061120031505a600060006000600060006112005af1505a90035a600060006000600060006113005af1505a90035a600060006000600060006113005af1505a9003829003610001558190036100005500",
+                            "storage": {
+                                "0x00": "0x3781",
+                                "0x01": "0x23f9"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0450d2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de919d44",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x640285d01545b1e921617b7d35b025b341cbdc85044910121b33c406125c1f86",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Test that EXT*CALL call doesn't charge for value transfer, even if the outer call\n    transfered value.\n\n    NOTE: This is particularly possible for EXTDELEGATECALL, which carries over the value sent\n    in the outer call, however, we extend the test to all 3 EXT*CALL opcodes for good measure.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L147",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
+            "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
+        }
+    }
+}

@@ -1,0 +1,3486 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-128-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x6e1daaa7046a14c1b5a5f8f97ef51d4ed1100e9deb5be0b84503fb492c31e8d7",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xfc375f7b5d1dd2d0634345d56234dc2f13c548ceb6473310876c702aefccbaf0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-128-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x86cbbab612a1c75c697043e0bfc4915bdf6987883464b619e2e39c26eefe5a7e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x2fea66d69880479747a1d3bfe70886b6ab0650f262629bd5d6f01b88738aaffb",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-129-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x783c853ba67464d25d2d2ba98d3e338d7e8a534b56225263f33c65f0d7c7c5f3",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xecc4f3e3b059259db34ac33d9447cf3b0b251d7935425d0099bcadb8a0e60f2d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-129-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbf981ebf52b5bda3158679af4b4386471d859735abda6525d963b7b4226429f5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xda75cc7d23289d2b1c7a1bce09cb16ded9f0c5e2792d74e4c4c100ca8c426308",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-16-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001503000100000034ff000000008000046000602061ffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x239091f22c57aae7173d64583ce0eea681d0913af463b2fb9b211243cd56c574",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001503000100000034ff000000008000046000602061ffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b99a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xb30f6b2e8d4f5f7fd40f0ba1b1d0fb98627b48ec62b98695eca9ab90cba4f130",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-16-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600061ffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xe4e8a4bea4955d78dc0d8838c007a48cdab46d2a4f6cc2030640778826c4d880",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600061ffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b99a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x90a12277418602f7c1c15281181b70bee944b88a23ad324e1a81cd92cd833d58",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-17-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001603000100000034ff0000000080000460006020620100006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x5779eacf91285badf91d5b0c478b22446901069ebf46ae4435bd6d92f619c8f9",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001603000100000034ff0000000080000460006020620100006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b99a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x5a033446e11fc452204e019e8ee7f93d8109b70e490bbf335101051b21761730",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-17-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001603000100000034ff0000000080000460006201000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x89bc3bca429e3c529b95530936dbc3188658c6da998a55ebc16a3b2f373d336f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001603000100000034ff0000000080000460006201000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b99a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xcbbea5f2b2970fe60d81cf4725aaf3b03db7b7045f8e777591d9c4b6af1b9ea6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-256-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001002303000100000034ff00000000800004600060206fffffffffffffffffffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xf2f5c8d6bafbb6461cd0b1b79240a4ee8f0acf991c03e4eef3b197098ac8cd86",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001002303000100000034ff00000000800004600060206fffffffffffffffffffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x34eabec7d7c09a4390efb655d2689220652b0ca66b17e7721e3cf5b7ea65fb91",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-256-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001002303000100000034ff0000000080000460006fffffffffffffffffffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x4b98dae0432d50b0246180c64d3e8de2b64d97237b1cc44f0c79c1490ba05e66",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001002303000100000034ff0000000080000460006fffffffffffffffffffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xb9d3ff2368cfa1c6971eff1fb4c4d27806ad8f6afdf26206abd773f67031e8af",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-32-bit-mem-cost-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600060206301ffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x7c58db3acd6cd1aac5bd29822789aa90a4d7b140bf553ba574054f1bac8610f1",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600060206301ffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x364fa63e7c6534599241e614bf2c0a1c5eec8cc46c50a56ff074251124c7cb58",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-32-bit-mem-cost-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff0000000080000460006301ffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xd0463374dea3cf94074b17a7f1f2371299f4f781d5f6bcc0c6cd848f63931727",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff0000000080000460006301ffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x69e9de48c6762cdee2cb7ba2e1c389ee262006a256e805160c4d113a914335a8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-32-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff000000008000046000602063ffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xe28173b9376f912bf9fefb8c0f4f7e44074b8a18b1842fed095d63e987ecf8ca",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff000000008000046000602063ffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x83bde96cf9718b2b8ced1ef086fd204a4e08cebb4795c74c401facfb983468c0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-32-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600063ffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x7aa9e38cfd8bcd0f8392cf215aa4ed4dbe97cf1cfdec52bcd77733c339998b86",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600063ffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x5afb2d86e6e514847957f9071bd1a20c95b3f1c57cdd20f8bfc72a917b4c7b6f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-33-bit-mem-cost-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600060206302d412e06000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x062a505f38e190ae943c4833b415ca52790dd5c9a066bc8af4940c63c49fb11c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600060206302d412e06000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x4014007eccddf05e0cdd7e4c3b1566f850b6cc7ee818b6e99f777e86556ba65b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-33-bit-mem-cost-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001703000100000034ff0000000080000460006302d412e060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x3646d5e43754b396662254c1d5f51d945877db7c93d149ded0e39028300715e1",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001703000100000034ff0000000080000460006302d412e060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x7626989412bb52b688d963083c72365d9b9f7ec1a4f800a5c2d2fbafbaa4e5ee",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-33-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001803000100000034ff00000000800004600060206401000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x922b76f30af21950063f4acba9333e152c0fe958974f04fee0a81c087ccacf68",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001803000100000034ff00000000800004600060206401000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x063045d498daa4acf1980b4a4c86dc1fae3f4fb8c88fc7e2d25e3ceca95888e7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-33-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001803000100000034ff00000000800004600064010000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x6a456622cd81275b2978e7f48365c8622e10988fb94a5aae4490ca3d9f80906c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001803000100000034ff00000000800004600064010000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x240bb47b94fb92cea47bf2e36652abb998a10efd56893cc4335acba5d19b00ed",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-64-bit-mem-cost-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001903000100000034ff00000000800004600060206501ffffffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x011eeaec81e291677c30b88c0556c640857169c4f1adced11a4437edae584d2b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001903000100000034ff00000000800004600060206501ffffffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xc677488efe0c4eff6bc1f4b7da73b0894eb0ac4d3d51368c7c3c3e74a8726fb8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-64-bit-mem-cost-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001903000100000034ff0000000080000460006501ffffffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xa3d8e2b5fbccafc389542099f36f24cbc6bca2c77ffe321d80027dabd47ccfe6",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001903000100000034ff0000000080000460006501ffffffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xc281180107cc8c335129dd49f7d7f82f3d86f9c56bf36e1629f63e740025989b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-64-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x6e1daaa7046a14c1b5a5f8f97ef51d4ed1100e9deb5be0b84503fb492c31e8d7",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xfc375f7b5d1dd2d0634345d56234dc2f13c548ceb6473310876c702aefccbaf0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-64-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x86cbbab612a1c75c697043e0bfc4915bdf6987883464b619e2e39c26eefe5a7e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x2fea66d69880479747a1d3bfe70886b6ab0650f262629bd5d6f01b88738aaffb",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-65-bit-mem-cost-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001903000100000034ff00000000800004600060206502d413cccf006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x253999de8ca08ac36ff86a808cfc2a7bdc367db882389a538a1fbfd01aada224",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001903000100000034ff00000000800004600060206502d413cccf006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x21bc7106616c685cb7b5694d267d0f5ec321fe4820ba103d5dadef1b4312de03",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-65-bit-mem-cost-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001903000100000034ff0000000080000460006502d413cccf0060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x99ea0319f43a0e288a924cd283e70f2602fa54d8d174f6c17b2fc9be87630307",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001903000100000034ff0000000080000460006502d413cccf0060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x06009739dd428ad9c9106eddddc6ebbf1048025d9584ca3e38111a38ebc2f88e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-65-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x783c853ba67464d25d2d2ba98d3e338d7e8a534b56225263f33c65f0d7c7c5f3",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xecc4f3e3b059259db34ac33d9447cf3b0b251d7935425d0099bcadb8a0e60f2d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-65-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbf981ebf52b5bda3158679af4b4386471d859735abda6525d963b7b4226429f5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2009",
+                                "0x03": "0x2009"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0165a0bc00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd080383fe83800",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xda75cc7d23289d2b1c7a1bce09cb16ded9f0c5e2792d74e4c4c100ca8c426308",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-8-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000602060ff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x8e8bb605ade15cb545fe259d3a90c82442ecc7f1b817c67257d86f4414579a3b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000602060ff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0311ca",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xa4c9fbe7a92ab25c0b94e84b901dcc269ffb28cee5c563e178753fad75e78ee8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-8-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000034ff00000000800004600060ff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x3c230953394215486d3334f3ee08ce1cfb4f7cdfe270e48b15aaacc204de380f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000034ff00000000800004600060ff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0311ca",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xa910cc02bd19de3fd1490036c0766655373c3f419012af358afe4b0b75a207e6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-9-bit-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600060206101006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x057b3c0aeae68da3763875daad061656a5f26d3cbbedd894e590cecd970e94d0",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600060206101006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0311ca",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xd4e8b7f4e03c8b41902dc99a2e0b01251a59a86b64736890d9135f4e9331c16b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-9-bit-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600061010060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbb6e8aa8a798bce71f0936442f1605e4441bb53a84286faf6b682f17d0c9004a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600061010060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0311ca",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x77a8a368059600d67105d5903dda36a0001760baf5f7d984cacdf3ba53bab765",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-zero-offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000602060006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x0cbfa4a6408e993e152749433decc94caf4f42108109623b5399352df783ba58",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000602060006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031182",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c5a4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x6ecc870001c74d93037273ead3119f9bb86b33c947b6ec5c3cc97a24d1c50f29",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py::test_eofcreate_memory[fork_Osaka-state_test-zero-size]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x033b2e3c9fd0803ce8000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000600060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {
+                    "0x03": "0x2009",
+                    "0x01": "0x2009"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x77359400"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x307781f2efef42465abb789b5d8f113a44a6ebf3ea4f982808229caf5438f8c7",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000600060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031179",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x033b2e3c9fd0803ce7f5c5c2",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xe547c809c782ee520e34edd24f3ab915a1c1cb8609a36ee333fad93cb8a41ec1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    }
+}

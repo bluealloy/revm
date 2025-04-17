@@ -1,0 +1,26 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py::test_rjumpi_truncated_2[fork_Osaka-eof_test]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010004ff000000008000016000e100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.TRUNCATED_INSTRUCTION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcd1472461cbdddd11a400689f0ef764d0a60db09200c93c2bf38049d2139b88f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nEOF1I4200_0015 (Invalid) EOF code containing truncated RJUMPI.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L937",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
+            "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
+        }
+    }
+}

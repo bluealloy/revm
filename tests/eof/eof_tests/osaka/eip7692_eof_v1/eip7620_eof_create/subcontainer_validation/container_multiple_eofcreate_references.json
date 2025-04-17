@@ -1,0 +1,25 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_container_multiple_eofcreate_references[fork_Osaka-eof_test]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001001503000100000034ff000000008000056000600060006000ec006000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x51f212366087ad790a1d997d8b12ab192703ccf3796f17a7a8a8271346c5cdea",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest multiple references to the same subcontainer from an EOFCREATE operation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L506",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    }
+}

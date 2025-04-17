@@ -1,0 +1,146 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-PUSH0x0x80-first_False]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000300830001ff000000008000000080008000000000e500015f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x92527c8115cb7953fd8be6a87471f359fa3bb58844f9bcc40fd063a1502df87e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-PUSH0x0x80-first_True]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200830001ff00000000800080000000005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50001e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x15a3af0cfd4c98451735f922caa7322e138e2aca0158f03a73203d1e603cc3a7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-code_prefix_-first_False]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000300030001ff000000008000000080000000000000e50001e50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd6fdcbffe0471b318e3efc6feba25d09dd4b5f0107a27460b72a9a2d19ad164b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-code_prefix_-first_True]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200030001ff0000000080000000000000e50001e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x7e7b8a8f36fbb7ae5ea1b9cf98669f400e20207459b099f750e5bb45d0a2e1e0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-code_prefix_PUSH0-first_False]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000300040001ff000000008000000080000100000000e500015fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd3022703b31e021064e78e4cdc32f3ca37fec45f28fb2a1f18c5f21bfb4f7e84",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py::test_jumpf_in_nonreturning[fork_Osaka-eof_test-code_prefix_PUSH0-first_True]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200040001ff00000000800001000000005fe50001e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_NON_RETURNING_FLAG",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x16d24c14920deeb8552c7967d8600a9169ac970d1a6356692315eae639ab1637",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to non-returning section with the JUMPF instruction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_nonreturning_validation.py#L163",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

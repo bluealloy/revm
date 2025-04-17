@@ -1,0 +1,146 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-less_output]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400090001ff000000008000010001000202020000e30001005f5fe100015fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.JUMPF_DESTINATION_INCOMPATIBLE_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xe2a042a89018ad944e50c75aa60f1938de15254e58d3867831d0d179a6b06d34",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-less_stack]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400090002ff000000008000010001000201000000e30001005f5fe100015fe5000250e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd1c5fe4ba0965d74bb57505b87532e0868dce3161e8e4c422dce254c00d84843",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-more_output]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400090001ff000000008000010001000200000000e30001005f5fe100015fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xe45d1cfa6557e50c1d8c77a037cc5b1616074d87002e9440883b3f36c7872393",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-more_stack]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0002ff000000008000010001000403020000e30001005f5f5f5fe100015fe5000250e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.JUMPF_DESTINATION_INCOMPATIBLE_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc557f1c20da2240c82b673da4f86bad6e51a41ab6da23467a96c2c3f6d445651",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-same_output]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400090001ff000000008000010001000201010000e30001005f5fe100015fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xe4a9d6bd10429cd895f5f4ecfb4b6409154dfae78b33fcd4fb08d221305423e4",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_diff_max_stack_height[fork_Osaka-eof_test-same_stack]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000a0002ff000000008000010001000302010000e30001005f5f5fe100015fe5000250e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x38d3cccfc8a3ebb44199692b1081e12777990c25c9d03489be235fbc6145863c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTests jumpf with a different max stack height.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

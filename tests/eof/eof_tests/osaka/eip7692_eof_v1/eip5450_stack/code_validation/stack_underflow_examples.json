@@ -1,0 +1,122 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py::test_stack_underflow_examples[fork_Osaka-eof_test-underflow_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010002ff000000008000010100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x9e8832c923c68eb72cc08098eb613093cc1999d9fc2dddba2ab5cd09e0b37d12",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to stack underflow at basic instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py#L525",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5450.md",
+            "reference-spec-version": "f20b164b00ae5553f7536a6d7a83a0f254455e09"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py::test_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000aff000000008000035f6000e100025f5fa200",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcee931bfef951ac09bb0fd5ac04a46a4a68d7f504b1e2eebf02ed085bb7d7639",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to stack underflow at basic instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py#L525",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5450.md",
+            "reference-spec-version": "f20b164b00ae5553f7536a6d7a83a0f254455e09"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py::test_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000aff000000008000035f6000e100025f5f0100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x744196ef1ad1f099d908313a2cb324081f25821b41d077904073b1354cf4161e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to stack underflow at basic instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py#L525",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5450.md",
+            "reference-spec-version": "f20b164b00ae5553f7536a6d7a83a0f254455e09"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py::test_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_2]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000aff000000008000035f5f6000e10001500100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x5aafbb5624d2145f2dc1f19627c59dfecc2ca40a365639f132733f243be85134",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to stack underflow at basic instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py#L525",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5450.md",
+            "reference-spec-version": "f20b164b00ae5553f7536a6d7a83a0f254455e09"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py::test_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010011ff000000008000036000e100085f5f6000e1000150505f5ffd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x86c50c20f0f8b41006025cd1d1027528cbf3d9702fff9a7df1078412412e658e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest EOF validation failing due to stack underflow at basic instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip5450_stack/test_code_validation.py#L525",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5450.md",
+            "reference-spec-version": "f20b164b00ae5553f7536a6d7a83a0f254455e09"
+        }
+    }
+}

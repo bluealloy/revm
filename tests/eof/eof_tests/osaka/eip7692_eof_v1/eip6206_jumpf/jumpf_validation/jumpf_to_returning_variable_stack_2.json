@@ -1,0 +1,218 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_0-code_outputs_1-code_inputs_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0001ff000000008000020002000301010000e30001005f6000e100025f5fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW|EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xdf849f717989bb33c888e4d3c1e2135c7890a8883f5d0cf4b33bd9bdde039d33",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_0-code_outputs_1-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0001ff000000008000020002000303010000e30001005f6000e100025f5fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x032e1d4bdd1fa0f00cf3094e8656e7cfac414096f6859cc2e23e3744cf846b62",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_0-code_outputs_1-code_inputs_5]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0001ff000000008000020002000305010000e30001005f6000e100025f5fe50002e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbf43996e8e58ce7dbebfdb1b6e5c86f810d2f43e96b5efb6e326ee49c57d8bf3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_2-code_outputs_1-code_inputs_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0003ff000000008000020002000301010000e30001005f6000e100025f5fe500025050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW|EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x19abe0951bedde70798c262afb4dc8e6e9aa30ba1fb39263a54a2f2992ed2547",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_2-code_outputs_1-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0003ff000000008000020002000303010000e30001005f6000e100025f5fe500025050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x66e04def86399ed02db451801ad1280be4e0703a3847dad20f9009738f98527d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_2-code_outputs_1-code_inputs_5]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0003ff000000008000020002000305010000e30001005f6000e100025f5fe500025050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc9aac108795eef3acbc33765fd24c145425a340fd82f8ec04b7bfb7264b226ea",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_4-code_outputs_1-code_inputs_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0005ff000000008000020002000301010000e30001005f6000e100025f5fe5000250505050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW|EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc98a908d4aa045026ef26f06d4e60129375f6856dddf5cf2b7f34bfb31fc214d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_4-code_outputs_1-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0005ff000000008000020002000303010000e30001005f6000e100025f5fe5000250505050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xfebd43593e57eb19b09ed636f26734348eaf7f4ed2cd0a0809523a3de286c689",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-eof_test-stack_decrease_4-code_outputs_1-code_inputs_5]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0005ff000000008000020002000305010000e30001005f6000e100025f5fe5000250505050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x84c72c3f706422515403e2beaedfe90893e7c2f0878381b5685fee02d2dd2847",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

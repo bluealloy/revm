@@ -1,0 +1,98 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_truncated_container[fork_Osaka-eof_test-data_len_0-data_section_size_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ff00010000800000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.EOFCREATE_WITH_TRUNCATED_CONTAINER",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x573d3c98a7aded4f8bea5f286d8b3847c106e7a2e948355807a760918c1a9b70",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nEOFCREATE instruction targeting a container with truncated data section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L625",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_truncated_container[fork_Osaka-eof_test-data_len_0-data_section_size_65535]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ffffff0000800000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.EOFCREATE_WITH_TRUNCATED_CONTAINER",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x2e804c8c3dbb241dad258f1b3014f3b32b65e52ac96c12b4b104068ad1c0e805",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nEOFCREATE instruction targeting a container with truncated data section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L625",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_truncated_container[fork_Osaka-eof_test-data_len_2-data_section_size_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000b03000100000016ff000000008000046000600060006000ec0000ef00010100040200010001ff00030000800000fedada",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.EOFCREATE_WITH_TRUNCATED_CONTAINER",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x637cc5ce4fb1536a11a55e4ee4e361e91ae6dd835513537ab90de119af19aedd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nEOFCREATE instruction targeting a container with truncated data section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L625",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_truncated_container[fork_Osaka-eof_test-data_len_2-data_section_size_65535]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000b03000100000016ff000000008000046000600060006000ec0000ef00010100040200010001ffffff0000800000fedada",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.EOFCREATE_WITH_TRUNCATED_CONTAINER",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcaed528587f4e8e7bb5d4b9147baad8c45e31677ed78f3033afc6f6f2f02725e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nEOFCREATE instruction targeting a container with truncated data section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L625",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    }
+}

@@ -1,0 +1,960 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0002_invalid_incorrect_magic_01]": {
+        "vectors": {
+            "0": {
+                "code": "0xef01010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_MAGIC",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbae650aae92e5a19d209fbc2557088ca1a3337d57dbc3249a18b68a0100d819c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0003_invalid_incorrect_magic_02]": {
+        "vectors": {
+            "0": {
+                "code": "0xef02010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_MAGIC",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x1976312f922926c49955c951be975a0d89b62e767a806311a025586da4641e81",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0004_invalid_incorrect_magic_ff]": {
+        "vectors": {
+            "0": {
+                "code": "0xefff010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_MAGIC",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x4682d5dedee21102afdb96b406ca889927ee2f025bbcc0ad74ae01b804e92f36",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0006_invalid_incorrect_version_00]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00000100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_VERSION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x3db577778fd379aaa00f8c189e69538002a0f32af8d94df30b0647d10dc112e1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0007_invalid_incorrect_version_02]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00020100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_VERSION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x4fa62fc53f40ed58b35c418cea6dbfcfe89f84e4b4ed7af191a4d90c76e64256",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0008_invalid_incorrect_version_ff]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00ff0100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_VERSION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x39b829cc204a2f54fa39b9af054e39530df9aba507027d122037c6f6531fbead",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0012_empty_code_section_with_non_empty_data_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010000ff00020000000000aabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.ZERO_SECTION_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x587bacf10bfcd7a64245deae0e56430b2eb2b79c3be0033f04874a8f457e300d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0020_no_section_terminator_after_data_section_size]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff0002",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_HEADERS_TERMINATOR",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x2c4a1502f0e5f8ecff262ed88412801ac3432997514937da05d5bf442300610b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0021_no_type_section_contents]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff000200",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xf3093686ad42f58d100d1d179f19b2fcfbcedf36878b4cf4953503f96ede60be",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0022_invalid_type_section_no_outputs_and_max_stack]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00020000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x4c51b5c3d1e1bca0047c40e3f3be5d9f2e5134d283a30f88d5773ed8413191d1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0023_invalid_type_section_no_max_stack]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff0002000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x3fb8151a298ce31b711dd8f1eda5a8b2643584d73387582a26c9009f6a946a4b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0024_invalid_type_section_max_stack_incomplete]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff000200000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x193fd8cf637ec2c3d1d3a2b025d98def614e8d20aacd7d859746f381582be009",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0025_no_code_section_contents]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00020000000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x1baabfe0b72686492e4d87e720acbbae6f51ab39b7b0c9004814d765aa0fd8e4",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0026_code_section_contents_incomplete]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010029ff000000000000027f",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xeebf93180ac1a44c5f261be3b821ee21096eaace05ba1f32c8aa2745299a86b3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0027_trailing_bytes_after_code_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00000000800000feaabbcc",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x5b345938b8a27fad8d14deec7242b422affde839f258eae3812cef9e5ed7d0f8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0027_trailing_bytes_after_code_section_with_wrong_first_section_type]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00000000000000feaabbcc",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_FIRST_SECTION_TYPE|EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcd06460cac9655face6751786397b19da5ae2858b320ee3cd263425d037e8aec",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0028_empty_code_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010000ff00000000000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.ZERO_SECTION_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x492d3272be75f9120222d303cb6e94226e4acedd42722f83211bac0df3f42aa5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0030_code_section_preceding_type_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010200010001010004ff00020000000000feaabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x823ec78869af0a7feadec4d3bb02ca4e3c4243c65337325a88550fb25a23d580",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0031_data_section_preceding_type_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001ff000201000402000100010000000000feaabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x6d778f14e10db8812eefbdf56449a0fe455fcdbadd3911d74cad3ddaefebcee3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0032_data_section_preceding_code_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff000202000100010000000000feaabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x250a7fd240d54d92ff09ed14136a651565fb0d575544cca6226bb32a16ca0550",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0033_data_section_without_code_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004ff00020000000000aabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xf9e05bb4a83011fb863a517af4c7a6eaca4eeb9280d16ff311f64383fbc0a694",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0034_no_data_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000402000100010000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbe52d890a570949e088c4240edd51a91d96b99e278bc2a74a0983ebfb88b1d1e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0035_trailing_bytes_after_data_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00020000800000feaabbccdd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xb12bd6e78f03b9c3f9972794b38e3d292efec75d8e39d96b360aff9e375ea2cc",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0035_trailing_bytes_after_data_section_with_wrong_first_section_type]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00020000000000feaabbccdd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_FIRST_SECTION_TYPE|EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x97a653dc3c9e764b548837fc5bd06fc9c6c3821441dedd7e7ba5ffe76debe361",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0036_multiple_data_sections]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff0002ff00020000000000feaabbaabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TERMINATOR|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x714f8910309126a73aa18ce52d8ceb3c5bfb80a8d1301cd89ded1c1fe429e5c6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0037_multiple_code_and_data_sections]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200010001ff0002ff0002000000000000000000fefeaabbaabb",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TERMINATOR|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x614eb6a838a4f549f40c24acdd5c4ddc17e3e06156ae5c21fc3f72c16d3d98af",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0038_unknown_section_id_at_the_beginning_05]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010400010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc2ac6341b3a8939d1c5049b8a6799b0629cff0933e99e88a812cb0b668f05bcd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0039_unknown_section_id_at_the_beginning_06]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010500010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x9d0dc615c2618753e3cd11fe7d5b24b2ef31d616090d82ac2298a80575ea7f0d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0040_unknown_section_id_at_the_beginning_ff]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001fe00010100040200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TYPE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x7fdaeb80fc0ae47969e92713b7f656c7ac47ed36b0d014c2001596a91b6b9ec3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0041_unknown_section_id_after_types_section_05]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040400010200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x2e61d32b7f852e698fa0dc2392325247390f4ddc8d7e331f045978320388de53",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0042_unknown_section_id_after_types_section_06]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040500010200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x629a3cb390df228c5d869eeea08ade0120fa89d0fe5a377113594c87208a1c7b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0043_unknown_section_id_after_types_section_ff]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004fe00010200010001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_CODE_HEADER|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xf5123b001a19f4bdd95aa358a17d4232f95d0bafb597340f896f4d046ad53246",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0044_unknown_section_id_after_code_section_05]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001050001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc50202e34525b4600be0098722e7a8b24970ae3e44b30bd50286a4737b115ec5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0045_unknown_section_id_after_code_section_06]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001060001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x5482f8f011e3afcadb1b0a89acec2efde482cc41f2ad0420ffcf05778762babd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0046_unknown_section_id_after_code_section_04]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001040001ff00000000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_DATA_SECTION|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x35d266772ed259eb3f801aa443e5f7339a94a8234c05426fbbee093d12340073",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0047_unknown_section_id_after_data_section_05]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00000500010000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TERMINATOR|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x829efc2c2349e3af04682ea56b2a49687435f2c2a34b2b8003dfe0649d680867",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0048_unknown_section_id_after_data_section_06]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00000600010000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TERMINATOR|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x45c158b0bebdeae5380fef03555e5713de60df5e02a0bab9a5433ba66c265223",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1I3540_0049_unknown_section_id_after_data_section_04]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00000400010000000000fe",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.MISSING_TERMINATOR|EOFException.UNEXPECTED_HEADER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x07f66a1bfdfd3e2e7103b515f1657efaa453b1eee0a418c638ff856eeae86565",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1V3540_0001_deployed_code_without_data_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010004ff0000000080000160005000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xf9100085fc5f4c2829398c8d0b7db53bbe0b0cc25b4d47f79aeb2cf2db6ed0cd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py::test_migrated_valid_invalid[fork_Osaka-eof_test-EOF1V3540_0002_deployed_code_with_data_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010004ff0004000080000160005000aabbccdd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x7c76821ccdd05f3b4f1a8540d6c522078cdd782af92caefa6eff307b6b2f779e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nVerify EOF container construction and exception.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_migrated_valid_invalid.py#L21",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    }
+}

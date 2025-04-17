@@ -1,0 +1,74 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py::test_dataloadn_truncated_immediate[fork_Osaka-eof_test-imm0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010001ff00200000800001d1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.TRUNCATED_INSTRUCTION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xe3513e00a08371cf3597eef1daa38d15a1a2540d7691973107ce90071ad92974",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
+            "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py::test_dataloadn_truncated_immediate[fork_Osaka-eof_test-imm1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010002ff00200000800001d100ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.TRUNCATED_INSTRUCTION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x96a766123fe40c6888bd88c52d3c932e2721118341db3e45afe4812f1ee23bb5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
+            "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py::test_dataloadn_truncated_immediate[fork_Osaka-eof_test-imm_from_next_section]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000600020001ff002000008000010001000100800000e30001e50002d10000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.TRUNCATED_INSTRUCTION",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x28ec3a386fe560d740a54175d4e7464f31c18717bd3486d0ad333bf91ec8c2f0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
+            "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"
+        }
+    }
+}

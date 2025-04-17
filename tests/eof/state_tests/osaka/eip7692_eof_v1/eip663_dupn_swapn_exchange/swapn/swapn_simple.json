@@ -1,0 +1,245 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip663_dupn_swapn_exchange/test_swapn.py::test_swapn_simple[fork_Osaka-state_test-12_of_30]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef000101000402000100b7ff0000000080001f61001e61001d61001c61001b61001a61001961001861001761001661001561001461001361001261001161001061000f61000e61000d61000c61000b61000a610009610008610007610006610005610004610003610002610001e70c600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055601155601255601355601455601555601655601755601855601955601a55601b55601c55601d55601e5500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x08a2153ee82c0ac1276cc87e5c9ef86f3d4a5ae76ea78ab85e458fcbf7abb809",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808026a0e5d462429669f661291a8dc4c49a092cfd4922b6f3f31c9189a2f4adf5ecd730a001494afaf472fbb80bcb107ffeb918a2b9115f454027840615d6d20d63c69ac0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef000101000402000100b7ff0000000080001f61001e61001d61001c61001b61001a61001961001861001761001661001561001461001361001261001161001061000f61000e61000d61000c61000b61000a610009610008610007610006610005610004610003610002610001e70c600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055601155601255601355601455601555601655601755601855601955601a55601b55601c55601d55601e5500",
+                            "storage": {
+                                "0x01": "0x0e",
+                                "0x02": "0x02",
+                                "0x03": "0x03",
+                                "0x04": "0x04",
+                                "0x05": "0x05",
+                                "0x06": "0x06",
+                                "0x07": "0x07",
+                                "0x08": "0x08",
+                                "0x09": "0x09",
+                                "0x0a": "0x0a",
+                                "0x0b": "0x0b",
+                                "0x0c": "0x0c",
+                                "0x0d": "0x0d",
+                                "0x0e": "0x01",
+                                "0x0f": "0x0f",
+                                "0x10": "0x10",
+                                "0x11": "0x11",
+                                "0x12": "0x12",
+                                "0x13": "0x13",
+                                "0x14": "0x14",
+                                "0x15": "0x15",
+                                "0x16": "0x16",
+                                "0x17": "0x17",
+                                "0x18": "0x18",
+                                "0x19": "0x19",
+                                "0x1a": "0x1a",
+                                "0x1b": "0x1b",
+                                "0x1c": "0x1c",
+                                "0x1d": "0x1d",
+                                "0x1e": "0x1e"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1f51c5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de379a1a",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x574c74e0a3d2c19f5708800213010642c40bdab069481fbd59bf85681d3e20f1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest case for simple SWAPN operations.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip663_dupn_swapn_exchange/test_swapn.py#L114",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-663.md",
+            "reference-spec-version": "b658bb87fe039d29e9475d5cfaebca9b92e0fca2"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip663_dupn_swapn_exchange/test_swapn.py::test_swapn_simple[fork_Osaka-state_test-5_of_9]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010039ff0000000080000a610009610008610007610006610005610004610003610002610001e70560015560025560035560045560055560065560075560085560095500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x272b349887406c8a18d5cffe0e7fbebf85f01fee212651fd6e9f98613d0e1207",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808026a0e5d462429669f661291a8dc4c49a092cfd4922b6f3f31c9189a2f4adf5ecd730a001494afaf472fbb80bcb107ffeb918a2b9115f454027840615d6d20d63c69ac0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010039ff0000000080000a610009610008610007610006610005610004610003610002610001e70560015560025560035560045560055560065560075560085560095500",
+                            "storage": {
+                                "0x01": "0x07",
+                                "0x02": "0x02",
+                                "0x03": "0x03",
+                                "0x04": "0x04",
+                                "0x05": "0x05",
+                                "0x06": "0x06",
+                                "0x07": "0x01",
+                                "0x08": "0x08",
+                                "0x09": "0x09"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0a119f",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7e6fee",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xcc8a32a2ec2d09f7d638e948081031e1b84072ab45203aaa1f3f2e911e10fed2",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest case for simple SWAPN operations.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip663_dupn_swapn_exchange/test_swapn.py#L114",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-663.md",
+            "reference-spec-version": "b658bb87fe039d29e9475d5cfaebca9b92e0fca2"
+        }
+    }
+}

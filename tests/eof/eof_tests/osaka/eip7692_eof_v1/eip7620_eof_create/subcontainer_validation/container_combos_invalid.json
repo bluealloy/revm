@@ -1,0 +1,74 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_container_combos_invalid[fork_Osaka-eof_test-EOFCREATE_RETURN]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001001103000100000018ff000000008000046000600060006000ec0061201560015500ef00010100040200010005ff0000000080000260006000f3",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INCOMPATIBLE_CONTAINER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x4b97dfd48caebc985dc3ea47d491c3cd8ce2972504eecd6ea684809dc81ec54c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest invalid subcontainer reference / opcode combos.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L190",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_container_combos_invalid[fork_Osaka-eof_test-EOFCREATE_STOP]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001001103000100000014ff000000008000046000600060006000ec0061201560015500ef00010100040200010001ff0000000080000000",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INCOMPATIBLE_CONTAINER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xb4f38e3f1d5e4a985a183dff26b0e8a8a9e69ec6342eaf436951fa1bb2ee57ff",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest invalid subcontainer reference / opcode combos.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L190",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_container_combos_invalid[fork_Osaka-eof_test-RETURNCODE_RETURNCODE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000c03000100000034ff0000000080000261201560015560006000ee00ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "containerKind": "INITCODE",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INCOMPATIBLE_CONTAINER_KIND",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x73a45115df53df847ee3d1ebfc007a40aa7ec64e32c15e30ce257a37f1a314f8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest invalid subcontainer reference / opcode combos.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L190",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
+            "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
+        }
+    }
+}

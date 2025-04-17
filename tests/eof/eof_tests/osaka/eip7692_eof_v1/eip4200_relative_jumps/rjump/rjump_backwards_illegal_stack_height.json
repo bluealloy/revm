@@ -1,0 +1,26 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_backwards_illegal_stack_height[fork_Osaka-eof_test]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010011ff000000008000245fe10003e0000761201562015500e0fff6",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HEIGHT_MISMATCH",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x67e9555506efacc0e7272d0e542e5fa10c6a3aff493fda18424446e00cd11b13",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nInvalid backward jump, found via fuzzing coverage.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1056",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
+            "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
+        }
+    }
+}

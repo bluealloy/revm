@@ -1,0 +1,26 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_into_self_remaining_code[fork_Osaka-eof_test]": {
+        "vectors": {
+            "0": {
+                "code": "0xef00010100040200010004ff00000000800000e0fffd00",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.UNREACHABLE_INSTRUCTIONS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x76141f5cd9c90e40a0b65b7bd49adfdefc6fb5c77fe33a1a6bc8a11f6b0b5b31",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    EOF1I4200_0008 (Invalid) EOF code containing RJUMP with target self RJUMP but remaining\n    unreachable code.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L239",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
+            "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
+        }
+    }
+}

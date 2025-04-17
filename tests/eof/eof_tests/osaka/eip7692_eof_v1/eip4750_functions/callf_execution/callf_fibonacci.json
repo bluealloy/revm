@@ -1,0 +1,25 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py::test_callf_fibonacci[fork_Osaka-eof_test-n_0-result_1]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x8b0e083575116a1462d4df1a304adb3a5cbe1cc26319f64824e187fa15183114",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest fibonacci sequence implementation with recursive CALLF instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
+            "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
+        }
+    }
+}

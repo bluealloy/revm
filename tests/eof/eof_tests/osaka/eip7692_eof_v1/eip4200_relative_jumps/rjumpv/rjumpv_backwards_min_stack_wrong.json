@@ -1,0 +1,26 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpv.py::test_rjumpv_backwards_min_stack_wrong[fork_Osaka-eof_test]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000fff000000008000035f6000e20000015f6004e200fff500",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HEIGHT_MISMATCH",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xda5be62b7ef8262bc294acde38395f7c46201dd6a87c243b42ad5329ee48a21e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nBackwards rjumpv where min_stack does not match.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpv.py#L1109",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
+            "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
+        }
+    }
+}
