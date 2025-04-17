@@ -129,14 +129,11 @@ pub trait Handler {
     ///
     /// Calculates initial and floor gas requirements and verifies they are covered by the gas limit.
     ///
-    /// Loads the caller account and validates transaction fields against state,
-    /// including nonce checks and balance verification for maximum gas costs.
+    /// Validation against state is done later in pre-execution phase in deduct_caller function.
     #[inline]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
-        let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
-        self.validate_tx_against_state(evm)?;
-        Ok(initial_and_floor_gas)
+        self.validate_initial_tx_gas(evm)
     }
 
     /// Prepares the EVM state for execution.

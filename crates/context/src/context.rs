@@ -92,8 +92,8 @@ impl<
         &mut self.error
     }
 
-    fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal) {
-        (&mut self.tx, &mut self.journaled_state)
+    fn tx_journal(&mut self) -> (&Self::Tx, &mut Self::Journal) {
+        (&self.tx, &mut self.journaled_state)
     }
 
     // Keep Default Implementation for Instructions Host Interface

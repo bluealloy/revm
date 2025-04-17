@@ -118,10 +118,22 @@ where
         let tx_caller = context.tx().caller();
 
         // Load acc
-        let account = context.journal().load_account_code(tx_caller)?;
-        let account = account.data.info.clone();
-
-        validate_tx_against_account(&account, context, additional_cost)?;
+        let account = &context.journal().load_account_code(tx_caller)?.info.clone();
+        let cfg = context.cfg();
+        let (is_balance_check_disabled, is_eip3607_disabled, is_nonce_check_disabled) = (
+            cfg.is_balance_check_disabled(),
+            cfg.is_eip3607_disabled(),
+            cfg.is_nonce_check_disabled(),
+        );
+        let tx = context.tx();
+        validate_tx_against_account(
+            account,
+            tx,
+            is_eip3607_disabled,
+            is_nonce_check_disabled,
+            is_balance_check_disabled,
+            additional_cost,
+        )?;
         Ok(())
     }
 
