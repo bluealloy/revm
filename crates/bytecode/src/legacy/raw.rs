@@ -15,7 +15,7 @@ impl LegacyRawBytecode {
     pub fn into_analyzed(self) -> LegacyAnalyzedBytecode {
         let bytecode = self.0;
         let len = bytecode.len();
-        let (jump_table, padded_bytecode) = analyze_legacy(bytecode.to_vec());
+        let (jump_table, padded_bytecode) = analyze_legacy(bytecode);
         LegacyAnalyzedBytecode::new(padded_bytecode, len, jump_table)
     }
 }
