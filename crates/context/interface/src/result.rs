@@ -374,7 +374,7 @@ pub enum InvalidTransaction {
     Eip7873NotSupported,
     /// EIP-7873 needs to have at least one initcode.
     Eip7873EmptyInitcodeList,
-    /// EIP-7873 initcode can't be zero lenght.
+    /// EIP-7873 initcode can't be zero length.
     Eip7873EmptyInitcode {
         i: usize,
     },
@@ -478,7 +478,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "Eip7873 initcode list should have at least one initcode")
             }
             Self::Eip7873EmptyInitcode { i } => {
-                write!(f, "Eip7873 initcode {i} can't be zero lenght")
+                write!(f, "Eip7873 initcode {i} can't be zero length")
             }
             Self::Eip7873TooManyInitcodes { size } => {
                 write!(

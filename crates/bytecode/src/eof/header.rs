@@ -45,7 +45,7 @@ pub const CONTAINER_SECTION_SIZE: usize = 4;
 
 /// Consumes code section from Header.
 ///
-/// It returnes rest of the input, list of sizes and sum of all sizes.
+/// It returns rest of the input, list of sizes and sum of all sizes.
 #[inline]
 fn consume_header_code_section(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize), EofDecodeError> {
     // `num_sections`   2 bytes 0x0001-0xFFFF
@@ -196,7 +196,7 @@ impl EofHeader {
     }
 
     /// Decodes EOF header from binary form.
-    /// Fomat of the code section is:
+    /// Format of the code section is:
     /// 0xEF000101 | u16  | 0x02 | u16 | u16 * cnum | 0x03 | u16 | cnum* u32 | 0xff | u16 | 0x00
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let mut header = EofHeader::default();

@@ -588,7 +588,7 @@ pub fn validate_eof_code(
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                if this_instruction.biggest as i32 + target_types.max_stack_increase as i32
+                if this_instruction.biggest + target_types.max_stack_increase as i32
                     > STACK_LIMIT as i32
                 {
                     // stack overflow

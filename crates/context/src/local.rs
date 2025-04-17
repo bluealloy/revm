@@ -35,7 +35,7 @@ impl LocalContextTr for LocalContext {
 
     fn clear(&mut self) {
         self.initcode_mapping.clear();
-        // Internaly sets len to 0 but it will not shrink or free the inner capacity.
+        // Internally sets len to 0 but it will not shrink or free the inner capacity.
         self.shared_memory_buffer.borrow_mut().clear();
     }
 

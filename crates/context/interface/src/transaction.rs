@@ -128,10 +128,10 @@ pub trait Transaction {
     /// List of initcodes found in Initcode transaction. Initcodes can only be accessed
     /// by TXCREATE opcode to create a new EOF contract.
     ///
-    /// Each transaction can contain up to [primitives::eof::MAX_INITCODE_COUNT] initcodes,
-    /// with each initcode not exceeding [primitives::eof::MAX_INITCODE_SIZE] bytes in size.
+    /// Each transaction can contain up to [`primitives::eof::MAX_INITCODE_COUNT`] initcodes,
+    /// with each initcode not exceeding [`primitives::MAX_INITCODE_SIZE`] bytes in size.
     ///
-    /// [EIP-7873](https://eips.ethereum.org/EIPS/eip-7873)
+    /// EIP link: <https://eips.ethereum.org/EIPS/eip-7873>
     fn initcodes(&self) -> impl Iterator<Item = &Bytes>;
 
     /// Returns maximum fee that can be paid for the transaction.
