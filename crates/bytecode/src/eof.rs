@@ -192,7 +192,10 @@ pub enum EofDecodeError {
     /// Invalid data kind
     InvalidDataKind,
     /// Invalid kind after code
-    InvalidKindAfterCode,
+    InvalidKindAfterCode {
+        /// Invalid unexpected kind type.
+        invalid_kind: u8,
+    },
     /// Mismatch of code and info sizes
     MismatchCodeAndInfoSize,
     /// There should be at least one size
@@ -244,7 +247,9 @@ impl fmt::Display for EofDecodeError {
             Self::InvalidCodeKind => "Invalid number for code kind",
             Self::InvalidTerminalByte => "Invalid terminal code",
             Self::InvalidDataKind => "Invalid data kind",
-            Self::InvalidKindAfterCode => "Invalid kind after code",
+            Self::InvalidKindAfterCode { invalid_kind } => {
+                return write!(f, "Invalid kind after code: {}", invalid_kind);
+            }
             Self::MismatchCodeAndInfoSize => "Mismatch of code and types sizes",
             Self::NonSizes => "There should be at least one size",
             Self::ShortInputForSizes => "Missing size",
@@ -268,26 +273,27 @@ mod test {
 
     #[test]
     fn decode_eof() {
-        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
         let eof = Eof::decode(bytes.clone()).unwrap();
         assert_eq!(bytes, eof.encode_slow());
     }
 
     #[test]
     fn decode_eof_dangling() {
+        //0xEF000101 | u16  | 0x02 | u16 | u16 * cnum | 0x03 | u16 | cnum* u32 | 0xff | u16 | 0x00
         let test_cases = [
             (
-                bytes!("ef000101000402000100010400000000800000fe"),
+                bytes!("ef00010100040200010001ff00000000800000fe"),
                 bytes!("010203"),
                 false,
             ),
             (
-                bytes!("ef000101000402000100010400000000800000fe"),
+                bytes!("ef00010100040200010001ff00000000800000fe"),
                 bytes!(""),
                 false,
             ),
             (
-                bytes!("ef000101000402000100010400000000800000"),
+                bytes!("ef00010100040200010001ff00000000800000"),
                 bytes!(""),
                 true,
             ),
@@ -311,7 +317,8 @@ mod test {
 
     #[test]
     fn data_slice() {
-        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        //0xEF000101 | u16  | 0x02 | u16 | u16 * cnum | 0x03 | u16 | cnum* u32 | 0xff | u16 | 0x00
+        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
         let mut eof = Eof::decode(bytes.clone()).unwrap();
         eof.body.data_section = bytes!("01020304");
         assert_eq!(eof.data_slice(0, 1), &[0x01]);

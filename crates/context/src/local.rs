@@ -3,7 +3,7 @@ use bytecode::{CodeType, Eof};
 use context_interface::LocalContextTr;
 use core::cell::RefCell;
 use primitives::{keccak256, Bytes, HashMap, B256};
-use std::rc::Rc;
+use std::{rc::Rc, vec::Vec};
 
 /// Local context that is filled by execution.
 #[derive(Clone, Debug)]

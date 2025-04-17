@@ -177,19 +177,18 @@ impl EofHeader {
         for size in &self.code_sizes {
             buffer.extend_from_slice(&size.to_be_bytes());
         }
-        // `kind_container_or_data`	1 byte	0x03 or 0x04	kind marker for container size section or data size section
-        if self.container_sizes.is_empty() {
-            buffer.push(KIND_DATA);
-        } else {
+        // `kind_container_or_data`	1 byte	0x03 or 0xff kind marker for container size section or data size section
+        if !self.container_sizes.is_empty() {
             buffer.push(KIND_CONTAINER);
             // `container_sections_sizes`
             buffer.extend_from_slice(&(self.container_sizes.len() as u16).to_be_bytes());
             for size in &self.container_sizes {
                 buffer.extend_from_slice(&size.to_be_bytes());
             }
-            // `kind_data`	1 byte	0x04	kind marker for data size section
-            buffer.push(KIND_DATA);
         }
+
+        // `kind_data`	1 byte	0xff	kind marker for data size section
+        buffer.push(KIND_DATA);
         // `data_size`	2 bytes	0x0000-0xFFFF	16-bit unsigned big-endian integer denoting the length of the data section content
         buffer.extend_from_slice(&self.data_size.to_be_bytes());
         // `terminator`	1 byte	0x00	marks the end of the EofHeader
@@ -197,6 +196,8 @@ impl EofHeader {
     }
 
     /// Decodes EOF header from binary form.
+    /// Fomat of the code section is:
+    /// 0xEF000101 | u16  | 0x02 | u16 | u16 * cnum | 0x03 | u16 | cnum* u32 | 0xff | u16 | 0x00
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let mut header = EofHeader::default();
 
@@ -272,7 +273,7 @@ impl EofHeader {
                 input
             }
             KIND_DATA => input,
-            _ => return Err(EofDecodeError::InvalidKindAfterCode),
+            invalid_kind => return Err(EofDecodeError::InvalidKindAfterCode { invalid_kind }),
         };
 
         // `data_size`	2 bytes	0x0000-0xFFFF	16-bit
@@ -300,7 +301,7 @@ mod tests {
 
     #[test]
     fn sanity_header_decode() {
-        let input = hex!("ef000101000402000100010400000000800000fe");
+        let input = hex!("ef00010100040200010001ff00000000800000fe");
         let (header, _) = EofHeader::decode(&input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
@@ -316,7 +317,7 @@ mod tests {
 
     #[test]
     fn failing_test() {
-        let input = hex!("ef00010100040200010006030001001404000200008000016000e0000000ef000101000402000100010400000000800000fe");
+        let input = hex!("ef0001010004020001000603000100000014ff000200008000016000e0000000ef000101000402000100010400000000800000fe");
         let _ = EofHeader::decode(&input).unwrap();
     }
 

@@ -93,7 +93,7 @@ mod test {
     use bytecode::opcode::{DATACOPY, DATALOAD, DATALOADN, DATASIZE};
 
     fn dummy_eof(code_bytes: Bytes) -> Bytecode {
-        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
         let mut eof = Eof::decode(bytes).unwrap();
 
         eof.body.data_section =

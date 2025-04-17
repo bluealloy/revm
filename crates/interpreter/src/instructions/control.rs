@@ -369,7 +369,7 @@ mod test {
     }
 
     fn dummy_eof() -> Eof {
-        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
         Eof::decode(bytes).unwrap()
     }
 
