@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001304000000008000026000e10007612015600155006000e200fff300",
+                "code": "0xef00010100040200010013ff000000008000026000e10007612015600155006000e200fff300",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x6b17673afa40fd0396267dc12b48089bd03d3704de9e2318b61c367084d5868c",
+                    "hash": "0x63149c22fd836d38ef92dd763ef882149186547044f7a989c111f56d1ec0e223",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001304000000008000026000e10007612015600155006000e200fff300",
+                            "code": "0xef00010100040200010013ff000000008000026000e10007612015600155006000e200fff300",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x50487a9de5230b7642de17edb06436c9292c9afbb52f9de109c5bdddca44cf67",
+            "hash": "0x9bcb7eec032b81bb3add7c34ec1bb1b060295d32e544b98c9564be4bf2c06de3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF1V4200_0009 (Valid) EOF with RJUMPV table size 1 (Negative).",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpv.py#L101",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpv.py#L101",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

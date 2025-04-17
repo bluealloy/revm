@@ -35,7 +35,7 @@
                 "0x00"
             ],
             "data": [
-                "0x610014600081600b8239f3ef00010100040200010001040000000080000000"
+                "0x610014600081600b8239f3ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -45,7 +45,7 @@
                 {
                     "hash": "0xdbacdcec53642efd574ad503d082d33a8eff5f7095795aaee6490ab014a8ffda",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a83989680940000000000000000000000000000000000001000809f610014600081600b8239f3ef000101000402000100010400000000800000001ba00aca6210c910fdafd4ac73942f35ef2e879aceb1305100d5b048cf68415b4f0fa061932bd373cac49efecaaa50ee0315a3b13078b5a7652fa52c219f8db2b37b56",
+                    "txbytes": "0xf87f800a83989680940000000000000000000000000000000000001000809f610014600081600b8239f3ef00010100040200010001ff00000000800000001ca0a8416f0b044d297f7e0ea88a9b444e4c2444498be1b95e690ad91024bdf6a11da07e825c875390c5626621ddefd4b865f867e9075da841c5e0797484727b3caa5c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -92,11 +92,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8abe2e0a7824055c2d2424e4a0ea709414094e2ab7b166a77f39ce813998342d",
+            "hash": "0x18b10dc85c97c140d0f55cd1197012c0217d265ebb84f03938c6ee9e10da206c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies that legacy initcode cannot create EOF.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L85",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L91",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -138,7 +138,7 @@
                 "0x00"
             ],
             "data": [
-                "0x610014600081600b8239f3ef00010100040200010001040000000080000000"
+                "0x610014600081600b8239f3ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -148,7 +148,7 @@
                 {
                     "hash": "0xadd098c6c9f59dbe5420cddb8995e484f4781761a585e5bb89957c73f5d17099",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a83989680940000000000000000000000000000000000001000809f610014600081600b8239f3ef000101000402000100010400000000800000001ba00aca6210c910fdafd4ac73942f35ef2e879aceb1305100d5b048cf68415b4f0fa061932bd373cac49efecaaa50ee0315a3b13078b5a7652fa52c219f8db2b37b56",
+                    "txbytes": "0xf87f800a83989680940000000000000000000000000000000000001000809f610014600081600b8239f3ef00010100040200010001ff00000000800000001ca0a8416f0b044d297f7e0ea88a9b444e4c2444498be1b95e690ad91024bdf6a11da07e825c875390c5626621ddefd4b865f867e9075da841c5e0797484727b3caa5c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -195,11 +195,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe135300ba16b6791a26f5f7c17521845ae1804083ba0c269da57809b6309a30e",
+            "hash": "0x49d5b66600f712b5f6c938cbd1333f6f4b2fb3c7aa8f93a7dd71070d3f5a15fa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies that legacy initcode cannot create EOF.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L85",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L91",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -241,7 +241,7 @@
                 "0x00"
             ],
             "data": [
-                "0x610032600081600b8239f3ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000"
+                "0x610034600081600b8239f3ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -251,7 +251,7 @@
                 {
                     "hash": "0x7789360253cc754284e1efb96ecfa77988482a751fea843096ad07a4388758b2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf89e800a8398968094000000000000000000000000000000000000100080b83d610032600081600b8239f3ef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000001ca06781228218982214e6ef968fdcf00c418ae6102af06367db768ae32f8cb49c0da05381ceaa95a11c449eb6307acc40551dacb0140bed7a779cbe824db3c31d393f",
+                    "txbytes": "0xf8a0800a8398968094000000000000000000000000000000000000100080b83f610034600081600b8239f3ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff00000000800000001ba0a094bdf352775fc48e515b353e41aa53fb7fe4839ccca61e106db943d5a1c736a07360fe6236da30ea027e62349106a3e823a4c5c280efd0839736ea2e2d0b08aa",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -298,11 +298,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x869487634098a1f2049af16e9ebbc3bdf57cf4d3478d6021618a88a2b1e85193",
+            "hash": "0x38653e1d007a83ec57d37373f7d03754a6e87db38e9e0b01de07303ad34f2c83",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies that legacy initcode cannot create EOF.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L85",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L91",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -344,7 +344,7 @@
                 "0x00"
             ],
             "data": [
-                "0x610032600081600b8239f3ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000"
+                "0x610034600081600b8239f3ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -354,7 +354,7 @@
                 {
                     "hash": "0x75e11bd3cdd608f0498b821b1ae6947379e99d22b5014888633fe35ab519cf4f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf89e800a8398968094000000000000000000000000000000000000100080b83d610032600081600b8239f3ef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000001ca06781228218982214e6ef968fdcf00c418ae6102af06367db768ae32f8cb49c0da05381ceaa95a11c449eb6307acc40551dacb0140bed7a779cbe824db3c31d393f",
+                    "txbytes": "0xf8a0800a8398968094000000000000000000000000000000000000100080b83f610034600081600b8239f3ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff00000000800000001ba0a094bdf352775fc48e515b353e41aa53fb7fe4839ccca61e106db943d5a1c736a07360fe6236da30ea027e62349106a3e823a4c5c280efd0839736ea2e2d0b08aa",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -401,11 +401,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5324bbae667a39b590d1b0e11043adf9891e34305517314183c416f3e00c716f",
+            "hash": "0x3120f4468d4a8c9b19da46d8decbf76b70da7691f7d2bc2440834230d950db6d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies that legacy initcode cannot create EOF.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L85",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_legacy_eof_creates.py#L91",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

@@ -20,13 +20,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0000ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ff00000000800000fe",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x930477734a5f1b1cd78ecebec9321450d1085855b9a5bc73ff90c9577c12cf86",
+                    "hash": "0x700186666eac2a5d24a028481832d9e43b7981f9da3bfd6e8b8590fb4e002158",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -61,13 +61,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0000ef000101000402000100010400000000800000fe",
+                            "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ff00000000800000fe",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                            "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x02"
@@ -105,11 +105,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6eee7037fc98f220f08c6c0630279394ce50f2585d9bf9124b5c0159bd035461",
+            "hash": "0xd55cd0f0448eca1ccd97fc4a49965c4590597ecc8e0c952abc6c4ec51856994f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -136,7 +136,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0000ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ff00000000800000fe",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -165,7 +165,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc27a607f9ffe151abe4974877879813de7fd437886048ca064f8b0e59c28c989",
+                    "hash": "0x43bf798e5c0e920dfb6e4330304cd80a753b451f717dc80d81ca339d933b2ce5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -177,7 +177,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0000ef000101000402000100010400000000800000fe",
+                            "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0000ef00010100040200010001ff00000000800000fe",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -220,11 +220,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x49479bdc7b071bf058352e337249fbf4e6e6fae201b91cabb2b4dcae74d7e2ce",
+            "hash": "0x46045833fb12f2f75cb034a9f930317a32c9db654d30021202c3f019483dcd15",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -251,13 +251,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006001ec0000ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046001600060006000ec0000ef00010100040200010001ff00000000800000fe",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                 "storage": {}
             }
         },
@@ -280,7 +280,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x00a8814fed89710fd0186bf40c6ef79c61416cc5d49cfeb043df87eebbdf3a4f",
+                    "hash": "0x5c779a64fa4e0ee7195bdad31eeb753753ecb3857050102faf7c440ea7ff4855",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -292,13 +292,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001001404000000008000046000600060006001ec0000ef000101000402000100010400000000800000fe",
+                            "code": "0xef0001010004020001000b03000100000014ff000000008000046001600060006000ec0000ef00010100040200010001ff00000000800000fe",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                            "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x02"
@@ -336,11 +336,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x47d61be58548ec02feb849e013ca7f4542066e9f66d7d09db82597029f5c1cbf",
+            "hash": "0x54d8f2c7efff0497a36dd36a2616a62b111b13e7c3016eacf3ea11d582f89d7a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -367,7 +367,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006001ec0000ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046001600060006000ec0000ef00010100040200010001ff00000000800000fe",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -396,7 +396,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf59f2676f0d70d2f7f47dd89711e79e7011cbe6c80faa931c42158cf35c6b250",
+                    "hash": "0x5b962884b87266ebe9eaa4d8b035984d1af821fed6cb813cb26ecdb4df26ad2b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -408,7 +408,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001001404000000008000046000600060006001ec0000ef000101000402000100010400000000800000fe",
+                            "code": "0xef0001010004020001000b03000100000014ff000000008000046001600060006000ec0000ef00010100040200010001ff00000000800000fe",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -451,11 +451,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xacb436aa39abf9d56bba2d87ecba98e86aa178d6442926e6e348e8aa52eee0b3",
+            "hash": "0xc3caab870e070f63e9437439a9ea6f90ea1ba8dee3b535a34ea3b21fb2eedf1c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -482,13 +482,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001003204000000008000046000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000b03000100000034ff000000008000046000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                 "storage": {}
             }
         },
@@ -511,7 +511,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x812c162eef62ab097eeebe7ba8c18252d9f72a7038906a460e5af561dc36d13d",
+                    "hash": "0xf8b686d90e1a5bb0a8482dc8e21b0474cb419549b682ad7c35d0227466467609",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -523,13 +523,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001003204000000008000046000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001000b03000100000034ff000000008000046000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                            "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x02"
@@ -567,11 +567,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x45ffecf5143c4b70a982b212ded61fa28fac8763184b02dafaa30e21b2f3df10",
+            "hash": "0x2c8eb76f175dd82efacdd1e6ae05a1fbca34803aafb78e6f6af94d99cc570516",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -598,7 +598,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001003204000000008000046000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000b03000100000034ff000000008000046000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -627,7 +627,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x51f755899fc8d21ff146011ae98270adc8ca223029342648d876661ff5045133",
+                    "hash": "0x08cf4804b1a388bd18c69d43f139ba19c6f20013d42bb972b9180ade46033054",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -639,7 +639,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001003204000000008000046000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001000b03000100000034ff000000008000046000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -682,11 +682,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x712233b2101f6ff69f48605b9a7659f01f58fa430fb7bde957e58ceed0dcb177",
+            "hash": "0x70722291aa3eb45523533891dc44b7e04221afd521bbb85cf34ec30b2d2213bc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -713,13 +713,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001003204000000008000046000600060006001ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000b03000100000034ff000000008000046001600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                 "storage": {}
             }
         },
@@ -742,7 +742,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9bb90fa90ddf13b6917d1d2bb40bcf0f9eb5fd68f3ef88190d3ac8852411eeaf",
+                    "hash": "0xd63899b14aa46ae57230189eee9d63909bc59eecf044ec3b8556807ebc67e86a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -754,13 +754,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001003204000000008000046000600060006001ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001000b03000100000034ff000000008000046001600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010012040000000080000360006000611000fb60055561201560015500",
+                            "code": "0xef00010100040200010012ff0000000080000360006000611000fb60055561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x02"
@@ -798,11 +798,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x68dd7904de530237c85c89460cfae0fd29cea633025f5d3f2fce9fd2a433c70d",
+            "hash": "0x132dd22ed27f74f2365a5777abe960504337267137b6bd4a6f8e0410a4e1c1b4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -829,7 +829,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000b030001003204000000008000046000600060006001ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000b03000100000034ff000000008000046001600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -858,7 +858,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5e9c16317a46a8f090cfc95e1d20179bcafb7c6985b675a53492196b3daa3778",
+                    "hash": "0x78c31b3751e223eb4e596cd1db97af9cd3638713328d348a29b90f85f37c291c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000110080801ba0c0634ad48281e397767c0507c8eeec932a30766c477fd93569be5d0b5c141315a03d16004c8b03822114979a04bf9a289905df2048dd51add22be5fd2c6d319066",
                     "indexes": {
@@ -870,7 +870,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b030001003204000000008000046000600060006001ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001000b03000100000034ff000000008000046001600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -913,11 +913,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe4d6964178551d4f18da4020e58b7bf27eb50d3ad63ca70116c88a8536753bb1",
+            "hash": "0x1b82a841ab85843190d92ca26ec4b3c601a288cd47ddabd8d4ca7575e7904de9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies correct handling of the static call flag with EOFCREATE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L573",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L568",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

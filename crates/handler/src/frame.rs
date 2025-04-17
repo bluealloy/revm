@@ -5,6 +5,7 @@ use crate::{
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
+use context::LocalContextTr;
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -90,7 +91,8 @@ where
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
-        let memory = SharedMemory::new_with_buffer(evm.ctx().memory_buffer().clone());
+        let memory =
+            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
         Self::init_with_context(evm, 0, frame_input, memory)
     }
 

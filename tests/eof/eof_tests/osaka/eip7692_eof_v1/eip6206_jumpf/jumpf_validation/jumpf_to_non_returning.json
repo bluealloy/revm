@@ -1,0 +1,188 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_0-code_inputs_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200030001ff0000000080000000800000e5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x6af5a4181bf34e432081a3417b9f118e566683b186fb9d0b78e525e3e61d2fae",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_0-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200030001ff0000000080000003800000e5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xbffd14b948f5bab03c30c79b4cd1c0c5a7b09514971a3421412e7c872fa07227",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_2-code_inputs_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200050001ff00000000800002008000005f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x47b13d13b0aef698dd3650db4fbba39f00f8ac9d37992266c2f159714cffd4da",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_2-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200050001ff00000000800002038000005f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x85952acf5f19ea58f0fc154c6c338127cfee2e247879dbd449c332ae89813a4d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_3-code_inputs_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200060001ff00000000800003008000005f5f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x2ad34dd0c9e50df655362d00cf09d34f7c5c0eb6a5201a4eaaeb885c4475f515",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_3-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200060001ff00000000800003038000005f5f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x4c0c178c25f93330a3cf767914e05997720350f6600d3287304b64363b116585",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_4-code_inputs_0]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200070001ff00000000800004008000005f5f5f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x18bffb5e2d20606e4429e009430e156508d1a237e4ab26decf6815dd3c6edc8a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_non_returning[fork_Osaka-eof_test-stack_height_4-code_inputs_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200070001ff00000000800004038000005f5f5f5fe5000100",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xd16af540046cbc348a5c6992979ef8d2828fc64512c4829111eb1f8ca945c1b6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF jumping to a non-returning function.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L185",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

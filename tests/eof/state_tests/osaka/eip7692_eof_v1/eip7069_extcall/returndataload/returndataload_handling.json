@@ -20,13 +20,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x657338eb444677994ba2e0022b4b72ac71c47652819b298a039b6b26b237ea24",
+                    "hash": "0x6aea67f9ea74c55746d214664c5ff92be09ee3b78570aa6f082ffdc4e3319fb5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -61,13 +61,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0376c9f5b0dd2e30e5a28dccd7c61721c7786f5bffa1f53c9bc801483a7a774d",
+            "hash": "0x859b1aba9ca3f1a98370db8eceb250150c829d8212fe41a077a7420ceadafa2c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -135,13 +135,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -164,7 +164,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc3ba9a36403e1f0eb1b288465959f3113d858b601956ed252f7f85df1dabed0c",
+                    "hash": "0x6a03bf72b4d1a98b493a52ae6ccfea465cd47c7743144b32ba82ff18e7be3618",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -176,13 +176,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -219,11 +219,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x30a692b8184ddd4739db2afc18883a94af0c23c07c310d0ea0292a5eebc01169",
+            "hash": "0x1c6459ff10559db7b6fe3ea1ee029ce032789b00074b6a01161209ef1d7cbe88",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -250,13 +250,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -279,7 +279,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf1678d41f620ceae5bc739f56ccd1e6fb93537713dec1237ec0008e0732b426d",
+                    "hash": "0x0b727332fa6d6f11c4166e8824adcf46d06b55dd7529bfca6afe8f24ec6b445b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -291,13 +291,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -334,11 +334,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x09091471e81908e8c9bb16289130c282ddd4d5f53570ace702799613438bd890",
+            "hash": "0x1a61509e76253b2f31b2bf7752d01cd1140b8c25fe13a8c6423f209222984777",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -365,13 +365,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -394,7 +394,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb8869b3c845f38ec84b30cc5ab05dd46f8fffeaa4c9638045fe2eda610beb9fc",
+                    "hash": "0xec68f0d8e3863687e7f8435b17d501cd8f5ea3a9f2815967a324577e7737bb89",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -406,13 +406,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x1010101010101010101010101010101000000000000000000000000000000000"
@@ -450,11 +450,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x02d6aba663ae64282c5ca8e4035f073d9341b6bc9df5f71bb864dfefff188a5b",
+            "hash": "0x5b8f360fe9fde9ca2e86e3609cf5f3d985c94bc5561c8959cbaf0748ea0f694c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -481,13 +481,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -510,7 +510,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x41e7c21baa755d60a2ac416a8096b2f886ab438d81291bcb29e6501005959ffc",
+                    "hash": "0xfe5e9352fcdbb9783494a08a641436c147a29aeafbba66d90a96fa1fcd3904b9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -522,13 +522,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x1010101010101010101010101010101000000000000000000000000000000000"
@@ -566,11 +566,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf73ecb827216a02da02f2220751217548d5dcfa2e5563c58d051fc3ac300c114",
+            "hash": "0xf7cc8fad4037084ad04dd4081aa0bc0aff29e1f9da84c11d9464bbe7edcd431d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -597,13 +597,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -626,7 +626,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4d370a7ae662acacd29a9dc4586ab004401f71fe5f4bb8611e915277d06b1f11",
+                    "hash": "0xc45fbdef3a6bbb7f4e3124b23e3773fe0e76975ec8a22c391a776b0643887174",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -638,13 +638,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x1010101010101010101010101010101000000000000000000000000000000000"
@@ -682,11 +682,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc536a2c37aa500bfa47da710432efb75da8de6b6842ac9a598e6ae938e955329",
+            "hash": "0x5087e0a3a4b25358acba2cebf51865818efc77eb6a2b7a22d351a9a427873129",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -713,13 +713,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -742,7 +742,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x12938434ccf2a19a40e014682f00102ec66412f1c499445423637d16682c62c5",
+                    "hash": "0xa9134c075226a87ba936c8d6a330ae710fd53f5971f68c502f660e821d08031e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -754,13 +754,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202020202020202020202020202020202020"
@@ -798,11 +798,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xeb8631bbe46819273e13914194b6e2357b02b5dab220b9936cd77392080ac212",
+            "hash": "0xa3c62c1c2c2b814320f73465f29fb895f3f054e74e562f9183267c59693659ff",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -829,13 +829,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -858,7 +858,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xdaae96ab8a63b6fd584116c6c9d2c1b6880105dd7e4a766d070ec0c96be47de1",
+                    "hash": "0xdac4ec647badc9fe82e8478f954d569da05c8a9981e500a16f4e0820937e8459",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -870,13 +870,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202020202020202020202020202020202020"
@@ -914,11 +914,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb410fb3cc1cc4c0b77808c84567b8c75028c3962fe5d661d8dac1babfa31ef75",
+            "hash": "0xeffb9dc6debaf22fb1d82ee1da7a322a4c18caeb1a0c092c1a600ce9677267fc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -945,13 +945,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -974,7 +974,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf05512575e267399285de69d58c164ca76be2ce6e6eaad85af2426e90efa4ad2",
+                    "hash": "0x340f31ede0dde95c6e8e5bdbd6ab0e0add894538847fcb64d8a0191d8ec6ebe1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -986,13 +986,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202020202020202020202020202020202020"
@@ -1030,11 +1030,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x47ab597cd2122dadec41e8d4c15f2e648849e916ec0ea430cf2135242717c0fe",
+            "hash": "0x8bb1d1fee91dc009e930f1d9f58ad3b64fa05fa58115d8eeccdc97e262216662",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1061,13 +1061,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1090,7 +1090,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xdab8b7d723eae7df3dc7f6a302b7644866a3b2a361661d8a3e8873c09f116c4f",
+                    "hash": "0xa1e52f26892287c1237d446d5836385db9cff26b34103eb9d1c7ccf0e262553b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1102,13 +1102,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86000f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -1146,11 +1146,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa23866f3ddf1e3f6270d7bdfedfdb2175dee73ec99dd47ba7a74f7564517e1e1",
+            "hash": "0x5cd6690cf0d0826be025e1ac0fd89bfb7422c46d0b2b82ad5d7e5e76fa307a16",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1177,13 +1177,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1206,7 +1206,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7e85de6f99b1089a9d9fbe8816a8b4e74236315ff6758aae47a510c5b23c24d2",
+                    "hash": "0x4ea67054513c7eb290ec46e15e58345bd073495a9050714ccf60614cc6081b87",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1218,13 +1218,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -1262,11 +1262,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa314af8687276c1b068d1d26930f14171737a43c6584ca8d54c19bd117dc1928",
+            "hash": "0x436ab5be693da11008c0d5aa2d7a3ea653fa376ed18ad4d57a463f0b616ecb65",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1293,13 +1293,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1322,7 +1322,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9aa899ed3aa1f4863b40adcd39b50f7b25dea65edc46201bc6506293bf0776e6",
+                    "hash": "0xa0dc74a5b1497f49f053e98611b86bd4ed76a0c3d511656f3ff9e83bc3c6162d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1334,13 +1334,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6000f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6000f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -1378,11 +1378,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3e9b635b8315c8764fbde176d3d1ac9112c710746175cb97bcb51bc54553ff12",
+            "hash": "0x5065107dfc27b9de7fda46b7bb1fe78858462897f64838905ffcce47aed17f9d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1409,13 +1409,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1438,7 +1438,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xccfc0effba30e00da621ee59d05b24cf3237013b9313d357dd4fdea1c0b5a29d",
+                    "hash": "0x56cd8937e2ecbfa1baa84511177088c8809c7ed17c782caa8841ca2096f1646d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1450,13 +1450,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -1493,11 +1493,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7f687d5299d068f21f5334270d1fd1ddcece4b1caf96b8e805d536343424e499",
+            "hash": "0x4418ea530fdb8bfb69b8ebc72a2ac09a973782a0e7e3270688a127804946f093",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1524,13 +1524,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1553,7 +1553,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x06241a3e3b9e0a0426bb7edc09a91adedc1ea42b843ba63b8169746b61746bfd",
+                    "hash": "0x3e16b0003892c69260c35a1de637d00d5015d9c240b3d3c1993e3d5118906973",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1565,13 +1565,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -1608,11 +1608,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbdf37ca602d2324a27d00ece932eceb1993f24cd9e98ba7e48c6921084705b97",
+            "hash": "0x5243324cf8badc9b289a7ccbbd142457b0621992afc79c89367c98bfbc88637d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1639,13 +1639,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1668,7 +1668,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x04d67a8c2e5c8b8323f874e1ce1e5e6e11099f7a1cb9577eec1a6bb50412d02b",
+                    "hash": "0xb2e185673db6e5cc8da27b11c9d73a61e6d31f9ff373b408f29a3adc85e453ec",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1680,13 +1680,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -1723,11 +1723,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xefb080c9c5ffba8d0df8fe740d1e99b8b5418581c6927facb7949151fb8b847c",
+            "hash": "0xd848afd8a23af889d982b3598ea7892885b0001bb60013c5a1cb3897985ab968",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1754,13 +1754,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1783,7 +1783,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf8df8f163462dfb34ad2b86933b6fcf44d4bbcef0b478aeb8f8c9ce45cf90b92",
+                    "hash": "0x21cff916ae356a6d310e525df9b7f8b0eb35d5f7d239ff29b756de9e349c8e0a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1795,13 +1795,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -1838,11 +1838,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfde9a1bef2ed2574fd59b8076a1fe13eee77e2943e2b798e827c4d8351810ad6",
+            "hash": "0x0b472b0adcaae96869ebb66dc51541d22f3ed3f4e0f2313b7bcd14925c7b4da4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1869,13 +1869,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -1898,7 +1898,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe55336ae62f57be186ac80a37dcc8fa9a45d78269c4125443b958fa2a8fe7dd8",
+                    "hash": "0xd86e7616f555f924fe5be197c24176ebdc8d92dbc4f6f7f2562c485eb259ada2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -1910,13 +1910,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -1953,11 +1953,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8ff05bb95ded0e282894de681e9a240833bf91d7d392a393f335ffdcdddbce25",
+            "hash": "0x7e6d1dec9ed9f31efd6f10fa2e04ef1b83661671ae64751c1a27756f538715c5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1984,13 +1984,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2013,7 +2013,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xad6394c458ee44a2aae0711533b1f0a6aa2dd4160349cdb328766fc1fa0c46b0",
+                    "hash": "0x94cc930a3f86ccdebe37ef640093d186881cd785cd82b8eed9ee3badd9f0478a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2025,13 +2025,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -2068,11 +2068,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x290887dce00ecbff0d53b95ab67afbdaf89d896bebd90192dfa4bca06edc829e",
+            "hash": "0xf44f781ec8e866d3738e1e08a34cb9884fa09732f31c6b554002c01955c28d9e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2099,13 +2099,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2128,7 +2128,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa12d4896df1db0ce491ecb30f2913b4239c62596bcfb792384b6caa959b18905",
+                    "hash": "0x328679c8fe6a8740382787b6bddb85bd4462c13f683cd4289f71385e08e7749f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2140,13 +2140,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202000000000000000000000000000000000"
@@ -2184,11 +2184,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5868b0a9d3a9b96b853b6f7aa81493a183d3f17a0dcffa035e97daf6b1749c57",
+            "hash": "0xdf37b8c36ece3915f81577cdcfcce87d2a661c228c9322df133b1dfb1a01eafe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2215,13 +2215,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2244,7 +2244,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xeedfdf3015319e33a21ed787539c01c61cf6fd2bcf1f1dbe83157940f4d7364d",
+                    "hash": "0x2b8876fbd56869c16dd5aded15c29fe15c4cd09155fe7f4639435f6aea16262d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2256,13 +2256,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202000000000000000000000000000000000"
@@ -2300,11 +2300,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf6dbb1a36dd87f86c116e3dce0e098f855edf9a53ecce9ba2ae51857e5e2dfd0",
+            "hash": "0x01eb7ce9babb3fd012123bace7a3d476273744ca1c16d16c5edeeb5599af29af",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2331,13 +2331,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2360,7 +2360,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc42e75577d5feee8ff9e12fc15a1942e913dccb3570ae7d3e73749001d5fd24c",
+                    "hash": "0x8102bd0aebbc02f5594f68788296130e6fa3c75f613517488d26f781ad2c0d96",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2372,13 +2372,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x2020202020202020202020202020202000000000000000000000000000000000"
@@ -2416,11 +2416,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x237cc6bb3784fded0117cecebe7a6948041493c4be873a9b8ce821c854c283d7",
+            "hash": "0x988488e19bbf30e05ef6f4db4928c5df0450678fdab52b257292aaac7aa3addc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2447,13 +2447,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2476,7 +2476,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7d5d62a42b0b46efd205a17863674a9056a8a31a93b1e6580aee76f098ba2f59",
+                    "hash": "0xba633f63912d61a4b32f986e9c27a9673f2c4c01baec5d54fcbf40d9a28f491b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2488,13 +2488,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86010f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -2532,11 +2532,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x1a29d39841008140b6a4dbdfbd93c68fb65dfae774dd297526cca46876e784a8",
+            "hash": "0x385ddfb9d48a53671b7b910f145732dac9b4fdf26395ffa8154f1cd9af62d0f8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2563,13 +2563,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2592,7 +2592,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x746769d463b606274e8de64f7048f3f17ce54fcb0ef509b6b2aa2f80f12f6fbc",
+                    "hash": "0xb318797e8d68ae7f5f5eaf39ac61625eeacc4ffdfe12d55ebe148c1a2cc5683e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2604,13 +2604,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -2648,11 +2648,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9181d0a6ce33fc3069c11370d211817353decd206e84116c2e9c5ddeb89bbab2",
+            "hash": "0x18ead22ddaaa719f43e63eaa33174b301fe8819ea193816f688951aa3c5f26d7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2679,13 +2679,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2708,7 +2708,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xbb08e6053dd2b4361eba9b68c0c88558aaca71bc4edc1dbd5e37c02352cb4bf8",
+                    "hash": "0x3ac902670253d55c2c717b1f2d9bd25f7be0f42c76e1f9217c07a5519f0d8cd3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2720,13 +2720,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6010f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6010f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303030303030303030303030303030303030"
@@ -2764,11 +2764,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x45686089c59737be98fdf5e6ad750ec2b46f134906a4ebc105f615b31af4b304",
+            "hash": "0x3b8dba2793f078736a8815a3cdb0eb93bcf7933b93fa7615ae6db3ec75376d7b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2795,13 +2795,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2824,7 +2824,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd8ecb68b964c2267237a76b6b90c05e2b88d679ded39fae2b1a46b3b01355f4a",
+                    "hash": "0x18e485d2161625971da2f053fcc1955022a9fad78b7c483187cbc0a733c521b1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2836,13 +2836,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -2879,11 +2879,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2505402947406336b24d90367d40361f8e2ab692e8c9dc427f37eebcc3ad4d8d",
+            "hash": "0x85af0b008bcc14c1d0671ebdcee74ddabccbe162b8bc135fdbae49a08262b941",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2910,13 +2910,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -2939,7 +2939,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x90560c1111d50ffe6d60ede857d07e1cbc8c64e5f57aaded3e6904d188d84ee9",
+                    "hash": "0xdebdb1bedb40703e99acade28611163df2b2d252335cceefff4bea790b8a9c5c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -2951,13 +2951,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -2994,11 +2994,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0b014bfdd4c042c2fc65e689792eeb9670c5fda1252034629b0c622a488c4e62",
+            "hash": "0x3948b09786178995b564c3158db0f11000462d51a60b2336e38810ee061fd46b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3025,13 +3025,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3054,7 +3054,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5ef09f12562d8e0e956b77a57136e5596addabd7ce0662028b49e53305c6ee9d",
+                    "hash": "0xa4e6230b0fbdf6bd32bf8025d987a54d242e4f6bbfa8f087f5a63043995eae0c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3066,13 +3066,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3109,11 +3109,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x535c6dd9faf49a1b239fe34a047f478848d9cbe95e95914324cbd0fc7e31c2ae",
+            "hash": "0x156519a3527531a09581b19e94907d552deda27885a571410adaa5387720c12f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3140,13 +3140,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3169,7 +3169,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3b2594cbfa5af001a1744008bf8aa14ca153445ed89c34208c5cb259c2b0e148",
+                    "hash": "0xa60c2b6dd2aec25f59cb2129e0a90e3568bae01d0ded05c033964e7a8063f6c6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3181,13 +3181,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3224,11 +3224,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xdf3d6fe3f084c84269b597682550adff60ffaa6225439c17fca8b90b38bc7f6e",
+            "hash": "0x59086cbef327f050158356b597ea323cf05f8a63b2d55d81abc1b0a16bae49f7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3255,13 +3255,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3284,7 +3284,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5e5dae9b7f23db20f62e314853d299770242ba93aa14cd34ef0e9421d7e5cc0c",
+                    "hash": "0x7da12839738207e94bfcb3a626803a8fde1b0d10143193763cd0284b640b9588",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3296,13 +3296,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3339,11 +3339,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x58f09b6be6677ff8ea402ece4ad891c634de6f755f759d531bca66a61e4ef67f",
+            "hash": "0x3c6b2f56e01530421a7540a378bef0597f5276c4fedb52bb9faa30a8028f55d1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3370,13 +3370,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3399,7 +3399,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3ec1b898874d88dc30ef9656c79e41e8f86457823cc076d8648678420473bba9",
+                    "hash": "0x8115897639798cd4dfe32391ba59c6a69a0c3a8db9036b2ce4f2b00015acd291",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3411,13 +3411,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3454,11 +3454,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0bce696af2cc0b756680567000aef7cc27a2d70ac16564f6f3cda177a7578c3b",
+            "hash": "0x01a446fe0f2153ceab27f35ac1a196cb4858cd80ea81d773f262a27341f550d7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3485,13 +3485,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3514,7 +3514,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x48485855305d21587bbea8d51a8ae8e99783258257ecf3b11b3b1fcf50722cc6",
+                    "hash": "0xe0403b54671f97ddfa8e8b5bc96fd946e8aca22abbe3753e0f8cfd5f6cb3eabc",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3526,13 +3526,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3569,11 +3569,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xeb59c47e27e98d6f98859bd7374688fc0ab8825b94186c75f209548c71324b9f",
+            "hash": "0x0d86d2c06378840350be9b061e7701c26ee1e1878f6047e5d3b59ceaf3035bf4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3600,13 +3600,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3629,7 +3629,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf3af1a3126c57226f1f0e2fa720fa1c963c41ab93039f840b07e86c387893b0e",
+                    "hash": "0xc07c84e4c688cb7b70b574629ff72b024744d4d64eb9b6daa27301072acdb1a1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3641,13 +3641,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3684,11 +3684,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf02b3ed3859653426b670e79041d8cc95b9d2f53d058e13e5b211c100bdfe811",
+            "hash": "0xe454b50fe7305d4e228fd2128e13aeef9d66dc69a40f89f4f9f920fe2ed4b6d5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3715,13 +3715,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3744,7 +3744,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4e140ae032af44a49352b91680435b052d86980eac190636b6f26c99a76266e0",
+                    "hash": "0xa895c5163edfb173cea651cfd629619e6d090802c106ce02d5a57f2a933d9298",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3756,13 +3756,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3799,11 +3799,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf6669b51e8d337b7eef8cc5d797c92b1210235fa5e2f9f73e5e56bac3459b07b",
+            "hash": "0xfacff12c50fe4a90aa4888a3dd6c67d772ac468dc1ce9ebeffa4b0aade98d076",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3830,13 +3830,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3859,7 +3859,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9c3a18319226ddf6637cc3c612f9e856c2ece202c733212f0a0732eba5992840",
+                    "hash": "0x00bde21518f5900734a99e430489f4f124b769c59de95f60572a8dfa6788b5f8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3871,13 +3871,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86020f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303000000000000000000000000000000000"
@@ -3915,11 +3915,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xaf4f0f21acacdd102bc453f96f12f04b99b232eac06cfd6bf1c2b46f1916852f",
+            "hash": "0x0002ffd64d80520719ad360f27fce418b0ce90387a6bbf156939ea5b2c5a3135",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3946,13 +3946,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -3975,7 +3975,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2d7738a30f647cfc6545c6376480e9da61c59b8f289004af7a401a1e35af1ea0",
+                    "hash": "0xaa9968b2f92a957e1ac3c2429d71a5ff45b93d3844704bf63a60cd31c74b1ada",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -3987,13 +3987,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303000000000000000000000000000000000"
@@ -4031,11 +4031,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc76ca747afa4082f51b59310b89eb574ce113651d40ffbc9ef02512113b12ffd",
+            "hash": "0x0c268e2ca737daeaf3c02379f827fd40760c1e74b41651ddc5334ff4ba27613c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4062,13 +4062,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4091,7 +4091,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa0f45f8179eee256b0e98c40380d5947e01e9dcf8f0be1f5f93149c88fa931d3",
+                    "hash": "0xe227728e44ce44f689c27c12f18de49c5e212af47e38ecbc8d6eb9e1c783df2e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4103,13 +4103,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6020f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6020f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x1000": "0x3030303030303030303030303030303000000000000000000000000000000000"
@@ -4147,11 +4147,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd9612a18b9672ea8a96b9f6cfceb6895eb3a1149005c7acb38611c9e5ded7a44",
+            "hash": "0xc0f6e6f3f49312f2b9adddc555aae4967af276f3896ee424e89d7a8ae6ea9488",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4178,13 +4178,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4207,7 +4207,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x8f426f04d0059e2307cadf689e174e7dae6d57000ed0b2ce9706ea2f953f80e4",
+                    "hash": "0xee3949304f4dbf7fea5ba7efa29380951afd29985d7bf7f709ed1a8f9a889dd1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4219,13 +4219,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4262,11 +4262,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xebe34376381bd76031d77728292f4583fd1b80f3d72419aa544659953da25c78",
+            "hash": "0xf13607854f591eb63ad92843cbbb4cecf8ee12f5aae8c169e4c35e6dd60ea986",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4293,13 +4293,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4322,7 +4322,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x8312d4cebb305be0e416ab32c9d94a1b0fdc8cb039cf5c7a23b1f684c9af08d9",
+                    "hash": "0x0924d9abbfd68a281dc95362c8be5b19c1f1a3980f46745079d1defe4c17bc1a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4334,13 +4334,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4377,11 +4377,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa0a1340d2817e86ab7bcfab12f7e6e6ecf659b9a31850ecc38ddc82b80ec5be2",
+            "hash": "0xf97f3514a6096a30046410bc1e762a41425438df37673c0257b40aa43eeca7c3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4408,13 +4408,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4437,7 +4437,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x550352b29b552c2a7aba8d2225ac4dc8ba623e255b5ad69c990230b3902277ae",
+                    "hash": "0x8f51315d3107ae2f59bacd2a26b8690061b8d4dadb28d562055406884d476aea",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4449,13 +4449,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800003d260006000d3d26000f3",
+                            "code": "0xef0001010004020001000aff00000000800003d260006000d3d26000f3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4492,11 +4492,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x70b74961bfe1953d3b26b0c91b38e2b9335de82b3faf983cb5aeacc279e8e46a",
+            "hash": "0x403dbcd926f54a8cf13203f31f5a1bb8af0bc5439eb795c4151be33074fdaf04",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4523,13 +4523,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4552,7 +4552,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x044414620a571444a08fad697d7f83d6f7eee0d6c960cc84265622faa87811d0",
+                    "hash": "0x26bc58d01eeaa0a4542e7cc049a3e8049226ff6665472a412cea5a5b7ce964a4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4564,13 +4564,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4607,11 +4607,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf8fb5421b922dbb37f5bb1410eb9615e1bcd357c2b3997a6c38922cec8cf51f2",
+            "hash": "0xd93f6fb8516b8bd24b03356cbe554a2a2a975a1bec7bb6a9d76f04d3ed20f3b0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4638,13 +4638,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4667,7 +4667,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb61e66337429ac2911db2a25fb08b5f068aa18bfcd8c7af5a6ca7b98f9223d56",
+                    "hash": "0x03532e1fa2668461a28078f7ae9b7284852b2ee294ad469419441a901632f224",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4679,13 +4679,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4722,11 +4722,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x82fb3d44c377abcbd31d816db8e67f48962deff371ad7ea1e78673642a8b2438",
+            "hash": "0xa2b661bddc4c4ff1be9cfddb81625e335a90215a47ceb0cb0f416135f16eafcb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4753,13 +4753,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4782,7 +4782,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x6cf35a4fb6fe555c41ade0d5e4ccc8cbe0411537ab137da713c1c597adf23fd5",
+                    "hash": "0xf5a4c5602eaae4e09d4282e18ca371a3330a0d0aad64893a1918570d5f9eda55",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4794,13 +4794,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400100000800003d260006000d3d26000f310101010101010101010101010101010",
+                            "code": "0xef0001010004020001000aff00100000800003d260006000d3d26000f310101010101010101010101010101010",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4837,11 +4837,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9aecf00aa18585ad78fbb1877fa36522b85b5029ccfbc59e1bfe6fd18a416b26",
+            "hash": "0x32255dfc36b14de6d5219c9a9b472e269fceb4b31aa6410fed076f64a0fe7568",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4868,13 +4868,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -4897,7 +4897,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd2a4b28b2214d42181b56c6771bd74e0a156e1bc306a0b31b608dc5a6df48447",
+                    "hash": "0xa918bbbe75838462d802bb2865c30969cb3112409ab9edcffe84c071c4032cde",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -4909,13 +4909,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4952,11 +4952,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb8cf3f80a727a1607560f352280dc29b8344348648e6b8b0599147136229dd35",
+            "hash": "0x8144b2c82f9dee5671f418bedb67d6905d33ba1a1255f8ae5d824681b89b016f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4983,13 +4983,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -5012,7 +5012,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x02328e00435e37a4ae83d7ddd8306be4fcebbe0987074cd282f95c62a39309d9",
+                    "hash": "0x7e450493269aadff2fdfc238fb4fff224ae791bd06984a00eff1fac8c81f37d9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -5024,13 +5024,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -5067,11 +5067,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xad4ef4974452396d71d502794fd43804ff04050d46b9b784860cf347f883f23e",
+            "hash": "0x245f8d2fc2da168e0e10a8cf99f0ab1214c5b57c25e210f867cfe52f1482a311",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -5098,13 +5098,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -5127,7 +5127,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x589e8cf7dedc5b9b86ade7caaeb84b4853242a98cc812b24b39a6a74e1c14cbd",
+                    "hash": "0xb3adc5bf0d6c6f831d9d98ed4466e8ca4a6b3b980652a80d520ce47d68af4dc4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -5139,13 +5139,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
+                            "code": "0xef0001010004020001000aff00200000800003d260006000d3d26000f32020202020202020202020202020202020202020202020202020202020202020",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -5182,11 +5182,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x522777318fbd1bcd5d4316384ef3bc9ee903579f0508a9b0d8b8dce1a7f54058",
+            "hash": "0xe6a9991fc866ee2b38e5920c20700f2acb6c09823619d9f2b132b7c6259d0503",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -5213,13 +5213,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -5242,7 +5242,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb10078738e30edee173b3ddbf5dca8cdb39716c74c99399f64b06d1e731ad9c4",
+                    "hash": "0x7928456102a6c382580eead71b265ccf66441a22f80a009edee3ec083f54cb56",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -5254,13 +5254,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f86030f76110005561201560015500",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f86030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -5297,11 +5297,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe6a9737213a8e63e4058e04471dbf9466285b3ff72bbd1f97c6cf1ab3eddfbdb",
+            "hash": "0xf57ddf1181b866a8c77954c5875e05cecc0d8ec3bf1cc6b8f8fb68bfd1cb6539",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -5328,13 +5328,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -5357,7 +5357,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x522e833bd1c60df906e2be36d27f7f3d5f5d1a9c81f077514416e95d8aeae443",
+                    "hash": "0x8e7d937ec543748024c50ad763e5443a4d727a1fa7b7e0e2cf7c00d758592648",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -5369,13 +5369,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f96030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f96030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -5412,11 +5412,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7bdd27262fee586792e84bfa6d48d8b293af861c92e1b6406b99640965986cd3",
+            "hash": "0x41afce201a4c0b5639101601198d1112b308cd1b72b1cc63c587a67361321f31",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -5443,13 +5443,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                 "storage": {}
             }
         },
@@ -5472,7 +5472,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x93c864c56ff8031ec307e1beaf9dad1882c520cc9d31b76c0f7a79fa0baf282f",
+                    "hash": "0x8a6ed8a1be4d0c2e891057f213c454e5d9eb02c4d5fc56d609f106cc2c32d45f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a831e8480940000000000000000000000000000000000001100808025a0b3afc79e7eb6744553c987dfa51e04eec7c6d695e6f730badd8150d43c6611fda056587ba537d9e4baf5e9fdb797ed4d7cf237c28c5d368b92f2f3681334585fec",
                     "indexes": {
@@ -5484,13 +5484,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+                            "code": "0xef0001010004020001000aff00300000800003d260006000d3d26000f3303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000fb6030f76110005561201560015500",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000fb6030f76110005561201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -5527,11 +5527,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5b6f969c1ffacebc54e1ff04ac1498363c9bbd3d4e70f890905e85acc9412092",
+            "hash": "0x50ce2e3e8810fbc1d9ac669f92ce2d27fc7608fa6f05e5d939633028d701c2f0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Much simpler than returndatacopy, no memory or boosted call.  Returner is called\n    and results are stored in storage slot, which is asserted for expected values.\n    The parameters offset and return data are configured to test boundary conditions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndataload.py#L182",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"

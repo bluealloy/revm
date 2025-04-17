@@ -20,13 +20,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100140400000000800004600060006000611000f8600255612015600155fe",
+                "code": "0xef00010100040200010014ff00000000800004600060006000611000f8600255612015600155fe",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x82e95c128a6e31a4830aeb7c6d2c3f0c2f5b1a838d43ae02b0b3565a69a436b6",
+                    "hash": "0x0ee2c780ffd4424ad42bd9c2e267cb708f56edfbe7d37459f3935d469dfc5810",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -61,13 +61,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100140400000000800004600060006000611000f8600255612015600155fe",
+                            "code": "0xef00010100040200010014ff00000000800004600060006000611000f8600255612015600155fe",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -102,11 +102,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa9ba1fdd9ad60efa17e24b8e2a3a992fe23fd248669e8001b3b6e75622d3083b",
+            "hash": "0x8d0358911c313941ff89871679c6f38616b194c7ca9799cde87be4e443f9f14f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF contracts calling EOF contracts and failing after the call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L670",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L727",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -133,13 +133,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010012040000000080000360006000611000f9600255612015600155fe",
+                "code": "0xef00010100040200010012ff0000000080000360006000611000f9600255612015600155fe",
                 "storage": {}
             }
         },
@@ -162,7 +162,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xfdafab4fb916b7008c9d5d68f63fadee13b5a2fbb415bea5cc3cf234ebb529a7",
+                    "hash": "0xd9c4a8f592cec338845e61a086996d6478f0d8dcdb724091411b58c8f2385d1b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -174,13 +174,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010012040000000080000360006000611000f9600255612015600155fe",
+                            "code": "0xef00010100040200010012ff0000000080000360006000611000f9600255612015600155fe",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -215,11 +215,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe152b9411e99394b6d14ae016652bf6ee9d17aeb23f4ab9d1c4e9b4e26cd3aba",
+            "hash": "0xdf199a1c0d0cd9191995797f93789bafc6218e7ac7fc9848cc22f678c47232b7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF contracts calling EOF contracts and failing after the call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L670",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L727",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -246,13 +246,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100180400000000800004600060006000611000f860025561201560015560006000fd",
+                "code": "0xef00010100040200010018ff00000000800004600060006000611000f860025561201560015560006000fd",
                 "storage": {}
             }
         },
@@ -275,7 +275,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa5e5e93689ae7a02ed5875acd857b4b8d2bc7102e901b245d04e39ca029ba5b0",
+                    "hash": "0xf263df7d3e507810e577ff5b497816c35abe67a0b12d59b8e7e7829100270ed3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -287,13 +287,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100180400000000800004600060006000611000f860025561201560015560006000fd",
+                            "code": "0xef00010100040200010018ff00000000800004600060006000611000f860025561201560015560006000fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -328,11 +328,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x44c66552d689e6d7b75c8e99810a9673c232296661d639331c8aa5501bb30926",
+            "hash": "0xb3e541df4f65b902505ca3965d902f2de7eb1e0956dad05147dcf4acf61069fa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF contracts calling EOF contracts and failing after the call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L670",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L727",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -359,13 +359,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010016040000000080000360006000611000f960025561201560015560006000fd",
+                "code": "0xef00010100040200010016ff0000000080000360006000611000f960025561201560015560006000fd",
                 "storage": {}
             }
         },
@@ -388,7 +388,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xebda66472ec19b19291629d331489ae488727301d6fa61e4078599436a415008",
+                    "hash": "0x4cb3c95c149f95ca0e2d9c2757a99a5b698d15d618aa18cac335a4916b698d02",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -400,13 +400,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010016040000000080000360006000611000f960025561201560015560006000fd",
+                            "code": "0xef00010100040200010016ff0000000080000360006000611000f960025561201560015560006000fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -441,11 +441,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x77a21c8531f38e8d2d16e350b4803b3138a14f1a230151ffb6a0a8628349a0e9",
+            "hash": "0x482eb2de76b4ba7cb21621133e7a35e16db17a398c72a9c0728ab3d46003e2af",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF contracts calling EOF contracts and failing after the call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L670",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L727",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"

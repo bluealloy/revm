@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010011030001001804000000008000046000600060006000ec0061201560015500ef00010100040200010005040000000080000260006000fd",
+                "code": "0xef0001010004020001001103000100000018ff000000008000046000600060006000ec0061201560015500ef00010100040200010005ff0000000080000260006000fd",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb0667a65ed5584c4698776a9393a1c02f3588940afdf7570c1985b7ca0248f36",
+                    "hash": "0xdafed0746e5bde2b6dcc069963b0eb19e578f3d075840ca800abfa2b02bf3f23",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -61,20 +61,20 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010011030001001804000000008000046000600060006000ec0061201560015500ef00010100040200010005040000000080000260006000fd",
+                            "code": "0xef0001010004020001001103000100000018ff000000008000046000600060006000ec0061201560015500ef00010100040200010005ff0000000080000260006000fd",
                             "storage": {
                                 "0x01": "0x2015"
                             }
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03706e",
+                            "balance": "0x03705c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de94893c",
+                            "balance": "0x3635c9adc5de948978",
                             "code": "0x",
                             "storage": {}
                         },
@@ -104,17 +104,17 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0224de5a97ed9bb79af789994b4c85159d3b85a51645b06045ca493c92628ff0",
+            "hash": "0xb136e6a9c1f09528c0a875b2b09ab5ff871806cdff347100ea53017a6c0dcc3e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest revert containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L76",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L76",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
         }
     },
-    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_reverting_container[fork_Osaka-eof_state_test-returncontract]": {
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_reverting_container[fork_Osaka-eof_state_test-returncode]": {
         "env": {
             "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
             "currentGasLimit": "0x016345785d8a0000",
@@ -149,7 +149,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef0001010004020001000c0300010018040000000080000261201560015560006000ee00ef00010100040200010005040000000080000260006000fd"
+                "0xef0001010004020001000c03000100000018ff0000000080000261201560015560006000ee00ef00010100040200010005ff0000000080000260006000fd"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -158,9 +158,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xaeaa6bb8b310f2e4c2c7e44b57634a29843271852eda223ce22247b2bf57511a",
+                    "hash": "0xb77f034c282836a72d295d7496cfb0093e02aaf0af00287bc507602839732617",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf889800a839896808080b83cef0001010004020001000c0300010018040000000080000261201560015560006000ee00ef00010100040200010005040000000080000260006000fd25a014a7f63a718f671e20f646a947cc74221ad113553c8c71542dfe89258c79724aa03cabbf74f7ca401884a7b22670dc1648fe2b2e450daccda00ecc3d1400bf9de3",
+                    "txbytes": "0xf88b800a839896808080b83eef0001010004020001000c03000100000018ff0000000080000261201560015560006000ee00ef00010100040200010005ff0000000080000260006000fd25a07f83dfe3b1759f88b7fe98b1c6dace34db9c4ea20c9b060a481c35130196872da046e3ebf444b283a0a3c12640efb327f93781734557e6c0463252e636d7b8f59d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -169,20 +169,20 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03b040",
+                            "balance": "0x03b058",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de93b480",
+                            "balance": "0x3635c9adc5de93b430",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa936eb7416f4c4981e7bb49b4c23498ff8103e0d": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010005040000000080000260006000fd",
+                            "code": "0xef00010100040200010005ff0000000080000260006000fd",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -213,11 +213,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x27fa69d24ff8a8cc48b7e0fa7150b023ad89dc65268de73e1a88ccfbf729da96",
+            "hash": "0xcbf3591dced626ddb6b803055ff57dd41273f786c1e6239c5261bcea2f57adf7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest revert containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L76",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L76",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

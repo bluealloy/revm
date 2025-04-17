@@ -1,0 +1,954 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_False-inner_create_opcode_EOFCREATE-outer_create_opcode_EOFCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef000101000402000100140300010000007fff000000008000046000600060006000ec0060035561201560015500ef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x22a6b227391873dba8884c2a363673931de3def4563f179fbc7871acb4dce6ab",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9011b01800a0a839896809400000000000000000000000000000000000010008080c0f8b6b87fef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000080a028de9f4f3bd710bb310719c4ee63831e55899f8f1f416ebf522ba629190433b5a020bce2266da0fe1ccaed5dce5ace91ca9e34a6ea4d27b5960482a7b8a411943b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef000101000402000100140300010000007fff000000008000046000600060006000ec0060035561201560015500ef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x4fa43b47d0ab41b4e9d52147206d10b921034823"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08639a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x4fa43b47d0ab41b4e9d52147206d10b921034823": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de840954",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x3ac65612afddfbcd0d7efd72c7ec3cba565700a77ab67168a6e028ec450f278f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_False-inner_create_opcode_EOFCREATE-outer_create_opcode_TXCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010034ff0000000080000560006000600060007ff57c7019493cd3433dabb402f9ce6a2e2912baa5b98c705ff320174b08b11c26ed60035561201560015500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x53077cf14fc7009c7122217cb1c2b475a89e47a384cb3a8560a8da721ee77399",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9011b01800a0a839896809400000000000000000000000000000000000010008080c0f8b6b87fef000101000402000100190300020000001400000034ff000000008000046000600060006000ec0160035561201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000080a028de9f4f3bd710bb310719c4ee63831e55899f8f1f416ebf522ba629190433b5a020bce2266da0fe1ccaed5dce5ace91ca9e34a6ea4d27b5960482a7b8a411943b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010034ff0000000080000560006000600060007ff57c7019493cd3433dabb402f9ce6a2e2912baa5b98c705ff320174b08b11c26ed60035561201560015500",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x4fa43b47d0ab41b4e9d52147206d10b921034823"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0863a3",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x4fa43b47d0ab41b4e9d52147206d10b921034823": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de840936",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xd0094eb3cd7ce54de2d95420acab023e0d10261b50a6dd557884fbb9b3ca82bf",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_False-inner_create_opcode_TXCREATE-outer_create_opcode_EOFCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000067ff000000008000046000600060006000ec0060035561201560015500ef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x7abc6f1848ea69e4bee3523d863dab8bd17b652dcbe624b4c13d2037ac8a98e3",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9010301800a0a839896809400000000000000000000000000000000000010008080c0f89eb867ef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000080a0d4ff3774f84054a7f3ea75df23ebe8dd97fa0448e4ec5d3eabd03833a3315c29a049e99b17ab758e6e66c4638dd77e3580942465dec7fe81b2eb8d82b3737c2298",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000067ff000000008000046000600060006000ec0060035561201560015500ef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x4fa43b47d0ab41b4e9d52147206d10b921034823"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08635b",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x4fa43b47d0ab41b4e9d52147206d10b921034823": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de840a26",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x7517c1c2da05a0dc118a7eab93c5ea83a78c946753f43a43dfc0ab3ec4d497a4",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_False-inner_create_opcode_TXCREATE-outer_create_opcode_TXCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010034ff0000000080000560006000600060007f76104f17ca4c7d1b85cfb90821e0334b5ca3abf8518cf729992f2cf8a9bf4157ed60035561201560015500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x1efc65b1bf789852acc24491d9697f9758cda8ecdd80fcd54c72242f42c62669",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9010301800a0a839896809400000000000000000000000000000000000010008080c0f89eb867ef0001010004020001003903000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed60035561201560015560006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000080a0d4ff3774f84054a7f3ea75df23ebe8dd97fa0448e4ec5d3eabd03833a3315c29a049e99b17ab758e6e66c4638dd77e3580942465dec7fe81b2eb8d82b3737c2298",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010034ff0000000080000560006000600060007f76104f17ca4c7d1b85cfb90821e0334b5ca3abf8518cf729992f2cf8a9bf4157ed60035561201560015500",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015",
+                                "0x03": "0x4fa43b47d0ab41b4e9d52147206d10b921034823"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x086364",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x4fa43b47d0ab41b4e9d52147206d10b921034823": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de840a08",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x29ff3ead145d69c7b1ce6f7f884faf8658326425b4b9494ab531364ceccc7ce5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_True-inner_create_opcode_EOFCREATE-outer_create_opcode_EOFCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000089ff000000008000046000600060006000ec0060035561201560015500ef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x49645ed5aa3c97a6f992d068f4e34f93e3a7683b88dc2f4ccb45675a2d2c067b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9012501800a0a839896809400000000000000000000000000000000000010008080c0f8c0b889ef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000001a003d7514f40d92c87bfd0bef9a49b836a5f468aa059f88c219ad026313187bd36a0167ce11b5d1630ba232ba3c68af760999b30823b7ae028f5cdaf14a337909072",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000089ff000000008000046000600060006000ec0060035561201560015500ef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x074ceb",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de87aa46",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x634a6faf75a4fcd41377458198c739dfdf135d9c1a3cb2c18e148af76bad0b8d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_True-inner_create_opcode_EOFCREATE-outer_create_opcode_TXCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010034ff0000000080000560006000600060007f341c2fb7705ecd665bc370cba08ced62cec5778074021fd0fda8ec333e688857ed60035561201560015500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xcbde12d57a8ea427ea6905d292e7dc9511bc84458551c0c634f29dae3fcd6de2",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9012501800a0a839896809400000000000000000000000000000000000010008080c0f8c0b889ef000101000402000100230300020000001400000034ff000000008000046000600060006000ec016003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000001a003d7514f40d92c87bfd0bef9a49b836a5f468aa059f88c219ad026313187bd36a0167ce11b5d1630ba232ba3c68af760999b30823b7ae028f5cdaf14a337909072",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010034ff0000000080000560006000600060007f341c2fb7705ecd665bc370cba08ced62cec5778074021fd0fda8ec333e688857ed60035561201560015500",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x074cf4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de87aa28",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x765605f772d9c3288959e87da51153a6a2be0735db7c11b7a8a561f03667dd70",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_True-inner_create_opcode_TXCREATE-outer_create_opcode_EOFCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef0001010004020001001403000100000071ff000000008000046000600060006000ec0060035561201560015500ef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x0d3a5487691cb4876e70c5de816f11829bc065d869a861b29833a63d091641eb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9010d01800a0a839896809400000000000000000000000000000000000010008080c0f8a8b871ef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000001a0a3212d830d935dda8a10725d6f3374478c33cc39626d2b47fc515248c2fc7e0ba07e759cd50cc4c7bd5b71b30b9f77795b8e7ae5063f0ce4a08bc53886084b5a39",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0001010004020001001403000100000071ff000000008000046000600060006000ec0060035561201560015500ef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x074cac",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de87ab18",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xd05e2de440054f86c96d2a7f5000ba499a2d120551df1dccc8fabed0af161e4b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_in_initcode[fork_Osaka-state_test-outer_create_reverts_True-inner_create_opcode_TXCREATE-outer_create_opcode_TXCREATE]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010034ff0000000080000560006000600060007f9f1d20bb46fd6d3b9efa6f57d29351447c10a2232a8a9e57a84914ddbd74037bed60035561201560015500",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000",
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x231a35608715d460ae454b2831bee94749b545943b41b792dc8ad79b7194a476",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f9010d01800a0a839896809400000000000000000000000000000000000010008080c0f8a8b871ef0001010004020001004303000100000014ff0000000080000560006000600060007fd4d82a866026826f8a1d8ce6305446d9e0f227f7c6a0eacb71078124a26f0e95ed6003556120156001556000e1000560006000fd60006000ee00ef00010100040200010001ff0000000080000000b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000001a0a3212d830d935dda8a10725d6f3374478c33cc39626d2b47fc515248c2fc7e0ba07e759cd50cc4c7bd5b71b30b9f77795b8e7ae5063f0ce4a08bc53886084b5a39",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010034ff0000000080000560006000600060007f9f1d20bb46fd6d3b9efa6f57d29351447c10a2232a8a9e57a84914ddbd74037bed60035561201560015500",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x074cb5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de87aafa",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x30764d3fa91b69478d7775d91429edda79d494de780ebc376b141cd31b443d0b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Verifies an TXCREATE occuring within initcode creates that contract.\n\n    Via the `outer_create_reverts` also verifies a TXCREATE occuring in an initcode is rolled back\n    when the initcode reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L294",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    }
+}

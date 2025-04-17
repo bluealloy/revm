@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(0, 0)]": {
         "vectors": {
             "0": {
-                "code": "0x0000010100040200010001040000000080000000",
+                "code": "0x0000010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x374b1bbb082df0ffb83abca0de995115fceaf7e21f65516f5576b1e4e6a84794",
+            "hash": "0x3e699f6b7e5d9850c9ba556b3e68133c2b8d19bb8f5929e96173ccf7db14923d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -26,7 +26,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(0, 1)]": {
         "vectors": {
             "0": {
-                "code": "0x0001010100040200010001040000000080000000",
+                "code": "0x0001010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0xc4ad268d853b7ee17e594ce0d656076210537a7be5b3eeab4dda063acc8667a2",
+            "hash": "0xf0dd82c8f01fb976f873e87f1c40ca5273571711c0008f07ba24497bce326284",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(0, 2)]": {
         "vectors": {
             "0": {
-                "code": "0x0002010100040200010001040000000080000000",
+                "code": "0x0002010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,11 +61,11 @@
             }
         },
         "_info": {
-            "hash": "0x5bab7f5cefc8564c7310fb62655d1f1d0871a4887e5f97172e714e7d8f1ee74b",
+            "hash": "0x420e299d79f01db9e76e4993c5c61a174122630308911ac6e4a6e1af6b959142",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -74,7 +74,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(0, 254)]": {
         "vectors": {
             "0": {
-                "code": "0x00fe010100040200010001040000000080000000",
+                "code": "0x00fe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -85,11 +85,11 @@
             }
         },
         "_info": {
-            "hash": "0x3388c38d932b789edca5649b8f8b1c6da228fd2655c9e1e94ab5e2d3d6aaaf69",
+            "hash": "0x99ae1fad5d6d95e46041c7c5a2bf43355fc948957b38717b8abdf661d1813b5c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -98,7 +98,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(0, 255)]": {
         "vectors": {
             "0": {
-                "code": "0x00ff010100040200010001040000000080000000",
+                "code": "0x00ff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -109,11 +109,11 @@
             }
         },
         "_info": {
-            "hash": "0xad7c14e463d791c790e82100dc5890036a5f4ae96fdd1ebb163ccdfb7bbee4bd",
+            "hash": "0x2ea5fa92ec57227f509833eb37c041363d990836eedfe3d3cf03289cc75e40de",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -122,7 +122,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(1, 0)]": {
         "vectors": {
             "0": {
-                "code": "0x0100010100040200010001040000000080000000",
+                "code": "0x0100010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -133,11 +133,11 @@
             }
         },
         "_info": {
-            "hash": "0x4bdb08b73af27c4571c769f0318f4db28fecd2b7bf1e2a06c9b4673b8cf5b73f",
+            "hash": "0xf22d8730601f17c91e79a4036c4eacc478a9c22e082533f44fb82a9b6867095a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -146,7 +146,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(1, 1)]": {
         "vectors": {
             "0": {
-                "code": "0x0101010100040200010001040000000080000000",
+                "code": "0x0101010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -157,11 +157,11 @@
             }
         },
         "_info": {
-            "hash": "0x550e90e4157fb0186aa8999973f4241a82d7565dc4f5797e0049aa2154d7822d",
+            "hash": "0x063108e77e2c2e7bed19dc2beb88b3a83cf8c2bb94ca57ac523c35eabe216ec9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -170,7 +170,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(1, 2)]": {
         "vectors": {
             "0": {
-                "code": "0x0102010100040200010001040000000080000000",
+                "code": "0x0102010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -181,11 +181,11 @@
             }
         },
         "_info": {
-            "hash": "0xde2647d1752ec3953b6b83337aa6000a8c988a8000d79e8aec14d7df424e55d7",
+            "hash": "0x87f283cb5ced29c3ba515c1ea1e856aaa266c3b9e1cbcebcccff5776971f87dc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -194,7 +194,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(1, 254)]": {
         "vectors": {
             "0": {
-                "code": "0x01fe010100040200010001040000000080000000",
+                "code": "0x01fe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -205,11 +205,11 @@
             }
         },
         "_info": {
-            "hash": "0xe45ab434f9899a45989cb5c4faec0d5766ae9e7ad11354af1379603adec93b8a",
+            "hash": "0xde9b5ff28603760a97e50d31f6c690a4c6fd8f3fa6c481fbe86bdf9813925179",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -218,7 +218,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(1, 255)]": {
         "vectors": {
             "0": {
-                "code": "0x01ff010100040200010001040000000080000000",
+                "code": "0x01ff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -229,11 +229,11 @@
             }
         },
         "_info": {
-            "hash": "0x9904c1bc5b48234365ef5191441eae6c5e5e800fc5a1b091a04acf4f15df49f3",
+            "hash": "0x6218b02868184649ad3dce18506da3eb40f77db3c79eb85f5abd85447e4695d2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -242,7 +242,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(238, 0)]": {
         "vectors": {
             "0": {
-                "code": "0xee00010100040200010001040000000080000000",
+                "code": "0xee00010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -253,11 +253,11 @@
             }
         },
         "_info": {
-            "hash": "0x7ebe518864afcfe8d7ba728993df5825c6e584f84c0fa4da7a6239e1b8f9e35d",
+            "hash": "0xebdc9ee3e88885ea77297821c708f0c45bd7a7599e050ca1e842f04b6e3bea16",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -266,7 +266,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(238, 1)]": {
         "vectors": {
             "0": {
-                "code": "0xee01010100040200010001040000000080000000",
+                "code": "0xee01010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -277,11 +277,11 @@
             }
         },
         "_info": {
-            "hash": "0xd1c73a3218fe92477bf3a53721072977e84d6bd8827e56e5445902c6adbca6ab",
+            "hash": "0x033b1b501e07b35cc0a6a6dd1a09c607a8f49c6a83a09c32315f42c5783065cd",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -290,7 +290,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(238, 2)]": {
         "vectors": {
             "0": {
-                "code": "0xee02010100040200010001040000000080000000",
+                "code": "0xee02010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -301,11 +301,11 @@
             }
         },
         "_info": {
-            "hash": "0x56b2d2c0f1488c45a0e997e695f26482940bd359f2842779008b58caf4b57ee8",
+            "hash": "0x839fe29824ed03c0ac0142e964656cb47597dc96d3e28a1983366393aed6befa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -314,7 +314,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(238, 254)]": {
         "vectors": {
             "0": {
-                "code": "0xeefe010100040200010001040000000080000000",
+                "code": "0xeefe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -325,11 +325,11 @@
             }
         },
         "_info": {
-            "hash": "0xb19ecdaa86df5fef52c8a0100ed207dfc353963108f82599b97b3409eb2b2857",
+            "hash": "0xb95f384b211f5702040dd9333ea31aff3a6f4ba7655a43607752982f1ac69627",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -338,7 +338,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(238, 255)]": {
         "vectors": {
             "0": {
-                "code": "0xeeff010100040200010001040000000080000000",
+                "code": "0xeeff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -349,11 +349,11 @@
             }
         },
         "_info": {
-            "hash": "0x7350e45b6032160162ac54a9d6047722521b602b66f14f50e353e25ab4f9de64",
+            "hash": "0x2977c8e7904e51f54a11494f2392bc9a214ce30d96336fd9c90651108d4cfdd7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -362,7 +362,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(239, 1)]": {
         "vectors": {
             "0": {
-                "code": "0xef01010100040200010001040000000080000000",
+                "code": "0xef01010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -373,11 +373,11 @@
             }
         },
         "_info": {
-            "hash": "0x009946c5933208d95e0aef21b50490e4625610394f51a4c3d31e59aa1b60d58f",
+            "hash": "0x668369bded125c7955d8bd4884a61f566e15c9a3f0924fe097c905e82251c443",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -386,7 +386,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(239, 2)]": {
         "vectors": {
             "0": {
-                "code": "0xef02010100040200010001040000000080000000",
+                "code": "0xef02010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -397,11 +397,11 @@
             }
         },
         "_info": {
-            "hash": "0xae3231de69a796560d7778af2035eb82dfe8c3fb9733741c244dc6ef225797ab",
+            "hash": "0x854787a980078c0b937e657255abe3e3b2eef42179b30a61e5c0259399d67a22",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -410,7 +410,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(239, 254)]": {
         "vectors": {
             "0": {
-                "code": "0xeffe010100040200010001040000000080000000",
+                "code": "0xeffe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -421,11 +421,11 @@
             }
         },
         "_info": {
-            "hash": "0xb02246a5681dd7482203f55b2ed269c5de641e652094ff0329652877630508d2",
+            "hash": "0x3c61b36b60fa65e8efb6c29a269086d22308d90fb8e45c3715b46364e28f9f14",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -434,7 +434,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(239, 255)]": {
         "vectors": {
             "0": {
-                "code": "0xefff010100040200010001040000000080000000",
+                "code": "0xefff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -445,11 +445,11 @@
             }
         },
         "_info": {
-            "hash": "0x8201cfe5063d45aa818a74c68d65924439e06fe5bc54aa5ae42fc019308a969a",
+            "hash": "0xc4bd26ed3e292f806068dcce35822f6c3bf5e2b5379b8a42b18b14909046c412",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -458,7 +458,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(240, 0)]": {
         "vectors": {
             "0": {
-                "code": "0xf000010100040200010001040000000080000000",
+                "code": "0xf000010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -469,11 +469,11 @@
             }
         },
         "_info": {
-            "hash": "0xa5b3e5bb9331c18642f525259d60b3bc55c0f5bf7a08eba67b0995ddb38f4ad1",
+            "hash": "0xd0d7bb867574552a5374ff87d2f28c67ba4e7473ea402a9a0b41dcf1ab43b2a5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -482,7 +482,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(240, 1)]": {
         "vectors": {
             "0": {
-                "code": "0xf001010100040200010001040000000080000000",
+                "code": "0xf001010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -493,11 +493,11 @@
             }
         },
         "_info": {
-            "hash": "0x293b94a84f1cb3465fddadf6150bf0791508a14e3393b2f83de8736341086c02",
+            "hash": "0x9e94575ea932557a6d5aea957ba3417a40b279eb1fda582200628c981a5c3330",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -506,7 +506,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(240, 2)]": {
         "vectors": {
             "0": {
-                "code": "0xf002010100040200010001040000000080000000",
+                "code": "0xf002010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -517,11 +517,11 @@
             }
         },
         "_info": {
-            "hash": "0x77a82ae723520a306710acdc0e52babe06ba32307bbcb4e04c8770fc1d2d3271",
+            "hash": "0x0c363c60493c94a193542453c22ee8fa7623b151ac805d8bca1cd4fecf105de8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -530,7 +530,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(240, 254)]": {
         "vectors": {
             "0": {
-                "code": "0xf0fe010100040200010001040000000080000000",
+                "code": "0xf0fe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -541,11 +541,11 @@
             }
         },
         "_info": {
-            "hash": "0x08317da9e189a2b16b2167e363eab47e7f384f4ccf07336acc9ef6bf72b5ff7d",
+            "hash": "0x1ee73f97b39c831c5e037c04e97b8705866a68ea3da1a8c8026c1d532a9996e5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -554,7 +554,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(240, 255)]": {
         "vectors": {
             "0": {
-                "code": "0xf0ff010100040200010001040000000080000000",
+                "code": "0xf0ff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -565,11 +565,11 @@
             }
         },
         "_info": {
-            "hash": "0x25bdee144466b38d77748fdd508048b67fdfdd02f8759d7f38fbc57244a8ee60",
+            "hash": "0x0a2622bffa5e1a9bb156ec10f48890fd0a107bd7bfb79e3dfce2fe0595e4b179",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -578,7 +578,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(255, 0)]": {
         "vectors": {
             "0": {
-                "code": "0xff00010100040200010001040000000080000000",
+                "code": "0xff00010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -589,11 +589,11 @@
             }
         },
         "_info": {
-            "hash": "0x49cbea3f5aac49cc363a64f7987b48644e90fcd955e71b59a0c354d7591b7738",
+            "hash": "0x991788aafb5fe38ed43281be83947d44ce1a28e76d45f76db593fb59789765d5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -602,7 +602,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(255, 1)]": {
         "vectors": {
             "0": {
-                "code": "0xff01010100040200010001040000000080000000",
+                "code": "0xff01010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -613,11 +613,11 @@
             }
         },
         "_info": {
-            "hash": "0xd5506f978d7a7523a8b86f6f5769edd5f8620b9901c2e08967113cde54e44eca",
+            "hash": "0x4bd0190774b439ed4c13372e0b15408f6ee9ddb2fb0282612c843ea3fefe74f1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -626,7 +626,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(255, 2)]": {
         "vectors": {
             "0": {
-                "code": "0xff02010100040200010001040000000080000000",
+                "code": "0xff02010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -637,11 +637,11 @@
             }
         },
         "_info": {
-            "hash": "0x72e5e9cda12e84f58fca44075c3f4d702330ad16969dda9e2522c35d92a356ea",
+            "hash": "0x86a1805aef85100daec0b87d2db0ce8eb21210f8d29522951413edc23ecf9d79",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -650,7 +650,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(255, 254)]": {
         "vectors": {
             "0": {
-                "code": "0xfffe010100040200010001040000000080000000",
+                "code": "0xfffe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -661,11 +661,11 @@
             }
         },
         "_info": {
-            "hash": "0x32bbbacf43d60af40ac2abbb9ec2f753591f869fd289f47378718d1214e04af9",
+            "hash": "0x69a5cd2e13453bd0a11de19b03a2ac66f96856e60103cbfb17fec10aad279140",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -674,7 +674,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(255, 255)]": {
         "vectors": {
             "0": {
-                "code": "0xffff010100040200010001040000000080000000",
+                "code": "0xffff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -685,11 +685,11 @@
             }
         },
         "_info": {
-            "hash": "0x6ba80947f1ba95282788af316f683cf85a1b437248e3b1e0ef4edbec081cd4ea",
+            "hash": "0x5785ad01d1100e3c1e47af13285560539cff84018922beac4121a4af39dc1bc8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -698,7 +698,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(96, 0)]": {
         "vectors": {
             "0": {
-                "code": "0x6000010100040200010001040000000080000000",
+                "code": "0x6000010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -709,11 +709,11 @@
             }
         },
         "_info": {
-            "hash": "0xaeb2ee1fd534db7749e573e235dc7d977b472caf7744d72986739466ee88c5c8",
+            "hash": "0x170ecc88e6833bdfddf8b241973b493d703c4a9e3af9fd9d05f6654d7649127f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -722,7 +722,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(96, 1)]": {
         "vectors": {
             "0": {
-                "code": "0x6001010100040200010001040000000080000000",
+                "code": "0x6001010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -733,11 +733,11 @@
             }
         },
         "_info": {
-            "hash": "0xe9967ff342b3373b93f214e0e2cc4c894a183d924063e392c498952198bfb45d",
+            "hash": "0x91233e16003fd33f83a86f9e62a2fb48b04f6267bdd52dff8551a8d532042eef",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -746,7 +746,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(96, 2)]": {
         "vectors": {
             "0": {
-                "code": "0x6002010100040200010001040000000080000000",
+                "code": "0x6002010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -757,11 +757,11 @@
             }
         },
         "_info": {
-            "hash": "0x4ba4291c3faef54df1af6bf527e1c3437cdeb6f878ac3cd87699eaa132f56440",
+            "hash": "0x82b300130873eb7cac43dfddd7d90ee2d60912e4d08963eb2128f398e5c07739",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -770,7 +770,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(96, 254)]": {
         "vectors": {
             "0": {
-                "code": "0x60fe010100040200010001040000000080000000",
+                "code": "0x60fe010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -781,11 +781,11 @@
             }
         },
         "_info": {
-            "hash": "0xc19b809619d7a701515c4462329f8cc9b01092a6d801ecfbffc1687a264e68bd",
+            "hash": "0x1e11c20aa86437ea061c35735cce62545775cff247e8cf758cc686841492d176",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -794,7 +794,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py::test_magic_validation[fork_Osaka-eof_test-magic_(96, 255)]": {
         "vectors": {
             "0": {
-                "code": "0x60ff010100040200010001040000000080000000",
+                "code": "0x60ff010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -805,11 +805,11 @@
             }
         },
         "_info": {
-            "hash": "0x13c089f793250bff20fd5f28f506a3d17c8adf1f621765a3e42df137a73a3b99",
+            "hash": "0x1761773f14ac8413362152fea4a87e5f4395a8cc903dc713c13aba4e3866e6ff",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerify EOF container 2-byte magic.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1200",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_container_validation.py#L1176",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"

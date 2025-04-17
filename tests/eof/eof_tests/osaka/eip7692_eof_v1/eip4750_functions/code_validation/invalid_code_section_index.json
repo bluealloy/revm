@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_invalid_code_section_index[fork_Osaka-eof_test-callf1]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100040400000000800000e3000100",
+                "code": "0xef00010100040200010004ff00000000800000e3000100",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x478467fdbfcadfcf9a92048e25fefd227506bdcbf9c7ca140ebc6d7d042654e0",
+            "hash": "0x505ae775c44c0bbabac4e8ee3363f03d171c6cf87e936adc2f2bbd0a9e3386d5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with invalid target code section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L286",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L436",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -26,7 +26,7 @@
     "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_invalid_code_section_index[fork_Osaka-eof_test-callf1_callf2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000802000200040004040000000080000000000000e3000100e30002e4",
+                "code": "0xef000101000802000200040004ff0000000080000000000000e3000100e30002e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0x80fee9224d0061e902445c4a12470e448895ff127808da78f853b0a3ca902268",
+            "hash": "0x4e39ee854b77ca70e928ffa8e78d4572c4e53c10416c34d8438558b6f9c7c5fe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with invalid target code section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L286",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L436",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_invalid_code_section_index[fork_Osaka-eof_test-callf2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000802000200040001040000000080000000000000e3000200e4",
+                "code": "0xef000101000802000200040001ff0000000080000000000000e3000200e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,11 +61,11 @@
             }
         },
         "_info": {
-            "hash": "0xfff2672a4ebade3905059072061d94ef241e22dadf74ca6b762d56ba80e45f94",
+            "hash": "0x0f64c5b9046d119f1ec6e0d35e70329968d964010d917b42edc728d5524957dd",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with invalid target code section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L286",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L436",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"

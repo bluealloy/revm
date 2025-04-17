@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000802000200030007040000000080000000800002e5000161201560015500",
+                "code": "0xef000101000802000200030007ff0000000080000000800002e5000161201560015500",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe499e7facb34832b9bb7ebba6e29af96db3c3ee8db58d777f0742846531ef896",
+                    "hash": "0xfccab5024578987ba2a8e1cfe0fe66d08b26244de224b49c7cc9dd20b1e212a0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000802000200030007040000000080000000800002e5000161201560015500",
+                            "code": "0xef000101000802000200030007ff0000000080000000800002e5000161201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x1b2778eef7b72c96e5d9893968a4cbdc0f50a7046292edb5cc8f2ef506f27e2f",
+            "hash": "0x2f8d93029fad79f6fd0d58f153c6c72c15073c1316246a5d9f8122ffb6ebdc85",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest JUMPF jumping forward.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

@@ -1,0 +1,803 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_0-code_outputs_1-code_inputs_1]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000301010000e30001005f6000e100025f5fe50002e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x90c62a9e2c25e56b50c40b5f2069cad62a7259bb465043da63674222d0b2634f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89c800a839896808080b84fef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000301010000e30001005f6000e100025f5fe50002e426a0a488abf6b30c5095f0c778a6fa460937041572d4affab08d0dcacdeeb864eb21a03dc6ba014a64124d1317b541ba02dcdd8703128969ae41a6862037766678e208",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0276ea",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c8f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x5840b4d4f2e648c2c817d33edb1046c5482c718cf85b9fc7e669460299c3bafb",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_0-code_outputs_1-code_inputs_3]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000303010000e30001005f6000e100025f5fe50002e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x90c62a9e2c25e56b50c40b5f2069cad62a7259bb465043da63674222d0b2634f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89c800a839896808080b84fef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000303010000e30001005f6000e100025f5fe50002e425a090113a8448d1cc0908803136724ab514d0ba83197700edd721411abcb71770aba056d47beccac75728a060734994debd249fd366a20a15ab5426d08c8193f615a7",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0276ea",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c8f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x4693e04d892e5bc632e27191d078798edadff8d3f5de767c99033c17d5732c4c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_0-code_outputs_1-code_inputs_5]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000305010000e30001005f6000e100025f5fe50002e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x90c62a9e2c25e56b50c40b5f2069cad62a7259bb465043da63674222d0b2634f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89c800a839896808080b84fef000101000402000100060300010000002fff0000000080000260006000ee00ef000101000c0200030004000b0001ff000000008000020002000305010000e30001005f6000e100025f5fe50002e426a0adb5e7a6aadc187608fa53b99818d997db4aac4767eb61824b3970fc5579c99da02f609509fb641bad17208572310bbd56e0a1b15479452c0ada10b04d69152b6b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0276ea",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c8f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xa94913a943c14cc7358ca30924ff021418e87796500ca7fccf3654572d4dfbf5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_2-code_outputs_1-code_inputs_1]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000301010000e30001005f6000e100025f5fe500025050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xb9293bf5e54ee53a9b844c7407c0d0cced152f04115569e54f022317cc31d21d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89e800a839896808080b851ef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000301010000e30001005f6000e100025f5fe500025050e425a051441ec4590580f09cf6ff4f0390af78c24bc3161c27fa03504440067d6702daa01b0969d1919c0f3421c4d5796980c0eed21ff85b5d0127495d7842dd3828b5ce",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02774a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c7b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xe2a915d2ff93987f088871bba376e9dcefd235059fb0e03e0f19d2b5d8d5be18",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_2-code_outputs_1-code_inputs_3]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000303010000e30001005f6000e100025f5fe500025050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xb9293bf5e54ee53a9b844c7407c0d0cced152f04115569e54f022317cc31d21d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89e800a839896808080b851ef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000303010000e30001005f6000e100025f5fe500025050e425a0c10b43f66f77883a2c88b8fca3844abb930c977aa7f98808de4b0d678a2572e6a020c53f37d8597f120aee5b448ae402536a6e263ff5b4cd355f6ba640bad75853",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02774a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c7b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x54abcd15ce5247999f971d8b133eb0833ef52de788c31dd1b69ef71aaeb923ed",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_2-code_outputs_1-code_inputs_5]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000305010000e30001005f6000e100025f5fe500025050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xb9293bf5e54ee53a9b844c7407c0d0cced152f04115569e54f022317cc31d21d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89e800a839896808080b851ef0001010004020001000603000100000031ff0000000080000260006000ee00ef000101000c0200030004000b0003ff000000008000020002000305010000e30001005f6000e100025f5fe500025050e425a075eae60b66ff5039aa47862bc8268b486cf252da929854d74f604dbb03a4c758a01e730ef0f2143f703b9ff540b1f74b3b08bded609ea845d53f993e540e753096",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02774a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c7b4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x164534ee5c8b0876cfbafcb7d7cebb501af09e78200e71dc38801766f1efd518",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_4-code_outputs_1-code_inputs_1]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000301010000e30001005f6000e100025f5fe5000250505050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x5344351b365211104211861d3de6c3bdefc93f32dfbecdc5b0f089dffdb60d65",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8a0800a839896808080b853ef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000301010000e30001005f6000e100025f5fe5000250505050e426a01ceeb18e04fe0c7e3f26e99aadef14af5956e0af3822c8ce79f88288c7a80225a05d9e21f0824b45ce14001e27da0a040a385b5ccab7a3c3b2693ae0ae4e05074b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0277aa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c674",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x6e22d28a8c2184e79eb1675f6a6111c6fc942ed0313685378d85f164c8e6261f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_4-code_outputs_1-code_inputs_3]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000303010000e30001005f6000e100025f5fe5000250505050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x5344351b365211104211861d3de6c3bdefc93f32dfbecdc5b0f089dffdb60d65",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8a0800a839896808080b853ef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000303010000e30001005f6000e100025f5fe5000250505050e426a037e4dc6f4b494e59a632cfc2b6c1b701d3b612a9741e30aa93b6f071cd16343ca01db506542a13727a8a236f18be4b4ef08c5b908ed9094a48172bebcdbcaa0a6b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0277aa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c674",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xf5dbcf87eef3366c755f84266a0c6bb01cb8aa4d05e1e225c94c1929f9fff9d1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_to_returning_variable_stack_2[fork_Osaka-state_test_from_eof_test-stack_decrease_4-code_outputs_1-code_inputs_5]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000305010000e30001005f6000e100025f5fe5000250505050e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x5344351b365211104211861d3de6c3bdefc93f32dfbecdc5b0f089dffdb60d65",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf89f800a839896808080b853ef0001010004020001000603000100000033ff0000000080000260006000ee00ef000101000c0200030004000b0005ff000000008000020002000305010000e30001005f6000e100025f5fe5000250505050e4269f96b0cf31b551e86fe16fe28f991509c29fc23da211f048a7057cb05c55254aa05c6aaa413c33739b0c14886023de151bdf0b5e883619c8f8850b8f513d1be05b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0277aa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c674",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xf07e6ce0944b50844eb58b9dcf40ed0944e0afadb752e9832785cca01a571876",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF with variable stack jumping to a returning function decreasing the stack.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L299",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

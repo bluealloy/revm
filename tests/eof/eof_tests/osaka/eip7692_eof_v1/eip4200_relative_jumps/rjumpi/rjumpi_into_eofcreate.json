@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py::test_rjumpi_into_eofcreate[fork_Osaka-eof_test]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b030001003204000000008000055f5f5f5f5fe10001ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000b03000100000034ff000000008000055f5f5f5f5fe10001ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x2899758b179ccc275034b4632b4442c6991288ab15326eb6425d426d3ed0d7ea",
+            "hash": "0x872c4f9d10dae0a2fa63fbe27c5f123dc3720f0ba04f47c481b884fa92d94828",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing RJUMPI with target EOFCREATE immediate.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L1386",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L1386",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

@@ -14,7 +14,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100040400000000800000e0000000",
+                "code": "0xef00010100040200010004ff00000000800000e0000000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -55,7 +55,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xfdef2f9623a6aa8b263343f9d540719594cd2815307d373cdd92087d28ff43d8",
+                    "hash": "0x641fc904a28aad3a79b4a31b7ae8e637dd881c519461bbd5b1416c9def62bde2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf08094000000000000000000000000000000000000120080801ca0a1e643d63381920366e4a3c8585ea62b0b5129c5068e82c1ab925755a312300ca0478ccccc7869805668c19a8e84adef75e29a9f02556255d04768e325bdeef4b0",
                     "indexes": {
@@ -67,7 +67,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100040400000000800000e0000000",
+                            "code": "0xef00010100040200010004ff00000000800000e0000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -122,11 +122,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xea6453eb9ded5f18bd0880d32aded72fda6dc588557a465bda607d3c0cc48b59",
+            "hash": "0x8dba23772b19ce005615b31564c937b0d66176cf714cba879aa15f346cb1f109",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EXTCODE* opcodes calling EOF and legacy contracts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_extcode.py#L25",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_extcode.py#L25",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "90f716078d0b08ce508a1e57803f885cc2f2e15e"

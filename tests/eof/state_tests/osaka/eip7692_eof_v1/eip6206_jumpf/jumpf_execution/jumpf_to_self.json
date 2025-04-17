@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010011040000000080000260015415e1000100612015600155e50000",
+                "code": "0xef00010100040200010011ff0000000080000260015415e1000100612015600155e50000",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe8075643a8451687eabdcb33ff67214bb02a7bf00ea45f0f689274777e1cd9d8",
+                    "hash": "0xcd56b96762f9ad3efc57b77893ab87dfa5219316e5b8ad3c010c42990d3e32f5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010011040000000080000260015415e1000100612015600155e50000",
+                            "code": "0xef00010100040200010011ff0000000080000260015415e1000100612015600155e50000",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8a5639f7424dc26ce161ef5f662ede0aab9c2a163a5f7e9f7199aee72c37e2e7",
+            "hash": "0x982c6ec2d0b0fc574091717da0e6a8dc2d1e12ea6ab29b616192fd3aa716ab7e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF jumping to self.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L132",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L132",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

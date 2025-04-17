@@ -14,7 +14,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -53,7 +53,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcc2947002438e1db1fb1c56690aba638b5d3732d712ae0b1eb0ce33fd8e214a9",
+                    "hash": "0xc7eec69f74a43ef5275f32120eb1ab0e9eef9e9c4abb1ca171082cb976f9b5a0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -65,7 +65,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -102,11 +102,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf7475d0e4660a2d7673681c5b8be37efdef2b452be51639e468935962cf459ab",
+            "hash": "0x71725af848e55ea6a22f632489a5646421ebcfaee6b117b0b8ea50a305e0aa76",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -127,7 +127,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -166,7 +166,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x403ef77f7eae90f3254bbdf29793ed9dc430d53408af3d1981cd712b38b419d6",
+                    "hash": "0x743fe0986aa38116afd17ae3c5f11c92866f8e2fce315811dd702e65d529b6f1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -178,7 +178,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -215,11 +215,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xafee59460d5df503a1ef45cd35ed7a32c3f9d462cb13deb288815795ebf1de3c",
+            "hash": "0xe9bee2ece30dbfee2b5cbc4cbc01c2d33193d941618bebdfb531fd5a18c024c0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -240,7 +240,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -279,7 +279,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9fabaf4e859180225aad7676c427322dd4c82d50e2ec72bfbaa6a82829149d09",
+                    "hash": "0x78f8369fc261b1c1cb43cf3cf0f7691e3d5e689415a610a0780c07df7c897c3a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -291,7 +291,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                            "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -328,11 +328,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xea3c1cb5c844aac308880f2473b2a7f5c04e51c7d5ff9e2012de68e941ca8449",
+            "hash": "0xdc3363541674d89cd2e0b22989bda33486b6a639150edb5413cd27083d870dea",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -353,7 +353,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -392,7 +392,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0d00c7910bc21d29c219db0a4d6c832d9a2add38e35b986a580b000c9b93be61",
+                    "hash": "0x07fcfdcc2a4086e1a656d29eb123ef3b4d5a3637c3e91e28ecb4804e5ac16474",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -404,7 +404,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -441,11 +441,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7508846ca6dd02bd359a677429bcf9c3e588a4f880026c75f2804bc502e43759",
+            "hash": "0x482ba087b83a2b61541c628ec2266a4dd5c230f2228e0a9a43a09a1587c74687",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -466,7 +466,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -505,7 +505,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcd68c9a58c5ed2cd72411e97be3b522d70677eefca45a77ba214b57eaeb936d9",
+                    "hash": "0xda74c213628f3fd132476aec0f77376208d443753dbff2bb99b4b742b93bba0b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -517,7 +517,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -554,11 +554,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x667e6367bf4762fdc22751b24d6e26cf762f9cf1d8f8791e9186d7af61a52fed",
+            "hash": "0xd20dc147a8f6c8bad21341a8a1d0386de7f1ab06381839b0ec51f7ac5c511aaf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -579,7 +579,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -618,7 +618,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4d7e6e197360059033eabb3a7ad526e461bae2801160cb9caa4b448ffc844e71",
+                    "hash": "0xeccfe7a0b06ed8f43eab60418a13b471f19b3649136e579dd32cc78a003d6e7d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -630,7 +630,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -667,11 +667,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x799372a506d0146e933c63b114d026066b6a3230b6a705ae7cdf1d0b4f6b82d5",
+            "hash": "0x950f85a6a296387df6a1841066922e1811ffc83eb9730527bcd94027b154dc51",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -692,7 +692,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -731,7 +731,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x6e3683eadab1fd26efef0bc66a77aad19eef3c222c2cb0f17d5ca87181c38d8e",
+                    "hash": "0x4385e33b6bead77b7c45dfdf086e51ba8b51411f5d8a1c33e09de3a55ae79467",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -743,7 +743,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -780,11 +780,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf74563dd4259073cd2679a7692545a48c435de8d7937c86233cbaeef64457c54",
+            "hash": "0xbba16d3102e08949cec84b247db80d140adcdeed603de386cc970a8d25360bd3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -805,7 +805,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -844,7 +844,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcfed34da3d53b1f611d90c60d061bc8f88128dd693d2096a9f11a82163606dc8",
+                    "hash": "0xf5933a4e1bf3bd6859c428c960a85bb36d50b156296c988a6516361fa3b71510",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -856,7 +856,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                            "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -893,11 +893,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x30c46b754a213d0bbf9cf9ccda11e7133c38ea532159cc5ad225b00f246f690f",
+            "hash": "0xca485119c44277f8a824b2e2a8b83896de8f82ec3998be87531afa009af3aa43",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -918,7 +918,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -957,7 +957,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7d92110fc7e807b430b782cfa8263a8f4143c56a316934ae2d5e34c141603041",
+                    "hash": "0x0e42bebb0e4ed2f32fc4e0449ceb8c364840c36213cc8b7aef6b9cf91c24223e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -969,7 +969,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1006,11 +1006,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa9002922a5fd4d69bd9848971ff94bf4d4049340fb6be5043c483edfaded0288",
+            "hash": "0x40ab7df044afd233e2bb1bbbb8e2c51d8a3ac9847fa12acefc3c6f42e94a372e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1031,7 +1031,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1070,7 +1070,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x217652108ba18b9546d991389a9be7e8f045619b08590f0728f5e79b14fc10cc",
+                    "hash": "0xc0d30546f2168785f8ec52cf7dd0afc0cc0a00b2cec427e90865be7ad5716f45",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1082,7 +1082,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1119,11 +1119,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3adbf7791323962a096a1f446c2a9ba2e121621429d56eb16f7c95f0a9412b05",
+            "hash": "0xae8552d0a277463bc5ebbeda2b0b58fbb6602391acc15d675e61231f62ed0d33",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1144,7 +1144,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1183,7 +1183,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x35334434c8b751e9158440c733fbea0c8e7c8b6c00dc27248c8494b54d56305b",
+                    "hash": "0x9562ab907fab1b861103b55529bc4df33f33d95014eda4b7638d752d2eddef28",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1195,7 +1195,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1232,11 +1232,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x766e6a5278f2ffd7623d4c493046f35649a70b48bc4b021fad2758c831d900f7",
+            "hash": "0x09b3848a90d59a89c94d2619cb2821b4cb6e6d47c021144c7ca56319fd014004",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1257,7 +1257,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1296,7 +1296,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x083818a086365b42909996b1ff4c90558ed74c0352b258f327fbbb6b375d4e6a",
+                    "hash": "0xe3eff1298660a695d9bb27b5d9d380e94ab87b49afa2b8859912dd055786e8b5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1308,7 +1308,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1345,11 +1345,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x71ee1f10411c4cc786edbbab90c8be88f8e81bb4da1c7c31210da331f3b21006",
+            "hash": "0xc2ac0f04089d448911209a5a05a51a6b4cc08dd83e50b209c0a8734b7adb54fa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1370,7 +1370,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1409,7 +1409,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x278fc51e60912fc83ed5cba582d4548740a43e1356d2f642d10fc100b35a69ba",
+                    "hash": "0x7314ca15a6120ddcf6d1cfc3f8c6f6205633a124796bdc7a0e914a8ca455b6b8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1421,7 +1421,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                            "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1458,11 +1458,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8770d19f515ec132e7d5a6b6ab41a90a15a3b46b9b149342763921ec31a88db8",
+            "hash": "0x1cd5375a9c10b097823b25a3221ddb3450b7ac5429469c17aed34800453d0554",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1483,7 +1483,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1522,7 +1522,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x175b37165a4878e201b4debf1c1984cabeb20da871a75c9e2aaf8355738b67ed",
+                    "hash": "0x3dbe9e1c85ffdf0566096562c022d573f00e4d868b3469b0285c4f388faac0d1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1534,7 +1534,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1571,11 +1571,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xaed8f323a6ae29df4157d2937ab836a2fe5c46453666f2a061d967b97834c6d0",
+            "hash": "0xc7859bd354c4e0fcaba37ed904d69e33f10828cc0a067c93332bf513d8a930e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1596,7 +1596,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1635,7 +1635,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x76fbad72ef77203170cc0caef8e260c68b5f01a7973a3fc94a8a2074ecf27368",
+                    "hash": "0x314987ee09e86f50b2a3790877307843e6c22c5d29db8b039b3939f12e1f8e36",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1647,7 +1647,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1684,11 +1684,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfae816699109276baaacf3b1e5cb5cc90cb619fbbb2684462e0d728e33e37ef4",
+            "hash": "0xa9a868011682db557823485f3e693e4e98c41a366989f96e1e6a42a6046ea21c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1709,7 +1709,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1748,7 +1748,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x339f85d54a3b03d9732816dfb64c7aef66f74f2b40445a3e0990191fe9a3b535",
+                    "hash": "0x45315bbf5cd92907a9dcd4339fb363f9f76cfcdff04ceb071747045c19de5e75",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1760,7 +1760,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1797,11 +1797,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa8db4d3c8dc0ea3096615d0c3edf734788c94c22075bef7dd2b37c24c83ac479",
+            "hash": "0x1afb9b452bb9e481b1763fe060b07bdeb30778606c0308286359993c8cc6a278",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1822,7 +1822,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1861,7 +1861,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3a1da0fb9109cc35077de13294d5fea03e734ccddbc863b6f38f327dca4518c5",
+                    "hash": "0xab5b279a9701f88e57955c2ee1e8ab635df3de872151a76e30f2e8404e1b7d1e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1873,7 +1873,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -1910,11 +1910,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0fa5ffa01f7764c75e77471226c11c4f061993cfecef1357c3693c152c761b07",
+            "hash": "0xdb92686b54a711980d3c08b2366c9cacae90772394bb9dda5576b60dd4d1dc46",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -1935,7 +1935,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -1974,7 +1974,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x597839dc2b2bdfe7a821dff9bb38d8183faeb5271a0a0652f29acd403e8086ad",
+                    "hash": "0x5ac6fc4a4c68a63bcf0dc65d758715fc4de6c1788c9452d698e5850c59b9e9b2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -1986,7 +1986,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                            "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2023,11 +2023,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb72349250052edf02598c23c33aff336574adfb80a8a1eb2b51b07bcce5ee738",
+            "hash": "0xb58ecbf740c31bb14bb2db80225dcb75a5e095ee2d34ceeeec45fa6780c96f06",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2048,7 +2048,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2087,7 +2087,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc96d53bef9fd0a8a1663841a0d80665caee1f9f0095f90c5ed666f32ff78c748",
+                    "hash": "0xbda86a56665c3df1ee7fd334a64ad6863f511d16275f8f5f87f0523fcf28168d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -2099,7 +2099,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2136,11 +2136,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xda6f8cd44246244e893db1b8cb673d8285c061f8db3af8a39e293cb67cd9abba",
+            "hash": "0x6d7620d39e37e71f07f7b89ade4ecd1391e5e2a20df5f90de62f2a4a9801dec5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2161,7 +2161,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2200,7 +2200,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe2bed797a723bfac09b2a4994e54ac175f467e04037a09ae704737a4e93372c4",
+                    "hash": "0xea33d7780b2fbec5e256b47f4968aca0bac5ed7291010470777c639f9bc7771e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f863018080078307a1209400000000000000000000000000000000000011008080c080a0f58f0a3ebaf2f108820fb0a849791eb7acdd82bcc015f53ec3d2cd685c897408a02c0a90f5478659bc269b1f80e18dd7698ddb7884b9ed8541aa9d095d0f514f97",
                     "indexes": {
@@ -2212,7 +2212,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2249,11 +2249,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc0d6eccc3b30b5c0ffe27dcfadd10725aaceaa9db112ac5ccf6f0121528e49ff",
+            "hash": "0x2d4330a60be0ebca2821f59e1d25c3209fa54a022e4378c18ab46cf5c994de2d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2274,7 +2274,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2313,7 +2313,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe1212c71bc0df066d429aeacf2e10687463e5de4413b3d79c5ac6940914f5ba5",
+                    "hash": "0xf5e23e3de140f7b7f7d8cb57fc39625a88a60d89c7fc3db3d5617c20db3f3e35",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2325,7 +2325,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2362,11 +2362,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe1ad76136bcd94ae3dc2b3e944d3204de891ecba6628f4a966695650ee5ea9e0",
+            "hash": "0x29d5b5955d63a52ff7cd879b2cf59aca4f062a8c153f34f6d4cc8063d965f1cb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2387,7 +2387,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2426,7 +2426,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe4c898d8313fd97173a2da5aa138d5c9031e293f60ea7314ec3b0e3f3b1fb7ba",
+                    "hash": "0xda110dc4f06bb36c6637ddb0ca518f4ab67876f970ca7413b3bc15a987849e55",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2438,7 +2438,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2475,11 +2475,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x37a322133438aeaf7644b5763818ead2107b9011ff0581bb21eb0e2c37bc2dff",
+            "hash": "0xf0b1019b4e3360623706f233d49d031fc6cabf362df129e393fd70f7c46c0950",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2500,7 +2500,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2539,7 +2539,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x82dd5ad1187d4387c3f2cdd2d2e559e3fb671591734b7162c69c2555404ed1af",
+                    "hash": "0xb54a7ab5ea2be060a7c631b6a4c40819897efc4d7d25c5fe486ddb98e9014a18",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2551,7 +2551,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                            "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2588,11 +2588,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x48d2f7eceb5627053f7c3948bf721423a8daa9d5a197d92839dfc859a96aa702",
+            "hash": "0xaab7fcbd064f549d1ee548d5930f364860db96960b760a2656db9737a4f572f2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2613,7 +2613,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2652,7 +2652,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd02cf168c8791555cf43f731d8c0e7d3a0091f54ab76abfbb427beea25f4f4ac",
+                    "hash": "0x3bd9c042104a74617f3f702b63d2f8fcbc325fd1841a3093db04b4fbf062a856",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2664,7 +2664,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2701,11 +2701,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2c351275761a9bc08263af77f4343d7482346d9216cf5717f7bc2da432112424",
+            "hash": "0xcb8a02e8735ac7072c5deabccf0bdd69259f9564c6c84c5e00f08efbd83c60f7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2726,7 +2726,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2765,7 +2765,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x78b8366da4eeb383d3654bef654bae9c217be6321f28c31e706752412cc95ea6",
+                    "hash": "0xb8d667bc34af8f50dc20702be9d5e989a137b44ee085f0ac94d94e7490bd225c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2777,7 +2777,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2814,11 +2814,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbceb58883b74610748f8bbc75f19e1073785e57da08ecb6be0c548f082e10f2c",
+            "hash": "0xcf2e1c08c876e1c61c22065263b1ee5e557a1c3b78ddef0d4dfe9cf6ab15f33e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2839,7 +2839,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2878,7 +2878,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4406c3501b09fcf85d9b69ab2642b207281ee6700cf7d74213157f64caa763da",
+                    "hash": "0xca345421234b9062ebc6f3e63fd6b1e779b0410e01494b105a4b99f564879c9f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -2890,7 +2890,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -2927,11 +2927,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x998a1138c97a9eae76004d602ba40d34a6bdca742708dac150564d2592414607",
+            "hash": "0x617aacc60c81c925ed1fd5bc9fadc31b069e94a3d1db5c1a98c0387f04f83687",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -2952,7 +2952,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -2991,7 +2991,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x06b8398bc35faeaab2e03e4bec0d9b459ce7e825da3bae93b0501c61635c0504",
+                    "hash": "0xd02ddb523acd7ec6d5ef6c5625c55714a66ecddd648f777f3c7f49b9594ccc20",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3003,7 +3003,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3040,11 +3040,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xeb927fa52293076dd17cff2a4c1299cfeddbaf7da2b386795314e468e5638a5a",
+            "hash": "0xd98e1fe1a355fa7e14af6104f1da51f4e0c170a86c0c0c81e2e34b7acb596977",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3065,7 +3065,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3104,7 +3104,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf2aa338bd027384a0eb2b68a408e91bc8c16f915054c725f3b59d74d444247fa",
+                    "hash": "0xefbc1a07b5af056842db7f044750ee5c7648ae74034424892cec8d311df475b6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3116,7 +3116,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                            "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3153,11 +3153,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x78fd50a76ba5141fd4c9f7d99c639aadadc7d0cb953e7c02a9fee83baff96292",
+            "hash": "0x2bab31e1586eeb9e02e231a5e6d76962e73d48cc028e527bb9598688a9c877cb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3178,7 +3178,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3217,7 +3217,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc888ac896e8e0dfbc97004d6edd0abd76892b6be8f3afdf4580a256c71bcf3c1",
+                    "hash": "0xf5ef9f366f14093fc6f4e0ff61bd978cd1b8a9b10636d7be41be1b38f3f6ffa6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3229,7 +3229,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3266,11 +3266,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfa3d088d5f86283636172fd4e3665e4afa24a01b69722f59762b22f65812ff47",
+            "hash": "0x96d680ab6b3434e334bdf9fee5a916f2d1157a16154013d76b8526bb39395603",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3291,7 +3291,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3330,7 +3330,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x277cc5e609d07dfbbe5bc8f2cb76289d70447f08790a45efcacb4339da6c8f4d",
+                    "hash": "0x6b0a66f6449df32a93462764bb768d9d5bccb0ef7ca825184b6a8b17f0f99f5b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3342,7 +3342,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3379,11 +3379,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc36197460ab424d305a0baa99a2cacfabe79976ddd95ddd52b492800f3c979fb",
+            "hash": "0x671a2ee5d4692c866b17a360779cb65a24846100a7bba107600bf55be90935f8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3404,7 +3404,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3443,7 +3443,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x725ecb5943b75093a97bff39069fa3374cd9368297a19c137cac752856199380",
+                    "hash": "0x2d21b63afdd1e5f0a74fab58f7478886acc1d96caf789d033ec4400dcd316301",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3455,7 +3455,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001005004000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010050ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3492,11 +3492,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbffbda314efc0d5dafccb89ea15c6d6f2baca3c6be5e50a354cff34c2d8e2f3d",
+            "hash": "0x8d84fe83dd4b1ed9d8e407b4a23c9e1c5a2c29d0a7820bd3f97a91f4b08d80fa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3517,7 +3517,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3556,7 +3556,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x1e7e05aa4ffc832cec93cfe0f720fb96942f4b86d9fbf33300667c59ed7aa4eb",
+                    "hash": "0x08068820c44615a614799b377eec234f861e5c5436853ddaebf7cebb3a6de327",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3568,7 +3568,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010031040000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
+                            "code": "0xef00010100040200010031ff0000000080000536600060003760006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3605,11 +3605,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x643ff92a9a5e40e1ee68a9e0272cd1381ef979230430d172f9cc467959f97c23",
+            "hash": "0xc96d11a6cf6da92c3c81ec0cbb76ef5b1481c5feff6b48398b13ef7c52e1e4b1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3630,7 +3630,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3669,7 +3669,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc946db74401feb96b5af1cadd45cf2806c2524aee48b2653110981fe78813deb",
+                    "hash": "0xfd107d377a367a10aa753e3e94e2fd459659d6699713f59f997865a858e49b43",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3681,7 +3681,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003104000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
+                            "code": "0xef00010100040200010031ff000000008000053660006000376000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff60003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3718,11 +3718,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbe53d4b25cf4e3a0c55b6c13150f958dd07a2f41598ed23fc74bf7d6af9161f8",
+            "hash": "0xf42a867d29cf8578dec38f277f0156c1b25e0e8e3406aa2edb38f609c511732d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3743,7 +3743,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3782,7 +3782,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x44c574d3594c8fd202e51c463e3b7b9eef5d3849c669f9fdaa19d57e52f3c855",
+                    "hash": "0xd4dd9a1d87d117e7d98a42dc2e88a3177ff273e542672ecf53b5f12ab2b1ac08",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3794,7 +3794,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3831,11 +3831,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x04630bb684a336f20d41febcd714198b9715582218f0b49e868d998dc16edc10",
+            "hash": "0xce3543191a9956ef9ce838a29668ef3dc39b0a2e1e63c925b2ecd857bf2cdf25",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3856,7 +3856,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -3895,7 +3895,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x81389b51ef2dc243e7fd346c23dce0d2a3cdd93e2beb2a10b4783502964cdd05",
+                    "hash": "0x9a638df5a9c876702d35c57870d7e4cb29076e92cdd99d3ac3553a45b4b67890",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -3907,7 +3907,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000604060006110003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000604060006110003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -3944,11 +3944,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x77b800f924113f3c8eca494b6cf17bdb8ed74051cd925a4e798d34923dc50381",
+            "hash": "0xc218b89d741b62f2e8a8a7718876452c17eabadf363b61df0f932838f4e70913",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -3969,7 +3969,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -4008,7 +4008,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe70363ac3c6e8f33a8364891d67a46fe61bce85ab858bd392d5b8154b4f8314d",
+                    "hash": "0xa2284fadc77fddef0f9c3d7f1a0b959c254ef063d1efcb60b92cbd2e5e9139f7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -4020,7 +4020,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -4057,11 +4057,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc425bd903e0849b263fc81952cfbb907d8fd87530590eee9cc9658db3764e82b",
+            "hash": "0x0b35d18d328b7e792c8d0ee6fef871628f88cf15b27c2b0f3e646366e6f26666",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -4082,7 +4082,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -4121,7 +4121,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x911a645397856f278ee1b276a54bd6a447aa8c73936307b3d429ea7c144b7730",
+                    "hash": "0x37deb31781e3180b8d95c0eda160951c52a1003412b53640ac20e563bbc05855",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -4133,7 +4133,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010013040000000080000536600060003760006000600160006101003ef3",
+                            "code": "0xef00010100040200010013ff0000000080000536600060003760006000600160006101003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -4170,11 +4170,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9fe79af3e0ebdb144ca9b29fbf76d250b2d0c1cd1ffdace5d2b897efe1d80efd",
+            "hash": "0x4bcee21d9f81736f99de7c602ff543d669c98c29a173d1b15d99d6b0fca97a12",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -4195,7 +4195,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -4234,7 +4234,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x04312e1cd1f2a7776d41bb9162c55565cf1ed32b4af9dcb926480bf553a1911a",
+                    "hash": "0x7435d4a60a0aeae5657dd23d789bf36db82469bc3785aed9bdb5de92ee7998fc",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -4246,7 +4246,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001204000000008000053660006000376000600060016000601f3ef3",
+                            "code": "0xef00010100040200010012ff000000008000053660006000376000600060016000601f3ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -4283,11 +4283,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x53735d1de7b0c7d271e9be2940488c06d41af060bf24e4a6e3c6a622dfac24d2",
+            "hash": "0x33dbde3b803771ee3e261e63289e4bb164b726a7206dcb48161b99210e484eda",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -4308,7 +4308,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -4347,7 +4347,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xadbcb89869516e44d447801ac3011cbd50cb4f4379edba109e3a4fd7c5f31b1e",
+                    "hash": "0x947c8eca6594dc23ff1758b0b2d0d38dfa550453678c2de6902399b23a591cc3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -4359,7 +4359,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006001600060203ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006001600060203ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -4396,11 +4396,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x040eb8ee703b0f8076579f36211092a6414bde67a4d965e44380a00bdbe15c2b",
+            "hash": "0xcc05c67bd969a5875696339ab06d888af179b4302a627b008b3df6c95ec7f434",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"
@@ -4421,7 +4421,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -4460,7 +4460,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd79e326e30e52612d27800f0ed8d83c17aee95bd93cd3d0b534906edf2a7fd03",
+                    "hash": "0x19940af150a74ac645093d76308291cf85ace2e5c287c895f5e428e2067c3f32",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x02f90165018080078307a12094000000000000000000000000000000000000110080b90100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffc080a028b7012b79e4be4d2d89372c54672df671b7d34d6187d9f79db849dddfc8768fa07fb18e99383cb40620c3fbe9277a364b645c12b2a6d23ffaa70134fe3b9731fc",
                     "indexes": {
@@ -4472,7 +4472,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100120400000000800005366000600037600060006000600060003ef3",
+                            "code": "0xef00010100040200010012ff00000000800005366000600037600060006000600060003ef3",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -4509,11 +4509,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x169312ac126e740860418916ded6aaee1ebb096781277f226ce8f251bfd2ca2e",
+            "hash": "0xa4c57fc20fc4fa8c2ba0ee79dbd353cd4f26f6e8ae905c689fe8d9d0c47b7f3d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nPerform RETURNDATACOPY operations that expand the memory, and verify the gas it costs.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_returndatacopy_memory_expansion.py#L170",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "e469fd6c8d736b2a3e1ce632263e3ad36fc8624d"

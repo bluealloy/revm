@@ -28,7 +28,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000b03000100140400000000800002333160015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000b03000100000014ff00000000800002333160015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xaa97e698695c85130a5eaccc3caeb40fd808061eb5a5c2e02f8ceabaceb69353",
+                    "hash": "0x6a01d0b625f5d6910302b8e746352bf431212c511d6bcdebc08ea821f3b91168",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf885800a8398968080821123b7ef0001010004020001000b03000100140400000000800002333160015560006000ee00ef0001010004020001000104000000008000000025a0c7bce9ef7aa1931afac3b548d3552786cd4292d9cba40fa3301e21e162c50144a03f55ef78cbd4172e22a3fc78c9343e173990c3ced1996c82cf2d8cf3570c7250",
+                    "txbytes": "0xf888800a8398968080821123b839ef0001010004020001000b03000100000014ff00000000800002333160015560006000ee00ef00010100040200010001ff000000008000000025a083fc4f6103049766766eb2e198c81ffba77ce60f0d0ecb8dfb9e8e22dc2e871ca07b82e716d2e03176dd4caf1541851750ebc6c601eb1e7761e449d6ffbd5c283c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,21 +48,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a719",
+                            "balance": "0x03a731",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x1cb5fcefcf"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a3d1",
+                            "balance": "0x1cbbe6a381",
                             "code": "0x",
                             "storage": {}
                         }
@@ -86,11 +86,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7a4e1c4f14349d86a176d5cb0d339d55b7758a158b342549085976bb739fa2d3",
+            "hash": "0xabf6de879f90d9a7486930d5b802cf2f1ac5efcc2a7106c0392bc7a257d12284",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"
@@ -125,7 +125,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000a030001001404000000008000023060015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000a03000100000014ff000000008000023060015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -134,9 +134,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x44a4042e46c7f24efed1a75c2146ba8a42dc557569e605bbcdd04293a6bc7bb3",
+                    "hash": "0x661c396f36a1f9e0ac352ddc116545339a40f44015d37b2258b79f7dea4c7fa8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf884800a8398968080821123b6ef0001010004020001000a030001001404000000008000023060015560006000ee00ef0001010004020001000104000000008000000025a02d7bc9e2229bef478b2c1e4d670adae33e4185f0bebe43e95d48eda8469d292ea049c0ea7809fc3a8d28a20550c81163ce284d9d819d24550a26e83a1eb212df41",
+                    "txbytes": "0xf887800a8398968080821123b838ef0001010004020001000a03000100000014ff000000008000023060015560006000ee00ef00010100040200010001ff000000008000000025a0ce969b28ca67c2e677bb33bc01c7ff6954ecb80b91316176fcebdd3e1ea2f008a04bdec302202a8b0068dd05fb167a2cbc6c55955c54754171da0df1063e9cfecc",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -145,21 +145,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a5bd",
+                            "balance": "0x03a5d5",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a859",
+                            "balance": "0x1cbbe6a809",
                             "code": "0x",
                             "storage": {}
                         }
@@ -183,11 +183,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf2a79087a932edfd8ef5308e1ccd3f0946e7b4da422ad58e2af96fe2588000c6",
+            "hash": "0x21d0f09f8f17124429670b80255755e9e096da001ab048ad13b949c044128ed0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"
@@ -222,7 +222,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000a030001001404000000008000023360015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000a03000100000014ff000000008000023360015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -231,9 +231,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb72e2f4aaf045bb8ce58b8640575d93e39214097b680237f6cbf1c0f18e70da3",
+                    "hash": "0xce5abd3f8ed7f0711093993470c8ef70d4931fd35da23b9e6393b0787c2c3ec1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf884800a8398968080821123b6ef0001010004020001000a030001001404000000008000023360015560006000ee00ef0001010004020001000104000000008000000025a05147ee8b2209e33bff7e8485c7fa397435ad325cd1c2346e3dd591d79f04bb6ba00b36eccd09c9b178d4da99b5a7080db3f454afa9322215ef856ecdcb7f34d981",
+                    "txbytes": "0xf887800a8398968080821123b838ef0001010004020001000a03000100000014ff000000008000023360015560006000ee00ef00010100040200010001ff000000008000000025a0ddd797bcfd908ff7f3f72c224fc65d1da1e953d212f03e006591ef62f9e9e8dca070471c4d2a4b12a4ef25d56d39b43c66c95d935987fea9651b98b8bc0c145da4",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -242,21 +242,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a5bd",
+                            "balance": "0x03a5d5",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a859",
+                            "balance": "0x1cbbe6a809",
                             "code": "0x",
                             "storage": {}
                         }
@@ -280,11 +280,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7e82863a55434813a87921bf82195f455abf4c95c761c103343e9ff10d26bc66",
+            "hash": "0xdf9ead069b87dc20192ee2d87d9bbcf1bc3f15c612db08920330541e9f7d1fef",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"
@@ -319,7 +319,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000a030001001404000000008000023460015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000a03000100000014ff000000008000023460015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -328,9 +328,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd22c3c952f5940cbffb30f469ed7e33d4c4845df9fab84f52b67efa3fa07847f",
+                    "hash": "0xa862b074d3807c6cc58ad1a4aa365c7124f5bc8e22adee99b71b1818c79d3bdb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf884800a8398968080821123b6ef0001010004020001000a030001001404000000008000023460015560006000ee00ef0001010004020001000104000000008000000026a0b284bd7a5634a58ac06141fafa2056c5977b48928619ad555e9aa4db54296c51a0365175b0d4f5157a7810ece97786234933dd369a97f2a0b8c0e9a956d3ce9903",
+                    "txbytes": "0xf887800a8398968080821123b838ef0001010004020001000a03000100000014ff000000008000023460015560006000ee00ef00010100040200010001ff000000008000000026a06fb0f16d68ea4816b5de3614bf5dfa2c8133740208e2041603a63fc0a6b0357ea062221c9abe83957c6d3487c6a8b2ab3dfda5325e8790854b852e79b0409bf272",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -339,21 +339,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a5bd",
+                            "balance": "0x03a5d5",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x1123"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a859",
+                            "balance": "0x1cbbe6a809",
                             "code": "0x",
                             "storage": {}
                         }
@@ -377,11 +377,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3189921594fc1e8c000682300a2957e4ad84ac258fc541c7acc0ca0e675fdbcd",
+            "hash": "0x41b827e6928933911c14c898dfe8dd49faeb60ef72f694d8ffbfaaf3f5103b3e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"
@@ -416,7 +416,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000a030001001404000000008000023260015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000a03000100000014ff000000008000023260015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -425,9 +425,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb72e2f4aaf045bb8ce58b8640575d93e39214097b680237f6cbf1c0f18e70da3",
+                    "hash": "0xce5abd3f8ed7f0711093993470c8ef70d4931fd35da23b9e6393b0787c2c3ec1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf884800a8398968080821123b6ef0001010004020001000a030001001404000000008000023260015560006000ee00ef0001010004020001000104000000008000000025a0beee7c1fbb61af17f9cbe75fcbcdc8f190a8eb528856d70c2f1380dc3e901e12a038025e9dee300fa6417fcea2e2f60f305588647d82f3ca751a62c4e62cee54ca",
+                    "txbytes": "0xf887800a8398968080821123b838ef0001010004020001000a03000100000014ff000000008000023260015560006000ee00ef00010100040200010001ff000000008000000025a0a610f0b3d0a3838d503e37b9e90e0fff3030365ab076190bb1cc014978cf3b0ba0483023350ff642765826525fd3272e2aa65edb460faa16f55779320b0c2d2750",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -436,21 +436,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a5bd",
+                            "balance": "0x03a5d5",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a859",
+                            "balance": "0x1cbbe6a809",
                             "code": "0x",
                             "storage": {}
                         }
@@ -474,11 +474,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd946591d9fd6263bb4ecd5e829bd605cecf44e442f8fab7e25bad8c5e861eb28",
+            "hash": "0x35f0c64d5b54b1058ba1d1c0c712eddda83ea2ec13e0218436a42e5a8e0c32e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"
@@ -513,7 +513,7 @@
                 "0x1123"
             ],
             "data": [
-                "0xef0001010004020001000a030001001404000000008000024760015560006000ee00ef00010100040200010001040000000080000000"
+                "0xef0001010004020001000a03000100000014ff000000008000024760015560006000ee00ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -522,9 +522,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x8905e9af2fc80912a1af681f4aaefe6704dabffad31f5d846c9af7367f02136d",
+                    "hash": "0xa12e18d589eb5fd20b635b28235f50dbb095a0610103720cbeff52d6eea8bf62",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf884800a8398968080821123b6ef0001010004020001000a030001001404000000008000024760015560006000ee00ef0001010004020001000104000000008000000026a026e2e5d1dd44436aa8b9759c62a343d3a7667a12a2f872dfea428ea8b7570707a063c655d9a1dd18980d259ca7841901a98e93250a314244c993757340781d5712",
+                    "txbytes": "0xf887800a8398968080821123b838ef0001010004020001000a03000100000014ff000000008000024760015560006000ee00ef00010100040200010001ff000000008000000025a087b11293fc562908bbca0fbe5614ab8727fa27e2f672d232207c63c60fe1b5dda038bd30ee6ffa7e8ab7b3e0b39c3f99f72decc5e09908fac7f0029172dd7bfc19",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -533,21 +533,21 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03a5c6",
+                            "balance": "0x03a5de",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x1123",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x1123"
                             }
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x1cbbe6a83b",
+                            "balance": "0x1cbbe6a7eb",
                             "code": "0x",
                             "storage": {}
                         }
@@ -571,11 +571,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x66c9870979b29423f9a0932bf309bd3282a315e32722d2229644b762dc06e832",
+            "hash": "0xe031cd1b6fd7987394f4b2826d743ed69562f4bef5b66fd273e6893ba89db446",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest EOF creation txs' initcode context instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7698_eof_creation_tx/test_eof_creation_tx.py#L28",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7698.md",
             "reference-spec-version": "ff544c14889aeb84be214546a09f410a67b919be"

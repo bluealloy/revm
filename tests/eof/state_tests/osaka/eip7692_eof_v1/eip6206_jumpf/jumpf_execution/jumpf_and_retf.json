@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100080200020008000d04000000008000010100000260015415e3000100e10001e4612015600155e50000",
+                "code": "0xef00010100080200020008000dff000000008000010100000160015415e3000100e10001e4612015600155e50000",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x70cbdfa9b1e08886502e7029a4c337c895629d64a8d0c52569db3c299cf57042",
+                    "hash": "0xc44793769ff4fe98268ba4c6fcd3a3441da1921c16bebc2d50729891e661c6e8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100080200020008000d04000000008000010100000260015415e3000100e10001e4612015600155e50000",
+                            "code": "0xef00010100080200020008000dff000000008000010100000160015415e3000100e10001e4612015600155e50000",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8e17cd1c528f532d53717ff9a32e1429b752b1041b725bce3dd69452e55f710f",
+            "hash": "0x6099ea16a341d8135739a5f32012422ac60c5a40004fea537329a53a11dc67ca",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -141,7 +141,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c02000300040008000704000000008000000000000100000002e30001005fe10003e50002e4612015600155e4",
+                "code": "0xef000101000c020003000400080007ff000000008000000000000100000002e30001005fe10003e50002e4612015600155e4",
                 "storage": {}
             }
         },
@@ -164,7 +164,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x45b0c910c0bb485c89a8686defdfa6bbef8cfdcc74c606d852a1d4a222dbc7a5",
+                    "hash": "0x754844dd1a73635edd338db975e17d9f3b5dbf60dcb8a400871e18a569b3645d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -176,7 +176,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c02000300040008000704000000008000000000000100000002e30001005fe10003e50002e4612015600155e4",
+                            "code": "0xef000101000c020003000400080007ff000000008000000000000100000002e30001005fe10003e50002e4612015600155e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -219,11 +219,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x15f0e968c4b5cbe03687039484357a13bb2e5257ebac4634c00ae4388cf552c5",
+            "hash": "0xc14630f3d51e8cda921e450ec83204a507706e2e9ef126b4b0babf3216472b4e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -256,7 +256,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c0200030006000d0001040000000080000101000002000000006001e3000100e10001e4612015600155e50002e4",
+                "code": "0xef000101000c0200030006000d0001ff0000000080000101000001000000006001e3000100e10001e4612015600155e50002e4",
                 "storage": {}
             }
         },
@@ -279,7 +279,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x25061c4631990ab6f3615b2dd8bf3890de0a1fc7417e519fbb0345a05e844079",
+                    "hash": "0x4dbe565fd6fef9b778137a6c1913dc0fdd2eb4cfa25f1c77f2f8ff0b209b4b88",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -291,7 +291,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c0200030006000d0001040000000080000101000002000000006001e3000100e10001e4612015600155e50002e4",
+                            "code": "0xef000101000c0200030006000d0001ff0000000080000101000001000000006001e3000100e10001e4612015600155e50002e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -334,11 +334,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2906e0b90f0c8a4ce1aac791475243a0dcd2373c6fab9d97fd371623b5a0cabb",
+            "hash": "0x6ad7acaa4b9f4a7f515a5c76403996a668b318b890a21b4d5ebce02a7b5e46ee",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -379,7 +379,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000400070001040000000080000101800001000000005fe50001e10001e4e50002e4"
+                "0xef000101000c020003000400070001ff0000000080000101800000000000005fe50001e10001e4e50002e4"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -388,9 +388,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x45bac5b4317e4e75a691e559aaa92f2facb68fda8c7e97a77e470c67bab8cad5",
+                    "hash": "0x681541921f101fd19143a8cbb7d7f46a645bbad0cf48a3459c35d942bb8ffb28",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf877800a839896808080abef000101000c020003000400070001040000000080000101800001000000005fe50001e10001e4e50002e425a061afa7c6cbcf934cb4fa5ef2615c1cae5d0fe1559af2c1dbf6f0d1c37d2504daa03a793772256f50f343f0c6193622d851c78d5464d705824871de9996954a476d",
+                    "txbytes": "0xf877800a839896808080abef000101000c020003000400070001ff0000000080000101800000000000005fe50001e10001e4e50002e426a0ff5cf1e8e47997bca1c12ed0fdacc4aaea8c20fe5e1e538c0c9016f055c25ba8a013cadb85359cf9784005b8d7c93dd2aef3e98ec28421677c0c8e36fc1eabbb90",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -399,13 +399,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027288",
+                            "balance": "0x027264",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d790",
+                            "balance": "0x3635c9adc5de97d808",
                             "code": "0x",
                             "storage": {}
                         },
@@ -435,11 +435,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbd8db61d21a79984ce064d2c204b1052e1c9e39a3014a806d56931aedc1896a0",
+            "hash": "0xd44d8432b307f9ccc3e8cec6004b5a512ddaab87e7854fab5cd7890c0b935f4e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -480,7 +480,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000400070001040000000080000101800001000000005fe50001e10003e50002e4e4"
+                "0xef000101000c020003000400070001ff0000000080000101800000000000005fe50001e10003e50002e4e4"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -489,9 +489,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x45bac5b4317e4e75a691e559aaa92f2facb68fda8c7e97a77e470c67bab8cad5",
+                    "hash": "0x681541921f101fd19143a8cbb7d7f46a645bbad0cf48a3459c35d942bb8ffb28",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf877800a839896808080abef000101000c020003000400070001040000000080000101800001000000005fe50001e10003e50002e4e426a0964586b753b50541700d5806ce15b476ed17128e9b55d9fb1e0f6461d1e0077ca074dd003e239cc837933bddc1b5579172ac888f0fd5298110cd7297082b8976a1",
+                    "txbytes": "0xf877800a839896808080abef000101000c020003000400070001ff0000000080000101800000000000005fe50001e10003e50002e4e425a053846afdc5369d7119b56622104b4a3c1c5187aab7c4aabfa280c6e1bfacbe9da02e15b39c244f83db70e0cf73bda7cd27f28918e93dc5cc7235dcaf58f6371770",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -500,13 +500,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027288",
+                            "balance": "0x027264",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d790",
+                            "balance": "0x3635c9adc5de97d808",
                             "code": "0x",
                             "storage": {}
                         },
@@ -536,11 +536,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x907b67768fd001cee1918413e23c145f9d92dfb8086b94558480d31960e5b93b",
+            "hash": "0xb1aec772398d4267e7812f2b9e36833c3d2762a6e5f602ca9e2751ec166ea064",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -581,7 +581,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef0001010008020002000400070400000000800001018000015fe50001e10001e4e50000"
+                "0xef000101000802000200040007ff00000000800001018000005fe50001e10001e4e50000"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -590,9 +590,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc1fe374cfbf60b73a5a618209cbe23bd5ebb98a66318235991326926cef5dd37",
+                    "hash": "0x2e2c6496b169a35a737467f7459de041fde75c334377cb1018b8d3e23ae3dfd3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf870800a839896808080a4ef0001010008020002000400070400000000800001018000015fe50001e10001e4e5000025a0a2ad56fc25ac479895f2a8cc946769c1b5d87b72b4c8575a517a988b49583a51a071532d9ffc1ccc506e2cb02ee5e1784d6686a44688f0bbb6c9193589601cc4c4",
+                    "txbytes": "0xf870800a839896808080a4ef000101000802000200040007ff00000000800001018000005fe50001e10001e4e5000026a07407f86cdf80e781fb9fcaeaebdbf593c95ed5facc111c203b7debda26bc4c85a004da05279827959a25ecb0dac97f611a73cf5718e6aa13a199469e76f5780397",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -601,13 +601,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0271c8",
+                            "balance": "0x0271a4",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97da10",
+                            "balance": "0x3635c9adc5de97da88",
                             "code": "0x",
                             "storage": {}
                         },
@@ -637,11 +637,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x233630d476c1a44265050f4303a72332c3952bf8017c6f7fdd361229de96a9a1",
+            "hash": "0x1f185d164a2fbd288bd70a8d00ba7096044fe21723499083442cfabbbc403187",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF and RETF in the same section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L154",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

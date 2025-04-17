@@ -20,19 +20,19 @@
             "0x0000000000000000000000000000000000005000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003f030001004f040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003c040000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                "code": "0xef0001010004020001003f0300010000004fff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003cff0000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100290400000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
+                "code": "0xef00010100040200010029ff00000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                 "storage": {}
             }
         },
@@ -55,7 +55,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xde6cc62227b4b078e56263de2ca4c5a3022420a1188093cb8f9f3da221a9e143",
+                    "hash": "0x1a6a604913593ebddbf001ee279187a136c6adfb1087cdf398b9428862ce63ab",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf863800a86b766917c3f46940000000000000000000000000000000000001000808026a070e1b9cc58598fbd49fe981fe9aba2194d945861a0d928f0156f7e3d31838637a07f45463c6ec41c405a85cde964606f2a5c19e01f786984766a6b8192d6072ccb",
                     "indexes": {
@@ -67,7 +67,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100290400000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
+                            "code": "0xef00010100040200010029ff00000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x01",
@@ -78,24 +78,24 @@
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                            "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000005000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003f030001004f040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003c040000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                            "code": "0xef0001010004020001003f0300010000004fff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003cff0000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02fa0b40",
+                            "balance": "0x02f99f40",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5d4b3da80",
+                            "balance": "0x3635c9adc5d4b54280",
                             "code": "0x",
                             "storage": {}
                         }
@@ -119,11 +119,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xcafb6cb3f2a8ffe67aabbc013e17f3d342b4eef267337d35756db320cafa4afd",
+            "hash": "0x7cb1a1d69df48d3f73e6e17c16e91d1c24f8590c5e9a861a59f82e4e0cfcd7f1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EOFCREATE handles msg depth limit correctly (1024).\n    NOTE: due to block gas limit and the 63/64th rule this limit is unlikely to be hit\n          on mainnet.\n    NOTE: See `tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py::test_eof_calls_msg_depth`\n          for more explanations and comments. Most notable deviation from that test is that here\n          calls and `EOFCREATE`s alternate in order to reach the max depth. `who_fails` decides\n          whether the failing depth 1024 will be on a call or on an `EOFCREATE` to happen.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L639",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L634",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -150,19 +150,19 @@
             "0x0000000000000000000000000000000000005000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003f030001004d040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003a040000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                "code": "0xef0001010004020001003f0300010000004dff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003aff0000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010027040000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
+                "code": "0xef00010100040200010027ff0000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                 "storage": {}
             }
         },
@@ -185,7 +185,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0b1aa5b808b3ea89cc2ba3fcd8b77eba82bcbd78066f95760a947fd80012797f",
+                    "hash": "0xb6e03e1aeb468e54fdb2a97dcb0aeea23c43d0d156c7c919e58b2f3c41553bf9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf863800a86b766917c3f46940000000000000000000000000000000000001000808026a070e1b9cc58598fbd49fe981fe9aba2194d945861a0d928f0156f7e3d31838637a07f45463c6ec41c405a85cde964606f2a5c19e01f786984766a6b8192d6072ccb",
                     "indexes": {
@@ -197,7 +197,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010027040000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
+                            "code": "0xef00010100040200010027ff0000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x05": "0x01",
@@ -208,24 +208,24 @@
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                            "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000005000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003f030001004d040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003a040000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                            "code": "0xef0001010004020001003f0300010000004dff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003aff0000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02f9f937",
+                            "balance": "0x02f98d37",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5d4b4169e",
+                            "balance": "0x3635c9adc5d4b57e9e",
                             "code": "0x",
                             "storage": {}
                         }
@@ -249,11 +249,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x023655947be4b6675c93321d667da15a7111193d0bad4eb2800d79f356035160",
+            "hash": "0xd6c5484ef83c0caa98ec338c3ad3183464086d2482f77e3727a0921843e8334f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EOFCREATE handles msg depth limit correctly (1024).\n    NOTE: due to block gas limit and the 63/64th rule this limit is unlikely to be hit\n          on mainnet.\n    NOTE: See `tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py::test_eof_calls_msg_depth`\n          for more explanations and comments. Most notable deviation from that test is that here\n          calls and `EOFCREATE`s alternate in order to reach the max depth. `who_fails` decides\n          whether the failing depth 1024 will be on a call or on an `EOFCREATE` to happen.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L639",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L634",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -280,19 +280,19 @@
             "0x0000000000000000000000000000000000005000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003f030001004f040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003c040000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                "code": "0xef0001010004020001003f0300010000004fff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003cff0000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100290400000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
+                "code": "0xef00010100040200010029ff00000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                 "storage": {}
             }
         },
@@ -315,7 +315,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x74e324aac301006cdc09d236ba96fe1553afa07963c80e6783c38e8ce9336018",
+                    "hash": "0x9e3206e72448589895a6620afdc159efdb9226cf3db7d35bed215f37fc0d75ff",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf863800a86b766917c3f46940000000000000000000000000000000000001100808025a00faae05cb7eab213d7a557bab55b65a52b1dd441e8b4d73130e13f17378cc455a0702f1786e842558dff6e0e2eb3e1ef3bd365a445e7a574d5655558610efb52aa",
                     "indexes": {
@@ -327,7 +327,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100290400000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
+                            "code": "0xef00010100040200010029ff00000000800004600035600052600060206000615000f86000f76008556020f76005556040f760095561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x08": "0x0400",
@@ -337,24 +337,24 @@
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                            "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000005000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003f030001004f040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003c040000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                            "code": "0xef0001010004020001003f0300010000004fff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003cff0000000080000460016000350160005261ca11606052600060206000615000f83d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02f93e9b",
+                            "balance": "0x02f8d29b",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5d4b684a6",
+                            "balance": "0x3635c9adc5d4b7eca6",
                             "code": "0x",
                             "storage": {}
                         }
@@ -378,11 +378,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9fbc63f4d032847e88b5cc2e33925eb873512b296b7e1fdeabed102e07f96621",
+            "hash": "0xa6321c00c6f119dd2e1cf73f92280e0b255cf7b982c037891ba1e287299eda27",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EOFCREATE handles msg depth limit correctly (1024).\n    NOTE: due to block gas limit and the 63/64th rule this limit is unlikely to be hit\n          on mainnet.\n    NOTE: See `tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py::test_eof_calls_msg_depth`\n          for more explanations and comments. Most notable deviation from that test is that here\n          calls and `EOFCREATE`s alternate in order to reach the max depth. `who_fails` decides\n          whether the failing depth 1024 will be on a call or on an `EOFCREATE` to happen.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L639",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L634",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -409,19 +409,19 @@
             "0x0000000000000000000000000000000000005000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001003f030001004d040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003a040000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                "code": "0xef0001010004020001003f0300010000004dff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003aff0000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010027040000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
+                "code": "0xef00010100040200010027ff0000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                 "storage": {}
             }
         },
@@ -444,7 +444,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x83f2020561771ad3ae256f02110de34a0d02de8cbc28115e5e0e457b73783791",
+                    "hash": "0x8f879e642e8a614feb31f86160dd6c2e2e9f2c8c4bf4936c62d62e920f3e21a0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf863800a86b766917c3f46940000000000000000000000000000000000001100808025a00faae05cb7eab213d7a557bab55b65a52b1dd441e8b4d73130e13f17378cc455a0702f1786e842558dff6e0e2eb3e1ef3bd365a445e7a574d5655558610efb52aa",
                     "indexes": {
@@ -456,7 +456,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010027040000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
+                            "code": "0xef00010100040200010027ff0000000080000360003560005260206000615000f96000f76008556020f76005556040f760095561201560015500",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x08": "0x0400",
@@ -466,24 +466,24 @@
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000046001600052600060206000611000f800",
+                            "code": "0xef00010100040200010010ff000000008000046001600052600060206000611000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000005000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001003f030001004d040000000080000460016000350160005263cc12ea7e606052602060006000356000ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003a040000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
+                            "code": "0xef0001010004020001003f0300010000004dff0000000080000460016000350160005263cc12ea7e606052600060206000600035ec003d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fdef0001010004020001003aff0000000080000460016000350160005261ca1160605260206000615000f93d15e1000c6060600060203e60606020fd6001600035016020525b60405260606020fd",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02f92c9b",
+                            "balance": "0x02f8c09b",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5d4b6c0a6",
+                            "balance": "0x3635c9adc5d4b828a6",
                             "code": "0x",
                             "storage": {}
                         }
@@ -507,11 +507,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbc407ebaef4722d049acef42dc1d8d678e2ac4d6f2d150f6df8c91b59ce93f66",
+            "hash": "0x7f56d5d73a5a06bef948f0d783cfd09e035cdd977fd8092f3a1058131d0bfea0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EOFCREATE handles msg depth limit correctly (1024).\n    NOTE: due to block gas limit and the 63/64th rule this limit is unlikely to be hit\n          on mainnet.\n    NOTE: See `tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py::test_eof_calls_msg_depth`\n          for more explanations and comments. Most notable deviation from that test is that here\n          calls and `EOFCREATE`s alternate in order to reach the max depth. `who_fails` decides\n          whether the failing depth 1024 will be on a call or on an `EOFCREATE` to happen.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L639",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L634",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

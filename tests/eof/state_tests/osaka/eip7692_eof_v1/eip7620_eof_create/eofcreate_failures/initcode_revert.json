@@ -20,7 +20,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010026030001003c04000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef0001010004020001002904000000008000027f0000000000000000000000000000000000000000000000000000000008c379a06000526004601cfd",
+                "code": "0xef000101000402000100260300010000003cff000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef00010100040200010029ff000000008000027f0000000000000000000000000000000000000000000000000000000008c379a06000526004601cfd",
                 "storage": {}
             }
         },
@@ -43,7 +43,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7bbf2a83dc3ed5c456ad0cb04345e906b20afe9483955d94b0eca6a4a20e26f7",
+                    "hash": "0xf1935102d6a75a6877f72b7f01e3c61d53d0621d1b9df2c2e031d4e96a7bacf8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000100080801ba00a827f57dab1e27137696202f240cb95cfc25acf2f077f6b32a7ca3ac039baf0a055fdd3269172368d880a16fa4192049edd5211d8cbb1d5222a0a77b11174d574",
                     "indexes": {
@@ -55,7 +55,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010026030001003c04000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef0001010004020001002904000000008000027f0000000000000000000000000000000000000000000000000000000008c379a06000526004601cfd",
+                            "code": "0xef000101000402000100260300010000003cff000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef00010100040200010029ff000000008000027f0000000000000000000000000000000000000000000000000000000008c379a06000526004601cfd",
                             "storage": {
                                 "0x01": "0x2015",
                                 "0x06": "0x08c379a0",
@@ -64,13 +64,13 @@
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0590d9",
+                            "balance": "0x0590b5",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de8d7282",
+                            "balance": "0x3635c9adc5de8d72fa",
                             "code": "0x",
                             "storage": {}
                         }
@@ -94,11 +94,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5a0de4f2c1f587208c9f3b83dfee06fed0dcac0c6f93d5f38e509cbbca0ebed7",
+            "hash": "0x2289c7fea22e1c6d42292b92f7bf897438a6ca1f18ca1be4923f1b859480bbfc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies proper handling of REVERT in initcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L43",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L43",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -125,7 +125,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010026030001003c04000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef0001010004020001002904000000008000027f000000000000000000000000000000000000000000000000000000000000000060005260006020fd",
+                "code": "0xef000101000402000100260300010000003cff000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef00010100040200010029ff000000008000027f000000000000000000000000000000000000000000000000000000000000000060005260006020fd",
                 "storage": {}
             }
         },
@@ -148,7 +148,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2c5f11dec0f07c692a4fc711cbeec1713626662f9809d3fda3437e6c9df9c61d",
+                    "hash": "0x2c70e9291e4b3fb48c3ab0d6a59ed995b4d6fab9ced2e15c2cc802677732bad9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a8398968094000000000000000000000000000000000000100080801ba00a827f57dab1e27137696202f240cb95cfc25acf2f077f6b32a7ca3ac039baf0a055fdd3269172368d880a16fa4192049edd5211d8cbb1d5222a0a77b11174d574",
                     "indexes": {
@@ -160,20 +160,20 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010026030001003c04000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef0001010004020001002904000000008000027f000000000000000000000000000000000000000000000000000000000000000060005260006020fd",
+                            "code": "0xef000101000402000100260300010000003cff000000008000046000600060006000ec006003553d6007553d60003d6020033e60005160065561201560015500ef00010100040200010029ff000000008000027f000000000000000000000000000000000000000000000000000000000000000060005260006020fd",
                             "storage": {
                                 "0x01": "0x2015"
                             }
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03be68",
+                            "balance": "0x03be44",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de938550",
+                            "balance": "0x3635c9adc5de9385c8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -197,11 +197,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x55186f1ccd0490e5b7de0f7abef4157a3246e3e5cfe4687fa6f0170ff84af00f",
+            "hash": "0x122bd9d31aa7a48f246c1714243bddda1396d827d9adc44629ed47e72a5b6e07",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nVerifies proper handling of REVERT in initcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L43",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L43",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

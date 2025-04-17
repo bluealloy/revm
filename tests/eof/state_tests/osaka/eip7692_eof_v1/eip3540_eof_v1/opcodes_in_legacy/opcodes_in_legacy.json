@@ -96,9 +96,9 @@
         "_info": {
             "hash": "0xc81030bf67bbe985f9278e48a60f322f4608c48dd091086ab66610d7d70991d8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -201,9 +201,9 @@
         "_info": {
             "hash": "0x267f9991e9739163f14e7f6cba874af6da81b7b51f6b82bb37dfc830abab127c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -306,9 +306,9 @@
         "_info": {
             "hash": "0xcb67553063620bf27cdef3234ee060a92d2c470b20d104feb60a19a9f2210d37",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -411,9 +411,9 @@
         "_info": {
             "hash": "0xf5b406f9fb215dafb374a79d3f37e879321b370d88c00677f3c556dd99ca124d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -516,9 +516,9 @@
         "_info": {
             "hash": "0xc5bd784e98663cb5882e11419e19bcb6a352ed221d68e2d539c1668375539f95",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -621,9 +621,9 @@
         "_info": {
             "hash": "0x051545a894d1ad2034322b34ad747b21e47ed5c1db9bb7344b032bde99d5eeab",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -726,9 +726,9 @@
         "_info": {
             "hash": "0x14769b276997be170273eb889cb917bd81348c9d6752265a9270ca31183d559b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -831,9 +831,9 @@
         "_info": {
             "hash": "0x77e70ed7a15fbd61934b65037c35f5c7acd0cbc71bca544aae497997dee9cbfc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -936,9 +936,9 @@
         "_info": {
             "hash": "0x43731267657ea9462a7c62dba70752663f37e826f48f3af21883d7d148cf2515",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1041,9 +1041,9 @@
         "_info": {
             "hash": "0xd7c3492f1b144471e194e1f06a6188f431ebbf9867b0f43d1aac9636946e7fb0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1146,9 +1146,9 @@
         "_info": {
             "hash": "0x306731cb8b93f42cf6c4867633a5c322e1bd78f38994e828ecef7443cc9b04a3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1251,9 +1251,9 @@
         "_info": {
             "hash": "0xb4141deca506814a00b05eaa825187794f5ae81ee5f74af3552c6a187a8e9499",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1356,15 +1356,15 @@
         "_info": {
             "hash": "0x6f2ddb3928d793a8f26b5412ff95730816d881a55cb800987a5804ec409d861c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
         }
     },
-    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py::test_opcodes_in_legacy[fork_Osaka-state_test-RETURNCONTRACT]": {
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py::test_opcodes_in_legacy[fork_Osaka-state_test-RETURNCODE]": {
         "env": {
             "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
             "currentGasLimit": "0x016345785d8a0000",
@@ -1461,9 +1461,9 @@
         "_info": {
             "hash": "0x32b18f34fcbe9a1570572268d86e8316d6fbc681816d77d7b66a84c8ea5415a7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1566,9 +1566,9 @@
         "_info": {
             "hash": "0xa8b54ed8c43c5f990e45de299159b273083ede14b12645809eee8383c2fb6b81",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1671,9 +1671,9 @@
         "_info": {
             "hash": "0x1904216d1f5e37f7deabb661d181c54f7fbfc312b34de2a4e290281236ae64d4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1776,9 +1776,9 @@
         "_info": {
             "hash": "0x4f6ca398d54d6249b4d2bfe220b46bbf0bd4b9f86a0856f3b356d6d3cb67a858",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"
@@ -1881,9 +1881,9 @@
         "_info": {
             "hash": "0x957fe5cddc68c8f5c553a29c39deb80c7895cf4c8df6b7afa35175b7314b7672",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest all EOF only opcodes in legacy contracts and expects failure.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_opcodes_in_legacy.py#L56",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7692.md",
             "reference-spec-version": "f0e7661ee0d16e612e0931ec88b4c9f208e9d513"

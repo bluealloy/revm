@@ -1,0 +1,186 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_callf_validate_outputs[fork_Osaka-state_test_from_eof_test-stack_height_2]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000402000100060300010000002bff0000000080000260006000ee00ef000101000c020003000400060002ff000000008000010001000202010000e30001005f5fe30002e450e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x793eba4897bebbdf131cb3641d9cdfb1dfbb673cd126ce42064e81cc35d503ea",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf898800a839896808080b84bef000101000402000100060300010000002bff0000000080000260006000ee00ef000101000c020003000400060002ff000000008000010001000202010000e30001005f5fe30002e450e425a02934e5f042cc02e00b6e6a96ccb3b7e2606438420b946791a22bf2f55f84b24ea04a70716d2dfe2b7b5b768377895391d2e3fd97fb7897a8fc654f82c6fea1b20a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02db4c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef000101000c020003000400060002ff000000008000010001000202010000e30001005f5fe30002e450e4",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de967a58",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xfe0ce0f21542fcf81dd3da40e8ade9e711295efa5197c04f35dfd8b2f347b0b2",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest CALLF instruction when calling a function returning more outputs than expected.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L824",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
+            "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_callf_validate_outputs[fork_Osaka-state_test_from_eof_test-stack_height_3]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000402000100060300010000002cff0000000080000260006000ee00ef000101000c020003000400070002ff000000008000010001000302010000e30001005f5f5fe30002e450e4"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xfddf0a437d15de572d0f38cf5aca70ecd8d716d7a84bcd304ab819897aeb0077",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf899800a839896808080b84cef000101000402000100060300010000002cff0000000080000260006000ee00ef000101000c020003000400070002ff000000008000010001000302010000e30001005f5f5fe30002e450e425a01312a7355eb0fc6177c25abf8f33420e6d91081ac100b80d8dd80899b4af67e6a0761b795b41d4081e070ad2f8a99c622a6e01229fbf66e74e9e77c7e6d3e33645",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0276a2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97c9e4",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x21d27c53c17784730ade57eb05ba94f3ef09f724b9559b927297f16ffaa02730",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest CALLF instruction when calling a function returning more outputs than expected.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L824",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
+            "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
+        }
+    }
+}

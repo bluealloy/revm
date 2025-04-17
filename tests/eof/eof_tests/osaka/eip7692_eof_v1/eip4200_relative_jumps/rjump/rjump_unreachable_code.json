@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_INVALID]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100050400000000800000e00001fefe",
+                "code": "0xef00010100040200010005ff00000000800000e00001fefe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x6509eb2a8febd394e590845f60e3d8bcfdb93d269cbf2c8b707e623496241ee8",
+            "hash": "0x69fdb50b41d9d2149f265f9523469ca0e8ac29eed5ba6e761f1efefb8ea01266",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -26,7 +26,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_PUSH1_0x00]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100060400000000800001e000026000fe",
+                "code": "0xef00010100040200010006ff00000000800001e000026000fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0xbf21c26a674957334a5b64bc8ac280045fefbace75b696f36cdce73f6d277dec",
+            "hash": "0xdcaf0f21c5b8239c8bc0b872975cd7c5a43077ed1a17f0ca72b38b890e7a284b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_PUSH2_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800001e00003610000fe",
+                "code": "0xef00010100040200010007ff00000000800001e00003610000fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,11 +61,11 @@
             }
         },
         "_info": {
-            "hash": "0x0ed7ac76f4070ca0383f947234fc94d9f88eb16b8e9f99a68e3fe6d50bf1fa0a",
+            "hash": "0xec1b7d89ffb130df7a1b1b89d853c21fcc8b0f5d6b07b7943b7ac116e6fdec25",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -74,7 +74,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_RJUMP_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e00003e00000fe",
+                "code": "0xef00010100040200010007ff00000000800000e00003e00000fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -85,11 +85,11 @@
             }
         },
         "_info": {
-            "hash": "0xff27da7ade4b5ef270de35c4d8e85f335b331ba4795a673d879a80754cb1a036",
+            "hash": "0x3c6b2d82bd71788e578ad5609c6c749796bdd4233aef9dfe3cc64e252f71e2ba",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -98,7 +98,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_RJUMP_0xfffd]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e00003e0fffdfe",
+                "code": "0xef00010100040200010007ff00000000800000e00003e0fffdfe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -109,11 +109,11 @@
             }
         },
         "_info": {
-            "hash": "0xd4b8a24ac196ea7547e761fcb81860ee843d6cfa0cdea2fa6f7679fbe9aea303",
+            "hash": "0x6344e3d4c3a7721344f5c6833a754dfca5b7b6727da437dad8490a0009f19455",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -122,7 +122,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_INVALID-unreachable_op_STOP]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100050400000000800000e0000100fe",
+                "code": "0xef00010100040200010005ff00000000800000e0000100fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -133,11 +133,11 @@
             }
         },
         "_info": {
-            "hash": "0x35199a24adee2ebeb88a642d40b2324bcb9d090e2cd7f7258513e58494c4066c",
+            "hash": "0xa670f4760c3623c797d77c6306eed1eafaf6591b1ba7844c75e65d2d6991d6cf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -146,7 +146,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_INVALID]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e00001fee0fffd",
+                "code": "0xef00010100040200010007ff00000000800000e00001fee0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -157,11 +157,11 @@
             }
         },
         "_info": {
-            "hash": "0x1af3cf954ecffbd2cc56b06f3b95a680db4317598049bdcdb5518e737c3e6577",
+            "hash": "0x76a1c45b54b08012a29bda2e20de6a8009bb073a1b0cb68382a95f8b103a939e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -170,7 +170,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_PUSH1_0x00]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100080400000000800001e000026000e0fffd",
+                "code": "0xef00010100040200010008ff00000000800001e000026000e0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -181,11 +181,11 @@
             }
         },
         "_info": {
-            "hash": "0x3cf6aa4f3c02d236c08a60c504918a090e751bb12a1d51e5c97cd84dcce1bf84",
+            "hash": "0x7f8104db0e6bed913eeeb1e66cf14db1d5e0e184b2dd46fbe641fca22cf1820c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -194,7 +194,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_PUSH2_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100090400000000800001e00003610000e0fffd",
+                "code": "0xef00010100040200010009ff00000000800001e00003610000e0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -205,11 +205,11 @@
             }
         },
         "_info": {
-            "hash": "0x7b6c1b5ea8808273d2569e28c96d79ac0f21b487a489ed702e662bc9b06e3913",
+            "hash": "0x562e95dd9488d4c1ac6f0bb22de10587120e416e80617348d97ac313129e30ea",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -218,7 +218,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_RJUMP_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100090400000000800000e00003e00000e0fffd",
+                "code": "0xef00010100040200010009ff00000000800000e00003e00000e0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -229,11 +229,11 @@
             }
         },
         "_info": {
-            "hash": "0xb9b4c9ec25e984f6d80b5b75fa6c3ded22bc828e3129167b47b95fffeb68720a",
+            "hash": "0x4485cc7ddfb25fd1b951dc35fbb9ea6f98f94654883f7e3734908f26495eabf0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -242,7 +242,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_RJUMP_0xfffd]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100090400000000800000e00003e0fffde0fffd",
+                "code": "0xef00010100040200010009ff00000000800000e00003e0fffde0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -253,11 +253,11 @@
             }
         },
         "_info": {
-            "hash": "0xe832283584f3debccba80d33e253793c3d210bc096f69e3e3624bf31db35bfb7",
+            "hash": "0x0fa4b9e1dbea8832b6c8ee601b26e85f54a8157b0c6ed81347b8165c61557094",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -266,7 +266,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_RJUMP_0xfffd-unreachable_op_STOP]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e0000100e0fffd",
+                "code": "0xef00010100040200010007ff00000000800000e0000100e0fffd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -277,11 +277,11 @@
             }
         },
         "_info": {
-            "hash": "0x0bdd33a9f99d548c50336bcf69ed7c81c839167b24431d4efe8e9470abcfcf75",
+            "hash": "0xb32bfdb98a8f3fcf34754f1ce09515b0a3902e8bd05d53c9a5ae33fae38b2f18",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -290,7 +290,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_INVALID]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100050400000000800000e00001fe00",
+                "code": "0xef00010100040200010005ff00000000800000e00001fe00",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -301,11 +301,11 @@
             }
         },
         "_info": {
-            "hash": "0x034f02a7b81e2baeedc62f4dbdb0325df8f6488118991ddcb8250f11eda97ad3",
+            "hash": "0x9429e00b56abc1fda753e6fea38484c6cc157c325eac2df0861378e088a1e256",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -314,7 +314,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_PUSH1_0x00]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100060400000000800001e00002600000",
+                "code": "0xef00010100040200010006ff00000000800001e00002600000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -325,11 +325,11 @@
             }
         },
         "_info": {
-            "hash": "0xb476a23631d6fff62cfb133779d9b13e2619e91ffb04feea50108ec253be7543",
+            "hash": "0xfd1acb50130acca772b1684cc8f079f045a06bad706d5edff888aaf301c299ae",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -338,7 +338,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_PUSH2_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800001e0000361000000",
+                "code": "0xef00010100040200010007ff00000000800001e0000361000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -349,11 +349,11 @@
             }
         },
         "_info": {
-            "hash": "0x7be56084ff45f56120588e0fb334a92e840885b46689fd14eac3c66de8c855a2",
+            "hash": "0xac961f1df8ae28255f6cb57f312235826346bed00ff13ac15e047f8a4971f765",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -362,7 +362,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_RJUMP_0x0000]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e00003e0000000",
+                "code": "0xef00010100040200010007ff00000000800000e00003e0000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -373,11 +373,11 @@
             }
         },
         "_info": {
-            "hash": "0xfcc0dcf1f079b633f31c9fa83b0763ef784b25dc75894b6d3a44a86e78da9dd2",
+            "hash": "0xcbbc0388e967de113488f1af3f7dfed655e89c8c22ca9f0ca72affbe5b64f4c8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -386,7 +386,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_RJUMP_0xfffd]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100070400000000800000e00003e0fffd00",
+                "code": "0xef00010100040200010007ff00000000800000e00003e0fffd00",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -397,11 +397,11 @@
             }
         },
         "_info": {
-            "hash": "0x5251d9ee4e4984873f9077c6725044a9f7618018fc13904d8ac7176c00703aa3",
+            "hash": "0x7124016021b9cd751abfb2e71f226a1907cec497d82bbff6975d9fce59a5abfa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -410,7 +410,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_unreachable_code[fork_Osaka-eof_test-terminating_op_STOP-unreachable_op_STOP]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100050400000000800000e000010000",
+                "code": "0xef00010100040200010005ff00000000800000e000010000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -421,11 +421,11 @@
             }
         },
         "_info": {
-            "hash": "0x7f9c013312e6d22b63a312c4c41700f1c7d2c2f2ed1d93bf1c444b0d20e54416",
+            "hash": "0xcc78badeacca4805cc0021497c6ab9e8ee04502a242774f245ffb9606c2a1529",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing instructions skipped by RJUMP.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L1020",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

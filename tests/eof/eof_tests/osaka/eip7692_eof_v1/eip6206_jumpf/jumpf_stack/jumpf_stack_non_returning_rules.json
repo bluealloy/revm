@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-0-ti-0]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030003000704000000008000000080000000800002e50001e5000261201560015500",
+                "code": "0xef000101000c020003000300030007ff000000008000000080000000800002e50001e5000261201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -12,11 +12,11 @@
             }
         },
         "_info": {
-            "hash": "0x2de85e99460dd378af028f42e80ae3f4e34072852bb88cae2e587b08a1d3463d",
+            "hash": "0x2398fbbd2502c034fd6ec9a11493e7a19bd1aa8583a778cb2fa1430043fcd3f6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -25,7 +25,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-0-ti-2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030003000904000000008000000080000002800002e50001e50002505061201560015500",
+                "code": "0xef000101000c020003000300030009ff000000008000000080000002800000e50001e50002505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -36,11 +36,11 @@
             }
         },
         "_info": {
-            "hash": "0x2473b48e8d92155cc03d95cb0e18627e44ae4e7e61d883dc6e9867ca8c09c7a3",
+            "hash": "0xb9cac200b97912b1c079064937f72e6c207411fe68e2fccfa6b2ccdffba6329d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -49,7 +49,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-0-ti-4]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030003000b04000000008000000080000004800004e50001e500025050505061201560015500",
+                "code": "0xef000101000c02000300030003000bff000000008000000080000004800000e50001e500025050505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -60,11 +60,11 @@
             }
         },
         "_info": {
-            "hash": "0x0b95d46aed8186479e248d2cf711f595ff38ac64315c24f4c60ee9fc35530d18",
+            "hash": "0x36ab330e87b753be74c015b4f1cc88e631f9656610bdd9dde723d5ad0536c342",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -73,7 +73,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-2-ti-0]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030005000704000000008000000080000200800002e500015f5fe5000261201560015500",
+                "code": "0xef000101000c020003000300050007ff000000008000000080000200800002e500015f5fe5000261201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -83,11 +83,11 @@
             }
         },
         "_info": {
-            "hash": "0x743c74b26b3e7d5a53cae78c9b31a2094488c9a18ad42062981b23b029d63c60",
+            "hash": "0xf74afd99cc5eb9be7d69bca2881deea24a9cfcda7d550dcf1090cd2e6db4dbf3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -96,7 +96,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-2-ti-2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030005000904000000008000000080000202800002e500015f5fe50002505061201560015500",
+                "code": "0xef000101000c020003000300050009ff000000008000000080000202800000e500015f5fe50002505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -106,11 +106,11 @@
             }
         },
         "_info": {
-            "hash": "0xdd9203ee653eb5b5dc90682c098734120bdab35fd6bec7533fcc0bc47d7c1160",
+            "hash": "0x1058e0d47e27b3c60d4abb04f30a2e67bc1b962432d60fee6f3731b82c79e14d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -119,7 +119,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-2-ti-4]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030005000b04000000008000000080000204800004e500015f5fe500025050505061201560015500",
+                "code": "0xef000101000c02000300030005000bff000000008000000080000204800000e500015f5fe500025050505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -130,11 +130,11 @@
             }
         },
         "_info": {
-            "hash": "0xb8834bf26024620f4c33b890a0859e8836312ff1aeadb097cb779d2e1d675f6d",
+            "hash": "0x0557faeb748c2ff50e0c72b15950c93956fee683f81854f0033f936ace5946b3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -143,7 +143,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-4-ti-0]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030007000704000000008000000080000400800002e500015f5f5f5fe5000261201560015500",
+                "code": "0xef000101000c020003000300070007ff000000008000000080000400800002e500015f5f5f5fe5000261201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -153,11 +153,11 @@
             }
         },
         "_info": {
-            "hash": "0x380f9d4c31f07a3cd987c5fef355d234a064dc3a03c43c0f71c809bdd900f095",
+            "hash": "0x88850b70fcd120fab6905a5d20751469db2d9f059fc6af8dd0a20a51ec57f13c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -166,7 +166,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-4-ti-2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030007000904000000008000000080000402800002e500015f5f5f5fe50002505061201560015500",
+                "code": "0xef000101000c020003000300070009ff000000008000000080000402800000e500015f5f5f5fe50002505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -176,11 +176,11 @@
             }
         },
         "_info": {
-            "hash": "0xaaf70a1910186affbf54afeb7bad67baec782c89b020bf098d766bb6d1742179",
+            "hash": "0xed572e2e72f98cb910b640f37ef1653f282abe3e82f209819b865aba9267d74d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -189,7 +189,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_non_returning_rules[fork_Osaka-eof_test-h-4-ti-4]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000c02000300030007000b04000000008000000080000404800004e500015f5f5f5fe500025050505061201560015500",
+                "code": "0xef000101000c02000300030007000bff000000008000000080000404800000e500015f5f5f5fe500025050505061201560015500",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -199,11 +199,11 @@
             }
         },
         "_info": {
-            "hash": "0x461b07fed6cc0e847e9f6a04ad4e9450acdc3276ee0f4464725c5f852a811db6",
+            "hash": "0xabe357c940c365e377a6e877092298fa28bfefd729b4ff38667efc8657865df5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Non-returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L20",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

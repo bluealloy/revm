@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CODE-section_size_HUGE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000180000300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001800003000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x110479cb2e9413827f4f04b2fb153f0b56de30a3bb1267edd8b66b367ba4a8e0",
+            "hash": "0x5c8a34facaf89da6b41a5de9fb889abd452e0817b79be867885cce458fa57f5f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -26,7 +26,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CODE-section_size_MAX-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001ffff0300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001ffff03000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0x15e4740a9868e234c7317991dab6ef85a3a4e6439e60c2193e1a96d0a491ec28",
+            "hash": "0x2b484bafacea41cb97d550346e2035ec1604c4b07ee8893d80d55540d82cae7d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CODE-section_size_OVERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100640300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001006403000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,11 +61,11 @@
             }
         },
         "_info": {
-            "hash": "0xd23fa27b88cd04131e7960a36ab629d955d8bff84f75d777067245c387cfcda0",
+            "hash": "0x65bd0582ff705c1cd07c26285b9519da4fb41f5bb69a523711e6e397648c7dbb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -74,7 +74,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CODE-section_size_UNDERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100020300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000203000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -85,11 +85,11 @@
             }
         },
         "_info": {
-            "hash": "0x8e442215a3251c05e3331977237cd2b92d1250ae127ae45c9ab9cab36c0380be",
+            "hash": "0xce401b272850ec4fef595da6179541e6b1e2f0dec23f2310a305484ac55ed473",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -98,7 +98,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CODE-section_size_ZERO-exception_EOFException.ZERO_SECTION_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100000300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000003000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -109,11 +109,59 @@
             }
         },
         "_info": {
-            "hash": "0x26956df5d27f54bb73c3df2670accc6ae52fcb8f3894cc6c7262175db026cbbb",
+            "hash": "0x83c381c4fb432eaa889d6ce95302ada552e2c56872753c1d9666b7b2d538af38",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_CONTAINER_BIG-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000d03000100010000ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xc3bd98828b7640cd7aae20043a6c0f0f9cedb5e99e4095d64fabfed748255332",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
+            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_CONTAINER_MAX-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010004020001000d030001ffffffffff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xf4bd524845d5673474d6ef27b38a44ba3272a962157233d54ad9da7f3c77c38d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -122,7 +170,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_HUGE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300018000040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000d03000100008000ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -133,35 +181,11 @@
             }
         },
         "_info": {
-            "hash": "0x525b4fee5eebe6000f2670f5bfdf8f17630e0b7726833905323f65026416ab8b",
+            "hash": "0x3a50329c2b711824459cf513c936cb7f90d8c4c34829485979b02e552737c53c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
-            "fixture-format": "eof_test",
-            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
-            "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
-        }
-    },
-    "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_MAX-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
-        "vectors": {
-            "0": {
-                "code": "0xef0001010004020001000d030001ffff040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
-                "containerKind": "RUNTIME",
-                "results": {
-                    "Osaka": {
-                        "exception": "EOFException.INVALID_SECTION_BODIES_SIZE",
-                        "result": false
-                    }
-                }
-            }
-        },
-        "_info": {
-            "hash": "0xc5d4d2d9d1b0ace4b67aed6e8b885e8313d2a75dbd379ef865e992b1a16cf98a",
-            "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -170,7 +194,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_OVERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010064040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000d03000100000064ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -181,11 +205,11 @@
             }
         },
         "_info": {
-            "hash": "0x7411b322362f676fb8d6e47e32c3ad1c2aedacdeb20f43c1344eb1ee44e59a62",
+            "hash": "0xef9b4d4886fe31db7a16e1524c5f23aa08d84bdb1579ac7f71ea0188406b324e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -194,7 +218,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_UNDERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010002040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000d03000100000002ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -205,11 +229,11 @@
             }
         },
         "_info": {
-            "hash": "0x8870f342baf537bf4f30ecf5dc495a1b9fdff2c7d48350ad849aa716ed2e264f",
+            "hash": "0xe43d9be8554ef640e7a9b5aedc9087a69b6ddc1d846bce2c5bc8720e29ba4590",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -218,7 +242,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_CONTAINER-section_size_ZERO-exception_EOFException.ZERO_SECTION_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010000040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000d03000100000000ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -229,11 +253,11 @@
             }
         },
         "_info": {
-            "hash": "0x9f877877a1eded685165b5284e76212e3f2ede8e74e955aec072bd6374001c8e",
+            "hash": "0x6789faba7919bed7dbc00ee23bd794383cee6657255347b18652847a548e6dc5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -242,7 +266,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_HUGE-exception_EOFException.TOPLEVEL_CONTAINER_TRUNCATED]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010032048000000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000daaa",
+                "code": "0xef0001010004020001000d03000100000034ff8000000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000daaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -253,11 +277,11 @@
             }
         },
         "_info": {
-            "hash": "0x8eda73cfe0a02dace418d92f839e8b1d7b4d93fc62427b536723805359b66f6b",
+            "hash": "0x7fc71fc1167fc565f8fe582d9fd69b1a56ffb385929914b41601625d7b02282d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -266,7 +290,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_MAX-exception_EOFException.TOPLEVEL_CONTAINER_TRUNCATED]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d030001003204ffff000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000daaa",
+                "code": "0xef0001010004020001000d03000100000034ffffff000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000daaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -277,11 +301,11 @@
             }
         },
         "_info": {
-            "hash": "0x2282e798f0a97eb872d3358f81ce11d2cdc0db671ac5420642402156acb7e9ce",
+            "hash": "0x2f4bf40f3d79f2f5c28b99cc4f48ba5fe0d2da98578303163abc2363e3b00a4b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -290,7 +314,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_NORMAL-exception_None]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010032040003000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010004020001000d03000100000034ff0003000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -300,11 +324,11 @@
             }
         },
         "_info": {
-            "hash": "0x71bb9d2970dd2394e4dd91435762cb5b1c96ab0a738d8c467c1d294f3959be87",
+            "hash": "0x55b63381c7a418c303ebed63fa711539ba4f277c4dee5fc291247bccf3b96fb9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -313,7 +337,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_OVERSIZE-exception_EOFException.TOPLEVEL_CONTAINER_TRUNCATED]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010032040064000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000daaa",
+                "code": "0xef0001010004020001000d03000100000034ff0064000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000daaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -324,11 +348,11 @@
             }
         },
         "_info": {
-            "hash": "0x3c03948129a611107c2a5eeed60c06586e51431a8da6376f9e18dee4d00093f2",
+            "hash": "0x8a95127b26bec5be4df442d61798a940e0de590f4dfd118ec6feafc9e532ef6a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -337,7 +361,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_UNDERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010032040002000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000daaa",
+                "code": "0xef0001010004020001000d03000100000034ff0002000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000daaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -348,11 +372,11 @@
             }
         },
         "_info": {
-            "hash": "0xd871f45a2ad15d3eb06d65bc898f541658ee32d1823ca47711d8903ec85e716c",
+            "hash": "0x0193e9fb372ca643a0cd4ba3bc77b58fc0a5e3201888ec1bf6398573911db1b2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -361,7 +385,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_DATA-section_size_ZERO-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000d0300010032040000000080000430506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000daaa",
+                "code": "0xef0001010004020001000d03000100000034ff0000000080000430506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000daaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -372,11 +396,11 @@
             }
         },
         "_info": {
-            "hash": "0x55643985835eb3f18acecf7e3fa3986a038cbbf4b375fb7f940a4f277c58a1f0",
+            "hash": "0x35fed89dc9b0b27335e07ac0b0d7d59c39f6ce5683ebc5866787a9f074a00062",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -385,7 +409,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_TYPE-section_size_HUGE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001018000020001000d0300010032040003000080000130506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001018000020001000d03000100000034ff0003000080000130506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -396,11 +420,11 @@
             }
         },
         "_info": {
-            "hash": "0x42eb7af91411ab66ed7f4a9dc7ccb95b9e959cc76abb4668f5cb97c6565ae85c",
+            "hash": "0x010c371302d3e6d9a01f3e4a7ab9ddc01241eca04b6bbf06ffe9dce784bb4bb8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -409,7 +433,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_TYPE-section_size_OVERSIZE-exception_EOFException.INVALID_SECTION_BODIES_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010064020001000d0300010032040003000080000130506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010064020001000d03000100000034ff0003000080000130506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -420,11 +444,11 @@
             }
         },
         "_info": {
-            "hash": "0x3e412143853ffaa9530cb18ea4d7827c987591a26c1b53ff983fd0c0e3624cc2",
+            "hash": "0x31c8557ecd584b32fb77fd95b58bb1cb826d5c33901520f5df165a5afd8262af",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -433,7 +457,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-section_kind_TYPE-section_size_UNDERSIZE-exception_EOFException.INVALID_TYPE_SECTION_SIZE]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010002020001000d0300010032040003000080000130506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010002020001000d03000100000034ff0003000080000130506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -444,11 +468,11 @@
             }
         },
         "_info": {
-            "hash": "0x0c3d5af469436072c9f96300139632e6f2f5838cb4898eed98cbbd96f204cf62",
+            "hash": "0x184785caf2ef3dc76c1563285ec2140b5ccfa356d0abe0d94c66cce8eae13f77",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -457,7 +481,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-type_size_max]": {
         "vectors": {
             "0": {
-                "code": "0xef000101ffff020001000d0300010032040003000080000130506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef000101ffff020001000d03000100000034ff0003000080000130506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -468,11 +492,11 @@
             }
         },
         "_info": {
-            "hash": "0x675d91343b72c0e422641852022a637916a4c6bf33e5bf70ef3e00a697479500",
+            "hash": "0xa13145a100e764dd47ef130267d2ae86995ba254f65a87fbe5ea6372501962e3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -481,7 +505,7 @@
     "tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py::test_section_size[fork_Osaka-eof_test-type_size_zero]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010000020001000d0300010032040003000080000130506000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef0001010004020001000104000000008000000000aaaa",
+                "code": "0xef0001010000020001000d03000100000034ff0003000080000130506000600060006000ec0000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff000000008000000000aaaa",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -492,11 +516,11 @@
             }
         },
         "_info": {
-            "hash": "0xbbaf789d435db2f914710856e9afa5e5902bf07e04541a035b301ed921bec7d4",
+            "hash": "0xbcf4061e989f4cff41781cfc5bc135734cf9165eb1f0a8223af5df94ff58ff28",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\nTest custom_size is auto, more or less then the actual size of the section.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L35",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest custom_size is auto, more or less than the actual size of the section.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_section_size.py#L37",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"

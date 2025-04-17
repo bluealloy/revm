@@ -20,13 +20,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100270400000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0de00",
+                "code": "0xef00010100040200010027ff00000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0de00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x05",
-                "code": "0xef000101000402000100280400000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0def800",
+                "code": "0xef00010100040200010028ff00000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0def800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -55,7 +55,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xde6bf2b04bd08ff992ac03c24c7c2d169f252f092ebfe751c89c44f0cab5a32d",
+                    "hash": "0xa8ec155faa8aa839ec77409c93582e6ead6f4d071c7f001b932318c8d1c0b7e7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808026a022e15292a00e41f8e5692b7018a26543a1bc62a2ee1d65f2a8d2926078549c0aa03299f97c12681fbd63aa5c6c8f09cefd5f89f8b39789fdedb040435c37e1fd8d",
                     "indexes": {
@@ -67,13 +67,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100270400000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0de00",
+                            "code": "0xef00010100040200010027ff00000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0de00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x03",
-                            "code": "0xef000101000402000100280400000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0def800",
+                            "code": "0xef00010100040200010028ff00000000800005600060006000640decafc0def860015f5f730000000000000000000000000000000decafc0def800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -123,11 +123,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb62bacca10a0e18e6e03033d57d9e6a861fe650e1c99f8960e8ab8e634dd68d0",
+            "hash": "0x2e41e7986ebc189add8716a18b19ed5dc330d64b93266cdb679ea16f562cd665",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EXTCALL to a non-existent account after another EXT*CALL has called it and not\n    created it.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -154,13 +154,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010025040000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0de00",
+                "code": "0xef00010100040200010025ff0000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0de00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x05",
-                "code": "0xef00010100040200010026040000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0def800",
+                "code": "0xef00010100040200010026ff0000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0def800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -189,7 +189,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5dc2d224da81b77ef6228db7ac31e525df55bf9ede3d1eb65240d97268c619f9",
+                    "hash": "0xfa4991351d4852f5e929c07859312b515c7150a5369ff3b397b8edc3eda796b2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808026a022e15292a00e41f8e5692b7018a26543a1bc62a2ee1d65f2a8d2926078549c0aa03299f97c12681fbd63aa5c6c8f09cefd5f89f8b39789fdedb040435c37e1fd8d",
                     "indexes": {
@@ -201,13 +201,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010025040000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0de00",
+                            "code": "0xef00010100040200010025ff0000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0de00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x03",
-                            "code": "0xef00010100040200010026040000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0def800",
+                            "code": "0xef00010100040200010026ff0000000080000560006000640decafc0def960015f5f730000000000000000000000000000000decafc0def800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -257,11 +257,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xcc70523564ea66dd17543e2ed40f9e27508c5a28c8c662f55e36b369028577f1",
+            "hash": "0x0a7dc673c9bc8203e92928d4aa1e23596655b481de0711a0b9ba32947ede50d9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EXTCALL to a non-existent account after another EXT*CALL has called it and not\n    created it.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -288,13 +288,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010025040000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0de00",
+                "code": "0xef00010100040200010025ff0000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0de00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x05",
-                "code": "0xef00010100040200010026040000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0def800",
+                "code": "0xef00010100040200010026ff0000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0def800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -323,7 +323,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x07626f79e03a6c36de2c31ba96f195db1f9c3ad93d8ac06257df4999b5b66ea1",
+                    "hash": "0x108ba15d4fc83b8367ba74d90e792130a6e2a95236cecd7a4b93784c875536a6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808026a022e15292a00e41f8e5692b7018a26543a1bc62a2ee1d65f2a8d2926078549c0aa03299f97c12681fbd63aa5c6c8f09cefd5f89f8b39789fdedb040435c37e1fd8d",
                     "indexes": {
@@ -335,13 +335,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010025040000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0de00",
+                            "code": "0xef00010100040200010025ff0000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0de00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x03",
-                            "code": "0xef00010100040200010026040000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0def800",
+                            "code": "0xef00010100040200010026ff0000000080000560006000640decafc0defb60015f5f730000000000000000000000000000000decafc0def800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -391,11 +391,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x577cf4f7f2a0c488e01e76b402937997bbc6b8291d151f29a3775b58eabe0c72",
+            "hash": "0x7e8b42fd90b3ba8eccd52ced507d8af5c532425117e113d159e26a17243d56b9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EXTCALL to a non-existent account after another EXT*CALL has called it and not\n    created it.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L191",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"

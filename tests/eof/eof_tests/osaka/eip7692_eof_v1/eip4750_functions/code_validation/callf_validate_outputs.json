@@ -1,0 +1,49 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_callf_validate_outputs[fork_Osaka-eof_test-stack_height_2]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400060002ff000000008000010001000202010000e30001005f5fe30002e450e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "result": true
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xa9b2c5fd39531d862fe40cac577b7a6f7051ea09a7d3cbdaaad0278227f93372",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest CALLF instruction when calling a function returning more outputs than expected.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L824",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
+            "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py::test_callf_validate_outputs[fork_Osaka-eof_test-stack_height_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400070002ff000000008000010001000302010000e30001005f5f5fe30002e450e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_HIGHER_THAN_OUTPUTS",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x2c2be1b4c9a0f8f3a9cc642fa025cf015be5652b0e4875ef89602db059743606",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest CALLF instruction when calling a function returning more outputs than expected.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L824",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
+            "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
+        }
+    }
+}

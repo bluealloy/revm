@@ -20,7 +20,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010009040000000080000263baddcafe60ef5500",
+                "code": "0xef00010100040200010009ff0000000080000263baddcafe60ef5500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x1a1fd92546424ee7324acdfabb6aec46d0b2bbd82cb4f8a329fde0cfb1d5d1cc",
+                    "hash": "0x2e3a7fba3a71e5431e793e9900a8b1cd62e99883599d370d720d1ba116b42efb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a830f424094000000000000000000000000000000000000110080801ba03273c8c217cceff9682d10afad5a21288b05d20e93b4f152c3d124ad57b3521da031b0098e68471a3513d9e7100a79a434dd46565b9787ddf72bbae469999d9c25",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010009040000000080000263baddcafe60ef5500",
+                            "code": "0xef00010100040200010009ff0000000080000263baddcafe60ef5500",
                             "storage": {
                                 "0xef": "0xbaddcafe"
                             }
@@ -106,11 +106,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6dc537b7177983c1b3df3d9d10681241b43f685669edc342065c851587427bb5",
+            "hash": "0xb216baa49bf850ddf09e9871883009bee08b6ff84402600e2099eb5c32fa239e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest simple contracts that are expected to succeed on call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_execution.py#L21",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_execution.py#L21",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"
@@ -137,7 +137,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100080400400000800002d10020d10000550000000000000000000000000000000000000000000000000000000000000000ef00000000000000000000000000000000000000000000000000000000baddcafe",
+                "code": "0xef00010100040200010008ff00400000800002d10020d10000550000000000000000000000000000000000000000000000000000000000000000ef00000000000000000000000000000000000000000000000000000000baddcafe",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -166,7 +166,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xabc6a03d2681d1e236f7ab782b12a3025fe1b6d407894bb134f735ae6e1a4db3",
+                    "hash": "0xe1d3f4d68b84bd2625111e3bd2e0b60019394368ea88e23bb5851fc9699fd6e0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a830f424094000000000000000000000000000000000000110080801ba03273c8c217cceff9682d10afad5a21288b05d20e93b4f152c3d124ad57b3521da031b0098e68471a3513d9e7100a79a434dd46565b9787ddf72bbae469999d9c25",
                     "indexes": {
@@ -178,7 +178,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100080400400000800002d10020d10000550000000000000000000000000000000000000000000000000000000000000000ef00000000000000000000000000000000000000000000000000000000baddcafe",
+                            "code": "0xef00010100040200010008ff00400000800002d10020d10000550000000000000000000000000000000000000000000000000000000000000000ef00000000000000000000000000000000000000000000000000000000baddcafe",
                             "storage": {
                                 "0xef": "0xbaddcafe"
                             }
@@ -223,11 +223,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa671b7e41f17aafe93b0f0426d6feaca6f0dc72ee9181775275dd3f62cdccfeb",
+            "hash": "0x067110e9c1ff0bf04cc97a3369af4ea6dffbcc7a66dc104624e6afaec80dab98",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest simple contracts that are expected to succeed on call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_execution.py#L21",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip3540_eof_v1/test_execution.py#L21",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "8dcb0a8c1c0102c87224308028632cc986a61183"

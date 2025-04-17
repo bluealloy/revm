@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py::test_jumpf_way_too_large[fork_Osaka-eof_test]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100030400000000800000e5ffff",
+                "code": "0xef00010100040200010003ff00000000800000e5ffff",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0xdf8e8a57f833bbedf2e16594892ca17d168d90ec03af538150a874709fac9b63",
+            "hash": "0x337f729d41583a273b21384a23487a16c77ae80574e7dcb8b6ed0b48d3d8d3ff",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF jumping to uint64.MAX.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L283",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L283",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010034040000000080000260006000ee00ef000101000402000100010400200000800001d1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "0xef0001010004020001000603000100000034ff0000000080000260006000ee00ef00010100040200010001ff00200000800001d1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb0001e59854c48f8b79a4cea920bf1f3c4ea077fbc6c88916e5977e8dcc0572e",
+                    "hash": "0x2c7532cf4586eec2f618a815d23294037ba38039dfb8003c40c1129ec28b641e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf89f800a839896808080b852ef000101000402000100060300010034040000000080000260006000ee00ef000101000402000100010400200000800001d1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff26a091caeb897151288edefe7b6390bde5dee0fad1483866c59d514d1626b90bfed1a04bf1da20c9775f22cd098d29ea81654390f0319bf4084f2ebf6a44b0249740e6",
+                    "txbytes": "0xf8a1800a839896808080b854ef0001010004020001000603000100000034ff0000000080000260006000ee00ef00010100040200010001ff00200000800001d1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25a0d47e6f6656c4eb644cadbfc992329be36c843967f20244a75d8f7c58700fbb28a07500fb5ee4e62fbd2034e3f10efbeb64cada4bba31061aa691ba32f0270012dd",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,13 +48,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027972",
+                            "balance": "0x02798a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97c084",
+                            "balance": "0x3635c9adc5de97c034",
                             "code": "0x",
                             "storage": {}
                         }
@@ -78,11 +78,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xdd4fb2d6c13b42e6a3cede769bffb8a83dbe74b0dde9804445f54d3fbc7bb9cf",
+            "hash": "0x3e8a4bfd5886b4450e076386e6a32afd05df378b6c86b4917eb1604f592cbbe4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
             "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"
@@ -117,7 +117,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010035040000000080000260006000ee00ef000101000402000100020400200000800001d100ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "0xef0001010004020001000603000100000035ff0000000080000260006000ee00ef00010100040200010002ff00200000800001d100ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -126,9 +126,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc382dfd93eb028140de242e475065526e8946ac3b3ff69cc4ba9f64c7653789b",
+                    "hash": "0x14aa773ccd3f56961834fe295d2982a328e04a5f63bef3d76855fe50d871980f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf8a0800a839896808080b853ef000101000402000100060300010035040000000080000260006000ee00ef000101000402000100020400200000800001d100ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25a0ddbde91b6af351268115a7d969046835dbabca96cea33ca25987eab2e1822361a01a2f0fa28180ac18e6ea2b57e76f45ec4ee67f8fa942e425f5ec7bc6eeec3dff",
+                    "txbytes": "0xf8a2800a839896808080b855ef0001010004020001000603000100000035ff0000000080000260006000ee00ef00010100040200010002ff00200000800001d100ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff26a0d3dc299a632475e8a9905761ed789cb86091f9c5fd0d8809152d7ecb655ce6eaa00ddb51787203479ac383f6f077dcaca123fed4701791b4d3f06415f1fdddbf5f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -137,13 +137,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02797e",
+                            "balance": "0x027996",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97c05c",
+                            "balance": "0x3635c9adc5de97c00c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -167,11 +167,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x453d3f1ff9e5247f3d2bba394db527704d81e067057412f69849bc161126de8a",
+            "hash": "0x7f3410635ab0b7da84e61ee7d277de3109cafe79fb960708c757e031a56df6fc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
             "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"
@@ -206,7 +206,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010048040000000080000260006000ee00ef000101000c02000300060002000104002000008000010001000100800000e30001e50002d10000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "0xef0001010004020001000603000100000048ff0000000080000260006000ee00ef000101000c020003000600020001ff002000008000010001000100800000e30001e50002d10000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -215,9 +215,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd012378a69402c00be5b19713a41a4dd31a972634f3c6823d549230f335d0e97",
+                    "hash": "0xe964577822764631505e3c4895e746d4660caaf42763073914a3c9787e839167",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf8b3800a839896808080b866ef000101000402000100060300010048040000000080000260006000ee00ef000101000c02000300060002000104002000008000010001000100800000e30001e50002d10000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25a013425e168774f6d5ec8b9599e1940634de07635fb563e2b626542ecfa050b686a01361bc16fb847714cb923d0afed3cda097a0e95d647ca80c5ad014921a53f4e7",
+                    "txbytes": "0xf8b5800a839896808080b868ef0001010004020001000603000100000048ff0000000080000260006000ee00ef000101000c020003000600020001ff002000008000010001000100800000e30001e50002d10000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25a0ff79b54e2e8f558841b12f40c6fbe89ae55e67a391198f5b849e7a4929afaae8a077cace5d64d2813c42812b79d81c4124369452d5e93dd446b35525e1fac58167",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -226,13 +226,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027bac",
+                            "balance": "0x027bc4",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97b918",
+                            "balance": "0x3635c9adc5de97b8c8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -256,11 +256,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xed4b7d22a6e9f2ac1cb2a2467b0b41439924e9ff66bd22d7cd4a52a45daebb08",
+            "hash": "0xabb3d6b60730e7e451f3bfac8c0878647a509c71167fd5d819d07f3a12b9b846",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for DATALOADN instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7480_data_section/test_code_validation.py#L242",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7480.md",
             "reference-spec-version": "3ee1334ef110420685f1c8ed63e80f9e1766c251"

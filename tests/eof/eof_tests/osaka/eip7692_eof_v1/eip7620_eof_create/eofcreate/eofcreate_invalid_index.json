@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_invalid_index[fork_Osaka-eof_test-0]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b04000000008000046000600060006000ec0000",
+                "code": "0xef0001010004020001000bff000000008000046000600060006000ec0000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,11 +13,11 @@
             }
         },
         "_info": {
-            "hash": "0x9e0c59decbe7f98d7d304389fdd39d54f529bf03ca3fa7df740918c6dabb4bd7",
+            "hash": "0x51394cc8fcd98a10a4429f48b57fd7fb24f46d2c93547d4b62627de921427069",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOFCREATE referring non-existent container section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L608",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L594",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -26,7 +26,7 @@
     "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_invalid_index[fork_Osaka-eof_test-1]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0100ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ec0100ef00010100040200010001ff00000000800000fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0xa823db08367e5f59e137474d8b29dd7a42adc1bac362e1cc44388227c7953b24",
+            "hash": "0x7212dbe93d7ff2f0ffd0ac5fb4b4ef3c92833ea144ba24023e26503913ac9b61",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOFCREATE referring non-existent container section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L608",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L594",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_invalid_index[fork_Osaka-eof_test-255]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ecff00ef000101000402000100010400000000800000fe",
+                "code": "0xef0001010004020001000b03000100000014ff000000008000046000600060006000ecff00ef00010100040200010001ff00000000800000fe",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,11 +61,11 @@
             }
         },
         "_info": {
-            "hash": "0x247e28f77c2ede0979d1c013d5be82cacf128fdf37c3acf554a1b7276ef60304",
+            "hash": "0xe77bb3e2d25b602f3b5811a6f4c550b329b0067247678de10d005a3955fc392a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOFCREATE referring non-existent container section index.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L608",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L594",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

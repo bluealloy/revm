@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000e3"
+                "0xef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff00000000800000e3"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe731e46c0712b5a6bdecbbc891c625cecf20d7578afb4209eb541671e203640e",
+                    "hash": "0x0141bd35fdb58a697ebad07e24ace3497131c62c4a05e85b067c9a46b2d1a819",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87e800a839896808080b2ef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000e326a0464072dc32c8d26bc0877c12efe3ebef192ca910db167b7c8586d6253813edbba014583b7d14191e135b963b5b5a9323dd7f353322d868938a7a4fd4d81770cf1d",
+                    "txbytes": "0xf880800a839896808080b4ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff00000000800000e325a04044b7549be8af0014aa9aefc1791b75e724bd14e459feb0584fa031132b1cbba02ccaec28636fe51c00c8e440d2dcf6b587b6e18700852a570b4292a970a006da",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,13 +48,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027324",
+                            "balance": "0x02733c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d588",
+                            "balance": "0x3635c9adc5de97d538",
                             "code": "0x",
                             "storage": {}
                         }
@@ -78,11 +78,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd3115d112b5ebbf14f589122e42b3823f9686be648d23b3e19d2ecb852a2631d",
+            "hash": "0x0f9d4ab324ccee72f25d2869c09eb9592f6d482fbab72942e5df5cf8426a4755",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L236",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L386",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -117,7 +117,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010015040000000080000260006000ee00ef000101000402000100020400000000800000e300"
+                "0xef0001010004020001000603000100000015ff0000000080000260006000ee00ef00010100040200010002ff00000000800000e300"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -126,9 +126,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x27b5445e777624d3cd1b83a890d5a816fc41ef50a2294df26467efbd35f00587",
+                    "hash": "0x682ec75d0dd4bd37220709f91130c3e9c95322283801377447938f6340d5c4dc",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000402000100060300010015040000000080000260006000ee00ef000101000402000100020400000000800000e30026a060531674e48b195694702dc6b91306fe1a2df9eeaefeb8140d9d94bab7eefb40a03a46c6a97e1f14c48c60f4173aca82fac6f6694e1fc05944c4763add17f76c86",
+                    "txbytes": "0xf881800a839896808080b5ef0001010004020001000603000100000015ff0000000080000260006000ee00ef00010100040200010002ff00000000800000e30026a054446ea2f04b78e241d51f66a9d7aeb968e0be20a476a1231126c6d2e7703eb6a02256391714f1ce9b7504995d5d057bcae0eda7aaf286c9ed5cb91a4002fb9b5e",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -137,13 +137,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027330",
+                            "balance": "0x027348",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d560",
+                            "balance": "0x3635c9adc5de97d510",
                             "code": "0x",
                             "storage": {}
                         }
@@ -167,11 +167,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2e88d55deed4564f4ae95a1b14b2dfd34a2937d234389c10e2fe8fa98e9af9e6",
+            "hash": "0xe316cbe8c6d83241191b8e6105e637ddcd1203ceb38c350bf753ec5d94051716",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L236",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L386",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -206,7 +206,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010029040000000080000260006000ee00ef000101000c020003000600020002040000000080000202010002020100025f5fe3000100e30003e4"
+                "0xef0001010004020001000603000100000029ff0000000080000260006000ee00ef000101000c020003000600020002ff0000000080000202010000020100005f5fe3000100e30003e4"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -215,9 +215,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x970ce21b72eefa420f85e255b4d5f450d5878660b373fff45b840410e17772d1",
+                    "hash": "0xe20d817b58a421b9d17a8ce825def78c999dee25d30a3c7521649e8b2c214858",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf894800a839896808080b847ef000101000402000100060300010029040000000080000260006000ee00ef000101000c020003000600020002040000000080000202010002020100025f5fe3000100e30003e425a01710c6b8cf541b085ec71cd54137f36e02744a0fe0a30495cfc29b9c8c816b50a04d9a45dfbc7621bf9003fdfd27b1055dff2929edb51a1d13399d05b4bdd57296",
+                    "txbytes": "0xf896800a839896808080b849ef0001010004020001000603000100000029ff0000000080000260006000ee00ef000101000c020003000600020002ff0000000080000202010000020100005f5fe3000100e30003e426a019da11fc9381ba21b6ae7ff60d35277b9090c53e1ac538122922aec67961012fa043d176602dd7f1cc8d715a67047e31eedadaaba5d0767102247974f8baf96838",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -226,13 +226,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027642",
+                            "balance": "0x027612",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97cb24",
+                            "balance": "0x3635c9adc5de97cbc4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -256,11 +256,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x61609a98b0849780b738c6bca9c1eba358a5d517d3c3f91eb1ff2492bd660b1f",
+            "hash": "0xd7977618b260564caf1bf7192ea2639eb8a039fdfdec0469a44d8ef08edcd1a3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest cases for CALLF instructions with truncated immediate bytes.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L236",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_code_validation.py#L386",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"

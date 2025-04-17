@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x1a22850ba502c107a4a44065f0bd7606362147942c8392e0a310fb3cca4963e9",
+                    "hash": "0x91097d4154381b5377342dea71d0d6f26a2da0b8cd662124de4e28a4a833d2a7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf880800a83e4e1c094000000000000000000000000000000000000100080a0000000000000000000000000000000000000000000000000000000000000000026a0f886baf241cdf4c82c6783d3b6070a672fac8e2b7c012b4d1099a4576b121455a02c739986a13aa69aacd71ff9b59aa85f10a98c348bbc2c6c5114c0dc503e4812",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                            "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                             "storage": {
                                 "0x00": "0x01"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb13a90a754867244023dfc11cbc4b7e71fc1681a6267b261193cedbe42743feb",
+            "hash": "0x1e297f5ef3cedfa4289aa8b5104817302d60c45454a866f50cf087d88358099e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest fibonacci sequence implementation with recursive CALLF instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -141,7 +141,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                 "storage": {}
             }
         },
@@ -164,7 +164,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa26923f1b14c04ec5268767b5b7b5ba958e5965ebe7aeaee6c5e6aa130bc6018",
+                    "hash": "0xe21c27a8696efca40dadff062135f9f7985ad9ce546db1fc12ab1d3831332a15",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf880800a83e4e1c094000000000000000000000000000000000000100080a0000000000000000000000000000000000000000000000000000000000000000126a041afee865b0a3002caad07d3fa92dc9532534972070ae4c53adcb0abf86b9340a07a616823ff58b577aad75f82d6f9e3eb50d61df6a57d432069b1c0fc2aad2f36",
                     "indexes": {
@@ -176,7 +176,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                            "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                             "storage": {
                                 "0x00": "0x01"
                             }
@@ -219,11 +219,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x56d1a445f562bb0940319ecb7acf46b21af3c72c0389277b5cd23726a327a6ab",
+            "hash": "0xe7e233a3df01893ed1f2149e4b643499079a52c1ad29bbabc8f7fe1255cc181b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest fibonacci sequence implementation with recursive CALLF instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -256,7 +256,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                 "storage": {}
             }
         },
@@ -279,7 +279,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2918b0375cffa78213936a6eb01ab7a5778cb9ef04497fab6c070822085911d8",
+                    "hash": "0x046267e903e880f0089e242e66838ecd60f4b1e589b40db9342f6f59f36c4c7f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf880800a83e4e1c094000000000000000000000000000000000000100080a0000000000000000000000000000000000000000000000000000000000000000d26a0cf2c4e57b79f6bd71b687395591a48aa41f6777420574f7df9d5a7032d145a27a00c4fb90cc13cb0607fff911152b7073461815c60ad15f50dbc68a379b428d2b4",
                     "indexes": {
@@ -291,7 +291,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                            "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                             "storage": {
                                 "0x00": "0xe9"
                             }
@@ -334,11 +334,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5dc8ea1f9306f0fd7fb07b85d9421ca322428037e527b152155f5f6185d0adf6",
+            "hash": "0x9d1a4d71a1032775d3e1f9c8d7e55bd84ab4d03a6c93ce245f88b4e7b715f375",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest fibonacci sequence implementation with recursive CALLF instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
@@ -371,7 +371,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                 "storage": {}
             }
         },
@@ -394,7 +394,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xaab6e938f9972b44a28d5f1de2801717d010e03986a2cebc946fd1cb20ec93a5",
+                    "hash": "0x8f09438bbd0513018536fb7e3b7d74a4497d817c9d473ebff8b17e4f97c4fd0b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf880800a83e4e1c094000000000000000000000000000000000000100080a0000000000000000000000000000000000000000000000000000000000000001b25a008c6dc0fcbc867cde8787b16b5fdb907710c7c51fd3f53042040fdbfe71ed359a011dbbf8118db90cf4b57362a662a10f494d2a9d60d771ca872a92cee6ac4b21f",
                     "indexes": {
@@ -406,7 +406,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010008020002000a001d040000000080000201010004600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
+                            "code": "0xef0001010008020002000a001dff0000000080000201010003600035e300016000550060028111e10004506001e460028103e3000160018203e30001019050e4",
                             "storage": {
                                 "0x00": "0x02ff42"
                             }
@@ -449,11 +449,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6ce130adc226a762254a75922b84dd6355fb8bce383b75b98b3bb3505c34694f",
+            "hash": "0x3082b0b0943a7bd6b3b07cb7a217355f8e46b5d2750cfe5df9ca65350f0dd228",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest fibonacci sequence implementation with recursive CALLF instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L73",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"

@@ -14,7 +14,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -26,13 +26,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60005f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000045f60005f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60005f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001bff000000008000045f60005f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -61,7 +61,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x40ce7e33a96d7c069404a163b76cf870acf2c6e812d37ef8966fca00163b27f8",
+                    "hash": "0x4d6fcabb649c9c046901ba212a3832e09aacdb206e18650db909b59b17fec1af",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -73,19 +73,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60005f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000045f60005f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60005f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001bff000000008000045f60005f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -130,11 +130,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4d30e5a3ed6b7a7f44300f4c0b9eeb09e1ec252a10a146e735e022bf246da56e",
+            "hash": "0x064bd056cb00869268f8f7e939ae1ca82d2ed566cad98087dffded6579c568cd",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -161,13 +161,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001bff000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -196,7 +196,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa9b441856ec6796146382b939ecbb95e28e2d250fb8741344016c4a5d665c346",
+                    "hash": "0x6ca2f09679535e7fff8bc2316107766377f40190dedd8f09ba3d2cd9b9d66fb6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -208,13 +208,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001bff000000008000045f60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -259,11 +259,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa2c1a3d63ef191874582a79a4546254e9ccbd8070f1a433c3c961ffd02cb5a76",
+            "hash": "0x41fdbf3b8030dd937bb67f97aff6281c208aa8789909be09f3ee5bb8c5778d98",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -284,7 +284,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -296,13 +296,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160005f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001bff00000000800004600160005f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160005f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001cff00000000800004600160005f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -331,7 +331,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3f73bfcbde75e18030b6e667a080d612762a759a4bc01c2ce6e88276ed087c32",
+                    "hash": "0x5458fdca16301002a2931f48b239d1d7d9157aee39165f61549415dca85cb27a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -343,19 +343,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160005f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001bff00000000800004600160005f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160005f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001cff00000000800004600160005f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -400,11 +400,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc0c6320cfadc1405404ad09a517314d52f6c9f455e565473bd287d3c74bb6068",
+            "hash": "0xe1003b9aa24ea51f02f726f33bd5206c2b8e331dd1cd510c1e6d90ce3a37dfab",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -431,13 +431,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001bff00000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001cff00000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -466,7 +466,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x75b6201de810665b7b5f63927c85db273e220e032fbdbae361fc61057a4d9ad8",
+                    "hash": "0xf3359b89ad95cd14e3a432874478e66954badf5864aadaa70f3becd7103cf26a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -478,13 +478,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001bff00000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001cff00000000800004600160005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -529,11 +529,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf3ea6b1f5dec26fd4640e35cfe2c38253d19bbfbdd4fdff8a1efb6fcd52c743a",
+            "hash": "0x6b9949aa14e87d84e2ce6bf5629f4fcaa8b35e76073e12cccccc7125b2320375",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -554,7 +554,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -566,13 +566,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60005f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60005f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60005f730000000000000000000000000000000000001000f900",
+                "code": "0xef0001010004020001001bff000000008000035b60005f730000000000000000000000000000000000001000f900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -601,7 +601,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9100e24fbb06f457ff92e49e86269652ceca5716c1b688ab99dbd587f752956e",
+                    "hash": "0xb4afbb1ee6b4a7ab66ed66fffcabb5339bc57b904ca9ac9cf9c031fa1bb342e3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -613,19 +613,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60005f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60005f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60005f730000000000000000000000000000000000001000f900",
+                            "code": "0xef0001010004020001001bff000000008000035b60005f730000000000000000000000000000000000001000f900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -670,11 +670,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8efeb94d5792bd23e27a09d178bbdd07ba2882733da1674f40b3f3cd34072be6",
+            "hash": "0x5a9ced5cfdfedad615f317f463dd8043da5717327b3bfbf5344724bbb64e3dfe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -701,13 +701,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                "code": "0xef0001010004020001001bff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -736,7 +736,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3822c62308488367e8510b244be3b37096adb35a3981ea40da47f18f02db154b",
+                    "hash": "0x8f961529441c9eb8406750383bc7c55ccdb6fb5d4af385778e2be42c4e85c44c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -748,13 +748,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                            "code": "0xef0001010004020001001bff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -799,11 +799,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0911b33f7a7af7f742861dff4a59372d41fa5529a3ac083ec1385e7970cd9e6d",
+            "hash": "0xea7474af15791aa98b5b1f75eb680f53ba5d8365a94ad91b1297a1a1fe5bbdf7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -824,7 +824,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -836,13 +836,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60005f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60005f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60005f730000000000000000000000000000000000001000fb00",
+                "code": "0xef0001010004020001001bff000000008000035b60005f730000000000000000000000000000000000001000fb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -871,7 +871,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf3e520002bbc35e2d5c49cc6d8bb3b8c1b3110fbc793004fab18143f0fd9449b",
+                    "hash": "0x2ed8f0666d0ea73ae35c7547832a4e22d28fe5dbf897f3bb68cbb82d0b6cc786",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -883,19 +883,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60005f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60005f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60005f730000000000000000000000000000000000001000fb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60005f730000000000000000000000000000000000001000fb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -940,11 +940,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6c1e7425b9e9d10b4efe125435d694b8f35623511ab3454053fa2c23dfad1e23",
+            "hash": "0x1011c6c6691fb7f71a226a5d241792f06c3d1b18fc12a2a707de9539a992f06d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -971,13 +971,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                "code": "0xef0001010004020001001bff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -1006,7 +1006,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5cc73d76dd4e8e588575b68c961bc860d7c1cac407db0bca0ce18ea86d733f1d",
+                    "hash": "0x5c93c673b63b48494bcc9e2874c49add0c663d161a4518de1a15d41094bd2bd1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -1018,13 +1018,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60005f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -1069,11 +1069,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4b63007be880f02038845e2a96c2054706206a8f15e11434fe7d69ccc0ff5099",
+            "hash": "0x951f3a8f43fa8c50c5b7a70325a2c5fdccbcfb5903ebcf57b2b3c1661eb73779",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1094,7 +1094,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -1106,13 +1106,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60015f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000045f60015f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60015f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001bff000000008000045f60015f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -1141,7 +1141,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf4d951695ceadabac4c5c783ea59a564acd7d5b649a2139c50d376885d019a84",
+                    "hash": "0xf7da9111e372559ac6cffae0269709711a102d1f9987e317b272d3b8a244d726",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -1153,19 +1153,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60015f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000045f60015f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60015f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001bff000000008000045f60015f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -1210,11 +1210,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3e55257f5f08e737a55a0efa9e404fa80d422977f33b96e0997cd82620c197b7",
+            "hash": "0x3c358217215dfe54f69b344189de6c0be26026c1b9df9ed1064a0711c6ca4476",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1241,13 +1241,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001bff000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -1276,7 +1276,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa445557b95fceac40eb5bfe4411c73afe3152a2b3d3f6c468405167927dc0c38",
+                    "hash": "0x2db58d2e059d38d64faacc005977718f72baeec8a68b2cf5f3064e823390205d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -1288,13 +1288,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001bff000000008000045f60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -1339,11 +1339,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6b347c76ba9c199f7567090e63404c390f881968e3779c711223744990dc6de7",
+            "hash": "0x6d2d34c53ee48b3545258e26d3142e4e4eb886d502511073aaa19a418537e4e0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1364,7 +1364,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -1376,13 +1376,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160015f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001bff00000000800004600160015f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160015f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001cff00000000800004600160015f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -1411,7 +1411,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x20a61f4ff608627ad5d67c30134a9b14a01017c762fd4d5936e136cf5e61c940",
+                    "hash": "0xac105660c20dcf17546394be6fa08a439e5b3509f1c94d47a58e7c0273dab251",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -1423,19 +1423,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160015f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001bff00000000800004600160015f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160015f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001cff00000000800004600160015f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -1480,11 +1480,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa98d5f1d416519e2596c6a31e7714368974f108e933cb4a73d3343156497dc51",
+            "hash": "0xaf70e2151b52183417040defbc2c0851b7cc85e16fa040fe9dd6d6f348e19db7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1511,13 +1511,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001bff00000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001cff00000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -1546,7 +1546,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7579d82d0e8f38c55f2b6f785daa9b2f43f4af2912cd02348416c217110d5662",
+                    "hash": "0xd4b3a4c8a78435aa7cbfce2a220b2f8926571bb574a7ec2695acf5407177aac9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -1558,13 +1558,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001bff00000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001cff00000000800004600160015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -1609,11 +1609,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8847c6f25a5d129c6e115faaa2a34ed7f1726a465c25bd5d4d46a36ef4148d38",
+            "hash": "0x521bfe9930a25d846e7ff035fe12d7b09a686b6ea6a099bcdb065ff47ecc3bc3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1634,7 +1634,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -1646,13 +1646,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60015f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60015f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60015f730000000000000000000000000000000000001000f900",
+                "code": "0xef0001010004020001001bff000000008000035b60015f730000000000000000000000000000000000001000f900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -1681,7 +1681,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2b90afcace2b98820bac1fc424f10210da5a4b23d401cf530e091a921daf2a66",
+                    "hash": "0x6922e162183d47a0e8d5974c5774427bb139ca04b6064b704370ed0282d8ec0a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -1693,19 +1693,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60015f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60015f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60015f730000000000000000000000000000000000001000f900",
+                            "code": "0xef0001010004020001001bff000000008000035b60015f730000000000000000000000000000000000001000f900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -1750,11 +1750,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x39aa3f8acdfe4e65806778dff97d8ca5f02ad6384a8ad354277959ad4c137533",
+            "hash": "0x08fc0d37d3093400f265bcab57177368faf98270d2327dbf97413c8c993fefed",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1781,13 +1781,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                "code": "0xef0001010004020001001bff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -1816,7 +1816,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc789423df3427dbc2b60eb12b67bddb1f650770f1a08861615026c159a72e87a",
+                    "hash": "0xa7291274b3d3e2092fd8a34ad91ffb3fbca64ee2af3a788c54635ff3ad5efe35",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -1828,13 +1828,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                            "code": "0xef0001010004020001001bff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -1879,11 +1879,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe063473180b967017a490c505b5f2410eaf63555a6c1d53328b14d88feefc889",
+            "hash": "0x462ee2252dbd7a84e0c5ab7883796c9fcf16f218f57e873f9d660121b6a2faf5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -1904,7 +1904,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -1916,13 +1916,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60015f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60015f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60015f730000000000000000000000000000000000001000fb00",
+                "code": "0xef0001010004020001001bff000000008000035b60015f730000000000000000000000000000000000001000fb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -1951,7 +1951,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xad4b3e8a566a2fc562b7464bf7a16bf12fe7943bbf42a819774dfa65049430a1",
+                    "hash": "0x3572dc005d82433694ffbc187b95173ad49b7a3540d62ff7b760e1f89a1b6dac",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -1963,19 +1963,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60015f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60015f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60015f730000000000000000000000000000000000001000fb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60015f730000000000000000000000000000000000001000fb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -2020,11 +2020,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf71ee95a0a20f5e7e861cc21c28d609915853138d39a89e973d55d4aa4e72522",
+            "hash": "0xec3a5cb5d58fdb1d543c87ebded6e593d114673b15918aef47cea09f20cdae63",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2051,13 +2051,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                "code": "0xef0001010004020001001bff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -2086,7 +2086,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x37290595fb1b73334aafb66b4b7752dd6773c0fb5d30dba6e4fdad16c097f13f",
+                    "hash": "0x96e6c6ce8315900d49ccf58c682e2870dad89c4524532f70be83fec9475f1a9f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -2098,13 +2098,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60015f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -2149,11 +2149,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf385bf92b2f4f0611b24ef3ac43e1043a0288c788841661f1962e35f642a3835",
+            "hash": "0xbdc0d7222edaec16c1ceec005e4fb6e5bae4b6301f068228478a77ea22b1c3bc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2174,7 +2174,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -2186,13 +2186,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60205f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000045f60205f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60205f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001bff000000008000045f60205f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -2221,7 +2221,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa030dd31edd7cc44a4b7abded1562bd64af71aeacb9a716e9dbc8d71e49670c2",
+                    "hash": "0xff1eea52330133fbb5f75fc06efe3176916e94d8bd1266fcae9a3592905b6fb3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -2233,19 +2233,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60205f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000045f60205f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60205f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001bff000000008000045f60205f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -2290,11 +2290,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x682a7331b6c2b4bd753c24e4324af983fe70400588901930b7476289d2583d2f",
+            "hash": "0x28abf4cc96bf71fdad96fd430587b87750b93adec594ab14757638c0a2f9505f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2321,13 +2321,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001bff000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -2356,7 +2356,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x513d1f0e9a16004d4da3ac490a5e5c4c86903c101f444940d881eafeceee69c8",
+                    "hash": "0xe40d88f0d899ba960ebe9a09e32d24f278d6cf8cd509db11743d1ab5c99005bb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -2368,13 +2368,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001bff000000008000045f60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -2419,11 +2419,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa9c6fe6002dc911430369f48154709d3ae012c94019ce454333ba18e91f6f159",
+            "hash": "0xc212e56603152fbbc962ad328307f9bcbc80b37edfdcc0b6e32be6ca7c27a7a0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2444,7 +2444,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -2456,13 +2456,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160205f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001bff00000000800004600160205f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160205f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001cff00000000800004600160205f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -2491,7 +2491,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x670c432eb7f7a866bc8785b4b002aeae470e1764d4c07f27571fa4f64f34fbd6",
+                    "hash": "0x265f98a26dbc638bdd0dd8f1dabfc2478d39d5e5142b340903d03c030a402b22",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -2503,19 +2503,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160205f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001bff00000000800004600160205f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160205f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001cff00000000800004600160205f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -2560,11 +2560,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x1e43b956de420130a0a015dba4c9a773053967b29ced8737506d77a80a524bcc",
+            "hash": "0xfd43407404b07783b49841a0ea2f58543852efc010cbe66556e76cf4e7bbb480",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2591,13 +2591,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001bff00000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001cff00000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -2626,7 +2626,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3a1f43d8f4be584529f35145b2b0737f725b9b8fcff312347352c040471d95e9",
+                    "hash": "0x2893053722f4407f8c829d9fc8275a8a308472b146be08cb19d75c011b320b8f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -2638,13 +2638,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001bff00000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001cff00000000800004600160205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -2689,11 +2689,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x392e168c1fbb8167602e532c56dbaf96defa26bb42f148fac960543899b453e6",
+            "hash": "0xea952d421cf1ee062f4913ab42f46785dae34904779f4e147f558ea8d0e85c8e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2714,7 +2714,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -2726,13 +2726,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60205f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60205f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60205f730000000000000000000000000000000000001000f900",
+                "code": "0xef0001010004020001001bff000000008000035b60205f730000000000000000000000000000000000001000f900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -2761,7 +2761,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4658c9e1657d69eaa18e5c9629fbe2d7273c31b3a7b45083546cf759042a6614",
+                    "hash": "0xa1c048ae1c4f1c86909b1fec3057eacfe1e899199aa3923bd6202c71741649c0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -2773,19 +2773,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60205f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60205f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60205f730000000000000000000000000000000000001000f900",
+                            "code": "0xef0001010004020001001bff000000008000035b60205f730000000000000000000000000000000000001000f900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -2830,11 +2830,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3a188139158a15eba7bb9e1780aaf30caf6959dee79a8dcded78b187a9ab5594",
+            "hash": "0xed5a70a2022efb10a9334b45170f6ea4b1369b3377f09881df65555bf7647fb2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2861,13 +2861,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                "code": "0xef0001010004020001001bff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -2896,7 +2896,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xaf1d91fd204ca3aaef8f8943b6620026065d11f54025a9fe7bb945077d5a55de",
+                    "hash": "0xc3b661fe005e501f0573e10f86fa330467bc8dc127b6c92525d2d5db679ad724",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -2908,13 +2908,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                            "code": "0xef0001010004020001001bff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -2959,11 +2959,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xca3614ed09338584d108f726afe9a1fd5c1c642ed2cc4faf38f439c04dbf8e5b",
+            "hash": "0xb06c2fd18d72ef962e3f89bfb69d2ab695321689dd0ae3ef078d9106d3043578",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -2984,7 +2984,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -2996,13 +2996,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60205f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60205f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60205f730000000000000000000000000000000000001000fb00",
+                "code": "0xef0001010004020001001bff000000008000035b60205f730000000000000000000000000000000000001000fb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -3031,7 +3031,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7e7ed44f9a87cd39e446667d876935f98d9c2c4ec20dec5afc80dd3915c65666",
+                    "hash": "0x645d3da9a24276839abedfcfa7424dfa796e6d1f68d37567f30a3c588ba32d8a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -3043,19 +3043,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60205f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60205f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60205f730000000000000000000000000000000000001000fb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60205f730000000000000000000000000000000000001000fb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -3100,11 +3100,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x603061f65d834251c43464671c9380e8c2730d02ee00f6d69977777f43404ff3",
+            "hash": "0x513c8823ac7d7ba36fde3de2a12d728c645577fc693b350b9e860dea2a426d37",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3131,13 +3131,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                "code": "0xef0001010004020001001bff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -3166,7 +3166,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4f7c951d5282c2eef7913ff61cd932f81f019903635d08ce65b447118cc36539",
+                    "hash": "0x1c7cda4d811ccd41e3197661ed302985bf4bef0b92846f31bdc3897f6eeee197",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -3178,13 +3178,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60205f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -3229,11 +3229,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x39b6a8ed4f917a7acb63273265e06ed8254035da575beead4b9131a177c5770c",
+            "hash": "0x535a79f0bccaeb7d17a271941c876c3dd702edf6950f084deb957fb62d0437fe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3254,7 +3254,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -3266,13 +3266,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60215f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000045f60215f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60215f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001bff000000008000045f60215f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -3301,7 +3301,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa4dfb9c471179452664ac899ce3f7216bcf51cbd3684d7a8e5193aeaf1a98766",
+                    "hash": "0x0cf25b56d2e15fc3b3638732856149630f75a93c3aa5363a1a448cf122127d96",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -3313,19 +3313,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60215f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000045f60215f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60215f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001bff000000008000045f60215f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -3370,11 +3370,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb27c5e89e48b666121ee7fbd4207f7061922c62548ad8e68870df6de7e8ff28e",
+            "hash": "0xfc718a1adf7faffed21931bb9015aa2d000589c5638edc84abd7a0ab40974cac",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3401,13 +3401,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001bff000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -3436,7 +3436,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4fbcf00a7886db79ae67b16102b3012be07915cccd085a59a24680728010ecb9",
+                    "hash": "0xf3970a9c1ecdc5db4d043370ffb1cda29c837d5b8cade18862d6195c97332389",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -3448,13 +3448,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001bff000000008000045f60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -3499,11 +3499,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x36290df4565fec8c3ccca1b166ab8cd0b71ec45e8ae96015c271ae10d7cfcf75",
+            "hash": "0xd492baec92747bfb82891bb75ad75612741870acacd262aaa05fedd39961f7b7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3524,7 +3524,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -3536,13 +3536,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160215f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001bff00000000800004600160215f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160215f730000000000000000000000000000000000001000f800",
+                "code": "0xef0001010004020001001cff00000000800004600160215f730000000000000000000000000000000000001000f800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -3571,7 +3571,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe2162cce6630f75ff9364b7ff65dc2351c1af2364fda0f72594a54b6f2281c71",
+                    "hash": "0x44852cf3b1c73c0698442fc694f96ccc2bf674afef7ced285da488c8444164ea",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -3583,19 +3583,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160215f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001bff00000000800004600160215f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160215f730000000000000000000000000000000000001000f800",
+                            "code": "0xef0001010004020001001cff00000000800004600160215f730000000000000000000000000000000000001000f800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -3640,11 +3640,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4ebb4509e84dc937ad81fae9c49e6fa85910309eaf953fd3b85d549771318b63",
+            "hash": "0xf1ef07ecbad65284356e07477a959f6061407e736d6b4533d1304e2273178513",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3671,13 +3671,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0400000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001bff00000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0400000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                "code": "0xef0001010004020001001cff00000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -3706,7 +3706,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xfc8cfd6145f7b34492fb95ff3a2c9d374c6753e2304f5128a0b9ba1da48e4e74",
+                    "hash": "0x63284d0635bf7292ea3b1dbdc5b64d7f7d5700ae03d69adbc942207d942a86a5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -3718,13 +3718,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0400000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001bff00000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0400000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
+                            "code": "0xef0001010004020001001cff00000000800004600160215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf800",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -3769,11 +3769,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x77a96c4fd1c589dd8323da5e57e38c212990ecc108c00f85492bd6313cf822a4",
+            "hash": "0xc80f86263bbacb57dc108e45c7f4e88721d4d3c328b6ce87f999c991bd2b5efd",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3794,7 +3794,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -3806,13 +3806,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60215f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60215f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60215f730000000000000000000000000000000000001000f900",
+                "code": "0xef0001010004020001001bff000000008000035b60215f730000000000000000000000000000000000001000f900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -3841,7 +3841,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcbbf656bf764f93bbf415e207bd28fff6dbdf99981e74d119be5468e803aa401",
+                    "hash": "0xb3756f5a002d40aaffaafa07bf0770a84dce1bdcb7195c9478ae0f7c70c2158d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -3853,19 +3853,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60215f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60215f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60215f730000000000000000000000000000000000001000f900",
+                            "code": "0xef0001010004020001001bff000000008000035b60215f730000000000000000000000000000000000001000f900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -3910,11 +3910,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x43013fbf6fe2d69f6488407ba47760209ed43bf2f198c94cc197bbc1e1dec4aa",
+            "hash": "0x5749f365c1debafc18d8b33d2cdb344182916bd060c87ad66dede5c53e150c27",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -3941,13 +3941,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                "code": "0xef0001010004020001001bff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -3976,7 +3976,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa3f43eade53ff1349150264239ca2243861ef7b02a5d1b6a32cf5a9c4b81f1bd",
+                    "hash": "0x8d35f9fd70bc31733febc41897751560e08b2e2d77053c0c138294901e9f719d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -3988,13 +3988,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
+                            "code": "0xef0001010004020001001bff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bf900",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -4039,11 +4039,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4583e836ad5602878dad60c47ee5255c1fccffea71fecc408895185d2b3f6944",
+            "hash": "0xe6951001f3c50f50ccb1f000b01bf3f8c97990d0f135eb71c1205306215b5b03",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4064,7 +4064,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010001040000000080000000",
+                "code": "0xef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -4076,13 +4076,13 @@
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60215f73000000000000000000000000000000000000100000",
+                "code": "0xef0001010004020001001aff000000008000035b60215f73000000000000000000000000000000000000100000",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60215f730000000000000000000000000000000000001000fb00",
+                "code": "0xef0001010004020001001bff000000008000035b60215f730000000000000000000000000000000000001000fb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001300": {
@@ -4111,7 +4111,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x801da9702aa91dde9263df9fe3369a4e7f3c0c2157113130bcb69f7a59a3175c",
+                    "hash": "0xbd5e09aad5a44c71a8a69a1cd94fc30773d25c74af033bba3e8397062c9a603b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001300808025a0d21292002de213e8491852eec4ddf9ec5b8104c196b169a37e3c6768e29e8b42a0760536c9a90fc8318e8ee57907849bf81ca290dc27092c1188422874be7e2a5f",
                     "indexes": {
@@ -4123,19 +4123,19 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60215f73000000000000000000000000000000000000100000",
+                            "code": "0xef0001010004020001001aff000000008000035b60215f73000000000000000000000000000000000000100000",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60215f730000000000000000000000000000000000001000fb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60215f730000000000000000000000000000000000001000fb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001300": {
@@ -4180,11 +4180,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x330c00e45a932d5df0680eb3559c240b887c6656ec291df4516016189e7efa6a",
+            "hash": "0x903abbc66b0d12bc4b4237ac0b7128b495a32843df44ab540b9d89876307d142",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"
@@ -4211,13 +4211,13 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001a04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                "code": "0xef0001010004020001001aff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                "code": "0xef0001010004020001001bff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001200": {
@@ -4246,7 +4246,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xab64ded52fcfa096b5c816d7e9793116f085863c2198f35a61ca16b20c467920",
+                    "hash": "0x4fae73921b05e4b6934508ea8e641aad74b9a6738a6d2974db88716b0de33821",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf865800a88016345785d8a0000940000000000000000000000000000000000001200808025a03e4ecaec0d803837e8d76cc03e8a73cb9490e2b027fb85a4d0aaac11deb752f7a01bd56765e8e0445d3ec3ba9a1adf20dc6281fc5dd603391b15c9577c8aed02e0",
                     "indexes": {
@@ -4258,13 +4258,13 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001a04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
+                            "code": "0xef0001010004020001001aff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0b00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b04000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
+                            "code": "0xef0001010004020001001bff000000008000035b60215f73a94f5374fce5edbc8e2a8697c15331677e6ebf0bfb00",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001200": {
@@ -4309,11 +4309,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfb7b218f7a3b9c97de23a347ad74f01b4758ed55736d2ea1fcd4dab72378b7bb",
+            "hash": "0x4d8cb36f71b23f5ef1245cd122fb68448ab8946fbdb000bd7c525eeb8d853857",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests variations of EXT*CALL gas, both warm and cold, without and with mem expansions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_gas.py#L42",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7069.md",
             "reference-spec-version": "1795943aeacc86131d5ab6bb3d65824b3b1d4cad"

@@ -1,0 +1,1418 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_-expected_result_factorybalance]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f0fc028d96a0555000aae7e62c85959dfb4766d79d448c4e5ac43c6eb55cbcaafed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000b03000100000014ff00000000800002333160055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x3e13c301459069dcad964313fae0c5e07b1667ac370817d943ab08959bf7857a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a201800a0a83030d4094000000000000000000000000000000000000100082112380c0f83bb839ef0001010004020001000b03000100000014ff00000000800002333160055560006000ee00ef00010100040200010001ff000000008000000080a052b75bc0406928af7abd84e8670ff078519dd1909a354cc06cd616fa0871f669a024a2d2a6dbedad9c7d20cf78dbe1249ef57cf3bc71103398a95fe99bfc967d0f",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f0fc028d96a0555000aae7e62c85959dfb4766d79d448c4e5ac43c6eb55cbcaafed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x1110"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04aa60",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90619d",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x2e4fffa7902df01e6816e6856b5d6e8908e8a1b6b347edb4a1c5e2a1869a0da7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_ADDRESS-expected_result_destination]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007fb5baf5ce85cb3076bd751e10d5d63d0248e213f0a67afe6eba87b4fd20d0433ded00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023060055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x09d0326a7943aab2f04920d393c4dbbaa8ce73a3b0399f3114400b276d6de00e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023060055560006000ee00ef00010100040200010001ff000000008000000001a04c8c4e00154dbffaa33ad8a64b3d06ce2bbd693f60bcfe793fe7020d960eb875a00dc0d43b0744fbbc00394ef6517572cf46adb6d59b2bb7419afa77a946df41f0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007fb5baf5ce85cb3076bd751e10d5d63d0248e213f0a67afe6eba87b4fd20d0433ded00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xe9d944ca238536172eabf5cae2682b133b8513595b2f9dc929aef3556e3b57e1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_CALLER-expected_result_caller]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f39e0fce77b2980abfe603d0c0700214881c95cfd225e77eab6aae35e1781dda9ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023360055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xe0a3afbd4a786e72f7ab8a57cf6271b36d84e14e83a208e8f69ed08d02372ab0",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023360055560006000ee00ef00010100040200010001ff000000008000000080a04628ef438cba645295e23724cdf5b6b891753e3477c15d2d313ffcc5afe4f956a0490b945a4c431dbcdee05db9b08f75b594ab4a034ee89db6ba70f3facc73f7a2",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f39e0fce77b2980abfe603d0c0700214881c95cfd225e77eab6aae35e1781dda9ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x1000"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x78dfee9e31c01611d931f0a0a535bee6bd58a33397de2f10c49bc01c33d8293a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_CALLVALUE-expected_result_eofcreate_value]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f5bc4ac1adafe41679d2cb0df4f6e3ad51a3b99640099b19bc67514b3e1c1a9b3ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023460055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x59ef6329cea8ac1fe44f48b68a5b0bae57dfb11ac5491db6302e3dd98711c660",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023460055560006000ee00ef00010100040200010001ff000000008000000080a058b60756fc11607df86188cf4e93354951944261b0a38e95ca3e3eac88203ad9a0385233dc77cd931174e748b2f3995ae3356ee0032ed9e9c49fa47fae62eb1213",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f5bc4ac1adafe41679d2cb0df4f6e3ad51a3b99640099b19bc67514b3e1c1a9b3ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x13"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xe9c1fb8ad978cf06bd1883cfe8da6641c340af7c0678a82bd21f43db769bd30d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_ORIGIN-expected_result_sender]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f8f3db10866fb261e77cb5b637250d701c7abca660537ae4b9eff31fbd075f24ded00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023260055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbb546f1beed8661451349a5649c3cd8cf240118e50632e54d33ba922118f83e7",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023260055560006000ee00ef00010100040200010001ff000000008000000001a0e9228ac3dd34721a82ca99ee8f911c11ebc170b80838603b4484aa0031bd386aa058da9f4fc2ebd67b54b2b6e8bef9a0f3567a28b1d8a79a42385b0f7960d02e26",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007f8f3db10866fb261e77cb5b637250d701c7abca660537ae4b9eff31fbd075f24ded00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x68ab023e8ef7f81c038109cd5e730cc44f2d774ae9ae0eeed8481751c6e68f21",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_EOF_V1-state_test-destination_code_SELFBALANCE-expected_result_selfbalance]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007fe73d4703a5806afb308763aacb08aa305e670fc00bfd9d78168cfdf3d84944c4ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000024760055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbdd3fd9c16fe03db46e049ad5ffce94b4132bdc16abc35b5a8aba1c5d02249cd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000024760055560006000ee00ef00010100040200010001ff000000008000000080a0d659e703d8d4f9157bd944f8281b2254c8cfe0ca2bed64e14ba23cdde764073aa029d1d4d38a89bb58981522ce44fa040bfca534654dca4180b93b05849b2003bf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0xef00010100040200010031ff0000000080000561201560015560136000600060007fe73d4703a5806afb308763aacb08aa305e670fc00bfd9d78168cfdf3d84944c4ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x13"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a90d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906607",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x0a947d9fbfac793617e719e05dc200f98fe06b04a2b7d0219f0c68c82f1a0d9c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_-expected_result_factorybalance]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007f0fc028d96a0555000aae7e62c85959dfb4766d79d448c4e5ac43c6eb55cbcaafed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000b03000100000014ff00000000800002333160055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xa841b285c5d7bef88628b3417e6c208dd2441189f74a142ac9e821c4361bcff7",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a201800a0a83030d4094000000000000000000000000000000000000100082112380c0f83bb839ef0001010004020001000b03000100000014ff00000000800002333160055560006000ee00ef00010100040200010001ff000000008000000080a052b75bc0406928af7abd84e8670ff078519dd1909a354cc06cd616fa0871f669a024a2d2a6dbedad9c7d20cf78dbe1249ef57cf3bc71103398a95fe99bfc967d0f",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007f0fc028d96a0555000aae7e62c85959dfb4766d79d448c4e5ac43c6eb55cbcaafed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x1110"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04aa60",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90619d",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xa8029c63e6967670cf5e816fed601b63002551852087906f67cb82e3b9060eef",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_ADDRESS-expected_result_destination]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007fb5baf5ce85cb3076bd751e10d5d63d0248e213f0a67afe6eba87b4fd20d0433ded00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023060055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbf79909fb8e9c13534eb363574d1b7ebd48515345550c7015b227793dc185ccd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023060055560006000ee00ef00010100040200010001ff000000008000000001a04c8c4e00154dbffaa33ad8a64b3d06ce2bbd693f60bcfe793fe7020d960eb875a00dc0d43b0744fbbc00394ef6517572cf46adb6d59b2bb7419afa77a946df41f0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007fb5baf5ce85cb3076bd751e10d5d63d0248e213f0a67afe6eba87b4fd20d0433ded00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xc8a20940b9ab8adfaef6aaec08d79eba699263d4b6b23e4dae172baadffbb9f3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_CALLER-expected_result_caller]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007f39e0fce77b2980abfe603d0c0700214881c95cfd225e77eab6aae35e1781dda9ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023360055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xbcfb87909c9f56d7543f4d7e44c4abb4baf7a72823543073fbeeb333ebc07e88",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023360055560006000ee00ef00010100040200010001ff000000008000000080a04628ef438cba645295e23724cdf5b6b891753e3477c15d2d313ffcc5afe4f956a0490b945a4c431dbcdee05db9b08f75b594ab4a034ee89db6ba70f3facc73f7a2",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007f39e0fce77b2980abfe603d0c0700214881c95cfd225e77eab6aae35e1781dda9ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x1000"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xdb49cf70cea22f6ea30425fdd763edd3265e6f558f679b3e63a4918c0f7742b0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_CALLVALUE-expected_result_eofcreate_value]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007f5bc4ac1adafe41679d2cb0df4f6e3ad51a3b99640099b19bc67514b3e1c1a9b3ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023460055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x67f394ff8d33ec080516c24386d946b4dcbbd06e86800554f6ce7e92491daec5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023460055560006000ee00ef00010100040200010001ff000000008000000080a058b60756fc11607df86188cf4e93354951944261b0a38e95ca3e3eac88203ad9a0385233dc77cd931174e748b2f3995ae3356ee0032ed9e9c49fa47fae62eb1213",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007f5bc4ac1adafe41679d2cb0df4f6e3ad51a3b99640099b19bc67514b3e1c1a9b3ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x13"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xf831cbea85c45066cde8b96febebad2b265d922abc61c66cb9265f2e4e940036",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_ORIGIN-expected_result_sender]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007f8f3db10866fb261e77cb5b637250d701c7abca660537ae4b9eff31fbd075f24ded00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000023260055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x50b0d58c5462c8d73eeeffed7911462d48432f82baca9af99c94bc962ff97441",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000023260055560006000ee00ef00010100040200010001ff000000008000000001a0e9228ac3dd34721a82ca99ee8f911c11ebc170b80838603b4484aa0031bd386aa058da9f4fc2ebd67b54b2b6e8bef9a0f3567a28b1d8a79a42385b0f7960d02e26",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007f8f3db10866fb261e77cb5b637250d701c7abca660537ae4b9eff31fbd075f24ded00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906625",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x6dae8e0f8f822e3ccc306f08dce4e7e4eadc78fdc95624dbca6f83b901828725",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py::test_txcreate_context[fork_Osaka-evm_code_type_LEGACY-state_test-destination_code_SELFBALANCE-expected_result_selfbalance]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x61201560015560136000600060007fe73d4703a5806afb308763aacb08aa305e670fc00bfd9d78168cfdf3d84944c4ed00",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x0a",
+            "maxFeePerGas": "0x0a",
+            "gasLimit": [
+                "0x030d40"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x1123"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "initcodes": [
+                "0xef0001010004020001000a03000100000014ff000000008000024760055560006000ee00ef00010100040200010001ff0000000080000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xe0a4dd72a44226f4e1868fd48d659ad3db1ece9929e3d6c07755923f8394c180",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x06f8a101800a0a83030d4094000000000000000000000000000000000000100082112380c0f83ab838ef0001010004020001000a03000100000014ff000000008000024760055560006000ee00ef00010100040200010001ff000000008000000080a0d659e703d8d4f9157bd944f8281b2254c8cfe0ca2bed64e14ba23cdde764073aa029d1d4d38a89bb58981522ce44fa040bfca534654dca4180b93b05849b2003bf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x1110",
+                            "code": "0x61201560015560136000600060007fe73d4703a5806afb308763aacb08aa305e670fc00bfd9d78168cfdf3d84944c4ed00",
+                            "storage": {
+                                "0x01": "0x2015"
+                            }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x13",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {
+                                "0x05": "0x13"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04a90d",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de906607",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x1f573042b958c53024e01a8c177dd077df260fd1cb1a5bb8b4391ae874ef5656",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest TXCREATE's initcode context instructions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7873_tx_create/test_txcreate.py#L561",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7873.md",
+            "reference-spec-version": "1115fe6110fcc0efc823fb7f8f5cd86c42173efe"
+        }
+    }
+}

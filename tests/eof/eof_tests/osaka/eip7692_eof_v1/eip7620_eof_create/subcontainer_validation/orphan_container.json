@@ -1,8 +1,8 @@
 {
-    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-returncontract-eofcreate]": {
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-returncode-eofcreate]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100110300020032003204000000008000046000600060006000ec0061201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef000101000402000100110300020000003400000034ff000000008000046000600060006000ec0061201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -13,20 +13,20 @@
             }
         },
         "_info": {
-            "hash": "0x90f38ecd032e4901c1657861ef45e5ad78f5ccaa16a1f87bf67c2052bcf638e9",
+            "hash": "0x3792c7a4d63b9acf1c6e62fb38c8ded3fddfc3b4bc265198670b71417617a877",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
         }
     },
-    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-returncontract-returncontract]": {
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-returncode-returncode]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000c03000200140032040000000080000261201560015560006000ee00ef00010100040200010001040000000080000000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000c0300020000001400000034ff0000000080000261201560015560006000ee00ef00010100040200010001ff0000000080000000ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "containerKind": "INITCODE",
                 "results": {
                     "Osaka": {
@@ -37,11 +37,11 @@
             }
         },
         "_info": {
-            "hash": "0xf3997dba18cc3b82330cb7c3be2eb0eebf0bcb4673d6516bda44e62170ee0900",
+            "hash": "0x324224fafcbc35761a47ab0f3c227d5a0fb01dc5a700d043e1a7c8d8b6bc1072",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -50,7 +50,7 @@
     "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-revert-eofcreate]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100110300020032001804000000008000046000600060006000ec0061201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000ef00010100040200010005040000000080000260006000fd",
+                "code": "0xef000101000402000100110300020000003400000018ff000000008000046000600060006000ec0061201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010005ff0000000080000260006000fd",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -61,20 +61,20 @@
             }
         },
         "_info": {
-            "hash": "0x0ea4535d5d8401c884c62af434c23ef3246fa18d3b77d6055a17135426bc0011",
+            "hash": "0x9e2f29710f3553b35fce67a0648bd8bc08c01707f931f8a39aedec2a752bae7e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
         }
     },
-    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-revert-returncontract]": {
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-revert-returncode]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000c03000200140018040000000080000261201560015560006000ee00ef00010100040200010001040000000080000000ef00010100040200010005040000000080000260006000fd",
+                "code": "0xef0001010004020001000c0300020000001400000018ff0000000080000261201560015560006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010005ff0000000080000260006000fd",
                 "containerKind": "INITCODE",
                 "results": {
                     "Osaka": {
@@ -85,11 +85,11 @@
             }
         },
         "_info": {
-            "hash": "0xade53806aad489023dc05c8e54b9582c0b0b89d7b846c3666d721c4a893fd974",
+            "hash": "0xe6426f719232bdccd1732904727e2bc42e9c0bb1f2c62cf50fcbb484a2d4ec41",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -98,7 +98,7 @@
     "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-stop-eofcreate]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100110300020032001404000000008000046000600060006000ec0061201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000ef00010100040200010001040000000080000000",
+                "code": "0xef000101000402000100110300020000003400000014ff000000008000046000600060006000ec0061201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010001ff0000000080000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -109,20 +109,20 @@
             }
         },
         "_info": {
-            "hash": "0xaa70fae0db07ea57ffd2d6822075da0a0d14a34d2470f7126f506a01c695031a",
+            "hash": "0x397b789b0257535fc85568ea1f31a5abd34fe51b0ecf68cdb584d67fdaa97e22",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
         }
     },
-    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-stop-returncontract]": {
+    "tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py::test_orphan_container[fork_Osaka-eof_test-stop-returncode]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000c03000200140014040000000080000261201560015560006000ee00ef00010100040200010001040000000080000000ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001000c0300020000001400000014ff0000000080000261201560015560006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010001ff0000000080000000",
                 "containerKind": "INITCODE",
                 "results": {
                     "Osaka": {
@@ -133,11 +133,11 @@
             }
         },
         "_info": {
-            "hash": "0x4dbe88964a5f0e2e3aa4ff3b60f556250a999e88a41bf379ac2d98b0e8f1b567",
+            "hash": "0x0084369aa59676903c75ff4980721b03c0d429651e6b7fea4a3135ee6248e137",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest orphaned containers.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L102",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

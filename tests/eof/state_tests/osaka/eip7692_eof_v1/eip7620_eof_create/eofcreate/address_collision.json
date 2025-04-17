@@ -20,10 +20,10 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001002e030001003204000000008000046000600060006000ec006003556000600060006000ec00601b556000600060016000ec0060275561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001002e03000100000034ff000000008000046000600060006000ec006003556000600060006000ec00601b556000600060006001ec0060275561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {}
             },
-            "0xee81e454c0f5434e10f19f88ec5356a4e8b6f9e9": {
+            "0xe33df84cc747e472e119aa42e3a81718849f6d1c": {
                 "nonce": "0x01",
                 "balance": "0x01",
                 "code": "0x",
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x33aa213caa8dc88ad4a1e65b15c74a4e014b2f2c1abfd388620003726af8bb87",
+                    "hash": "0x317d1260272e9a79bf412c29b00c67439e60a1ca38c1215e35480b2958bc3ee1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf862800a8545d964b80094000000000000000000000000000000000000100080801ba0fb0ce0ae05e7d19686f43e73195dbd31622b228bcc9ce3a4bfe64b13f8b6f369a0027a8c945e219e0b03e66e05fbe5a85581bccd3376297d5e779b8ee074eca7d0",
                     "indexes": {
@@ -61,22 +61,22 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x04",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001002e030001003204000000008000046000600060006000ec006003556000600060006000ec00601b556000600060016000ec0060275561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001002e03000100000034ff000000008000046000600060006000ec006003556000600060006000ec00601b556000600060006001ec0060275561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
                             "balance": "0xd17f168894",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
@@ -85,7 +85,7 @@
                             "code": "0x",
                             "storage": {}
                         },
-                        "0xee81e454c0f5434e10f19f88ec5356a4e8b6f9e9": {
+                        "0xe33df84cc747e472e119aa42e3a81718849f6d1c": {
                             "nonce": "0x01",
                             "balance": "0x01",
                             "code": "0x",
@@ -111,11 +111,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc88c350a1f803901dd4e20028f3224bce0b1df2d16e32fd8b66b145d1103e894",
+            "hash": "0x22809f5382751f7602869612b8bb457b46f85e484e8d63f18c8d35265109d0b7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests address collision.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L494",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py#L484",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000a0400000000800002e0000061201560015500",
+                "code": "0xef0001010004020001000aff00000000800002e0000061201560015500",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa284de3e45b0203abb41de40b1777d3c99eafcff8d574469ea341406ea7ac9c5",
+                    "hash": "0x2ff8498c10774a950352585b13e1a5e96fc386ee6d096d3b946829dd368efcce",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a0400000000800002e0000061201560015500",
+                            "code": "0xef0001010004020001000aff00000000800002e0000061201560015500",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -104,11 +104,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9e6e4009c9adc88b6786573cc24074f823bf9052bc6e1af87cc3f8736e8bc433",
+            "hash": "0xd18540c066af0c5752cd0cf6de376e26836aa3b1aff4b6cd406b0816d7f96201",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF1V4200_0002 (Valid) EOF code containing RJUMP (Zero).",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L55",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L55",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

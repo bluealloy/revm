@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_0]": {
         "vectors": {
             "0": {
-                "code": "0xef000101000402000100040400000000800000e0000000",
+                "code": "0xef00010100040200010004ff00000000800000e0000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -12,11 +12,11 @@
             }
         },
         "_info": {
-            "hash": "0x9cba978d6713bda4b3785d47d4d51fdc4b94377af349713aef48bb0661b73d53",
+            "hash": "0xcd7c0e2d2e0974ca2e836fd3d9b12ac1520f44f4fe7d560d6dbb6743dc389d5c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -25,7 +25,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_1]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b04000000008000025f6000e10003e000011900",
+                "code": "0xef0001010004020001000bff000000008000025f6000e10003e000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -35,11 +35,11 @@
             }
         },
         "_info": {
-            "hash": "0x3671b15ee5c1399febdb7d5845fb000f761632bb4766082a51529a45921a0e58",
+            "hash": "0x950c848fade30730226fee4dfa02f8c25bccfa5cf778626b3baaaf0e902542bb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -48,7 +48,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_2]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001304000000008000025f6000e100086000e10006e00004e000011900",
+                "code": "0xef00010100040200010013ff000000008000025f6000e100086000e10006e00004e000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -58,11 +58,11 @@
             }
         },
         "_info": {
-            "hash": "0xd8a0f547642aeeb9e86129923dcf2aecf803110ffceb798a63ea9714145d7158",
+            "hash": "0x96f21c1cd5b320763250ea6f5dd66e86b935b115f8c1053912d316f3104150a8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -71,7 +71,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_3]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000b04000000008000025f6000e10003e000015f00",
+                "code": "0xef0001010004020001000bff000000008000025f6000e10003e000015f00",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -81,11 +81,11 @@
             }
         },
         "_info": {
-            "hash": "0xee22c4023853ab2fe400ec54e746adf9499f0e8e075f02fbfdbd97f8bd0481ae",
+            "hash": "0x786a2691080000771140628f10b088fdda76ba83d8ffb2f472eb21b634eed6c3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -94,7 +94,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_4]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001404000000008000025f6000e100086000e10007e000055fe000011900",
+                "code": "0xef00010100040200010014ff000000008000025f6000e100086000e10007e000055fe000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -104,11 +104,11 @@
             }
         },
         "_info": {
-            "hash": "0x086915e7881d6cb61e7f3e3fd1ab6b04d0acecf443357a8e776f2845a1622481",
+            "hash": "0x81bfeba8e42f44699819276f0ffaa027bca3487a0fed8af66647670cdcc92307",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -117,7 +117,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_variable_stack_0]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001000c04000000008000035f6000e100025f5fe0000000",
+                "code": "0xef0001010004020001000cff000000008000035f6000e100025f5fe0000000",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -127,11 +127,11 @@
             }
         },
         "_info": {
-            "hash": "0x0468efb8ffed2130ac90eb2cb94d1ee01e3014e00a10b14219d4b7ae42acf3a4",
+            "hash": "0x761711e28e4591bbfbf523a525ecd3a183ed036fc81ede4b8b33c0954c3feccc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -140,7 +140,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_variable_stack_1]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001304000000008000055f6000e100025f5f5f6000e10003e000011900",
+                "code": "0xef00010100040200010013ff000000008000055f6000e100025f5f5f6000e10003e000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -150,11 +150,11 @@
             }
         },
         "_info": {
-            "hash": "0x7b375accb33db32077670da04ab806cab7eed6e2937a3ee6b9c7c2eb627238e2",
+            "hash": "0x54d05ad188bbc89b385faa8c6d4f14fd0e657a1c7573c93341775b9c9d8f600f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -163,7 +163,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_variable_stack_2]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001b04000000008000055f6000e100025f5f5f6000e100086000e10006e00004e000011900",
+                "code": "0xef0001010004020001001bff000000008000055f6000e100025f5f5f6000e100086000e10006e00004e000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -173,11 +173,11 @@
             }
         },
         "_info": {
-            "hash": "0x15418c0e529d5672d4ac7bcc77dae5bdb5cc368526b62ac8cafa4f0d305c59a1",
+            "hash": "0x2dea2cda502774710c8dfcca45967a9b1638b0d13b86d057880a3175d2b8c8b5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -186,7 +186,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_variable_stack_3]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001304000000008000055f6000e100025f5f5f6000e10003e000015f00",
+                "code": "0xef00010100040200010013ff000000008000055f6000e100025f5f5f6000e10003e000015f00",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -196,11 +196,11 @@
             }
         },
         "_info": {
-            "hash": "0x5d3867df821d34d7f35f7b03117fc1955a91eb6abe8ff80f566134abfbc9a5f3",
+            "hash": "0x737199251e20dd91a95e96013cd39a7983e7410c21b64a5a26dd03c177671e5b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -209,7 +209,7 @@
     "tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py::test_rjump_valid_forward[fork_Osaka-eof_test-forwards_rjump_variable_stack_4]": {
         "vectors": {
             "0": {
-                "code": "0xef0001010004020001001b04000000008000045f6000e100025f5f6000e100086000e10007e000055fe000011900",
+                "code": "0xef0001010004020001001bff000000008000045f6000e100025f5f6000e100086000e10007e000055fe000011900",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -219,11 +219,11 @@
             }
         },
         "_info": {
-            "hash": "0x1bad0f6132d49ca1dd7a7ec4fd44c5ec085e04bfb9630a57affd54ba34b4869c",
+            "hash": "0x9a63f255096b234a55b9fa8b47a589e90ca6cfeb0c6b3cfe944f5813a3d690a0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMP.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjump.py#L270",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

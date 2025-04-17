@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010019040000000080000260006000ee00ef0001010004020001000604000000008000016001e1000000"
+                "0xef0001010004020001000603000100000019ff0000000080000260006000ee00ef00010100040200010006ff000000008000016001e1000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf4d96be62c35788de9da11c8d1b53f9c76050646717a3af4e0683589383b403e",
+                    "hash": "0x7f1d80cc7624f2975c5a2c09a1232b20ab854c3f47124c44d80ef7b01516e110",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf883800a839896808080b7ef000101000402000100060300010019040000000080000260006000ee00ef0001010004020001000604000000008000016001e100000025a04c12542faf32bbfcb385c0a766578fc09c80571d5299b0dd6d950df4cb1f7415a0044beb1dc18bb25d32886563f2e9766a7117fd2bb99d99dedb4d378c82887a64",
+                    "txbytes": "0xf886800a839896808080b839ef0001010004020001000603000100000019ff0000000080000260006000ee00ef00010100040200010006ff000000008000016001e100000025a02e40f4d98cacbbefd4613f13843bd7f4c5cc7f58a9f9b4b35974f10a686fbeeaa03af424313f5e98eab6d248c0f7fa7284da56517280a6d753af52636b6707438f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,19 +48,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02ae76",
+                            "balance": "0x02ae8e",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000604000000008000016001e1000000",
+                            "code": "0xef00010100040200010006ff000000008000016001e1000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de970fcc",
+                            "balance": "0x3635c9adc5de970f7c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -84,11 +84,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe789e3ff077766e2c835f8d3859d52822d4f842cb7268664cbf8a86aea38afe5",
+            "hash": "0x5b61034f263f9f2d9c89f77f0d64d0f9ac3b65ede31bc16414b685d59102c606",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -123,7 +123,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e1000450e000011900"
+                "0xef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e1000450e000011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -132,9 +132,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x98cf07f8fc66d91928d47781e4617dd6efca884760118652b770938e910f5272",
+                    "hash": "0xaa9d532d837772f22c76f37e5080ca0c6345f9deecebe4f11e15fd2739e9d659",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88a800a839896808080b83def00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e1000450e00001190025a02fcec8005d0d671a52a9059b5a5f79029298515adf7463471b7a194415575fc4a05a70e0e2a2da74ce7a6dedca78444a4cfa92f73faf52db40fe8cc603ced15f68",
+                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e1000450e00001190025a0b23bbb032cd7ade253dc491c20eaa94011858f41608d653073556b4b9084fad8a063a9cdb698e905622958f81b289b64fef4cd2d7854c9aeb197d701b933aac8c8",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -143,19 +143,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bd82",
+                            "balance": "0x02bd9a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000c04000000008000025f6000e1000450e000011900",
+                            "code": "0xef0001010004020001000cff000000008000025f6000e1000450e000011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96dda4",
+                            "balance": "0x3635c9adc5de96dd54",
                             "code": "0x",
                             "storage": {}
                         }
@@ -179,11 +179,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfa244c59e2c76a98b2f37bb6becfa8d07f8a2cff4e0122915d1a68bdd1525318",
+            "hash": "0x6b9c342c7d27863e08a75ca9c1892b97a3a06d96e81ce634e165418512f3166d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -218,7 +218,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001d040000000080000260006000ee00ef0001010004020001000a04000000008000025f6000e10003e0000000"
+                "0xef000101000402000100060300010000001dff0000000080000260006000ee00ef0001010004020001000aff000000008000025f6000e10003e0000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -227,9 +227,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa42e62509902af6281a21667c79c15b88fd98ec1cbd18ddb7de8e1c1dc38def1",
+                    "hash": "0x3b617af74409ef9cec39c9d8e526fe7a19bfc855fda3d82a9c4ae9b154a27539",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf888800a839896808080b83bef00010100040200010006030001001d040000000080000260006000ee00ef0001010004020001000a04000000008000025f6000e10003e000000025a0663f598fbe9b1982e7bd525c80b14cd762befa35d3d86097618290fd76d880bea039f793adf35a4169551636e9c39d9bd138c21761df7d6d8eb535cd1e1daf751a",
+                    "txbytes": "0xf88a800a839896808080b83def000101000402000100060300010000001dff0000000080000260006000ee00ef0001010004020001000aff000000008000025f6000e10003e000000025a0ebeb6c703d4f62dac3bcbaf923a7bf5685f1746f17d4be3ed9424758f25de51aa0474c08e94416c7f5c3fae4ee9ef4d2c6e1d5581fcdbaac4e343b6e324856a86c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -238,19 +238,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02b84e",
+                            "balance": "0x02b866",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000a04000000008000025f6000e10003e0000000",
+                            "code": "0xef0001010004020001000aff000000008000025f6000e10003e0000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96eefc",
+                            "balance": "0x3635c9adc5de96eeac",
                             "code": "0x",
                             "storage": {}
                         }
@@ -274,11 +274,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa5366addc0164bdffd21af58c3f5e8bab0a59de0e6409c83caeea4dc3f954db9",
+            "hash": "0x80aadc87ebce45ae8bca5828c684cd97c3fff0900df45e076a9281b6d3f0ca5b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -313,7 +313,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001e040000000080000260006000ee00ef0001010004020001000b04000000008000025f6000e100045fe0000000"
+                "0xef000101000402000100060300010000001eff0000000080000260006000ee00ef0001010004020001000bff000000008000025f6000e100045fe0000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -322,9 +322,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcc73f947dcc35f3542aee41dd2d9c003fffcbb261a3605d2bfb3c28f5ddc0a04",
+                    "hash": "0xc83c7d90f6aaf4c4cdfd07b2718ffda36e823f5e251c650c8f36a64122b772de",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf889800a839896808080b83cef00010100040200010006030001001e040000000080000260006000ee00ef0001010004020001000b04000000008000025f6000e100045fe000000026a0b36f13db76adf0bbea76f32a805e4d3a5080f92216211a7bcbe4a94065fcf5eca027d244d23acb166e5e4183c0cc2bcea84c043f1388e7acc168e1fbded17a379a",
+                    "txbytes": "0xf88b800a839896808080b83eef000101000402000100060300010000001eff0000000080000260006000ee00ef0001010004020001000bff000000008000025f6000e100045fe000000026a021567e71ea243023d86f1644af9397cecb57da527dc38e7b002a37120123d502a06890678f6f42ef112e3274454917896379ae4831bfd3ad8dedf62995651a937a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -333,19 +333,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bad6",
+                            "balance": "0x02baee",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000b04000000008000025f6000e100045fe0000000",
+                            "code": "0xef0001010004020001000bff000000008000025f6000e100045fe0000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96e68c",
+                            "balance": "0x3635c9adc5de96e63c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -369,11 +369,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8b1f5263463d376577742656aaa9580b6bbf1ad0954da50da377a211abb4f8fb",
+            "hash": "0xb5e582099c93141a02c401fa860f0d3a5d50d6112337059c8ea39babc3f2fc70",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -408,7 +408,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001b040000000080000260006000ee00ef0001010004020001000804000000008000025f6000e100011900"
+                "0xef000101000402000100060300010000001bff0000000080000260006000ee00ef00010100040200010008ff000000008000025f6000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -417,9 +417,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc5353860bd1fd7c38282033f095bf001610952d3faf32ca6fc441bca1361587b",
+                    "hash": "0xfac23c1df9efe29b9b5b04d0209336bfd9f7e788e7b2d25f49623aa5cb2ba481",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf886800a839896808080b839ef00010100040200010006030001001b040000000080000260006000ee00ef0001010004020001000804000000008000025f6000e10001190026a05fdd09d13f699008257ecddd958df4cd75fbb0a4617455850e0c03645b47cc47a03ad58db3016e8b92b28531a15a6c0595264bb0b156073454541a14441ba59bc4",
+                    "txbytes": "0xf888800a839896808080b83bef000101000402000100060300010000001bff0000000080000260006000ee00ef00010100040200010008ff000000008000025f6000e10001190026a0a29171d5b5729d9b58d2db2ccba394997303876b0d89eabb3e70ed74faefe80fa02040c3d4d5eabdaf06e436718422b7b3b868aaab8c2a4a9269f72cf48f014d45",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -428,19 +428,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02b386",
+                            "balance": "0x02b39e",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000804000000008000025f6000e100011900",
+                            "code": "0xef00010100040200010008ff000000008000025f6000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96feec",
+                            "balance": "0x3635c9adc5de96fe9c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -464,11 +464,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe8826d704ed662960a21f3a448060fcdc8c659da6aec6858f89c82fb381cf84d",
+            "hash": "0x90d165c9f61f4431ca02fa5f601ddf60439aa9aedce9c8d4e2dd0a2cf9352b86",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -503,7 +503,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010020040000000080000260006000ee00ef0001010004020001000d04000000008000025f6000e100066000e100011900"
+                "0xef0001010004020001000603000100000020ff0000000080000260006000ee00ef0001010004020001000dff000000008000025f6000e100066000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -512,9 +512,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0649ef350a6b7cfc8c5f7232b96757587f44c92fe720d7e93ba11a907292b20f",
+                    "hash": "0xc3b6c13b728141ec1fa984fe0519717ef34ae3eb5403c8fe268cb9d848f471ec",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88b800a839896808080b83eef000101000402000100060300010020040000000080000260006000ee00ef0001010004020001000d04000000008000025f6000e100066000e10001190026a0569a3ec74a02fbada2ce55e7f96c709324b227c4860d1ba951e339af8d568692a05e2afa7c4d8ff4e745167049044aaaf36faf0c24082ec842df32621756dbfa2a",
+                    "txbytes": "0xf88d800a839896808080b840ef0001010004020001000603000100000020ff0000000080000260006000ee00ef0001010004020001000dff000000008000025f6000e100066000e10001190026a0e9049b09e7dee13f691b8de0226d8402223372a250974121acd5d0352b77e578a06db93d5f03c6ce6c4534ad3ecb435227db9e949951d88d58ec906a41378e9403",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -523,19 +523,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bfe6",
+                            "balance": "0x02bffe",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000d04000000008000025f6000e100066000e100011900",
+                            "code": "0xef0001010004020001000dff000000008000025f6000e100066000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96d5ac",
+                            "balance": "0x3635c9adc5de96d55c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -559,11 +559,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3475866fb4573cc42e7133831d96bed881185726279aa1a39f8cab26eb5d544a",
+            "hash": "0x6a043c203e3b060e58f1be798b5fe4cad2c0ce23d156021719c102c0490c3542",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -598,7 +598,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001b040000000080000260006000ee00ef0001010004020001000804000000008000025f6000e100015f00"
+                "0xef000101000402000100060300010000001bff0000000080000260006000ee00ef00010100040200010008ff000000008000025f6000e100015f00"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -607,9 +607,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9f7a1843919a17c4b8b78d35c9fe2a2b8d2d0bf7dde318d373d3a132fee6af19",
+                    "hash": "0x0caac045c3b8f3831f509c70761ae6ff5d047b71b71bfcab30d58a595aed97af",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf886800a839896808080b839ef00010100040200010006030001001b040000000080000260006000ee00ef0001010004020001000804000000008000025f6000e100015f0025a07ab1f3aad1dc225807eea0d47a8f7211290b803aa3ad9af5f78730391f505265a01b9fe1b607ec83690dace2e57962485aacf739a16d052aa8ff73a02051adb488",
+                    "txbytes": "0xf888800a839896808080b83bef000101000402000100060300010000001bff0000000080000260006000ee00ef00010100040200010008ff000000008000025f6000e100015f0026a0b944cfa1c787061309293c6221339a6d434a8b0b718fd57292ec0d8dcdf42959a0083097f4d2f94f647810e840e83848bfa359b72c7eb3792151f16fdebed84e8a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -618,19 +618,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02b386",
+                            "balance": "0x02b39e",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000804000000008000025f6000e100015f00",
+                            "code": "0xef00010100040200010008ff000000008000025f6000e100015f00",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96feec",
+                            "balance": "0x3635c9adc5de96fe9c",
                             "code": "0x",
                             "storage": {}
                         }
@@ -654,11 +654,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x05207008e199b1510f47db7da1fc7e2c34b9c3cfb0bfd69b6b526d0577b068b8",
+            "hash": "0xfe94dbddd6c2243afa0b492483810ed7baa57a9d0323294e7d5592a5cdb95dcf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -693,7 +693,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010021040000000080000260006000ee00ef0001010004020001000e04000000008000035f6000e100075f6000e100011900"
+                "0xef0001010004020001000603000100000021ff0000000080000260006000ee00ef0001010004020001000eff000000008000035f6000e100075f6000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -702,9 +702,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x44a2b0c4c497f3a3a363e185595f2351fc47e8b96c61f18a85989a0ff890ddc9",
+                    "hash": "0x6a308628146041ff4c3105d0d6f526a1b2f8a10905f93df57ff4dd5bc8b11446",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010021040000000080000260006000ee00ef0001010004020001000e04000000008000035f6000e100075f6000e10001190025a0e84a13a925cf8e29ef81bf9ec81da14b982ca8c15c37418399df912b8214d677a03b6e85db6e7d8627399ba0f8bc0d909462694bc61a3e30bbecd16ed4722f1eca",
+                    "txbytes": "0xf88e800a839896808080b841ef0001010004020001000603000100000021ff0000000080000260006000ee00ef0001010004020001000eff000000008000035f6000e100075f6000e10001190026a03f47075a60467829112321e50ea9b6845633a917ccb8bf37d4113921d6e3d859a04cc7c7192a0ee2f5a870d991499fd327304ec5004f3a0b592a4a5bfa511f6b20",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -713,19 +713,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02c26e",
+                            "balance": "0x02c28c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000e04000000008000035f6000e100075f6000e100011900",
+                            "code": "0xef0001010004020001000eff000000008000035f6000e100075f6000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96cd3c",
+                            "balance": "0x3635c9adc5de96ccd8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -749,11 +749,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x991e1150408367741bfb48f595c26dff4aa27bc08433c4a43e85aa2b9fd20f8b",
+            "hash": "0xbd08be5fb95d30df314f539d09d7123b99eff876cb3e3141b999839eb84aea85",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -788,7 +788,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000035f60010180600a11e1000480e1fff200"
+                "0xef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000035f60010180600a11e1000480e1fff200"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -797,9 +797,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc116ac27afe96ca0b20b3fb6c288418092b810194be03abd7eca0938c847c460",
+                    "hash": "0x7198b65bef6166afa018004f83676daf3d2c4757c8e657b87d0da26639871c3a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88e800a839896808080b841ef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000035f60010180600a11e1000480e1fff20025a0e18cac2736a026a0b03361df700cb6751066bc207fe058fcad0d61b18e015e72a02e6113cd8c4c52c9134cc02e988d0f5865cb028ed63380805c9a24ce6a2ad3ba",
+                    "txbytes": "0xf890800a839896808080b843ef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000035f60010180600a11e1000480e1fff20025a031018e40f1c0b1f29497a7154dfd8decaac95e68d574cc8bb0ac709bfec42a87a02fb8a13aa885ce5d81f73a81738697d7d493624ab596e36aabd185b903ffbad1",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -808,19 +808,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02c7f0",
+                            "balance": "0x02c808",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000035f60010180600a11e1000480e1fff200",
+                            "code": "0xef00010100040200010010ff000000008000035f60010180600a11e1000480e1fff200",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96bae0",
+                            "balance": "0x3635c9adc5de96ba90",
                             "code": "0x",
                             "storage": {}
                         }
@@ -844,11 +844,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb55a3f5fff8ea6c889b4d6d0042e37451cc750cc94084188ef10284ca119f135",
+            "hash": "0xcd897c08990c7cb4d519772c3cffff34690f35b00cbbb5ae48ea63ac52b67262",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -883,7 +883,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010024040000000080000260006000ee00ef0001010004020001001104000000008000035f60010180600a11e100055f80e1fff300"
+                "0xef0001010004020001000603000100000024ff0000000080000260006000ee00ef00010100040200010011ff000000008000035f60010180600a11e100055f80e1fff300"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -892,9 +892,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xce77e536bafab9d8e4448a911259952e750ad4aa4af24a462d1f7cd7d861d07d",
+                    "hash": "0xa19c60b22bf33646b975f94dc7207bf2945835b1286c8a4ddd965cab7bff756f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88f800a839896808080b842ef000101000402000100060300010024040000000080000260006000ee00ef0001010004020001001104000000008000035f60010180600a11e100055f80e1fff30026a05db854d0f497a6fece7d0a54e35b9b2314a1421d10a85f09b657b8cc88c852fba0587303b88f9bc79c7cfd6ea4f9ab8408e5829d29a4975a1720493538cc7eae3e",
+                    "txbytes": "0xf891800a839896808080b844ef0001010004020001000603000100000024ff0000000080000260006000ee00ef00010100040200010011ff000000008000035f60010180600a11e100055f80e1fff30026a0449fa8361d7e9b472a96ac1116ef42a932033fbe49803289cb1ee90246f0852ca00ecd58a65d88479bfe562d23243915752eab11f4f3100c31813232aeec23fbf1",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -903,19 +903,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02ca78",
+                            "balance": "0x02ca90",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001104000000008000035f60010180600a11e100055f80e1fff300",
+                            "code": "0xef00010100040200010011ff000000008000035f60010180600a11e100055f80e1fff300",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96b270",
+                            "balance": "0x3635c9adc5de96b220",
                             "code": "0x",
                             "storage": {}
                         }
@@ -939,11 +939,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9874778f5d5fa44cc050af6bf62f5625b0bc9a106b77f388573a8e84c1722b6b",
+            "hash": "0x96f3e7584d779fc5e26b7a34bde2d6ee158497b9f35e215e510f4d43b4ac17d2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -978,7 +978,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e100045fe000015f00"
+                "0xef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e100045fe000015f00"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -987,9 +987,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x51f15ad2278c4c6bdebb31190540503ec9226c7ff2e3c91f3ac7aa1ca3cf86e4",
+                    "hash": "0x27ab39e3568a14b64e6f4eec977cc93593ab76f21b32ef15c7df18349ee2fe6a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88a800a839896808080b83def00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e100045fe000015f0025a0b6e6096c9ff30ab6776808fe4d09a50efdbe1f25aba48a1ac10f0bf35f4c4d4ea05a66544a2bc8c08806b753442eedf83b172f43e74daac110406745af83e6e1bf",
+                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e100045fe000015f0025a0379a1b9ef78838d0a6ab1a6ebc4d5f2224e066c7bc254783a80ead26f1035f1ca001fec491d06e58c16bd5e5b1fa816cca6448f75c7b4fd446f71a7cfba4fd27b5",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -998,19 +998,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bd82",
+                            "balance": "0x02bd9a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000c04000000008000025f6000e100045fe000015f00",
+                            "code": "0xef0001010004020001000cff000000008000025f6000e100045fe000015f00",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96dda4",
+                            "balance": "0x3635c9adc5de96dd54",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1034,11 +1034,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xda01b21a53f837e4c47f45a22d20c819bbd8bd511f9eead83847833ccdab51c0",
+            "hash": "0x0db8c274fd5236abe62703d3a3583f1b8d6ab4e3dc192898699221ee882b0e8e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1073,7 +1073,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e100045fe000011900"
+                "0xef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e100045fe000011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1082,9 +1082,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x23ce4d0e31473e084980bc36c9935e37da179c81d11e74d5cbead008bcc9530e",
+                    "hash": "0x4ca856eb0ea6e40fad5332d5e2a4167dd05266295097899e31b2c45a23bbf141",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88a800a839896808080b83def00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e100045fe00001190026a05a412dbe74d908ecc16fb5538ab0b1f85db4773ae57deda6603303b73bbf21d4a0286f9fb828c1bf741d41166021fc6b31d0885b3abee108645876d98f5687c77f",
+                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e100045fe00001190026a059bb75d7b4d184badb7a9820040639077a69a513dc9ba7beecd300a80f835a0ba07b63e4b77bc3131696fd538b000c3e7352e85a88bd21307466b11ec22cfa6c08",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1093,19 +1093,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bd82",
+                            "balance": "0x02bd9a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000c04000000008000025f6000e100045fe000011900",
+                            "code": "0xef0001010004020001000cff000000008000025f6000e100045fe000011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96dda4",
+                            "balance": "0x3635c9adc5de96dd54",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1129,11 +1129,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2bb3ed008b26dec6a7eab100928dfa2bc301c134b56f57d375fcc811899f3f69",
+            "hash": "0x4c9f2aa672063484a5f1a8112f4e7e9bcbf7623635485eac651c19bfd8a33522",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1168,7 +1168,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e1000450e000015000"
+                "0xef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e1000450e000015000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1177,9 +1177,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xeac0e2ad329f20cfb311309d533fbc1d2856aa5bb7487f9e10a4d3bda9fe1d0d",
+                    "hash": "0x626c0b3ac23c7f5a79956465ed5749879aa2045477a830c0067ce7356afa3039",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88a800a839896808080b83def00010100040200010006030001001f040000000080000260006000ee00ef0001010004020001000c04000000008000025f6000e1000450e00001500026a0d5ae5597d47887385809c51f4cfa771cc8a669fc8f8212b6505214fa18ea1771a01a037ad36bd52446e3fd33ea318fad04a991312cd7578049f5fa34f1cb2c0d77",
+                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010000001fff0000000080000260006000ee00ef0001010004020001000cff000000008000025f6000e1000450e00001500026a0370c1119dac031115101b0d9c4e2860cb12fc1b0ce1f8f73f2b567719ad49772a00f26205e5696a98f29c179b8984dcf8ae81ab9f7500dde09a309e56e861f2d37",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1188,19 +1188,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02bd82",
+                            "balance": "0x02bd9a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000c04000000008000025f6000e1000450e000015000",
+                            "code": "0xef0001010004020001000cff000000008000025f6000e1000450e000015000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96dda4",
+                            "balance": "0x3635c9adc5de96dd54",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1224,11 +1224,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd1dedffbf9b7eb6672ebcfcb71c6d5bba178a1db8d002c8e00b07134b0aa9826",
+            "hash": "0x8f12755cbe4970c58ab4eba3dc4cefb715f3a214ce6e1128ff134496562a0e4d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1263,7 +1263,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010021040000000080000260006000ee00ef0001010004020001000e04000000008000045f6000e100025f5f6001e1000000"
+                "0xef0001010004020001000603000100000021ff0000000080000260006000ee00ef0001010004020001000eff000000008000045f6000e100025f5f6001e1000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1272,9 +1272,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf5861580429e08dd91aee4353e992680f62b082104123588dd10b5a92dcf3714",
+                    "hash": "0xe72bac2dc119e29333b6dd6e4f7a3e7c3badbb8086941ac2ef52d5c18213f1f3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88c800a839896808080b83fef000101000402000100060300010021040000000080000260006000ee00ef0001010004020001000e04000000008000045f6000e100025f5f6001e100000025a0905d9ea0e7a8fe0e2a3acf2c5aa8704ac33b934a53ded96ab6728cfe8be71afaa07368ff487943b27f8eeda7dcd0cc4e6dcf387c64f144777befc9fd72e3c70bf3",
+                    "txbytes": "0xf88e800a839896808080b841ef0001010004020001000603000100000021ff0000000080000260006000ee00ef0001010004020001000eff000000008000045f6000e100025f5f6001e100000026a0e78f111fcb7eb608321d6e41e7b3ad6bce6675a480072cb5c37f37fd8697d03ba05478067ba933ea2ada7cc4135cfeb6b37bd861b1e8449ef8ed25b8ffcda32066",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1283,19 +1283,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02c26e",
+                            "balance": "0x02c28c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000e04000000008000045f6000e100025f5f6001e1000000",
+                            "code": "0xef0001010004020001000eff000000008000045f6000e100025f5f6001e1000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96cd3c",
+                            "balance": "0x3635c9adc5de96ccd8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1319,11 +1319,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xaa45c227fffa61aaaa5e104132e29d503ea43d493663e8af0f8d753d3d5db8cd",
+            "hash": "0xdc19d35abdb330d7c3d7a5aa4e2ff3defe4179ef45c80218432a99245a50e945",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1358,7 +1358,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e000011900"
+                "0xef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e000011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1367,9 +1367,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x45d9b33e395c2d0da4aa291fc6822c2b5ee1f7f47489314ed4fbacbc1ad43921",
+                    "hash": "0x1017c5ac2e770b1b7edf8375d4c7396e30e0a9958670af0ba98e121bf7ce2d9f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf892800a839896808080b845ef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e00001190026a05c26fe1d39588db04f2ab2b7d80979944e11777412a5ab35d4c90d2030f3fd2da040cc268bbd847bca183aaf36877efa8c564ba43c51a7e98c4fdccb1cc022cb04",
+                    "txbytes": "0xf894800a839896808080b847ef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e00001190025a03ddafa41b64580f3952d65cc44a566be244faf6c10308fb377fd3fd30d651149a032dc5908579f11a8b120f9e9978145c640e6a68eb51f1e0e63444bcacf98021a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1378,19 +1378,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d180",
+                            "balance": "0x02d198",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e000011900",
+                            "code": "0xef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e000011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de969b00",
+                            "balance": "0x3635c9adc5de969ab0",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1414,11 +1414,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6edf6091220d85d52479a080924647bc3387d7223b4c8abbb73ce83b2b4fa75f",
+            "hash": "0xc451574d70e554456dd9f95530678984221b81865edade4ea9bdc95747470f14",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1453,7 +1453,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010025040000000080000260006000ee00ef0001010004020001001204000000008000055f6000e100025f5f5f6000e10003e0000000"
+                "0xef0001010004020001000603000100000025ff0000000080000260006000ee00ef00010100040200010012ff000000008000055f6000e100025f5f5f6000e10003e0000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1462,9 +1462,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x78e5ad2a5adfa98619f414e49329d8cea18487dc75c17114cdf3ce18d867e91e",
+                    "hash": "0x9fbffcb8659b213852f21dc02619406d8ba1d041734f5fd273dc9d672d18e1bb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf890800a839896808080b843ef000101000402000100060300010025040000000080000260006000ee00ef0001010004020001001204000000008000055f6000e100025f5f5f6000e10003e000000025a00874836c13a7a9366f73b8affe0cfbb265ee6b19112d169cb0b0459a09dc1d20a0258ad34c4dd46a0cfc7839d86404de2875d1255fafee4e295b9f67a36f4a9529",
+                    "txbytes": "0xf892800a839896808080b845ef0001010004020001000603000100000025ff0000000080000260006000ee00ef00010100040200010012ff000000008000055f6000e100025f5f5f6000e10003e000000025a002adc09b802c9c51b1239f6fb35f2c7de68f861150b36df587b910287fdb1b4da07de5003ea7dc309e3d2ab707d44c824837b8d64ef83a3f9c26e219ce51f86e5c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1473,19 +1473,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02cc4c",
+                            "balance": "0x02cc64",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001204000000008000055f6000e100025f5f5f6000e10003e0000000",
+                            "code": "0xef00010100040200010012ff000000008000055f6000e100025f5f5f6000e10003e0000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96ac58",
+                            "balance": "0x3635c9adc5de96ac08",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1509,11 +1509,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5a145c11ef17d6d82c9b4d6e4c9c3b77105cfdc333df445eb124fd54e44a9ce0",
+            "hash": "0xadde31d8d2d5401c88668d6daed27594cd3da7ea41c4d552acf96f86ed616343",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1548,7 +1548,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010026040000000080000260006000ee00ef0001010004020001001304000000008000055f6000e100025f5f5f6000e100045fe0000000"
+                "0xef0001010004020001000603000100000026ff0000000080000260006000ee00ef00010100040200010013ff000000008000055f6000e100025f5f5f6000e100045fe0000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1557,9 +1557,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4d74f697d1678cffe14182b819fac3d56363344483f784cd50c903e6a3543aea",
+                    "hash": "0x3f8c52dfc55be725e74948b09145ab488bdbbb1ed9717a953e1b42f7b59e7ebf",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf891800a839896808080b844ef000101000402000100060300010026040000000080000260006000ee00ef0001010004020001001304000000008000055f6000e100025f5f5f6000e100045fe000000026a09f302314fbe7b0d8a5310cadd5b1ab3222f236ab3a5141bd7fcd84122e51826ca0199508bb2ac539248af2b452996213e8a4199a126e4983b7a587c39d9e026ae7",
+                    "txbytes": "0xf893800a839896808080b846ef0001010004020001000603000100000026ff0000000080000260006000ee00ef00010100040200010013ff000000008000055f6000e100025f5f5f6000e100045fe000000025a02b92d8971d0f2fa7fb32db3785ccb3108c54e9a2bff3475f0286458d01f8bfb0a02a4e16cd8133efa996c66832a089a1652933da1c410344fe97da47fc9ae7b07f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1568,19 +1568,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02ced4",
+                            "balance": "0x02ceec",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001304000000008000055f6000e100025f5f5f6000e100045fe0000000",
+                            "code": "0xef00010100040200010013ff000000008000055f6000e100025f5f5f6000e100045fe0000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96a3e8",
+                            "balance": "0x3635c9adc5de96a398",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1604,11 +1604,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbb924fec11bbdba89f03ac1da75e4a9a2e11f019cb34d0c99b5a7a0c012c9b23",
+            "hash": "0xcd241f279e4604e8bded8070e6e3d5c179a75feec4093268562e73ed1557b9d1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1643,7 +1643,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000055f6000e100025f5f5f6000e100011900"
+                "0xef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000055f6000e100025f5f5f6000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1652,9 +1652,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd808f043eb118e0a4457dc695916597abad68495ebf4f12248fd2273cec9ad57",
+                    "hash": "0xc89fe7d6a3badda2b7045f9a70b4610f0f31b93ee6e7f6c603627d096cfb1b14",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88e800a839896808080b841ef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000055f6000e100025f5f5f6000e10001190026a03ead863459a7735ee52cee3f7b98d425f07d85c9937892840a5950008df1efbda0457e2a5908c1489ff7c6170cb2a0955c642778824aa69c19f3a15532b4edae69",
+                    "txbytes": "0xf890800a839896808080b843ef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000055f6000e100025f5f5f6000e10001190025a0f606010fb8d04d6351197b6841a01d14240b0c4d6e6c9a101ef7019f05377c40a079e5aade88504a5cb2e9389d0f632b6e2d5e5c17c4422380ed1796d6bcea647c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1663,19 +1663,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02c784",
+                            "balance": "0x02c79c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000055f6000e100025f5f5f6000e100011900",
+                            "code": "0xef00010100040200010010ff000000008000055f6000e100025f5f5f6000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96bc48",
+                            "balance": "0x3635c9adc5de96bbf8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1699,11 +1699,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6a0bc26a7dc9abad0117c0fd59a237cd57c489521dfbaa2c4b1c9b58fb3d39a1",
+            "hash": "0x916e4fd4abde337e984adbdc2a7fb5f05fee282dcf3f85060e291f009159d86f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1738,7 +1738,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010028040000000080000260006000ee00ef0001010004020001001504000000008000055f6000e100025f5f5f6000e100066000e100011900"
+                "0xef0001010004020001000603000100000028ff0000000080000260006000ee00ef00010100040200010015ff000000008000055f6000e100025f5f5f6000e100066000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1747,9 +1747,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xc7a81c93fec52c2467ab91c6cae9d2d4e63cbe9de8fa5c51a981622c5b1683ba",
+                    "hash": "0x579de629980b670e608a46fbc17844695e6bd9a440f18a371168be9f2149b3da",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf893800a839896808080b846ef000101000402000100060300010028040000000080000260006000ee00ef0001010004020001001504000000008000055f6000e100025f5f5f6000e100066000e10001190026a07cd36f2abe90792b4fb568faeb6b716eb3c2be9606bec8a6c85ce93ed8137abca05a74fd265afc0cea17789d4f2df916252ab887d3e3b733f3ab48bbe06a6d154c",
+                    "txbytes": "0xf895800a839896808080b848ef0001010004020001000603000100000028ff0000000080000260006000ee00ef00010100040200010015ff000000008000055f6000e100025f5f5f6000e100066000e10001190026a09917c5e25c8f5ced6daf17e5d533229ca2551b83dbc8f4084a9c1ea584780ef0a07e78e43c19266a8edf2e995410addef30da6cb5b18769cc12996afc1311d78d1",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1758,19 +1758,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d3e4",
+                            "balance": "0x02d3fc",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001504000000008000055f6000e100025f5f5f6000e100066000e100011900",
+                            "code": "0xef00010100040200010015ff000000008000055f6000e100025f5f5f6000e100066000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de969308",
+                            "balance": "0x3635c9adc5de9692b8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1794,11 +1794,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6ff80f80d1f953ba02e8a6f8a8efa01a627d928cefcdf0613a2768c981aa1105",
+            "hash": "0x0f12ba87c5a82d0d0cad283af1fe8fb3b6dd5fa06c4ef7b2090de1c78daa71d2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1833,7 +1833,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000055f6000e100025f5f5f6000e100015f00"
+                "0xef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000055f6000e100025f5f5f6000e100015f00"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1842,9 +1842,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb68aaf3e760d5aa165c8415bfceaf792a5385c0264d33be6e47dd551838592b2",
+                    "hash": "0xcf698cdb0eb30ed6518f0ba4410474a586e680faa7f6ae013eeddcb0516aea31",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88e800a839896808080b841ef000101000402000100060300010023040000000080000260006000ee00ef0001010004020001001004000000008000055f6000e100025f5f5f6000e100015f0026a09ff029a59f2abdbd81f2a0fb4fe542055fe9f7e8f66b799109d9d8b3783ea641a00b2126fe8d73110994d75550764d4269a6f4d0f9e018697c0e89ca34f18deba7",
+                    "txbytes": "0xf890800a839896808080b843ef0001010004020001000603000100000023ff0000000080000260006000ee00ef00010100040200010010ff000000008000055f6000e100025f5f5f6000e100015f0026a06c3391f2825cf11d0824102b98e314825af73c3af27162b57549fbeaf2e6f6bea02c2f3da4d4e44b3105428d47628b30c011f3f2d2e8629b857cf739b6c91faa3d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1853,19 +1853,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02c784",
+                            "balance": "0x02c79c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001004000000008000055f6000e100025f5f5f6000e100015f00",
+                            "code": "0xef00010100040200010010ff000000008000055f6000e100025f5f5f6000e100015f00",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de96bc48",
+                            "balance": "0x3635c9adc5de96bbf8",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1889,11 +1889,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbaf42037757bdb0eac0936b0eade8bfc66d5c79d1ee7410ec7aeea0df202a5f5",
+            "hash": "0xb77fe476b7ce30a596c97e2d8a0a5ff26ecab9000989512a9cfe02a8beee291d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -1928,7 +1928,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010029040000000080000260006000ee00ef0001010004020001001604000000008000065f6000e100025f5f5f6000e100075f6000e100011900"
+                "0xef0001010004020001000603000100000029ff0000000080000260006000ee00ef00010100040200010016ff000000008000065f6000e100025f5f5f6000e100075f6000e100011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -1937,9 +1937,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2b4fd111ebb17a783c5ff158fbc42308e426a79aeeca75d566bcc7f44fd9c5e1",
+                    "hash": "0xb6a6aeb4123d11de5bac555952a05697db1a60f589daaca921b938c039c09874",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf894800a839896808080b847ef000101000402000100060300010029040000000080000260006000ee00ef0001010004020001001604000000008000065f6000e100025f5f5f6000e100075f6000e10001190025a0f3314bb861ef313f8ed3493e15506c9ca8106d0ba746044c8552200cf22eb135a0560af6b767519c64b824b95ef160a137aa4df697afb4910cf72ef33bd1f4aa15",
+                    "txbytes": "0xf896800a839896808080b849ef0001010004020001000603000100000029ff0000000080000260006000ee00ef00010100040200010016ff000000008000065f6000e100025f5f5f6000e100075f6000e10001190026a0dda94b0a97dfe71b9af0efed0f28c84a70c3c20dda2b74c6e2545931feebdd42a0573c2a9ed274d798e10171a686f5a63fc099170f28eea9325ccfef31481e13c3",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1948,19 +1948,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d66c",
+                            "balance": "0x02d684",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001604000000008000065f6000e100025f5f5f6000e100075f6000e100011900",
+                            "code": "0xef00010100040200010016ff000000008000065f6000e100025f5f5f6000e100075f6000e100011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de968a98",
+                            "balance": "0x3635c9adc5de968a48",
                             "code": "0x",
                             "storage": {}
                         }
@@ -1984,11 +1984,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5778f84e1c35b43020fa2880cd54082ba55f4e5a8269c3a81a751bfa41721eec",
+            "hash": "0xe4df37422e1ec9279570453dd4ca08c487ea675bd89d45bd870dbc16a4b045cc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -2023,7 +2023,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001002b040000000080000260006000ee00ef0001010004020001001804000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff200"
+                "0xef000101000402000100060300010000002bff0000000080000260006000ee00ef00010100040200010018ff000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff200"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -2032,9 +2032,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x53519441986a542161647a46416974ef610318c26170de62b3644273f4aabbe2",
+                    "hash": "0x820627ebc9b4d3659aa8e7ea50a355dad374d1008066b487e28529e0dcdc55e8",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf896800a839896808080b849ef00010100040200010006030001002b040000000080000260006000ee00ef0001010004020001001804000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff20026a045c7bd1f90fca45a447000b2a8246786b0daa2adf647957a670d50edee67139da04168bd1084ff9761006302c20dda044101038c30dcf95080221eb5f63bab2027",
+                    "txbytes": "0xf898800a839896808080b84bef000101000402000100060300010000002bff0000000080000260006000ee00ef00010100040200010018ff000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff20026a0dfbac5769c1d61ff72ab8ec3a1ceac45f7e1b2cd2c69617c5fd5fb6df40722cba03e9bac4e7d2c76fdc91482348fd69bc2e779e6ba101b3c924b5679c0fbfd465d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2043,19 +2043,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02dbe8",
+                            "balance": "0x02dc00",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001804000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff200",
+                            "code": "0xef00010100040200010018ff000000008000065f6000e100025f5f5f60010180600a11e1000480e1fff200",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de967850",
+                            "balance": "0x3635c9adc5de967800",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2079,11 +2079,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x64937610b627750931ebd2e89cf2726986f72ad7cd46b42f33c33bab97dc0c72",
+            "hash": "0x3465be33dc712e64c23f1678ff57c02ba6c91582b553a917e0098874f2abf866",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -2118,7 +2118,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef00010100040200010006030001002c040000000080000260006000ee00ef0001010004020001001904000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff300"
+                "0xef000101000402000100060300010000002cff0000000080000260006000ee00ef00010100040200010019ff000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff300"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -2127,9 +2127,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2d3e960578bd4ae6de59bfff1b90ade039675827df2563eee8f7f80d99ba4622",
+                    "hash": "0xea72f01d7e9a19e12010d12f598298d7316cc0f20fb62abc2d91897956745e4b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf897800a839896808080b84aef00010100040200010006030001002c040000000080000260006000ee00ef0001010004020001001904000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff30026a091ee9590caf312359a2876860193cf2a8bf6cf3327bed3e31c09a19cf3eb6ba3a00df50ce841c177677a72fc4e046572b2ae69b895c0a6aadc7bbf9e62e4609e2b",
+                    "txbytes": "0xf899800a839896808080b84cef000101000402000100060300010000002cff0000000080000260006000ee00ef00010100040200010019ff000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff30026a0c123e39bfaf3ace8307f1a410d713c2e52dac7c242a4fab3508866f470edc62ba07da6fcd85c98ab806563c7715e87fa9af64cf6093cdd36e3362f614ba9b5a94e",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2138,19 +2138,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02de70",
+                            "balance": "0x02de88",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001904000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff300",
+                            "code": "0xef00010100040200010019ff000000008000065f6000e100025f5f5f60010180600a11e100055f80e1fff300",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de966fe0",
+                            "balance": "0x3635c9adc5de966f90",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2174,11 +2174,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8585e48e83ebb2297b37da49c257293222e3c502e2dfd10d19fb888d42de3bf6",
+            "hash": "0xa9b4c8f6b1df665c10595afeb744aed3215de73814af5728673d4346736c7fd6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -2213,7 +2213,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe000015f00"
+                "0xef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe000015f00"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -2222,9 +2222,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xdef78e51b8d83cd5c6521a2d90b74fcb939958dc7e14572bdaaec0e075d34fc7",
+                    "hash": "0x499df87d776b5884a835f180722defdffa914950ffbb51d829295483f1e3af97",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf892800a839896808080b845ef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe000015f0025a0955fe13ae87a7b0032961fa68f85b4472d7bcd122ff0f043a2f97c06200ebf4ba03bff1503fcff489846f3dad876ad691fbabe7698546e7b5dc858f848d954b166",
+                    "txbytes": "0xf894800a839896808080b847ef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe000015f0025a00c4915a3e1043da256022ad4b98610653fad92bf12da2ceea1a79f47026c5f90a00871d01932eebca396b9691d6d4c26f9e9588bd113e15c889281d7083a99b2de",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2233,19 +2233,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d180",
+                            "balance": "0x02d198",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe000015f00",
+                            "code": "0xef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe000015f00",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de969b00",
+                            "balance": "0x3635c9adc5de969ab0",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2269,11 +2269,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8536abc77dff1a2688edc9f0b98a46c9464cfd658dd809a9deeef330091f5c96",
+            "hash": "0x3b4a60f21dcbec258833d6575425020ec0ec92e4026df542c84d86f6ab281586",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -2308,7 +2308,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe000011900"
+                "0xef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe000011900"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -2317,9 +2317,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x023bfe5facdb8afe9913eb30a01a41bd7c4c9ee03890ffaa41311f48f66558a3",
+                    "hash": "0xeaf9acc88ef6e3ca1bfdb539e9fc5abc77ca7f3304b56e8b92ef6bbfd91f5a68",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf892800a839896808080b845ef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe00001190025a019c02049b0e1b0203aedcd7ce7195ffab9365a20c615419da042e4aa158008caa00b6fc9a22efbbafbb9c5d11b9af1b53cc124035596173d170cdffe919d0b35c9",
+                    "txbytes": "0xf894800a839896808080b847ef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe00001190025a096d2428dec9b928a2f8b5f3f7d66f92de76f003b8184cffe5aa9f7c3c563a976a05b40c194ed4c3ad83241fbd786dc8146e0a7612bb6d1bd021b8228f601d30c3f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2328,19 +2328,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d180",
+                            "balance": "0x02d198",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001404000000008000055f6000e100025f5f5f6000e100045fe000011900",
+                            "code": "0xef00010100040200010014ff000000008000055f6000e100025f5f5f6000e100045fe000011900",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de969b00",
+                            "balance": "0x3635c9adc5de969ab0",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2364,11 +2364,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xafb84c1f44bfa90c033e27a43f1f6953e1dd09119d6e14b976596f4064269942",
+            "hash": "0x266b498b5718ca71c0e5c59a35b6803b55baf214d2b9f485783c2ebfbaa37c0a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
@@ -2403,7 +2403,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e000015000"
+                "0xef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e000015000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -2412,9 +2412,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x61cc7b82a1eb22619a17a03514efc6d5511173a840a50cc4eec90ac6bcaf6987",
+                    "hash": "0x0a1ae062a0e516ecf34d641c3b2e25b6ea9d4aaa595e8796b169117e359b6a82",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf892800a839896808080b845ef000101000402000100060300010027040000000080000260006000ee00ef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e00001500025a07c12ff0257b03e3054ce945c1e30cf5e9f61ebded997854c717d18e407785364a02d2f902ae7549b531a6d29bc27b1e70af81197525a46c5a2f3ededb1bcc755c8",
+                    "txbytes": "0xf894800a839896808080b847ef0001010004020001000603000100000027ff0000000080000260006000ee00ef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e00001500025a01b6eaa0d6d57c36be064e1e74fa0a9b81b54020669e416e7fc174a12cc2835fca0681cabd07b5deae19c14cb3b36cf4676051829b278a98fcced9a4792861a6a45",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2423,19 +2423,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02d180",
+                            "balance": "0x02d198",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001404000000008000055f6000e100025f5f5f6000e1000450e000015000",
+                            "code": "0xef00010100040200010014ff000000008000055f6000e100025f5f5f6000e1000450e000015000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de969b00",
+                            "balance": "0x3635c9adc5de969ab0",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2459,11 +2459,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd9c65c02bca8bd0f1a6a4a659472d3d086b3ad9e161b7a9e051b0646225ecb92",
+            "hash": "0xa4334c9b41ae423d5f54aab57356d9176b5c51432d2563915b59eb2ebf1ed6e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate a valid code section containing at least one forward RJUMPI.\n    These tests exercise the stack height validation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L265",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"

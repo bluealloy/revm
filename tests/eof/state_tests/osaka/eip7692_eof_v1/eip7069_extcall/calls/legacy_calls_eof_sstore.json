@@ -20,7 +20,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x951b2b00a19d0cfb44ca60d7c07d9b5bdbc8aaf7eab1394d5a6416d63c2a15da",
+                    "hash": "0x6e4e11bc58d4d16346bd798e59d1b23d8875893825c0a3d8851b78b140f11969",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -106,11 +106,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x9ce45df80760b92b21da45191612fc5dec49fe91e009f115bc7ddd3b0e3efcae",
+            "hash": "0x84120271df987d53651739ab885518661c7ee4be189c118b2522753ebf3ea381",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest legacy contracts calling EOF contracts that use SSTORE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L66",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L123",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -137,7 +137,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -166,7 +166,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x74d39fd195df370b6b4a1b04783db4ae4699ce7ccc20368ee099f4de17a0e079",
+                    "hash": "0xf3dd7138154bac29768d60340142c537358312495264800385f95f2603e032f5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -178,7 +178,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {
                                 "0x05": "0x1100"
                             }
@@ -224,11 +224,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xeeddb2ebdcfd4fa98a40c5de1148dbbcd3380feab7b02c5b7d4b0cdcd2d0a766",
+            "hash": "0xe23d3abaaaccd655a99a10ad1b13fe561cc41d1281e47fb5180a99563c62f054",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest legacy contracts calling EOF contracts that use SSTORE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L66",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L123",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -255,7 +255,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -284,7 +284,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x99d688da5553dbf6e26c51416af369f4141009240f82b1aac86aa0b7c4ce3ad7",
+                    "hash": "0x9c87e0804c219d1d0184155b10d030b4ea005ab200db915a79c486aea56f4488",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -296,7 +296,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -341,11 +341,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x94a0c74dea22667066b7844f9b3b149771c29c52831079456f90e3fe7cdc2f0a",
+            "hash": "0x7b8d087cae5dfa3a8bdb02276f3676be81e398f0ad78f1c673973178446fd722",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest legacy contracts calling EOF contracts that use SSTORE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L66",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L123",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"
@@ -372,7 +372,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001000504000000008000023360055500",
+                "code": "0xef00010100040200010005ff000000008000023360055500",
                 "storage": {}
             },
             "0x0000000000000000000000000000000000001100": {
@@ -401,7 +401,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb6b0f99ac31b4a7c03ed7633294a8b86c6c67b949d896496679a5796b48c2166",
+                    "hash": "0xa86ac0216a69f322990ba60eddfc11e9b0244c622caa702d01ee7ec7ffa61916",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8402faf080940000000000000000000000000000000000001100808025a0f2842b483b9d9e5dea69faef5283db27203d1eb76a0f7b905d5be0091bc1de37a0310b07b54a347016df64ba8c86a975d8274f87603ddd08046ae9055d4eff315c",
                     "indexes": {
@@ -413,7 +413,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001000504000000008000023360055500",
+                            "code": "0xef00010100040200010005ff000000008000023360055500",
                             "storage": {}
                         },
                         "0x0000000000000000000000000000000000001100": {
@@ -456,11 +456,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x76b4d705ade60e594fc3e4bdca2be4871f71df7b55cb0d9ad687b38d8a3159ed",
+            "hash": "0x5956fa7ef3743566d7f4a549cfcae1f2914caea68bdde373a2a3bc5bda7060e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest legacy contracts calling EOF contracts that use SSTORE.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L66",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7069_extcall/test_calls.py#L123",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3540.md",
             "reference-spec-version": "2f013de4065babde7c02f84a2ce9864a3c5bfbd3"

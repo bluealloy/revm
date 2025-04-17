@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef0001010008020002000d0006030002003200140400000000800004008000026000600060006000ec00e5000160006000ee01ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000ef00010100040200010001040000000080000000"
+                "0xef0001010008020002000d00060300020000003400000014ff00000000800004008000026000600060006000ec00e5000160006000ee01ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010001ff0000000080000000"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,36 +37,36 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xebc6f900d7065fefb23bc92e59f36c950d83cfe8bb9907e0eab4daa96fd5a6f5",
+                    "hash": "0x23fdf76fa489bed8f6f68e5dcf51bd749e3ccb3269591242fc3fd4b5bf32ec9b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf8c6800a839896808080b879ef0001010008020002000d0006030002003200140400000000800004008000026000600060006000ec00e5000160006000ee01ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000ef0001010004020001000104000000008000000025a02698d1ead9a7452c4fb12414f93b07bd227038a8274e2da5e7b7817fd8092feda0320fac90d244e0480ab522d7c6ccee47ac3b2f5dd1f9aa8ad44867a063ea957c",
+                    "txbytes": "0xf8cc800a839896808080b87fef0001010008020002000d00060300020000003400000014ff00000000800004008000026000600060006000ec00e5000160006000ee01ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000ef00010100040200010001ff000000008000000026a08a43e60a8d390421a24834ab97519c5a6d504e79b0c58febe42ba70f4a4fab0da0602f9d094f1e358bddeb9f6e909f4a33d04a315eacff30b465b9bc5824deed9a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
                         "value": 0
                     },
                     "state": {
+                        "0x24e8f4219782ef6fe5667ca1b178b59be6b01f7d": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
+                        },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0450cf",
+                            "balance": "0x0450f3",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
-                            "storage": {}
-                        },
-                        "0xa24e7d7d83c223c73501ca67b35bf2d394fc2781": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
+                            "code": "0xef00010100040200010001ff0000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de919d4e",
+                            "balance": "0x3635c9adc5de919cd6",
                             "code": "0x",
                             "storage": {}
                         }
@@ -90,11 +90,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x755a68c1a800f06d86451c300404eee1cf5659668900117fa994d5e90a04fd55",
+            "hash": "0x842155338c25460bfe8a7931d92c5a59d8425127f0c26f5fbc7065771f5839e2",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTest multiple kinds of subcontainer at the same level.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L486",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_subcontainer_validation.py#L486",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

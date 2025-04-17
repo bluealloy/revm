@@ -26,7 +26,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000802000200090003040000000080000200800000612015600155e50001e50000",
+                "code": "0xef000101000802000200090003ff0000000080000200800000612015600155e50001e50000",
                 "storage": {}
             }
         },
@@ -49,7 +49,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa2103ff57f4b63e4b56101e803ed468484b096c0150d2b111f438bfc2aa87ead",
+                    "hash": "0xa93b0fdd627e8804ba40dc04c6a7688cfba4a05dbcc950471c4aedfc9e536e25",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -61,7 +61,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000802000200090003040000000080000200800000612015600155e50001e50000",
+                            "code": "0xef000101000802000200090003ff0000000080000200800000612015600155e50001e50000",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -102,11 +102,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7be89f51b6e11e3b68e57d19af32ed9e8caa97fd556d62401ab58226a4e11092",
+            "hash": "0x2f65b91e13532b5da01138179f3dadc6a3c5541eeb6e85558ff8fa070d26e846",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF causing an infinite loop.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -147,7 +147,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000802000200030003040000000080000000000000e50001e50000"
+                "0xef000101000802000200030003ff0000000080000000000000e50001e50000"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -158,7 +158,7 @@
                 {
                     "hash": "0x2ef17cbe52ba562539ed3527c12cc6e28555bd06f786bf0e882ffedee289adda",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf86b800a8398968080809fef000101000802000200030003040000000080000000000000e50001e5000025a0aa8c9ac4e2c225cf4a7e35f49a4bfd74cc1fe2c2c52fc73e84322f92eef8bc54a069449e3c26b92064f90c5864b68888b8933230c3031c567dc00c4503961bfec5",
+                    "txbytes": "0xf86b800a8398968080809fef000101000802000200030003ff0000000080000000000000e50001e5000025a05f1cea90e7dd2afe2adfdff7ccae88612deb148b8232975b83b5d7472b6e3be2a035114383dbc90b20c69fe05f0285eb55ee01b1794bec96fadefe8b63b0df6af4",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -203,11 +203,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc95f52ea02852b811261649547515aa72932fb5e8c9a8804eb7d37aff5383201",
+            "hash": "0x4a00fdcebf51dbe0482d5a67de9bebadd4b15eb3492b1716e31afe7c12723db8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF causing an infinite loop.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -240,7 +240,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c02000300090003000304000000008000020080000000800000612015600155e50001e50002e50001",
+                "code": "0xef000101000c020003000900030003ff000000008000020080000000800000612015600155e50001e50002e50001",
                 "storage": {}
             }
         },
@@ -263,7 +263,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0f6eae161ca8d432bcabb50b68796f69f24dffefc15e47de2d8deb43a30bc999",
+                    "hash": "0xb28aba30cfd5a431f8ac718e5d6e73a8adda48b85713a96ecf815ea0f7e4d2cc",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -275,7 +275,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c02000300090003000304000000008000020080000000800000612015600155e50001e50002e50001",
+                            "code": "0xef000101000c020003000900030003ff000000008000020080000000800000612015600155e50001e50002e50001",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -316,11 +316,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x42c6585ccf937fee9c0d7cb89fe7e86b651bdded6f6b85e39f7619b80afd48d5",
+            "hash": "0x511474d3dcf5ce7868827e5f7c4153b235f94859efb8c6a32b36cb8fd550c30a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF causing an infinite loop.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -353,7 +353,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0003000304000000008000020000000000000000612015600155e3000100e50002e50001",
+                "code": "0xef000101000c020003000a00030003ff000000008000020000000000000000612015600155e3000100e50002e50001",
                 "storage": {}
             }
         },
@@ -376,7 +376,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x196a14c37a37263bfaf95552effc2d53edbe6da89845ff0482bfba44fb36543f",
+                    "hash": "0xdc8e1b2dc15d8860c9daad5da6ed9e24a6bac22f0ca213968839bb3e9048c66f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -388,7 +388,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0003000304000000008000020000000000000000612015600155e3000100e50002e50001",
+                            "code": "0xef000101000c020003000a00030003ff000000008000020000000000000000612015600155e3000100e50002e50001",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -429,11 +429,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf86cc4898067d478e0eb070cacd6ef06d2362a6c19f5732ef2f57d66b02b8901",
+            "hash": "0xd0a6981f3f33126c216c8089f99589f3b779aa7f14d21488a4e4df799bf6a9f7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF causing an infinite loop.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -466,7 +466,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100090400000000800002612015600155e50000",
+                "code": "0xef00010100040200010009ff00000000800002612015600155e50000",
                 "storage": {}
             }
         },
@@ -489,7 +489,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0971f02fd8ac9b5ea328535e45968001caead642754a42c2757ccf3d8806e198",
+                    "hash": "0x71ebd2b9f0a0a60bbb86631eebbdaf30a61e5219d30c16e4d14793e6c87371ed",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000808025a0ee4b7012f87e423cf429499851f8becb39a147eab3f63d6426efd4d51718c6e8a04b788f452a534aab1d43e25fb5e92d1f86f730ea714f85bd045b26713ef65c99",
                     "indexes": {
@@ -501,7 +501,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100090400000000800002612015600155e50000",
+                            "code": "0xef00010100040200010009ff00000000800002612015600155e50000",
                             "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
@@ -542,11 +542,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x47aed2efd5b90a7e476e72b17a5cee3f2ea15691da0d979040868806fe1219be",
+            "hash": "0xdb99e85b0f2895f8286384b0d607b6ef1615b98943131a18ad33daa277196efe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nTests JUMPF causing an infinite loop.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L560",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

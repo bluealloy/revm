@@ -20,7 +20,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b03000100320400000000800004602067ffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -46,7 +46,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf4cf393d4fac6deff3be50d886e2c6b5dc373d6c02c82362f239dc5f0232f8bd",
+                    "hash": "0x6e1daaa7046a14c1b5a5f8f97ef51d4ed1100e9deb5be0b84503fb492c31e8d7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -58,7 +58,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b03000100320400000000800004602067ffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -96,11 +96,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa522bd5f907391a7009da9386cc17cdf6f7a385f5b16cb64994f8db7a6dedbc2",
+            "hash": "0xfc375f7b5d1dd2d0634345d56234dc2f13c548ceb6473310876c702aefccbaf0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -127,7 +127,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0300010032040000000080000467ffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -153,7 +153,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x322423032339bca5ae56134254c8c6e98087d6d14abdff8b8a58253bc6137390",
+                    "hash": "0x86cbbab612a1c75c697043e0bfc4915bdf6987883464b619e2e39c26eefe5a7e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -165,7 +165,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0300010032040000000080000467ffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -203,11 +203,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2835dac521ca5406e452edb12bec81a3272b8d7762ee7a6e6dcfb838af2d346a",
+            "hash": "0x2fea66d69880479747a1d3bfe70886b6ab0650f262629bd5d6f01b88738aaffb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -234,7 +234,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0300010032040000000080000460206801000000000000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -260,7 +260,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7e4bd83dfaf11cbfa47899151b5e6dc40b4fe4963c8d88125fc2b46cee8cfa57",
+                    "hash": "0x783c853ba67464d25d2d2ba98d3e338d7e8a534b56225263f33c65f0d7c7c5f3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -272,7 +272,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0300010032040000000080000460206801000000000000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -310,11 +310,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x73c633994048e56f4e37e0f8c1cb921f2947294590b5e9bf883c2f2ffd10dccd",
+            "hash": "0xecc4f3e3b059259db34ac33d9447cf3b0b251d7935425d0099bcadb8a0e60f2d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -341,7 +341,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0300010032040000000080000468010000000000000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -367,7 +367,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa5c942c773ce0089b84d736fdaaaebccb4228a567c2bab5f328dd9d383bc2c60",
+                    "hash": "0xbf981ebf52b5bda3158679af4b4386471d859735abda6525d963b7b4226429f5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -379,7 +379,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0300010032040000000080000468010000000000000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -417,11 +417,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3e05ba3c300db2ccb76fe74ac749820c68f48f841db6efc60ad2580f8ce6af5e",
+            "hash": "0xda75cc7d23289d2b1c7a1bce09cb16ded9f0c5e2792d74e4c4c100ca8c426308",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -448,7 +448,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001503000100320400000000800004602061ffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001503000100000034ff000000008000046000602061ffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -474,7 +474,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xdd871252a44f50e177635e426fe3907662fb7122250387aa7f500282701fe57a",
+                    "hash": "0x239091f22c57aae7173d64583ce0eea681d0913af463b2fb9b211243cd56c574",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -486,27 +486,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001503000100320400000000800004602061ffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001503000100000034ff000000008000046000602061ffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03b9be",
+                            "balance": "0x03b99a",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f394dc",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
                             "code": "0x",
                             "storage": {}
                         }
@@ -530,11 +530,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x5d1b40e79b811c4fc84a5a5c9f5b64267dd2b4547a0ec04b8663379bff52833d",
+            "hash": "0xb30f6b2e8d4f5f7fd40f0ba1b1d0fb98627b48ec62b98695eca9ab90cba4f130",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -561,7 +561,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100150300010032040000000080000461ffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600061ffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -587,7 +587,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xb20555eedcf3ac49c10a561c4d01530a4b758cb5a9c4460d29cdc640cf26598c",
+                    "hash": "0xe4e8a4bea4955d78dc0d8838c007a48cdab46d2a4f6cc2030640778826c4d880",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -599,27 +599,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100150300010032040000000080000461ffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600061ffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03b9be",
+                            "balance": "0x03b99a",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f394dc",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
                             "code": "0x",
                             "storage": {}
                         }
@@ -643,11 +643,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x716c715c71aa60cf08ad0bbb10a7a3e0799ce8097734997c308c103c98ff3b3b",
+            "hash": "0x90a12277418602f7c1c15281181b70bee944b88a23ad324e1a81cd92cd833d58",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -674,7 +674,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100160300010032040000000080000460206201000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001603000100000034ff0000000080000460006020620100006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -700,7 +700,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9458242ca7efe4491183dea18073095e1f2da15efc6ed121938ff66f33d4306e",
+                    "hash": "0x5779eacf91285badf91d5b0c478b22446901069ebf46ae4435bd6d92f619c8f9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -712,27 +712,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100160300010032040000000080000460206201000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001603000100000034ff0000000080000460006020620100006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03b9be",
+                            "balance": "0x03b99a",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f394dc",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
                             "code": "0x",
                             "storage": {}
                         }
@@ -756,11 +756,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xceec8594177c1298d78d0e0923626e3f6cf04046b35552f8b1acc15ee920dca8",
+            "hash": "0x5a033446e11fc452204e019e8ee7f93d8109b70e490bbf335101051b21761730",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -787,7 +787,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100160300010032040000000080000462010000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001603000100000034ff0000000080000460006201000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -813,7 +813,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf28f20f66b1636aa14e26d7f38fe1ac3b634e03f7004423c00aea9d3013564f2",
+                    "hash": "0x89bc3bca429e3c529b95530936dbc3188658c6da998a55ebc16a3b2f373d336f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -825,27 +825,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100160300010032040000000080000462010000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001603000100000034ff0000000080000460006201000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03b9be",
+                            "balance": "0x03b99a",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f394dc",
+                            "balance": "0x033b2e3c9fd0803ce7f39554",
                             "code": "0x",
                             "storage": {}
                         }
@@ -869,11 +869,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x19da18277af08818e986b7648a98a75dec0a9b34fcc49e0f90b0c1fde94d6af3",
+            "hash": "0xcbbea5f2b2970fe60d81cf4725aaf3b03db7b7045f8e777591d9c4b6af1b9ea6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -900,7 +900,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100230300010032040000000080000460206fffffffffffffffffffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001002303000100000034ff00000000800004600060206fffffffffffffffffffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -926,7 +926,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x9f241a013fb9c32a32c9ad2f8421856da96c8f71a5bf97827a2a834581ba1316",
+                    "hash": "0xf2f5c8d6bafbb6461cd0b1b79240a4ee8f0acf991c03e4eef3b197098ac8cd86",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -938,7 +938,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100230300010032040000000080000460206fffffffffffffffffffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001002303000100000034ff00000000800004600060206fffffffffffffffffffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -976,11 +976,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xfa745b2c6fd78e887a4d7b6dbd73de43152403fad17f455be2e77872c5bea703",
+            "hash": "0x34eabec7d7c09a4390efb655d2689220652b0ca66b17e7721e3cf5b7ea65fb91",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1007,7 +1007,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010023030001003204000000008000046fffffffffffffffffffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001002303000100000034ff0000000080000460006fffffffffffffffffffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1033,7 +1033,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xccd360f333a7910fc17b9f59c20fa4aac20629ced0cd07399cd0e52d030bf697",
+                    "hash": "0x4b98dae0432d50b0246180c64d3e8de2b64d97237b1cc44f0c79c1490ba05e66",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1045,7 +1045,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010023030001003204000000008000046fffffffffffffffffffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001002303000100000034ff0000000080000460006fffffffffffffffffffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1083,11 +1083,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x399022d91a4507fbee948006330317fe9f5bc70e848bce483385328bd72a1d10",
+            "hash": "0xb9d3ff2368cfa1c6971eff1fb4c4d27806ad8f6afdf26206abd773f67031e8af",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1114,7 +1114,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100170300010032040000000080000460206301ffff2060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600060206301ffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1140,7 +1140,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf6464408f78e3e187f496725e4b4c78aea91fefa18507d2213ebe1e7f8538b8f",
+                    "hash": "0x7c58db3acd6cd1aac5bd29822789aa90a4d7b140bf553ba574054f1bac8610f1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1152,7 +1152,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100170300010032040000000080000460206301ffff2060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600060206301ffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1190,11 +1190,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe22b68fe055228d0a5fd0b3ed66fe44234a0c78178c2397b1c485da2e76c7120",
+            "hash": "0x364fa63e7c6534599241e614bf2c0a1c5eec8cc46c50a56ff074251124c7cb58",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1221,7 +1221,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010017030001003204000000008000046301ffff20602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff0000000080000460006301ffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1247,7 +1247,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcb3319e21ad3cc68bf8d0b972348444db60c1702679e80b398a0cee9ef649c09",
+                    "hash": "0xd0463374dea3cf94074b17a7f1f2371299f4f781d5f6bcc0c6cd848f63931727",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1259,7 +1259,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010017030001003204000000008000046301ffff20602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff0000000080000460006301ffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1297,11 +1297,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe31416e716d9d544a7b32cd3b25afa9e323272a5c27325e72683909f022e2d86",
+            "hash": "0x69e9de48c6762cdee2cb7ba2e1c389ee262006a256e805160c4d113a914335a8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1328,7 +1328,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001703000100320400000000800004602063ffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff000000008000046000602063ffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1354,7 +1354,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x64fa751d7ed282538103e372da191c3f4862f4826bf34ec011d417c4a45864b5",
+                    "hash": "0xe28173b9376f912bf9fefb8c0f4f7e44074b8a18b1842fed095d63e987ecf8ca",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1366,7 +1366,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001703000100320400000000800004602063ffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff000000008000046000602063ffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1404,11 +1404,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa8587c38b8e8656499c6818fe7b3f505202b1558fa79d0676d74075fed541c31",
+            "hash": "0x83bde96cf9718b2b8ced1ef086fd204a4e08cebb4795c74c401facfb983468c0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1435,7 +1435,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100170300010032040000000080000463ffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600063ffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1461,7 +1461,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x778467bbfe935055907ec189e32cf071368cbdbb89f863366baeea387cfe2bac",
+                    "hash": "0x7aa9e38cfd8bcd0f8392cf215aa4ed4dbe97cf1cfdec52bcd77733c339998b86",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1473,7 +1473,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100170300010032040000000080000463ffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600063ffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1511,11 +1511,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2c5837d1e73b0528570ae04c6c39514fd096c32690f6d44c773a435dbf1df832",
+            "hash": "0x5afb2d86e6e514847957f9071bd1a20c95b3f1c57cdd20f8bfc72a917b4c7b6f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1542,7 +1542,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100170300010032040000000080000460206302d412e060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff00000000800004600060206302d412e06000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1568,7 +1568,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x47a8906f2d7d8b8b28ba38e79f644085e2297e044042a335d346e73303ab4316",
+                    "hash": "0x062a505f38e190ae943c4833b415ca52790dd5c9a066bc8af4940c63c49fb11c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1580,7 +1580,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100170300010032040000000080000460206302d412e060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff00000000800004600060206302d412e06000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1618,11 +1618,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4b028d8579a8ca8079da01a3f495461d351f1829514d4dab50a73bd9a62b2f72",
+            "hash": "0x4014007eccddf05e0cdd7e4c3b1566f850b6cc7ee818b6e99f777e86556ba65b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1649,7 +1649,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010017030001003204000000008000046302d412e0602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001703000100000034ff0000000080000460006302d412e060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1675,7 +1675,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x23c98327405267c760d63dd6ee933131135b8477d5606edd01ceaba6e0005758",
+                    "hash": "0x3646d5e43754b396662254c1d5f51d945877db7c93d149ded0e39028300715e1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1687,7 +1687,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010017030001003204000000008000046302d412e0602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001703000100000034ff0000000080000460006302d412e060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1725,11 +1725,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xbb003fbd6a76d8f22c095c9a7fd3a1e56e796cdfe1c5a4da625255e480e3d177",
+            "hash": "0x7626989412bb52b688d963083c72365d9b9f7ec1a4f800a5c2d2fbafbaa4e5ee",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1756,7 +1756,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001803000100320400000000800004602064010000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001803000100000034ff00000000800004600060206401000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1782,7 +1782,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xddc7130e5ff55dbb6b87e3e8bfa7d205eab1e78d6e7361bc56f5384f42f63538",
+                    "hash": "0x922b76f30af21950063f4acba9333e152c0fe958974f04fee0a81c087ccacf68",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1794,7 +1794,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001803000100320400000000800004602064010000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001803000100000034ff00000000800004600060206401000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1832,11 +1832,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa9c5f5c1ffd89a833b7bd315ef7142b6988a95085f26e3b02120cf50d059461d",
+            "hash": "0x063045d498daa4acf1980b4a4c86dc1fae3f4fb8c88fc7e2d25e3ceca95888e7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1863,7 +1863,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001803000100320400000000800004640100000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001803000100000034ff00000000800004600064010000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1889,7 +1889,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcf88b1e5402f5b8f606584a48c43bbeff78fa5f32cbc7df6145d60731268f839",
+                    "hash": "0x6a456622cd81275b2978e7f48365c8622e10988fb94a5aae4490ca3d9f80906c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -1901,7 +1901,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001803000100320400000000800004640100000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001803000100000034ff00000000800004600064010000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -1939,11 +1939,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xeb6341d069e243ee743130931f99212976c9a2973abc2130d70e103077a49b74",
+            "hash": "0x240bb47b94fb92cea47bf2e36652abb998a10efd56893cc4335acba5d19b00ed",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -1970,7 +1970,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100190300010032040000000080000460206501ffffffff2060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001903000100000034ff00000000800004600060206501ffffffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -1996,7 +1996,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xddfdfe338bc7829b55b8eb3a2931c7ff4a85f2af4f57862705cb790cdeb8743e",
+                    "hash": "0x011eeaec81e291677c30b88c0556c640857169c4f1adced11a4437edae584d2b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2008,7 +2008,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100190300010032040000000080000460206501ffffffff2060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001903000100000034ff00000000800004600060206501ffffffff206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2046,11 +2046,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8403d4d607574111138f3b70ed10dfb4c243bb35094d92265aa62efe3c76bf9d",
+            "hash": "0xc677488efe0c4eff6bc1f4b7da73b0894eb0ac4d3d51368c7c3c3e74a8726fb8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2077,7 +2077,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010019030001003204000000008000046501ffffffff20602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001903000100000034ff0000000080000460006501ffffffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2103,7 +2103,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x39bc6f6dc16ba7c9a4596f71ff9ef33dc5d88bd04b86f61495db0e8c8b087fa0",
+                    "hash": "0xa3d8e2b5fbccafc389542099f36f24cbc6bca2c77ffe321d80027dabd47ccfe6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2115,7 +2115,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010019030001003204000000008000046501ffffffff20602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001903000100000034ff0000000080000460006501ffffffff2060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2153,11 +2153,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x6a2641739c60cb4839336aafa6aa2c785b3d45cff341f33d6c79b6ea8298e4df",
+            "hash": "0xc281180107cc8c335129dd49f7d7f82f3d86f9c56bf36e1629f63e740025989b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2184,7 +2184,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b03000100320400000000800004602067ffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2210,7 +2210,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf4cf393d4fac6deff3be50d886e2c6b5dc373d6c02c82362f239dc5f0232f8bd",
+                    "hash": "0x6e1daaa7046a14c1b5a5f8f97ef51d4ed1100e9deb5be0b84503fb492c31e8d7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2222,7 +2222,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b03000100320400000000800004602067ffffffffffffffff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001b03000100000034ff000000008000046000602067ffffffffffffffff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2260,11 +2260,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa522bd5f907391a7009da9386cc17cdf6f7a385f5b16cb64994f8db7a6dedbc2",
+            "hash": "0xfc375f7b5d1dd2d0634345d56234dc2f13c548ceb6473310876c702aefccbaf0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2291,7 +2291,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001b0300010032040000000080000467ffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2317,7 +2317,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x322423032339bca5ae56134254c8c6e98087d6d14abdff8b8a58253bc6137390",
+                    "hash": "0x86cbbab612a1c75c697043e0bfc4915bdf6987883464b619e2e39c26eefe5a7e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2329,7 +2329,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001b0300010032040000000080000467ffffffffffffffff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001b03000100000034ff00000000800004600067ffffffffffffffff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2367,11 +2367,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2835dac521ca5406e452edb12bec81a3272b8d7762ee7a6e6dcfb838af2d346a",
+            "hash": "0x2fea66d69880479747a1d3bfe70886b6ab0650f262629bd5d6f01b88738aaffb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2398,7 +2398,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100190300010032040000000080000460206502d413cccf0060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001903000100000034ff00000000800004600060206502d413cccf006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2424,7 +2424,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe9041b27633c097b62e9cf8b3f0066c0fcfa05e6e833e8f1a7c0b44290120112",
+                    "hash": "0x253999de8ca08ac36ff86a808cfc2a7bdc367db882389a538a1fbfd01aada224",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2436,7 +2436,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100190300010032040000000080000460206502d413cccf0060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001903000100000034ff00000000800004600060206502d413cccf006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2474,11 +2474,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x370701c7eb8a677326247e117699e2948d58a2a3b48f3a11a037aa0d84609a65",
+            "hash": "0x21bc7106616c685cb7b5694d267d0f5ec321fe4820ba103d5dadef1b4312de03",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2505,7 +2505,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010019030001003204000000008000046502d413cccf00602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001903000100000034ff0000000080000460006502d413cccf0060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2531,7 +2531,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x21fc6dee4b280057ea866f1b0c55edc35aa9efb5b8ce2f7a96ba8751cc63c457",
+                    "hash": "0x99ea0319f43a0e288a924cd283e70f2602fa54d8d174f6c17b2fc9be87630307",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2543,7 +2543,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010019030001003204000000008000046502d413cccf00602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001903000100000034ff0000000080000460006502d413cccf0060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2581,11 +2581,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xba38f4fac7066ad63c6df4d3a49dde6a70d0ab9c47780189a59546d224cf6ae0",
+            "hash": "0x06009739dd428ad9c9106eddddc6ebbf1048025d9584ca3e38111a38ebc2f88e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2612,7 +2612,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0300010032040000000080000460206801000000000000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2638,7 +2638,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7e4bd83dfaf11cbfa47899151b5e6dc40b4fe4963c8d88125fc2b46cee8cfa57",
+                    "hash": "0x783c853ba67464d25d2d2ba98d3e338d7e8a534b56225263f33c65f0d7c7c5f3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2650,7 +2650,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0300010032040000000080000460206801000000000000000060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006020680100000000000000006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2688,11 +2688,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x73c633994048e56f4e37e0f8c1cb921f2947294590b5e9bf883c2f2ffd10dccd",
+            "hash": "0xecc4f3e3b059259db34ac33d9447cf3b0b251d7935425d0099bcadb8a0e60f2d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2719,7 +2719,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001c0300010032040000000080000468010000000000000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2745,7 +2745,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xa5c942c773ce0089b84d736fdaaaebccb4228a567c2bab5f328dd9d383bc2c60",
+                    "hash": "0xbf981ebf52b5bda3158679af4b4386471d859735abda6525d963b7b4226429f5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2757,7 +2757,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001c0300010032040000000080000468010000000000000000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001c03000100000034ff0000000080000460006801000000000000000060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2009",
                                 "0x03": "0x2009"
@@ -2795,11 +2795,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3e05ba3c300db2ccb76fe74ac749820c68f48f841db6efc60ad2580f8ce6af5e",
+            "hash": "0xda75cc7d23289d2b1c7a1bce09cb16ded9f0c5e2792d74e4c4c100ca8c426308",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2826,7 +2826,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001403000100320400000000800004602060ff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000602060ff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2852,7 +2852,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x525a42551d7e74ec518fb64af324a1d131b456760fd68b2b79d8aad5a5c4fb74",
+                    "hash": "0x8e8bb605ade15cb545fe259d3a90c82442ecc7f1b817c67257d86f4414579a3b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2864,27 +2864,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001403000100320400000000800004602060ff60006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000602060ff6000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0311ee",
+                            "balance": "0x0311ca",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c43c",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -2908,11 +2908,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x512dc82ff415a39135a723dde1c6c4f6af97c82eb585943c7efb676ef03c8972",
+            "hash": "0xa4c9fbe7a92ab25c0b94e84b901dcc269ffb28cee5c563e178753fad75e78ee8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -2939,7 +2939,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000402000100140300010032040000000080000460ff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001403000100000034ff00000000800004600060ff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -2965,7 +2965,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x71aaeed4b5ebc001842dc18592980a9702c583e700af8204ddc00e83adff2d51",
+                    "hash": "0x3c230953394215486d3334f3ee08ce1cfb4f7cdfe270e48b15aaacc204de380f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -2977,27 +2977,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef000101000402000100140300010032040000000080000460ff602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001403000100000034ff00000000800004600060ff60206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0311ee",
+                            "balance": "0x0311ca",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c43c",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -3021,11 +3021,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x679f0248f1c6c14210d0b82ad787dbe37d1c2d4037fcf1ce2565d9d362d675ba",
+            "hash": "0xa910cc02bd19de3fd1490036c0766655373c3f419012af358afe4b0b75a207e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -3052,7 +3052,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001503000100320400000000800004602061010060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600060206101006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -3078,7 +3078,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xae323a9790edc638dea0c7cff29ffde6b2ef665be3360448dbf8377456ff57dc",
+                    "hash": "0x057b3c0aeae68da3763875daad061656a5f26d3cbbedd894e590cecd970e94d0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -3090,27 +3090,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001503000100320400000000800004602061010060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600060206101006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0311ee",
+                            "balance": "0x0311ca",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c43c",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -3134,11 +3134,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0cb7f496d69f25d8cf5d9d8da898d45010a093946ffa468d63c9149f3efdb293",
+            "hash": "0xd4e8b7f4e03c8b41902dc99a2e0b01251a59a86b64736890d9135f4e9331c16b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -3165,7 +3165,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef0001010004020001001503000100320400000000800004610100602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001503000100000034ff00000000800004600061010060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -3191,7 +3191,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x224ffbc9679b5d0d9722275ddc2d2487b2c70d347029941c5bd61f8003ba0b88",
+                    "hash": "0xbb6e8aa8a798bce71f0936442f1605e4441bb53a84286faf6b682f17d0c9004a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -3203,27 +3203,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef0001010004020001001503000100320400000000800004610100602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001503000100000034ff00000000800004600061010060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0311ee",
+                            "balance": "0x0311ca",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c43c",
+                            "balance": "0x033b2e3c9fd0803ce7f5c4b4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -3247,11 +3247,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7c4f837710c28da6e727316e25dcd0d7af6b2ff48bfd617154955653fdd300e8",
+            "hash": "0x77a8a368059600d67105d5903dda36a0001760baf5f7d984cacdf3ba53bab765",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -3278,7 +3278,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010014030001003204000000008000046020600060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000602060006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -3304,7 +3304,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x542c37cd6c2e2c616b213a1c5f37a45bb68cb7746e718b321c2ff11dd5a79312",
+                    "hash": "0x0cbfa4a6408e993e152749433decc94caf4f42108109623b5399352df783ba58",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -3316,27 +3316,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010014030001003204000000008000046020600060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000602060006000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0311a6",
+                            "balance": "0x031182",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c52c",
+                            "balance": "0x033b2e3c9fd0803ce7f5c5a4",
                             "code": "0x",
                             "storage": {}
                         }
@@ -3360,11 +3360,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xae718a340e9373e45b4620035904bfaf461cb693c2b3a7f3f9216ae8e30ed235",
+            "hash": "0x6ecc870001c74d93037273ead3119f9bb86b33c947b6ec5c3cc97a24d1c50f29",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
@@ -3391,7 +3391,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef00010100040200010014030001003204000000008000046000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                "code": "0xef0001010004020001001403000100000034ff000000008000046000600060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                 "storage": {
                     "0x03": "0x2009",
                     "0x01": "0x2009"
@@ -3417,7 +3417,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x2ab5e1fbdd21a210ca0f6c682542f57a1e99e31c6f0e6adc141a22eb3e6d0e46",
+                    "hash": "0x307781f2efef42465abb789b5d8f113a44a6ebf3ea4f982808229caf5438f8c7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf861800a8477359400940000000000000000000000000000000000001000808025a0482e7195c18a2e81d44bc77e84f8803e13417f1cb5bbe59ba7e718b2a4785b8ca041685f1d32efe9a19dca37c617bd3105b43ecdc5e69de2f2b33b268974de421b",
                     "indexes": {
@@ -3429,27 +3429,27 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x02",
                             "balance": "0x00",
-                            "code": "0xef00010100040200010014030001003204000000008000046000602060006000ec0060035561201560015500ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+                            "code": "0xef0001010004020001001403000100000034ff000000008000046000600060206000ec0060035561201560015500ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001ff0000000080000000",
                             "storage": {
                                 "0x01": "0x2015",
-                                "0x03": "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74"
+                                "0x03": "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f"
                             }
+                        },
+                        "0x0a2c788d0e30f758f32d063d3203355e8bad4c0f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef00010100040200010001ff0000000080000000",
+                            "storage": {}
                         },
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x03119d",
+                            "balance": "0x031179",
                             "code": "0x",
-                            "storage": {}
-                        },
-                        "0x6527a8aefdeeb438b0bfb0e197a6f075e8524c74": {
-                            "nonce": "0x01",
-                            "balance": "0x00",
-                            "code": "0xef00010100040200010001040000000080000000",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x033b2e3c9fd0803ce7f5c54a",
+                            "balance": "0x033b2e3c9fd0803ce7f5c5c2",
                             "code": "0x",
                             "storage": {}
                         }
@@ -3473,11 +3473,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7803a7e9245c2ab968acca4e9142cdb87b2638d0fd46566a76fea5cc6e4c90b2",
+            "hash": "0xe547c809c782ee520e34edd24f3ab915a1c1cb8609a36ee333fad93cb8a41ec1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests auxdata sizes in EOFCREATE including multiple offset conditions.\n\n    EOFCREATE either succeeds or fails based on memory access cost, resulting in new address\n    or zero in the create address slot.\n\n    The name id of `*-mem-cost` refers to the bit-length of the result of the calculated memory\n    expansion cost. Their length choice is designed to cause problems on shorter bit-length\n    representations with native integers.\n\n    The `offset_field` param indicates what part of the input data arguments are being tested,\n    either the offset of the data in memory or the size of the data in memory.\n\n    The `test_arg` param is the value passed into the field being tested (offset or size),\n    intending to trigger integer size bugs for that particular field.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip7620_eof_create/test_memory.py#L27",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"

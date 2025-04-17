@@ -34,7 +34,108 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000304000000008000020000000202000002e30001612015600155005fe500025050e401"
+                "0xef000101000c020003000a00040003ff000000008000020000000202000000e30001612015600155005fe500025050e401"
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xecd4ac7a5543ac5d4863e97ca5a701d8bcf44eb2de60c7aef122daefeb69aa32",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000020000000202000000e30001612015600155005fe500025050e40126a0a3b94e1fd307f915b40b7ec161c198a60f8cfbc516608bb0c836fd900158f536a06bdb48366e6fef661493d5d029b33eafa81003c65a558ccbc047a82d59715a24",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x027384",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97d448",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x5b3eb91544309c83b0f78e63f9052a5e00d87cc56873affbaa83499c8262a39f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-less-stack-ti-2-to-0-so-2]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000c020003000a00040003ff000000008000040002000202000000e30001612015600155005fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -45,7 +146,7 @@
                 {
                     "hash": "0x2626dbb9d5e781ff061914adeefd55e3a0ecf91c4f29ed06467cf83d0bf8f38b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000020000000202000002e30001612015600155005fe500025050e40125a0480ccc63ba5f462cfb2f68077f9a6b55a0110cdf8797b8de820fd14b89dc5ed0a05cbbbc87a6eb984d4ad3622af16551fd5d7067672a8a5e405c3b0ffb6846540a",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000040002000202000000e30001612015600155005fe500025050e40125a0019425459dfdca128c2e74fb5a7a66345384e180c0f72b31e7ee030a71e9edaca03f8eb991ca47a06888f1970e34fe3d1bd7c4a9ab5ba15a1499e77ec4821fb969",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -90,112 +191,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7c53a13af37fbf4ee7f7432670af5e2f2851728fa475059f7074a70a1b717684",
+            "hash": "0x0397fa5d532563200fbc52ca1aa682fe1a0a666664d91f8d1b6666b6f3db47e9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
-            "fixture-format": "state_test",
-            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
-            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
-        }
-    },
-    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-less-stack-ti-2-to-0-so-2]": {
-        "env": {
-            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
-            "currentGasLimit": "0x016345785d8a0000",
-            "currentNumber": "0x01",
-            "currentTimestamp": "0x03e8",
-            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "currentDifficulty": "0x00",
-            "currentBaseFee": "0x07",
-            "currentExcessBlobGas": "0x00"
-        },
-        "pre": {
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            },
-            "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            }
-        },
-        "transaction": {
-            "nonce": "0x00",
-            "gasPrice": "0x0a",
-            "gasLimit": [
-                "0x989680"
-            ],
-            "value": [
-                "0x00"
-            ],
-            "data": [
-                "0xef000101000c020003000a0004000304000000008000040002000202000002e30001612015600155005fe500025050e401"
-            ],
-            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
-            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
-            "to": ""
-        },
-        "post": {
-            "Osaka": [
-                {
-                    "hash": "0x1e38c254885c2e31a875dc4bbb7db508b5e62ee8c6123deae21208d1223267b3",
-                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000040002000202000002e30001612015600155005fe500025050e40125a0bca9e803ce345cda3c478cafbd94c40a435ae66d110369df4356d7f501a4f57ba068e7be1fcaee44ac3e886a140f4ae5056c6d9f6aa6ec161d603524a2a17f86a1",
-                    "indexes": {
-                        "data": 0,
-                        "gas": 0,
-                        "value": 0
-                    },
-                    "state": {
-                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-                            "nonce": "0x00",
-                            "balance": "0x0273cc",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                            "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d358",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                            "nonce": "0x00",
-                            "balance": "0x3635c9adc5dea00000",
-                            "code": "0x",
-                            "storage": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "config": {
-            "blobSchedule": {
-                "Cancun": {
-                    "target": "0x03",
-                    "max": "0x06",
-                    "baseFeeUpdateFraction": "0x32f0ed"
-                },
-                "Prague": {
-                    "target": "0x06",
-                    "max": "0x09",
-                    "baseFeeUpdateFraction": "0x4c6964"
-                }
-            },
-            "chainid": "0x01"
-        },
-        "_info": {
-            "hash": "0xdc9a00b533107d0277a8d5076ed92fa3cdf6be70512e37a473d34454e2144341",
-            "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -236,7 +236,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000304000000008000060004000202000002e30001612015600155005fe500025050e401"
+                "0xef000101000c020003000a00040003ff000000008000060004000202000000e30001612015600155005fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -245,9 +245,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x1e38c254885c2e31a875dc4bbb7db508b5e62ee8c6123deae21208d1223267b3",
+                    "hash": "0x2626dbb9d5e781ff061914adeefd55e3a0ecf91c4f29ed06467cf83d0bf8f38b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000060004000202000002e30001612015600155005fe500025050e40126a038c3f0c016846cd1b1c8b1fad705837c99e4eabe359441479873a4d755dac090a06bbd7d19d184f1f1ad12f195e3e7bdcf58b4b3bb5e5f91109e959893a6829522",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000060004000202000000e30001612015600155005fe500025050e40126a0e6af5b9814b114b521429f93572adba370fdc2c8c89a9f32285265241feb7c3da06ef70b9ab08ef3e971e8fe9fe9ce74daca70f454160158db058abf3a800e6ab4",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -256,13 +256,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273cc",
+                            "balance": "0x0273a8",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d358",
+                            "balance": "0x3635c9adc5de97d3d0",
                             "code": "0x",
                             "storage": {}
                         },
@@ -292,11 +292,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd0f4c62b95eea84fd7e010f5c306bcba5b7efa8b327ce5a6f3289228483f2092",
+            "hash": "0x61e8e800798c70011404ecfbfdfc5f5ac1ba0a7b9ddc432442c4d70b3d2b4a62",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -337,7 +337,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000104000000008000040002000202020002e30001612015600155005fe50002e401"
+                "0xef000101000c020003000a00040001ff000000008000040002000202020000e30001612015600155005fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -346,9 +346,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf83a63e3a5108f040978666f896c3c77f16f365e08da9d16f0cbd2583e3cf602",
+                    "hash": "0xa4eb7311f2923f19947e70f69a52945890d32e25ef014dd3125befe6c4ad583e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a0004000104000000008000040002000202020002e30001612015600155005fe50002e40125a0e6554d3b7fce7528af25603f02af6b3045c106bc7bac032eb0d0a5ba1a4f1324a0671947f48c615a875da1ece455b271dadcb8a7fc21fee3990c206460c4e54574",
+                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a00040001ff000000008000040002000202020000e30001612015600155005fe50002e40125a01b6e7d99ee13e344240e0c7f76b466e1f9a363d02bc85f86db14b844ab385334a076625b6544b459d8bd63974459d0ecaa3ae27b34cb6609f23a003900aa2ca241",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -357,13 +357,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027390",
+                            "balance": "0x02736c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d420",
+                            "balance": "0x3635c9adc5de97d498",
                             "code": "0x",
                             "storage": {}
                         },
@@ -393,11 +393,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x733d919b3aeb97b97db82c7f99704a2e3ef5baa65b0cf1ed4eee7937805ff01c",
+            "hash": "0xfa2f0ddb1a7fc417f4fb5a31df6d1870041251c6d796a7819dc1dacc07f6e2ed",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -438,7 +438,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000104000000008000060004000202020002e30001612015600155005fe50002e401"
+                "0xef000101000c020003000a00040001ff000000008000060004000202020000e30001612015600155005fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -447,9 +447,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xf83a63e3a5108f040978666f896c3c77f16f365e08da9d16f0cbd2583e3cf602",
+                    "hash": "0xa4eb7311f2923f19947e70f69a52945890d32e25ef014dd3125befe6c4ad583e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a0004000104000000008000060004000202020002e30001612015600155005fe50002e40126a00f50a56676c220274bc59d17bebba72b9fd454ab3f91c7a92aebb47ee2b574d3a054a4292f70f61d361b6bce04fc21d66e26e789f3bc07b3bdc5d6a7a2078c1b70",
+                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a00040001ff000000008000060004000202020000e30001612015600155005fe50002e40126a047f642b89e5cc2895abc1df16ec50a3192a79f44af81b7e93a6b7909b18ffd33a05ce52fe19f33db00e01484fe1a36e9dca7c9f1e28fe2acf3663e6e5a2442b2e8",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -458,13 +458,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027390",
+                            "balance": "0x02736c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d420",
+                            "balance": "0x3635c9adc5de97d498",
                             "code": "0x",
                             "storage": {}
                         },
@@ -494,11 +494,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd2c6e5771b7086b56ddc99f61dafa5e67fb45149552736152c8a3fe0eb71115f",
+            "hash": "0xf790ffab636a1667e0c38da4da4b2e830e180474945adf93a037e1353292bacf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -539,7 +539,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000304000000008000060004000202040004e30001612015600155005fe500025f5fe401"
+                "0xef000101000c020003000a00040003ff000000008000060004000202040002e30001612015600155005fe500025f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -550,7 +550,7 @@
                 {
                     "hash": "0x0d8a39e9ad956af85a500e85f136569c8aedbe95a278332b5f1743f3464ba9bc",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000060004000202040004e30001612015600155005fe500025f5fe40126a0934e5058f6f2c6acb18fe2c739a656915a2eb447837342518e7ce31ef47b3899a0037d265990bfb7c654c248bde164a2fc69d827a62afe28a3793cde14421ed032",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000060004000202040002e30001612015600155005fe500025f5fe40125a0a816222a963be39dad1b22b0bfe7cd52890319cbfecd417e43a126ecd8d79a76a07272790df098e2e853f2a018d349197341955505aaaef1721d6f178ec4d7e12a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -595,11 +595,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe0baecf2dd73c843039f72175022e2c7585c757c3e9e1fadd6fdbcd7a4f8782b",
+            "hash": "0x2f5e3dfec70876b5a92ca974bb5400492fcd5f1a698c2e2d7a84c322f3b5ad1f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -640,7 +640,108 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000504000000008000020000000404000004e30001612015600155005f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00060005ff000000008000020000000404000000e30001612015600155005f5f5fe5000250505050e401"
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xf2159ebae6eee8e67116795c9f4d2a7670ded587b05c2d64143f79fc96eddda1",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a00060005ff000000008000020000000404000000e30001612015600155005f5f5fe5000250505050e40126a02f6ad9bfa1a0843eda5e696707ca86e7ec46a85d40e010dc4895f1073ee5c61aa0260da1609cc9120e49ba79681720f77fc9be7fb1bf043250195f06f56173e034",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x027444",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97d1c8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xc5bcf9369f20e23bd1d2e7be512b0f013a3e7f18071efda1a803dc5f3c05f701",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-less-stack-ti-4-to-0-so-2]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000c020003000a00060005ff000000008000040002000404000000e30001612015600155005f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -651,7 +752,7 @@
                 {
                     "hash": "0xe2ac8b5b3e844236d70dfd09c2065af5ac45aa9578c221822b2265be4f65e0f4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a0006000504000000008000020000000404000004e30001612015600155005f5f5fe5000250505050e40126a0a07706959b0d6d17c0779b8cd900e92cf136f339dc4e8108deaed612462a8dc8a03ad7c817999ef8958260e621760abeb4a54d2c2e08846c1e0ef591b33cb5765c",
+                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a00060005ff000000008000040002000404000000e30001612015600155005f5f5fe5000250505050e40125a0b04330f389cc62c111ba96aefd1f8cc9b25ba5a701ae5c39070a08996a949c30a0318ee528b1494c3018f1a1b7b9d26887ce1fb1f992ede06bb778c354fc82b3b7",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -696,112 +797,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xf14ea9cf3917147877e1dd4d429174136c39495e1f1ed8f0d3b999491a9c09f0",
+            "hash": "0xff1ae8e3999c744ccc8976c3d980439fe78a723eddcd30480c43640885d52bd8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
-            "fixture-format": "state_test",
-            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
-            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
-        }
-    },
-    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-less-stack-ti-4-to-0-so-2]": {
-        "env": {
-            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
-            "currentGasLimit": "0x016345785d8a0000",
-            "currentNumber": "0x01",
-            "currentTimestamp": "0x03e8",
-            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "currentDifficulty": "0x00",
-            "currentBaseFee": "0x07",
-            "currentExcessBlobGas": "0x00"
-        },
-        "pre": {
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            },
-            "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            }
-        },
-        "transaction": {
-            "nonce": "0x00",
-            "gasPrice": "0x0a",
-            "gasLimit": [
-                "0x989680"
-            ],
-            "value": [
-                "0x00"
-            ],
-            "data": [
-                "0xef000101000c020003000a0006000504000000008000040002000404000004e30001612015600155005f5f5fe5000250505050e401"
-            ],
-            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
-            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
-            "to": ""
-        },
-        "post": {
-            "Osaka": [
-                {
-                    "hash": "0xe501007f38c2f6b38d6d6bdf581751ad83dadae8320430b932a71450e2b37c60",
-                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a0006000504000000008000040002000404000004e30001612015600155005f5f5fe5000250505050e40126a0b3628f72af8ea4caaf5ad7b55ee1fa9a2bbc617dd34fd2303e67da92e2e88eafa0261db13b9052df48c09f94015dec9788b8345342459ae5b5ef09838ba7f3f3f8",
-                    "indexes": {
-                        "data": 0,
-                        "gas": 0,
-                        "value": 0
-                    },
-                    "state": {
-                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-                            "nonce": "0x00",
-                            "balance": "0x02748c",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                            "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d0d8",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                            "nonce": "0x00",
-                            "balance": "0x3635c9adc5dea00000",
-                            "code": "0x",
-                            "storage": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "config": {
-            "blobSchedule": {
-                "Cancun": {
-                    "target": "0x03",
-                    "max": "0x06",
-                    "baseFeeUpdateFraction": "0x32f0ed"
-                },
-                "Prague": {
-                    "target": "0x06",
-                    "max": "0x09",
-                    "baseFeeUpdateFraction": "0x4c6964"
-                }
-            },
-            "chainid": "0x01"
-        },
-        "_info": {
-            "hash": "0xff73be31fcb5cca405c6e501b7feb939a00fd7e4a27104a5e714b64e2db453a4",
-            "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -842,7 +842,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000504000000008000060004000404000004e30001612015600155005f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00060005ff000000008000060004000404000000e30001612015600155005f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -851,9 +851,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xe501007f38c2f6b38d6d6bdf581751ad83dadae8320430b932a71450e2b37c60",
+                    "hash": "0xe2ac8b5b3e844236d70dfd09c2065af5ac45aa9578c221822b2265be4f65e0f4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a0006000504000000008000060004000404000004e30001612015600155005f5f5fe5000250505050e40126a09291916e4608521dbdfbba375d4c7632745fdc2de387d055f50d984c101b99d2a070df13de7061059eaef17d74633804520dc4a88ab1c499709a968d872f4e646a",
+                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a00060005ff000000008000060004000404000000e30001612015600155005f5f5fe5000250505050e40125a00245f65dea7db2092b726a5c992bdc2b9955090a6749ac6c8acc9ee04937531ba019115cc886039bd42439eeecd82401497c90a6c4ff4f7b6515b56904c40a9d4e",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -862,13 +862,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02748c",
+                            "balance": "0x027468",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d0d8",
+                            "balance": "0x3635c9adc5de97d150",
                             "code": "0x",
                             "storage": {}
                         },
@@ -898,11 +898,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa6077c062dd096578f9d799cfec406e7b74701d295012850bc49a1e87a61b071",
+            "hash": "0xeb117a169e64d7aa0b8bb5b2534c8257f4140a2b2d77d45b8de15e935d524e13",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -943,7 +943,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000304000000008000040002000404020004e30001612015600155005f5f5fe500025050e401"
+                "0xef000101000c020003000a00060003ff000000008000040002000404020000e30001612015600155005f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -952,9 +952,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3ecfa297524cad327939a39954d3188f80c8945493e2f4e776254e542f2ef7b1",
+                    "hash": "0x31f3e991f15dea2fb314604ebfd6417f0e2451158ce932646fa272a5dd784756",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87e800a839896808080b3ef000101000c020003000a0006000304000000008000040002000404020004e30001612015600155005f5f5fe500025050e40126a00c10c6d2d30817f1111b60baa5b0b8ab0781dfd303c209ff3b5c5be425b0251e9f24d9169e4d64d4dd2bb0c610d06a02fff0ddea0ba2dc5c6f836013de759d99",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000040002000404020000e30001612015600155005f5f5fe500025050e40126a0959c4e0de4b0b7de38d1f24b42b90d0271f2d0df1e43e6733cccdd5fbb82dbe5a0769994284f96c763bee1850cbe8b30dc8a13e042aac057b1e74b9d4704fc4bcf",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -963,13 +963,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027450",
+                            "balance": "0x02742c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d1a0",
+                            "balance": "0x3635c9adc5de97d218",
                             "code": "0x",
                             "storage": {}
                         },
@@ -999,11 +999,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xd3c3d9b2e89ca1841851144d05aa8d002bf06382eb8426605a846dec24d6bb2c",
+            "hash": "0x34f3884a5657766cd12c55d1de95cce23701a20d0e96134ad94ff5de6c787051",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1044,7 +1044,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000304000000008000060004000404020004e30001612015600155005f5f5fe500025050e401"
+                "0xef000101000c020003000a00060003ff000000008000060004000404020000e30001612015600155005f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1053,9 +1053,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3ecfa297524cad327939a39954d3188f80c8945493e2f4e776254e542f2ef7b1",
+                    "hash": "0x31f3e991f15dea2fb314604ebfd6417f0e2451158ce932646fa272a5dd784756",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0006000304000000008000060004000404020004e30001612015600155005f5f5fe500025050e40126a003f1069a15f6f58dbe942df2afe6ed02d98dc01ed69fba72f55e404261305bf0a042ac8c7e9740bdeee20324123a765ae01ac40ec1d50914337a6f6e73557f5c75",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000060004000404020000e30001612015600155005f5f5fe500025050e40125a01906b7d979d6578fc73bfc31fdd1fa750d794f78d74457ec89eac642c6b8ad54a055d98da2de823cc15a60b3d2938dc016ff1378466cd5815df6c68ccd44dfbacb",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1064,13 +1064,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027450",
+                            "balance": "0x02742c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d1a0",
+                            "balance": "0x3635c9adc5de97d218",
                             "code": "0x",
                             "storage": {}
                         },
@@ -1100,11 +1100,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xb22508e3f0b3c1ce66cff07b6d679a1d08963b251d2b7c59574728eb7fc66770",
+            "hash": "0x15950b23e09583458d74e1ec0628bf531a3a5a540773ed0b53d5dbd713eec6a9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1145,7 +1145,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000104000000008000060004000404040004e30001612015600155005f5f5fe50002e401"
+                "0xef000101000c020003000a00060001ff000000008000060004000404040000e30001612015600155005f5f5fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1154,9 +1154,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0d8a39e9ad956af85a500e85f136569c8aedbe95a278332b5f1743f3464ba9bc",
+                    "hash": "0x1e38c254885c2e31a875dc4bbb7db508b5e62ee8c6123deae21208d1223267b3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0006000104000000008000060004000404040004e30001612015600155005f5f5fe50002e40125a0c5d41767818306dc42f9d19417f3d86f0d4cd8e168927f29329c8f4164c8a1e4a01865cde3ec93a12500f1e87b13f602e432103070df3a2f1ae6d55ef72c805ba7",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00060001ff000000008000060004000404040000e30001612015600155005f5f5fe50002e40126a0a44912cd7dedc650a36b617bcd898aae81f44841f92902ca53e537b7e31d4084a03ad897c32b84a404ef82aed71f0dd7806553a6004700db9cfd717123a61f2dce",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1165,13 +1165,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273f0",
+                            "balance": "0x0273cc",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d2e0",
+                            "balance": "0x3635c9adc5de97d358",
                             "code": "0x",
                             "storage": {}
                         },
@@ -1201,11 +1201,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa03108eff0ca16d8bb8a85be985a99d17a92e83e9a9f8e5e7b2753fba0c4a6ba",
+            "hash": "0x2cc44f278a1d2e78e0f9e7da37e26bbe6b94fa8fc957fd8f09fe7522dcf13feb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1246,7 +1246,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000104000000008000020000000000000000e30001612015600155005fe50002e401"
+                "0xef000101000c020003000a00040001ff000000008000020000000000000000e30001612015600155005fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1257,7 +1257,7 @@
                 {
                     "hash": "0xc62182958b2e2dba1bb69d5aca1be024e3bf7523d754f36a60ce3599803432ab",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a0004000104000000008000020000000000000000e30001612015600155005fe50002e40126a0555f0786b007f5233608d6d9348aaf72249400c1cfe20c4bd094aaa5a9583275a0182a7aa3db614cc0721d6e6d075af9875d78feefb6ef107e7d663a8288503397",
+                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a00040001ff000000008000020000000000000000e30001612015600155005fe50002e40125a050f30e2178e5f442a84a0092c7bc98d5215038c31f200e3c6b9dbc02c02cb1d2a03a8b3462304c6e53694ca13e37a8f691629f98a61c15fbf97a356d9a232f802a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1302,11 +1302,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x164d595edff1d1bc192ffe573f7f6b207b6e3da0f85f70f05292225cb7711cba",
+            "hash": "0xdf66de167b6893e454e5b85a4d288a8f009e3f59fe43bff17248ef8154afe425",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1347,7 +1347,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000104000000008000040002000000000000e30001612015600155005fe50002e401"
+                "0xef000101000c020003000a00040001ff000000008000040002000000000000e30001612015600155005fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1358,7 +1358,7 @@
                 {
                     "hash": "0x5873160902a9701ed213c89978a12f9aae53df91ea6b71ff3d3e908928963038",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a0004000104000000008000040002000000000000e30001612015600155005fe50002e40126a065d4172561b02f0b904a8317ccb04d44bcfc56f35db437c4a5f02ea75ad2d650a048c486549eb195f9da7c9d3077237b72fff452f001bfdc601784b01f0281215d",
+                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a00040001ff000000008000040002000000000000e30001612015600155005fe50002e40126a0be058b6a6b1079c197d9d8bf88eed2da16f8a7c2d71f372511f1495c4278810aa0056922ce8050fdf2fd130592ca50feb9b82a9a290f934f291824b7b8769a7778",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1403,11 +1403,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xdade6d02db816912303e65aa41dae2ecf7ff5ccb30218744bfafbf231d793353",
+            "hash": "0xfb5d0b884823234632f294c3f4642e04552ceca3064b8fc96b0a744e0c59abaf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1448,7 +1448,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000104000000008000060004000000000000e30001612015600155005fe50002e401"
+                "0xef000101000c020003000a00040001ff000000008000060004000000000000e30001612015600155005fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1459,7 +1459,7 @@
                 {
                     "hash": "0x5873160902a9701ed213c89978a12f9aae53df91ea6b71ff3d3e908928963038",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a0004000104000000008000060004000000000000e30001612015600155005fe50002e40125a02636bd6db53f483bef63150f89baadfa7f1e96976541d67ede1cc85e9d3db36ea0289bf22cafa23cb9be1747d131e941788fd8aa9f51ca2a34ea1389b9e45d4f90",
+                    "txbytes": "0xf87b800a839896808080afef000101000c020003000a00040001ff000000008000060004000000000000e30001612015600155005fe50002e40125a01b9edd60440c0c40a32f83b9bbfd29741b3ccf6bdc7e856307c45dc3986050a3a0437cd03ac602e44b041c0e95e259499d3c152475d024ca88aa02498a990b0c44",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1504,11 +1504,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x595b0d2bbc4e79bac653679f5c7512a3c01431d3c11a5606fb66940a0c9eaaaf",
+            "hash": "0x436de36426c41395b1317a3884e89c114d23cad361405e3809dbda56605b1d71",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1549,7 +1549,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000304000000008000040002000000020002e30001612015600155005fe500025f5fe401"
+                "0xef000101000c020003000a00040003ff000000008000040002000000020002e30001612015600155005fe500025f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1560,7 +1560,7 @@
                 {
                     "hash": "0x2626dbb9d5e781ff061914adeefd55e3a0ecf91c4f29ed06467cf83d0bf8f38b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000040002000000020002e30001612015600155005fe500025f5fe40126a0a57bd3d53b04521e6b3141ea6702b0872cb493e12c5507d638964e055ebdf79aa073aba6d7dd66c1186525b6d5fcad62f271ac61dcd25e44c5112326910cb15247",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000040002000000020002e30001612015600155005fe500025f5fe40125a0c08198fd04a9f1e66364303cccc0382086ac9b1783490acf723ccff62ad53443a02d69710e30be7b46df955457a3cd0024e25de74403520dd57a79543f8180be8a",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1605,11 +1605,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa41ff6586016aa9d900d97eca89c0dce272c12eadb94698694b58389a12ea223",
+            "hash": "0x055616db034f2351e403b559a494340c7ee98df2d225fca01d51817f41c12f4e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1650,7 +1650,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000304000000008000060004000000020002e30001612015600155005fe500025f5fe401"
+                "0xef000101000c020003000a00040003ff000000008000060004000000020002e30001612015600155005fe500025f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1661,7 +1661,7 @@
                 {
                     "hash": "0x2626dbb9d5e781ff061914adeefd55e3a0ecf91c4f29ed06467cf83d0bf8f38b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0004000304000000008000060004000000020002e30001612015600155005fe500025f5fe40125a01210c38c8782d2f66b33f479bc633628b003f523aa48087d15b277c8caf0cd44a07e6752920c064bd09c880b9fedfa1f034a3baf11f3cb1b8cffce22e8bdba37d8",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00040003ff000000008000060004000000020002e30001612015600155005fe500025f5fe40125a04d5e1804f71af51088c960e6a5ac322fb08b009c2f226475eab816c1a103ba1fa025765f297393c70a87490cca30b7d810151710e4870ec1d44173aefc377cdf8c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1706,11 +1706,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xed08fed732acea90e47a983172bddf39589a2c925ca596de662b9ed9969d94ee",
+            "hash": "0xd00736c726bc20fb2ab662129632e856ac8c044f1c0a3e14c04b02dba8c2684f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1751,7 +1751,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0004000504000000008000060004000000040004e30001612015600155005fe500025f5f5f5fe401"
+                "0xef000101000c020003000a00040005ff000000008000060004000000040004e30001612015600155005fe500025f5f5f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1762,7 +1762,7 @@
                 {
                     "hash": "0x4ef0ceb8d4847d26d6ba2cb78869bd595d7afb831b9b0c741da8bf7f0584728c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0004000504000000008000060004000000040004e30001612015600155005fe500025f5f5f5fe40125a097f04f67978365096bbbd761a2dc9fad5810e5fe7d69ec99fb00115b3be0dc1aa01e863d8cc56507af4c998a4a1f75a6b5e674dfbe6fb4b4ea12c78f796baa8c08",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00040005ff000000008000060004000000040004e30001612015600155005fe500025f5f5f5fe40126a00a74568ca2a9000cfba2866a0c91a09f4f88314f27199ee6a67f3f23c5a32d95a06328428bbf4b4e166f08dabcef0af28ba6dd0dcd28ad3d8c009a43d1fc065174",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1807,11 +1807,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x042c5e844f6788ea2192e57b64cffd18c75d5af37e2bc9c5306e55153729da1a",
+            "hash": "0xb86eac14b5dc4589f17165ef77d4ad39b99122272e37f16f9faeaf01ad8fc49b",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -1852,7 +1852,108 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000304000000008000020000000202000002e30001612015600155005f5f5fe500025050e401"
+                "0xef000101000c020003000a00060003ff000000008000020000000202000000e30001612015600155005f5f5fe500025050e401"
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0x62bb94c30ab30fdfbfb3757d4bc66256c8f9ec757d1a333983b9db0257e3b434",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000020000000202000000e30001612015600155005f5f5fe500025050e40126a032d654e074648af0fa6e758266d2a6c29b9e1d2852c39f2ccee1a56465a80826a04291551da3ce9393b83e96b5c5a47cc34b98bc6fe7b3ede0586a3bcf9f6fdb86",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0273e4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97d308",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x3f6dc3e9dbeeb3059f88c43d6be2ad1e2c5747bf516cb4784267be8f3036dec7",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-more-stack-ti-2-to-0-so-2]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000c020003000a00060003ff000000008000040002000202000000e30001612015600155005f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -1863,7 +1964,7 @@
                 {
                     "hash": "0x4ef0ceb8d4847d26d6ba2cb78869bd595d7afb831b9b0c741da8bf7f0584728c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0006000304000000008000020000000202000002e30001612015600155005f5f5fe500025050e40125a00b41d23e450487474344ae3b5072bf0a841065c2171fc9e08d53eca537a309f7a04ded3c7f6bee21944e193a2ac1caa1ab8978d5d4d0a6b27f61de4b99374d4f4f",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000040002000202000000e30001612015600155005f5f5fe500025050e40126a04e2661c9678d86044817c3b7041bc25e774e67fc8c2b66adb86ec304d764ff84a030259a818ae5959dbfc1f90d0f7e3cf93dbc32f8975a94c0a7385454889e2a42",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -1908,112 +2009,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2a2693cd4c4628d2a1471ced357f8ab1e3b4bf1ebc37767d64ae1f82d2b241b4",
+            "hash": "0xffbab440f557cf803bc7afece6b29ca61ab51e0bddcea853a7212f9a92ce05c4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
-            "fixture-format": "state_test",
-            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
-            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
-        }
-    },
-    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-more-stack-ti-2-to-0-so-2]": {
-        "env": {
-            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
-            "currentGasLimit": "0x016345785d8a0000",
-            "currentNumber": "0x01",
-            "currentTimestamp": "0x03e8",
-            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "currentDifficulty": "0x00",
-            "currentBaseFee": "0x07",
-            "currentExcessBlobGas": "0x00"
-        },
-        "pre": {
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            },
-            "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            }
-        },
-        "transaction": {
-            "nonce": "0x00",
-            "gasPrice": "0x0a",
-            "gasLimit": [
-                "0x989680"
-            ],
-            "value": [
-                "0x00"
-            ],
-            "data": [
-                "0xef000101000c020003000a0006000304000000008000040002000202000002e30001612015600155005f5f5fe500025050e401"
-            ],
-            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
-            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
-            "to": ""
-        },
-        "post": {
-            "Osaka": [
-                {
-                    "hash": "0x31f3e991f15dea2fb314604ebfd6417f0e2451158ce932646fa272a5dd784756",
-                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0006000304000000008000040002000202000002e30001612015600155005f5f5fe500025050e40125a01d665b6f9143626bbd52f66b5a75fa71735a6f66eda689cb3b3d5e307b02643fa021b86aec6257b9f7668bcdd86cae4ea60b5b0f19e79b9f5d4321034e9b2c88f1",
-                    "indexes": {
-                        "data": 0,
-                        "gas": 0,
-                        "value": 0
-                    },
-                    "state": {
-                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-                            "nonce": "0x00",
-                            "balance": "0x02742c",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                            "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d218",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                            "nonce": "0x00",
-                            "balance": "0x3635c9adc5dea00000",
-                            "code": "0x",
-                            "storage": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "config": {
-            "blobSchedule": {
-                "Cancun": {
-                    "target": "0x03",
-                    "max": "0x06",
-                    "baseFeeUpdateFraction": "0x32f0ed"
-                },
-                "Prague": {
-                    "target": "0x06",
-                    "max": "0x09",
-                    "baseFeeUpdateFraction": "0x4c6964"
-                }
-            },
-            "chainid": "0x01"
-        },
-        "_info": {
-            "hash": "0x01534c9f1c8863177753ae9699b69ce22e687c4b0bf28eface92bd48ae622d78",
-            "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2054,7 +2054,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000304000000008000060004000202000002e30001612015600155005f5f5fe500025050e401"
+                "0xef000101000c020003000a00060003ff000000008000060004000202000000e30001612015600155005f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2063,9 +2063,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x31f3e991f15dea2fb314604ebfd6417f0e2451158ce932646fa272a5dd784756",
+                    "hash": "0x4ef0ceb8d4847d26d6ba2cb78869bd595d7afb831b9b0c741da8bf7f0584728c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0006000304000000008000060004000202000002e30001612015600155005f5f5fe500025050e40126a0955dfa7d7e333f1f310d51c8e47c912686c4da98fac1a4d47b7721f0b751abafa04a3997d5a622ff96d5443ca1c52a6812532c4f198dcbb3cc73c6b98601d0f90e",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000060004000202000000e30001612015600155005f5f5fe500025050e40125a07820449b85c0a1c8b00055bce695590d05146523863ce2bffadac6b750513e84a04b46a236b91fc39a11952aab0d4f91236bc83b379794d729f1af75628db3e344",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2074,13 +2074,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02742c",
+                            "balance": "0x027408",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d218",
+                            "balance": "0x3635c9adc5de97d290",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2110,11 +2110,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3bc2b329d7f3ffb5d1074b66e71c01337ce92dda9a43f6290e78ddf7cd66a512",
+            "hash": "0xc6031e1c675cba9209a1a0a3e1947a53d4e7c84b37058b322ce43336c68e7601",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2155,7 +2155,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000104000000008000040002000202020002e30001612015600155005f5f5fe50002e401"
+                "0xef000101000c020003000a00060001ff000000008000040002000202020000e30001612015600155005f5f5fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2164,9 +2164,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0d8a39e9ad956af85a500e85f136569c8aedbe95a278332b5f1743f3464ba9bc",
+                    "hash": "0x1e38c254885c2e31a875dc4bbb7db508b5e62ee8c6123deae21208d1223267b3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0006000104000000008000040002000202020002e30001612015600155005f5f5fe50002e40126a0c85cfe4bda10a2f7825930117ade2cf872aebb91ce9154b9840f779eeb4ec0e4a0538909b12f76e8a13b264559097168f2d3e322d7b9f5f7e421ffb100668eba70",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00060001ff000000008000040002000202020000e30001612015600155005f5f5fe50002e40126a023eac1d19ce6fdf25deb2201e26aded248c4dbe358eed3ec18e65cbcac10f4dba0565596cc23798f102f4603116a8e95a87b46f8ed4d24cc5304bd226f43087c7c",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2175,13 +2175,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273f0",
+                            "balance": "0x0273cc",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d2e0",
+                            "balance": "0x3635c9adc5de97d358",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2211,11 +2211,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8a49292186d4b356c55735481cc88ec23c1eeee797370a932851a9b7e0dfb9cb",
+            "hash": "0x89d2b3c5b0b4f64b3269eba73451e459bae6253f353c58d190cbccbd07970b99",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2256,7 +2256,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000104000000008000060004000202020002e30001612015600155005f5f5fe50002e401"
+                "0xef000101000c020003000a00060001ff000000008000060004000202020000e30001612015600155005f5f5fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2265,9 +2265,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x0d8a39e9ad956af85a500e85f136569c8aedbe95a278332b5f1743f3464ba9bc",
+                    "hash": "0x1e38c254885c2e31a875dc4bbb7db508b5e62ee8c6123deae21208d1223267b3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a0006000104000000008000060004000202020002e30001612015600155005f5f5fe50002e40126a076139ac66e4d55bd6e89fff72fdba52a473d8dbad909694a828f2f22cdeae2dda035ab7d6586f999ca8d1a982c09ad6d5fa80611ceb43309f1bbe94f0f0ef29152",
+                    "txbytes": "0xf87d800a839896808080b1ef000101000c020003000a00060001ff000000008000060004000202020000e30001612015600155005f5f5fe50002e40125a04fd0eeb3ef9650c6342023170ae1ee80c218f280772eda61925f540f7e3afc93a06cdae89da9ce3a88724a006290cfe129c2485659b18b8707df22cca452f2655f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2276,13 +2276,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273f0",
+                            "balance": "0x0273cc",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d2e0",
+                            "balance": "0x3635c9adc5de97d358",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2312,11 +2312,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4290979cdc799e68359ffb928caaf14a98cda644eadcbb9294139b5f073e5e7e",
+            "hash": "0x1a40d572e226af5b048b06f61c337779a11cdc10c616461b4789668fbcbf91e6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2357,7 +2357,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0006000304000000008000060004000202040004e30001612015600155005f5f5fe500025f5fe401"
+                "0xef000101000c020003000a00060003ff000000008000060004000202040002e30001612015600155005f5f5fe500025f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2368,7 +2368,7 @@
                 {
                     "hash": "0x3ecfa297524cad327939a39954d3188f80c8945493e2f4e776254e542f2ef7b1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0006000304000000008000060004000202040004e30001612015600155005f5f5fe500025f5fe40126a09b36ecd4bd9b1cb9be5ea5ee677e8f26819ad7812ab83865929c5513446a81d9a01c013541943e3d3682646c6edeb1cce254d35fb5e73a8c26418e2bd0b5845a42",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00060003ff000000008000060004000202040002e30001612015600155005f5f5fe500025f5fe40126a03e50a140258157986096fd2816234f1d1b80498de8af349f3250fc26d466ddc6a02d0bb0f2757b04173bd3e8b5b5d3adc524202407d711260009761a392842c88d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2413,11 +2413,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8980a4231ffc8405901bd575de34be47cfc4a0133155645812a062c002b26f76",
+            "hash": "0xd42a3c5d923c9be3546ea32bdc75fdc1234b6c78b76c7a126071e41f9f1bc88c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2458,7 +2458,108 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0008000504000000008000020000000404000004e30001612015600155005f5f5f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00080005ff000000008000020000000404000000e30001612015600155005f5f5f5f5fe5000250505050e401"
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
+            "to": ""
+        },
+        "post": {
+            "Osaka": [
+                {
+                    "hash": "0xc9a57cda148238ee64100e6d0d3c0dbf9fee4a8ece846ce13dbf84860bbdedde",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a00080005ff000000008000020000000404000000e30001612015600155005f5f5f5f5fe5000250505050e40126a0e4eb950d5c2d6eb8f8a55f56464b6075477aa4af4762f0f9205299e7da07dc73a0750e7cb65566f85291aa8720f9f3f10693a372011d3e807eb1be459a4005e47a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0274a4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97d088",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0xbd2dddffd193c312f1fc5781a7c5092d34b8b93b054dacea962106bfc02a0940",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
+            "fixture-format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-more-stack-ti-4-to-0-so-2]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x989680"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xef000101000c020003000a00080005ff000000008000040002000404000000e30001612015600155005f5f5f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2469,7 +2570,7 @@
                 {
                     "hash": "0xb0e565abe5e4281949ff194c6fb2ad7acebaa61a583fcc0cb2fd081f5856e445",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a0008000504000000008000020000000404000004e30001612015600155005f5f5f5f5fe5000250505050e40126a046a3624f756bbe077e063295f2e58529bffe7de149ac2b7451b1633e6b8c7a9fa076429d047ad8cea919334e1ad10f7f319245c3b0662b9a2d0a5f5f050363bfcb",
+                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a00080005ff000000008000040002000404000000e30001612015600155005f5f5f5f5fe5000250505050e40126a05b1b0b1dee8aed566193d39669cda29635a4d497afc9b24746ea2033d9ab11c0a04d1a1a543518503cdb5f5c83d7fb7fc7e9b04a09653eee5abf5191e4c6493a9d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2514,112 +2615,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x04cb4f9231ae076e5edb01e86d30c7aca6f3bc74842a513ec667e6f8aee218be",
+            "hash": "0xb117854b103862c2d947c6ae768efd014b85ce7332641ea271e3e4d4f34257ef",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
-            "fixture-format": "state_test",
-            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
-            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
-        }
-    },
-    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py::test_jumpf_stack_returning_rules[fork_Osaka-eof_state_test-more-stack-ti-4-to-0-so-2]": {
-        "env": {
-            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
-            "currentGasLimit": "0x016345785d8a0000",
-            "currentNumber": "0x01",
-            "currentTimestamp": "0x03e8",
-            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "currentDifficulty": "0x00",
-            "currentBaseFee": "0x07",
-            "currentExcessBlobGas": "0x00"
-        },
-        "pre": {
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            },
-            "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            }
-        },
-        "transaction": {
-            "nonce": "0x00",
-            "gasPrice": "0x0a",
-            "gasLimit": [
-                "0x989680"
-            ],
-            "value": [
-                "0x00"
-            ],
-            "data": [
-                "0xef000101000c020003000a0008000504000000008000040002000404000004e30001612015600155005f5f5f5f5fe5000250505050e401"
-            ],
-            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
-            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
-            "to": ""
-        },
-        "post": {
-            "Osaka": [
-                {
-                    "hash": "0x5556fed1269f90215f0a909fb53a4402c6ac4a1c137f299e4fbc79d8dcc1e9ca",
-                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a0008000504000000008000040002000404000004e30001612015600155005f5f5f5f5fe5000250505050e40125a029a067d37aadba805d9a78cef32a034722eb1641211578cf20ce2c946ac34f3ba0382c5d0e4950304a99719b5b56909ba392feb05d7392d7e4594e826d574b194d",
-                    "indexes": {
-                        "data": 0,
-                        "gas": 0,
-                        "value": 0
-                    },
-                    "state": {
-                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-                            "nonce": "0x00",
-                            "balance": "0x0274ec",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
-                            "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97cf98",
-                            "code": "0x",
-                            "storage": {}
-                        },
-                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                            "nonce": "0x00",
-                            "balance": "0x3635c9adc5dea00000",
-                            "code": "0x",
-                            "storage": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "config": {
-            "blobSchedule": {
-                "Cancun": {
-                    "target": "0x03",
-                    "max": "0x06",
-                    "baseFeeUpdateFraction": "0x32f0ed"
-                },
-                "Prague": {
-                    "target": "0x06",
-                    "max": "0x09",
-                    "baseFeeUpdateFraction": "0x4c6964"
-                }
-            },
-            "chainid": "0x01"
-        },
-        "_info": {
-            "hash": "0x50ed7a1f295d351163b229f0f050db579d05a1e1a899eb268a842cb531e781bd",
-            "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
-            "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2660,7 +2660,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0008000504000000008000060004000404000004e30001612015600155005f5f5f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00080005ff000000008000060004000404000000e30001612015600155005f5f5f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2669,9 +2669,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x5556fed1269f90215f0a909fb53a4402c6ac4a1c137f299e4fbc79d8dcc1e9ca",
+                    "hash": "0xb0e565abe5e4281949ff194c6fb2ad7acebaa61a583fcc0cb2fd081f5856e445",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a0008000504000000008000060004000404000004e30001612015600155005f5f5f5f5fe5000250505050e40125a0ce64a924a307353bc412b868b4efda4b6e2b3a687fb127eca901ee4c246a9c0ea00ed47313189da2e4c2941c27dc1a7a7991848a4e451091ae4be4d7ff7e005f83",
+                    "txbytes": "0xf883800a839896808080b7ef000101000c020003000a00080005ff000000008000060004000404000000e30001612015600155005f5f5f5f5fe5000250505050e40126a058b802f238a437390b875baa5ec0d020ea3b8cf29069f9f657d5a7a6a40188f8a06f4d1a42885ea4a8a6c69e2e5628b50c4876438f22e06f62961f9388f5c113d1",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2680,13 +2680,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0274ec",
+                            "balance": "0x0274c8",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97cf98",
+                            "balance": "0x3635c9adc5de97d010",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2716,11 +2716,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x08f402baf2025809289a633280f5d2c9dff2e2e452c671d66568361e29df38dd",
+            "hash": "0x494a967f8673c2e01fafd774669b3c7bacc28942c8185540c5ad6ea85f0f8ca0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2761,7 +2761,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0008000304000000008000040002000404020004e30001612015600155005f5f5f5f5fe500025050e401"
+                "0xef000101000c020003000a00080003ff000000008000040002000404020000e30001612015600155005f5f5f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2770,9 +2770,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcb63d2fd5de366c7a4a0bb93d1b76f7ac4e21b365e3c1f6cb3dd0c69f2fbadc2",
+                    "hash": "0xe501007f38c2f6b38d6d6bdf581751ad83dadae8320430b932a71450e2b37c60",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a0008000304000000008000040002000404020004e30001612015600155005f5f5f5f5fe500025050e40126a06b1c76b2ac25fd06628deb689fc68de0c6219eb5b7cc6e7847771cdb72fd08e1a01945e3e93a2a022b65c7c78065c0f6f2f8501d02b493a0334b9b7e59b8a21dd6",
+                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a00080003ff000000008000040002000404020000e30001612015600155005f5f5f5f5fe500025050e40125a03a1ccf1872909b4e949777b5855c0cc6579aa6e644f2fe276d3b72cae1a35beda01f4fec412f0b53144ad0f0a002586d66857b1a3a46c9b2d56882c02cf70fab0d",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2781,13 +2781,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0274b0",
+                            "balance": "0x02748c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d060",
+                            "balance": "0x3635c9adc5de97d0d8",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2817,11 +2817,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe3e9623d01c04686a8a3712f3538a4f5b916183f9d664997120a76c5861cfff3",
+            "hash": "0x283c55985166ab4f1b7ff610f740a6dbb41adb18b8a7a9dbde43be6da28166b1",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2862,7 +2862,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0008000304000000008000060004000404020004e30001612015600155005f5f5f5f5fe500025050e401"
+                "0xef000101000c020003000a00080003ff000000008000060004000404020000e30001612015600155005f5f5f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2871,9 +2871,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcb63d2fd5de366c7a4a0bb93d1b76f7ac4e21b365e3c1f6cb3dd0c69f2fbadc2",
+                    "hash": "0xe501007f38c2f6b38d6d6bdf581751ad83dadae8320430b932a71450e2b37c60",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a0008000304000000008000060004000404020004e30001612015600155005f5f5f5f5fe500025050e40126a0b26002c095ced9d903233d43ab91a2d1eb77a06c21d6b66282c1e454ef699abda0129799582a8893704915e16ed30825650097db66f87103411a6cde1058ee7c71",
+                    "txbytes": "0xf881800a839896808080b5ef000101000c020003000a00080003ff000000008000060004000404020000e30001612015600155005f5f5f5f5fe500025050e40126a092a40d36ab48e3d3700a6b8f67cdb90d22fbff8dfc5b88a49b9b307208bf7a22a04438be7d58dc057ba4353a405d51dc3b4be567aca65cd7f523dac70124640250",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2882,13 +2882,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0274b0",
+                            "balance": "0x02748c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d060",
+                            "balance": "0x3635c9adc5de97d0d8",
                             "code": "0x",
                             "storage": {}
                         },
@@ -2918,11 +2918,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x0a32cf66c684ba416dc805745b87731d3ccbc93bc18f156f7e892ac5ef8066f9",
+            "hash": "0xeb304883d935a2e089f4f8174f5ad8d535bab8f7c0ce8a304a1fede46f808258",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -2963,7 +2963,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0008000104000000008000060004000404040004e30001612015600155005f5f5f5f5fe50002e401"
+                "0xef000101000c020003000a00080001ff000000008000060004000404040000e30001612015600155005f5f5f5f5fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -2972,9 +2972,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3ecfa297524cad327939a39954d3188f80c8945493e2f4e776254e542f2ef7b1",
+                    "hash": "0x31f3e991f15dea2fb314604ebfd6417f0e2451158ce932646fa272a5dd784756",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a0008000104000000008000060004000404040004e30001612015600155005f5f5f5f5fe50002e40126a0bc67d15a08390b51de6e1234b6017805352303de193108b7adfef4ef58b6c864a020176e1b82c59b1b3685b3dd9bfaec3c569e814acff61e166995e94c94008ac9",
+                    "txbytes": "0xf87f800a839896808080b3ef000101000c020003000a00080001ff000000008000060004000404040000e30001612015600155005f5f5f5f5fe50002e40125a05385ce15e9ee88399d02eabef354435553c9be287f409e5ffb86f600cc84ae54a074ff76c74325da824768dde8c81701b88ae97a52e1084102cda0fe16ec2a0eb6",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -2983,13 +2983,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027450",
+                            "balance": "0x02742c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d1a0",
+                            "balance": "0x3635c9adc5de97d218",
                             "code": "0x",
                             "storage": {}
                         },
@@ -3019,11 +3019,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x65915b48416eba1873ebe914bdbc75ba14db4217bf2cc0b1e7fad9266f542b90",
+            "hash": "0x1ce08b49ff0eb1791a5f7ad6d15362b43a183beb863223e4a67fa0d1ce932786",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3056,7 +3056,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0003000104000000008000020000000000000000e3000161201560015500e50002e4",
+                "code": "0xef000101000c020003000a00030001ff000000008000020000000000000000e3000161201560015500e50002e4",
                 "storage": {}
             }
         },
@@ -3079,7 +3079,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x23c45c405e4c6e37192079df16386967504873cf72bc441d554733cb369ca71d",
+                    "hash": "0xf12a34acfc0135ea74977432173b398c28f66e337e0da9c6bc7bc8d2f16b3492",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -3091,7 +3091,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0003000104000000008000020000000000000000e3000161201560015500e50002e4",
+                            "code": "0xef000101000c020003000a00030001ff000000008000020000000000000000e3000161201560015500e50002e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3134,11 +3134,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xca3fae914550fbf897c9f9f9abbbf8b88a4beed1a925b388fd1e2cbec6456234",
+            "hash": "0x857b5a0751031ec62ca2769324319fa88fcd010172923f40a4e8db90c94aeeb0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3179,7 +3179,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0003000104000000008000040002000000000000e3000161201560015500e50002e401"
+                "0xef000101000c020003000a00030001ff000000008000040002000000000000e3000161201560015500e50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -3190,7 +3190,7 @@
                 {
                     "hash": "0xc5157f3565cc2d8ba51fe53c2f3dddd3e253ae3c5a88d22615e8342cb841d2d9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87a800a839896808080aeef000101000c020003000a0003000104000000008000040002000000000000e3000161201560015500e50002e40126a0097506c84e991250ebf9a79ff74663d1b636e0c02516e5ec7f14887be8d29126a050a242fb1d4deac6b0ac4b1984f244e47aab6ae82fb94d02ada3692fefa53459",
+                    "txbytes": "0xf87a800a839896808080aeef000101000c020003000a00030001ff000000008000040002000000000000e3000161201560015500e50002e40126a07b78553c458ff733da7ef64c15a1560a268f9ea9715b279c65155f1b47579826a02f4dc14237cac220a291d3a1fa7d5c911bdeb5fc2c46d1084a773aa1b884a1db",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -3235,11 +3235,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xa051bb5ed595b77c96ec7fc2e0609128e9eb3b96c0bff11545c31fe3fde56807",
+            "hash": "0x81196002eb8baaafc065390e9ed02b4c9039d4315a8083c84c5b5d84214d1d31",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3280,7 +3280,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0003000104000000008000060004000000000000e3000161201560015500e50002e401"
+                "0xef000101000c020003000a00030001ff000000008000060004000000000000e3000161201560015500e50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -3291,7 +3291,7 @@
                 {
                     "hash": "0xc5157f3565cc2d8ba51fe53c2f3dddd3e253ae3c5a88d22615e8342cb841d2d9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87a800a839896808080aeef000101000c020003000a0003000104000000008000060004000000000000e3000161201560015500e50002e40125a047695b87a7e22bc6ab25fd7e75852f378c49480211ed51ef90d2b13c59606d97a0166ecac80b18235f8d87e93c46b2935e421e94bdee33581aae97cbee0730af4e",
+                    "txbytes": "0xf87a800a839896808080aeef000101000c020003000a00030001ff000000008000060004000000000000e3000161201560015500e50002e40125a0e6678c2bb173b1af915b7900597be1b3268db721034610e9c8a0d2a28245a186a065f9a3941402b5793ba911e605523ed96aecf0fbdebb0da3b87ae5ab19f78262",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -3336,11 +3336,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x1dcbaa1d90a98fcfb1f855326b170131e6b4607ea03e60ac004d97b8da0cb587",
+            "hash": "0xe15f9dda7986f79507dfe582d1eff72b05197d79540215914b4bbf56646d12d5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3373,7 +3373,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0003000304000000008000040002000000020002e3000161201560015500e500025f5fe4",
+                "code": "0xef000101000c020003000a00030003ff000000008000040002000000020002e3000161201560015500e500025f5fe4",
                 "storage": {}
             }
         },
@@ -3396,7 +3396,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3113a4eef90fb514f2835125252951e32a632681459d5f6617e34d05ae23f566",
+                    "hash": "0xec54e8300103e3cf4bd435b415eac6fa53736845a50abd77f0ef5b696d7decd4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -3408,7 +3408,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0003000304000000008000040002000000020002e3000161201560015500e500025f5fe4",
+                            "code": "0xef000101000c020003000a00030003ff000000008000040002000000020002e3000161201560015500e500025f5fe4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3451,11 +3451,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x18e8bb95c9f541b6ba35c91cefac8bb839936dca1eff1900db8dedd190be166b",
+            "hash": "0x1916ed1380e83d03a61d89ccdff96ea5ed67bf9129753d248f267787a7b070d0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3496,7 +3496,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0003000304000000008000060004000000020002e3000161201560015500e500025f5fe401"
+                "0xef000101000c020003000a00030003ff000000008000060004000000020002e3000161201560015500e500025f5fe401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -3507,7 +3507,7 @@
                 {
                     "hash": "0x1df1c418382cbe2c90308ce53a096422d627083e367b21e7b477a7a89be64801",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87c800a839896808080b0ef000101000c020003000a0003000304000000008000060004000000020002e3000161201560015500e500025f5fe40125a08457f70b797e1ccb626e7894a8d008ebd04bdc8800ed70828b8c8f0d4d806711a073c8364a6abb1b77d5e38f4c5e865928046935870d8dfc286fce0a5f8bd048c5",
+                    "txbytes": "0xf87c800a839896808080b0ef000101000c020003000a00030003ff000000008000060004000000020002e3000161201560015500e500025f5fe40126a004b0dbf09308f18d7311660d75857e56e2ca65f86d67ba9b253e7087383a1f7da04427036d11e62ed18730fc2ebf441501cacfbb6c3173dbcc8715e90204d2c673",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -3552,11 +3552,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc69d5d0aa3f1b725fb768704807b0aa970d9c52d53245fc3039a109edd960136",
+            "hash": "0xefed120e26ae31074185d2af5f26a6a554427ad558f3b5fb7e592d62c02e5f9e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3589,7 +3589,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0003000504000000008000060004000000040004e3000161201560015500e500025f5f5f5fe4",
+                "code": "0xef000101000c020003000a00030005ff000000008000060004000000040004e3000161201560015500e500025f5f5f5fe4",
                 "storage": {}
             }
         },
@@ -3612,7 +3612,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xcac13f5bbe586bfc25c5c32b1c643e2202431f0679425d3e827e720857d8b6e3",
+                    "hash": "0xd909465495cca899c496d61cdfc514926dd89ec74df72c4412946462ebbadb1d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -3624,7 +3624,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0003000504000000008000060004000000040004e3000161201560015500e500025f5f5f5fe4",
+                            "code": "0xef000101000c020003000a00030005ff000000008000060004000000040004e3000161201560015500e500025f5f5f5fe4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3667,11 +3667,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x4bf826cf833396a74ca876763d5963df98be360555aa6a4f011cf55c0a5b69d0",
+            "hash": "0xf1e92a398d0a35a0b8d140d88066f95e5380cca0c5d3edd73368db25de6cac50",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3704,7 +3704,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0005000304000000008000020000000202000002e30001612015600155005f5fe500025050e4",
+                "code": "0xef000101000c020003000a00050003ff000000008000020000000202000000e30001612015600155005f5fe500025050e4",
                 "storage": {}
             }
         },
@@ -3727,7 +3727,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd733e3e08dd6141616aad409202d0a652ac31f8a7f54c9771bfa9171bb6a88f5",
+                    "hash": "0x1fe8e568af36069f0046281bc4af2bfaad4c825edeba5f1c8178380db6308a35",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -3739,7 +3739,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0005000304000000008000020000000202000002e30001612015600155005f5fe500025050e4",
+                            "code": "0xef000101000c020003000a00050003ff000000008000020000000202000000e30001612015600155005f5fe500025050e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -3782,11 +3782,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x14acd6978a6e3f03170bfc57066fcbb7f2e21e4ad5959a451e683b3e906dd561",
+            "hash": "0x588c2af538dd6e876bf3048cc72b91abf2072024756992301a8bb390de3c6edb",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3827,7 +3827,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0005000304000000008000040002000202000002e30001612015600155005f5fe500025050e401"
+                "0xef000101000c020003000a00050003ff000000008000040002000202000000e30001612015600155005f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -3836,9 +3836,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xff19fcd43ae9af68fd644b4d1dbf06a546f00fa8d278a9319bb8452267df79e4",
+                    "hash": "0xdd5569fc96e9ee2037dcfb1b1396dd4ae02d93229f34876c24fec8f2ecfa07df",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87e800a839896808080b2ef000101000c020003000a0005000304000000008000040002000202000002e30001612015600155005f5fe500025050e40126a0a299339dc2e8edd219ede21f320c50831f7437cc6851ce4c91527ea381d918cba02dca99223f3b3b5bbd02b81a503aa6571ad670501f75705c791d32dc3e187c6f",
+                    "txbytes": "0xf87e800a839896808080b2ef000101000c020003000a00050003ff000000008000040002000202000000e30001612015600155005f5fe500025050e40125a02804fa30be44c99dfd6401c868c005157ae2337c0396b571f5d755e7b1ba046aa01e236e7e5730b511f41dd39167c2b551c756563393f242b6e595db05ac41096f",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -3847,13 +3847,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273fc",
+                            "balance": "0x0273d8",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d2b8",
+                            "balance": "0x3635c9adc5de97d330",
                             "code": "0x",
                             "storage": {}
                         },
@@ -3883,11 +3883,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x52976ac1c20decb8015253993d1ce94b30424f96201ec10173c9056a7624f487",
+            "hash": "0x5f060d0979723eb5435046c47220ae9c2d92b1d2ddb89b0bff557bdb7bdaa8d5",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -3928,7 +3928,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0005000304000000008000060004000202000002e30001612015600155005f5fe500025050e401"
+                "0xef000101000c020003000a00050003ff000000008000060004000202000000e30001612015600155005f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -3937,9 +3937,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xff19fcd43ae9af68fd644b4d1dbf06a546f00fa8d278a9319bb8452267df79e4",
+                    "hash": "0xdd5569fc96e9ee2037dcfb1b1396dd4ae02d93229f34876c24fec8f2ecfa07df",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87e800a839896808080b2ef000101000c020003000a0005000304000000008000060004000202000002e30001612015600155005f5fe500025050e40126a0105087bc3020fbd9fcf51194f04d21ce11b052e227083a62558532312585382da0553b977cb0cb838c161fc9e070b6a3b8485ae0e1f3653f0e0c51ebf53ba697bf",
+                    "txbytes": "0xf87e800a839896808080b2ef000101000c020003000a00050003ff000000008000060004000202000000e30001612015600155005f5fe500025050e40125a087eac306ce2d1eb7b0517e3514d845ec616f1b8199bca07530a0775ce05c6441a01c5533e496d62d56571b1b75a2635a55e2be88abd34b5262fc4e9116499dadd1",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -3948,13 +3948,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273fc",
+                            "balance": "0x0273d8",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d2b8",
+                            "balance": "0x3635c9adc5de97d330",
                             "code": "0x",
                             "storage": {}
                         },
@@ -3984,11 +3984,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x2340dcfa00dbe270c009fd5faaa1eabf6ad9fa0d8c30957631f6ceed57324464",
+            "hash": "0x88bc8ce9336f24cfd263aa88ece61ada74161badfb37fe047f2ce7a8a8f6f5db",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4021,7 +4021,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0005000104000000008000040002000202020002e30001612015600155005f5fe50002e4",
+                "code": "0xef000101000c020003000a00050001ff000000008000040002000202020000e30001612015600155005f5fe50002e4",
                 "storage": {}
             }
         },
@@ -4044,7 +4044,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x523d4d9961ba99b4dd1a9df5cf5d380feaeafa9ceece6fc4c7965fd93ae7d17e",
+                    "hash": "0xc158eb8b7b9746067f46410dac97a5d57de47bb271f15bd21b685f76a27c1e70",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -4056,7 +4056,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0005000104000000008000040002000202020002e30001612015600155005f5fe50002e4",
+                            "code": "0xef000101000c020003000a00050001ff000000008000040002000202020000e30001612015600155005f5fe50002e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4099,11 +4099,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x7d5e0f5a357fdee83b5be9c2ff45c0a2505186d3f1d86939ea7f04cd2bf88c82",
+            "hash": "0x69ae3d6b6a5ebb66bf4236f9cac8228576eb7a5b8a24ee3a25f0cfbf125f8528",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4144,7 +4144,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0005000104000000008000060004000202020002e30001612015600155005f5fe50002e401"
+                "0xef000101000c020003000a00050001ff000000008000060004000202020000e30001612015600155005f5fe50002e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -4153,9 +4153,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x588cc4451a40b5b847919c5841c9b417e7a006b3a7f2225bcb279eb2e26483b3",
+                    "hash": "0x3568350138401163a4bc197f7612e3cb5768f8f0e7d4667e4a02ae8d9bfd189b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf87c800a839896808080b0ef000101000c020003000a0005000104000000008000060004000202020002e30001612015600155005f5fe50002e40125a02fad07afbb5e56ee6badec14a234995102d306942d1c75b14dafe670157b34d4a00d09f65f5b0d1335497e3ac70c0dc54fffc5bc73aae358e087b2d81210aa383b",
+                    "txbytes": "0xf87c800a839896808080b0ef000101000c020003000a00050001ff000000008000060004000202020000e30001612015600155005f5fe50002e40125a092cb005ffae775be09b280343f1132ac18472f8ccf8ebe75ba864f89b41abd6fa05b189dcd4c63c5bb217e83f6a06f7317fa58092368d5f9b0f8c5601f2bbf15fe",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -4164,13 +4164,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0273c0",
+                            "balance": "0x02739c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d380",
+                            "balance": "0x3635c9adc5de97d3f8",
                             "code": "0x",
                             "storage": {}
                         },
@@ -4200,11 +4200,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xc6b9e0cd76d03324b438e78eca3408c9883bfb3fa2571fcd0161d895aae3ff58",
+            "hash": "0x03bfc0e41dec9908731dc012bf66321bf5afd96c619f81a6c795b9caac1f2c3a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4237,7 +4237,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0005000304000000008000060004000202040004e30001612015600155005f5fe500025f5fe4",
+                "code": "0xef000101000c020003000a00050003ff000000008000060004000202040002e30001612015600155005f5fe500025f5fe4",
                 "storage": {}
             }
         },
@@ -4260,7 +4260,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x60a7839ab13568dd92c6d676dc4a759bb48fe634550a211b2602eef3e6cd68e2",
+                    "hash": "0x440d6d3db1e84f94bd08be94aca8533156264d034fe09b72e4f477e23e36352a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -4272,7 +4272,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0005000304000000008000060004000202040004e30001612015600155005f5fe500025f5fe4",
+                            "code": "0xef000101000c020003000a00050003ff000000008000060004000202040002e30001612015600155005f5fe500025f5fe4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4315,11 +4315,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x8af5b656b471157e8371f93adb879d91d94a5f4ebb9ec66b978c7736b40bc291",
+            "hash": "0x2c3b289c9ef890dbff45abb670288ac8bc83397e404364fe8ee14306d4f445e8",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4352,7 +4352,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0007000504000000008000020000000404000004e30001612015600155005f5f5f5fe5000250505050e4",
+                "code": "0xef000101000c020003000a00070005ff000000008000020000000404000000e30001612015600155005f5f5f5fe5000250505050e4",
                 "storage": {}
             }
         },
@@ -4375,7 +4375,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x3de78ac832ec7afaaaa57bbf1b6b5c740ab779e4cc881f62cfa04c4e5725d394",
+                    "hash": "0xa2340a52490a16fa30e90156ac6fe1d2759f0a96306d2b0eb4a255ba5095b86c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -4387,7 +4387,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0007000504000000008000020000000404000004e30001612015600155005f5f5f5fe5000250505050e4",
+                            "code": "0xef000101000c020003000a00070005ff000000008000020000000404000000e30001612015600155005f5f5f5fe5000250505050e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4430,11 +4430,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xff6e32f0738ba2afe8371816505e44caf118c82530223b3cf74df36ceb98b256",
+            "hash": "0x742d82c1dd336d22643a6d3594db3c5545baa8fa85d5dab93ccc3763db999064",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4475,7 +4475,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0007000504000000008000040002000404000004e30001612015600155005f5f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00070005ff000000008000040002000404000000e30001612015600155005f5f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -4484,9 +4484,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x8318ddb69c49532c20a9a852d5a1ecfd2e5ff4255486a6660e20ae29072928d1",
+                    "hash": "0x83b8398a873bf2bf83b890f51bf519046876f24c0934c21898b8315b49210e4c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf882800a839896808080b6ef000101000c020003000a0007000504000000008000040002000404000004e30001612015600155005f5f5f5fe5000250505050e40126a02e51dd08300ca438abd9f9d523c396141d0973e0cc4809004ec2736b8e61d10ba01e3df118c8d6a4dca3c05dcbde6ba4ecbec34907ad84a3768ddd8902d58e9313",
+                    "txbytes": "0xf882800a839896808080b6ef000101000c020003000a00070005ff000000008000040002000404000000e30001612015600155005f5f5f5fe5000250505050e40126a0367fb3019157644885d5cf4bb4937818444b64f992ad1e11cfccfb627ae75270a05055f4a171b9f440fe37d6b4f6db8e59e0d510dfa84b8d7123239bc9aeac028e",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -4495,13 +4495,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0274bc",
+                            "balance": "0x027498",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d038",
+                            "balance": "0x3635c9adc5de97d0b0",
                             "code": "0x",
                             "storage": {}
                         },
@@ -4531,11 +4531,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xcacf9a8f9c1e20f08a11358b6ccff23dabecd39193f58a0af9cf0229911da99d",
+            "hash": "0xcc93fffb2d535f7f23ed7b3c613a0bc0cc92ff44f12549a92075dd3339f9245f",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4576,7 +4576,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0007000504000000008000060004000404000004e30001612015600155005f5f5f5fe5000250505050e401"
+                "0xef000101000c020003000a00070005ff000000008000060004000404000000e30001612015600155005f5f5f5fe5000250505050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -4585,9 +4585,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x8318ddb69c49532c20a9a852d5a1ecfd2e5ff4255486a6660e20ae29072928d1",
+                    "hash": "0x83b8398a873bf2bf83b890f51bf519046876f24c0934c21898b8315b49210e4c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf882800a839896808080b6ef000101000c020003000a0007000504000000008000060004000404000004e30001612015600155005f5f5f5fe5000250505050e40125a02ce236ce314a08d551c1b9d2bfc6f3ff17b20dfbac4df97b37192385c7b591ada00e81a902291fd68a55b8afd8743417da354d8c2acd44c3383e4c22b4dc1c8c1c",
+                    "txbytes": "0xf882800a839896808080b6ef000101000c020003000a00070005ff000000008000060004000404000000e30001612015600155005f5f5f5fe5000250505050e40125a09d0f8d9ed65fba007ee3fdfb44d1e1768b4611a950cf65d0f801d0681a30311aa0480b19cface0b0acda41fd122e51ace9ea2a64d8f410b9d8176aad1d02132769",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -4596,13 +4596,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x0274bc",
+                            "balance": "0x027498",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d038",
+                            "balance": "0x3635c9adc5de97d0b0",
                             "code": "0x",
                             "storage": {}
                         },
@@ -4632,11 +4632,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3ca639f1a716c209211fe5daa5d0aba03e3db9beabe6f7999dcd1cd37c03dc74",
+            "hash": "0x2fe672d782a575902cda673498061b7727e9dc3f2ce1c9231fb6a340830607b6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4669,7 +4669,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0007000304000000008000040002000404020004e30001612015600155005f5f5f5fe500025050e4",
+                "code": "0xef000101000c020003000a00070003ff000000008000040002000404020000e30001612015600155005f5f5f5fe500025050e4",
                 "storage": {}
             }
         },
@@ -4692,7 +4692,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xbf6d5bb1ef7062f509602c7bae771bc701eb8c2cdfb660d4859644fe2282d5dc",
+                    "hash": "0x5b8c33d5d2f1843507af117ff782820bb2efd9305be89659bd8f1bf8a8907890",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -4704,7 +4704,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0007000304000000008000040002000404020004e30001612015600155005f5f5f5fe500025050e4",
+                            "code": "0xef000101000c020003000a00070003ff000000008000040002000404020000e30001612015600155005f5f5f5fe500025050e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4747,11 +4747,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x255bd596b5bba123d3d291898e3d40678c1edf4d810b7f975423838ed22be649",
+            "hash": "0xd0961b186d4f00ec6e7804253c9f45ab4aab7356c403d95fb0bec9f1bf8a7de3",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4792,7 +4792,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000c020003000a0007000304000000008000060004000404020004e30001612015600155005f5f5f5fe500025050e401"
+                "0xef000101000c020003000a00070003ff000000008000060004000404020000e30001612015600155005f5f5f5fe500025050e401"
             ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f",
@@ -4801,9 +4801,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x7e24783aa572ddae691bef2a513f06053ab1c4ce15518b164beaaa68d4b2356b",
+                    "hash": "0x3c3bbf3a4f01c25908b8afac854239c88760e72d8b8481fcf6c071ab15e262a0",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf880800a839896808080b4ef000101000c020003000a0007000304000000008000060004000404020004e30001612015600155005f5f5f5fe500025050e40125a016c07b6d1b4ca6dad7264c5cf87ef5fd6c88b1928bf1bba2f4abb777cd5fe65da01702ddb1981dd150b29c3bfad51d5939e0a14f287795915dbd7505fbd578bab7",
+                    "txbytes": "0xf880800a839896808080b4ef000101000c020003000a00070003ff000000008000060004000404020000e30001612015600155005f5f5f5fe500025050e40125a0a9ea68ebb74f4b7533855edb5c16062bad32c77fb213ba545f046a2c7ad3fab0a075b3e0ce76a3f0e816552aaf5c64fc6145aa71b83b44250abb33d07a6611602b",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -4812,13 +4812,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x027480",
+                            "balance": "0x02745c",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x8a0a19589531694250d570040a0c4b74576919b8": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97d100",
+                            "balance": "0x3635c9adc5de97d178",
                             "code": "0x",
                             "storage": {}
                         },
@@ -4848,11 +4848,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x3780944cc0579bf7718ccad92365846ae75f0576d7838de57b874e4ad1d6e709",
+            "hash": "0xf133e1927576478245f51137420204adc9429aa9443e5c0e0c24ab75b3f7e60a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -4885,7 +4885,7 @@
             "0x0000000000000000000000000000000000001000": {
                 "nonce": "0x01",
                 "balance": "0x00",
-                "code": "0xef000101000c020003000a0007000104000000008000060004000404040004e30001612015600155005f5f5f5fe50002e4",
+                "code": "0xef000101000c020003000a00070001ff000000008000060004000404040000e30001612015600155005f5f5f5fe50002e4",
                 "storage": {}
             }
         },
@@ -4908,7 +4908,7 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x78c902896052cbdc3e1c2883f42ba7fe367d876cd36a25600ccc209e8d0ab593",
+                    "hash": "0xce6678071ec4847ad6ef141b9386dd97730a4844cee2112f2f744884a306a781",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0xf860800a83989680940000000000000000000000000000000000001000800126a05ed11cfd964148acc54c0287052842c948defa51bc1c56c12c250bd2cb4fc263a02dfc859b24c992f204f9264906ea83e96b3bd0fd7c2ae0aa6c88e3195f433bc7",
                     "indexes": {
@@ -4920,7 +4920,7 @@
                         "0x0000000000000000000000000000000000001000": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c020003000a0007000104000000008000060004000404040004e30001612015600155005f5f5f5fe50002e4",
+                            "code": "0xef000101000c020003000a00070001ff000000008000060004000404040000e30001612015600155005f5f5f5fe50002e4",
                             "storage": {
                                 "0x01": "0x2015"
                             }
@@ -4963,11 +4963,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0xe186274c3745cf0471dee16e85f7462c343d5a649bf53f15ae54959fa1eaf8b2",
+            "hash": "0xcbfe3596032976d2a1bab919d884a4e8c89b23a16e9102db834c9bb006e61a13",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Tests for JUMPF validation stack rules.  Returning section cases.\n    Valid cases are executed.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L68",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_stack.py#L69",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

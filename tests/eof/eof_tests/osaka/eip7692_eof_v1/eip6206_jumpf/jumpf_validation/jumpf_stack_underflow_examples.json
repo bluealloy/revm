@@ -1,0 +1,146 @@
+{
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_2]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c020003000400030002ff000000008000020002000001020001e3000100e500025fe4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x85fd1d3d0455ca6198570a4b84720ed9fc3fdc8141c75b656bc604cf03ae7154",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_3]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000802000200030005ff0000000080000001800002e5000160006000fd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xcec866b74f066c1d63eeb72aae97c6823255692d6e810d709261423fed7a62bd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_4]": {
+        "vectors": {
+            "0": {
+                "code": "0xef000101000c0200030004000b0003ff000000008000030003000305030000e30001005f6000e100025f5fe500025050e4",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xdefc4d18d85d629d0f419942319923622f22be148729897f5f3ebdef99c15e99",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_6]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010008020002000b0005ff00000000800003048000025f6000e100025f5fe5000160006000fd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xb0e7d2a129bad9d3c7495272be6df584f60e051305217e7a8ab025a03bfbfd25",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_7]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010008020002000b0005ff00000000800003038000025f6000e100025f5fe5000160006000fd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0x205e0b30d12744e7f974f25b5b91305155ea87f5cc471dbd607bc8918e759925",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    },
+    "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py::test_jumpf_stack_underflow_examples[fork_Osaka-eof_test-underflow_variable_stack_8]": {
+        "vectors": {
+            "0": {
+                "code": "0xef0001010008020002000c0005ff00000000800003038000025f5f5f6000e1000150e5000160006000fd",
+                "containerKind": "RUNTIME",
+                "results": {
+                    "Osaka": {
+                        "exception": "EOFException.STACK_UNDERFLOW",
+                        "result": false
+                    }
+                }
+            }
+        },
+        "_info": {
+            "hash": "0xb2cc392ccc0e82568657f0871a5939d1d6a6f3817512d6c8a0fac13267acc317",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
+            "description": "Test function documentation:\nTest JUMPF instruction causing validation time stack underflow.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L362",
+            "fixture-format": "eof_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
+            "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
+        }
+    }
+}

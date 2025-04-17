@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010034040000000080000260006000ee00ef000101000c0200030004000a000704000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe"
+                "0xef0001010004020001000603000100000034ff0000000080000260006000ee00ef000101000c0200030004000a0007ff000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0x4b15139bbc6011d50df5c633bc7375c0ea4f3d91955d32c8b000690636179eb1",
+                    "hash": "0x094e5b7251655cf6a837dbd98f6ed1ccdda2f5d2610ec812f7df51b56948842b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf89f800a839896808080b852ef000101000402000100060300010034040000000080000260006000ee00ef000101000c0200030004000a000704000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe26a03b32717292fc79171f9fb47eb2f554f1dae193598382c43b928737967055642fa049837d936334334ba49ca1f56169d719232458f71857ff31dfafe02d712a6c6e",
+                    "txbytes": "0xf8a1800a839896808080b854ef0001010004020001000603000100000034ff0000000080000260006000ee00ef000101000c0200030004000a0007ff000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe25a0f534791011ca17886ec9b0d3b79638f080551c8eb5f5afdc299bf09928bab9fba07cfa49345bfc315f97a0a28191e28cc27b9c348430e6d885c6c774b17e5f12ac",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,19 +48,19 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02f1b4",
+                            "balance": "0x02f1cc",
                             "code": "0x",
                             "storage": {}
                         },
                         "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
                             "nonce": "0x01",
                             "balance": "0x00",
-                            "code": "0xef000101000c0200030004000a000704000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe",
+                            "code": "0xef000101000c0200030004000a0007ff000000008000010001000200010002e30001005f5fe1000450e50002e45f5fe10001e4fe",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de962fa8",
+                            "balance": "0x3635c9adc5de962f58",
                             "code": "0x",
                             "storage": {}
                         }
@@ -84,11 +84,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x533531043ab569fd30570cb0723c6575030952d2abc23007a260d2975e8e11f0",
+            "hash": "0x20d4019a9440bf886f8ed51387d0bd4acab487d1ec927c6576d786be1dbec288",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Test EOF container validation where in the same code section we have returning\n    and nonreturning terminating instructions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L118",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_validation.py#L118",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

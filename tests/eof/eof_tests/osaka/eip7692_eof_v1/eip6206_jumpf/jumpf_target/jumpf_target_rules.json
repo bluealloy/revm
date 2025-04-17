@@ -2,7 +2,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-0-to-0]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000a00040007040000000080000200000001000000000000000260006000e3000100600035e10001e4e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040008000a00040007ff0000000080000200000001000000000000000260006000e3000100600035e10001e4e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -12,11 +12,11 @@
             }
         },
         "_info": {
-            "hash": "0xca31d1fb3411c28f30ac481479c5845dfd0b7a124cf2fda57a950a8c6f3ff39f",
+            "hash": "0x68d23a3b267d87ee253fb28f50bbc1269219aff9e0d33c9345ed6e32120e6f6c",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -25,7 +25,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-0-to-127]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000a00830007040000000080000200000001007f007f0000000260006000e3000100600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000a00830007ff0000000080000200000001007f007f0000000260006000e3000100600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -36,11 +36,11 @@
             }
         },
         "_info": {
-            "hash": "0xd1bc92bf4e6168c5d55515ed34614fff91128afa275368cc8e2e7c030087527d",
+            "hash": "0x5d5ae50b0114747044593d419a924f17104109b843faf52eb8aa9cd278a4d3dd",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -49,7 +49,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-0-to-2]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000a00060007040000000080000200000001000200020000000260006000e3000100600035e10001e4e500025f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000a00060007ff0000000080000200000001000200020000000260006000e3000100600035e10001e4e500025f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -60,11 +60,11 @@
             }
         },
         "_info": {
-            "hash": "0xeb00ab93422d6ddea592197609c2e8a3d973015b83796932074ca899d0964d6a",
+            "hash": "0x286bfd3cc6eb2b34a7fa3fab470482cac90a27ded998f5e172961579a878cc2d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -73,7 +73,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-0-to-4]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000a00080007040000000080000200000001000400040000000260006000e3000100600035e10001e4e500025f5f5f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000a00080007ff0000000080000200000001000400040000000260006000e3000100600035e10001e4e500025f5f5f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -84,11 +84,11 @@
             }
         },
         "_info": {
-            "hash": "0x44de794fe278b735065e44af4dade858e70058d18d06fb94aa5fb28af1fb9e12",
+            "hash": "0x7691065dab93a6d9a9a6d34f9d3cdffb26549ed1058cfb073ee56545361f95cc",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -97,7 +97,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-0-to-N]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000a00040007040000000080000200000001008000000000000260006000e3000100600035e10001e4e50002e3000300612015600155e4",
+                "code": "0xef00010100100200040008000a00040007ff0000000080000200000001008000000000000260006000e3000100600035e10001e4e50002e3000300612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -107,11 +107,11 @@
             }
         },
         "_info": {
-            "hash": "0xf5100c58ad2acfb9c7c339839bc1bad0ad5c5f7d23e0b4cda7bab94d1aad2a36",
+            "hash": "0x5c8faeeb1939187a9fbdd594fa3c34a035714291e39b738ba0f2919f492f15d6",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -120,7 +120,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-127-to-0]": {
         "vectors": {
             "0": {
-                "code": "0xef000101001002000400080108008300070400000000800081007f00fe7f00007f0000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe5000250505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
+                "code": "0xef00010100100200040008010800830007ff00000000800081007f00fe7f0000000000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe5000250505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -130,11 +130,11 @@
             }
         },
         "_info": {
-            "hash": "0xc1737670ad3833d5b250907e5d152e825a8095d23e249d4f54bff646e3a7c9e5",
+            "hash": "0x92a123f73e515fbe2757db7bc80e16880ca245b72460d21afecd1902660b79f0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -143,7 +143,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-127-to-127]": {
         "vectors": {
             "0": {
-                "code": "0xef000101001002000400080089000400070400000000800081007f00807f7f007f0000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e4e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040008008900040007ff00000000800081007f00807f7f00000000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e4e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -153,11 +153,11 @@
             }
         },
         "_info": {
-            "hash": "0x875404c35da35d798b28eeb4a0cfb6425bb1ed4eadb835a663a1f2d23af0e6bc",
+            "hash": "0xad46b36bcef03a155a43bfb60103f42e2b1746f7c311882585610dae98926fe4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -166,7 +166,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-127-to-2]": {
         "vectors": {
             "0": {
-                "code": "0xef000101001002000400080106008100070400000000800081007f00fc7f02007f0000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe500025050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
+                "code": "0xef00010100100200040008010600810007ff00000000800081007f00fc7f0200000000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe500025050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -176,11 +176,11 @@
             }
         },
         "_info": {
-            "hash": "0x7e89ec7e448890b2e0f6662deef01339c7f76d6fd633422174635944a091107d",
+            "hash": "0x10f2813a011e9261820ce98aaaf56b0bbadaf767ee9990a63de43992b0b9113e",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -189,7 +189,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-127-to-4]": {
         "vectors": {
             "0": {
-                "code": "0xef000101001002000400080104007f00070400000000800081007f00fa7f04007f0000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50002505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
+                "code": "0xef000101001002000400080104007f0007ff00000000800081007f00fa7f0400000000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50002505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -199,11 +199,11 @@
             }
         },
         "_info": {
-            "hash": "0x40be54ea3c86aab06c8dfd5a46444b45746da8dd94cbf95245b3293c05ced8fe",
+            "hash": "0xbcbc08abb9a19195c2a45131321cf52af382d994b30f7f7d3226ea73d9b917ac",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -212,7 +212,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-127-to-N]": {
         "vectors": {
             "0": {
-                "code": "0xef000101001002000400080108000400070400000000800081007f00fe7f80007f0000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50002e3000300612015600155e4",
+                "code": "0xef00010100100200040008010800040007ff00000000800081007f00fe7f8000000000000260006000e30001005f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f600035e10001e45f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe50002e3000300612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -222,11 +222,11 @@
             }
         },
         "_info": {
-            "hash": "0xf9d6ae646b82da6ce0c6010e081f60a9b0fed9c76f50c7b70ef03a410a92da4b",
+            "hash": "0xd771fad41494421d61ab210e979e986f1cb8b059542d1ebb93e80ccb353b1248",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -235,7 +235,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-2-to-0]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000e00060007040000000080000400020004020000020000000260006000e30001005f5f600035e10001e45f5fe500025050e30003e4612015600155e4",
+                "code": "0xef00010100100200040008000e00060007ff0000000080000400020004020000000000000260006000e30001005f5f600035e10001e45f5fe500025050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -245,11 +245,11 @@
             }
         },
         "_info": {
-            "hash": "0x6340547fd8b5daa027c15900d791f3d0fea7d85bd4c846cd7da10a5e7e3a1466",
+            "hash": "0x6277d65ba2c4eca60c00e88cf3cd916c7ecf56f1eae0436707401d9f7ff6417a",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -258,7 +258,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-2-to-127]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000c00810007040000000080000400020003027f007f0000000260006000e30001005f5f600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000c00810007ff0000000080000400020003027f007d0000000260006000e30001005f5f600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -269,11 +269,11 @@
             }
         },
         "_info": {
-            "hash": "0xd89f2af6a5ff397ec24cb8a8c40c214e3a8792aab051a2e90d9e5040f83d9dcc",
+            "hash": "0xe8b440f1f2cd7289fee66b225bbe8e8c4ced980b075682e14a815d3e230b9e67",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -282,7 +282,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-2-to-2]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000c00040007040000000080000400020003020200020000000260006000e30001005f5f600035e10001e4e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040008000c00040007ff0000000080000400020003020200000000000260006000e30001005f5f600035e10001e4e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -292,11 +292,11 @@
             }
         },
         "_info": {
-            "hash": "0x0e6cad88ba43d68b4199726e473bca3ff771d91372d349e792ec15556292c9b9",
+            "hash": "0x0f0c3bd892486b064ae28ec2774e4667a7d29622cf909073b62b4866bf314dfa",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -305,7 +305,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-2-to-4]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000c00060007040000000080000400020003020400040000000260006000e30001005f5f600035e10001e4e500025f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000c00060007ff0000000080000400020003020400020000000260006000e30001005f5f600035e10001e4e500025f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -316,11 +316,11 @@
             }
         },
         "_info": {
-            "hash": "0x83e30da27ef183b4845d8b20f48d75d45796dc51152b9ed0906113d01b0a1cea",
+            "hash": "0xd7287381f09a83ec4ede35499c02446c22488f89bad1d0439fb102f5c6020ec4",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -329,7 +329,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-2-to-N]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000e00040007040000000080000400020004028000020000000260006000e30001005f5f600035e10001e45f5fe50002e3000300612015600155e4",
+                "code": "0xef00010100100200040008000e00040007ff0000000080000400020004028000000000000260006000e30001005f5f600035e10001e45f5fe50002e3000300612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -339,11 +339,11 @@
             }
         },
         "_info": {
-            "hash": "0xec3dd756e602ff67f0f80431104b1c46943b459091afdfcd3bfefa91f76fcf4d",
+            "hash": "0x86dd295161cccf7856c0abc9b45e08c82f1be087b3a8b99d988bb86ffb985596",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -352,7 +352,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-4-to-0]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008001200080007040000000080000600040008040000040000000260006000e30001005f5f5f5f600035e10001e45f5f5f5fe5000250505050e30003e4612015600155e4",
+                "code": "0xef00010100100200040008001200080007ff0000000080000600040008040000000000000260006000e30001005f5f5f5f600035e10001e45f5f5f5fe5000250505050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -362,11 +362,11 @@
             }
         },
         "_info": {
-            "hash": "0x4f3d006c5b961d21c0a4811b5401421b0238463048f7b00cdb118aa2937973f2",
+            "hash": "0x5f39cc9e4b5bbf0df5a4f92d33b631e6bfee6379b2f5b9ed0b884236660118ce",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -375,7 +375,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-4-to-127]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000e007f0007040000000080000600040005047f007f0000000260006000e30001005f5f5f5f600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
+                "code": "0xef00010100100200040008000e007f0007ff0000000080000600040005047f007b0000000260006000e30001005f5f5f5f600035e10001e4e500025f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5fe30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -386,11 +386,11 @@
             }
         },
         "_info": {
-            "hash": "0x174c7298064a4e1659d3c499d4a593e5cb08fba3802ea2d9b24a4f54fd517498",
+            "hash": "0xd7a305cae60c3c1f3d3a999a8f5f36881a67e285fe2c433fc7fa71835000e8ed",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -399,7 +399,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-4-to-2]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008001000060007040000000080000600040006040200040000000260006000e30001005f5f5f5f600035e10001e45f5fe500025050e30003e4612015600155e4",
+                "code": "0xef00010100100200040008001000060007ff0000000080000600040006040200000000000260006000e30001005f5f5f5f600035e10001e45f5fe500025050e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -409,11 +409,11 @@
             }
         },
         "_info": {
-            "hash": "0xca6cc0f54407f838c17e7b37530b8964c400bad77999a014e78de133e0790a86",
+            "hash": "0x6d122975fda2c4b5c70156a852adb3bc732e562576c5245164eaf13c265c0dc9",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -422,7 +422,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-4-to-4]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008000e00040007040000000080000600040005040400040000000260006000e30001005f5f5f5f600035e10001e4e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040008000e00040007ff0000000080000600040005040400000000000260006000e30001005f5f5f5f600035e10001e4e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -432,11 +432,11 @@
             }
         },
         "_info": {
-            "hash": "0x2af5f5efe88ed524f33b0c09840eea51abd0138cdf2201315c0ace35d453e13d",
+            "hash": "0x902e10048c86090ff71b4c515d338ff97a4c4d927cbbc165d67b678c5e23aa44",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -445,7 +445,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-4-to-N]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040008001200040007040000000080000600040008048000040000000260006000e30001005f5f5f5f600035e10001e45f5f5f5fe50002e3000300612015600155e4",
+                "code": "0xef00010100100200040008001200040007ff0000000080000600040008048000000000000260006000e30001005f5f5f5f600035e10001e45f5f5f5fe50002e3000300612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -455,11 +455,11 @@
             }
         },
         "_info": {
-            "hash": "0x0fed686c4f39de2b61fcf7cda7924ba6796f6bec610499a810f00d262c9cb8c8",
+            "hash": "0xecd9f02dad90103104b54e897f259c03ba8f40150b561fe3a5527543b15bbcf7",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -468,7 +468,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-N-to-0]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040003000a000400070400000000800000008000010000000000000002e50001600035e1000100e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040003000a00040007ff00000000800000008000010000000000000002e50001600035e1000100e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -479,11 +479,11 @@
             }
         },
         "_info": {
-            "hash": "0x99ba266d0efdc0ab14e6ab257f5bc6087c309805641b51b4b2f6f9c8968a6a9a",
+            "hash": "0xf3ac9dfc599a1badf44ceebb767f9b516f844e4449f322c78d54d28b18380378",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -492,7 +492,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-N-to-127]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040003000a00040007040000000080000000800001007f000000000002e50001600035e1000100e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040003000a00040007ff0000000080000000800001007f000000000002e50001600035e1000100e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -503,11 +503,11 @@
             }
         },
         "_info": {
-            "hash": "0x208323038467e46fe60543c6cf9e69cc3eb1850b8533105e75f6d53c6a007477",
+            "hash": "0x5cf3ab0ebb1305aaffcb182f8aa8bdf6e56a6549d076d6e1f30f4578d3bf25b0",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -516,7 +516,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-N-to-2]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040003000a000400070400000000800000008000010002000000000002e50001600035e1000100e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040003000a00040007ff00000000800000008000010002000000000002e50001600035e1000100e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -527,11 +527,11 @@
             }
         },
         "_info": {
-            "hash": "0xaa15acc50e9879e29279b96ea4f1c114f08afe94a0c0c371f04660eb30fdb9d5",
+            "hash": "0x4b6f21e50a0438ffebf2ad20792de972130188d19da44e665c4f21d3d3796a46",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -540,7 +540,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-N-to-4]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040003000a000400070400000000800000008000010004000000000002e50001600035e1000100e50002e30003e4612015600155e4",
+                "code": "0xef00010100100200040003000a00040007ff00000000800000008000010004000000000002e50001600035e1000100e50002e30003e4612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -551,11 +551,11 @@
             }
         },
         "_info": {
-            "hash": "0x2978d55260a9bbf884cfb4dbd04f118bddda471da0dae9348db3a55679ebcdf3",
+            "hash": "0x0a003f04257905bd8114051b48af5b693d852bcb2e0567ec4c36b457fd89607d",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
@@ -564,7 +564,7 @@
     "tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py::test_jumpf_target_rules[fork_Osaka-eof_test-so-N-to-N]": {
         "vectors": {
             "0": {
-                "code": "0xef00010100100200040003000a000400070400000000800000008000010080000000000002e50001600035e1000100e50002e3000300612015600155e4",
+                "code": "0xef00010100100200040003000a00040007ff00000000800000008000010080000000000002e50001600035e1000100e50002e3000300612015600155e4",
                 "containerKind": "RUNTIME",
                 "results": {
                     "Osaka": {
@@ -574,11 +574,11 @@
             }
         },
         "_info": {
-            "hash": "0x4597698ed5991efbae87299aef924adefa918b2731fad71e052606503919cb0c",
+            "hash": "0xc068c920ac2fb92af398431389a27fefa0eba1ff2be1262b0647f0915f314958",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\n\n    Validate the target section rules of JUMPF, and execute valid cases.\n    We are not testing stack so a lot of the logic is to get correct stack values.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip6206_jumpf/test_jumpf_target.py#L19",
             "fixture-format": "eof_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"

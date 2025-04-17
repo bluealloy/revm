@@ -28,7 +28,7 @@
                 "0x00"
             ],
             "data": [
-                "0xef000101000402000100060300010022040000000080000260006000ee00ef0001010004020001000f04000000008000046001600260036001e10001e8005500"
+                "0xef0001010004020001000603000100000022ff0000000080000260006000ee00ef0001010004020001000fff000000008000046001600260036001e10001e8005500"
             ],
             "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
@@ -37,9 +37,9 @@
         "post": {
             "Osaka": [
                 {
-                    "hash": "0xd0a92e26009015076313d65aaf54a545452cf33f47fe0bddbeb88a1aa55636e7",
+                    "hash": "0x85b0fc046c69f1fbaeac85a03fcb4cbc2a6ca498f9b7f035021d8cbf99b7858f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes": "0xf88d800a839896808080b840ef000101000402000100060300010022040000000080000260006000ee00ef0001010004020001000f04000000008000046001600260036001e10001e800550025a0cb6bf06aa9d148d6714bf45bd4f51906eb275ee2754df801080ea6e77ec7e65fa04ef7e7ef5588bacf82db5db0ae61bb31d0ecbd49a0f2ad263855841683977698",
+                    "txbytes": "0xf88e800a839896808080b842ef0001010004020001000603000100000022ff0000000080000260006000ee00ef0001010004020001000fff000000008000046001600260036001e10001e8005500269f400c8173864b01ed704d5cc2001c7f5b03c59bd121e2418ec26084880a681aa025c9aab40cf5f1a469dd3c2256485b09429dc836b364773fb12cd923b952fb49",
                     "indexes": {
                         "data": 0,
                         "gas": 0,
@@ -48,13 +48,13 @@
                     "state": {
                         "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
                             "nonce": "0x00",
-                            "balance": "0x02757c",
+                            "balance": "0x02759a",
                             "code": "0x",
                             "storage": {}
                         },
                         "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
                             "nonce": "0x01",
-                            "balance": "0x3635c9adc5de97cdb8",
+                            "balance": "0x3635c9adc5de97cd54",
                             "code": "0x",
                             "storage": {}
                         }
@@ -78,11 +78,11 @@
             "chainid": "0x01"
         },
         "_info": {
-            "hash": "0x39e7a21b93340cef20e69895b41accc281739b0973d2f3b7b251583b57ae9c11",
+            "hash": "0x11e5a700106e8b0ab5daead45ce61dec657375618b21ca7905e7b1dd4b409772",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.14.1+commit.3186982f",
+            "filling-transition-tool": "evmone-t8n 0.15.0+commit.4977c945",
             "description": "Test function documentation:\nEOF code containing RJUMPI with target EXCHANGE immediate.",
-            "url": "https://github.com/ethereum/execution-spec-tests/tree/v4.1.0/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L1363",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/e0cd6da30255e19ca166878b4591a4497f40957c/tests/osaka/eip7692_eof_v1/eip4200_relative_jumps/test_rjumpi.py#L1363",
             "fixture-format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4200.md",
             "reference-spec-version": "17d4a8d12d2b5e0f2985c866376c16c8c6df7cba"
