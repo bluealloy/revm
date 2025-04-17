@@ -117,6 +117,65 @@ impl AccountInfo {
         self
     }
 
+    /// Sets the code hash of this account.
+    ///
+    /// # Note
+    ///
+    /// This is a mutable method, so it will modify the current instance of [`AccountInfo`].
+    /// If you want to create a new instance with the given code hash, use [`with_code_hash`].
+    pub fn set_code_hash(&mut self, code_hash: B256) {
+        self.code_hash = code_hash;
+    }
+
+    /// Sets the bytecode of this account.
+    ///
+    /// # Note
+    ///
+    /// This is a mutable method, so it will modify the current instance of [`AccountInfo`].
+    /// If you want to create a new instance with the given bytecode, use [`with_code`].
+    pub fn set_code(&mut self, code: Bytecode) {
+        self.code = Some(code);
+    }
+
+    /// Sets the bytecode and code hash of this account.
+    ///
+    /// # Note
+    ///
+    /// This is a mutable method, so it will modify the current instance of [`AccountInfo`].
+    /// If you want to create a new instance with the given bytecode, use [`with_code`].
+    /// If you want to create a new instance with the given code hash, use [`with_code_hash`].
+    /// If you want to create a new instance with the given code and code hash, use
+    /// [`with_code_and_hash`].
+    ///
+    /// # Note
+    ///
+    /// This method is expensive as it calculates the code hash using [`Bytecode::hash_slow`].
+    /// It is recommended to use [`with_code_and_hash`] instead if you already have the code hash.
+    pub fn set_code_and_hash(&mut self, code: Bytecode) {
+        self.code_hash = code.hash_slow();
+        self.code = Some(code);
+    }
+
+    /// Sets the given balance.
+    ///
+    /// # Note
+    ///
+    /// This is a mutable method, so it will modify the current instance of [`AccountInfo`].
+    /// If you want to create a new instance with the given balance, use [`with_balance`].
+    pub fn set_balance(mut self, balance: U256) {
+        self.balance = balance;
+    }
+
+    /// Sets the given nonce.
+    ///
+    /// # Note
+    ///
+    /// This is a mutable method, so it will modify the current instance of [`AccountInfo`].
+    /// If you want to create a new instance with the given nonce, use [`with_nonce`].
+    pub fn set_nonce(mut self, nonce: u64) {
+        self.nonce = nonce;
+    }
+
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
     /// This is useful when creating journals or snapshots of the state, where it is
