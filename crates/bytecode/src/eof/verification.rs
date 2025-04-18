@@ -47,7 +47,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 /// in verification process.
 #[inline]
 pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
-    // Data needs to be filled first first container.
+    // Data needs to be filled in the container.
     if !eof.body.is_data_filled {
         return Err(EofError::Validation(EofValidationError::DataNotFilled));
     }
