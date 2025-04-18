@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
 - add criterion benchmark for evm build ([#2319](https://github.com/bluealloy/revm/pull/2319))
-- add check for path and existence existence ([#2320](https://github.com/bluealloy/revm/pull/2320))
+- add check for path and existence ([#2320](https://github.com/bluealloy/revm/pull/2320))
 - bump bench time, and reduce burntpix iterations ([#2315](https://github.com/bluealloy/revm/pull/2315))
 - update EOF validation logic and improve error handling ([#2304](https://github.com/bluealloy/revm/pull/2304))
 
