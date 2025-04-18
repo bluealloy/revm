@@ -37,7 +37,7 @@ pub struct JournalInner<ENTRY> {
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
-    /// If spec is set it it assumed that precompile addresses are set as well for this particular spec.
+    /// If spec is set it assumed that precompile addresses are set as well for this particular spec.
     ///
     /// This spec is used for two things:
     ///
