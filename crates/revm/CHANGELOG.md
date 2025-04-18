@@ -1057,7 +1057,7 @@ Changes:
 # v1.0.0
 date: 18.12.2021
 
-It feel's like that the lib is in the state that is okay to promote it to the v1 version. Other that that, a lot of optimizations are done and the inspector trait was rewritten.
+It feel's like that the lib is in the state that is okay to promote it to the v1 version. Other that, a lot of optimizations are done and the inspector trait was rewritten.
 
 Changes: 
 *  web3 db
