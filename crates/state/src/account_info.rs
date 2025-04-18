@@ -117,6 +117,40 @@ impl AccountInfo {
         self
     }
 
+    /// Sets the [`AccountInfo`] `balance`.
+    #[inline]
+    pub fn set_balance(&mut self, balance: U256) -> &mut Self {
+        self.balance = balance;
+        self
+    }
+
+    /// Sets the [`AccountInfo`] `nonce`.
+    #[inline]
+    pub fn set_nonce(&mut self, nonce: u64) -> &mut Self {
+        self.nonce = nonce;
+        self
+    }
+
+    /// Sets the [`AccountInfo`] `code_hash` and clears any cached bytecode.
+    #[inline]
+    pub fn set_code_hash(&mut self, code_hash: B256) -> &mut Self {
+        self.code = None;
+        self.code_hash = code_hash;
+        self
+    }
+
+    /// Replaces the [`AccountInfo`] bytecode and recalculates `code_hash`.
+    ///
+    /// # Note
+    ///
+    /// As code hash is calculated with [`Bytecode::hash_slow`] there will be performance penalty if used frequently.
+    #[inline]
+    pub fn set_code(&mut self, code: Bytecode) -> &mut Self {
+        self.code_hash = code.hash_slow();
+        self.code = Some(code);
+        self
+    }
+
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
     /// This is useful when creating journals or snapshots of the state, where it is
