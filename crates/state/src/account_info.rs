@@ -132,6 +132,11 @@ impl AccountInfo {
     }
 
     /// Sets the [`AccountInfo`] `code_hash` and clears any cached bytecode.
+    ///
+    /// # Note
+    ///
+    /// Calling this after `set_code(...)` will remove the bytecode you just set.
+    /// If you intend to mutate the code, use only `set_code`.
     #[inline]
     pub fn set_code_hash(&mut self, code_hash: B256) -> &mut Self {
         self.code = None;
