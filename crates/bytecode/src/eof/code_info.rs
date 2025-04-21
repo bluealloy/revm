@@ -89,7 +89,7 @@ impl CodeInfo {
             });
         }
 
-        if self.inputs as usize + self.max_stack_increase as usize >= STACK_LIMIT {
+        if self.inputs as usize + self.max_stack_increase as usize > STACK_LIMIT {
             return Err(EofDecodeError::InvalidCodeInfoStackOverflow {
                 inputs: self.inputs,
                 max_stack_increment: self.max_stack_increase,
