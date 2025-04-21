@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0](https://github.com/bluealloy/revm/compare/revme-v4.0.2...revme-v4.1.0) - 2025-04-21
+
+### Added
+
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Other
+
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [4.0.2](https://github.com/bluealloy/revm/compare/revme-v4.0.0..revme-v4.0.1) - 2025-04-15
 
 ### Other
