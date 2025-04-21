@@ -267,7 +267,13 @@ pub trait Handler {
         if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
             return Ok(());
         }
-        let initcode = evm.ctx().tx().initcodes().cloned().collect::<Vec<_>>();
+        let initcode = evm
+            .ctx()
+            .tx()
+            .initcodes()
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
         evm.ctx().local().insert_initcodes(&initcode);
         Ok(())
     }

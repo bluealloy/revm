@@ -322,9 +322,7 @@ pub fn validate_tx_against_account<CTX: ContextTr>(
 /// * there are zero entries in initcodes, or if there are more than MAX_INITCODE_COUNT entries.
 /// * any entry in initcodes is zero length, or if any entry exceeds MAX_INITCODE_SIZE.
 /// * the to is nil.
-pub fn validate_eip7873_initcodes<'a, I: Iterator<Item = &'a Bytes> + 'a>(
-    initcodes: I,
-) -> Result<(), InvalidTransaction> {
+pub fn validate_eip7873_initcodes(initcodes: &[Bytes]) -> Result<(), InvalidTransaction> {
     let mut i = 0;
     for initcode in initcodes {
         // InitcodeTransaction is invalid if any entry in initcodes is zero length

@@ -1,3 +1,4 @@
+use bytecode::{validate_eof_inner, Eof};
 use clap::Parser;
 use revm::{
     bytecode::eof::{self, validate_raw_eof_inner, CodeType, EofError},
@@ -51,13 +52,21 @@ impl Cmd {
             };
 
             if bytes[0] == 0xEF {
-                match validate_raw_eof_inner(bytes, container_kind) {
+                match Eof::decode(bytes) {
                     Ok(eof) => {
                         println!("Decoding: {:#?}", eof);
+                        match validate_eof_inner(&eof, container_kind) {
+                            Ok(_) => {
+                                println!("Validation: OK");
+                            }
+                            Err(eof_error) => {
+                                eprintln!("Validation error: {}", eof_error);
+                            }
+                        }
                         println!("Validation: OK");
                     }
                     Err(eof_error) => {
-                        eprintln!("err: {}", eof_error);
+                        eprintln!("Decoding error: {}", eof_error);
                     }
                 }
             } else {

@@ -95,6 +95,7 @@ impl CodeInfo {
                 max_stack_increment: self.max_stack_increase,
             });
         }
+
         Ok(())
     }
 }

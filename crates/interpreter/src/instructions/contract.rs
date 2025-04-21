@@ -89,9 +89,7 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
-    // Requirement for EOF could potentially be lifted as using TXCREATE from
-    // a legacy bytecode can remove a need for first eof contract deployment.
-    require_eof!(interpreter);
+    check!(interpreter, OSAKA);
     require_non_staticcall!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
 

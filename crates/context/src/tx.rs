@@ -231,8 +231,8 @@ impl Transaction for TxEnv {
         self.gas_priority_fee
     }
 
-    fn initcodes(&self) -> impl Iterator<Item = &Bytes> {
-        self.initcodes.iter()
+    fn initcodes(&self) -> &[Bytes] {
+        &self.initcodes
     }
 }
 

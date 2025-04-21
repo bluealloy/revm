@@ -132,7 +132,7 @@ pub trait Transaction {
     /// with each initcode not exceeding [`primitives::MAX_INITCODE_SIZE`] bytes in size.
     ///
     /// EIP link: <https://eips.ethereum.org/EIPS/eip-7873>
-    fn initcodes(&self) -> impl Iterator<Item = &Bytes>;
+    fn initcodes(&self) -> &[Bytes];
 
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {

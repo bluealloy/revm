@@ -138,7 +138,7 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.authorization_list()
     }
 
-    fn initcodes(&self) -> impl Iterator<Item = &Bytes> {
+    fn initcodes(&self) -> &[Bytes] {
         self.base.initcodes()
     }
 }
