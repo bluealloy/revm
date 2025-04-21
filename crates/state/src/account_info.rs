@@ -155,7 +155,15 @@ impl AccountInfo {
         self.code = Some(code);
         self
     }
-
+    /// Sets the bytecode and its hash.
+    ///
+    /// # Note
+    ///
+    /// It is on the caller's responsibility to ensure that the bytecode hash is correct.
+    pub fn set_code_and_hash(&mut self, code: Bytecode, code_hash: B256) {
+        self.code_hash = code_hash;
+        self.code = Some(code);
+    }
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
     /// This is useful when creating journals or snapshots of the state, where it is
