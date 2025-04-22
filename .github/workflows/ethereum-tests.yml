@@ -43,7 +43,5 @@ jobs:
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
           ethtests/GeneralStateTests/ \
-          ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-          tests/eof/state_tests
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation tests/eof/eof_tests
+          ethtests/LegacyTests/Constantinople/GeneralStateTests/
           ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}

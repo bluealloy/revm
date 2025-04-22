@@ -362,8 +362,16 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                    if test.expect_exception.is_some() {
+                        continue;
+                    } else {
+                        panic!("Invalid transaction type without expected exception");
+                    }
+                };
+                tx.tx_type = tx_type as u8;
 
+                tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
                 tx.data = unit
                     .transaction
                     .data
@@ -382,7 +390,7 @@ pub fn execute_test_suite(
                     .flatten()
                     .unwrap_or_default();
 
-                tx.initcodes = unit.transaction.initcodes.clone();
+                tx.initcodes = unit.transaction.initcodes.clone().unwrap_or_default();
 
                 tx.authorization_list = unit
                     .transaction
@@ -396,15 +404,7 @@ pub fn execute_test_suite(
                     None => TxKind::Create,
                 };
                 tx.kind = to;
-
-                if let Err(e) = tx.derive_tx_type() {
-                    if test.expect_exception.is_some() {
-                        continue;
-                    } else {
-                        panic!("Invalid transaction type without expected exception: {e:?}");
-                    }
-                }
-
+                
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()

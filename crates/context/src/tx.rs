@@ -124,19 +124,18 @@ impl TxEnv {
     /// Derives tx type from transaction fields and sets it to `tx_type`.
     /// Returns error in case some fields were not set correctly.
     pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
-        let mut tx_type = TransactionType::Legacy;
-
         if !self.access_list.0.is_empty() {
-            tx_type = TransactionType::Eip2930;
+            self.tx_type = TransactionType::Eip2930 as u8;
         }
 
         if self.gas_priority_fee.is_some() {
-            tx_type = TransactionType::Eip1559;
+            self.tx_type = TransactionType::Eip1559 as u8;
         }
 
-        if !self.blob_hashes.is_empty() {
+        if !self.blob_hashes.is_empty() || self.max_fee_per_blob_gas > 0 {
             if let TxKind::Call(_) = self.kind {
-                tx_type = TransactionType::Eip4844;
+                self.tx_type = TransactionType::Eip4844 as u8;
+                return Ok(());
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip4844);
             }
@@ -144,7 +143,8 @@ impl TxEnv {
 
         if !self.authorization_list.is_empty() {
             if let TxKind::Call(_) = self.kind {
-                tx_type = TransactionType::Eip7702;
+                self.tx_type = TransactionType::Eip7702 as u8;
+                return Ok(());
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip7702);
             }
@@ -152,13 +152,12 @@ impl TxEnv {
 
         if !self.initcodes.is_empty() {
             if let TxKind::Call(_) = self.kind {
-                tx_type = TransactionType::Eip7873;
+                self.tx_type = TransactionType::Eip7873 as u8;
+                return Ok(());
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip7873);
             }
         }
-
-        self.tx_type = tx_type as u8;
         Ok(())
     }
 }
