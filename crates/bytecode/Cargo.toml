@@ -22,7 +22,7 @@ primitives.workspace = true
 
 # Jumpmap
 bitvec = { workspace = true, features = ["alloc"] }
-once_cell.workspace = true
+once_cell = { workspace = true, features = ["alloc"] }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -33,7 +33,7 @@ phf = { workspace = true, features = ["macros"], optional = true }
 
 [features]
 default = ["std", "parse"]
-std = ["serde?/std", "primitives/std", "bitvec/std", "phf?/std"]
+std = ["serde?/std", "primitives/std", "bitvec/std", "once_cell/std", "phf?/std"]
 hashbrown = ["primitives/hashbrown"]
 serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
 serde-json = ["serde"]
