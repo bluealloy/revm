@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v3.0.1...revm-handler-v4.0.0) - 2025-04-22
+
+### Added
+
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- *(eof)* extdelegate bytecode check after eip7702 load ([#2417](https://github.com/bluealloy/revm/pull/2417))
+- skip account list for legacy ([#2400](https://github.com/bluealloy/revm/pull/2400))
+
+### Other
+
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v2.0.0...revm-handler-v3.0.0) - 2025-04-09
 
 ### Added
