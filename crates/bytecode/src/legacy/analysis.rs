@@ -18,12 +18,11 @@ use std::{sync::Arc, vec, vec::Vec};
 /// Undefined behavior if the bytecode does not end with a valid STOP opcode. Please check
 /// [`crate::LegacyAnalyzedBytecode::new`] for details on how the bytecode is validated.
 pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
-    let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
-
     if bytecode.is_empty() {
-        return (JumpTable(Arc::new(jumps)), Bytes::from(vec![opcode::STOP]));
+        return (JumpTable::default(), Bytes::from_static(&[opcode::STOP]));
     }
 
+    let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
     let range = bytecode.as_ptr_range();
     let start = range.start;
     let mut iterator = start;

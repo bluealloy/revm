@@ -1,9 +1,10 @@
 use bitvec::vec::BitVec;
+use once_cell::race::OnceBox;
 use primitives::hex;
 use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
-#[derive(Clone, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpTable(pub Arc<BitVec<u8>>);
 
@@ -12,6 +13,14 @@ impl Debug for JumpTable {
         f.debug_struct("JumpTable")
             .field("map", &hex::encode(self.0.as_raw_slice()))
             .finish()
+    }
+}
+
+impl Default for JumpTable {
+    #[inline]
+    fn default() -> Self {
+        static DEFAULT: OnceBox<JumpTable> = OnceBox::new();
+        DEFAULT.get_or_init(|| Self(Arc::default()).into()).clone()
     }
 }
 

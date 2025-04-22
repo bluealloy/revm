@@ -1,8 +1,6 @@
 use super::JumpTable;
 use crate::opcode;
-use bitvec::{bitvec, order::Lsb0};
 use primitives::Bytes;
-use std::sync::Arc;
 
 /// Legacy analyzed bytecode represents the original bytecode format used in Ethereum.
 ///
@@ -45,7 +43,7 @@ impl Default for LegacyAnalyzedBytecode {
         Self {
             bytecode: Bytes::from_static(&[0]),
             original_len: 0,
-            jump_table: JumpTable(Arc::new(bitvec![u8, Lsb0; 0])),
+            jump_table: JumpTable::default(),
         }
     }
 }
@@ -115,9 +113,10 @@ impl LegacyAnalyzedBytecode {
 
 #[cfg(test)]
 mod tests {
-    use crate::{opcode, LegacyRawBytecode};
-
     use super::*;
+    use crate::{opcode, LegacyRawBytecode};
+    use bitvec::{bitvec, order::Lsb0};
+    use std::sync::Arc;
 
     #[test]
     fn test_bytecode_new() {
