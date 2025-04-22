@@ -103,8 +103,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         } = self;
         // Spec is not changed. It is always set again execution.
         let _ = spec;
-        // Load precompiles into warm_preloaded_addresses. PrecompileProvider
-        *warm_preloaded_addresses = precompiles.clone();
+        // Load precompiles into warm_preloaded_addresses.
+        warm_preloaded_addresses.clone_from(precompiles);
 
         let state = mem::take(state);
         let logs = mem::take(logs);
