@@ -3714,6 +3714,7 @@ name = "revm-bytecode"
 version = "3.0.0"
 dependencies = [
  "bitvec",
+ "once_cell",
  "paste",
  "phf",
  "revm-primitives",

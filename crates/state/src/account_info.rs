@@ -8,16 +8,18 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 #[derive(Clone, Debug, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
-    /// Account balance
+    /// Account balance.
     pub balance: U256,
-    /// Account nonce
+    /// Account nonce.
     pub nonce: u64,
-    /// code hash
+    /// Hash of the raw bytes in `code`, or [`KECCAK_EMPTY`].
     pub code_hash: B256,
-    /// [`Bytecode`] data associated with this account
+    /// [`Bytecode`] data associated with this account.
     ///
-    /// If [None], `code_hash` will be used to fetch it if code needs to be loaded from
-    /// inside `revm`.
+    /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be
+    /// loaded from inside `revm`.
+    ///
+    /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
 }
 
