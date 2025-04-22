@@ -257,7 +257,7 @@ pub trait Handler {
     /// Unused fees are returned to caller after execution completes.
     #[inline]
     fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
+        pre_execution::deduct_caller(evm.ctx())
     }
 
     /* EXECUTION */

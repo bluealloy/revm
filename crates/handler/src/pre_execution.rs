@@ -70,9 +70,12 @@ pub fn load_accounts<
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextTr>(
+pub fn deduct_caller<
+    CTX: ContextTr,
+    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
+>(
     context: &mut CTX,
-) -> Result<(), <CTX::Db as Database>::Error> {
+) -> Result<(), ERROR> {
     let basefee = context.block().basefee();
     let blob_price = context.block().blob_gasprice().unwrap_or_default();
     let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
@@ -98,14 +101,14 @@ pub fn deduct_caller<CTX: ContextTr>(
     let (tx, journal) = context.tx_journal();
     let caller_account = journal.load_account(caller)?.data;
 
-    let _ = validate_tx_against_account(
+    validate_tx_against_account(
         &caller_account.info,
         tx,
         is_eip3607_disabled,
         is_nonce_check_disabled,
         is_balance_check_disabled,
-        U256::from(gas_cost),
-    );
+        U256::ZERO,
+    )?;
 
     // Set new caller account balance.
     caller_account.info.balance = caller_account
