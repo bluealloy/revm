@@ -404,7 +404,7 @@ pub fn execute_test_suite(
                     None => TxKind::Create,
                 };
                 tx.kind = to;
-                
+
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()

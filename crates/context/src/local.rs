@@ -99,13 +99,13 @@ impl Initcode {
 
         // pending validation
         let Ok(eof) = Eof::decode(self.bytes.clone()) else {
-            self.status = InitcodeStatus::Invalid; 
+            self.status = InitcodeStatus::Invalid;
             return None;
         };
 
         // validate in Initcode mode, data section should be filled and it should not contain RETURN or STOP
-        if let Err(_) = eof.validate_mode(CodeType::Initcode) {
-            self.status = InitcodeStatus::Invalid; 
+        if eof.validate_mode(CodeType::Initcode).is_err() {
+            self.status = InitcodeStatus::Invalid;
             return None;
         }
         // mark initcode as valid so we can skip this validation next time.

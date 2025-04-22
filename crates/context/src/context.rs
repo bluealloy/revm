@@ -97,7 +97,9 @@ impl<
         (&mut self.tx, &mut self.journaled_state)
     }
 
-    // Keep Default Implementation for Instructions Host Interface
+    fn tx_local(&mut self) -> (&mut Self::Tx, &mut Self::Local) {
+        (&mut self.tx, &mut self.local)
+    }
 }
 
 impl<
