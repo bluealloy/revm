@@ -4,7 +4,7 @@
 set -e
 
 # Version for the execution spec tests
-VERSION="v4.2.0"
+VERSION="v4.3.0"
 # Version for the EOF spec tests, it is currently upgrading to eof devnet-1 so we will use devnet-0 suite.
 EOF_VERSION="eip7692@v2.3.0"
 
