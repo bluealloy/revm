@@ -103,15 +103,17 @@ impl EofBody {
     /// Decodes an EOF container body from the given buffer and header.
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, EofDecodeError> {
         let header_len = header.size();
-        let partial_body_len =
-            header.sum_code_sizes + header.sum_container_sizes + header.types_size as usize;
-        let full_body_len = partial_body_len + header.data_size as usize;
+        let partial_body_len = header
+            .sum_code_sizes
+            .saturating_add(header.sum_container_sizes)
+            .saturating_add(header.types_size as usize);
+        let full_body_len = partial_body_len.saturating_add(header.data_size as usize);
 
-        if input.len() < header_len + partial_body_len {
+        if input.len() < header_len.saturating_add(partial_body_len) {
             return Err(EofDecodeError::MissingBodyWithoutData);
         }
 
-        if input.len() > header_len + full_body_len {
+        if input.len() > header_len.saturating_add(full_body_len) {
             return Err(EofDecodeError::DanglingData);
         }
 
