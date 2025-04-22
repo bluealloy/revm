@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v3.0.1...revm-statetest-types-v4.0.0) - 2025-04-22
+
+### Added
+
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+
+### Other
+
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+
 ## [3.0.1](https://github.com/bluealloy/revm/compare/revm-statetest-types-v3.0.0..revm-statetest-types-v3.0.1) - 2025-04-15
 
 ### Other

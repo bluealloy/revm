@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v3.0.1...revm-inspector-v3.0.2) - 2025-04-22
+
+### Fixed
+
+- *(tracing)* Fix the ordering of EOFCREATE frame traces ([#2398](https://github.com/bluealloy/revm/pull/2398))
+
+### Other
+
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v3.0.0...revm-inspector-v3.0.1) - 2025-04-15
 
 ### Other
