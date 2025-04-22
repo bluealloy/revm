@@ -3,7 +3,7 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 
 use crate::{
-    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
+    gas::{self, EOF_CREATE_GAS, MIN_CALLEE_GAS},
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_action::FrameInput,
@@ -17,7 +17,7 @@ use crate::{
 use bytecode::eof::{Eof, EofHeader};
 use context_interface::CreateScheme;
 use core::cmp::max;
-use primitives::{hardfork::SpecId, keccak256, Address, Bytes, B256, U256};
+use primitives::{eof::new_eof_address, hardfork::SpecId, Address, Bytes, B256, U256};
 use std::boxed::Box;
 
 /// EOF Create instruction
@@ -30,7 +30,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = interpreter.bytecode.read_u8();
 
-    popn!([value, salt, data_offset, data_size], interpreter);
+    popn!([salt, input_offset, input_size, value], interpreter);
 
     let container = interpreter
         .bytecode
@@ -39,7 +39,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .clone();
 
     // Resize memory and get return range.
-    let Some(input_range) = resize_memory(interpreter, data_offset, data_size) else {
+    let Some(input_range) = resize_memory(interpreter, input_offset, input_size) else {
         return;
     };
 
@@ -56,17 +56,16 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         panic!("Panic if data section is not full");
     }
 
-    // Deduct gas for hash that is needed to calculate address.
-    gas_or_fail!(interpreter, cost_per_word(container.len(), KECCAK256WORD));
-
-    let created_address = interpreter
-        .input
-        .target_address()
-        .create2(salt.to_be_bytes(), keccak256(container));
+    // Calculate new address
+    let created_address = new_eof_address(
+        interpreter.input.target_address(),
+        salt.to_be_bytes().into(),
+    );
 
     let gas_limit = interpreter.control.gas().remaining_63_of_64_parts();
     gas!(interpreter, gas_limit);
-    // Send container for execution container is preverified.
+
+    // Send container for execution as all deployed containers are preverified to be valid EOF.
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
             EOFCreateInputs::new_opcode(
@@ -81,7 +80,71 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         InstructionResult::CallOrCreate,
     );
 
+    // jump over initcontainer index.
     interpreter.bytecode.relative_jump(1);
+}
+
+/// Instruction to create a new EOF contract from a transaction initcode.
+pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    host: &mut H,
+) {
+    check!(interpreter, OSAKA);
+    require_non_staticcall!(interpreter);
+    gas!(interpreter, EOF_CREATE_GAS);
+
+    // pop tx_initcode_hash, salt, input_offset, input_size, value from the operand stack
+    popn!(
+        [tx_initcode_hash, salt, input_offset, input_size, value],
+        interpreter
+    );
+    let tx_initcode_hash = B256::from(tx_initcode_hash);
+
+    // perform (and charge for) memory expansion using [input_offset, input_size]
+    let Some(input_range) = resize_memory(interpreter, input_offset, input_size) else {
+        return;
+    };
+
+    // Get validated initcode with all its subcontainers validated recursively.
+    let Some(initcode) = host.initcode_by_hash(tx_initcode_hash) else {
+        // If initcode is not found or not valid, push 0 on the stack.
+        push!(interpreter, U256::ZERO);
+        return;
+    };
+
+    // caller’s memory slice [input_offset:input_size] is used as calldata
+    let input = if !input_range.is_empty() {
+        interpreter.memory.slice(input_range).to_vec().into()
+    } else {
+        Bytes::new()
+    };
+
+    // Decode initcode as EOF.
+    let eof = Eof::decode(initcode).expect("Subcontainer is verified");
+
+    // Calculate new address
+    let created_address = new_eof_address(
+        interpreter.input.target_address(),
+        salt.to_be_bytes().into(),
+    );
+
+    let gas_limit = interpreter.control.gas().remaining_63_of_64_parts();
+    gas!(interpreter, gas_limit);
+
+    // Send container for execution as all deployed containers are preverified to be valid EOF.
+    interpreter.control.set_next_action(
+        InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
+            EOFCreateInputs::new_opcode(
+                interpreter.input.target_address(),
+                created_address,
+                value,
+                eof,
+                gas_limit,
+                input,
+            ),
+        ))),
+        InstructionResult::CallOrCreate,
+    );
 }
 
 pub fn return_contract<H: Host + ?Sized>(

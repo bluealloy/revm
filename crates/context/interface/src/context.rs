@@ -1,9 +1,8 @@
 pub use crate::journaled_state::StateLoad;
-use crate::{Block, Cfg, Database, JournalTr, Transaction};
+use crate::{Block, Cfg, Database, JournalTr, LocalContextTr, Transaction};
 use auto_impl::auto_impl;
-use core::cell::RefCell;
 use primitives::U256;
-use std::{rc::Rc, string::String, vec::Vec};
+use std::string::String;
 
 /// Trait that defines the context of the EVM execution.
 ///
@@ -24,6 +23,8 @@ pub trait ContextTr {
     type Journal: JournalTr<Database = Self::Db>;
     /// Chain type
     type Chain;
+    /// Local context type
+    type Local: LocalContextTr;
 
     /// Get the transaction
     fn tx(&self) -> &Self::Tx;
@@ -41,13 +42,16 @@ pub trait ContextTr {
     fn db_ref(&self) -> &Self::Db;
     /// Get the chain
     fn chain(&mut self) -> &mut Self::Chain;
-    /// Interpreter shared memory buffer. A reused memory buffer for calls.
-    fn memory_buffer(&mut self) -> &Rc<RefCell<Vec<u8>>>;
+    /// Get the local context
+    fn local(&mut self) -> &mut Self::Local;
     /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
     fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
+    /// Get the transaction and local context. It is used to efficiently load initcode
+    /// into local context without copying them from transaction.
+    fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local);
 }
 
 /// Inner Context error used for Interpreter to set error without returning it frm instruction

@@ -79,6 +79,11 @@ pub struct TxEnv {
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
     pub authorization_list: Vec<SignedAuthorization>,
+
+    /// List of initcodes that is part of Initcode transaction.
+    ///
+    /// [EIP-7873](https://eips.ethereum.org/EIPS/eip-7873)
+    pub initcodes: Vec<Bytes>,
 }
 
 impl Default for TxEnv {
@@ -98,6 +103,7 @@ impl Default for TxEnv {
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
+            initcodes: Vec::new(),
         }
     }
 }
@@ -110,25 +116,26 @@ pub enum DeriveTxTypeError {
     MissingTargetForEip4844,
     /// Missing target for EIP-7702
     MissingTargetForEip7702,
+    /// Missing target for EIP-7873
+    MissingTargetForEip7873,
 }
 
 impl TxEnv {
     /// Derives tx type from transaction fields and sets it to `tx_type`.
     /// Returns error in case some fields were not set correctly.
     pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
-        let mut tx_type = TransactionType::Legacy;
-
         if !self.access_list.0.is_empty() {
-            tx_type = TransactionType::Eip2930;
+            self.tx_type = TransactionType::Eip2930 as u8;
         }
 
         if self.gas_priority_fee.is_some() {
-            tx_type = TransactionType::Eip1559;
+            self.tx_type = TransactionType::Eip1559 as u8;
         }
 
-        if !self.blob_hashes.is_empty() {
+        if !self.blob_hashes.is_empty() || self.max_fee_per_blob_gas > 0 {
             if let TxKind::Call(_) = self.kind {
-                tx_type = TransactionType::Eip4844;
+                self.tx_type = TransactionType::Eip4844 as u8;
+                return Ok(());
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip4844);
             }
@@ -136,13 +143,21 @@ impl TxEnv {
 
         if !self.authorization_list.is_empty() {
             if let TxKind::Call(_) = self.kind {
-                tx_type = TransactionType::Eip7702;
+                self.tx_type = TransactionType::Eip7702 as u8;
+                return Ok(());
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip7702);
             }
         }
 
-        self.tx_type = tx_type as u8;
+        if !self.initcodes.is_empty() {
+            if let TxKind::Call(_) = self.kind {
+                self.tx_type = TransactionType::Eip7873 as u8;
+                return Ok(());
+            } else {
+                return Err(DeriveTxTypeError::MissingTargetForEip7873);
+            }
+        }
         Ok(())
     }
 }
@@ -213,6 +228,10 @@ impl Transaction for TxEnv {
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
         self.gas_priority_fee
+    }
+
+    fn initcodes(&self) -> &[Bytes] {
+        &self.initcodes
     }
 }
 

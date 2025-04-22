@@ -369,11 +369,9 @@ pub fn execute_test_suite(
                         panic!("Invalid transaction type without expected exception");
                     }
                 };
-
                 tx.tx_type = tx_type as u8;
 
                 tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
-
                 tx.data = unit
                     .transaction
                     .data
@@ -391,6 +389,8 @@ pub fn execute_test_suite(
                     .cloned()
                     .flatten()
                     .unwrap_or_default();
+
+                tx.initcodes = unit.transaction.initcodes.clone().unwrap_or_default();
 
                 tx.authorization_list = unit
                     .transaction

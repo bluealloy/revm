@@ -1,6 +1,7 @@
 use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
 use revm::{
-    context_interface::transaction::{AccessList, TransactionType},
+    context::TransactionType,
+    context_interface::transaction::AccessList,
     primitives::{Address, Bytes, B256, U256},
 };
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
+    #[serde(rename = "type")]
+    pub tx_type: Option<u8>,
     pub data: Vec<Bytes>,
     pub gas_limit: Vec<U256>,
     pub gas_price: Option<U256>,
@@ -22,7 +25,7 @@ pub struct TransactionParts {
     pub value: Vec<U256>,
     pub max_fee_per_gas: Option<U256>,
     pub max_priority_fee_per_gas: Option<U256>,
-
+    pub initcodes: Option<Vec<Bytes>>,
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
     pub authorization_list: Option<Vec<TestAuthorization>>,
@@ -40,6 +43,10 @@ impl TransactionParts {
     ///   * It has both blob gas and no destination.
     ///   * It has authorization list and no destination.
     pub fn tx_type(&self, access_list_index: usize) -> Option<TransactionType> {
+        if let Some(tx_type) = self.tx_type {
+            return Some(TransactionType::from(tx_type));
+        }
+
         let mut tx_type = TransactionType::Legacy;
 
         // If it has access list it is EIP-2930 tx
@@ -58,14 +65,21 @@ impl TransactionParts {
         if self.max_fee_per_blob_gas.is_some() {
             // target need to be present for EIP-4844 tx
             self.to?;
-            tx_type = TransactionType::Eip4844;
+            return Some(TransactionType::Eip4844);
         }
 
         // And if it has authorization list it is EIP-7702 tx
         if self.authorization_list.is_some() {
             // Target need to be present for EIP-7702 tx
             self.to?;
-            tx_type = TransactionType::Eip7702;
+            return Some(TransactionType::Eip7702);
+        }
+
+        // And if it has initcodes it is EIP-7873 tx
+        if self.initcodes.is_some() {
+            // Target need to be present for EIP-7873 tx
+            self.to?;
+            return Some(TransactionType::Eip7873);
         }
 
         Some(tx_type)

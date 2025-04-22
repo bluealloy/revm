@@ -114,7 +114,7 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     // Check max stack height for target code section.
     // Safe to subtract as max_stack_height is always more than inputs.
-    if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
+    if interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
         interpreter
             .control
             .set_instruction_result(InstructionResult::StackOverflow);
@@ -169,8 +169,7 @@ pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .expect("Invalid code section index");
 
     // Check max stack height for target code section.
-    // Safe to subtract as max_stack_height is always more than inputs.
-    if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
+    if interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
         interpreter
             .control
             .set_instruction_result(InstructionResult::StackOverflow);
@@ -370,7 +369,7 @@ mod test {
     }
 
     fn dummy_eof() -> Eof {
-        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
         Eof::decode(bytes).unwrap()
     }
 
@@ -488,7 +487,7 @@ mod test {
         interpreter.runtime_flag.is_eof = true;
 
         // push two items so we can overflow the CALLF call.
-        // overflow happens if max_stack_size + stack.len is more than 1024
+        // overflow happens if max_stack_increase + stack.len is more than 1024
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 

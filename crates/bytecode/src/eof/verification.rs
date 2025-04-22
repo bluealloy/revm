@@ -573,9 +573,7 @@ pub fn validate_eof_code(
                 // Mark called code as accessed.
                 tracker.access_code(section_i);
 
-                // We decrement by `types.inputs` as they are considered as send
-                // to the called code and included in types.max_stack_size.
-                if this_instruction.biggest - stack_requirement + target_types.max_stack_size as i32
+                if this_instruction.biggest + target_types.max_stack_increase as i32
                     > STACK_LIMIT as i32
                 {
                     // If stack max items + called code max stack size
@@ -590,10 +588,7 @@ pub fn validate_eof_code(
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                // We decrement types.inputs as they are considered send to the called code.
-                // And included in types.max_stack_size.
-                if this_instruction.biggest - target_types.inputs as i32
-                    + target_types.max_stack_size as i32
+                if this_instruction.biggest + target_types.max_stack_increase as i32
                     > STACK_LIMIT as i32
                 {
                     // stack overflow
@@ -754,12 +749,16 @@ pub fn validate_eof_code(
         return Err(EofValidationError::LastInstructionNotTerminating);
     }
     // TODO : Integrate max so we dont need to iterate again
+    let this_code_info = &types[this_types_index];
     let mut max_stack_requirement = 0;
     for opcode in jumps {
-        max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
+        max_stack_requirement = core::cmp::max(
+            opcode.biggest.saturating_sub(this_code_info.inputs as i32),
+            max_stack_requirement,
+        );
     }
 
-    if max_stack_requirement != types[this_types_index].max_stack_size as i32 {
+    if max_stack_requirement != this_code_info.max_stack_increase as i32 {
         // Stack overflow
         return Err(EofValidationError::MaxStackMismatch);
     }
@@ -776,7 +775,7 @@ mod test {
     fn test1() {
         // result:Result { result: false, exception: Some("EOF_ConflictingStackHeight") }
         let err =
-            validate_raw_eof(hex!("ef0001010004020001000704000000008000016000e200fffc00").into());
+            validate_raw_eof(hex!("ef00010100040200010007ff000000008000016000e200fffc00").into());
         assert!(err.is_err(), "{err:#?}");
     }
 
@@ -784,7 +783,7 @@ mod test {
     fn test2() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof_inner(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into(),None);
+            validate_raw_eof_inner(hex!("ef000101000c020003000400040002ff000000008000020002000100010001e30001005fe500025fe4").into(),None);
         assert!(err.is_ok(), "{err:#?}");
     }
 
@@ -792,7 +791,7 @@ mod test {
     fn test3() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof_inner(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into(),None);
+            validate_raw_eof_inner(hex!("ef000101000c020003000400080003ff000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into(),None);
         assert_eq!(
             err,
             Err(EofError::Validation(
@@ -803,10 +802,9 @@ mod test {
 
     #[test]
     fn test4() {
-        //0xef0001010004020001000e04000000008000045f6000e100025f5f6000e1fffd00
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err = validate_raw_eof(
-            hex!("ef0001010004020001000e04000000008000045f6000e100025f5f6000e1fffd00").into(),
+            hex!("ef0001010004020001000eff000000008000045f6000e100025f5f6000e1fffd00").into(),
         );
         assert_eq!(
             err,
@@ -818,7 +816,7 @@ mod test {
 
     #[test]
     fn test5() {
-        let err = validate_raw_eof(hex!("ef000101000402000100030400000000800000e5ffff").into());
+        let err = validate_raw_eof(hex!("ef00010100040200010003ff00000000800000e5ffff").into());
         assert_eq!(
             err,
             Err(EofError::Validation(
@@ -830,7 +828,7 @@ mod test {
     #[test]
     fn size_limit() {
         let eof = validate_raw_eof_inner(
-            hex!("ef00010100040200010003040001000080000130500000").into(),
+            hex!("ef00010100040200010003ff0001000080000130500000").into(),
             Some(CodeType::Runtime),
         );
         assert!(eof.is_ok());
@@ -839,7 +837,7 @@ mod test {
     #[test]
     fn test() {
         let eof = validate_raw_eof_inner(
-            hex!("ef0001010004020001000504ff0300008000023a60cbee1800").into(),
+            hex!("ef00010100040200010005ffff0300008000023a60cbee1800").into(),
             None,
         );
         assert_eq!(
@@ -851,7 +849,7 @@ mod test {
     #[test]
     fn unreachable_code_section() {
         let eof = validate_raw_eof_inner(
-            hex!("ef000101000c02000300030001000304000000008000000080000000800000e50001fee50002")
+            hex!("ef000101000c020003000300010003ff000000008000000080000000800000e50001fee50002")
                 .into(),
             None,
         );
@@ -866,7 +864,7 @@ mod test {
     #[test]
     fn non_returning_sections() {
         let eof = validate_raw_eof_inner(
-            hex!("ef000101000c02000300040001000304000000008000000080000000000000e300020000e50001")
+            hex!("ef000101000c020003000400010003ff000000008000000080000000000000e300020000e50001")
                 .into(),
             Some(CodeType::Runtime),
         );
@@ -881,7 +879,7 @@ mod test {
     #[test]
     fn incompatible_container_kind() {
         let eof = validate_raw_eof_inner(
-            hex!("ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000")
+            hex!("ef0001010004020001000603000100000014ff0000000080000260006000ee00ef00010100040200010001040000000080000000")
                 .into(),
             Some(CodeType::Runtime),
         );

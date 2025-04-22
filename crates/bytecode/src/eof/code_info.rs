@@ -1,3 +1,5 @@
+use primitives::STACK_LIMIT;
+
 use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,
@@ -19,19 +21,19 @@ pub struct CodeInfo {
     ///
     /// Number of stack elements the code section returns or 0x80 for non-returning functions
     pub outputs: u8,
-    /// `max_stack_height` - 2 bytes - `0x0000-0x03FF`
+    /// `max_stack_increase` - 2 bytes - `0x0000-0x03FF`
     ///
-    /// Maximum number of elements ever placed onto the stack by the code section
-    pub max_stack_size: u16,
+    /// Maximum number of elements that got added to the stack by this code section.
+    pub max_stack_increase: u16,
 }
 
 impl CodeInfo {
-    /// Returns new `CodeInfo` with the given inputs, outputs, and max_stack_size.
-    pub fn new(inputs: u8, outputs: u8, max_stack_size: u16) -> Self {
+    /// Returns new `CodeInfo` with the given inputs, outputs, and max_stack_increase.
+    pub fn new(inputs: u8, outputs: u8, max_stack_increase: u16) -> Self {
         Self {
             inputs,
             outputs,
-            max_stack_size,
+            max_stack_increase,
         }
     }
 
@@ -51,7 +53,7 @@ impl CodeInfo {
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         buffer.push(self.inputs);
         buffer.push(self.outputs);
-        buffer.extend_from_slice(&self.max_stack_size.to_be_bytes());
+        buffer.extend_from_slice(&self.max_stack_increase.to_be_bytes());
     }
 
     /// Decodes the section from the input.
@@ -59,11 +61,11 @@ impl CodeInfo {
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;
         let (input, outputs) = consume_u8(input)?;
-        let (input, max_stack_size) = consume_u16(input)?;
+        let (input, max_stack_increase) = consume_u16(input)?;
         let section = Self {
             inputs,
             outputs,
-            max_stack_size,
+            max_stack_increase,
         };
         section.validate()?;
         Ok((section, input))
@@ -71,12 +73,29 @@ impl CodeInfo {
 
     /// Validates the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
-        if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
-            return Err(EofDecodeError::InvalidCodeInfo);
+        if self.inputs > 0x7f {
+            return Err(EofDecodeError::InvalidCodeInfoInputValue { value: self.inputs });
         }
-        if self.inputs as u16 > self.max_stack_size {
-            return Err(EofDecodeError::InvalidCodeInfo);
+
+        if self.outputs > 0x80 {
+            return Err(EofDecodeError::InvalidCodeInfoOutputValue {
+                value: self.outputs,
+            });
         }
+
+        if self.max_stack_increase > 0x03FF {
+            return Err(EofDecodeError::InvalidCodeInfoMaxIncrementValue {
+                value: self.max_stack_increase,
+            });
+        }
+
+        if self.inputs as usize + self.max_stack_increase as usize > STACK_LIMIT {
+            return Err(EofDecodeError::InvalidCodeInfoStackOverflow {
+                inputs: self.inputs,
+                max_stack_increment: self.max_stack_increase,
+            });
+        }
+
         Ok(())
     }
 }

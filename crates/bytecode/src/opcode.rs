@@ -646,7 +646,7 @@ opcodes! {
     // 0xEA
     // 0xEB
     0xEC => EOFCREATE      => stack_io(4, 1), immediate_size(1);
-    // 0xED
+    0xED => TXCREATE       => stack_io(5, 1);
     0xEE => RETURNCONTRACT => stack_io(2, 0), immediate_size(1), terminating;
     // 0xEF
     0xF0 => CREATE       => stack_io(3, 1), not_eof;
@@ -764,8 +764,8 @@ mod tests {
                 eof_opcode_num += 1;
             }
         }
-        assert_eq!(opcode_num, 168);
-        assert_eq!(eof_opcode_num, 152);
+        assert_eq!(opcode_num, 169);
+        assert_eq!(eof_opcode_num, 153);
     }
 
     #[test]

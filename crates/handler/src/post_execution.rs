@@ -49,6 +49,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
     Ok(())
 }
 
+#[inline]
 pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
