@@ -40,7 +40,7 @@ As previously noted, there are several groups of projects that utilize this tech
 * **Major block builders**.
 * **Clients**: [Reth](https://github.com/paradigmxyz/reth), [Helios](https://github.com/a16z/helios), [Trin](https://github.com/ethereum/trin),..
 * **Tooling**: [Foundry](https://github.com/foundry-rs/foundry/), [Hardhat](https://github.com/NomicFoundation/hardhat),..
-* **L2s**: [Optimism](https://github.com/bluealloy/revm/tree/main/crates/optimism), [Coinbase](https://www.base.org/), [Scroll](https://github.com/scroll-tech/revm),..
+* **L2s**: [Optimism](https://github.com/bluealloy/revm/tree/main/crates/op-revm), [Coinbase](https://www.base.org/), [Scroll](https://github.com/scroll-tech/revm),..
 * **zkVM**: [Risc0](https://github.com/risc0/risc0-ethereum), [Succinct](https://github.com/succinctlabs/rsp),..
 
 The full list of projects that use Revm is available in the awesome-revm section of the book.

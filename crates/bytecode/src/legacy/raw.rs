@@ -1,7 +1,6 @@
 use super::{analyze_legacy, LegacyAnalyzedBytecode};
 use core::ops::Deref;
 use primitives::Bytes;
-use std::vec::Vec;
 
 /// Used only as intermediate representation for legacy bytecode.
 /// Please check [`LegacyAnalyzedBytecode`] for the main structure that is used in Revm.
@@ -14,12 +13,10 @@ impl LegacyRawBytecode {
     ///
     /// It extends the bytecode with 33 zero bytes and analyzes it to find the jumpdests.
     pub fn into_analyzed(self) -> LegacyAnalyzedBytecode {
-        let len = self.0.len();
-        let mut padded_bytecode = Vec::with_capacity(len + 33);
-        padded_bytecode.extend_from_slice(&self.0);
-        padded_bytecode.resize(len + 33, 0);
-        let jump_table = analyze_legacy(&padded_bytecode);
-        LegacyAnalyzedBytecode::new(padded_bytecode.into(), len, jump_table)
+        let bytecode = self.0;
+        let len = bytecode.len();
+        let (jump_table, padded_bytecode) = analyze_legacy(bytecode);
+        LegacyAnalyzedBytecode::new(padded_bytecode, len, jump_table)
     }
 }
 

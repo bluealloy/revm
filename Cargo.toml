@@ -104,7 +104,6 @@ auto_impl = "1.2.0"
 bitflags = { version = "2.6.0", default-features = false }
 cfg-if = { version = "1.0", default-features = false }
 derive-where = { version = "1.2.7", default-features = false }
-enumn = "0.1"
 once_cell = { version = "1.19", default-features = false }
 rand = "0.8"
 tokio = "1.44"

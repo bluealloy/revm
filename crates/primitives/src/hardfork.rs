@@ -3,6 +3,7 @@
 #![allow(missing_docs)]
 
 use core::str::FromStr;
+pub use num_enum::TryFromPrimitive;
 pub use std::string::{String, ToString};
 pub use SpecId::*;
 
@@ -10,7 +11,7 @@ pub use SpecId::*;
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs).
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, TryFromPrimitive)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     /// Frontier hard fork
@@ -80,7 +81,7 @@ impl SpecId {
     /// Returns the [`SpecId`] for the given [`u8`].
     #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
-        Self::n(spec_id)
+        Self::try_from(spec_id).ok()
     }
 
     /// Returns `true` if the given specification ID is enabled in this spec.
