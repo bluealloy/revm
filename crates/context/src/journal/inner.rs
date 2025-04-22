@@ -1,4 +1,5 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
+use super::{JournalEntryTr, JournalOutput};
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
@@ -12,8 +13,7 @@ use primitives::{
     Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-
-use super::{JournalEntryTr, JournalOutput};
+use std::vec::Vec;
 
 /// Inner journal state that contains journal and state changes.
 ///
