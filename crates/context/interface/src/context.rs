@@ -51,7 +51,7 @@ pub trait ContextTr {
     fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
     /// Get the transaction and local context. It is used to efficiently load initcode
     /// into local context without copying them from transaction.
-    fn tx_local(&mut self) -> (&mut Self::Tx, &mut Self::Local);
+    fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local);
 }
 
 /// Inner Context error used for Interpreter to set error without returning it frm instruction

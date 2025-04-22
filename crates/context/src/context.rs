@@ -97,8 +97,8 @@ impl<
         (&mut self.tx, &mut self.journaled_state)
     }
 
-    fn tx_local(&mut self) -> (&mut Self::Tx, &mut Self::Local) {
-        (&mut self.tx, &mut self.local)
+    fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local) {
+        (&self.tx, &mut self.local)
     }
 }
 
