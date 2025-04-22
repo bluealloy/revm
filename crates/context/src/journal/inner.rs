@@ -12,7 +12,6 @@ use primitives::{
     Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-use std::{vec, vec::Vec};
 
 use super::{JournalEntryTr, JournalOutput};
 
@@ -33,7 +32,7 @@ pub struct JournalInner<ENTRY> {
     /// The current call stack depth
     pub depth: usize,
     /// The journal of state changes, one for each call
-    pub journal: Vec<Vec<ENTRY>>,
+    pub journal: Vec<ENTRY>,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -74,7 +73,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
-            journal: vec![vec![]],
+            journal: Vec::with_capacity(4 * 1024),
             depth: 0,
             spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
@@ -110,7 +109,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let logs = mem::take(logs);
         transient_storage.clear();
         journal.clear();
-        journal.push(vec![]);
         *depth = 0;
 
         JournalOutput { state, logs }
@@ -134,7 +132,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn touch(&mut self, address: Address) {
         if let Some(account) = self.state.get_mut(&address) {
-            Self::touch_account(self.journal.last_mut().unwrap(), address, account);
+            Self::touch_account(&mut self.journal, address, account);
         }
     }
 
@@ -167,12 +165,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         let account = self.state.get_mut(&address).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
+        Self::touch_account(&mut self.journal, address, account);
 
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(ENTRY::code_changed(address));
+        self.journal.push(ENTRY::code_changed(address));
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
@@ -199,11 +194,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if account.info.nonce == u64::MAX {
             return None;
         }
-        Self::touch_account(self.journal.last_mut().unwrap(), address, account);
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(ENTRY::nonce_changed(address));
+        Self::touch_account(&mut self.journal, address, account);
+        self.journal.push(ENTRY::nonce_changed(address));
 
         account.info.nonce += 1;
 
@@ -222,7 +214,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if balance.is_zero() {
             self.load_account(db, to)?;
             let to_account = self.state.get_mut(&to).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
+            Self::touch_account(&mut self.journal, to, to_account);
             return Ok(None);
         }
         // load accounts
@@ -231,7 +223,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // sub balance from
         let from_account = self.state.get_mut(&from).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
+        Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
 
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
@@ -241,7 +233,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // add balance to
         let to_account = &mut self.state.get_mut(&to).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
+        Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
             return Ok(Some(TransferError::OverflowPayment));
@@ -250,8 +242,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
-            .last_mut()
-            .unwrap()
             .push(ENTRY::balance_transfer(from, to, balance));
 
         Ok(None)
@@ -293,7 +283,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Newly created account is present, as we just loaded it.
         let target_acc = self.state.get_mut(&target_address).unwrap();
-        let last_journal = self.journal.last_mut().unwrap();
+        let last_journal = &mut self.journal;
 
         // New account can be created if:
         // Bytecode is not empty.
@@ -344,7 +334,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal_i: self.journal.len(),
         };
         self.depth += 1;
-        self.journal.push(Default::default());
         checkpoint
     }
 
@@ -361,20 +350,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
-        // iterate over last N journals sets and revert our global state
-        let len = self.journal.len();
-        self.journal
-            .iter_mut()
-            .rev()
-            .take(len - checkpoint.journal_i)
-            .for_each(|cs| {
-                for entry in mem::take(cs).into_iter().rev() {
-                    entry.revert(state, transient_storage, is_spurious_dragon_enabled);
-                }
-            });
-
         self.logs.truncate(checkpoint.log_i);
-        self.journal.truncate(checkpoint.journal_i);
+
+        // iterate over last N journals sets and revert our global state
+        self.journal
+            .drain(checkpoint.journal_i..)
+            .rev()
+            .for_each(|entry| {
+                entry.revert(state, transient_storage, is_spurious_dragon_enabled);
+            });
     }
 
     /// Performs selfdestruct action.
@@ -406,7 +390,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), target, target_account);
+            Self::touch_account(&mut self.journal, target, target_account);
             target_account.info.balance += acc_balance;
         }
 
@@ -437,7 +421,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         };
 
         if let Some(entry) = journal_entry {
-            self.journal.last_mut().unwrap().push(entry);
+            self.journal.push(entry);
         };
 
         Ok(StateLoad {
@@ -573,10 +557,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         };
         // journal loading of cold account.
         if load.is_cold {
-            self.journal
-                .last_mut()
-                .unwrap()
-                .push(ENTRY::account_warmed(address));
+            self.journal.push(ENTRY::account_warmed(address));
         }
         if load_code {
             let info = &mut load.data.info;
@@ -631,10 +612,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         if is_cold {
             // add it to journal as cold loaded.
-            self.journal
-                .last_mut()
-                .unwrap()
-                .push(ENTRY::storage_warmed(address, key));
+            self.journal.push(ENTRY::storage_warmed(address, key));
         }
 
         Ok(StateLoad::new(value, is_cold))
@@ -673,8 +651,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         self.journal
-            .last_mut()
-            .unwrap()
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
@@ -731,8 +707,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(had_value) = had_value {
             // insert in journal only if value was changed.
             self.journal
-                .last_mut()
-                .unwrap()
                 .push(ENTRY::transient_storage_changed(address, key, had_value));
         }
     }

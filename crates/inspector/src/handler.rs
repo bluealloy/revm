@@ -299,7 +299,7 @@ where
     // handle selfdestruct
     if let InterpreterAction::Return { result } = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            match context.journal().last_journal().last() {
+            match context.journal().journal().last() {
                 Some(JournalEntry::AccountDestroyed {
                     address,
                     target,

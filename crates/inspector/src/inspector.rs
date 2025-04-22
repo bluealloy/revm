@@ -149,7 +149,7 @@ pub trait JournalExt {
 
     /// Get the journal entries that are created from last checkpoint.
     /// new checkpoint is created when sub call is made.
-    fn last_journal(&self) -> &[JournalEntry];
+    fn journal(&self) -> &[JournalEntry];
 
     /// Return the current Journaled state.
     fn evm_state(&self) -> &EvmState;
@@ -165,8 +165,8 @@ impl<DB: Database> JournalExt for Journal<DB> {
     }
 
     #[inline]
-    fn last_journal(&self) -> &[JournalEntry] {
-        self.journal.last().expect("Journal is never empty")
+    fn journal(&self) -> &[JournalEntry] {
+        &self.journal
     }
 
     #[inline]

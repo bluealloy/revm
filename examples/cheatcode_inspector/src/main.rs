@@ -232,8 +232,8 @@ impl JournalExt for Backend {
         self.journaled_state.logs()
     }
 
-    fn last_journal(&self) -> &[JournalEntry] {
-        self.journaled_state.last_journal()
+    fn journal(&self) -> &[JournalEntry] {
+        self.journaled_state.journal()
     }
 
     fn evm_state(&self) -> &EvmState {
