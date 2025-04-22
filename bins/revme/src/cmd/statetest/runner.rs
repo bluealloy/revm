@@ -411,65 +411,42 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = Context::mainnet()
+
+                let evm_context = Context::mainnet()
                     .with_block(&block)
                     .with_tx(&tx)
                     .with_cfg(&cfg)
-                    .with_db(&mut state)
-                    .build_mainnet();
+                    .with_db(&mut state);
 
                 // Do the deed
-                let (e, exec_result) = if trace {
-                    let mut evm = Context::mainnet()
-                        .with_block(&block)
-                        .with_tx(&tx)
-                        .with_cfg(&cfg)
-                        .with_db(&mut state)
-                        .build_mainnet_with_inspector(
-                            TracerEip3155::buffered(stderr()).without_summary(),
-                        );
-
-                    let timer = Instant::now();
+                let timer = Instant::now();
+                let (db, exec_result) = if trace {
+                    let mut evm = evm_context.build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
+                    );
                     let res = evm.inspect_replay_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    let spec = cfg.spec();
-                    let db = &mut evm.ctx.journaled_state.database;
-                    // Dump state and traces if test failed
-                    let output = check_evm_execution(
-                        &test,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        db,
-                        spec,
-                        print_json_outcome,
-                    );
-                    let Err(e) = output else {
-                        continue;
-                    };
-                    (e, res)
-                } else {
-                    let timer = Instant::now();
-                    let res = evm.replay_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    let spec = cfg.spec();
                     let db = evm.ctx.journaled_state.database;
-                    // Dump state and traces if test failed
-                    let output = check_evm_execution(
-                        &test,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        db,
-                        spec,
-                        print_json_outcome,
-                    );
-                    let Err(e) = output else {
-                        continue;
-                    };
-                    (e, res)
+                    (db, res)
+                } else {
+                    let mut evm = evm_context.build_mainnet();
+                    let res = evm.replay_commit();
+                    let db = evm.ctx.journaled_state.database;
+                    (db, res)
+                };
+                *elapsed.lock().unwrap() += timer.elapsed();
+                let spec = cfg.spec();
+                // Dump state and traces if test failed
+                let output = check_evm_execution(
+                    &test,
+                    unit.out.as_ref(),
+                    &name,
+                    &exec_result,
+                    db,
+                    spec,
+                    print_json_outcome,
+                );
+                let Err(e) = output else {
+                    continue;
                 };
 
                 // Print only once or if we are already in trace mode, just return error
