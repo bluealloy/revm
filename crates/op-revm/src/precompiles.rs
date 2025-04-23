@@ -44,6 +44,12 @@ impl OpPrecompiles {
             spec,
         }
     }
+
+    // Precompiles getter.
+    #[inline]
+    pub fn precompiles(&self) -> &'static Precompiles {
+        self.inner.precompiles
+    }
 }
 
 /// Returns precompiles for Fjord spec.
