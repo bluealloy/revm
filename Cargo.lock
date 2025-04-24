@@ -3824,10 +3824,8 @@ dependencies = [
  "bincode",
  "revm-bytecode",
  "revm-context-interface",
- "revm-database-interface",
  "revm-primitives",
  "serde",
- "walkdir",
 ]
 
 [[package]]
