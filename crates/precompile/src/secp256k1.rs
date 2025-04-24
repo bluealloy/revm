@@ -97,7 +97,7 @@ extern "C" {
     fn _ecrecover(
         digest32_offset: *const u8,
         sig64_offset: *const u8,
-        output65_offset: *mut u8,
+        output32_offset: *mut u8,
         rec_id: u32,
     );
 }
@@ -114,8 +114,8 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
-    let mut public_key: [u8; 65] = [0u8; 65];
-    let mut hash: B256 = B256::ZERO;
+
+    let mut public_key: [u8; 32] = [0u8; 32];
     unsafe {
         _ecrecover(
             input[0..32].as_ptr(),
@@ -123,8 +123,12 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             public_key.as_mut_ptr(),
             (input[63] - 27) as u32,
         );
-        _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
     }
-    hash[..12].fill(0);
-    Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::from(hash)))
+    if public_key == [0u8; 32] {
+        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
+    }
+    Ok(PrecompileOutput::new(
+        ECRECOVER_BASE,
+        Bytes::from(public_key),
+    ))
 }
