@@ -24,7 +24,6 @@ use bytecode::Bytecode;
 use loop_control::LoopControl as LoopControlImpl;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
 use return_data::ReturnDataImpl;
-use std::convert::From;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
