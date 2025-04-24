@@ -66,7 +66,7 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, Journal<EmptyDB>,
 mod test {
     use crate::ExecuteEvm;
     use crate::{MainBuilder, MainContext};
-    use alloy_signer::SignerSync;
+    use alloy_signer::{Either, SignerSync};
     use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
         opcode::{PUSH1, SSTORE},
@@ -96,7 +96,7 @@ mod test {
             .modify_tx_chained(|tx| {
                 tx.tx_type = TransactionType::Eip7702.into();
                 tx.gas_limit = 100_000;
-                tx.authorization_list = vec![auth];
+                tx.authorization_list = vec![Either::Left(auth)];
                 tx.caller = EEADDRESS;
                 tx.kind = TxKind::Call(signer.address());
             });

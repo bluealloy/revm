@@ -1,7 +1,10 @@
 //! This module contains [`TxEnv`] struct and implements [`Transaction`] trait for it.
 use crate::TransactionType;
-use context_interface::transaction::{
-    AccessList, AccessListItem, SignedAuthorization, Transaction,
+use context_interface::{
+    either::Either,
+    transaction::{
+        AccessList, AccessListItem, RecoveredAuthorization, SignedAuthorization, Transaction,
+    },
 };
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
@@ -78,7 +81,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction via [EIP-7702].
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
-    pub authorization_list: Vec<SignedAuthorization>,
+    pub authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
 
     /// List of initcodes that is part of Initcode transaction.
     ///
@@ -160,11 +163,21 @@ impl TxEnv {
         }
         Ok(())
     }
+
+    /// Insert a list of signed authorizations into the authorization list.
+    pub fn set_signed_authorization(&mut self, auth: Vec<SignedAuthorization>) {
+        self.authorization_list = auth.into_iter().map(Either::Left).collect();
+    }
+
+    /// Insert a list of recovered authorizations into the authorization list.
+    pub fn set_recovered_authorization(&mut self, auth: Vec<RecoveredAuthorization>) {
+        self.authorization_list = auth.into_iter().map(Either::Right).collect();
+    }
 }
 
 impl Transaction for TxEnv {
-    type AccessListItem = AccessListItem;
-    type Authorization = SignedAuthorization;
+    type AccessListItem<'a> = &'a AccessListItem;
+    type Authorization<'a> = &'a Either<SignedAuthorization, RecoveredAuthorization>;
 
     fn tx_type(&self) -> u8 {
         self.tx_type
@@ -198,7 +211,7 @@ impl Transaction for TxEnv {
         self.chain_id
     }
 
-    fn access_list(&self) -> Option<impl Iterator<Item = &Self::AccessListItem>> {
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
         Some(self.access_list.0.iter())
     }
 
@@ -214,7 +227,7 @@ impl Transaction for TxEnv {
         self.authorization_list.len()
     }
 
-    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization> {
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
         self.authorization_list.iter()
     }
 
