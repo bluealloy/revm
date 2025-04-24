@@ -13,7 +13,7 @@ pub mod in_memory_db;
 pub mod states;
 
 #[cfg(feature = "alloydb")]
-pub use alloydb::{AlloyDB, BlockId};
+pub use alloydb::{AlloyDB, BlockId, DBTransportError};
 
 pub use in_memory_db::*;
 pub use states::{
