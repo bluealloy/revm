@@ -107,6 +107,7 @@ derive-where = { version = "1.2.7", default-features = false }
 once_cell = { version = "1.19", default-features = false }
 rand = "0.8"
 tokio = "1.44"
+either = { version = "1.15.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0.89"

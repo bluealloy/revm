@@ -27,8 +27,12 @@ pub trait TransactionError: Debug + core::error::Error {}
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
-    type AccessListItem: AccessListItemTr;
-    type Authorization: AuthorizationTr;
+    type AccessListItem<'a>: AccessListItemTr
+    where
+        Self: 'a;
+    type Authorization<'a>: AuthorizationTr
+    where
+        Self: 'a;
 
     /// Returns the transaction type.
     ///
@@ -79,7 +83,7 @@ pub trait Transaction {
     /// Access list for the transaction.
     ///
     /// Introduced in EIP-2930.
-    fn access_list(&self) -> Option<impl Iterator<Item = &Self::AccessListItem>>;
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>>;
 
     /// Returns vector of fixed size hash(32 bytes)
     ///
@@ -123,7 +127,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> impl Iterator<Item = &Self::Authorization>;
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>>;
 
     /// List of initcodes found in Initcode transaction. Initcodes can only be accessed
     /// by TXCREATE opcode to create a new EOF contract.

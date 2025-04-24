@@ -31,11 +31,12 @@ alloy-eip2930.workspace = true
 
 # misc
 auto_impl.workspace = true
+either.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
+	"derive",
+	"rc",
 ], optional = true }
 
 [features]
@@ -46,7 +47,8 @@ std = [
 	"alloy-eip2930/std",
 	"database-interface/std",
 	"primitives/std",
-	"state/std"
+	"state/std",
+	"either/std",
 ]
 serde = [
 	"dep:serde",
@@ -54,6 +56,7 @@ serde = [
 	"state/serde",
 	"alloy-eip7702/serde",
 	"alloy-eip2930/serde",
-	"database-interface/serde"
+	"database-interface/serde",
+	"either/serde",
 ]
 serde-json = ["serde"]

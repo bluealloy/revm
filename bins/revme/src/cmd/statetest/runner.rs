@@ -2,6 +2,7 @@ use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     utils::recover_address,
 };
+use context::either::Either;
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
@@ -396,7 +397,12 @@ pub fn execute_test_suite(
                     .transaction
                     .authorization_list
                     .clone()
-                    .map(|auth_list| auth_list.into_iter().map(Into::into).collect::<Vec<_>>())
+                    .map(|auth_list| {
+                        auth_list
+                            .into_iter()
+                            .map(|i| Either::Left(i.into()))
+                            .collect::<Vec<_>>()
+                    })
                     .unwrap_or_default();
 
                 let to = match unit.transaction.to {
