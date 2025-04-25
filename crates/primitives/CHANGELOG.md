@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v18.0.0...revm-primitives-v19.0.0) - 2025-04-25
+
+### Added
+
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+
+### Other
+
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- replaced SpecId enumn with num_enum ([#2420](https://github.com/bluealloy/revm/pull/2420))
+- bump stable tests, introduce lints ([#2403](https://github.com/bluealloy/revm/pull/2403))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v17.0.0...revm-primitives-v18.0.0) - 2025-04-09
 
 ### Other
