@@ -43,8 +43,6 @@ mod secp256k1 {
 #[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    // Silence the unused crate dependency warning.
-    use k256 as _;
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
@@ -65,7 +63,7 @@ mod secp256k1 {
     }
 }
 
-// #[cfg(feature = "std")]
+#[cfg(feature = "std")]
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     use revm_primitives::alloy_primitives::B512;
 
@@ -92,69 +90,48 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
 
-// #[cfg(not(feature = "std"))]
-// #[link(wasm_import_module = "fluentbase_v1preview")]
-// extern "C" {
-//     fn _keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
-//     fn _ecrecover(
-//         digest32_offset: *const u8,
-//         sig64_offset: *const u8,
-//         output65_offset: *mut u8,
-//         rec_id: u32,
-//     );
-// }
-//
-// #[cfg(not(feature = "std"))]
-// pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-//     use revm_primitives::{PrecompileError, PrecompileErrors};
-//     const ECRECOVER_BASE: u64 = 3_000;
-//     if ECRECOVER_BASE > gas_limit {
-//         return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
-//     }
-//     let input = right_pad::<128>(input);
-//     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
-//     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
-//         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
-//     }
-//     let mut public_key: [u8; 65] = [0u8; 65];
-//     let mut hash: B256 = B256::ZERO;
-//     unsafe {
-//         _ecrecover(
-//             input[0..32].as_ptr(),
-//             input[64..128].as_ptr(),
-//             public_key.as_mut_ptr(),
-//             (input[63] - 27) as u32,
-//         );
-//         _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
-//     }
-//     hash[..12].fill(0);
-//     Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::from(hash)))
-// }
+#[cfg(not(feature = "std"))]
+#[link(wasm_import_module = "fluentbase_v1preview")]
+extern "C" {
+    fn _keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
+    fn _secp256k1_recover(
+        digest32_offset: *const u8,
+        sig64_offset: *const u8,
+        output65_offset: *mut u8,
+        rec_id: u32,
+    ) -> i32;
+}
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         secp256k1::{ec_recover_run, ec_recover_run_std},
-//         Bytes,
-//     };
-//     use revm_primitives::{hex, keccak256};
-//
-//     #[test]
-//     fn test_ecrecover() {
-//         let digest32 = keccak256("IT People test of ecrecover.");
-//         let sig64 =
-// hex!("c46cdc50a66f4d07c6e9a127a7277e882fb21bcfb5b068f2b58c7f7283993b790bdb5f0ac79d1a7efdc255f399a045038c1b433e9d06c1b1abd58a5fcaab33f1"
-// );
-//
-//         let mut input: Vec<u8> = vec![];
-//         input.extend(&digest32);
-//         (0..31).for_each(|_| input.push(0));
-//         input.push(0x1c);
-//         input.extend(&sig64);
-//         let input = Bytes::from(input);
-//         let (gas, result) = ec_recover_run_std(&input, 1_000_000).unwrap();
-//         println!("gas used: {}", gas);
-//         let (_, result2) = ec_recover_run(&input, 1_000_000).unwrap();
-//         assert_eq!(result, result2)
-//     }
-// }
+#[cfg(not(feature = "std"))]
+pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    use revm_primitives::{PrecompileError, PrecompileErrors};
+    const ECRECOVER_BASE: u64 = 3_000;
+    if ECRECOVER_BASE > gas_limit {
+        return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
+    }
+    let input = right_pad::<128>(input);
+    // `v` must be a 32-byte big-endian integer equal to 27 or 28.
+    if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
+        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
+    }
+
+    let mut public_key: [u8; 65] = [0u8; 65];
+    let ok = unsafe {
+        _secp256k1_recover(
+            input[0..32].as_ptr(),
+            input[64..128].as_ptr(),
+            public_key.as_mut_ptr(),
+            (input[63] - 27) as u32,
+        )
+    };
+    if ok == 0 {
+        let mut hash = [0u8; 32];
+        unsafe {
+            _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr());
+        }
+        hash[..12].fill(0);
+        Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::from(hash)))
+    } else {
+        Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()))
+    }
+}
