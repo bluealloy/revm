@@ -19,7 +19,7 @@ pub struct LocalContext {
 impl Default for LocalContext {
     fn default() -> Self {
         Self {
-            initcode_mapping: HashMap::new(),
+            initcode_mapping: HashMap::default(),
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
         }
     }
