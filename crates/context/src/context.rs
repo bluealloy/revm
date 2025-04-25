@@ -85,6 +85,10 @@ impl<
         &mut self.chain
     }
 
+    fn chain_ref(&self) -> &Self::Chain {
+        &self.chain
+    }
+
     fn local(&mut self) -> &mut Self::Local {
         &mut self.local
     }

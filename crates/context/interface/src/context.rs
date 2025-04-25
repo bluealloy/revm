@@ -42,6 +42,8 @@ pub trait ContextTr {
     fn db_ref(&self) -> &Self::Db;
     /// Get the chain
     fn chain(&mut self) -> &mut Self::Chain;
+    /// Get the chain reference
+    fn chain_ref(&self) -> &Self::Chain;
     /// Get the local context
     fn local(&mut self) -> &mut Self::Local;
     /// Get the error
