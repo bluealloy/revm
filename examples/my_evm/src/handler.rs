@@ -5,8 +5,7 @@ use revm::{
     },
     context_interface::{ContextTr, JournalTr},
     handler::{
-        instructions::InstructionProvider, EthFrame, EvmTr, FrameResult, Handler,
-        PrecompileProvider,
+        instructions::InstructionProvider, EthFrame, EvmTr, Frame, FrameResult, Handler, PrecompileProvider
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
