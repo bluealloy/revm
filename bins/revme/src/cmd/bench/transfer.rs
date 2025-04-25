@@ -13,12 +13,15 @@ pub fn run(criterion: &mut Criterion) {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = BENCH_CALLER;
             tx.kind = TxKind::Call(BENCH_TARGET);
-            tx.value = U256::from(10);
+            tx.value = U256::from(1);
+            tx.gas_price = 0;
+            tx.gas_priority_fee = None;
         })
+        .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
         .build_mainnet();
     criterion.bench_function("transfer", |b| {
         b.iter(|| {
-            let _ = evm.replay();
+            let _ = evm.replay().unwrap();
         })
     });
 }

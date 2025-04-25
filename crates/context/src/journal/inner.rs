@@ -33,6 +33,11 @@ pub struct JournalInner<ENTRY> {
     pub depth: usize,
     /// The journal of state changes, one for each call
     pub journal: Vec<ENTRY>,
+    /// Previous journal entries. With multi transaction execution we contain both previous journal
+    /// entries and current journal entries (Current Journal is inside [`Self::journal`]).
+    pub journal_history: Vec<Vec<ENTRY>>,
+    /// History logs.
+    pub history_logs: Vec<Vec<Log>>,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -74,11 +79,45 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::new(),
+            journal_history: Vec::new(),
+            history_logs: Vec::new(),
             depth: 0,
             spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
         }
+    }
+
+    /// Prepare for next transaction.
+    ///
+    /// This function is used to prepare for next transaction. It will save the current journal
+    /// and clear the journal for the next transaction.
+    pub fn prep_for_next_tx(&mut self) {
+        // Clears all field from JournalInner. Doing it this way to avoid
+        // missing any field.
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            journal_history,
+            history_logs,
+            spec,
+            warm_preloaded_addresses,
+            precompiles,
+        } = self;
+        // Spec precompiles and state are not changed. It is always set again execution.
+        let _ = spec;
+        let _ = precompiles;
+        let _ = state;
+        transient_storage.clear();
+
+        journal_history.push(mem::take(journal));
+        history_logs.push(mem::take(logs));
+        warm_preloaded_addresses.clear();
+
+        *depth = 0;
     }
 
     /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state.
@@ -88,6 +127,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Precompile addresses
     #[inline]
     pub fn clear_and_take_output(&mut self) -> JournalOutput {
+        // self.depth = 0;
+        // // TODO for tests
+        // return JournalOutput {
+        //     state: HashMap::default(),
+        //     logs: Vec::new(),
+        // };
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -96,11 +141,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
+            journal_history,
             spec,
+            history_logs,
             warm_preloaded_addresses,
             precompiles,
         } = self;
-        // Spec is not changed. It is always set again execution.
+        // Spec is not changed. And it is always set again in execution.
         let _ = spec;
         // Load precompiles into warm_preloaded_addresses.
         warm_preloaded_addresses.clone_from(precompiles);
@@ -108,7 +155,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let state = mem::take(state);
         let logs = mem::take(logs);
         transient_storage.clear();
+
+        // todo history logs.
         journal.clear();
+        journal_history.clear();
         *depth = 0;
 
         JournalOutput { state, logs }
@@ -448,14 +498,21 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             Entry::Vacant(vac) => vac.insert(
                 db.basic(address)?
                     .map(|i| i.into())
-                    .unwrap_or(Account::new_not_existing()),
+                    .unwrap_or(Account::new_not_existing(self.journal_history.len())),
             ),
         };
         // preload storages.
         for storage_key in storage_keys.into_iter() {
-            if let Entry::Vacant(entry) = account.storage.entry(storage_key) {
-                let storage = db.storage(address, storage_key)?;
-                entry.insert(EvmStorageSlot::new(storage));
+            match account.storage.entry(storage_key) {
+                Entry::Occupied(entry) => {
+                    let slot = entry.into_mut();
+                    slot.set_transaction_id(self.journal_history.len());
+                    slot.mark_warm_with_transaction_id(self.journal_history.len());
+                }
+                Entry::Vacant(entry) => {
+                    let storage = db.storage(address, storage_key)?;
+                    entry.insert(EvmStorageSlot::new(storage, self.journal_history.len()));
+                }
             }
         }
         Ok(account)
@@ -543,7 +600,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
-                    Account::new_not_existing()
+                    Account::new_not_existing(self.journal_history.len())
                 };
 
                 // Precompiles among some other account are warm loaded so we need to take that into account
@@ -593,7 +650,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let (value, is_cold) = match account.storage.entry(key) {
             Entry::Occupied(occ) => {
                 let slot = occ.into_mut();
-                let is_cold = slot.mark_warm();
+                let is_cold = slot.mark_warm_with_transaction_id(self.journal_history.len());
                 (slot.present_value, is_cold)
             }
             Entry::Vacant(vac) => {
@@ -604,7 +661,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     db.storage(address, key)?
                 };
 
-                vac.insert(EvmStorageSlot::new(value));
+                vac.insert(EvmStorageSlot::new(value, self.journal_history.len()));
 
                 (value, true)
             }

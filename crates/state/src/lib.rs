@@ -22,6 +22,8 @@ use primitives::{HashMap, U256};
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
+    /// Transaction id, used to track when account was toched/loaded into journal.
+    pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
@@ -30,10 +32,11 @@ pub struct Account {
 
 impl Account {
     /// Creates new account and mark it as non existing.
-    pub fn new_not_existing() -> Self {
+    pub fn new_not_existing(transaction_id: usize) -> Self {
         Self {
             info: AccountInfo::default(),
             storage: HashMap::default(),
+            transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
         }
     }
@@ -190,6 +193,7 @@ impl From<AccountInfo> for Account {
         Self {
             info,
             storage: HashMap::default(),
+            transaction_id: 0,
             status: AccountStatus::Loaded,
         }
     }
@@ -234,25 +238,29 @@ pub struct EvmStorageSlot {
     pub original_value: U256,
     /// Present value of the storage slot
     pub present_value: U256,
+    /// Transaction id, used to track when storage slot was made warm.
+    pub transaction_id: usize,
     /// Represents if the storage slot is cold
     pub is_cold: bool,
 }
 
 impl EvmStorageSlot {
     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
-    pub fn new(original: U256) -> Self {
+    pub fn new(original: U256, transaction_id: usize) -> Self {
         Self {
             original_value: original,
             present_value: original,
+            transaction_id,
             is_cold: false,
         }
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
-    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
+    pub fn new_changed(original_value: U256, present_value: U256, transaction_id: usize) -> Self {
         Self {
             original_value,
             present_value,
+            transaction_id,
             is_cold: false,
         }
     }
@@ -262,23 +270,39 @@ impl EvmStorageSlot {
     }
 
     /// Returns the original value of the storage slot.
+    #[inline]
     pub fn original_value(&self) -> U256 {
         self.original_value
     }
 
     /// Returns the current value of the storage slot.
+    #[inline]
     pub fn present_value(&self) -> U256 {
         self.present_value
     }
 
-    /// Marks the storage slot as cold.
+    /// Marks the storage slot as cold. Does not change transaction_id.
+    #[inline]
     pub fn mark_cold(&mut self) {
         self.is_cold = true;
     }
 
-    /// Marks the storage slot as warm and returns a bool indicating if it was previously cold.
-    pub fn mark_warm(&mut self) -> bool {
-        core::mem::replace(&mut self.is_cold, false)
+    /// Sets the transaction id of the storage slot.
+    #[inline]
+    pub fn set_transaction_id(&mut self, transaction_id: usize) {
+        self.transaction_id = transaction_id;
+    }
+
+    /// Marks the storage slot as warm and sets transaction_id to the given value
+    ///
+    ///
+    /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
+    #[inline]
+    pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
+        let old_transition_id = core::mem::replace(&mut self.transaction_id, transaction_id);
+        let old_is_cold = core::mem::replace(&mut self.is_cold, false);
+
+        old_transition_id != transaction_id || old_is_cold
     }
 }
 
@@ -382,8 +406,8 @@ mod tests {
         let mut storage = HashMap::new();
         let key1 = U256::from(1);
         let key2 = U256::from(2);
-        let slot1 = EvmStorageSlot::new(U256::from(10));
-        let slot2 = EvmStorageSlot::new(U256::from(20));
+        let slot1 = EvmStorageSlot::new(U256::from(10), 0);
+        let slot2 = EvmStorageSlot::new(U256::from(20), 0);
 
         storage.insert(key1, slot1.clone());
         storage.insert(key2, slot2.clone());
@@ -469,7 +493,7 @@ mod tests {
         };
 
         let slot_key = U256::from(42);
-        let slot_value = EvmStorageSlot::new(U256::from(123));
+        let slot_value = EvmStorageSlot::new(U256::from(123), 0);
         let mut storage = HashMap::new();
         storage.insert(slot_key, slot_value.clone());
 
