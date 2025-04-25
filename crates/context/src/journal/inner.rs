@@ -73,7 +73,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
-            journal: Vec::with_capacity(4 * 1024),
+            journal: Vec::new(),
             depth: 0,
             spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
