@@ -94,12 +94,12 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 #[link(wasm_import_module = "fluentbase_v1preview")]
 extern "C" {
     fn _keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
-    fn _ecrecover(
+    fn _secp256k1_recover(
         digest32_offset: *const u8,
         sig64_offset: *const u8,
-        output32_offset: *mut u8,
+        output65_offset: *mut u8,
         rec_id: u32,
-    );
+    ) -> i32;
 }
 
 #[cfg(not(feature = "std"))]
@@ -115,20 +115,23 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let mut public_key: [u8; 32] = [0u8; 32];
-    unsafe {
-        _ecrecover(
+    let mut public_key: [u8; 65] = [0u8; 65];
+    let ok = unsafe {
+        _secp256k1_recover(
             input[0..32].as_ptr(),
             input[64..128].as_ptr(),
             public_key.as_mut_ptr(),
             (input[63] - 27) as u32,
-        );
+        )
+    };
+    if ok == 0 {
+        let mut hash = [0u8; 32];
+        unsafe {
+            _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr());
+        }
+        hash[..12].fill(0);
+        Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::from(hash)))
+    } else {
+        Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()))
     }
-    if public_key == [0u8; 32] {
-        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
-    }
-    Ok(PrecompileOutput::new(
-        ECRECOVER_BASE,
-        Bytes::from(public_key),
-    ))
 }
