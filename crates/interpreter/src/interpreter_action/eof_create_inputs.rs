@@ -1,6 +1,8 @@
 use bytecode::Eof;
 use primitives::{Address, Bytes, U256};
 
+use super::CallInput;
+
 /// EOF create can be called from two places:
 /// * EOFCREATE opcode
 /// * Creation transaction.
@@ -19,7 +21,7 @@ pub enum EOFCreateKind {
     },
     Opcode {
         initcode: Eof,
-        input: Bytes,
+        input: CallInput,
         created_address: Address,
     },
 }
@@ -40,7 +42,7 @@ impl Default for EOFCreateKind {
     fn default() -> Self {
         EOFCreateKind::Opcode {
             initcode: Eof::default(),
-            input: Bytes::default(),
+            input: CallInput::Bytes(Bytes::default()),
             created_address: Address::default(),
         }
     }
@@ -81,7 +83,7 @@ impl EOFCreateInputs {
         value: U256,
         eof_init_code: Eof,
         gas_limit: u64,
-        input: Bytes,
+        input: CallInput,
     ) -> EOFCreateInputs {
         EOFCreateInputs::new(
             caller,

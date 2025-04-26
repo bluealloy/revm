@@ -1,5 +1,5 @@
-use crate::interpreter_types::InputsTr;
-use primitives::{Address, Bytes, U256};
+use crate::{interpreter_types::InputsTr, CallInput};
+use primitives::{Address, U256};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct InputsImpl {
     pub target_address: Address,
     pub caller_address: Address,
-    pub input: Bytes,
+    pub input: CallInput,
     pub call_value: U256,
 }
 
@@ -22,7 +22,13 @@ impl InputsTr for InputsImpl {
     }
 
     fn input(&self) -> &[u8] {
-        &self.input
+        match &self.input {
+            CallInput::Range(_range) => {
+                // Get slice from parent memory using range
+                todo!("Implement memory range access")
+            }
+            CallInput::Bytes(bytes) => bytes.as_ref(),
+        }
     }
 
     fn call_value(&self) -> U256 {

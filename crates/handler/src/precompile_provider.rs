@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use context::Cfg;
 use context_interface::ContextTr;
-use interpreter::{Gas, InputsImpl, InstructionResult, InterpreterResult};
+use interpreter::{CallInput, Gas, InputsImpl, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
@@ -99,6 +99,13 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
+        let input_bytes = match &inputs.input {
+            CallInput::Range(_range) => {
+                // Get from parent memory (need access to memory)
+                todo!("Implement memory range access")
+            }
+            CallInput::Bytes(bytes) => bytes.clone(),
+        };
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
@@ -106,7 +113,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             output: Bytes::new(),
         };
 
-        match (*precompile)(&inputs.input, gas_limit) {
+        match (*precompile)(&input_bytes, gas_limit) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");

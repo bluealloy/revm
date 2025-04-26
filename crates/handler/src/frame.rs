@@ -17,9 +17,10 @@ use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl, InstructionResult,
-    Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
+    return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
+    CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
+    InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
+    SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -369,7 +370,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
-            input: Bytes::new(),
+            input: CallInput::Bytes(Bytes::new()),
             call_value: inputs.value,
         };
         let gas_limit = inputs.gas_limit;
@@ -438,7 +439,7 @@ where
                 let tx = context.tx();
                 let create_address = tx.caller().create(tx.nonce());
 
-                (input, eof, Some(create_address))
+                (CallInput::Bytes(input), eof, Some(create_address))
             }
         };
 

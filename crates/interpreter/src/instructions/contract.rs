@@ -11,8 +11,8 @@ use crate::{
         EofContainer, Immediates, InputsTr, InterpreterTypes, Jumps, LoopControl, MemoryTr,
         ReturnData, RuntimeFlag, StackTr,
     },
-    CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
-    InterpreterAction, InterpreterResult,
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host,
+    InstructionResult, InterpreterAction, InterpreterResult,
 };
 use bytecode::eof::{Eof, EofHeader};
 use context_interface::CreateScheme;
@@ -74,7 +74,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 value,
                 eof,
                 gas_limit,
-                input,
+                CallInput::Bytes(input),
             ),
         ))),
         InstructionResult::CallOrCreate,
@@ -140,7 +140,7 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 value,
                 eof,
                 gas_limit,
-                input,
+                CallInput::Bytes(input),
             ),
         ))),
         InstructionResult::CallOrCreate,
@@ -334,7 +334,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address,
             caller: interpreter.input.target_address(),
@@ -372,7 +372,7 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address: interpreter.input.target_address(),
             caller: interpreter.input.caller_address(),
@@ -410,7 +410,7 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address,
             caller: interpreter.input.target_address(),
@@ -543,7 +543,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address: to,
             caller: interpreter.input.target_address(),
@@ -596,7 +596,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address: interpreter.input.target_address(),
             caller: interpreter.input.target_address(),
@@ -643,7 +643,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address: interpreter.input.target_address(),
             caller: interpreter.input.caller_address(),
@@ -688,7 +688,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address: to,
             caller: interpreter.input.target_address(),
