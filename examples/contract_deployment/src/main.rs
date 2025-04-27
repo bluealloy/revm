@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example: Deploy and interact with a contract using OP Stack (Optimism) extensions in revm.
+//!
+//! Demonstrates contract creation, storage access, and transaction replay in an
+//! Optimism-compatible EVM context.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};
@@ -9,7 +12,7 @@ use revm::{
     database::CacheDB,
     database_interface::EmptyDB,
     handler::EvmTr,
-    primitives::{hex, Bytes, TxKind, U256},
+    primitives::{hex, Bytes, StorageValue, TxKind},
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 
@@ -80,7 +83,7 @@ fn main() -> anyhow::Result<()> {
         .get(&address)
         .ok_or_else(|| anyhow!("Contract not found"))?
         .storage
-        .get::<U256>(&Default::default())
+        .get::<StorageValue>(&Default::default())
     else {
         bail!("Failed to write storage in the init code: {result:#?}");
     };

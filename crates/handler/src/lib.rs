@@ -1,4 +1,8 @@
-//! Optimism-specific constants, types, and helpers.
+//! OP Stack (Optimism) transaction and block handlers for revm.
+//!
+//! Implements the main execution logic, including fee distribution, deposit transaction
+//! handling, and OP Stack-specific state transitions. Use these handlers to run
+//! Optimism-compatible blocks and transactions in revm.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
