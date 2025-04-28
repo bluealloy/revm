@@ -58,7 +58,7 @@ impl<'a> BytecodeIterator<'a> {
         // Special handling for RJUMPV which has variable immediates
         if opcode == opcode::RJUMPV {
             if let Some(max_index) = self.peek() {
-                immediate_size += (max_index as usize) * 2;
+                immediate_size += (max_index as usize + 1) * 2;
             }
         }
 
