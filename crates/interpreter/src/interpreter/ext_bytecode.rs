@@ -1,10 +1,6 @@
 use core::ops::Deref;
 
-use bytecode::{
-    eof::CodeInfo,
-    utils::{read_i16, read_u16},
-    Bytecode,
-};
+use bytecode::{eof::CodeInfo, utils::read_u16, Bytecode};
 use primitives::{Bytes, B256};
 
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
@@ -99,18 +95,8 @@ impl Jumps for ExtBytecode {
 
 impl Immediates for ExtBytecode {
     #[inline]
-    fn read_i16(&self) -> i16 {
-        unsafe { read_i16(self.instruction_pointer) }
-    }
-
-    #[inline]
     fn read_u16(&self) -> u16 {
         unsafe { read_u16(self.instruction_pointer) }
-    }
-
-    #[inline]
-    fn read_i8(&self) -> i8 {
-        unsafe { core::mem::transmute(*self.instruction_pointer) }
     }
 
     #[inline]
@@ -121,17 +107,6 @@ impl Immediates for ExtBytecode {
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
-    }
-
-    #[inline]
-    fn read_offset_i16(&self, offset: isize) -> i16 {
-        unsafe {
-            read_i16(
-                self.instruction_pointer
-                    // Offset for max_index that is one byte
-                    .offset(offset),
-            )
-        }
     }
 
     #[inline]

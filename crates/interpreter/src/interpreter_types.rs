@@ -6,13 +6,22 @@ use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
 pub trait Immediates {
-    fn read_i16(&self) -> i16;
+    #[inline]
+    fn read_i16(&self) -> i16 {
+        self.read_u16() as i16
+    }
     fn read_u16(&self) -> u16;
 
-    fn read_i8(&self) -> i8;
+    #[inline]
+    fn read_i8(&self) -> i8 {
+        self.read_u8() as i8
+    }
     fn read_u8(&self) -> u8;
 
-    fn read_offset_i16(&self, offset: isize) -> i16;
+    #[inline]
+    fn read_offset_i16(&self, offset: isize) -> i16 {
+        self.read_offset_u16(offset) as i16
+    }
     fn read_offset_u16(&self, offset: isize) -> u16;
 
     fn read_slice(&self, len: usize) -> &[u8];
