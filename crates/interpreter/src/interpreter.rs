@@ -86,7 +86,7 @@ impl Default for Interpreter<EthInterpreter> {
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,
-                input: CallInput::Bytes(Bytes::default()),
+                input: CallInput::default(),
                 call_value: U256::ZERO,
             },
             false,
