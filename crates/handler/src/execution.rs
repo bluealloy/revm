@@ -31,9 +31,7 @@ pub fn create_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) ->
                     tx.caller(),
                     tx.value(),
                     gas_limit,
-                    EOFCreateKind::Tx {
-                        initdata: input.clone(),
-                    },
+                    EOFCreateKind::Tx { initdata: input },
                 )))
             } else {
                 FrameInput::Create(Box::new(CreateInputs {
