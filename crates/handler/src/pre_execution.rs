@@ -14,7 +14,7 @@ use context_interface::{
 use core::cmp::Ordering;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
-
+use std::boxed::Box;
 use crate::{EvmTr, PrecompileProvider};
 
 pub fn load_accounts<
