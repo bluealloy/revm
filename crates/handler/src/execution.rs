@@ -1,8 +1,8 @@
 use bytecode::EOF_MAGIC_BYTES;
 use context_interface::Transaction;
 use interpreter::{
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
-    FrameInput,
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs,
+    EOFCreateKind, FrameInput,
 };
 use primitives::{hardfork::SpecId, TxKind};
 use std::boxed::Box;
@@ -13,7 +13,7 @@ pub fn create_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) ->
 
     match tx.kind() {
         TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
-            input,
+            input: CallInput::Bytes(input),
             gas_limit,
             target_address,
             bytecode_address: target_address,

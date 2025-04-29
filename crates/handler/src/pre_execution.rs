@@ -2,6 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
 use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
 use context_interface::ContextTr;
@@ -11,9 +12,10 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,
 };
+use core::cmp::Ordering;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
-
-use crate::{EvmTr, PrecompileProvider};
+use state::AccountInfo;
+use std::boxed::Box;
 
 pub fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
@@ -69,45 +71,103 @@ pub fn load_accounts<
 }
 
 #[inline]
-pub fn deduct_caller<CTX: ContextTr>(
-    context: &mut CTX,
-) -> Result<(), <CTX::Db as Database>::Error> {
-    let basefee = context.block().basefee();
-    let blob_price = context.block().blob_gasprice().unwrap_or_default();
-    let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
-    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-    let value = context.tx().value();
-
-    // Subtract gas costs from the caller's account.
-    // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = (context.tx().gas_limit() as u128).saturating_mul(effective_gas_price);
-
-    // EIP-4844
-    if context.tx().tx_type() == TransactionType::Eip4844 {
-        let blob_gas = context.tx().total_blob_gas() as u128;
-        gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
+pub fn validate_account_nonce_and_code(
+    caller_info: &mut AccountInfo,
+    tx_nonce: u64,
+    bump_nonce: bool,
+    is_eip3607_disabled: bool,
+    is_nonce_check_disabled: bool,
+) -> Result<(), InvalidTransaction> {
+    // EIP-3607: Reject transactions from senders with deployed code
+    // This EIP is introduced after london but there was no collision in past
+    // so we can leave it enabled always
+    if !is_eip3607_disabled {
+        let bytecode = match caller_info.code.as_ref() {
+            Some(code) => code,
+            None => &Bytecode::default(),
+        };
+        // Allow EOAs whose code is a valid delegation designation,
+        // i.e. 0xef0100 || address, to continue to originate transactions.
+        if !bytecode.is_empty() && !bytecode.is_eip7702() {
+            return Err(InvalidTransaction::RejectCallerWithCode);
+        }
     }
 
-    let is_call = context.tx().kind().is_call();
-    let caller = context.tx().caller();
-
-    // Load caller's account.
-    let caller_account = context.journal().load_account(caller)?.data;
-    // Set new caller account balance.
-    caller_account.info.balance = caller_account
-        .info
-        .balance
-        .saturating_sub(U256::from(gas_cost));
-
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        caller_account.info.balance = value.max(caller_account.info.balance);
+    // Check that the transaction's nonce is correct
+    if !is_nonce_check_disabled {
+        let tx = tx_nonce;
+        let state = caller_info.nonce;
+        match tx.cmp(&state) {
+            Ordering::Greater => {
+                return Err(InvalidTransaction::NonceTooHigh { tx, state });
+            }
+            Ordering::Less => {
+                return Err(InvalidTransaction::NonceTooLow { tx, state });
+            }
+            _ => {}
+        }
     }
 
     // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if is_call {
+    if bump_nonce {
         // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        caller_info.nonce = caller_info.nonce.saturating_add(1);
+    }
+
+    Ok(())
+}
+
+#[inline]
+pub fn validate_against_state_and_deduct_caller<
+    CTX: ContextTr,
+    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
+>(
+    context: &mut CTX,
+) -> Result<(), ERROR> {
+    let basefee = context.block().basefee() as u128;
+    let blob_price = context.block().blob_gasprice().unwrap_or_default();
+    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
+    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
+    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+
+    let (tx, journal) = context.tx_journal();
+
+    // Load caller's account.
+    let caller_account = journal.load_account_code(tx.caller())?.data;
+
+    validate_account_nonce_and_code(
+        &mut caller_account.info,
+        tx.nonce(),
+        tx.kind().is_call(),
+        is_eip3607_disabled,
+        is_nonce_check_disabled,
+    )?;
+
+    let max_balance_spending = tx.max_balance_spending()?;
+
+    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
+    // Transfer will be done inside `*_inner` functions.
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        caller_account.info.balance = caller_account.info.balance.max(tx.value());
+    } else if max_balance_spending > caller_account.info.balance {
+        return Err(InvalidTransaction::LackOfFundForMaxFee {
+            fee: Box::new(max_balance_spending),
+            balance: Box::new(caller_account.info.balance),
+        }
+        .into());
+    } else {
+        let effective_balance_spending = tx
+            .effective_balance_spending(basefee, blob_price)
+            .expect("effective balance is always smaller than max balance so it can't overflow");
+
+        // subtracting max balance spending with value that is going to be deducted later in the call.
+        let gas_balance_spending = effective_balance_spending - tx.value();
+
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(gas_balance_spending);
     }
 
     // Touch account so we know it is changed.

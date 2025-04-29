@@ -4,7 +4,7 @@ mod create_inputs;
 mod create_outcome;
 mod eof_create_inputs;
 
-pub use call_inputs::{CallInputs, CallScheme, CallValue};
+pub use call_inputs::{CallInput, CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
