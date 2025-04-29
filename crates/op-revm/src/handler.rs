@@ -21,6 +21,7 @@ use revm::{
     state::Account,
     Database,
 };
+use std::boxed::Box;
 
 pub struct OpHandler<EVM, ERROR, FRAME> {
     pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
