@@ -19,7 +19,8 @@ pub trait State {
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Gets storage value of address at index.
-    fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, Self::Error>;
+    fn storage(&mut self, address: Address, index: StorageKey)
+        -> Result<StorageValue, Self::Error>;
 }
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
@@ -50,7 +51,11 @@ where
         StateRef::code_by_hash(*self, code_hash)
     }
 
-    fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, Self::Error> {
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         StateRef::storage(*self, address, index)
     }
 }
@@ -69,7 +74,11 @@ where
         self.deref().code_by_hash(code_hash)
     }
 
-    fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, Self::Error> {
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         self.deref().storage(address, index)
     }
 }

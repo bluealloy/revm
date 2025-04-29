@@ -12,8 +12,8 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,
 };
-use primitives::StorageKey;
 use core::cmp::Ordering;
+use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
