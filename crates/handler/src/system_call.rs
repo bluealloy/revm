@@ -113,7 +113,7 @@ mod tests {
         Context,
     };
     use database::InMemoryDB;
-    use primitives::{b256, bytes, U256};
+    use primitives::{b256, bytes, StorageKey, U256};
     use state::{AccountInfo, Bytecode};
 
     const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
@@ -156,7 +156,7 @@ mod tests {
         assert_eq!(
             state[&HISTORY_STORAGE_ADDRESS]
                 .storage
-                .get(&U256::from(0))
+                .get(&StorageKey::from(0))
                 .map(|slot| slot.present_value)
                 .unwrap_or_default(),
             U256::from_be_bytes(block_hash.0),

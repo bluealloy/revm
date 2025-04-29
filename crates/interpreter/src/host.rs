@@ -3,7 +3,7 @@ use context_interface::{
     journaled_state::AccountLoad,
     Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
-use primitives::{Address, Bytes, Log, B256, U256};
+use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 
 use crate::instructions::utility::IntoU256;
 
@@ -70,16 +70,16 @@ pub trait Host {
     fn sstore(
         &mut self,
         address: Address,
-        key: U256,
-        value: U256,
+        key: StorageKey,
+        value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>>;
 
     /// Sload, calls `ContextTr::journal().sload(address, key)`
-    fn sload(&mut self, address: Address, key: U256) -> Option<StateLoad<U256>>;
+    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
     /// Tstore, calls `ContextTr::journal().tstore(address, key, value)`
-    fn tstore(&mut self, address: Address, key: U256, value: U256);
+    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
     /// Tload, calls `ContextTr::journal().tload(address, key)`
-    fn tload(&mut self, address: Address, key: U256) -> U256;
+    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
     /// Balance, calls `ContextTr::journal().load_account(address)`
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
     /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
@@ -215,7 +215,7 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
+    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
         self.journal()
             .sload(address, index)
             .map_err(|e| {
@@ -230,8 +230,8 @@ impl<CTX: ContextTr> Host for CTX {
     fn sstore(
         &mut self,
         address: Address,
-        index: U256,
-        value: U256,
+        index: StorageKey,
+        value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
         self.journal()
             .sstore(address, index, value)
@@ -242,12 +242,12 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets the transient storage value of `address` at `index`.
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
+    fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
         self.journal().tload(address, index)
     }
 
     /// Sets the transient storage value of `address` at `index`.
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
+    fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
         self.journal().tstore(address, index, value)
     }
 
@@ -348,20 +348,20 @@ impl Host for DummyHost {
     fn sstore(
         &mut self,
         _address: Address,
-        _key: U256,
-        _value: U256,
+        _key: StorageKey,
+        _value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
         None
     }
 
-    fn sload(&mut self, _address: Address, _key: U256) -> Option<StateLoad<U256>> {
+    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
         None
     }
 
-    fn tstore(&mut self, _address: Address, _key: U256, _value: U256) {}
+    fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
 
-    fn tload(&mut self, _address: Address, _key: U256) -> U256 {
-        U256::ZERO
+    fn tload(&mut self, _address: Address, _key: StorageKey) -> StorageValue {
+        StorageValue::ZERO
     }
 
     fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {

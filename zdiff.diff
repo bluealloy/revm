@@ -1,0 +1,1763 @@
+diff --git a/crates/context/interface/src/context.rs b/crates/context/interface/src/context.rs
+index 9e483661..83ecf93a 100644
+--- a/crates/context/interface/src/context.rs
++++ b/crates/context/interface/src/context.rs
+@@ -1,7 +1,7 @@
+ pub use crate::journaled_state::StateLoad;
+ use crate::{Block, Cfg, Database, JournalTr, LocalContextTr, Transaction};
+ use auto_impl::auto_impl;
+-use primitives::U256;
++use primitives::StorageValue;
+ use std::string::String;
+ 
+ /// Trait that defines the context of the EVM execution.
+@@ -77,11 +77,11 @@ impl<DbError> From<DbError> for ContextError<DbError> {
+ #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+ pub struct SStoreResult {
+     /// Value of the storage when it is first read
+-    pub original_value: U256,
++    pub original_value: StorageValue,
+     /// Current value of the storage
+-    pub present_value: U256,
++    pub present_value: StorageValue,
+     /// New value that is set
+-    pub new_value: U256,
++    pub new_value: StorageValue,
+ }
+ 
+ impl SStoreResult {
+diff --git a/crates/context/interface/src/journaled_state.rs b/crates/context/interface/src/journaled_state.rs
+index cd1aee00..7532443b 100644
+--- a/crates/context/interface/src/journaled_state.rs
++++ b/crates/context/interface/src/journaled_state.rs
+@@ -1,7 +1,9 @@
+ use crate::context::{SStoreResult, SelfDestructResult};
+ use core::ops::{Deref, DerefMut};
+ use database_interface::Database;
+-use primitives::{hardfork::SpecId, Address, Bytes, HashSet, Log, B256, U256};
++use primitives::{
++    hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
++};
+ use state::{
+     bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+     Account, Bytecode,
+@@ -29,22 +31,22 @@ pub trait JournalTr {
+     fn sload(
+         &mut self,
+         address: Address,
+-        key: U256,
+-    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error>;
++        key: StorageKey,
++    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error>;
+ 
+     /// Stores the storage value in Journal state.
+     fn sstore(
+         &mut self,
+         address: Address,
+-        key: U256,
+-        value: U256,
++        key: StorageKey,
++        value: StorageValue,
+     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
+ 
+     /// Loads transient storage value.
+-    fn tload(&mut self, address: Address, key: U256) -> U256;
++    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
+ 
+     /// Stores transient storage value.
+-    fn tstore(&mut self, address: Address, key: U256, value: U256);
++    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
+ 
+     /// Logs the log in Journal state.
+     fn log(&mut self, log: Log);
+@@ -60,7 +62,7 @@ pub trait JournalTr {
+     fn warm_account_and_storage(
+         &mut self,
+         address: Address,
+-        storage_keys: impl IntoIterator<Item = U256>,
++        storage_keys: impl IntoIterator<Item = StorageKey>,
+     ) -> Result<(), <Self::Database as Database>::Error>;
+ 
+     /// Warms the account.
+diff --git a/crates/context/src/journal.rs b/crates/context/src/journal.rs
+index e71ed541..3850aa76 100644
+--- a/crates/context/src/journal.rs
++++ b/crates/context/src/journal.rs
+@@ -15,7 +15,7 @@ use context_interface::{
+ };
+ use core::ops::{Deref, DerefMut};
+ use database_interface::Database;
+-use primitives::{hardfork::SpecId, Address, HashSet, Log, B256, U256};
++use primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256};
+ use state::{Account, EvmState};
+ use std::vec::Vec;
+ 
+@@ -116,25 +116,25 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
+     fn sload(
+         &mut self,
+         address: Address,
+-        key: U256,
+-    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
++        key: StorageKey,
++    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
+         self.inner.sload(&mut self.database, address, key)
+     }
+ 
+     fn sstore(
+         &mut self,
+         address: Address,
+-        key: U256,
+-        value: U256,
++        key: StorageKey,
++        value: StorageValue,
+     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
+         self.inner.sstore(&mut self.database, address, key, value)
+     }
+ 
+-    fn tload(&mut self, address: Address, key: U256) -> U256 {
++    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
+         self.inner.tload(address, key)
+     }
+ 
+-    fn tstore(&mut self, address: Address, key: U256, value: U256) {
++    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue) {
+         self.inner.tstore(address, key, value)
+     }
+ 
+@@ -174,7 +174,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
+     fn warm_account_and_storage(
+         &mut self,
+         address: Address,
+-        storage_keys: impl IntoIterator<Item = U256>,
++        storage_keys: impl IntoIterator<Item = StorageKey>,
+     ) -> Result<(), <Self::Database as Database>::Error> {
+         self.inner
+             .initial_account_load(&mut self.database, address, storage_keys)?;
+diff --git a/crates/context/src/journal/entry.rs b/crates/context/src/journal/entry.rs
+index d994b7ff..c9cee74b 100644
+--- a/crates/context/src/journal/entry.rs
++++ b/crates/context/src/journal/entry.rs
+@@ -4,7 +4,7 @@
+ //!
+ //! They are created when there is change to the state from loading (making it warm), changes to the balance,
+ //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
+-use primitives::{Address, KECCAK_EMPTY, PRECOMPILE3, U256};
++use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
+ use state::{EvmState, TransientStorage};
+ 
+ /// Trait for tracking and reverting state changes in the EVM.
+@@ -39,15 +39,19 @@ pub trait JournalEntryTr {
+ 
+     /// Creates a journal entry for when a storage slot is modified
+     /// Records the previous value for reverting
+-    fn storage_changed(address: Address, key: U256, had_value: U256) -> Self;
++    fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self;
+ 
+     /// Creates a journal entry for when a storage slot is accessed and marked as "warm" for gas metering
+     /// This is called with SLOAD opcode.
+-    fn storage_warmed(address: Address, key: U256) -> Self;
++    fn storage_warmed(address: Address, key: StorageKey) -> Self;
+ 
+     /// Creates a journal entry for when a transient storage slot is modified (EIP-1153)
+     /// Records the previous value for reverting
+-    fn transient_storage_changed(address: Address, key: U256, had_value: U256) -> Self;
++    fn transient_storage_changed(
++        address: Address,
++        key: StorageKey,
++        had_value: StorageValue,
++    ) -> Self;
+ 
+     /// Creates a journal entry for when an account's code is modified
+     fn code_changed(address: Address) -> Self;
+@@ -142,9 +146,9 @@ pub enum JournalEntry {
+         /// Address of account that had its storage changed.
+         address: Address,
+         /// Key of storage slot that is changed.
+-        key: U256,
++        key: StorageKey,
+         /// Previous value of storage slot.
+-        had_value: U256,
++        had_value: StorageValue,
+     },
+     /// Entry used to track storage warming introduced by EIP-2929.
+     /// Action: Storage warmed
+@@ -153,7 +157,7 @@ pub enum JournalEntry {
+         /// Address of account that had its storage warmed. By SLOAD or SSTORE opcode.
+         address: Address,
+         /// Key of storage slot that is warmed.
+-        key: U256,
++        key: StorageKey,
+     },
+     /// It is used to track an EIP-1153 transient storage change.
+     /// Action: Transient storage changed.
+@@ -162,9 +166,9 @@ pub enum JournalEntry {
+         /// Address of account that had its transient storage changed.
+         address: Address,
+         /// Key of transient storage slot that is changed.
+-        key: U256,
++        key: StorageKey,
+         /// Previous value of transient storage slot.
+-        had_value: U256,
++        had_value: StorageValue,
+     },
+     /// Code changed
+     /// Action: Account code changed
+@@ -205,7 +209,7 @@ impl JournalEntryTr for JournalEntry {
+         JournalEntry::AccountCreated { address }
+     }
+ 
+-    fn storage_changed(address: Address, key: U256, had_value: U256) -> Self {
++    fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self {
+         JournalEntry::StorageChanged {
+             address,
+             key,
+@@ -217,11 +221,15 @@ impl JournalEntryTr for JournalEntry {
+         JournalEntry::NonceChange { address }
+     }
+ 
+-    fn storage_warmed(address: Address, key: U256) -> Self {
++    fn storage_warmed(address: Address, key: StorageKey) -> Self {
+         JournalEntry::StorageWarmed { address, key }
+     }
+ 
+-    fn transient_storage_changed(address: Address, key: U256, had_value: U256) -> Self {
++    fn transient_storage_changed(
++        address: Address,
++        key: StorageKey,
++        had_value: StorageValue,
++    ) -> Self {
+         JournalEntry::TransientStorageChange {
+             address,
+             key,
+diff --git a/crates/context/src/journal/inner.rs b/crates/context/src/journal/inner.rs
+index 3dbeb93f..a3b8e813 100644
+--- a/crates/context/src/journal/inner.rs
++++ b/crates/context/src/journal/inner.rs
+@@ -8,9 +8,9 @@ use context_interface::{
+ use core::mem;
+ use database_interface::Database;
+ use primitives::{
+-    hardfork::{SpecId, SpecId::*},
++    hardfork::SpecId::{self, *},
+     hash_map::Entry,
+-    Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
++    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+ };
+ use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+ use std::vec::Vec;
+@@ -440,7 +440,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+         &mut self,
+         db: &mut DB,
+         address: Address,
+-        storage_keys: impl IntoIterator<Item = U256>,
++        storage_keys: impl IntoIterator<Item = StorageKey>,
+     ) -> Result<&mut Account, DB::Error> {
+         // load or get account.
+         let account = match self.state.entry(address) {
+@@ -584,8 +584,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+         &mut self,
+         db: &mut DB,
+         address: Address,
+-        key: U256,
+-    ) -> Result<StateLoad<U256>, DB::Error> {
++        key: StorageKey,
++    ) -> Result<StateLoad<StorageValue>, DB::Error> {
+         // assume acc is warm
+         let account = self.state.get_mut(&address).unwrap();
+         // only if account is created in this tx we can assume that storage is empty.
+@@ -599,7 +599,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+             Entry::Vacant(vac) => {
+                 // if storage was cleared, we don't need to ping db.
+                 let value = if is_newly_created {
+-                    U256::ZERO
++                    StorageValue::ZERO
+                 } else {
+                     db.storage(address, key)?
+                 };
+@@ -628,8 +628,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+         &mut self,
+         db: &mut DB,
+         address: Address,
+-        key: U256,
+-        new: U256,
++        key: StorageKey,
++        new: StorageValue,
+     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
+         // assume that acc exists and load the slot.
+         let present = self.sload(db, address, key)?;
+@@ -668,7 +668,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+     ///
+     /// EIP-1153: Transient storage opcodes
+     #[inline]
+-    pub fn tload(&mut self, address: Address, key: U256) -> U256 {
++    pub fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
+         self.transient_storage
+             .get(&(address, key))
+             .copied()
+@@ -682,7 +682,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+     ///
+     /// EIP-1153: Transient storage opcodes
+     #[inline]
+-    pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
++    pub fn tstore(&mut self, address: Address, key: StorageKey, new: StorageValue) {
+         let had_value = if new.is_zero() {
+             // if new values is zero, remove entry from transient storage.
+             // if previous values was some insert it inside journal.
+diff --git a/crates/database/interface/src/async_db.rs b/crates/database/interface/src/async_db.rs
+index 0b85216e..85ce9631 100644
+--- a/crates/database/interface/src/async_db.rs
++++ b/crates/database/interface/src/async_db.rs
+@@ -2,7 +2,7 @@ use core::future::Future;
+ 
+ use crate::{DBErrorMarker, Database, DatabaseRef};
+ use core::error::Error;
+-use primitives::{Address, B256, U256};
++use primitives::{Address, StorageKey, StorageValue, B256};
+ use state::{AccountInfo, Bytecode};
+ use tokio::runtime::{Handle, Runtime};
+ 
+@@ -31,8 +31,8 @@ pub trait DatabaseAsync {
+     fn storage_async(
+         &mut self,
+         address: Address,
+-        index: U256,
+-    ) -> impl Future<Output = Result<U256, Self::Error>> + Send;
++        index: StorageKey,
++    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
+ 
+     /// Gets block hash by block number.
+     fn block_hash_async(
+@@ -66,8 +66,8 @@ pub trait DatabaseAsyncRef {
+     fn storage_async_ref(
+         &self,
+         address: Address,
+-        index: U256,
+-    ) -> impl Future<Output = Result<U256, Self::Error>> + Send;
++        index: StorageKey,
++    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
+ 
+     /// Gets block hash by block number.
+     fn block_hash_async_ref(
+@@ -134,7 +134,11 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
+     }
+ 
+     #[inline]
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(
++        &mut self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         self.rt.block_on(self.db.storage_async(address, index))
+     }
+ 
+@@ -158,7 +162,11 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
+     }
+ 
+     #[inline]
+-    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage_ref(
++        &self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         self.rt.block_on(self.db.storage_async_ref(address, index))
+     }
+ 
+diff --git a/crates/database/interface/src/empty_db.rs b/crates/database/interface/src/empty_db.rs
+index 94dc7810..155ec36a 100644
+--- a/crates/database/interface/src/empty_db.rs
++++ b/crates/database/interface/src/empty_db.rs
+@@ -1,7 +1,7 @@
+ use crate::{DBErrorMarker, Database, DatabaseRef};
+ use core::error::Error;
+ use core::{convert::Infallible, fmt, marker::PhantomData};
+-use primitives::{keccak256, Address, B256, U256};
++use primitives::{keccak256, Address, StorageKey, StorageValue, B256};
+ use state::{AccountInfo, Bytecode};
+ use std::string::ToString;
+ 
+@@ -67,7 +67,11 @@ impl<E: DBErrorMarker + Error> Database for EmptyDBTyped<E> {
+     }
+ 
+     #[inline]
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(
++        &mut self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         <Self as DatabaseRef>::storage_ref(self, address, index)
+     }
+ 
+@@ -91,8 +95,12 @@ impl<E: DBErrorMarker + Error> DatabaseRef for EmptyDBTyped<E> {
+     }
+ 
+     #[inline]
+-    fn storage_ref(&self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
+-        Ok(U256::default())
++    fn storage_ref(
++        &self,
++        _address: Address,
++        _index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
++        Ok(StorageValue::default())
+     }
+ 
+     #[inline]
+diff --git a/crates/database/interface/src/lib.rs b/crates/database/interface/src/lib.rs
+index 5c67019d..ab213af0 100644
+--- a/crates/database/interface/src/lib.rs
++++ b/crates/database/interface/src/lib.rs
+@@ -9,7 +9,7 @@ use core::convert::Infallible;
+ 
+ use auto_impl::auto_impl;
+ use core::error::Error;
+-use primitives::{Address, HashMap, B256, U256};
++use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
+ use state::{Account, AccountInfo, Bytecode};
+ use std::string::String;
+ 
+@@ -44,7 +44,8 @@ pub trait Database {
+     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+ 
+     /// Gets storage value of address at index.
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
++    fn storage(&mut self, address: Address, index: StorageKey)
++        -> Result<StorageValue, Self::Error>;
+ 
+     /// Gets block hash by block number.
+     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
+@@ -75,7 +76,8 @@ pub trait DatabaseRef {
+     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+ 
+     /// Gets storage value of address at index.
+-    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
++    fn storage_ref(&self, address: Address, index: StorageKey)
++        -> Result<StorageValue, Self::Error>;
+ 
+     /// Gets block hash by block number.
+     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
+@@ -106,7 +108,11 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
+     }
+ 
+     #[inline]
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(
++        &mut self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         self.0.storage_ref(address, index)
+     }
+ 
+diff --git a/crates/database/src/alloydb.rs b/crates/database/src/alloydb.rs
+index 11abbe81..4736122c 100644
+--- a/crates/database/src/alloydb.rs
++++ b/crates/database/src/alloydb.rs
+@@ -6,7 +6,7 @@ use alloy_provider::{
+ use alloy_transport::TransportError;
+ use core::error::Error;
+ use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
+-use primitives::{Address, B256, U256};
++use primitives::{Address, StorageKey, StorageValue, B256};
+ use state::{AccountInfo, Bytecode};
+ use std::fmt::Display;
+ 
+@@ -99,7 +99,11 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
+         // This is not needed, as the code is already loaded with basic_ref
+     }
+ 
+-    async fn storage_async_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    async fn storage_async_ref(
++        &self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         Ok(self
+             .provider
+             .get_storage_at(address, index)
+diff --git a/crates/database/src/in_memory_db.rs b/crates/database/src/in_memory_db.rs
+index 506ca67e..92afeb01 100644
+--- a/crates/database/src/in_memory_db.rs
++++ b/crates/database/src/in_memory_db.rs
+@@ -1,6 +1,9 @@
+ use core::convert::Infallible;
+ use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
+-use primitives::{address, hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
++use primitives::{
++    address, hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY,
++    U256,
++};
+ use state::{Account, AccountInfo, Bytecode};
+ use std::vec::Vec;
+ 
+@@ -160,8 +163,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
+     pub fn insert_account_storage(
+         &mut self,
+         address: Address,
+-        slot: U256,
+-        value: U256,
++        slot: StorageKey,
++        value: StorageValue,
+     ) -> Result<(), ExtDB::Error> {
+         let account = self.load_account(address)?;
+         account.storage.insert(slot, value);
+@@ -172,7 +175,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
+     pub fn replace_account_storage(
+         &mut self,
+         address: Address,
+-        storage: HashMap<U256, U256>,
++        storage: HashMap<StorageKey, StorageValue>,
+     ) -> Result<(), ExtDB::Error> {
+         let account = self.load_account(address)?;
+         account.account_state = AccountState::StorageCleared;
+@@ -251,7 +254,11 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
+     /// Get the value in an account's storage slot.
+     ///
+     /// It is assumed that account is already loaded.
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(
++        &mut self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         match self.cache.accounts.entry(address) {
+             Entry::Occupied(mut acc_entry) => {
+                 let acc_entry = acc_entry.get_mut();
+@@ -262,7 +269,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
+                             acc_entry.account_state,
+                             AccountState::StorageCleared | AccountState::NotExisting
+                         ) {
+-                            Ok(U256::ZERO)
++                            Ok(StorageValue::ZERO)
+                         } else {
+                             let slot = self.db.storage_ref(address, index)?;
+                             entry.insert(slot);
+@@ -280,7 +287,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
+                     account.storage.insert(index, value);
+                     (account, value)
+                 } else {
+-                    (info.into(), U256::ZERO)
++                    (info.into(), StorageValue::ZERO)
+                 };
+                 acc_entry.insert(account);
+                 Ok(value)
+@@ -317,7 +324,11 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
+         }
+     }
+ 
+-    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage_ref(
++        &self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         match self.cache.accounts.get(&address) {
+             Some(acc_entry) => match acc_entry.storage.get(&index) {
+                 Some(entry) => Ok(*entry),
+@@ -326,7 +337,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
+                         acc_entry.account_state,
+                         AccountState::StorageCleared | AccountState::NotExisting
+                     ) {
+-                        Ok(U256::ZERO)
++                        Ok(StorageValue::ZERO)
+                     } else {
+                         self.db.storage_ref(address, index)
+                     }
+@@ -351,7 +362,7 @@ pub struct DbAccount {
+     /// If account is selfdestructed or newly created, storage will be cleared.
+     pub account_state: AccountState,
+     /// Storage slots
+-    pub storage: HashMap<U256, U256>,
++    pub storage: HashMap<StorageKey, StorageValue>,
+ }
+ 
+ impl DbAccount {
+@@ -396,7 +407,7 @@ pub enum AccountState {
+     /// EVM touched this account. For newer hardfork this means it can be cleared/removed from state.
+     Touched,
+     /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for storage slots
+-    /// and assume they are U256::ZERO
++    /// and assume they are StorageValue::ZERO
+     StorageCleared,
+     /// EVM didn't interacted with this account
+     #[default]
+@@ -461,8 +472,12 @@ impl Database for BenchmarkDB {
+     }
+ 
+     /// Get storage value of address at index.
+-    fn storage(&mut self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
+-        Ok(U256::default())
++    fn storage(
++        &mut self,
++        _address: Address,
++        _index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
++        Ok(StorageValue::default())
+     }
+ 
+     // History related
+@@ -475,7 +490,7 @@ impl Database for BenchmarkDB {
+ mod tests {
+     use super::{CacheDB, EmptyDB};
+     use database_interface::Database;
+-    use primitives::{Address, HashMap, U256};
++    use primitives::{Address, HashMap, StorageKey, StorageValue};
+     use state::AccountInfo;
+ 
+     #[test]
+@@ -491,7 +506,7 @@ mod tests {
+             },
+         );
+ 
+-        let (key, value) = (U256::from(123), U256::from(456));
++        let (key, value) = (StorageKey::from(123), StorageValue::from(456));
+         let mut new_state = CacheDB::new(init_state);
+         new_state
+             .insert_account_storage(account, key, value)
+@@ -514,8 +529,8 @@ mod tests {
+             },
+         );
+ 
+-        let (key0, value0) = (U256::from(123), U256::from(456));
+-        let (key1, value1) = (U256::from(789), U256::from(999));
++        let (key0, value0) = (StorageKey::from(123), StorageValue::from(456));
++        let (key1, value1) = (StorageKey::from(789), StorageValue::from(999));
+         init_state
+             .insert_account_storage(account, key0, value0)
+             .unwrap();
+@@ -526,7 +541,7 @@ mod tests {
+             .unwrap();
+ 
+         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
+-        assert_eq!(new_state.storage(account, key0), Ok(U256::ZERO));
++        assert_eq!(new_state.storage(account, key0), Ok(StorageValue::ZERO));
+         assert_eq!(new_state.storage(account, key1), Ok(value1));
+     }
+ 
+diff --git a/crates/database/src/states/bundle_account.rs b/crates/database/src/states/bundle_account.rs
+index f3a5010b..034d633f 100644
+--- a/crates/database/src/states/bundle_account.rs
++++ b/crates/database/src/states/bundle_account.rs
+@@ -2,7 +2,7 @@ use super::{
+     reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, StorageSlot,
+     StorageWithOriginalValues, TransitionAccount,
+ };
+-use primitives::{HashMap, U256};
++use primitives::{HashMap, StorageKey, StorageValue};
+ use state::AccountInfo;
+ 
+ /// Account information focused on creating of database changesets
+@@ -24,7 +24,7 @@ pub struct BundleAccount {
+     /// When extracting changeset we compare if original value is different from present value.
+     /// If it is different we add it to changeset.
+     ///
+-    /// If Account was destroyed we ignore original value and compare present state with U256::ZERO.
++    /// If Account was destroyed we ignore original value and compare present state with StorageValue::ZERO.
+     pub storage: StorageWithOriginalValues,
+     /// Account status.
+     pub status: AccountStatus,
+@@ -55,13 +55,13 @@ impl BundleAccount {
+ 
+     /// Return storage slot if it exists.
+     ///
+-    /// In case we know that account is newly created or destroyed, return `Some(U256::ZERO)`
+-    pub fn storage_slot(&self, slot: U256) -> Option<U256> {
++    /// In case we know that account is newly created or destroyed, return `Some(StorageValue::ZERO)`
++    pub fn storage_slot(&self, slot: StorageKey) -> Option<StorageValue> {
+         let slot = self.storage.get(&slot).map(|s| s.present_value);
+         if slot.is_some() {
+             slot
+         } else if self.status.is_storage_known() {
+-            Some(U256::ZERO)
++            Some(StorageValue::ZERO)
+         } else {
+             None
+         }
+@@ -101,7 +101,7 @@ impl BundleAccount {
+                 } else {
+                     // Set all storage to zero but preserve original values.
+                     self.storage.iter_mut().for_each(|(_, v)| {
+-                        v.present_value = U256::ZERO;
++                        v.present_value = StorageValue::ZERO;
+                     });
+                     return false;
+                 }
+@@ -150,7 +150,7 @@ impl BundleAccount {
+             };
+ 
+         let previous_storage_from_update =
+-            |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
++            |updated_storage: &StorageWithOriginalValues| -> HashMap<StorageKey, RevertToSlot> {
+                 updated_storage
+                     .iter()
+                     .filter(|s| s.1.is_changed())
+diff --git a/crates/database/src/states/bundle_state.rs b/crates/database/src/states/bundle_state.rs
+index bb984b66..7b24298e 100644
+--- a/crates/database/src/states/bundle_state.rs
++++ b/crates/database/src/states/bundle_state.rs
+@@ -6,7 +6,9 @@ use super::{
+ };
+ use bytecode::Bytecode;
+ use core::{mem, ops::RangeInclusive};
+-use primitives::{hash_map::Entry, Address, HashMap, HashSet, B256, KECCAK_EMPTY, U256};
++use primitives::{
++    hash_map::Entry, Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
++};
+ use state::AccountInfo;
+ use std::{
+     collections::{BTreeMap, BTreeSet},
+@@ -19,12 +21,12 @@ pub struct BundleBuilder {
+     states: HashSet<Address>,
+     state_original: HashMap<Address, AccountInfo>,
+     state_present: HashMap<Address, AccountInfo>,
+-    state_storage: HashMap<Address, HashMap<U256, (U256, U256)>>,
++    state_storage: HashMap<Address, HashMap<StorageKey, (StorageValue, StorageValue)>>,
+ 
+     reverts: BTreeSet<(u64, Address)>,
+     revert_range: RangeInclusive<u64>,
+     revert_account: HashMap<(u64, Address), Option<Option<AccountInfo>>>,
+-    revert_storage: HashMap<(u64, Address), Vec<(U256, U256)>>,
++    revert_storage: HashMap<(u64, Address), Vec<(StorageKey, StorageValue)>>,
+ 
+     contracts: HashMap<B256, Bytecode>,
+ }
+@@ -114,7 +116,11 @@ impl BundleBuilder {
+     }
+ 
+     /// Collects storage info of BundleState state.
+-    pub fn state_storage(mut self, address: Address, storage: HashMap<U256, (U256, U256)>) -> Self {
++    pub fn state_storage(
++        mut self,
++        address: Address,
++        storage: HashMap<StorageKey, (StorageValue, StorageValue)>,
++    ) -> Self {
+         self.set_state_storage(address, storage);
+         self
+     }
+@@ -150,7 +156,7 @@ impl BundleBuilder {
+         mut self,
+         block_number: u64,
+         address: Address,
+-        storage: Vec<(U256, U256)>,
++        storage: Vec<(StorageKey, StorageValue)>,
+     ) -> Self {
+         self.set_revert_storage(block_number, address, storage);
+         self
+@@ -194,7 +200,7 @@ impl BundleBuilder {
+     pub fn set_state_storage(
+         &mut self,
+         address: Address,
+-        storage: HashMap<U256, (U256, U256)>,
++        storage: HashMap<StorageKey, (StorageValue, StorageValue)>,
+     ) -> &mut Self {
+         self.states.insert(address);
+         self.state_storage.insert(address, storage);
+@@ -224,7 +230,7 @@ impl BundleBuilder {
+         &mut self,
+         block_number: u64,
+         address: Address,
+-        storage: Vec<(U256, U256)>,
++        storage: Vec<(StorageKey, StorageValue)>,
+     ) -> &mut Self {
+         self.reverts.insert((block_number, address));
+         self.revert_storage.insert((block_number, address), storage);
+@@ -336,7 +342,9 @@ impl BundleBuilder {
+     }
+ 
+     /// Mutable getter for `state_storage` field
+-    pub fn get_state_storage_mut(&mut self) -> &mut HashMap<Address, HashMap<U256, (U256, U256)>> {
++    pub fn get_state_storage_mut(
++        &mut self,
++    ) -> &mut HashMap<Address, HashMap<StorageKey, (StorageValue, StorageValue)>> {
+         &mut self.state_storage
+     }
+ 
+@@ -358,7 +366,9 @@ impl BundleBuilder {
+     }
+ 
+     /// Mutable getter for `revert_storage` field
+-    pub fn get_revert_storage_mut(&mut self) -> &mut HashMap<(u64, Address), Vec<(U256, U256)>> {
++    pub fn get_revert_storage_mut(
++        &mut self,
++    ) -> &mut HashMap<(u64, Address), Vec<(StorageKey, StorageValue)>> {
+         &mut self.revert_storage
+     }
+ 
+@@ -425,7 +435,7 @@ impl BundleState {
+                 Address,
+                 Option<AccountInfo>,
+                 Option<AccountInfo>,
+-                HashMap<U256, (U256, U256)>,
++                HashMap<StorageKey, (StorageValue, StorageValue)>,
+             ),
+         >,
+         reverts: impl IntoIterator<
+@@ -433,7 +443,7 @@ impl BundleState {
+                 Item = (
+                     Address,
+                     Option<Option<AccountInfo>>,
+-                    impl IntoIterator<Item = (U256, U256)>,
++                    impl IntoIterator<Item = (StorageKey, StorageValue)>,
+                 ),
+             >,
+         >,
+@@ -862,6 +872,7 @@ impl BundleState {
+ mod tests {
+     use super::*;
+     use crate::{StorageWithOriginalValues, TransitionAccount};
++    use primitives::U256;
+ 
+     #[test]
+     fn transition_states() {
+@@ -902,12 +913,12 @@ mod tests {
+         Address::new([0x61; 20])
+     }
+ 
+-    fn slot1() -> U256 {
+-        U256::from(5)
++    fn slot1() -> StorageKey {
++        StorageKey::from(5)
+     }
+ 
+-    fn slot2() -> U256 {
+-        U256::from(7)
++    fn slot2() -> StorageKey {
++        StorageKey::from(7)
+     }
+ 
+     /// Tests bundle one.
+@@ -925,8 +936,8 @@ mod tests {
+                         code: None,
+                     }),
+                     HashMap::from_iter([
+-                        (slot1(), (U256::from(0), U256::from(10))),
+-                        (slot2(), (U256::from(0), U256::from(15))),
++                        (slot1(), (StorageValue::from(0), StorageValue::from(10))),
++                        (slot2(), (StorageValue::from(0), StorageValue::from(15))),
+                     ]),
+                 ),
+                 (
+@@ -945,7 +956,10 @@ mod tests {
+                 (
+                     account1(),
+                     Some(None),
+-                    vec![(slot1(), U256::from(0)), (slot2(), U256::from(0))],
++                    vec![
++                        (slot1(), StorageValue::from(0)),
++                        (slot2(), StorageValue::from(0)),
++                    ],
+                 ),
+                 (account2(), Some(None), vec![]),
+             ]],
+@@ -966,7 +980,7 @@ mod tests {
+                     code_hash: KECCAK_EMPTY,
+                     code: None,
+                 }),
+-                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
++                HashMap::from_iter([(slot1(), (StorageValue::from(0), StorageValue::from(15)))]),
+             )],
+             vec![vec![(
+                 account1(),
+@@ -976,7 +990,7 @@ mod tests {
+                     code_hash: KECCAK_EMPTY,
+                     code: None,
+                 })),
+-                vec![(slot1(), U256::from(10))],
++                vec![(slot1(), StorageValue::from(10))],
+             )]],
+             vec![],
+         )
+@@ -996,7 +1010,7 @@ mod tests {
+             )
+             .state_storage(
+                 account1(),
+-                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(10)))]),
++                HashMap::from_iter([(slot1(), (StorageValue::from(0), StorageValue::from(10)))]),
+             )
+             .state_address(account2())
+             .state_present_account_info(
+@@ -1010,7 +1024,7 @@ mod tests {
+             )
+             .revert_address(0, account1())
+             .revert_account_info(0, account1(), Some(None))
+-            .revert_storage(0, account1(), vec![(slot1(), U256::from(0))])
++            .revert_storage(0, account1(), vec![(slot1(), StorageValue::from(0))])
+             .revert_account_info(0, account2(), Some(None))
+             .build()
+     }
+@@ -1029,7 +1043,7 @@ mod tests {
+             )
+             .state_storage(
+                 account1(),
+-                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
++                HashMap::from_iter([(slot1(), (StorageValue::from(0), StorageValue::from(15)))]),
+             )
+             .revert_address(0, account1())
+             .revert_account_info(
+@@ -1042,7 +1056,7 @@ mod tests {
+                     code: None,
+                 })),
+             )
+-            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
++            .revert_storage(0, account1(), vec![(slot1(), StorageValue::from(10))])
+             .build()
+     }
+ 
+@@ -1111,7 +1125,7 @@ mod tests {
+         revert1
+             .1
+             .storage
+-            .insert(slot2(), RevertToSlot::Some(U256::from(15)));
++            .insert(slot2(), RevertToSlot::Some(StorageValue::from(15)));
+ 
+         assert_eq!(
+             b1.reverts.as_ref(),
+@@ -1172,7 +1186,7 @@ mod tests {
+             .revert_address(2, account2())
+             .revert_account_info(0, account1(), Some(None))
+             .revert_account_info(2, account2(), None)
+-            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
++            .revert_storage(0, account1(), vec![(slot1(), StorageValue::from(10))])
+             .build();
+ 
+         assert_eq!(state.reverts.len(), 4);
+@@ -1318,7 +1332,7 @@ mod tests {
+         assert!(builder.get_revert_storage_mut().is_empty());
+         builder
+             .get_revert_storage_mut()
+-            .insert((0, account1()), vec![(slot1(), U256::from(0))]);
++            .insert((0, account1()), vec![(slot1(), StorageValue::from(0))]);
+         assert!(builder
+             .get_revert_storage_mut()
+             .contains_key(&(0, account1())));
+diff --git a/crates/database/src/states/cache_account.rs b/crates/database/src/states/cache_account.rs
+index de300ad6..35ccfdbe 100644
+--- a/crates/database/src/states/cache_account.rs
++++ b/crates/database/src/states/cache_account.rs
+@@ -2,7 +2,7 @@ use super::{
+     plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
+     StorageWithOriginalValues, TransitionAccount,
+ };
+-use primitives::{HashMap, U256};
++use primitives::{HashMap, StorageKey, StorageValue, U256};
+ use state::AccountInfo;
+ 
+ /// Cache account contains plain state that gets updated
+@@ -92,7 +92,7 @@ impl CacheAccount {
+     }
+ 
+     /// Returns storage slot if it exists.
+-    pub fn storage_slot(&self, slot: U256) -> Option<U256> {
++    pub fn storage_slot(&self, slot: StorageKey) -> Option<StorageValue> {
+         self.account
+             .as_ref()
+             .and_then(|a| a.storage.get(&slot).cloned())
+diff --git a/crates/database/src/states/changes.rs b/crates/database/src/states/changes.rs
+index b03c1108..860ebb9a 100644
+--- a/crates/database/src/states/changes.rs
++++ b/crates/database/src/states/changes.rs
+@@ -1,6 +1,6 @@
+ use super::RevertToSlot;
+ use bytecode::Bytecode;
+-use primitives::{Address, B256, U256};
++use primitives::{Address, StorageKey, StorageValue, B256};
+ use state::AccountInfo;
+ use std::vec::Vec;
+ 
+@@ -31,7 +31,7 @@ pub struct PlainStorageChangeset {
+     /// Wipe storage
+     pub wipe_storage: bool,
+     /// Storage key value pairs
+-    pub storage: Vec<(U256, U256)>,
++    pub storage: Vec<(StorageKey, StorageValue)>,
+ }
+ 
+ /// Plain Storage Revert.
+@@ -49,7 +49,7 @@ pub struct PlainStorageRevert {
+     /// Contains the storage key and old values of that storage
+     ///
+     /// **Note**: Reverts are **not** sorted.
+-    pub storage_revert: Vec<(U256, RevertToSlot)>,
++    pub storage_revert: Vec<(StorageKey, RevertToSlot)>,
+ }
+ 
+ /// Plain state reverts are used to easily store reverts into database.
+@@ -76,4 +76,4 @@ impl PlainStateReverts {
+ }
+ 
+ /// Storage reverts
+-pub type StorageRevert = Vec<Vec<(Address, bool, Vec<(U256, RevertToSlot)>)>>;
++pub type StorageRevert = Vec<Vec<(Address, bool, Vec<(StorageKey, RevertToSlot)>)>>;
+diff --git a/crates/database/src/states/plain_account.rs b/crates/database/src/states/plain_account.rs
+index 0d54a468..571c591e 100644
+--- a/crates/database/src/states/plain_account.rs
++++ b/crates/database/src/states/plain_account.rs
+@@ -1,4 +1,4 @@
+-use primitives::{HashMap, U256};
++use primitives::{HashMap, StorageKey, StorageValue};
+ use state::{AccountInfo, EvmStorageSlot};
+ 
+ // Plain account of StateDatabase.
+@@ -30,9 +30,9 @@ pub struct StorageSlot {
+     /// When the slot is first loaded, this is the original value.
+     ///
+     /// If the slot was not changed, this is equal to the present value.
+-    pub previous_or_original_value: U256,
++    pub previous_or_original_value: StorageValue,
+     /// When loaded with sload present value is set to original value
+-    pub present_value: U256,
++    pub present_value: StorageValue,
+ }
+ 
+ impl From<EvmStorageSlot> for StorageSlot {
+@@ -43,7 +43,7 @@ impl From<EvmStorageSlot> for StorageSlot {
+ 
+ impl StorageSlot {
+     /// Creates a new _unchanged_ `StorageSlot` for the given value.
+-    pub fn new(original: U256) -> Self {
++    pub fn new(original: StorageValue) -> Self {
+         Self {
+             previous_or_original_value: original,
+             present_value: original,
+@@ -51,7 +51,10 @@ impl StorageSlot {
+     }
+ 
+     /// Creates a new _changed_ `StorageSlot`.
+-    pub fn new_changed(previous_or_original_value: U256, present_value: U256) -> Self {
++    pub fn new_changed(
++        previous_or_original_value: StorageValue,
++        present_value: StorageValue,
++    ) -> Self {
+         Self {
+             previous_or_original_value,
+             present_value,
+@@ -64,12 +67,12 @@ impl StorageSlot {
+     }
+ 
+     /// Returns the original value of the storage slot.
+-    pub fn original_value(&self) -> U256 {
++    pub fn original_value(&self) -> StorageValue {
+         self.previous_or_original_value
+     }
+ 
+     /// Returns the current value of the storage slot.
+-    pub fn present_value(&self) -> U256 {
++    pub fn present_value(&self) -> StorageValue {
+         self.present_value
+     }
+ }
+@@ -77,11 +80,11 @@ impl StorageSlot {
+ /// This storage represent values that are before block changed.
+ ///
+ /// Note: Storage that we get EVM contains original values before block changed.
+-pub type StorageWithOriginalValues = HashMap<U256, StorageSlot>;
++pub type StorageWithOriginalValues = HashMap<StorageKey, StorageSlot>;
+ 
+ /// Simple plain storage that does not have previous value.
+ /// This is used for loading from database, cache and for bundle state.
+-pub type PlainStorage = HashMap<U256, U256>;
++pub type PlainStorage = HashMap<StorageKey, StorageValue>;
+ 
+ impl From<AccountInfo> for PlainAccount {
+     fn from(info: AccountInfo) -> Self {
+diff --git a/crates/database/src/states/reverts.rs b/crates/database/src/states/reverts.rs
+index 2afbc3f5..f11156b3 100644
+--- a/crates/database/src/states/reverts.rs
++++ b/crates/database/src/states/reverts.rs
+@@ -6,7 +6,7 @@ use core::{
+     cmp::Ordering,
+     ops::{Deref, DerefMut},
+ };
+-use primitives::{Address, HashMap, U256};
++use primitives::{Address, HashMap, StorageKey, StorageValue};
+ use state::AccountInfo;
+ use std::vec::Vec;
+ 
+@@ -143,7 +143,7 @@ impl PartialEq for Reverts {
+ #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+ pub struct AccountRevert {
+     pub account: AccountInfoRevert,
+-    pub storage: HashMap<U256, RevertToSlot>,
++    pub storage: HashMap<StorageKey, RevertToSlot>,
+     pub previous_status: AccountStatus,
+     pub wipe_storage: bool,
+ }
+@@ -166,7 +166,7 @@ impl AccountRevert {
+     ) -> Self {
+         // Take present storage values as the storages that we are going to revert to.
+         // As those values got destroyed.
+-        let mut previous_storage: HashMap<U256, RevertToSlot> = previous_storage
++        let mut previous_storage: HashMap<StorageKey, RevertToSlot> = previous_storage
+             .drain()
+             .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+             .collect();
+@@ -313,15 +313,15 @@ pub enum AccountInfoRevert {
+ #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+ #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+ pub enum RevertToSlot {
+-    Some(U256),
++    Some(StorageValue),
+     Destroyed,
+ }
+ 
+ impl RevertToSlot {
+-    pub fn to_previous_value(self) -> U256 {
++    pub fn to_previous_value(self) -> StorageValue {
+         match self {
+             RevertToSlot::Some(value) => value,
+-            RevertToSlot::Destroyed => U256::ZERO,
++            RevertToSlot::Destroyed => StorageValue::ZERO,
+         }
+     }
+ }
+diff --git a/crates/database/src/states/state.rs b/crates/database/src/states/state.rs
+index 31821def..bf9bad0e 100644
+--- a/crates/database/src/states/state.rs
++++ b/crates/database/src/states/state.rs
+@@ -4,7 +4,7 @@ use super::{
+ };
+ use bytecode::Bytecode;
+ use database_interface::{Database, DatabaseCommit, EmptyDB};
+-use primitives::{hash_map, Address, HashMap, B256, BLOCK_HASH_HISTORY, U256};
++use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
+ use state::{Account, AccountInfo};
+ use std::{
+     boxed::Box,
+@@ -251,11 +251,15 @@ impl<DB: Database> Database for State<DB> {
+         res
+     }
+ 
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(
++        &mut self,
++        address: Address,
++        index: StorageKey,
++    ) -> Result<StorageValue, Self::Error> {
+         // Account is guaranteed to be loaded.
+         // Note that storage from bundle is already loaded with account.
+         if let Some(account) = self.cache.accounts.get_mut(&address) {
+-            // Account will always be some, but if it is not, U256::ZERO will be returned.
++            // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
+             let is_storage_known = account.status.is_storage_known();
+             Ok(account
+                 .account
+@@ -266,7 +270,7 @@ impl<DB: Database> Database for State<DB> {
+                         // If account was destroyed or account is newly built
+                         // we return zero and don't ask database.
+                         let value = if is_storage_known {
+-                            U256::ZERO
++                            StorageValue::ZERO
+                         } else {
+                             self.database.storage(address, index)?
+                         };
+@@ -317,7 +321,7 @@ mod tests {
+         states::{reverts::AccountInfoRevert, StorageSlot},
+         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
+     };
+-    use primitives::keccak256;
++    use primitives::{keccak256, U256};
+ 
+     #[test]
+     fn block_hash_cache() {
+@@ -353,7 +357,11 @@ mod tests {
+     fn reverts_preserve_old_values() {
+         let mut state = State::builder().with_bundle_update().build();
+ 
+-        let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
++        let (slot1, slot2, slot3) = (
++            StorageKey::from(1),
++            StorageKey::from(2),
++            StorageKey::from(3),
++        );
+ 
+         // Non-existing account for testing account state transitions.
+         // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) -> [Changed] (nonce: 3)
+@@ -378,9 +386,9 @@ mod tests {
+             nonce: 1,
+             ..Default::default()
+         };
+-        let existing_account_initial_storage = HashMap::<U256, U256>::from_iter([
+-            (slot1, U256::from(100)), // 0x01 => 100
+-            (slot2, U256::from(200)), // 0x02 => 200
++        let existing_account_initial_storage = HashMap::<StorageKey, StorageValue>::from_iter([
++            (slot1, StorageValue::from(100)), // 0x01 => 100
++            (slot2, StorageValue::from(200)), // 0x02 => 200
+         ]);
+         let existing_account_changed_info = AccountInfo {
+             nonce: 2,
+@@ -410,7 +418,7 @@ mod tests {
+                         slot1,
+                         StorageSlot::new_changed(
+                             *existing_account_initial_storage.get(&slot1).unwrap(),
+-                            U256::from(1000),
++                            StorageValue::from(1000),
+                         ),
+                     )]),
+                     storage_was_destroyed: false,
+@@ -441,7 +449,7 @@ mod tests {
+                     previous_info: Some(new_account_changed_info),
+                     storage: HashMap::from_iter([(
+                         slot1,
+-                        StorageSlot::new_changed(U256::ZERO, U256::from(1)),
++                        StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(1)),
+                     )]),
+                     storage_was_destroyed: false,
+                 },
+@@ -456,19 +464,22 @@ mod tests {
+                     storage: HashMap::from_iter([
+                         (
+                             slot1,
+-                            StorageSlot::new_changed(U256::from(100), U256::from(1_000)),
++                            StorageSlot::new_changed(
++                                StorageValue::from(100),
++                                StorageValue::from(1_000),
++                            ),
+                         ),
+                         (
+                             slot2,
+                             StorageSlot::new_changed(
+                                 *existing_account_initial_storage.get(&slot2).unwrap(),
+-                                U256::from(2_000),
++                                StorageValue::from(2_000),
+                             ),
+                         ),
+                         // Create new slot
+                         (
+                             slot3,
+-                            StorageSlot::new_changed(U256::ZERO, U256::from(3_000)),
++                            StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(3_000)),
+                         ),
+                     ]),
+                     storage_was_destroyed: false,
+@@ -490,7 +501,10 @@ mod tests {
+                     AccountRevert {
+                         account: AccountInfoRevert::DeleteIt,
+                         previous_status: AccountStatus::LoadedNotExisting,
+-                        storage: HashMap::from_iter([(slot1, RevertToSlot::Some(U256::ZERO))]),
++                        storage: HashMap::from_iter([(
++                            slot1,
++                            RevertToSlot::Some(StorageValue::ZERO)
++                        )]),
+                         wipe_storage: false,
+                     }
+                 ),
+@@ -512,7 +526,7 @@ mod tests {
+                                     *existing_account_initial_storage.get(&slot2).unwrap()
+                                 )
+                             ),
+-                            (slot3, RevertToSlot::Some(U256::ZERO))
++                            (slot3, RevertToSlot::Some(StorageValue::ZERO))
+                         ]),
+                         wipe_storage: false,
+                     }
+@@ -531,7 +545,7 @@ mod tests {
+                 status: AccountStatus::InMemoryChange,
+                 storage: HashMap::from_iter([(
+                     slot1,
+-                    StorageSlot::new_changed(U256::ZERO, U256::from(1))
++                    StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(1))
+                 )]),
+             }),
+             "The latest state of the new account is incorrect"
+@@ -550,20 +564,20 @@ mod tests {
+                         slot1,
+                         StorageSlot::new_changed(
+                             *existing_account_initial_storage.get(&slot1).unwrap(),
+-                            U256::from(1_000)
++                            StorageValue::from(1_000)
+                         )
+                     ),
+                     (
+                         slot2,
+                         StorageSlot::new_changed(
+                             *existing_account_initial_storage.get(&slot2).unwrap(),
+-                            U256::from(2_000)
++                            StorageValue::from(2_000)
+                         )
+                     ),
+                     // Create new slot
+                     (
+                         slot3,
+-                        StorageSlot::new_changed(U256::ZERO, U256::from(3_000))
++                        StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(3_000))
+                     ),
+                 ]),
+             }),
+@@ -598,7 +612,7 @@ mod tests {
+         };
+ 
+         // Existing account with storage.
+-        let (slot1, slot2) = (U256::from(1), U256::from(2));
++        let (slot1, slot2) = (StorageKey::from(1), StorageKey::from(2));
+         let existing_account_with_storage_address = Address::from_slice(&[0x3; 20]);
+         let existing_account_with_storage_info = AccountInfo {
+             nonce: 1,
+@@ -636,9 +650,12 @@ mod tests {
+                     storage: HashMap::from_iter([
+                         (
+                             slot1,
+-                            StorageSlot::new_changed(U256::from(1), U256::from(10)),
++                            StorageSlot::new_changed(StorageValue::from(1), StorageValue::from(10)),
++                        ),
++                        (
++                            slot2,
++                            StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(20)),
+                         ),
+-                        (slot2, StorageSlot::new_changed(U256::ZERO, U256::from(20))),
+                     ]),
+                     storage_was_destroyed: false,
+                 },
+@@ -677,9 +694,12 @@ mod tests {
+                     storage: HashMap::from_iter([
+                         (
+                             slot1,
+-                            StorageSlot::new_changed(U256::from(10), U256::from(1)),
++                            StorageSlot::new_changed(StorageValue::from(10), StorageValue::from(1)),
++                        ),
++                        (
++                            slot2,
++                            StorageSlot::new_changed(StorageValue::from(20), StorageValue::ZERO),
+                         ),
+-                        (slot2, StorageSlot::new_changed(U256::from(20), U256::ZERO)),
+                     ]),
+                     storage_was_destroyed: false,
+                 },
+@@ -708,7 +728,7 @@ mod tests {
+             ..Default::default()
+         };
+ 
+-        let (slot1, slot2) = (U256::from(1), U256::from(2));
++        let (slot1, slot2) = (StorageKey::from(1), StorageKey::from(2));
+ 
+         // Existing account is destroyed.
+         state.apply_transition(Vec::from([(
+@@ -733,7 +753,7 @@ mod tests {
+                 previous_info: None,
+                 storage: HashMap::from_iter([(
+                     slot1,
+-                    StorageSlot::new_changed(U256::ZERO, U256::from(1)),
++                    StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(1)),
+                 )]),
+                 storage_was_destroyed: false,
+             },
+@@ -763,7 +783,7 @@ mod tests {
+                 previous_info: None,
+                 storage: HashMap::from_iter([(
+                     slot2,
+-                    StorageSlot::new_changed(U256::ZERO, U256::from(2)),
++                    StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(2)),
+                 )]),
+                 storage_was_destroyed: false,
+             },
+@@ -782,7 +802,7 @@ mod tests {
+                     original_info: Some(existing_account_info.clone()),
+                     storage: HashMap::from_iter([(
+                         slot2,
+-                        StorageSlot::new_changed(U256::ZERO, U256::from(2))
++                        StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(2))
+                     )]),
+                     status: AccountStatus::DestroyedChanged,
+                 }
+diff --git a/crates/handler/src/mainnet_builder.rs b/crates/handler/src/mainnet_builder.rs
+index 2244ae90..4ed0fb68 100644
+--- a/crates/handler/src/mainnet_builder.rs
++++ b/crates/handler/src/mainnet_builder.rs
+@@ -76,6 +76,7 @@ mod test {
+     use context_interface::{transaction::Authorization, TransactionType};
+     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
+     use primitives::{hardfork::SpecId, TxKind, U256};
++    use primitives::{StorageKey, StorageValue};
+ 
+     #[test]
+     fn sanity_eip7702_tx() {
+@@ -109,8 +110,12 @@ mod test {
+         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
+         assert_eq!(auth_acc.info.nonce, 1);
+         assert_eq!(
+-            auth_acc.storage.get(&U256::from(1)).unwrap().present_value,
+-            U256::from(1)
++            auth_acc
++                .storage
++                .get(&StorageKey::from(1))
++                .unwrap()
++                .present_value,
++            StorageValue::from(1)
+         );
+     }
+ }
+diff --git a/crates/handler/src/system_call.rs b/crates/handler/src/system_call.rs
+index bdc49051..22d170c5 100644
+--- a/crates/handler/src/system_call.rs
++++ b/crates/handler/src/system_call.rs
+@@ -113,7 +113,7 @@ mod tests {
+         Context,
+     };
+     use database::InMemoryDB;
+-    use primitives::{b256, bytes, U256};
++    use primitives::{b256, bytes, StorageKey, U256};
+     use state::{AccountInfo, Bytecode};
+ 
+     const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
+@@ -156,7 +156,7 @@ mod tests {
+         assert_eq!(
+             state[&HISTORY_STORAGE_ADDRESS]
+                 .storage
+-                .get(&U256::from(0))
++                .get(&StorageKey::from(0))
+                 .map(|slot| slot.present_value)
+                 .unwrap_or_default(),
+             U256::from_be_bytes(block_hash.0),
+diff --git a/crates/interpreter/src/host.rs b/crates/interpreter/src/host.rs
+index 3961d5d0..ea1fae67 100644
+--- a/crates/interpreter/src/host.rs
++++ b/crates/interpreter/src/host.rs
+@@ -3,7 +3,7 @@ use context_interface::{
+     journaled_state::AccountLoad,
+     Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
+ };
+-use primitives::{Address, Bytes, Log, B256, U256};
++use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+ 
+ use crate::instructions::utility::IntoU256;
+ 
+@@ -70,16 +70,16 @@ pub trait Host {
+     fn sstore(
+         &mut self,
+         address: Address,
+-        key: U256,
+-        value: U256,
++        key: StorageKey,
++        value: StorageValue,
+     ) -> Option<StateLoad<SStoreResult>>;
+ 
+     /// Sload, calls `ContextTr::journal().sload(address, key)`
+-    fn sload(&mut self, address: Address, key: U256) -> Option<StateLoad<U256>>;
++    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
+     /// Tstore, calls `ContextTr::journal().tstore(address, key, value)`
+-    fn tstore(&mut self, address: Address, key: U256, value: U256);
++    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
+     /// Tload, calls `ContextTr::journal().tload(address, key)`
+-    fn tload(&mut self, address: Address, key: U256) -> U256;
++    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
+     /// Balance, calls `ContextTr::journal().load_account(address)`
+     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+     /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
+@@ -215,7 +215,7 @@ impl<CTX: ContextTr> Host for CTX {
+     }
+ 
+     /// Gets storage value of `address` at `index` and if the account is cold.
+-    fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
++    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
+         self.journal()
+             .sload(address, index)
+             .map_err(|e| {
+@@ -230,8 +230,8 @@ impl<CTX: ContextTr> Host for CTX {
+     fn sstore(
+         &mut self,
+         address: Address,
+-        index: U256,
+-        value: U256,
++        index: StorageKey,
++        value: StorageValue,
+     ) -> Option<StateLoad<SStoreResult>> {
+         self.journal()
+             .sstore(address, index, value)
+@@ -242,12 +242,12 @@ impl<CTX: ContextTr> Host for CTX {
+     }
+ 
+     /// Gets the transient storage value of `address` at `index`.
+-    fn tload(&mut self, address: Address, index: U256) -> U256 {
++    fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
+         self.journal().tload(address, index)
+     }
+ 
+     /// Sets the transient storage value of `address` at `index`.
+-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
++    fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
+         self.journal().tstore(address, index, value)
+     }
+ 
+@@ -348,20 +348,20 @@ impl Host for DummyHost {
+     fn sstore(
+         &mut self,
+         _address: Address,
+-        _key: U256,
+-        _value: U256,
++        _key: StorageKey,
++        _value: StorageValue,
+     ) -> Option<StateLoad<SStoreResult>> {
+         None
+     }
+ 
+-    fn sload(&mut self, _address: Address, _key: U256) -> Option<StateLoad<U256>> {
++    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
+         None
+     }
+ 
+-    fn tstore(&mut self, _address: Address, _key: U256, _value: U256) {}
++    fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
+ 
+-    fn tload(&mut self, _address: Address, _key: U256) -> U256 {
+-        U256::ZERO
++    fn tload(&mut self, _address: Address, _key: StorageKey) -> StorageValue {
++        StorageValue::ZERO
+     }
+ 
+     fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+diff --git a/crates/primitives/src/lib.rs b/crates/primitives/src/lib.rs
+index 3f3c5ab1..1ca1e347 100644
+--- a/crates/primitives/src/lib.rs
++++ b/crates/primitives/src/lib.rs
+@@ -23,3 +23,8 @@ pub use alloy_primitives::{
+     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
+     Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
+ };
++
++/// type alias for storage keys
++pub type StorageKey = U256;
++/// type alias for storage values
++pub type StorageValue = U256;
+diff --git a/crates/state/src/lib.rs b/crates/state/src/lib.rs
+index d064fbfe..62b45f6e 100644
+--- a/crates/state/src/lib.rs
++++ b/crates/state/src/lib.rs
+@@ -14,7 +14,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
+ use bitflags::bitflags;
+ use core::hash::Hash;
+ use primitives::hardfork::SpecId;
+-use primitives::{HashMap, U256};
++use primitives::{HashMap, StorageKey, StorageValue};
+ 
+ /// Account type used inside Journal to track changed to state.
+ #[derive(Debug, Clone, PartialEq, Eq, Default)]
+@@ -126,7 +126,7 @@ impl Account {
+     /// Returns an iterator over the storage slots that have been changed.
+     ///
+     /// See also [EvmStorageSlot::is_changed].
+-    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
++    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&StorageKey, &EvmStorageSlot)> {
+         self.storage.iter().filter(|(_, slot)| slot.is_changed())
+     }
+ 
+@@ -139,7 +139,7 @@ impl Account {
+     /// Populates storage from an iterator of storage slots and returns self for method chaining.
+     pub fn with_storage<I>(mut self, storage_iter: I) -> Self
+     where
+-        I: Iterator<Item = (U256, EvmStorageSlot)>,
++        I: Iterator<Item = (StorageKey, EvmStorageSlot)>,
+     {
+         for (key, slot) in storage_iter {
+             self.storage.insert(key, slot);
+@@ -231,16 +231,16 @@ impl Default for AccountStatus {
+ #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+ pub struct EvmStorageSlot {
+     /// Original value of the storage slot
+-    pub original_value: U256,
++    pub original_value: StorageValue,
+     /// Present value of the storage slot
+-    pub present_value: U256,
++    pub present_value: StorageValue,
+     /// Represents if the storage slot is cold
+     pub is_cold: bool,
+ }
+ 
+ impl EvmStorageSlot {
+     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
+-    pub fn new(original: U256) -> Self {
++    pub fn new(original: StorageValue) -> Self {
+         Self {
+             original_value: original,
+             present_value: original,
+@@ -249,7 +249,7 @@ impl EvmStorageSlot {
+     }
+ 
+     /// Creates a new _changed_ `EvmStorageSlot`.
+-    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
++    pub fn new_changed(original_value: StorageValue, present_value: StorageValue) -> Self {
+         Self {
+             original_value,
+             present_value,
+@@ -262,12 +262,12 @@ impl EvmStorageSlot {
+     }
+ 
+     /// Returns the original value of the storage slot.
+-    pub fn original_value(&self) -> U256 {
++    pub fn original_value(&self) -> StorageValue {
+         self.original_value
+     }
+ 
+     /// Returns the current value of the storage slot.
+-    pub fn present_value(&self) -> U256 {
++    pub fn present_value(&self) -> StorageValue {
+         self.present_value
+     }
+ 
+@@ -286,7 +286,7 @@ impl EvmStorageSlot {
+ mod tests {
+     use super::*;
+     use crate::EvmStorageSlot;
+-    use primitives::KECCAK_EMPTY;
++    use primitives::{StorageKey, KECCAK_EMPTY, U256};
+ 
+     #[test]
+     fn account_is_empty_balance() {
+@@ -380,10 +380,10 @@ mod tests {
+     #[test]
+     fn test_account_with_storage() {
+         let mut storage = HashMap::new();
+-        let key1 = U256::from(1);
+-        let key2 = U256::from(2);
+-        let slot1 = EvmStorageSlot::new(U256::from(10));
+-        let slot2 = EvmStorageSlot::new(U256::from(20));
++        let key1 = StorageKey::from(1);
++        let key2 = StorageKey::from(2);
++        let slot1 = EvmStorageSlot::new(StorageValue::from(10));
++        let slot2 = EvmStorageSlot::new(StorageValue::from(20));
+ 
+         storage.insert(key1, slot1.clone());
+         storage.insert(key2, slot2.clone());
+@@ -468,8 +468,8 @@ mod tests {
+             ..AccountInfo::default()
+         };
+ 
+-        let slot_key = U256::from(42);
+-        let slot_value = EvmStorageSlot::new(U256::from(123));
++        let slot_key = StorageKey::from(42);
++        let slot_value = EvmStorageSlot::new(StorageValue::from(123));
+         let mut storage = HashMap::new();
+         storage.insert(slot_key, slot_value.clone());
+ 
+diff --git a/crates/state/src/types.rs b/crates/state/src/types.rs
+index 5eb0a67b..7c656428 100644
+--- a/crates/state/src/types.rs
++++ b/crates/state/src/types.rs
+@@ -1,11 +1,11 @@
+ use super::{Account, EvmStorageSlot};
+-use primitives::{Address, HashMap, U256};
++use primitives::{Address, HashMap, StorageKey, StorageValue};
+ 
+ /// EVM State is a mapping from addresses to accounts.
+ pub type EvmState = HashMap<Address, Account>;
+ 
+ /// Structure used for EIP-1153 transient storage
+-pub type TransientStorage = HashMap<(Address, U256), U256>;
++pub type TransientStorage = HashMap<(Address, StorageKey), StorageValue>;
+ 
+ /// An account's Storage is a mapping from 256-bit integer keys to [EvmStorageSlot]s.
+-pub type EvmStorage = HashMap<U256, EvmStorageSlot>;
++pub type EvmStorage = HashMap<StorageKey, EvmStorageSlot>;
+diff --git a/examples/database_components/src/lib.rs b/examples/database_components/src/lib.rs
+index c0a3394c..c0142d15 100644
+--- a/examples/database_components/src/lib.rs
++++ b/examples/database_components/src/lib.rs
+@@ -10,7 +10,7 @@ pub use state::{State, StateRef};
+ 
+ use revm::{
+     database_interface::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef},
+-    primitives::{Address, HashMap, B256, U256},
++    primitives::{Address, HashMap, StorageValue, B256, U256},
+     state::{Account, AccountInfo, Bytecode},
+ };
+ 
+@@ -43,7 +43,7 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
+             .map_err(Self::Error::State)
+     }
+ 
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(&mut self, address: Address, index: U256) -> Result<StorageValue, Self::Error> {
+         self.state
+             .storage(address, index)
+             .map_err(Self::Error::State)
+@@ -69,7 +69,7 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
+             .map_err(Self::Error::State)
+     }
+ 
+-    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage_ref(&self, address: Address, index: U256) -> Result<StorageValue, Self::Error> {
+         self.state
+             .storage(address, index)
+             .map_err(Self::Error::State)
+diff --git a/examples/database_components/src/state.rs b/examples/database_components/src/state.rs
+index 0e64bf07..db348012 100644
+--- a/examples/database_components/src/state.rs
++++ b/examples/database_components/src/state.rs
+@@ -3,7 +3,7 @@
+ use auto_impl::auto_impl;
+ use core::ops::Deref;
+ use revm::{
+-    primitives::{Address, B256, U256},
++    primitives::{Address, StorageValue, B256, U256},
+     state::{AccountInfo, Bytecode},
+ };
+ use std::{error::Error as StdError, sync::Arc};
+@@ -19,7 +19,7 @@ pub trait State {
+     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+ 
+     /// Gets storage value of address at index.
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
++    fn storage(&mut self, address: Address, index: U256) -> Result<StorageValue, Self::Error>;
+ }
+ 
+ #[auto_impl(&, &mut, Box, Rc, Arc)]
+@@ -33,7 +33,7 @@ pub trait StateRef {
+     fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+ 
+     /// Gets storage value of address at index.
+-    fn storage(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
++    fn storage(&self, address: Address, index: U256) -> Result<StorageValue, Self::Error>;
+ }
+ 
+ impl<T> State for &T
+@@ -50,7 +50,7 @@ where
+         StateRef::code_by_hash(*self, code_hash)
+     }
+ 
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(&mut self, address: Address, index: U256) -> Result<StorageValue, Self::Error> {
+         StateRef::storage(*self, address, index)
+     }
+ }
+@@ -69,7 +69,7 @@ where
+         self.deref().code_by_hash(code_hash)
+     }
+ 
+-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
++    fn storage(&mut self, address: Address, index: U256) -> Result<StorageValue, Self::Error> {
+         self.deref().storage(address, index)
+     }
+ }
+diff --git a/examples/erc20_gas/src/main.rs b/examples/erc20_gas/src/main.rs
+index cf621966..b845ff4e 100644
+--- a/examples/erc20_gas/src/main.rs
++++ b/examples/erc20_gas/src/main.rs
+@@ -15,7 +15,9 @@ use revm::{
+     },
+     database::{AlloyDB, BlockId, CacheDB},
+     database_interface::WrapDatabaseAsync,
+-    primitives::{address, hardfork::SpecId, keccak256, Address, TxKind, KECCAK_EMPTY, U256},
++    primitives::{
++        address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, KECCAK_EMPTY, U256,
++    },
+     state::AccountInfo,
+     Context, Database, MainBuilder, MainContext,
+ };
+@@ -49,7 +51,7 @@ async fn main() -> Result<()> {
+     let balance_slot = erc_address_storage(account);
+     println!("Balance slot: {balance_slot}");
+     cache_db
+-        .insert_account_storage(TOKEN, balance_slot, hundred_tokens * U256::from(2))
++        .insert_account_storage(TOKEN, balance_slot, hundred_tokens * StorageValue::from(2))
+         .unwrap();
+     cache_db.insert_account_info(
+         account,
+@@ -111,7 +113,7 @@ where
+     Ok(())
+ }
+ 
+-fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
++fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<StorageValue> {
+     let slot = erc_address_storage(address);
+     alloy_db.storage(TOKEN, slot).map_err(From::from)
+ }
