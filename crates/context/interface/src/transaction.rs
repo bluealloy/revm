@@ -11,6 +11,7 @@ pub use eip2930::AccessListItemTr;
 pub use eip7702::AuthorizationTr;
 pub use transaction_type::TransactionType;
 
+use crate::result::InvalidTransaction;
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
@@ -162,6 +163,53 @@ pub trait Transaction {
             return max_price;
         };
         min(max_price, base_fee.saturating_add(max_priority_fee))
+    }
+
+    /// Returns the maximum balance that can be spent by the transaction.
+    ///
+    /// Return U256 or error if all values overflow U256 number.
+    fn max_balance_spending(&self) -> Result<U256, InvalidTransaction> {
+        // gas_limit * max_fee + value + additional_gas_cost
+        let mut max_balance_spending = U256::from(self.gas_limit())
+            .checked_mul(U256::from(self.max_fee_per_gas()))
+            .and_then(|gas_cost| gas_cost.checked_add(self.value()))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+        // add blob fee
+        if self.tx_type() == TransactionType::Eip4844 {
+            let data_fee = self.calc_max_data_fee();
+            max_balance_spending = max_balance_spending
+                .checked_add(data_fee)
+                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }
+        Ok(max_balance_spending)
+    }
+
+    /// Returns the effective balance that is going to be spent that depends on base_fee
+    ///
+    /// This is always strictly less than [`Self::max_balance_spending`].
+    ///
+    /// Return U256 or error if all values overflow U256 number.
+    fn effective_balance_spending(
+        &self,
+        base_fee: u128,
+        blob_price: u128,
+    ) -> Result<U256, InvalidTransaction> {
+        // gas_limit * max_fee + value + additional_gas_cost
+        let mut effective_balance_spending = U256::from(self.gas_limit())
+            .checked_mul(U256::from(self.effective_gas_price(base_fee)))
+            .and_then(|gas_cost| gas_cost.checked_add(self.value()))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+        // add blob fee
+        if self.tx_type() == TransactionType::Eip4844 {
+            let blob_gas = self.total_blob_gas() as u128;
+            effective_balance_spending = effective_balance_spending
+                .checked_add(U256::from(blob_price).saturating_mul(U256::from(blob_gas)))
+                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }
+
+        Ok(effective_balance_spending)
     }
 }
 
