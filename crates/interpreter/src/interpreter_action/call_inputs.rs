@@ -1,15 +1,78 @@
-use core::ops::Range;
+use core::{
+    cell::{Ref, RefCell},
+    ops::Range,
+};
 use primitives::{Address, Bytes, U256};
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+use std::rc::Rc;
 
 /// Input enum for a call.
+///
+/// Rc<RefCell<..>> buffer introduces some UI restrictions. We can't have a function
+/// where input is returned as slice as RefCell does not allow for this. If you need
+/// a new variable you can use [`Self::bytes`] function.
+///
+/// # Note
+///
+/// As CallInput uses shared memory buffer it can get overriden if not used directly when call happens.
+/// Best option if input is needed would be to clone inputs with [`Self::bytes`] function.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallInput {
     /// The Range of the call data to be taken from SharedMemory
-    Range(Range<usize>),
+    SharedBuffer {
+        /// The range that points to the buffer.
+        range: Range<usize>,
+        /// The buffer used in Interpreter SharedMemory that is used as input.
+        buffer: Rc<RefCell<Vec<u8>>>,
+    },
     /// Bytes of the call data.
     Bytes(Bytes),
+}
+
+impl CallInput {
+    /// Return a slice from Shared Buffer, in case this is [`CallInput::Bytes`] variant return None.
+    ///
+    /// In case of borrow failure or invalid range, return None.
+    ///
+    /// # Note
+    ///
+    /// CallInput shared buffer can be overriden when used in later calls.
+    pub fn shared_buffer_slice(&self) -> Option<Ref<'_, [u8]>> {
+        match self {
+            Self::SharedBuffer { range, buffer } => {
+                let borrow = buffer.try_borrow().ok()?;
+                // check that range is valid
+                borrow.get(range.clone())?;
+                Some(Ref::map(borrow, |b| {
+                    b.get(range.clone()).unwrap_or_default()
+                }))
+            }
+            Self::Bytes(i) => None,
+        }
+    }
+
+    /// Returns the bytes of the call inputs, or none if range input can't be obtained.
+    ///
+    /// # Note
+    ///
+    /// If option `Range` is used, the returned bytes are copied from the buffer, this can be expensive opperation
+    /// if used in the loop.
+    ///
+    /// In case that buffer can't be obtained or if the range is invalid, the returned bytes are empty. If buffer is
+    /// overridden with next call invalid data will be returned.
+    pub fn bytes(&self) -> Option<Bytes> {
+        match self {
+            Self::SharedBuffer { range, buffer } => Some(
+                buffer
+                    .try_borrow()
+                    .ok()?
+                    .get(range.clone())?
+                    .to_vec()
+                    .into(),
+            ),
+            Self::Bytes(bytes) => Some(bytes.clone()),
+        }
+    }
 }
 
 impl Default for CallInput {
@@ -21,7 +84,7 @@ impl Default for CallInput {
 }
 
 /// Inputs for a call.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The call data of the call.

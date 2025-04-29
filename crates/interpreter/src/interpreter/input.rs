@@ -23,7 +23,7 @@ impl InputsTr for InputsImpl {
 
     fn input(&self) -> &[u8] {
         match &self.input {
-            CallInput::Range(_range) => {
+            CallInput::SharedBuffer { range, buffer } => {
                 // Get slice from parent memory using range
                 todo!("Implement memory range access")
             }
