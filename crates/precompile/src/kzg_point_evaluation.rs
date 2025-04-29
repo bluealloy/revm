@@ -8,7 +8,7 @@ cfg_if::cfg_if! {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
     }
 }
-use primitives::{hex_literal::hex, Bytes};
+use primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
 /// KZG point evaluation precompile, containing address and function to run.
@@ -37,7 +37,7 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(PrecompileError::OutOfGas);
     }
@@ -132,7 +132,7 @@ mod tests {
 
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
-        let output = run(&input.into(), gas).unwrap();
+        let output = run(&input, gas).unwrap();
         assert_eq!(output.gas_used, gas);
         assert_eq!(output.bytes[..], expected_output);
     }

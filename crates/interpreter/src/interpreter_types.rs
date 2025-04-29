@@ -1,4 +1,4 @@
-use crate::{Gas, InstructionResult, InterpreterAction};
+use crate::{CallInput, Gas, InstructionResult, InterpreterAction};
 use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
@@ -31,7 +31,7 @@ pub trait Immediates {
 pub trait InputsTr {
     fn target_address(&self) -> Address;
     fn caller_address(&self) -> Address;
-    fn input(&self) -> &[u8];
+    fn input(&self) -> &CallInput;
     fn call_value(&self) -> U256;
 }
 

@@ -6,7 +6,7 @@ use crate::bls12_381_const::{
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
 };
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use primitives::{Bytes, B256};
+use primitives::B256;
 use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
@@ -24,7 +24,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDR
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
