@@ -12,6 +12,7 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, Database,
 };
+use primitives::StorageValue;
 use core::cmp::Ordering;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
@@ -60,7 +61,7 @@ pub fn load_accounts<
                 } else {
                     journal.warm_account_and_storage(
                         *address,
-                        storage.map(|i| U256::from_be_bytes(i.0)),
+                        storage.map(|i| StorageValue::from_be_bytes(i.0)),
                     )?;
                 }
             }
