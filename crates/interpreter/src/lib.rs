@@ -31,8 +31,8 @@ pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
 };
 pub use interpreter_action::{
-    CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
-    EOFCreateKind, FrameInput, InterpreterAction,
+    CallInput, CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome,
+    EOFCreateInputs, EOFCreateKind, FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};

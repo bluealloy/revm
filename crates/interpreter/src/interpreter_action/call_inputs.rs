@@ -1,12 +1,31 @@
 use core::ops::Range;
 use primitives::{Address, Bytes, U256};
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+
+/// Input enum for a call.
+pub enum CallInput {
+    /// The Range of the call data to be taken from SharedMemory
+    Range(Range<usize>),
+    /// Bytes of the call data.
+    Bytes(Bytes),
+}
+
+impl Default for CallInput {
+    /// Returns a default `CallInput` with an empty `Bytes`.
+    #[inline]
+    fn default() -> Self {
+        CallInput::Bytes(Bytes::default())
+    }
+}
+
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The call data of the call.
-    pub input: Bytes,
+    pub input: CallInput,
     /// The return memory offset where the output of the call is written.
     ///
     /// In EOF, this range is invalid as EOF calls do not write output to memory.
