@@ -83,110 +83,6 @@ where
         self.mainnet.validate_env(evm)
     }
 
-    /*
-
-        let context = evm.ctx();
-       let spec = context.cfg().spec();
-       let block_number = context.block().number();
-    //    if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
-    //        return Ok(());
-    //    } else {
-    //        // The L1-cost fee is only computed for Optimism non-deposit transactions.
-    //        if context.chain().l2_block != block_number {
-    //            // L1 block info is stored in the context for later use.
-    //            // and it will be reloaded from the database if it is not for the current block.
-    //            *context.chain() = L1BlockInfo::try_fetch(context.db(), block_number, spec)?;
-    //        }
-    //    }
-
-    //    let enveloped_tx = context
-    //        .tx()
-    //        .enveloped_tx()
-    //        .expect("all not deposit tx have enveloped tx")
-    //        .clone();
-
-    //    // compute L1 cost
-    //    let mut additional_cost = context.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
-
-    //    if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-    //        let gas_limit = U256::from(context.tx().gas_limit());
-    //        let operator_fee_charge = context
-    //            .chain()
-    //            .operator_fee_charge(&enveloped_tx, gas_limit);
-
-    //        additional_cost = additional_cost.saturating_add(operator_fee_charge);
-    //    }
-
-       let tx_caller = context.tx().caller();
-
-       // Load acc
-       let account = context.journal().load_account_code(tx_caller)?;
-       let account = account.data.info.clone();
-
-       validate_tx_against_account(&account, context, additional_cost)?;
-       Ok(())
-    */
-
-    /***** DEDUCT CALLER
-
-            let ctx = evm.ctx();
-        let spec = ctx.cfg().spec();
-        let caller = ctx.tx().caller();
-        let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-
-        // // If the transaction is a deposit with a `mint` value, add the mint value
-        // // in wei to the caller's balance. This should be persisted to the database
-        // // prior to the rest of execution.
-        // let mut tx_l1_cost = U256::ZERO;
-        // if is_deposit {
-        //     let tx = ctx.tx();
-        //     if let Some(mint) = tx.mint() {
-        //         let mut caller_account = ctx.journal().load_account(caller)?;
-        //         caller_account.info.balance += U256::from(mint);
-        //     }
-        // } else {
-        //     let enveloped_tx = ctx
-        //         .tx()
-        //         .enveloped_tx()
-        //         .expect("all not deposit tx have enveloped tx")
-        //         .clone();
-        //     tx_l1_cost = ctx.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
-        // }
-
-        // We deduct caller max balance after minting and before deducing the
-        // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
-        // self.mainnet.deduct_caller(evm)?;
-
-        // If the transaction is not a deposit transaction, subtract the L1 data fee from the
-        // caller's balance directly after minting the requested amount of ETH.
-        // Additionally deduct the operator fee from the caller's account.
-        // if !is_deposit {
-        //     let ctx = evm.ctx();
-
-        //     // Deduct the operator fee from the caller's account.
-        //     let gas_limit = U256::from(ctx.tx().gas_limit());
-        //     let enveloped_tx = ctx
-        //         .tx()
-        //         .enveloped_tx()
-        //         .expect("all not deposit tx have enveloped tx")
-        //         .clone();
-
-        //     let mut operator_fee_charge = U256::ZERO;
-        //     if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-        //         operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
-        //     }
-
-        //     let mut caller_account = ctx.journal().load_account(caller)?;
-        //     caller_account.info.balance = caller_account
-        //         .info
-        //         .balance
-        //         .saturating_sub(tx_l1_cost.saturating_add(operator_fee_charge));
-        // }
-        // Ok(())
-
-
-    ******/
-
     fn validate_against_state_and_deduct_caller(
         &self,
         evm: &mut Self::Evm,
@@ -235,21 +131,23 @@ where
 
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        // validates account nonce and code
-        validate_account_nonce_and_code(
-            &mut caller_account.info,
-            tx.nonce(),
-            tx.kind().is_call(),
-            is_eip3607_disabled,
-            is_nonce_check_disabled,
-        )?;
-
-        // We deduct caller max balance after minting and before deducing the
-        // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
+        // If the transaction is a deposit with a `mint` value, add the mint value
+        // in wei to the caller's balance. This should be persisted to the database
+        // prior to the rest of execution.
         if is_deposit {
             if let Some(mint) = mint {
-                caller_account.info.balance += U256::from(mint);
+                caller_account.info.balance =
+                    caller_account.info.balance.saturating_add(U256::from(mint));
             }
+        } else {
+            // validates account nonce and code
+            validate_account_nonce_and_code(
+                &mut caller_account.info,
+                tx.nonce(),
+                tx.kind().is_call(),
+                is_eip3607_disabled,
+                is_nonce_check_disabled,
+            )?;
         }
 
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
@@ -258,26 +156,36 @@ where
         // Transfer will be done inside `*_inner` functions.
         if is_balance_check_disabled {
             // Make sure the caller's balance is at least the value of the transaction.
+            // this is not consensus critical, and it is used in testing.
             caller_account.info.balance = caller_account.info.balance.max(tx.value());
-        } else if max_balance_spending > caller_account.info.balance {
+        } else if !is_deposit && max_balance_spending > caller_account.info.balance {
+            // skip max balance check for deposit transactions.
+            // this check for deposit was skipped previously in `validate_tx_against_state` function
             return Err(InvalidTransaction::LackOfFundForMaxFee {
                 fee: Box::new(max_balance_spending),
                 balance: Box::new(caller_account.info.balance),
             }
             .into());
         } else {
-            let effective_balance_spending = tx
-                .effective_balance_spending(basefee, blob_price)
-                .expect("effective balance is always smaller than max balance so it can't overflow")
-                .saturating_add(additional_cost);
+            let effective_balance_spending =
+                tx.effective_balance_spending(basefee, blob_price).expect(
+                    "effective balance is always smaller than max balance so it can't overflow",
+                );
 
             // subtracting max balance spending with value that is going to be deducted later in the call.
             let gas_balance_spending = effective_balance_spending - tx.value();
 
+            // If the transaction is not a deposit transaction, subtract the L1 data fee from the
+            // caller's balance directly after minting the requested amount of ETH.
+            // Additionally deduct the operator fee from the caller's account.
+            //
+            // In case of deposit additional cost will be zero.
+            let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
+
             caller_account.info.balance = caller_account
                 .info
                 .balance
-                .saturating_sub(gas_balance_spending);
+                .saturating_sub(op_gas_balance_spending);
         }
 
         Ok(())
