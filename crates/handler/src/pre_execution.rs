@@ -183,11 +183,7 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
-    let spec = context.cfg().spec().into();
     let tx = context.tx();
-    if !spec.is_enabled_in(SpecId::PRAGUE) {
-        return Ok(0);
-    }
     // Return if there is no auth list.
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
