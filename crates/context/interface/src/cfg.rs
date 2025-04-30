@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{Address, hardfork::SpecId, TxKind, U256};
+use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
@@ -56,7 +56,5 @@ pub enum CreateScheme {
         salt: U256,
     },
     /// Custom scheme where we set up the original address
-    Custom {
-        address: Address,
-    }
+    Custom { address: Address },
 }
