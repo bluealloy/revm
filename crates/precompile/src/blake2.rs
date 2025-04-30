@@ -11,8 +11,6 @@ pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_addre
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    let input = &input[..];
-
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Blake2WrongLength);
     }

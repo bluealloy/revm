@@ -22,5 +22,8 @@ pub fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
-    Ok(PrecompileOutput::new(gas_used, Bytes::copy_from_slice(input)))
+    Ok(PrecompileOutput::new(
+        gas_used,
+        Bytes::copy_from_slice(input),
+    ))
 }
