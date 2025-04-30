@@ -108,13 +108,12 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let r;
         let input_bytes = match &inputs.input {
             CallInput::SharedBuffer(range) => {
-                r = context
-                    .local()
-                    .shared_memory_buffer_slice(range.clone())
-                    .expect("shared memory buffer slice should be valid");
-                // Get from parent memory (need access to memory)
-                //todo!("Implement memory range access")
-                r.as_ref()
+                if let Some(slice) = context.local().shared_memory_buffer_slice(range.clone()) {
+                    r = slice;
+                    r.as_ref()
+                } else {
+                    &[]
+                }
             }
             CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
         };

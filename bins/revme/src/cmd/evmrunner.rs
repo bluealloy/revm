@@ -1,9 +1,9 @@
 use clap::Parser;
-use database::BenchmarkDB;
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    primitives::{address, hex, Address, TxKind},
+    primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::io::Error as IoError;
@@ -57,8 +57,6 @@ pub struct Cmd {
 impl Cmd {
     /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
-        const CALLER: Address = address!("0000000000000000000000000000000000000001");
-
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
             // Check if path exists.
             if !path.exists() {
@@ -78,15 +76,18 @@ impl Cmd {
 
         let mut db = BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(bytecode.into())?);
 
-        let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
+        let nonce = db
+            .basic(BENCH_CALLER)
+            .unwrap()
+            .map_or(0, |account| account.nonce);
 
         // BenchmarkDB is dummy state that implements Database trait.
         // The bytecode is deployed at zero address.
         let mut evm = Context::mainnet()
             .with_db(db)
             .modify_tx_chained(|tx| {
-                tx.caller = CALLER;
-                tx.kind = TxKind::Call(Address::ZERO);
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
                 tx.data = input;
                 tx.nonce = nonce;
             })

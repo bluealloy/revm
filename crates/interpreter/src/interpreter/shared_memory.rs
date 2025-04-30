@@ -366,15 +366,12 @@ impl SharedMemory {
     ) {
         let mut buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
         let (src, dst) = buffer.split_at_mut(self.my_checkpoint);
-        unsafe {
-            set_data(
-                dst,
-                src.get_mut(data_range).unwrap(),
-                memory_offset,
-                data_offset,
-                len,
-            )
+        let src = if data_range.is_empty() {
+            &mut []
+        } else {
+            src.get_mut(data_range).unwrap()
         };
+        unsafe { set_data(dst, src, memory_offset, data_offset, len) };
     }
 
     /// Copies elements from one part of the memory to another part of itself.

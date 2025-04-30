@@ -3,7 +3,7 @@ use primitives::{Address, Bytes, U256};
 
 /// Input enum for a call.
 ///
-/// As CallInput uses shared memory buffer it can get overriden if not used directly when call happens.
+/// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallInput {
@@ -12,7 +12,7 @@ pub enum CallInput {
     ///
     /// # Warning
     ///
-    /// Use it with causion, CallInput shared buffer can be overriden if context from child call is returned so
+    /// Use it with causion, CallInput shared buffer can be overridden if context from child call is returned so
     /// recomendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
     SharedBuffer(Range<usize>),
     /// Bytes of the call data.
