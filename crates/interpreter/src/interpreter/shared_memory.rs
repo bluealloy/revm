@@ -426,19 +426,19 @@ unsafe fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: us
         dst.get_mut(dst_offset..dst_offset + len).unwrap().fill(0);
         return;
     }
-    let data_end = min(src_offset + len, src.len());
-    let data_len = data_end - src_offset;
-    debug_assert!(src_offset < src.len() && data_end <= src.len());
-    let data = unsafe { src.get_unchecked(src_offset..data_end) };
+    let src_end = min(src_offset + len, src.len());
+    let src_len = src_end - src_offset;
+    debug_assert!(src_offset < src.len() && src_end <= src.len());
+    let data = unsafe { src.get_unchecked(src_offset..src_end) };
     unsafe {
-        dst.get_unchecked_mut(dst_offset..dst_offset + data_len)
+        dst.get_unchecked_mut(dst_offset..dst_offset + src_len)
             .copy_from_slice(data)
     };
 
     // Nullify rest of memory slots
     // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
     unsafe {
-        dst.get_unchecked_mut(dst_offset + data_len..dst_offset + len - data_len)
+        dst.get_unchecked_mut(dst_offset + src_len..dst_offset + len)
             .fill(0)
     };
 }
