@@ -477,7 +477,7 @@ mod tests {
     use super::*;
     use crate::{api::default_ctx::OpContext, DefaultOp, OpBuilder};
     use revm::{
-        context::{Context, TransactionType},
+        context::{BlockEnv, Context, TransactionType},
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
@@ -678,6 +678,33 @@ mod tests {
         // Check the account balance is updated.
         let account = evm.ctx().journal().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1010));
+    }
+
+    #[test]
+    fn test_reload_l1_block_info_isthmus() {
+        const BLOCK_NUM: u64 = 100;
+
+        let ctx = Context::op()
+            .with_chain(L1BlockInfo {
+                l2_block: BLOCK_NUM + 1, // ahead by one block
+                ..Default::default()
+            })
+            .with_block(BlockEnv {
+                number: BLOCK_NUM,
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+
+        let mut evm = ctx.build_op();
+
+        assert_ne!(evm.ctx().chain().l2_block, BLOCK_NUM);
+
+        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        handler
+            .validate_against_state_and_deduct_caller(&mut evm)
+            .unwrap();
+
+        assert_eq!(evm.ctx().chain().l2_block, BLOCK_NUM);
     }
 
     #[test]
