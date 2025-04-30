@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-context-v3.0.1...revm-context-v4.0.0) - 2025-04-30
+
+### Added
+
+- *(Handler)* merge state validation with deduct_caller ([#2460](https://github.com/bluealloy/revm/pull/2460))
+- add chain_ref method to ContextTr trait ([#2450](https://github.com/bluealloy/revm/pull/2450))
+- *(tx)* Add Either RecoveredAuthorization ([#2448](https://github.com/bluealloy/revm/pull/2448))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- use HashMap::default in LocalContext ([#2451](https://github.com/bluealloy/revm/pull/2451))
+
+### Other
+
+- remove default capacity on journal reverts ([#2449](https://github.com/bluealloy/revm/pull/2449))
+- *(journal)* flatten journal entries ([#2440](https://github.com/bluealloy/revm/pull/2440))
+- clone_from precompile addresses ([#2438](https://github.com/bluealloy/revm/pull/2438))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.1](https://github.com/bluealloy/revm/compare/revm-context-v3.0.0...revm-context-v3.0.1) - 2025-04-15
 
 ### Other
