@@ -346,6 +346,7 @@ where
                 init_code_hash = keccak256(&inputs.init_code);
                 inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
             }
+            CreateScheme::Custom { address } => address,
         };
 
         // warm load account.
