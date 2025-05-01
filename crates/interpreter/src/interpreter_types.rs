@@ -90,6 +90,9 @@ pub trait MemoryTr {
     /// Panics if range is out of scope of allocated memory.
     fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
 
+    /// Offset of local context of memory.
+    fn local_memory_offset(&self) -> usize;
+
     /// Sets memory data at given offset.
     ///
     /// # Panics

@@ -64,6 +64,10 @@ impl MemoryTr for SharedMemory {
         self.slice_range(range)
     }
 
+    fn local_memory_offset(&self) -> usize {
+        self.my_checkpoint
+    }
+
     fn set_data_from_global(
         &mut self,
         memory_offset: usize,

@@ -103,7 +103,13 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
             }
             CallInput::SharedBuffer(range) => {
                 let input_slice = interpreter.memory.global_slice(range.clone());
-                unsafe { ptr::copy_nonoverlapping(input_slice.as_ptr(), word.as_mut_ptr(), count) };
+                unsafe {
+                    ptr::copy_nonoverlapping(
+                        input_slice.as_ptr().add(offset),
+                        word.as_mut_ptr(),
+                        count,
+                    )
+                };
             }
         }
     }

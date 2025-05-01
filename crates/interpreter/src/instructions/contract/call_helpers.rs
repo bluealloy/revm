@@ -13,7 +13,12 @@ pub fn get_memory_input_and_out_ranges(
 ) -> Option<(Range<usize>, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
-    let in_range = resize_memory(interpreter, in_offset, in_len)?;
+    let mut in_range = resize_memory(interpreter, in_offset, in_len)?;
+
+    if !in_range.is_empty() {
+        let offset = interpreter.memory.local_memory_offset();
+        in_range = in_range.start.saturating_add(offset)..in_range.end.saturating_add(offset);
+    }
 
     let ret_range = resize_memory(interpreter, out_offset, out_len)?;
     Some((in_range, ret_range))
