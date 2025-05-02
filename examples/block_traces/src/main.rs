@@ -9,7 +9,7 @@ use revm::{
     database::{AlloyDB, CacheDB, StateBuilder},
     database_interface::WrapDatabaseAsync,
     inspector::{inspectors::TracerEip3155, InspectEvm},
-    primitives::TxKind,
+    primitives::{hardfork::SpecId, TxKind},
     Context, MainBuilder, MainContext,
 };
 use std::fs::OpenOptions;
@@ -68,7 +68,8 @@ async fn main() -> anyhow::Result<()> {
     let prev_id: BlockId = previous_block_number.into();
     // SAFETY: This cannot fail since this is in the top-level tokio runtime
 
-    let state_db = WrapDatabaseAsync::new(AlloyDB::new(client, prev_id)).unwrap();
+    let state_db =
+        WrapDatabaseAsync::new(AlloyDB::new(client, prev_id, SpecId::default())).unwrap();
     let cache_db: CacheDB<_> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let ctx = Context::mainnet()

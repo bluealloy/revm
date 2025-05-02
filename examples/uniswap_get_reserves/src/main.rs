@@ -8,7 +8,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
-    primitives::{address, TxKind, U256},
+    primitives::{address, hardfork::SpecId, TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
@@ -18,7 +18,9 @@ async fn main() -> anyhow::Result<()> {
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
     let provider = ProviderBuilder::new().connect(rpc_url).await?;
 
-    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let alloy_db =
+        WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest(), SpecId::default()))
+            .unwrap();
     let cache_db = CacheDB::new(alloy_db);
 
     // ----------------------------------------------------------- //

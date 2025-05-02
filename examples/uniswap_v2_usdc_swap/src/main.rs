@@ -9,7 +9,9 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, keccak256, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
+    primitives::{
+        address, hardfork::SpecId, keccak256, Address, Bytes, TxKind, KECCAK_EMPTY, U256,
+    },
     state::AccountInfo,
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -23,7 +25,10 @@ async fn main() -> Result<()> {
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27";
     let provider = ProviderBuilder::new().connect(rpc_url).await?.erased();
 
-    let alloy_db = WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest())).unwrap();
+    let alloy_db =
+        WrapDatabaseAsync::new(AlloyDB::new(provider, BlockId::latest(), SpecId::default()))
+            .unwrap();
+
     let mut cache_db = CacheDB::new(alloy_db);
 
     // Random empty account

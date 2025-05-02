@@ -85,7 +85,7 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
 
         let empty_acc = SpecId::is_enabled_in(self.spec_id, SpecId::SPURIOUS_DRAGON);
         if empty_acc && nonce == 0 && balance.is_zero() && code.is_empty() {
-            return Ok(None);
+            Ok(None)
         } else {
             Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
         }
