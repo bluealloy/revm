@@ -6,7 +6,7 @@ use alloy_provider::{
 use alloy_transport::TransportError;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
-use primitives::{Address, B256, U256};
+use primitives::{hardfork::SpecId, Address, B256, U256};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
@@ -39,15 +39,17 @@ pub struct AlloyDB<N: Network, P: Provider<N>> {
     /// The block number on which the queries will be based on.
     block_number: BlockId,
     _marker: core::marker::PhantomData<fn() -> N>,
+    spec_id: SpecId,
 }
 
 impl<N: Network, P: Provider<N>> AlloyDB<N, P> {
     /// Creates a new AlloyDB instance, with a [Provider] and a block.
-    pub fn new(provider: P, block_number: BlockId) -> Self {
+    pub fn new(provider: P, block_number: BlockId, spec_id: SpecId) -> Self {
         Self {
             provider,
             block_number,
             _marker: core::marker::PhantomData,
+            spec_id,
         }
     }
 
@@ -78,10 +80,15 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
 
         let balance = balance?;
         let code = Bytecode::new_raw(code?.0.into());
-        let code_hash = code.hash_slow();
         let nonce = nonce?;
+        let code_hash = code.hash_slow();
 
-        Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
+        let empty_acc = SpecId::is_enabled_in(self.spec_id, SpecId::SPURIOUS_DRAGON);
+        if empty_acc && nonce == 0 && balance.is_zero() && code.is_empty() {
+            return Ok(None);
+        } else {
+            Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
+        }
     }
 
     async fn block_hash_async_ref(&self, number: u64) -> Result<B256, Self::Error> {
@@ -122,7 +129,7 @@ mod tests {
                 .parse()
                 .unwrap(),
         );
-        let alloydb = AlloyDB::new(client, BlockId::from(16148323));
+        let alloydb = AlloyDB::new(client, BlockId::from(16148323), SpecId::default());
         let wrapped_alloydb = WrapDatabaseAsync::new(alloydb).unwrap();
 
         // ETH/USDT pair on Uniswap V2
