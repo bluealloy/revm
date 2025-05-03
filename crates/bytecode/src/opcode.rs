@@ -206,7 +206,7 @@ impl OpCode {
 /// Information about opcode, such as name, and stack inputs and outputs
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
-    /// Invariant: `(name_ptr, name_len)` is a [`&'static str`][str]
+    /// Invariant: `(name_ptr, name_len)` is a [`&'static str`][str].
     ///
     /// It is a shorted variant of [`str`] as
     /// the name length is always less than 256 characters.
@@ -228,6 +228,10 @@ pub struct OpCodeInfo {
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
 }
+
+// SAFETY: The `NonNull` is just a `&'static str`.
+unsafe impl Send for OpCodeInfo {}
+unsafe impl Sync for OpCodeInfo {}
 
 impl fmt::Debug for OpCodeInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -355,7 +359,7 @@ macro_rules! opcodes {
         )*}
 
         /// Maps each opcode to its info.
-        pub const OPCODE_INFO: [Option<OpCodeInfo>; 256] = {
+        pub static OPCODE_INFO: [Option<OpCodeInfo>; 256] = {
             let mut map = [None; 256];
             let mut prev: u8 = 0;
             $(

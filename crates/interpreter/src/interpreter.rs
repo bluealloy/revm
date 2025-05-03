@@ -17,7 +17,7 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    interpreter_types::*, Gas, Host, Instruction, InstructionResult, InstructionTable,
+    interpreter_types::*, CallInput, Gas, Host, Instruction, InstructionResult, InstructionTable,
     InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -86,7 +86,7 @@ impl Default for Interpreter<EthInterpreter> {
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,
-                input: Bytes::default(),
+                input: CallInput::default(),
                 call_value: U256::ZERO,
             },
             false,
@@ -260,7 +260,7 @@ mod tests {
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,
-                input: Bytes::default(),
+                input: CallInput::Bytes(Bytes::default()),
                 call_value: U256::ZERO,
             },
             false,
