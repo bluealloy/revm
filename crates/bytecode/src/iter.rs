@@ -16,7 +16,7 @@ impl<'a> BytecodeIterator<'a> {
     /// Creates a new iterator from a bytecode reference.
     #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
-        let bytes = bytecode.original_byte_slice();
+        let bytes = &bytecode.bytecode()[..];
         Self {
             start: bytes.as_ptr(),
             bytes: bytes.iter(),
