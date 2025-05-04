@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Default)]
-pub struct ReturnDataImpl(Bytes);
+pub struct ReturnDataImpl(pub Bytes);
 
 impl ReturnData for ReturnDataImpl {
     fn buffer(&self) -> &[u8] {
