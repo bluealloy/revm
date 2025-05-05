@@ -153,6 +153,7 @@ where
                 ItemOrResult::Item(mut init) => {
                     let (context, inspector) = evm.ctx_inspector();
                     if let Some(output) = frame_start(context, inspector, &mut init) {
+                        frame.new_memory_context();
                         output
                     } else {
                         match self.frame_init(frame, evm, init.clone())? {

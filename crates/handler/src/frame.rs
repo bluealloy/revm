@@ -47,6 +47,9 @@ pub trait Frame: Sized {
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
+    // Temporary method to fix previous version of inspector.
+    fn new_memory_context(&mut self);
+
     fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
     fn return_result(
@@ -101,6 +104,10 @@ where
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         self.init(evm, frame_input)
+    }
+
+    fn new_memory_context(&mut self) {
+        self.memory.borrow_mut().new_context();
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
