@@ -8,7 +8,6 @@ use revm::{
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{borrow::Cow, fs};
 
 #[derive(Debug, thiserror::Error)]
@@ -94,12 +93,17 @@ impl Cmd {
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
-            // Microbenchmark
-            let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-            microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.replay().unwrap();
+            let mut criterion = criterion::Criterion::default()
+                .warm_up_time(std::time::Duration::from_millis(300))
+                .measurement_time(std::time::Duration::from_secs(2))
+                .without_plots();
+            let mut criterion_group = criterion.benchmark_group("revme");
+            criterion_group.bench_function("evm", |b| {
+                b.iter(|| {
+                    let _ = evm.replay().unwrap();
+                })
             });
+            criterion_group.finish();
 
             return Ok(());
         }
