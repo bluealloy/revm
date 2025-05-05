@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v18.0.0...revm-interpreter-v19.0.0) - 2025-05-05
+
+### Added
+
+- Add a custom address to the CreateScheme. ([#2464](https://github.com/bluealloy/revm/pull/2464))
+- replace input Bytes and refactored code where required ([#2453](https://github.com/bluealloy/revm/pull/2453))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- *(inspector)* fix call return with Some ([#2469](https://github.com/bluealloy/revm/pull/2469))
+- skip account list for legacy ([#2400](https://github.com/bluealloy/revm/pull/2400))
+
+### Other
+
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- Replace InterpreterAction with InterpreterTypes::Output ([#2424](https://github.com/bluealloy/revm/pull/2424))
+- simplify reading signed integers ([#2456](https://github.com/bluealloy/revm/pull/2456))
+- *(revm-interpreter)* remove unused deps ([#2447](https://github.com/bluealloy/revm/pull/2447))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v17.0.0...revm-interpreter-v18.0.0) - 2025-04-09
 
 ### Added

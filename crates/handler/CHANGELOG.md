@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v3.0.1...revm-handler-v4.0.0) - 2025-05-05
+
+### Added
+
+- Add a custom address to the CreateScheme. ([#2464](https://github.com/bluealloy/revm/pull/2464))
+- remove spec id verification on `apply_eip7702_auth_list` ([#2466](https://github.com/bluealloy/revm/pull/2466))
+- *(Handler)* merge state validation with deduct_caller ([#2460](https://github.com/bluealloy/revm/pull/2460))
+- replace input Bytes and refactored code where required ([#2453](https://github.com/bluealloy/revm/pull/2453))
+- *(tx)* Add Either RecoveredAuthorization ([#2448](https://github.com/bluealloy/revm/pull/2448))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- *(eof)* extdelegate bytecode check after eip7702 load ([#2417](https://github.com/bluealloy/revm/pull/2417))
+- skip account list for legacy ([#2400](https://github.com/bluealloy/revm/pull/2400))
+
+### Other
+
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v2.0.0...revm-handler-v3.0.0) - 2025-04-09
 
 ### Added

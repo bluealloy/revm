@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v3.0.1...revm-inspector-v4.0.0) - 2025-05-05
+
+### Fixed
+
+- *(inspector)* fix call return with Some ([#2469](https://github.com/bluealloy/revm/pull/2469))
+- *(tracing)* Fix the ordering of EOFCREATE frame traces ([#2398](https://github.com/bluealloy/revm/pull/2398))
+
+### Other
+
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- *(journal)* flatten journal entries ([#2440](https://github.com/bluealloy/revm/pull/2440))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [3.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v3.0.0...revm-inspector-v3.0.1) - 2025-04-15
 
 ### Other
