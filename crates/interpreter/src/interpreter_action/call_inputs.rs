@@ -12,8 +12,8 @@ pub enum CallInput {
     ///
     /// # Warning
     ///
-    /// Use it with causion, CallInput shared buffer can be overridden if context from child call is returned so
-    /// recomendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
+    /// Use it with caution, CallInput shared buffer can be overridden if context from child call is returned so
+    /// recommendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
     SharedBuffer(Range<usize>),
     /// Bytes of the call data.
     Bytes(Bytes),
