@@ -146,15 +146,11 @@ impl SharedMemory {
         }
     }
 
-    /// Prepares the shared memory for returning from child context.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `new_child_context` was not called before.
+    /// Prepares the shared memory for returning from child context. Do nothing if there is no child context.
     #[inline]
     pub fn free_child_context(&mut self) {
         let Some(child_checkpoint) = self.child_checkpoint.take() else {
-            panic!("free_child_context was called without new_child_context");
+            return;
         };
         unsafe {
             self.buffer.borrow_mut().set_len(child_checkpoint);
