@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 pub struct ReturnDataImpl(Bytes);
 
 impl ReturnData for ReturnDataImpl {
-    fn buffer(&self) -> &[u8] {
-        self.0.as_ref()
+    fn buffer(&self) -> &Bytes {
+        &self.0
     }
 
     fn set_buffer(&mut self, bytes: Bytes) {

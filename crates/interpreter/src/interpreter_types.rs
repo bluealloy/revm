@@ -257,7 +257,7 @@ pub trait EofCodeInfo {
 /// Returns return data.
 pub trait ReturnData {
     /// Returns return data.
-    fn buffer(&self) -> &[u8];
+    fn buffer(&self) -> &Bytes;
 
     /// Sets return buffer.
     fn set_buffer(&mut self, bytes: Bytes);

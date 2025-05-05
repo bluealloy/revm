@@ -6,9 +6,9 @@ use revm::{
     primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::io::Error as IoError;
 use std::path::PathBuf;
 use std::{borrow::Cow, fs};
+use std::{io::Error as IoError, time::Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -108,6 +108,7 @@ impl Cmd {
             return Ok(());
         }
 
+        let time = Instant::now();
         let out = if self.trace {
             evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
@@ -115,11 +116,13 @@ impl Cmd {
             println!("Result: {:#?}", out.result);
             out
         };
+        let time = time.elapsed();
 
         if self.state {
             println!("State: {:#?}", out.state);
         }
 
+        println!("Elapsed: {:?}", time);
         Ok(())
     }
 }

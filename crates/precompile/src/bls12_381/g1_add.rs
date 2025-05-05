@@ -30,7 +30,7 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let [b_x, b_y] = remove_g1_padding(&input[PADDED_G1_LENGTH..])?;
 
     // NB: There is no subgroup check for the G1 addition precompile because the time to do the subgroup
-    // check would be more than the time it takes to to do the g1 addition.
+    // check would be more than the time it takes to do the g1 addition.
     //
     // Users should be careful to note whether the points being added are indeed in the right subgroup.
     let a_aff = &read_g1_no_subgroup_check(a_x, a_y)?;
