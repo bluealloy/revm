@@ -1,15 +1,14 @@
 use clap::Parser;
-use database::BenchmarkDB;
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::io::Error as IoError;
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{borrow::Cow, fs};
+use std::{io::Error as IoError, time::Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -85,24 +84,30 @@ impl Cmd {
         let mut evm = Context::mainnet()
             .with_db(db)
             .modify_tx_chained(|tx| {
-                tx.caller = CALLER;
-                tx.kind = TxKind::Call(Address::ZERO);
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
                 tx.data = input;
                 tx.nonce = nonce;
             })
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
-            // Microbenchmark
-            let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-            microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.replay().unwrap();
+            let mut criterion = criterion::Criterion::default()
+                .warm_up_time(std::time::Duration::from_millis(300))
+                .measurement_time(std::time::Duration::from_secs(2))
+                .without_plots();
+            let mut criterion_group = criterion.benchmark_group("revme");
+            criterion_group.bench_function("bytecode", |b| {
+                b.iter(|| {
+                    let _ = evm.replay().unwrap();
+                })
             });
+            criterion_group.finish();
 
             return Ok(());
         }
 
+        let time = Instant::now();
         let out = if self.trace {
             evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
@@ -110,11 +115,13 @@ impl Cmd {
             println!("Result: {:#?}", out.result);
             out
         };
+        let time = time.elapsed();
 
         if self.state {
             println!("State: {:#?}", out.state);
         }
 
+        println!("Elapsed: {:?}", time);
         Ok(())
     }
 }
