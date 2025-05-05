@@ -20,7 +20,7 @@ Options:
 
 ## Running eth tests
 
-Eth tests are suite of tests from Ethereum Fondation that are used to test EVM implementations.
+Eth tests are suite of tests from Ethereum Foundation that are used to test EVM implementations.
 Part of these tests are included in revm repository in `tests` folder.
 
 Download eth tests `git clone https://github.com/ethereum/tests`. They can be run with `revme` with command:

@@ -1,4 +1,4 @@
-use crate::handler::Erc20MainetHandler;
+use crate::handler::Erc20MainnetHandler;
 use revm::{
     context::JournalOutput,
     context_interface::{
@@ -26,7 +26,7 @@ where
         >,
     >,
 {
-    Erc20MainetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new().run(evm)
+    Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new().run(evm)
 }
 
 pub fn transact_erc20evm_commit<EVM>(
