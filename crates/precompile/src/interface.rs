@@ -26,7 +26,7 @@ impl PrecompileOutput {
 }
 
 /// Precompile function type. Takes input and gas limit and returns precompile result.
-pub type PrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
+pub type PrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 /// Precompile error type.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

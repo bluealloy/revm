@@ -3,7 +3,7 @@ use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    primitives::{address, hex, Address, TxKind},
+    primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::path::PathBuf;
@@ -56,8 +56,6 @@ pub struct Cmd {
 impl Cmd {
     /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
-        const CALLER: Address = address!("0000000000000000000000000000000000000001");
-
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
             // Check if path exists.
             if !path.exists() {
@@ -77,7 +75,10 @@ impl Cmd {
 
         let mut db = BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(bytecode.into())?);
 
-        let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
+        let nonce = db
+            .basic(BENCH_CALLER)
+            .unwrap()
+            .map_or(0, |account| account.nonce);
 
         // BenchmarkDB is dummy state that implements Database trait.
         // The bytecode is deployed at zero address.
@@ -97,7 +98,7 @@ impl Cmd {
                 .measurement_time(std::time::Duration::from_secs(2))
                 .without_plots();
             let mut criterion_group = criterion.benchmark_group("revme");
-            criterion_group.bench_function("bytecode", |b| {
+            criterion_group.bench_function("evm", |b| {
                 b.iter(|| {
                     let _ = evm.replay().unwrap();
                 })

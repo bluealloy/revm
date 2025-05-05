@@ -5,23 +5,23 @@ use crate::{
 };
 use context_interface::{context::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
-use primitives::{hardfork::SpecId::*, Bytes, U256};
+use primitives::{hardfork::SpecId::*, U256};
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
-) -> Option<(Bytes, Range<usize>)> {
+) -> Option<(Range<usize>, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
-    let in_range = resize_memory(interpreter, in_offset, in_len)?;
+    let mut in_range = resize_memory(interpreter, in_offset, in_len)?;
 
-    let mut input = Bytes::new();
     if !in_range.is_empty() {
-        input = Bytes::copy_from_slice(interpreter.memory.slice(in_range).as_ref());
+        let offset = interpreter.memory.local_memory_offset();
+        in_range = in_range.start.saturating_add(offset)..in_range.end.saturating_add(offset);
     }
 
     let ret_range = resize_memory(interpreter, out_offset, out_len)?;
-    Some((input, ret_range))
+    Some((in_range, ret_range))
 }
 
 /// Resize memory and return range of memory.

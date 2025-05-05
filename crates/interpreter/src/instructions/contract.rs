@@ -543,7 +543,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
+            input: CallInput::SharedBuffer(input),
             gas_limit,
             target_address: to,
             caller: interpreter.input.target_address(),
@@ -596,7 +596,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
+            input: CallInput::SharedBuffer(input),
             gas_limit,
             target_address: interpreter.input.target_address(),
             caller: interpreter.input.target_address(),
@@ -643,7 +643,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
+            input: CallInput::SharedBuffer(input),
             gas_limit,
             target_address: interpreter.input.target_address(),
             caller: interpreter.input.caller_address(),
@@ -688,7 +688,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Call host to interact with target contract
     interpreter.control.set_next_action(
         InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
+            input: CallInput::SharedBuffer(input),
             gas_limit,
             target_address: to,
             caller: interpreter.input.target_address(),

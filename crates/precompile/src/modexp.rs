@@ -19,7 +19,7 @@ pub const BERLIN: PrecompileWithAddress =
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-pub fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
@@ -27,7 +27,7 @@ pub fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-2565>
 /// Gas cost of berlin is modified from byzantium.
-pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_byzantium_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap().into();
+            let input = hex::decode(test.input).unwrap();
             let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
@@ -371,7 +371,7 @@ mod tests {
     #[test]
     fn test_berlin_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BERLIN_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap().into();
+            let input = hex::decode(test.input).unwrap();
             let res = berlin_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(

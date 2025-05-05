@@ -21,14 +21,8 @@ impl InputsTr for InputsImpl {
         self.caller_address
     }
 
-    fn input(&self) -> &[u8] {
-        match &self.input {
-            CallInput::Range(_range) => {
-                // Get slice from parent memory using range
-                todo!("Implement memory range access")
-            }
-            CallInput::Bytes(bytes) => bytes.as_ref(),
-        }
+    fn input(&self) -> &CallInput {
+        &self.input
     }
 
     fn call_value(&self) -> U256 {

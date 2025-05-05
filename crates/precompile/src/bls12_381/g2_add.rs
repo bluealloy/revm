@@ -5,7 +5,6 @@ use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_ADD_ADDRESS, g2_add);
@@ -16,7 +15,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_ADD_ADDRE
 /// Output is an encoding of addition operation result - single G2 point (`256`
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
-pub fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

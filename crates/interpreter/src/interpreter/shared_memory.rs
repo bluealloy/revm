@@ -1,3 +1,4 @@
+use super::MemoryTr;
 use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,
@@ -6,8 +7,6 @@ use core::{
 };
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
-
-use super::MemoryTr;
 
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
@@ -63,6 +62,35 @@ impl MemoryTr for SharedMemory {
 
     fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
         self.slice_range(range)
+    }
+
+    fn local_memory_offset(&self) -> usize {
+        self.my_checkpoint
+    }
+
+    fn set_data_from_global(
+        &mut self,
+        memory_offset: usize,
+        data_offset: usize,
+        len: usize,
+        data_range: Range<usize>,
+    ) {
+        self.global_to_local_set_data(memory_offset, data_offset, len, data_range);
+    }
+
+    /// Returns a byte slice of the memory region at the given offset.
+    ///
+    /// # Safety
+    ///
+    /// In debug this will panic on out of bounds. In release it will silently fail.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
+        let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
+        Ref::map(buffer, |b| match b.get(range) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+        })
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
@@ -212,6 +240,21 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
+    pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
+        let buffer = self.buffer.borrow(); // Borrow the inner Vec<u8>
+        Ref::map(buffer, |b| match b.get(range) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+        })
+    }
+
+    /// Returns a byte slice of the memory region at the given offset.
+    ///
+    /// # Panics
+    ///
+    /// Panics on out of bounds.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
         let buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
         RefMut::map(buffer, |b| {
@@ -307,22 +350,28 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
-        if data_offset >= data.len() {
-            // Nullify all memory slots
-            self.slice_mut(memory_offset, len).fill(0);
-            return;
-        }
-        let data_end = min(data_offset + len, data.len());
-        let data_len = data_end - data_offset;
-        debug_assert!(data_offset < data.len() && data_end <= data.len());
-        let data = unsafe { data.get_unchecked(data_offset..data_end) };
-        self.slice_mut(memory_offset, data_len)
-            .copy_from_slice(data);
+        let mut dst = self.context_memory_mut();
+        unsafe { set_data(dst.as_mut(), data, memory_offset, data_offset, len) };
+    }
 
-        // Nullify rest of memory slots
-        // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
-        self.slice_mut(memory_offset + data_len, len - data_len)
-            .fill(0);
+    /// Set data from global memory to local memory. If global range is smaller than len, zeroes the rest.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn global_to_local_set_data(
+        &mut self,
+        memory_offset: usize,
+        data_offset: usize,
+        len: usize,
+        data_range: Range<usize>,
+    ) {
+        let mut buffer = self.buffer.borrow_mut(); // Borrow the inner Vec<u8> mutably
+        let (src, dst) = buffer.split_at_mut(self.my_checkpoint);
+        let src = if data_range.is_empty() {
+            &mut []
+        } else {
+            src.get_mut(data_range).unwrap()
+        };
+        unsafe { set_data(dst, src, memory_offset, data_offset, len) };
     }
 
     /// Copies elements from one part of the memory to another part of itself.
@@ -355,6 +404,40 @@ impl SharedMemory {
             None => debug_unreachable!("Context memory should be always valid"),
         })
     }
+}
+
+/// Copies data from src to dst taking into account the offsets and len.
+///
+/// If src does not have enough data, it nullifies the rest of dst that is not copied.
+///
+/// # Safety
+///
+/// Assumes that dst has enough space to copy the data.
+/// Assumes that src has enough data to copy.
+/// Assumes that dst_offset and src_offset are in bounds.
+/// Assumes that dst and src are valid.
+/// Assumes that dst and src do not overlap.
+unsafe fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, len: usize) {
+    if src_offset >= src.len() {
+        // Nullify all memory slots
+        dst.get_mut(dst_offset..dst_offset + len).unwrap().fill(0);
+        return;
+    }
+    let src_end = min(src_offset + len, src.len());
+    let src_len = src_end - src_offset;
+    debug_assert!(src_offset < src.len() && src_end <= src.len());
+    let data = unsafe { src.get_unchecked(src_offset..src_end) };
+    unsafe {
+        dst.get_unchecked_mut(dst_offset..dst_offset + src_len)
+            .copy_from_slice(data)
+    };
+
+    // Nullify rest of memory slots
+    // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
+    unsafe {
+        dst.get_unchecked_mut(dst_offset + src_len..dst_offset + len)
+            .fill(0)
+    };
 }
 
 /// Returns number of words what would fit to provided number of bytes,
