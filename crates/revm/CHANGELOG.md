@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [22.0.2](https://github.com/bluealloy/revm/compare/revm-v22.0.1...revm-v22.0.2) - 2025-05-05
+
+### Other
+
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+
 ## [22.0.1](https://github.com/bluealloy/revm/compare/revm-v22.0.0..revm-v22.0.1) - 2025-04-15
 
 ### Other

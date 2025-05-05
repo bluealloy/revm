@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0](https://github.com/bluealloy/revm/compare/op-revm-v3.0.2...op-revm-v3.1.0) - 2025-05-05
+
+### Added
+
+- *(Handler)* merge state validation with deduct_caller ([#2460](https://github.com/bluealloy/revm/pull/2460))
+- *(tx)* Add Either RecoveredAuthorization ([#2448](https://github.com/bluealloy/revm/pull/2448))
+- add precompiles getter to OpPrecompiles ([#2444](https://github.com/bluealloy/revm/pull/2444))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+
+### Other
+
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+
 ## [3.0.2](https://github.com/bluealloy/revm/compare/op-revm-v3.0.1...op-revm-v3.0.2) - 2025-04-15
 
 ### Other
