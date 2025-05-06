@@ -697,7 +697,7 @@ mod tests {
         const L1_BLOB_BASE_FEE_SCALAR: u64 = 4;
         const L1_FEE_SCALARS: U256 = U256::from_limbs([
             0,
-            (L1_BASE_FEE_SCALAR << 64 - BASE_FEE_SCALAR_OFFSET * 2) | L1_BLOB_BASE_FEE_SCALAR,
+            (L1_BASE_FEE_SCALAR << (64 - BASE_FEE_SCALAR_OFFSET * 2)) | L1_BLOB_BASE_FEE_SCALAR,
             0,
             0,
         ]);

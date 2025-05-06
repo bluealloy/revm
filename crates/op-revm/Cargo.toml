@@ -49,9 +49,14 @@ std = [
 	"once_cell/std",
 	"sha2/std",
 	"serde_json/std",
+	"alloy-primitives/std"
 ]
 hashbrown = ["revm/hashbrown"]
-serde = ["dep:serde", "revm/serde"]
+serde = [
+	"dep:serde",
+	"revm/serde",
+	"alloy-primitives/serde"
+]
 portable = ["revm/portable"]
 
 dev = [
