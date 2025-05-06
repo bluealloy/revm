@@ -291,7 +291,7 @@ pub trait Handler {
     /// Processes the result of the initial call and handles returned gas.
     #[inline]
     fn last_frame_result(
-        &self,
+        &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {

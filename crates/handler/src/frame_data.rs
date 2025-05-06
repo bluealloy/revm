@@ -4,7 +4,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, Interprete
 use primitives::Address;
 
 /// Call Frame
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
@@ -12,7 +12,7 @@ pub struct CallFrame {
 }
 
 /// Create Frame
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
     /// Create frame has a created address.
@@ -20,7 +20,7 @@ pub struct CreateFrame {
 }
 
 /// Eof Create Frame
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
@@ -29,7 +29,7 @@ pub struct EOFCreateFrame {
 /// Frame Data
 ///
 /// [`FrameData`] bundles different types of frames.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameData {
     Call(CallFrame),
@@ -39,7 +39,7 @@ pub enum FrameData {
 
 /// Frame Result
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
