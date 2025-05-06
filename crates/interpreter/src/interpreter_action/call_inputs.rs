@@ -1,15 +1,37 @@
 use core::ops::Range;
 use primitives::{Address, Bytes, U256};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-
 /// Input enum for a call.
+///
+/// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallInput {
-    /// The Range of the call data to be taken from SharedMemory
-    Range(Range<usize>),
+    /// The Range points to the SharedMemory buffer. Buffer can be found in [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
+    /// And can be accessed with `evm.ctx().local().shared_memory_buffer()`
+    ///
+    /// # Warning
+    ///
+    /// Use it with caution, CallInput shared buffer can be overridden if context from child call is returned so
+    /// recommendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
+    SharedBuffer(Range<usize>),
     /// Bytes of the call data.
     Bytes(Bytes),
+}
+
+impl CallInput {
+    /// Returns the length of the call input.
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Bytes(bytes) => bytes.len(),
+            Self::SharedBuffer(range) => range.len(),
+        }
+    }
+
+    /// Returns `true` if the call input is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Default for CallInput {
@@ -21,7 +43,7 @@ impl Default for CallInput {
 }
 
 /// Inputs for a call.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The call data of the call.

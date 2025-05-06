@@ -6,45 +6,53 @@ use crate::{opcode, Bytecode, OpCode};
 /// without dealing with the immediate values that follow instructions.
 #[derive(Debug, Clone)]
 pub struct BytecodeIterator<'a> {
-    /// Reference to the underlying bytecode bytes
-    bytes: &'a [u8],
-    /// Current position in the bytecode
-    position: usize,
-    /// End position in the bytecode (to handle original length for legacy bytecode)
-    end: usize,
+    /// Start pointer of the bytecode. Only used to calculate [`position`](Self::position).
+    start: *const u8,
+    /// Iterator over the bytecode bytes.
+    bytes: core::slice::Iter<'a, u8>,
 }
 
 impl<'a> BytecodeIterator<'a> {
     /// Creates a new iterator from a bytecode reference.
+    #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
-        let bytes = bytecode.bytecode();
-        let end = match bytecode {
-            Bytecode::LegacyAnalyzed(analyzed) => analyzed.original_len(),
-            Bytecode::Eip7702(_) => 0,
-            _ => bytes.len(),
+        let bytes = match bytecode {
+            Bytecode::LegacyAnalyzed(_) | Bytecode::Eof(_) => &bytecode.bytecode()[..],
+            Bytecode::Eip7702(_) => &[],
         };
-
         Self {
-            bytes: bytes.as_ref(),
-            position: 0,
-            end,
+            start: bytes.as_ptr(),
+            bytes: bytes.iter(),
         }
-    }
-
-    /// Returns the current position in the bytecode.
-    pub fn position(&self) -> usize {
-        self.position
     }
 
     /// Skips to the next opcode, taking into account PUSH instructions.
     pub fn skip_to_next_opcode(&mut self) {
-        if self.position >= self.end {
-            return;
-        }
+        self.next();
+    }
 
-        let opcode = self.bytes[self.position];
-        self.position += 1;
+    /// Returns the remaining bytes in the bytecode as a slice.
+    #[inline]
+    pub fn as_slice(&self) -> &[u8] {
+        self.bytes.as_slice()
+    }
 
+    /// Returns the current position in the bytecode.
+    #[inline]
+    pub fn position(&self) -> usize {
+        (self.bytes.as_slice().as_ptr() as usize) - (self.start as usize)
+        // TODO: Use the following on 1.87
+        // SAFETY: `start` always points to the start of the bytecode.
+        // unsafe {
+        //     self.bytes
+        //         .as_slice()
+        //         .as_ptr()
+        //         .offset_from_unsigned(self.start)
+        // }
+    }
+
+    #[inline]
+    fn skip_immediate(&mut self, opcode: u8) {
         // Get base immediate size from opcode info
         let mut immediate_size = opcode::OPCODE_INFO[opcode as usize]
             .map(|info| info.immediate_size() as usize)
@@ -52,20 +60,30 @@ impl<'a> BytecodeIterator<'a> {
 
         // Special handling for RJUMPV which has variable immediates
         if opcode == opcode::RJUMPV {
-            if let Some(&max_index) = self.bytes.get(self.position) {
-                immediate_size += (max_index as usize) * 2;
+            if let Some(max_index) = self.peek() {
+                immediate_size += (max_index as usize + 1) * 2;
             }
         }
 
-        self.position += immediate_size;
+        // Advance the iterator by the immediate size
+        if immediate_size > 0 {
+            self.bytes = self
+                .bytes
+                .as_slice()
+                .get(immediate_size..)
+                .unwrap_or_default()
+                .iter();
+        }
     }
 
     /// Returns the current opcode without advancing the iterator.
+    #[inline]
     pub fn peek(&self) -> Option<u8> {
-        self.bytes.get(self.position).copied()
+        self.bytes.as_slice().first().copied()
     }
 
     /// Returns the current opcode wrapped in OpCode without advancing the iterator.
+    #[inline]
     pub fn peek_opcode(&self) -> Option<OpCode> {
         self.peek().and_then(OpCode::new)
     }
@@ -74,37 +92,29 @@ impl<'a> BytecodeIterator<'a> {
 impl Iterator for BytecodeIterator<'_> {
     type Item = u8;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.position >= self.end {
-            return None;
-        }
+        self.bytes
+            .next()
+            .copied()
+            .inspect(|&current| self.skip_immediate(current))
+    }
 
-        // Get the opcode first with bounds check
-        let opcode = *self.bytes.get(self.position)?;
-        self.skip_to_next_opcode();
-        Some(opcode)
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // Lower bound is 0 if empty, 1 if not empty as it depends on the bytes.
+        let byte_len = self.bytes.len();
+        (byte_len.min(1), Some(byte_len))
     }
 }
 
-/// Extension trait for Bytecode to provide iteration capabilities.
-pub trait BytecodeIteratorExt {
-    /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
-    fn iter_opcodes(&self) -> BytecodeIterator<'_>;
-}
-
-impl BytecodeIteratorExt for Bytecode {
-    fn iter_opcodes(&self) -> BytecodeIterator<'_> {
-        BytecodeIterator::new(self)
-    }
-}
+impl core::iter::FusedIterator for BytecodeIterator<'_> {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[allow(unused_imports)]
-    use crate::{eof::Eof, LegacyRawBytecode};
-    #[allow(unused_imports)]
-    use primitives::{Address, Bytes};
+    use crate::LegacyRawBytecode;
+    use primitives::Bytes;
 
     #[test]
     fn test_simple_bytecode_iteration() {

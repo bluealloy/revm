@@ -14,11 +14,11 @@ use revm::{
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
-pub struct Erc20MainetHandler<EVM, ERROR, FRAME> {
+pub struct Erc20MainnetHandler<EVM, ERROR, FRAME> {
     _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
-impl<CTX, ERROR, FRAME> Erc20MainetHandler<CTX, ERROR, FRAME> {
+impl<CTX, ERROR, FRAME> Erc20MainnetHandler<CTX, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
             _phantom: core::marker::PhantomData,
@@ -26,13 +26,13 @@ impl<CTX, ERROR, FRAME> Erc20MainetHandler<CTX, ERROR, FRAME> {
     }
 }
 
-impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
+impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<EVM, ERROR, FRAME> Handler for Erc20MainetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,

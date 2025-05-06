@@ -5,7 +5,7 @@ use crate::{
         InputsTr, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
         StackTr,
     },
-    Host, InstructionResult,
+    CallInput, Host, InstructionResult,
 };
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
@@ -90,12 +90,28 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
+
         // SAFETY: `count` is bounded by the calldata length.
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
-        debug_assert!(count <= 32 && offset + count <= input_len);
-        unsafe { ptr::copy_nonoverlapping(input.as_ptr().add(offset), word.as_mut_ptr(), count) };
+        match interpreter.input.input() {
+            CallInput::Bytes(bytes) => {
+                unsafe {
+                    ptr::copy_nonoverlapping(bytes.as_ptr().add(offset), word.as_mut_ptr(), count)
+                };
+            }
+            CallInput::SharedBuffer(range) => {
+                let input_slice = interpreter.memory.global_slice(range.clone());
+                unsafe {
+                    ptr::copy_nonoverlapping(
+                        input_slice.as_ptr().add(offset),
+                        word.as_mut_ptr(),
+                        count,
+                    )
+                };
+            }
+        }
     }
     *offset_ptr = word.into();
 }
@@ -127,10 +143,18 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let data_offset = as_usize_saturated!(data_offset);
-    // Note: This can't panic because we resized memory to fit.
-    interpreter
-        .memory
-        .set_data(memory_offset, data_offset, len, interpreter.input.input());
+    match interpreter.input.input() {
+        CallInput::Bytes(bytes) => {
+            interpreter
+                .memory
+                .set_data(memory_offset, data_offset, len, bytes.as_ref());
+        }
+        CallInput::SharedBuffer(range) => {
+            interpreter
+                .memory
+                .set_data_from_global(memory_offset, data_offset, len, range.clone());
+        }
+    }
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY

@@ -1,5 +1,5 @@
 use auto_impl::auto_impl;
-use context::Cfg;
+use context::{Cfg, LocalContextTr};
 use context_interface::ContextTr;
 use interpreter::{CallInput, Gas, InputsImpl, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
@@ -90,7 +90,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
     fn run(
         &mut self,
-        _context: &mut CTX,
+        context: &mut CTX,
         address: &Address,
         inputs: &InputsImpl,
         _is_static: bool,
@@ -99,21 +99,26 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
-        let input_bytes = match &inputs.input {
-            CallInput::Range(_range) => {
-                // Get from parent memory (need access to memory)
-                todo!("Implement memory range access")
-            }
-            CallInput::Bytes(bytes) => bytes.clone(),
-        };
-
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
             gas: Gas::new(gas_limit),
             output: Bytes::new(),
         };
 
-        match (*precompile)(&input_bytes, gas_limit) {
+        let r;
+        let input_bytes = match &inputs.input {
+            CallInput::SharedBuffer(range) => {
+                if let Some(slice) = context.local().shared_memory_buffer_slice(range.clone()) {
+                    r = slice;
+                    r.as_ref()
+                } else {
+                    &[]
+                }
+            }
+            CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
+        };
+
+        match (*precompile)(input_bytes, gas_limit) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");

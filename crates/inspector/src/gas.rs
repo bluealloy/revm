@@ -83,10 +83,10 @@ mod tests {
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
-        interpreter_types::{Jumps, LoopControl},
-        CallInputs, CreateInputs, Interpreter, InterpreterTypes,
+        interpreter_types::{Jumps, LoopControl, ReturnData},
+        CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
     };
-    use primitives::{Bytes, TxKind};
+    use primitives::{Address, Bytes, TxKind};
     use state::bytecode::{opcode, Bytecode};
 
     #[derive(Default, Debug)]
@@ -170,5 +170,96 @@ mod tests {
         ];
 
         assert_eq!(inspector.gas_remaining_steps, steps);
+    }
+
+    #[derive(Default, Debug)]
+    struct CallOverrideInspector {
+        call_override: Vec<Option<CallOutcome>>,
+        create_override: Vec<Option<CreateOutcome>>,
+        return_buffer: Vec<Bytes>,
+    }
+
+    impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for CallOverrideInspector {
+        fn call(&mut self, _context: &mut CTX, _inputs: &mut CallInputs) -> Option<CallOutcome> {
+            self.call_override.pop().unwrap_or_default()
+        }
+
+        fn step(&mut self, interpreter: &mut Interpreter<INTR>, _context: &mut CTX) {
+            let this_buffer = interpreter.return_data.buffer();
+            let Some(buffer) = self.return_buffer.last() else {
+                self.return_buffer.push(this_buffer.clone());
+                return;
+            };
+            if this_buffer != buffer {
+                self.return_buffer.push(this_buffer.clone());
+            }
+        }
+
+        fn create(
+            &mut self,
+            _context: &mut CTX,
+            _inputs: &mut CreateInputs,
+        ) -> Option<CreateOutcome> {
+            self.create_override.pop().unwrap_or_default()
+        }
+    }
+
+    #[test]
+    fn test_call_override_inspector() {
+        use interpreter::{CallOutcome, CreateOutcome, InstructionResult};
+
+        let mut inspector = CallOverrideInspector::default();
+        inspector.call_override.push(Some(CallOutcome::new(
+            InterpreterResult::new(InstructionResult::Return, [0x01].into(), Gas::new(100_000)),
+            0..1,
+        )));
+        inspector.call_override.push(None);
+        inspector.create_override.push(Some(CreateOutcome::new(
+            InterpreterResult::new(InstructionResult::Revert, [0x02].into(), Gas::new(100_000)),
+            Some(Address::ZERO),
+        )));
+
+        let contract_data: Bytes = Bytes::from(vec![
+            opcode::PUSH1,
+            0x01,
+            opcode::PUSH1,
+            0x0,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::ADDRESS,
+            opcode::CALL,
+            opcode::PUSH1,
+            0x01,
+            opcode::PUSH1,
+            0x0,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::DUP1,
+            opcode::ADDRESS,
+            opcode::CREATE,
+            opcode::STOP,
+        ]);
+
+        let bytecode = Bytecode::new_raw(contract_data);
+
+        let ctx = Context::mainnet()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .modify_tx_chained(|tx| {
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
+            });
+
+        let mut evm = ctx.build_mainnet_with_inspector(inspector);
+
+        let _ = evm.inspect_replay().unwrap();
+        assert_eq!(evm.inspector.return_buffer.len(), 3);
+        assert_eq!(
+            evm.inspector.return_buffer,
+            [Bytes::new(), Bytes::from([0x01]), Bytes::from([0x02])].to_vec()
+        );
     }
 }

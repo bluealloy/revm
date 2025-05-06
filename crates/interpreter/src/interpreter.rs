@@ -10,6 +10,8 @@ mod subroutine_stack;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
+pub use loop_control::LoopControl as LoopControlImpl;
+pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
@@ -21,9 +23,7 @@ use crate::{
     InterpreterAction,
 };
 use bytecode::Bytecode;
-use loop_control::LoopControl as LoopControlImpl;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
-use return_data::ReturnDataImpl;
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]

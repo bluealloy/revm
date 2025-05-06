@@ -14,7 +14,7 @@ pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let y = hex!("1522a4a7f34e1ea350ae07c29c96c7e79655aa926122e95fe69fcbd932ca49e9").to_vec();
     let proof = hex!("a62ad71d14c5719385c0686f1871430475bf3a00f0aa3f7b8dd99a9abc2160744faf0070725e00b60ad9a026a15b1a8c").to_vec();
 
-    let kzg_input = [versioned_hash, z, y, commitment, proof].concat().into();
+    let kzg_input = [versioned_hash, z, y, commitment, proof].concat();
     let gas = 50000;
 
     group.bench_function("kzg precompile", |b| {

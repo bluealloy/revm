@@ -1,15 +1,14 @@
 use clap::Parser;
-use database::BenchmarkDB;
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    primitives::{address, hex, Address, TxKind},
+    primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::io::Error as IoError;
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{borrow::Cow, fs};
+use std::{io::Error as IoError, time::Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -57,8 +56,6 @@ pub struct Cmd {
 impl Cmd {
     /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
-        const CALLER: Address = address!("0000000000000000000000000000000000000001");
-
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
             // Check if path exists.
             if !path.exists() {
@@ -78,31 +75,40 @@ impl Cmd {
 
         let mut db = BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(bytecode.into())?);
 
-        let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
+        let nonce = db
+            .basic(BENCH_CALLER)
+            .unwrap()
+            .map_or(0, |account| account.nonce);
 
         // BenchmarkDB is dummy state that implements Database trait.
         // The bytecode is deployed at zero address.
         let mut evm = Context::mainnet()
             .with_db(db)
             .modify_tx_chained(|tx| {
-                tx.caller = CALLER;
-                tx.kind = TxKind::Call(Address::ZERO);
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
                 tx.data = input;
                 tx.nonce = nonce;
             })
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
-            // Microbenchmark
-            let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-            microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.replay().unwrap();
+            let mut criterion = criterion::Criterion::default()
+                .warm_up_time(std::time::Duration::from_millis(300))
+                .measurement_time(std::time::Duration::from_secs(2))
+                .without_plots();
+            let mut criterion_group = criterion.benchmark_group("revme");
+            criterion_group.bench_function("evm", |b| {
+                b.iter(|| {
+                    let _ = evm.replay().unwrap();
+                })
             });
+            criterion_group.finish();
 
             return Ok(());
         }
 
+        let time = Instant::now();
         let out = if self.trace {
             evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
@@ -110,11 +116,13 @@ impl Cmd {
             println!("Result: {:#?}", out.result);
             out
         };
+        let time = time.elapsed();
 
         if self.state {
             println!("State: {:#?}", out.state);
         }
 
+        println!("Elapsed: {:?}", time);
         Ok(())
     }
 }
