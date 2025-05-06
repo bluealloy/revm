@@ -365,6 +365,9 @@ pub struct CfgEnv {
     pub disable_beneficiary_reward: bool,
     /// Do we enable EVM proxy for running EVM runtime?
     pub enable_rwasm_proxy: bool,
+    /// If enabled, the rwasm compiler injects fuel-charging instructions before each builtin call.
+    /// By default, it is set to `true`.
+    pub disable_builtins_consume_fuel: bool,
 }
 
 impl CfgEnv {
@@ -485,6 +488,7 @@ impl Default for CfgEnv {
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
             enable_rwasm_proxy: false,
+            disable_builtins_consume_fuel: false,
         }
     }
 }
