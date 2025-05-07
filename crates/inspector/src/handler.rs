@@ -99,7 +99,8 @@ where
         mut frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
         let (ctx, inspector) = evm.ctx_inspector();
-        if let Some(output) = frame_start(ctx, inspector, &mut frame_input) {
+        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_input) {
+            frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }
         let mut ret = self.first_frame_init(evm, frame_input.clone());
@@ -152,7 +153,8 @@ where
             let result = match call_or_result {
                 ItemOrResult::Item(mut init) => {
                     let (context, inspector) = evm.ctx_inspector();
-                    if let Some(output) = frame_start(context, inspector, &mut init) {
+                    if let Some(mut output) = frame_start(context, inspector, &mut init) {
+                        frame_end(context, inspector, &init, &mut output);
                         output
                     } else {
                         match self.frame_init(frame, evm, init.clone())? {
