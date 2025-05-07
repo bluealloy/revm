@@ -10,13 +10,13 @@
 * `SharedMemory` is not longer Rc<RefCell<>> and internally uses Rc<RefCell<Vec<u8>>> buffer.
     * No action if you dont use it inside Interpreter.
 * In `JournalExt` fn `last_journal()` is renamed to `journal()`
+* EOF is disabled from Osaka and not accessible.
 
 # v68 tag (revm v21.0.0) -> v70 tag ( revm v22.0.2)
 
 No breaking changes
 
 # v67 tag (revm v21.0.0) -> v68 tag ( revm v22.0.0)
-
 
 * No code breaking changes
 * alloy-primitives bumped to v1.0.0 and we had a major bump because of it.

@@ -3685,7 +3685,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "22.0.2"
+version = "23.0.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
