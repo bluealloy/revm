@@ -5,9 +5,7 @@ use context_interface::{
 };
 use core::cmp;
 use interpreter::gas::{self, InitialAndFloorGas};
-use primitives::{
-    eip4844, eof::MAX_INITCODE_COUNT, hardfork::SpecId, Bytes, B256, MAX_INITCODE_SIZE,
-};
+use primitives::{eip4844, hardfork::SpecId, B256};
 
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
@@ -190,10 +188,11 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         }
         TransactionType::Eip7873 => {
             // Check if EIP-7873 transaction is enabled.
-            if !spec_id.is_enabled_in(SpecId::OSAKA) {
-                return Err(InvalidTransaction::Eip7873NotSupported);
-            }
-
+            // TODO(EOF) EOF removed from spec.
+            //if !spec_id.is_enabled_in(SpecId::OSAKA) {
+            return Err(InvalidTransaction::Eip7873NotSupported);
+            //}
+            /*
             // validate chain id
             if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
@@ -212,8 +211,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
-
-            //let
+             */
         }
         TransactionType::Custom => {
             // Custom transaction type check is not done here.
@@ -237,6 +235,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
     Ok(())
 }
 
+/* TODO(EOF)
 /// Validate Initcode Transaction initcode list, return error if any of the following conditions are met:
 /// * there are zero entries in initcodes, or if there are more than MAX_INITCODE_COUNT entries.
 /// * any entry in initcodes is zero length, or if any entry exceeds MAX_INITCODE_SIZE.
@@ -272,6 +271,7 @@ pub fn validate_eip7873_initcodes(initcodes: &[Bytes]) -> Result<(), InvalidTran
 
     Ok(())
 }
+*/
 
 /// Validate initial transaction gas.
 pub fn validate_initial_tx_gas(

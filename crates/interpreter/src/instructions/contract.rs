@@ -89,7 +89,8 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
-    check!(interpreter, OSAKA);
+    // TODO(EOF) only accepted in EOF.
+    require_eof!(interpreter);
     require_non_staticcall!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
 

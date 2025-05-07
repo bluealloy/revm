@@ -255,9 +255,13 @@ pub trait Handler {
         if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
             return Ok(());
         }
-        let (tx, local) = evm.ctx().tx_local();
-        local.insert_initcodes(tx.initcodes());
         Ok(())
+        /* TODO(EOF)
+        let (tx, local) = evm.ctx().tx_local();
+        local.insert_initcodes(&[]);
+        tx.initcodes());
+        Ok(())
+        */
     }
 
     /// Deducts maximum possible fee and transfer value from caller's balance.
