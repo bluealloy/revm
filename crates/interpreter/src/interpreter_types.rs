@@ -29,9 +29,16 @@ pub trait Immediates {
 
 /// Trait for fetching inputs of the call.
 pub trait InputsTr {
+    /// Returns target address of the call.
     fn target_address(&self) -> Address;
+    /// Returns bytecode address of the call. For DELEGATECALL this address will be different from target address.
+    /// And if initcode is called this address will be [`None`].
+    fn bytecode_address(&self) -> Option<&Address>;
+    /// Returns caller address of the call.
     fn caller_address(&self) -> Address;
+    /// Returns input of the call.
     fn input(&self) -> &CallInput;
+    /// Returns call value of the call.
     fn call_value(&self) -> U256;
 }
 
