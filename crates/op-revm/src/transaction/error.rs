@@ -80,6 +80,7 @@ impl<DBError> From<OpTransactionError> for EVMError<DBError, OpTransactionError>
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::string::ToString;
 
     #[test]
     fn test_display_op_errors() {
