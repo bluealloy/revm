@@ -38,11 +38,7 @@ use core::{
     ops::{Deref, DerefMut},
 };
 use fluentbase_genesis::try_resolve_precompile_account_from_input;
-use fluentbase_sdk::{
-    compile_wasm_to_rwasm_with_config,
-    default_rwasm_config,
-    PRECOMPILE_EVM_RUNTIME,
-};
+use fluentbase_sdk::{compile_wasm_to_rwasm, default_compilation_config, PRECOMPILE_EVM_RUNTIME};
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 use std::{boxed::Box, sync::Arc};
@@ -398,12 +394,11 @@ impl<DB: Database> EvmContext<DB> {
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
             let init_code = inputs.init_code.as_ref();
-            let mut config = default_rwasm_config();
+            let mut config = default_compilation_config();
             if self.env.cfg.disable_builtins_consume_fuel {
                 config.builtins_consume_fuel(false);
             }
-            let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)
-            else {
+            let Ok(compilation_result) = compile_wasm_to_rwasm(init_code, config) else {
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
