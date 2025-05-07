@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v3.0.0...revm-database-interface-v3.0.1) - 2025-05-07
+
+### Other
+
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- remove alloy-sol-types deps ([#2411](https://github.com/bluealloy/revm/pull/2411))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v2.0.0...revm-database-interface-v3.0.0) - 2025-04-09
 
 ### Other

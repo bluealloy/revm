@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v19.0.0...revm-precompile-v20.0.0) - 2025-05-07
+
+### Added
+
+- skip cloning of call input from shared memory ([#2462](https://github.com/bluealloy/revm/pull/2462))
+
+### Fixed
+
+- *(isthmus)* Add input size limitations to bls12-381 {G1/G2} MSM + pairing ([#2406](https://github.com/bluealloy/revm/pull/2406))
+
+### Other
+
+- typos ([#2474](https://github.com/bluealloy/revm/pull/2474))
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- make OPCODE_INFO a static ([#2459](https://github.com/bluealloy/revm/pull/2459))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- *(docs)* precompile crate ([#2413](https://github.com/bluealloy/revm/pull/2413))
+- bump stable tests, introduce lints ([#2403](https://github.com/bluealloy/revm/pull/2403))
+
 ## [19.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v18.0.0...revm-precompile-v19.0.0) - 2025-04-09
 
 ### Other
