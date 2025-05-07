@@ -192,7 +192,7 @@ where
     }
 
     fn last_frame_result(
-        &self,
+        &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
@@ -506,7 +506,7 @@ mod tests {
             0..0,
         ));
 
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let mut handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
         handler
             .last_frame_result(&mut evm, &mut exec_result)
