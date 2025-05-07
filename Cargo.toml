@@ -39,7 +39,7 @@ default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
-revm = { path = "crates/revm", version = "22.0.2", default-features = false }
+revm = { path = "crates/revm", version = "23.0.0", default-features = false }
 primitives = { path = "crates/primitives", package = "revm-primitives", version = "19.0.0", default-features = false }
 bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "4.0.0", default-features = false }
 database = { path = "crates/database", package = "revm-database", version = "3.1.0", default-features = false }

@@ -1,7 +1,24 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
 # v70 tag
-date: 15.04.2025
+date: 07.05.2025
+
+Maintanance release.
+* `revm-primitives`: 18.0.0 -> 19.0.0 (⚠️ API breaking changes)
+* `revm-bytecode`: 3.0.0 -> 4.0.0 (⚠️ API breaking changes)
+* `revm-state`: 3.0.0 -> 3.0.1 (✓ API compatible changes)
+* `revm-database-interface`: 3.0.0 -> 3.0.1 (✓ API compatible changes)
+* `revm-context-interface`: 3.0.0 -> 4.0.0 (⚠️ API breaking changes)
+* `revm-context`: 3.0.1 -> 4.0.0 (⚠️ API breaking changes)
+* `revm-database`: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+* `revm-interpreter`: 18.0.0 -> 19.0.0 (⚠️ API breaking changes)
+* `revm-precompile`: 19.0.0 -> 20.0.0 (⚠️ API breaking changes)
+* `revm-handler`: 3.0.1 -> 4.0.0 (⚠️ API breaking changes)
+* `revm-inspector`: 3.0.1 -> 4.0.0 (⚠️ API breaking changes)
+* `revm`: 22.0.1 -> 23.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 3.0.1 -> 4.0.0 (⚠️ API breaking changes)
+* `revme`: 4.0.2 -> 4.1.0 (✓ API compatible changes)
+* `op-revm`: 3.0.2 -> 3.1.0 (✓ API compatible changes)
 
 # v69 tag
 date: 14.04.2025
