@@ -76,3 +76,32 @@ impl<DBError> From<OpTransactionError> for EVMError<DBError, OpTransactionError>
         Self::Transaction(value)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_display_op_errors() {
+        assert_eq!(
+            OpTransactionError::DepositSystemTxPostRegolith.to_string(),
+            "deposit system transactions post regolith hardfork are not supported"
+        );
+        assert_eq!(
+            OpTransactionError::HaltedDepositPostRegolith.to_string(),
+            "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
+        )
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serialize_json_op_transaction_error() {
+        let response = r#""DepositSystemTxPostRegolith""#;
+
+        let op_transaction_error: OpTransactionError = serde_json::from_str(response).unwrap();
+        assert_eq!(
+            op_transaction_error,
+            OpTransactionError::DepositSystemTxPostRegolith
+        );
+    }
+}
