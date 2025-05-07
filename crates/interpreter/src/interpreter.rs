@@ -85,6 +85,7 @@ impl Default for Interpreter<EthInterpreter> {
             ExtBytecode::new(Bytecode::default()),
             InputsImpl {
                 target_address: Address::ZERO,
+                bytecode_address: None,
                 caller_address: Address::ZERO,
                 input: CallInput::default(),
                 call_value: U256::ZERO,
@@ -260,6 +261,7 @@ mod tests {
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,
+                bytecode_address: None,
                 input: CallInput::Bytes(Bytes::default()),
                 call_value: U256::ZERO,
             },
