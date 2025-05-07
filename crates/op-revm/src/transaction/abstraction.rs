@@ -144,9 +144,10 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.authorization_list()
     }
 
-    fn initcodes(&self) -> &[Bytes] {
-        self.base.initcodes()
-    }
+    // TODO(EOF)
+    // fn initcodes(&self) -> &[Bytes] {
+    //     self.base.initcodes()
+    // }
 }
 
 impl<T: Transaction> OpTxTr for OpTransaction<T> {
