@@ -190,10 +190,11 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         }
         TransactionType::Eip7873 => {
             // Check if EIP-7873 transaction is enabled.
-            if !spec_id.is_enabled_in(SpecId::OSAKA) {
-                return Err(InvalidTransaction::Eip7873NotSupported);
-            }
-
+            // TODO(EOF) EOF removed from spec.
+            //if !spec_id.is_enabled_in(SpecId::OSAKA) {
+            return Err(InvalidTransaction::Eip7873NotSupported);
+            //}
+            /*
             // validate chain id
             if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
@@ -212,8 +213,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
-
-            //let
+             */
         }
         TransactionType::Custom => {
             // Custom transaction type check is not done here.
