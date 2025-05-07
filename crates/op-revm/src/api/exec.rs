@@ -14,6 +14,7 @@ use revm::{
     },
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    primitives::{Address, Bytes},
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
@@ -125,8 +126,8 @@ where
 {
     fn transact_system_call(
         &mut self,
-        data: revm::primitives::Bytes,
-        system_contract_address: revm::primitives::Address,
+        system_contract_address: Address,
+        data: Bytes,
     ) -> Self::Output {
         self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
