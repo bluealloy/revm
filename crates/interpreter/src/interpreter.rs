@@ -212,6 +212,7 @@ mod tests {
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,
+                bytecode_address: None,
                 input: Bytes::default(),
                 call_value: U256::ZERO,
             },

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct InputsImpl {
     pub target_address: Address,
     pub caller_address: Address,
+    pub bytecode_address: Option<Address>,
     pub input: Bytes,
     pub call_value: U256,
 }
@@ -27,5 +28,9 @@ impl InputsTr for InputsImpl {
 
     fn call_value(&self) -> U256 {
         self.call_value
+    }
+
+    fn bytecode_address(&self) -> Option<&Address> {
+        self.bytecode_address.as_ref()
     }
 }

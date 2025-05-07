@@ -21,6 +21,7 @@ pub trait Immediates {
 pub trait InputsTr {
     fn target_address(&self) -> Address;
     fn caller_address(&self) -> Address;
+    fn bytecode_address(&self) -> Option<&Address>;
     fn input(&self) -> &[u8];
     fn call_value(&self) -> U256;
 }

@@ -213,6 +213,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: inputs.target_address,
             caller_address: inputs.caller,
+            bytecode_address: Some(inputs.bytecode_address),
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
         };
@@ -375,6 +376,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
+            bytecode_address: None,
             input: Bytes::new(),
             call_value: inputs.value,
         };
@@ -490,6 +492,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
+            bytecode_address: None,
             input,
             call_value: inputs.value,
         };
