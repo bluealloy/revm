@@ -16,7 +16,6 @@ impl From<HaltReason> for OpHaltReason {
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
-    use alloy_primitives::B256;
     use revm::context_interface::result::OutOfGasError;
 
     #[test]
