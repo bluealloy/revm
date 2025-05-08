@@ -45,9 +45,9 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// Block values are taken into account and will determent how system call will be executed.
     fn transact_system_call(
         &mut self,
-        data: Bytes,
         system_contract_address: Address,
-    ) -> Self::Output;
+        data: Bytes,
+    ) -> Result<(Self::Output, Self::State), Self::Error>;
 }
 
 /// Extension of the [`SystemCallEvm`] trait that adds a method that commits the state after execution.
@@ -55,8 +55,8 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     /// Transact the system call and commit to the state.
     fn transact_system_call_commit(
         &mut self,
-        data: Bytes,
         system_contract_address: Address,
+        data: Bytes,
     ) -> Self::CommitOutput;
 }
 
@@ -69,9 +69,9 @@ where
 {
     fn transact_system_call(
         &mut self,
-        data: Bytes,
         system_contract_address: Address,
-    ) -> Self::Output {
+        data: Bytes,
+    ) -> Result<(Self::Output, Self::State), Self::Error> {
         // set tx fields.
         self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
         // create handler
@@ -92,10 +92,10 @@ where
 {
     fn transact_system_call_commit(
         &mut self,
-        data: Bytes,
         system_contract_address: Address,
+        data: Bytes,
     ) -> Self::CommitOutput {
-        self.transact_system_call(data, system_contract_address)
+        self.transact_system_call(system_contract_address, data)
             .map(|r| {
                 self.db().commit(r.state);
                 r.result
@@ -136,7 +136,7 @@ mod tests {
             .modify_block_chained(|b| b.number = 1)
             .build_mainnet();
         let res = my_evm
-            .transact_system_call(block_hash.0.into(), HISTORY_STORAGE_ADDRESS)
+            .transact_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
         let result = res.result;

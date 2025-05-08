@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revme-v4.1.0...revme-v5.0.0) - 2025-05-07
+
+Dependency bump
+
+## [4.1.0](https://github.com/bluealloy/revm/compare/revme-v4.0.2...revme-v4.1.0) - 2025-05-07
+
+### Added
+
+- *(Osaka)* disable EOF ([#2480](https://github.com/bluealloy/revm/pull/2480))
+- skip cloning of call input from shared memory ([#2462](https://github.com/bluealloy/revm/pull/2462))
+- *(tx)* Add Either RecoveredAuthorization ([#2448](https://github.com/bluealloy/revm/pull/2448))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- *(revme)* evm command caller/target for bench ([#2476](https://github.com/bluealloy/revm/pull/2476))
+
+### Other
+
+- *(revme)* simplify repeated code ([#2432](https://github.com/bluealloy/revm/pull/2432))
+- backport from release branch ([#2415](https://github.com/bluealloy/revm/pull/2415)) ([#2416](https://github.com/bluealloy/revm/pull/2416))
+- *(lints)* revm-context lints ([#2404](https://github.com/bluealloy/revm/pull/2404))
+
 ## [4.0.2](https://github.com/bluealloy/revm/compare/revme-v4.0.0..revme-v4.0.1) - 2025-04-15
 
 ### Other

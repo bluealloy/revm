@@ -4,9 +4,9 @@
 set -e
 
 # Version for the execution spec tests
-VERSION="v4.3.0"
+VERSION="v4.4.0"
 # Version for the EOF spec tests, it is currently upgrading to eof devnet-1 so we will use devnet-0 suite.
-EOF_VERSION="v4.3.0"
+EOF_VERSION="v4.4.0"
 
 # Directories
 FIXTURES_DIR="test-fixtures"
@@ -130,11 +130,11 @@ run_tests() {
     echo "Running develop statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$DEVELOP_DIR/state_tests"
 
-    echo "Running EOF statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$EOF_DIR/state_tests"
+    echo "Skipping EOF statetests..."
+    # $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$EOF_DIR/state_tests"
 
-    echo "Running EOF validation tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- eof-validation "$EOF_DIR/eof_tests"
+    echo "Skipping EOF validation tests..."
+    # $RUST_RUNNER run $CARGO_OPTS -p revme -- eof-validation "$EOF_DIR/eof_tests"
 }
 
 ##############################

@@ -42,13 +42,15 @@ pub trait ContextTr {
     fn db_ref(&self) -> &Self::Db;
     /// Get the chain
     fn chain(&mut self) -> &mut Self::Chain;
+    /// Get the chain reference
+    fn chain_ref(&self) -> &Self::Chain;
     /// Get the local context
     fn local(&mut self) -> &mut Self::Local;
     /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
-    fn tx_journal(&mut self) -> (&mut Self::Tx, &mut Self::Journal);
+    fn tx_journal(&mut self) -> (&Self::Tx, &mut Self::Journal);
     /// Get the transaction and local context. It is used to efficiently load initcode
     /// into local context without copying them from transaction.
     fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local);

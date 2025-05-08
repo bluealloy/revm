@@ -160,10 +160,7 @@ pub mod bn128_pair {
 
 pub mod bls12_381 {
     use super::*;
-    use revm::{
-        precompile::bls12_381_const::{G1_MSM_ADDRESS, G2_MSM_ADDRESS, PAIRING_ADDRESS},
-        primitives::Bytes,
-    };
+    use revm::precompile::bls12_381_const::{G1_MSM_ADDRESS, G2_MSM_ADDRESS, PAIRING_ADDRESS};
 
     #[cfg(not(feature = "std"))]
     use crate::std::string::ToString;
@@ -179,7 +176,7 @@ pub mod bls12_381 {
     pub const ISTHMUS_PAIRING: PrecompileWithAddress =
         PrecompileWithAddress(PAIRING_ADDRESS, run_pair);
 
-    pub fn run_g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    pub fn run_g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G1MSM input length too long for OP Stack input size limitation".to_string(),
@@ -188,7 +185,7 @@ pub mod bls12_381 {
         precompile::bls12_381::g1_msm::g1_msm(input, gas_limit)
     }
 
-    pub fn run_g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    pub fn run_g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G2MSM input length too long for OP Stack input size limitation".to_string(),
@@ -197,7 +194,7 @@ pub mod bls12_381 {
         precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
 
-    pub fn run_pair(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "Pairing input length too long for OP Stack input size limitation".to_string(),

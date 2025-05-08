@@ -21,7 +21,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRE
 /// Output is an encoding of multi-scalar-multiplication operation result - single G1
 /// point (`128` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
-pub fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -76,7 +76,7 @@ pub fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if g1_points.is_empty() {
         return Ok(PrecompileOutput::new(
             required_gas,
-            ENCODED_POINT_AT_INFINITY.into(),
+            Bytes::from_static(&ENCODED_POINT_AT_INFINITY),
         ));
     }
 

@@ -7,11 +7,16 @@ use context::{
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
+use state::EvmState;
 
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
     /// Output of transaction execution.
     type Output;
+    // Output state
+    type State;
+    /// Error type
+    type Error;
     /// Transaction type.
     type Tx: Transaction;
     /// Block type.
@@ -23,16 +28,40 @@ pub trait ExecuteEvm {
     /// Set the block.
     fn set_block(&mut self, block: Self::Block);
 
-    /// Transact the transaction that is set in the context.
-    fn replay(&mut self) -> Self::Output;
+    fn transact_continue(&mut self, tx: Self::Tx) -> Result<Self::Output, Self::Error>;
+
+    fn finalize(&mut self) -> Self::State;
 
     /// Transact the given transaction.
     ///
     /// Internally sets transaction in context and use `replay` to execute the transaction.
-    fn transact(&mut self, tx: Self::Tx) -> Self::Output {
-        self.set_tx(tx);
-        self.replay()
+    fn transact(&mut self, tx: Self::Tx) -> Result<(Self::Output, Self::State), Self::Error> {
+        let output = self.transact_continue(tx)?;
+        let state = self.finalize();
+        Ok((output, state))
     }
+
+    fn multi_transact(
+        &mut self,
+        txs: impl Iterator<Item = Self::Tx>,
+    ) -> Result<Vec<Self::Output>, Self::Error> {
+        let mut outputs = Vec::new();
+        for tx in txs {
+            outputs.push(self.transact_continue(tx)?);
+        }
+        Ok(outputs)
+    }
+
+    fn multi_transact_finalize(
+        &mut self,
+        txs: impl Iterator<Item = Self::Tx>,
+    ) -> Result<(Vec<Self::Output>, Self::State), Self::Error> {
+        let output = self.multi_transact(txs)?;
+        let state = self.finalize();
+        Ok((output, state))
+    }
+
+    fn clear_state(&mut self);
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -56,18 +85,29 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    type Output = Result<
-        ResultAndState<HaltReason>,
-        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
-    >;
+    type Output = ExecutionResult<HaltReason>;
+    type State = EvmState;
+    type Error = EVMError<<CTX::Db as Database>::Error, InvalidTransaction>;
 
     type Tx = <CTX as ContextTr>::Tx;
 
     type Block = <CTX as ContextTr>::Block;
 
-    fn replay(&mut self) -> Self::Output {
-        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        t.run(self)
+    fn transact_continue(&mut self, tx: Self::Tx) -> Result<Self::Output, Self::Error> {
+        todo!("");
+        // TODO run should return output without state.
+        // let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        // t.run(self)
+    }
+
+    fn finalize(&mut self) -> Self::State {
+        todo!();
+        //self.journal().finalize()
+    }
+
+    fn clear_state(&mut self) {
+        todo!();
+        //self.journal().revert_last()
     }
 
     fn set_tx(&mut self, tx: Self::Tx) {

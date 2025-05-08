@@ -1,4 +1,4 @@
-# Revm
+# Revme
 
 Is a binary that allows running statetest and eof validation.
 
@@ -20,9 +20,9 @@ Options:
 
 ## Running eth tests
 
-Eth tests are suite of tests from Ethereum Fondation that are used to test EVM implementations.
-Part of these tests are included in revm repository in `tests` folder.
+Eth tests are a suite of tests from the Ethereum Foundation that are used to test EVM implementations.
+Part of these tests are included in the revm repository in the `tests` folder.
 
-Download eth tests `git clone https://github.com/ethereum/tests`. They can be run with `revme` with command:
+Download eth tests `git clone https://github.com/ethereum/tests`. They can be run with `revme` using the following command:
 `cargo run --release -p revme -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests`
-All statetest that can be run by revme can be found in `GeneralStateTests` folder.
+All statetest that can be run by revme can be found in the `GeneralStateTests` folder.

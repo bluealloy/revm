@@ -25,6 +25,7 @@ impl CreateInputs {
             CreateScheme::Create2 { salt } => self
                 .caller
                 .create2_from_code(salt.to_be_bytes(), &self.init_code),
+            CreateScheme::Custom { address } => address,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{Gas, InstructionResult, InterpreterAction};
+use crate::{CallInput, Gas, InstructionResult, InterpreterAction};
 use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
@@ -6,13 +6,22 @@ use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
 pub trait Immediates {
-    fn read_i16(&self) -> i16;
+    #[inline]
+    fn read_i16(&self) -> i16 {
+        self.read_u16() as i16
+    }
     fn read_u16(&self) -> u16;
 
-    fn read_i8(&self) -> i8;
+    #[inline]
+    fn read_i8(&self) -> i8 {
+        self.read_u8() as i8
+    }
     fn read_u8(&self) -> u8;
 
-    fn read_offset_i16(&self, offset: isize) -> i16;
+    #[inline]
+    fn read_offset_i16(&self, offset: isize) -> i16 {
+        self.read_offset_u16(offset) as i16
+    }
     fn read_offset_u16(&self, offset: isize) -> u16;
 
     fn read_slice(&self, len: usize) -> &[u8];
@@ -20,9 +29,16 @@ pub trait Immediates {
 
 /// Trait for fetching inputs of the call.
 pub trait InputsTr {
+    /// Returns target address of the call.
     fn target_address(&self) -> Address;
+    /// Returns bytecode address of the call. For DELEGATECALL this address will be different from target address.
+    /// And if initcode is called this address will be [`None`].
+    fn bytecode_address(&self) -> Option<&Address>;
+    /// Returns caller address of the call.
     fn caller_address(&self) -> Address;
-    fn input(&self) -> &[u8];
+    /// Returns input of the call.
+    fn input(&self) -> &CallInput;
+    /// Returns call value of the call.
     fn call_value(&self) -> U256;
 }
 
@@ -59,6 +75,31 @@ pub trait MemoryTr {
     ///
     /// Panics if range is out of scope of allocated memory.
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]);
+
+    /// Inner clone part of memory from global context to local context.
+    /// This is used to clone calldata to memory.
+    ///
+    /// # Panics
+    ///
+    /// Panics if range is out of scope of allocated memory.
+    fn set_data_from_global(
+        &mut self,
+        memory_offset: usize,
+        data_offset: usize,
+        len: usize,
+        data_range: Range<usize>,
+    );
+
+    /// Memory slice with global range. This range
+    ///
+    /// # Panics
+    ///
+    /// Panics if range is out of scope of allocated memory.
+    fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
+
+    /// Offset of local context of memory.
+    fn local_memory_offset(&self) -> usize;
+
     /// Sets memory data at given offset.
     ///
     /// # Panics
@@ -81,6 +122,7 @@ pub trait MemoryTr {
     ///
     /// Panics if range is out of scope of allocated memory.
     fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
+
     /// Memory slice len
     ///
     /// Uses [`slice`][MemoryTr::slice] internally.
@@ -222,7 +264,7 @@ pub trait EofCodeInfo {
 /// Returns return data.
 pub trait ReturnData {
     /// Returns return data.
-    fn buffer(&self) -> &[u8];
+    fn buffer(&self) -> &Bytes;
 
     /// Sets return buffer.
     fn set_buffer(&mut self, bytes: Bytes);

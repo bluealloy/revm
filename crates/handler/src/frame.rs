@@ -17,13 +17,14 @@ use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl, InstructionResult,
-    Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
+    return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
+    CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
+    InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
+    SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
+    hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
@@ -207,6 +208,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: inputs.target_address,
             caller_address: inputs.caller,
+            bytecode_address: Some(inputs.bytecode_address),
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
         };
@@ -312,9 +314,10 @@ where
         }
 
         // Prague EOF
-        if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
-            return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        }
+        // TODO(EOF)
+        // if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
+        //     return return_error(InstructionResult::CreateInitCodeStartingEF00);
+        // }
 
         // Fetch balance of caller.
         let caller_balance = context
@@ -345,6 +348,7 @@ where
                 init_code_hash = keccak256(&inputs.init_code);
                 inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
             }
+            CreateScheme::Custom { address } => address,
         };
 
         // warm load account.
@@ -369,7 +373,8 @@ where
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
-            input: Bytes::new(),
+            bytecode_address: None,
+            input: CallInput::Bytes(Bytes::new()),
             call_value: inputs.value,
         };
         let gas_limit = inputs.gas_limit;
@@ -438,7 +443,7 @@ where
                 let tx = context.tx();
                 let create_address = tx.caller().create(tx.nonce());
 
-                (input, eof, Some(create_address))
+                (CallInput::Bytes(input), eof, Some(create_address))
             }
         };
 
@@ -484,6 +489,7 @@ where
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
+            bytecode_address: None,
             input,
             call_value: inputs.value,
         };

@@ -1,7 +1,7 @@
 [package]
 name = "revme"
 description = "Rust Ethereum Virtual Machine Executable"
-version = "4.0.2"
+version = "5.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -36,7 +36,6 @@ alloy-sol-types.workspace = true
 # misc
 hash-db.workspace = true
 indicatif.workspace = true
-microbench.workspace = true
 plain_hasher.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true, features = ["preserve_order"] }

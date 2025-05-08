@@ -129,14 +129,11 @@ pub trait Handler {
     ///
     /// Calculates initial and floor gas requirements and verifies they are covered by the gas limit.
     ///
-    /// Loads the caller account and validates transaction fields against state,
-    /// including nonce checks and balance verification for maximum gas costs.
+    /// Validation against state is done later in pre-execution phase in deduct_caller function.
     #[inline]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
-        let initial_and_floor_gas = self.validate_initial_tx_gas(evm)?;
-        self.validate_tx_against_state(evm)?;
-        Ok(initial_and_floor_gas)
+        self.validate_initial_tx_gas(evm)
     }
 
     /// Prepares the EVM state for execution.
@@ -149,12 +146,11 @@ pub trait Handler {
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+        self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
-        self.deduct_caller(evm)?;
         // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
         self.apply_eip7873_eof_initcodes(evm)?;
         let gas = self.apply_eip7702_auth_list(evm)?;
-
         Ok(gas)
     }
 
@@ -233,14 +229,6 @@ pub trait Handler {
         validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
     }
 
-    /// Loads caller account to access nonce and balance.
-    ///
-    /// Calculates maximum possible transaction fee and verifies caller has sufficient balance.
-    #[inline]
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        validation::validate_tx_against_state(evm.ctx())
-    }
-
     /* PRE EXECUTION */
 
     /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
@@ -267,17 +255,24 @@ pub trait Handler {
         if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
             return Ok(());
         }
-        let (tx, local) = evm.ctx().tx_local();
-        local.insert_initcodes(tx.initcodes());
         Ok(())
+        /* TODO(EOF)
+        let (tx, local) = evm.ctx().tx_local();
+        local.insert_initcodes(&[]);
+        tx.initcodes());
+        Ok(())
+        */
     }
 
     /// Deducts maximum possible fee and transfer value from caller's balance.
     ///
     /// Unused fees are returned to caller after execution completes.
     #[inline]
-    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::deduct_caller(evm.ctx()).map_err(From::from)
+    fn validate_against_state_and_deduct_caller(
+        &self,
+        evm: &mut Self::Evm,
+    ) -> Result<(), Self::Error> {
+        pre_execution::validate_against_state_and_deduct_caller(evm.ctx())
     }
 
     /* EXECUTION */
@@ -300,7 +295,7 @@ pub trait Handler {
     /// Processes the result of the initial call and handles returned gas.
     #[inline]
     fn last_frame_result(
-        &self,
+        &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {

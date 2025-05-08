@@ -1,22 +1,24 @@
-use core::cmp::Ordering;
 use revm::{
     context::{Cfg, JournalOutput},
     context_interface::{
         result::{HaltReason, InvalidTransaction},
-        Block, ContextTr, JournalTr, Transaction, TransactionType,
+        Block, ContextTr, JournalTr, Transaction,
     },
-    handler::{EvmTr, EvmTrError, Frame, FrameResult, Handler},
+    handler::{
+        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, FrameResult,
+        Handler,
+    },
     interpreter::FrameInput,
     primitives::{hardfork::SpecId, U256},
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
-pub struct Erc20MainetHandler<EVM, ERROR, FRAME> {
+pub struct Erc20MainnetHandler<EVM, ERROR, FRAME> {
     _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
-impl<CTX, ERROR, FRAME> Erc20MainetHandler<CTX, ERROR, FRAME> {
+impl<CTX, ERROR, FRAME> Erc20MainnetHandler<CTX, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
             _phantom: core::marker::PhantomData,
@@ -24,13 +26,13 @@ impl<CTX, ERROR, FRAME> Erc20MainetHandler<CTX, ERROR, FRAME> {
     }
 }
 
-impl<EVM, ERROR, FRAME> Default for Erc20MainetHandler<EVM, ERROR, FRAME> {
+impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<EVM, ERROR, FRAME> Handler for Erc20MainetHandler<EVM, ERROR, FRAME>
+impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
@@ -41,83 +43,74 @@ where
     type Frame = FRAME;
     type HaltReason = HaltReason;
 
-    fn validate_tx_against_state(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn validate_against_state_and_deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), ERROR> {
         let context = evm.ctx();
+        let basefee = context.block().basefee() as u128;
+        let blob_price = context.block().blob_gasprice().unwrap_or_default();
+        let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
+        let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
+        let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
         let caller = context.tx().caller();
-        let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
-        let _ = context.journal().load_account(TOKEN)?.data.clone();
+        let value = context.tx().value();
 
-        if !context.cfg().is_nonce_check_disabled() {
-            let tx_nonce = context.tx().nonce();
-            let state_nonce = caller_nonce;
-            match tx_nonce.cmp(&state_nonce) {
-                Ordering::Less => {
-                    return Err(ERROR::from(InvalidTransaction::NonceTooLow {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }))
-                }
-                Ordering::Greater => {
-                    return Err(ERROR::from(InvalidTransaction::NonceTooHigh {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }))
-                }
-                _ => (),
-            }
-        }
+        let (tx, journal) = context.tx_journal();
 
-        let mut balance_check = U256::from(context.tx().gas_limit())
-            .checked_mul(U256::from(context.tx().max_fee_per_gas()))
-            .and_then(|gas_cost| gas_cost.checked_add(context.tx().value()))
-            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        // Load caller's account.
+        let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        if context.tx().tx_type() == TransactionType::Eip4844 {
-            let tx = context.tx();
-            let data_fee = tx.calc_max_data_fee();
-            balance_check = balance_check
-                .checked_add(data_fee)
-                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-        }
+        validate_account_nonce_and_code(
+            &mut caller_account.info,
+            tx.nonce(),
+            tx.kind().is_call(),
+            is_eip3607_disabled,
+            is_nonce_check_disabled,
+        )?;
 
-        let account_balance_slot = erc_address_storage(caller);
+        // Touch account so we know it is changed.
+        caller_account.mark_touch();
+
+        let max_balance_spending = tx.max_balance_spending()?;
+        let effective_balance_spending = tx
+            .effective_balance_spending(basefee, blob_price)
+            .expect("effective balance is always smaller than max balance so it can't overflow");
+
+        let account_balance_slot = erc_address_storage(tx.caller());
         let account_balance = context
             .journal()
             .sload(TOKEN, account_balance_slot)
             .map(|v| v.data)
             .unwrap_or_default();
 
-        if account_balance < balance_check && !context.cfg().is_balance_check_disabled() {
+        if account_balance < max_balance_spending && !is_balance_check_disabled {
             return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: Box::new(balance_check),
+                fee: Box::new(max_balance_spending),
                 balance: Box::new(account_balance),
             }
             .into());
         };
 
-        Ok(())
-    }
+        // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
+        // Transfer will be done inside `*_inner` functions.
+        if is_balance_check_disabled {
+            // ignore balance check.
+            // TODO add transfer value to the erc20 slot.
+        } else if max_balance_spending > account_balance {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: Box::new(max_balance_spending),
+                balance: Box::new(account_balance),
+            }
+            .into());
+        } else {
+            // subtracting max balance spending with value that is going to be deducted later in the call.
+            let gas_balance_spending = effective_balance_spending - value;
 
-    fn deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        let context = evm.ctx();
-        // load and touch token account
-        let _ = context.journal().load_account(TOKEN)?.data;
-        context.journal().touch_account(TOKEN);
-
-        let basefee = context.block().basefee() as u128;
-        let blob_price = context.block().blob_gasprice().unwrap_or_default();
-        let effective_gas_price = context.tx().effective_gas_price(basefee);
-
-        let mut gas_cost = (context.tx().gas_limit() as u128).saturating_mul(effective_gas_price);
-
-        if context.tx().tx_type() == TransactionType::Eip4844 {
-            let blob_gas = context.tx().total_blob_gas() as u128;
-            gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
+            token_operation::<EVM::Context, ERROR>(
+                context,
+                caller,
+                TREASURY,
+                gas_balance_spending,
+            )?;
         }
-
-        let caller = context.tx().caller();
-        println!("Deduct caller: {:?} for amount: {gas_cost:?}", caller);
-        token_operation::<EVM::Context, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
 
         Ok(())
     }

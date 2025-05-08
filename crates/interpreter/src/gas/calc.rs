@@ -3,7 +3,7 @@ use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::{
     journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction, TransactionType,
 };
-use primitives::{eip7702, hardfork::SpecId, Bytes, U256};
+use primitives::{eip7702, hardfork::SpecId, U256};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -382,18 +382,17 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
-    initcodes: &[Bytes],
 ) -> InitialAndFloorGas {
     let mut gas = InitialAndFloorGas::default();
 
     // Initdate stipend
-    let mut tokens_in_calldata =
-        get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
+    let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
 
+    // TODO(EOF) Tx type is removed
     // initcode stipend
-    for initcode in initcodes {
-        tokens_in_calldata += get_tokens_in_calldata(initcode.as_ref(), true);
-    }
+    // for initcode in initcodes {
+    //     tokens_in_calldata += get_tokens_in_calldata(initcode.as_ref(), true);
+    // }
 
     gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
@@ -456,11 +455,12 @@ pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> In
     }
 
     // Access initcodes only if tx is Eip7873.
-    let initcodes = if tx.tx_type() == TransactionType::Eip7873 {
-        tx.initcodes()
-    } else {
-        &[]
-    };
+    // TODO(EOF) Tx type is removed
+    // let initcodes = if tx.tx_type() == TransactionType::Eip7873 {
+    //     tx.initcodes()
+    // } else {
+    //     &[]
+    // };
 
     calculate_initial_tx_gas(
         spec,
@@ -469,7 +469,7 @@ pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> In
         accounts as u64,
         storages as u64,
         tx.authorization_list_len() as u64,
-        initcodes,
+        //initcodes,
     )
 }
 

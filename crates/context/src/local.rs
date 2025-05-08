@@ -19,7 +19,7 @@ pub struct LocalContext {
 impl Default for LocalContext {
     fn default() -> Self {
         Self {
-            initcode_mapping: HashMap::new(),
+            initcode_mapping: HashMap::default(),
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
         }
     }
@@ -44,7 +44,7 @@ impl LocalContextTr for LocalContext {
         initcode.validate().cloned()
     }
 
-    fn shared_memory_buffer(&mut self) -> &Rc<RefCell<Vec<u8>>> {
+    fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         &self.shared_memory_buffer
     }
 }

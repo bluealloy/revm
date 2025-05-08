@@ -14,7 +14,7 @@ Revm is a highly efficient and stable implementation of the Ethereum Virtual Mac
 [tg-url]: https://t.me/+Ig4WDWOzikA3MzA0
 [tg-badge]: https://img.shields.io/badge/chat-telegram-blue
 
-Known for its robustness, it stands as one of the most popular libraries and critical component of the Ethereum ecosystem. Revm plays a crucial role across various projects, being widely utilized by almost all tooling and block builders. It is integrated into Reth, multiple Layer 2 variants and other clients and serving as a standard for zkVMs.
+Known for its robustness, it stands as one of the most popular libraries and a critical component of the Ethereum ecosystem. Revm plays a crucial role across various projects, being widely utilized by almost all tooling and block builders. It is integrated into Reth, multiple Layer 2 variants and other clients and serving as a standard for zkVMs.
 
 Revm offers two primary applications: firstly, it functions as an executor where users can set up block info and process mainnet transactions; secondly, it acts as a framework that facilitates the extension and support of different EVM variants such as op-revm.
 
@@ -31,7 +31,7 @@ let mut evm = evm.with_inspector(tracer);
 let out = evm.inspect_with_tx(tx);
 ```
 
-The Evm Framework API is somewhat complex to use, but this document provides a detailed explanation. It enables users to extend logic, incorporate various context types, and offers built-in support for inspection. For a practical example, you can refer to the op-revm crate.
+The Evm Framework API is somewhat complex to use, but this document provides a detailed explanation. It enables users to extend logic, incorporate various context types, and offers built-in support for inspection. For a practical example, you can refer to the [op-revm crate](https://github.com/op-rs/op-revm).
 
 ### Users:
 
@@ -43,25 +43,25 @@ As previously noted, there are several groups of projects that utilize this tech
 * **L2s**: [Optimism](https://github.com/bluealloy/revm/tree/main/crates/op-revm), [Coinbase](https://www.base.org/), [Scroll](https://github.com/scroll-tech/revm),..
 * **zkVM**: [Risc0](https://github.com/risc0/risc0-ethereum), [Succinct](https://github.com/succinctlabs/rsp),..
 
-The full list of projects that use Revm is available in the awesome-revm section of the book.
+The full list of projects that use Revm is available in the [awesome-revm](https://bluealloy.github.io/revm/awesome.html) section of the book.
 
 ### How to, dev section
 
 The [book](https://bluealloy.github.io/revm/) and [`Architecture and API`](https://bluealloy.github.io/revm/architecture.html) page is the best starting resource.
 
-Some quicklinks can be found here. Some point to code documentation or book. code docs are there to explain usage of particular part of the code where book is to get more of the overview on architecture or how components/projects fit toggether.
+Some quick links can be found here. Some point to code documentation or the book. code docs are there to explain usage of a particular part of the code where the book is to get more of an overview of the architecture or how components/projects fit together.
 
-* How to build and use revm can be found here. (code)
+* How to build and use revm can be found here. [book](https://bluealloy.github.io/revm/dev.html)
 * Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
 * Structure of the project (list of crates and their versions) can be seen here. [book](https://github.com/bluealloy/revm/tree/main/crates)
-* How to use Revm Framework can be foud in MyEvm example. [book](https://github.com/bluealloy/revm/tree/main/examples/my_evm)
+* How to use Revm Framework can be found in MyEvm example. [book](https://github.com/bluealloy/revm/tree/main/examples/my_evm)
 * Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
 * How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
 * How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
-* If there is more explanations please open PR request for it.
+* If there is more need for explanations please open a PR request.
 
 ### Community:
-For questions please open an github issue or join public telegram group: [https://t.me/+Ig4WDWOzikA3MzA0](https://t.me/+Ig4WDWOzikA3MzA0)
+For questions please open a github issue or join the public telegram group: [https://t.me/+Ig4WDWOzikA3MzA0](https://t.me/+Ig4WDWOzikA3MzA0)
 
 ### Licence
 Revm is licensed under MIT Licence.
