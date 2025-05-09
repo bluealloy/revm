@@ -74,6 +74,7 @@ pub fn load_accounts<
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
     tx_nonce: u64,
+    bump_nonce: bool,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
 ) -> Result<(), InvalidTransaction> {
@@ -107,6 +108,12 @@ pub fn validate_account_nonce_and_code(
         }
     }
 
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+    if bump_nonce {
+        // Nonce is already checked
+        caller_info.nonce = caller_info.nonce.saturating_add(1);
+    }
+
     Ok(())
 }
 
@@ -131,15 +138,10 @@ pub fn validate_against_state_and_deduct_caller<
     validate_account_nonce_and_code(
         &mut caller_account.info,
         tx.nonce(),
+        tx.kind().is_call(),
         is_eip3607_disabled,
         is_nonce_check_disabled,
     )?;
-
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
 
     let max_balance_spending = tx.max_balance_spending()?;
 
