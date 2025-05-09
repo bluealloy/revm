@@ -61,10 +61,15 @@ where
         validate_account_nonce_and_code(
             &mut caller_account.info,
             tx.nonce(),
-            tx.kind().is_call(),
             is_eip3607_disabled,
             is_nonce_check_disabled,
         )?;
+
+        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        if tx.kind().is_call() {
+            // Nonce is already checked
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
 
         // Touch account so we know it is changed.
         caller_account.mark_touch();
