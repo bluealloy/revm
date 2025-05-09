@@ -1,4 +1,10 @@
-//! Optimism-specific constants, types, and helpers.
+//! Optimism-specific constants, types, and helpers for context interfaces.
+//!
+//! Extends standard interfaces with:
+//! - Transaction: Deposit transaction type and validation
+//! - Block: L1 block reference fields for fee calculation
+//! - Result: Optimism-specific halt conditions for deposits
+//! - Configuration: Optimism hardfork specification support
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

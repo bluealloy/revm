@@ -1,4 +1,11 @@
-//! Optimism-specific constants, types, and helpers.
+//! Optimism-specific constants, types, and helpers for EVM execution.
+//!
+//! Modifies standard execution with:
+//! - L1 data fee calculation and attribution
+//! - Deposit transaction special handling per hardfork
+//! - Fee distribution to multiple recipients
+//! - System transactions for cross-domain messaging
+//! - Sequencer fee processing
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

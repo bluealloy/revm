@@ -1,4 +1,10 @@
-//! Optimism-specific constants, types, and helpers.
+//! Optimism-specific constants, types, and helpers for state management.
+//!
+//! State structures optimized for:
+//! - Deposit transaction processing with mint value tracking  
+//! - L1/L2 fee recipient account management
+//! - Access list accounting aligned with EIP-2930
+//! - Predeploy contract state handling
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

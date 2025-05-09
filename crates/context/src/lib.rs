@@ -1,4 +1,10 @@
-//! Optimism-specific constants, types, and helpers.
+//! Optimism-specific constants, types, and helpers for execution context.
+//!
+//! Key differences from Ethereum:
+//! - Block context includes L1 origin data for fee calculations
+//! - Transaction context supports deposit transactions
+//! - Journal tracks additional state for L1/L2 fee distribution
+//! - Configuration supports Optimism-specific hardforks
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
