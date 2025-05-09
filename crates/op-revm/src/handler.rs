@@ -139,6 +139,9 @@ where
                 caller_account.info.balance =
                     caller_account.info.balance.saturating_add(U256::from(mint));
             }
+            if tx.kind().is_call() {
+                caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+            }
         } else {
             // validates account nonce and code
             validate_account_nonce_and_code(
