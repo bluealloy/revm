@@ -6,7 +6,7 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::result::InvalidTransaction,
+    context::{result::InvalidTransaction, LocalContextTr},
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
         Block, Cfg, ContextTr, JournalTr, Transaction,
@@ -446,9 +446,10 @@ where
         } else {
             Err(error)
         };
-        // do cleanup
+        // do the cleanup
         evm.ctx().chain().clear_tx_l1_cost();
         evm.ctx().journal().clear();
+        evm.ctx().local().clear();
 
         output
     }
