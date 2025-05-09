@@ -3,7 +3,15 @@ Because this is workspace with multi libraries, tags will be simplified, and wit
 # v71 tag
 date: 09.05.2025
 
-op-revm fix
+op-revm fix: deposit nonce bump
+
+* `op-revm`: 4.0.1 -> 4.0.2 (✓ API compatible changes)
+
+
+# v71 tag
+date: 09.05.2025
+
+op-revm fix.
 
 * `op-revm`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
 
