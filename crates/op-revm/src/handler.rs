@@ -188,6 +188,8 @@ where
                 .saturating_sub(op_gas_balance_spending);
         }
 
+        // Touch account so we know it is changed.
+        caller_account.mark_touch();
         Ok(())
     }
 
