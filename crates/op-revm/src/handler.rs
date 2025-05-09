@@ -139,20 +139,18 @@ where
                 caller_account.info.balance =
                     caller_account.info.balance.saturating_add(U256::from(mint));
             }
+            if tx.kind().is_call() {
+                caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+            }
         } else {
             // validates account nonce and code
             validate_account_nonce_and_code(
                 &mut caller_account.info,
                 tx.nonce(),
+                tx.kind().is_call(),
                 is_eip3607_disabled,
                 is_nonce_check_disabled,
             )?;
-        }
-
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            // Nonce is already checked
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
         }
 
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
