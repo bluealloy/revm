@@ -3,7 +3,6 @@ use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use std::vec::Vec;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{

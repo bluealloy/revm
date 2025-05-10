@@ -54,7 +54,6 @@ use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
-use std::{boxed::Box, vec::Vec};
 
 /// Calculate the linear cost of a precompile.
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {

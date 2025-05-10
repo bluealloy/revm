@@ -2,7 +2,7 @@ use super::JumpTable;
 use crate::opcode;
 use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
-use std::{sync::Arc, vec, vec::Vec};
+use std::{sync::Arc, vec};
 
 /// Analyze the bytecode to find the jumpdests. Used to create a jump table
 /// that is needed for [`crate::LegacyAnalyzedBytecode`].

@@ -11,7 +11,7 @@ use primitives::{
 };
 
 use core::{convert::identity, mem};
-use std::{borrow::Cow, fmt, vec, vec::Vec};
+use std::{borrow::Cow, fmt, vec};
 
 /// Decodes `raw` into an [`Eof`] container and validates it.
 pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {

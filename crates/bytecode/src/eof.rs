@@ -22,7 +22,7 @@ pub use verification::*;
 
 use core::cmp::min;
 use primitives::{b256, bytes, Bytes, B256};
-use std::{fmt, vec, vec::Vec};
+use std::{fmt, vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =

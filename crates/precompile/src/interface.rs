@@ -2,7 +2,6 @@
 //! the precompile output type, and the precompile error type.
 use core::fmt;
 use primitives::Bytes;
-use std::string::String;
 
 /// A precompile operation result type
 ///

@@ -4,7 +4,6 @@ use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,
 };
-use std::vec::Vec;
 
 /// Non returning function has a output `0x80`
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;

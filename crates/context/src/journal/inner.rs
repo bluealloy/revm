@@ -13,7 +13,6 @@ use primitives::{
     Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-use std::vec::Vec;
 
 /// Inner journal state that contains journal and state changes.
 ///

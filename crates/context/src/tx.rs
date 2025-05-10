@@ -8,7 +8,6 @@ use context_interface::{
 };
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
-use std::vec::Vec;
 
 /// The transaction environment
 #[derive(Clone, Debug, PartialEq, Eq)]

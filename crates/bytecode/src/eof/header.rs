@@ -2,7 +2,6 @@ use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,
 };
-use std::vec::Vec;
 
 /// EOF header structure that contains section sizes and metadata
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
