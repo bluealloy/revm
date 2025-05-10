@@ -14,7 +14,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 use bitflags::bitflags;
 use core::hash::Hash;
 use primitives::hardfork::SpecId;
-use primitives::{HashMap, U256};
+use primitives::{HashMap, StorageKey, StorageValue};
 
 /// Account type used inside Journal to track changed to state.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -126,7 +126,7 @@ impl Account {
     /// Returns an iterator over the storage slots that have been changed.
     ///
     /// See also [EvmStorageSlot::is_changed].
-    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
+    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&StorageKey, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
 
@@ -139,7 +139,7 @@ impl Account {
     /// Populates storage from an iterator of storage slots and returns self for method chaining.
     pub fn with_storage<I>(mut self, storage_iter: I) -> Self
     where
-        I: Iterator<Item = (U256, EvmStorageSlot)>,
+        I: Iterator<Item = (StorageKey, EvmStorageSlot)>,
     {
         for (key, slot) in storage_iter {
             self.storage.insert(key, slot);
@@ -231,16 +231,16 @@ impl Default for AccountStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EvmStorageSlot {
     /// Original value of the storage slot
-    pub original_value: U256,
+    pub original_value: StorageValue,
     /// Present value of the storage slot
-    pub present_value: U256,
+    pub present_value: StorageValue,
     /// Represents if the storage slot is cold
     pub is_cold: bool,
 }
 
 impl EvmStorageSlot {
     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
-    pub fn new(original: U256) -> Self {
+    pub fn new(original: StorageValue) -> Self {
         Self {
             original_value: original,
             present_value: original,
@@ -249,7 +249,7 @@ impl EvmStorageSlot {
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
-    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
+    pub fn new_changed(original_value: StorageValue, present_value: StorageValue) -> Self {
         Self {
             original_value,
             present_value,
@@ -262,12 +262,12 @@ impl EvmStorageSlot {
     }
 
     /// Returns the original value of the storage slot.
-    pub fn original_value(&self) -> U256 {
+    pub fn original_value(&self) -> StorageValue {
         self.original_value
     }
 
     /// Returns the current value of the storage slot.
-    pub fn present_value(&self) -> U256 {
+    pub fn present_value(&self) -> StorageValue {
         self.present_value
     }
 
@@ -286,7 +286,7 @@ impl EvmStorageSlot {
 mod tests {
     use super::*;
     use crate::EvmStorageSlot;
-    use primitives::KECCAK_EMPTY;
+    use primitives::{StorageKey, KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {
@@ -380,10 +380,10 @@ mod tests {
     #[test]
     fn test_account_with_storage() {
         let mut storage = HashMap::new();
-        let key1 = U256::from(1);
-        let key2 = U256::from(2);
-        let slot1 = EvmStorageSlot::new(U256::from(10));
-        let slot2 = EvmStorageSlot::new(U256::from(20));
+        let key1 = StorageKey::from(1);
+        let key2 = StorageKey::from(2);
+        let slot1 = EvmStorageSlot::new(StorageValue::from(10));
+        let slot2 = EvmStorageSlot::new(StorageValue::from(20));
 
         storage.insert(key1, slot1.clone());
         storage.insert(key2, slot2.clone());
@@ -468,8 +468,8 @@ mod tests {
             ..AccountInfo::default()
         };
 
-        let slot_key = U256::from(42);
-        let slot_value = EvmStorageSlot::new(U256::from(123));
+        let slot_key = StorageKey::from(42);
+        let slot_value = EvmStorageSlot::new(StorageValue::from(123));
         let mut storage = HashMap::new();
         storage.insert(slot_key, slot_value.clone());
 

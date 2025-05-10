@@ -10,7 +10,7 @@ pub use state::{State, StateRef};
 
 use revm::{
     database_interface::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef},
-    primitives::{Address, HashMap, B256, U256},
+    primitives::{Address, HashMap, StorageKey, StorageValue, B256},
     state::{Account, AccountInfo, Bytecode},
 };
 
@@ -43,7 +43,11 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
             .map_err(Self::Error::State)
     }
 
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         self.state
             .storage(address, index)
             .map_err(Self::Error::State)
@@ -69,7 +73,11 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
             .map_err(Self::Error::State)
     }
 
-    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage_ref(
+        &self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         self.state
             .storage(address, index)
             .map_err(Self::Error::State)

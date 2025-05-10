@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
     StorageWithOriginalValues, TransitionAccount,
 };
-use primitives::{HashMap, U256};
+use primitives::{HashMap, StorageKey, StorageValue, U256};
 use state::AccountInfo;
 
 /// Cache account contains plain state that gets updated
@@ -92,7 +92,7 @@ impl CacheAccount {
     }
 
     /// Returns storage slot if it exists.
-    pub fn storage_slot(&self, slot: U256) -> Option<U256> {
+    pub fn storage_slot(&self, slot: StorageKey) -> Option<StorageValue> {
         self.account
             .as_ref()
             .and_then(|a| a.storage.get(&slot).cloned())

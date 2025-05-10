@@ -9,7 +9,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, keccak256, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
+    primitives::{address, keccak256, Address, Bytes, StorageKey, TxKind, KECCAK_EMPTY, U256},
     state::AccountInfo,
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
     let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
     let usdc_weth_pair = address!("B4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc");
 
-    let weth_balance_slot = U256::from(3);
+    let weth_balance_slot = StorageKey::from(3);
 
     // Give our test account some fake WETH and ETH
     let one_ether = U256::from(1_000_000_000_000_000_000u128);

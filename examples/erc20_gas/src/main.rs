@@ -15,7 +15,9 @@ use revm::{
     },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, hardfork::SpecId, keccak256, Address, TxKind, KECCAK_EMPTY, U256},
+    primitives::{
+        address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, KECCAK_EMPTY, U256,
+    },
     state::AccountInfo,
     Context, Database, MainBuilder, MainContext,
 };
@@ -49,7 +51,7 @@ async fn main() -> Result<()> {
     let balance_slot = erc_address_storage(account);
     println!("Balance slot: {balance_slot}");
     cache_db
-        .insert_account_storage(TOKEN, balance_slot, hundred_tokens * U256::from(2))
+        .insert_account_storage(TOKEN, balance_slot, hundred_tokens * StorageValue::from(2))
         .unwrap();
     cache_db.insert_account_info(
         account,
@@ -111,7 +113,7 @@ where
     Ok(())
 }
 
-fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
+fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<StorageValue> {
     let slot = erc_address_storage(address);
     alloy_db.storage(TOKEN, slot).map_err(From::from)
 }

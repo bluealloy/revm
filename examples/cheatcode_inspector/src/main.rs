@@ -26,7 +26,7 @@ use revm::{
         interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
         SelfDestructResult, StateLoad,
     },
-    primitives::{hardfork::SpecId, Address, HashSet, Log, B256, U256},
+    primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
     state::{Account, Bytecode, EvmState},
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
@@ -75,25 +75,25 @@ impl JournalTr for Backend {
     fn sload(
         &mut self,
         address: Address,
-        key: U256,
-    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
+        key: StorageKey,
+    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
         self.journaled_state.sload(address, key)
     }
 
     fn sstore(
         &mut self,
         address: Address,
-        key: U256,
-        value: U256,
+        key: StorageKey,
+        value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
         self.journaled_state.sstore(address, key, value)
     }
 
-    fn tload(&mut self, address: Address, key: U256) -> U256 {
+    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
         self.journaled_state.tload(address, key)
     }
 
-    fn tstore(&mut self, address: Address, key: U256, value: U256) {
+    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue) {
         self.journaled_state.tstore(address, key, value)
     }
 
@@ -112,7 +112,7 @@ impl JournalTr for Backend {
     fn warm_account_and_storage(
         &mut self,
         address: Address,
-        storage_keys: impl IntoIterator<Item = U256>,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.journaled_state
             .warm_account_and_storage(address, storage_keys)

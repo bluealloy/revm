@@ -1,7 +1,9 @@
 use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
-use primitives::{hardfork::SpecId, Address, Bytes, HashSet, Log, B256, U256};
+use primitives::{
+    hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
+};
 use state::{
     bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
     Account, Bytecode,
@@ -29,22 +31,22 @@ pub trait JournalTr {
     fn sload(
         &mut self,
         address: Address,
-        key: U256,
-    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error>;
+        key: StorageKey,
+    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error>;
 
     /// Stores the storage value in Journal state.
     fn sstore(
         &mut self,
         address: Address,
-        key: U256,
-        value: U256,
+        key: StorageKey,
+        value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
 
     /// Loads transient storage value.
-    fn tload(&mut self, address: Address, key: U256) -> U256;
+    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
 
     /// Stores transient storage value.
-    fn tstore(&mut self, address: Address, key: U256, value: U256);
+    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
 
     /// Logs the log in Journal state.
     fn log(&mut self, log: Log);
@@ -60,7 +62,7 @@ pub trait JournalTr {
     fn warm_account_and_storage(
         &mut self,
         address: Address,
-        storage_keys: impl IntoIterator<Item = U256>,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     /// Warms the account.
