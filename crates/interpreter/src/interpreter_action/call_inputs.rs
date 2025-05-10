@@ -1,6 +1,6 @@
+use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
 use primitives::{Address, Bytes, U256};
-
 /// Input enum for a call.
 ///
 /// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
@@ -31,6 +31,27 @@ impl CallInput {
     /// Returns `true` if the call input is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// Returns the bytes of the call input.
+    /// # Allocation
+    /// If this `CallInput` is a `SharedBuffer`, the slice will be copied
+    /// into a fresh `Bytes` buffer, i.e., this always allocates when reading
+    /// from shared memory.
+    pub fn bytes<CTX>(&self, ctx: &mut CTX) -> Bytes
+    where
+        CTX: ContextTr,
+    {
+        match self {
+            CallInput::Bytes(bytes) => bytes.clone(),
+            CallInput::SharedBuffer(range) => {
+                if let Some(slice) = ctx.local().shared_memory_buffer_slice(range.clone()) {
+                    Bytes::from(slice.to_vec())
+                } else {
+                    Bytes::new()
+                }
+            }
+        }
     }
 }
 
