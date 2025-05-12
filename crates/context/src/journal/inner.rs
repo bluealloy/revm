@@ -178,6 +178,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Assume account is warm.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
+        if let Bytecode::Eip7702(eip7702_bytecode) = &code {
+            if eip7702_bytecode.address().is_zero() {
+                self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
+                return;
+            }
+        }
+
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash)
     }
