@@ -177,7 +177,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Assume account is warm.
     ///
-    /// In case of EIP-7702 code with zero address, the bytecode will be erased. 
+    /// In case of EIP-7702 code with zero address, the bytecode will be erased.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         if let Bytecode::Eip7702(eip7702_bytecode) = &code {
