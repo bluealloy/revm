@@ -76,6 +76,7 @@ mod test {
     use context_interface::{transaction::Authorization, TransactionType};
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{hardfork::SpecId, TxKind, U256};
+    use primitives::{StorageKey, StorageValue};
 
     #[test]
     fn sanity_eip7702_tx() {
@@ -109,8 +110,12 @@ mod test {
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
         assert_eq!(auth_acc.info.nonce, 1);
         assert_eq!(
-            auth_acc.storage.get(&U256::from(1)).unwrap().present_value,
-            U256::from(1)
+            auth_acc
+                .storage
+                .get(&StorageKey::from(1))
+                .unwrap()
+                .present_value,
+            StorageValue::from(1)
         );
     }
 }
