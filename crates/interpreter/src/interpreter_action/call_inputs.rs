@@ -34,23 +34,25 @@ impl CallInput {
     }
 
     /// Returns the bytes of the call input.
+    ///
+    /// SharedMemory buffer can be shrunked or overwritten if the child call returns the
+    /// shared memory context to its parent, the range in `CallInput::SharedBuffer` can show unexpected data.
+    ///
     /// # Allocation
+    ///
     /// If this `CallInput` is a `SharedBuffer`, the slice will be copied
-    /// into a fresh `Bytes` buffer, i.e., this always allocates when reading
-    /// from shared memory.
+    /// into a fresh `Bytes` buffer, which can pose a performance penalty.
     pub fn bytes<CTX>(&self, ctx: &mut CTX) -> Bytes
     where
         CTX: ContextTr,
     {
         match self {
             CallInput::Bytes(bytes) => bytes.clone(),
-            CallInput::SharedBuffer(range) => {
-                if let Some(slice) = ctx.local().shared_memory_buffer_slice(range.clone()) {
-                    Bytes::from(slice.to_vec())
-                } else {
-                    Bytes::new()
-                }
-            }
+            CallInput::SharedBuffer(range) => ctx
+                .local()
+                .shared_memory_buffer_slice(range.clone())
+                .map(|b| Bytes::from(b.to_vec()))
+                .unwrap_or_default(),
         }
     }
 }
