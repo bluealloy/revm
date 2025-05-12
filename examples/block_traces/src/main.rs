@@ -12,6 +12,7 @@ use revm::{
     primitives::TxKind,
     Context, MainBuilder, MainContext,
 };
+use std::fs::create_dir_all;
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
@@ -41,6 +42,8 @@ impl Write for FlushWriter {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    create_dir_all("traces")?;
+
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 

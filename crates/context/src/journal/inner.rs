@@ -8,9 +8,9 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
-    hardfork::{SpecId, SpecId::*},
+    hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, U256,
+    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
@@ -490,7 +490,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-        storage_keys: impl IntoIterator<Item = U256>,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<&mut Account, DB::Error> {
         // load or get account.
         let account = match self.state.entry(address) {
@@ -641,8 +641,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-        key: U256,
-    ) -> Result<StateLoad<U256>, DB::Error> {
+        key: StorageKey,
+    ) -> Result<StateLoad<StorageValue>, DB::Error> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
@@ -656,7 +656,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             Entry::Vacant(vac) => {
                 // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
-                    U256::ZERO
+                    StorageValue::ZERO
                 } else {
                     db.storage(address, key)?
                 };
@@ -685,8 +685,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-        key: U256,
-        new: U256,
+        key: StorageKey,
+        new: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
         let present = self.sload(db, address, key)?;
@@ -725,7 +725,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// EIP-1153: Transient storage opcodes
     #[inline]
-    pub fn tload(&mut self, address: Address, key: U256) -> U256 {
+    pub fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
         self.transient_storage
             .get(&(address, key))
             .copied()
@@ -739,7 +739,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// EIP-1153: Transient storage opcodes
     #[inline]
-    pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
+    pub fn tstore(&mut self, address: Address, key: StorageKey, new: StorageValue) {
         let had_value = if new.is_zero() {
             // if new values is zero, remove entry from transient storage.
             // if previous values was some insert it inside journal.

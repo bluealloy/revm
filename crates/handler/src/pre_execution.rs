@@ -13,6 +13,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
+use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
@@ -60,7 +61,7 @@ pub fn load_accounts<
                 } else {
                     journal.warm_account_and_storage(
                         *address,
-                        storage.map(|i| U256::from_be_bytes(i.0)),
+                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
                     )?;
                 }
             }

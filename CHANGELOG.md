@@ -1,6 +1,21 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
 # v71 tag
+date: 09.05.2025
+
+op-revm fix: deposit nonce bump
+
+* `op-revm`: 4.0.1 -> 4.0.2 (✓ API compatible changes)
+
+
+# v71 tag
+date: 09.05.2025
+
+op-revm fix.
+
+* `op-revm`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+
+# v71 tag
 date: 07.05.2025
 
 Maintanance release that fixes last v70 version bump.

@@ -8,7 +8,7 @@ use revm::{
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
-    primitives::{address, TxKind, U256},
+    primitives::{address, StorageKey, TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
     // =========================================================== //
 
     // Choose slot of storage that you would like to transact with
-    let slot = U256::from(8);
+    let slot = StorageKey::from(8);
 
     // ETH/USDT pair on Uniswap V2
     let pool_address = address!("0d4a11d5EEaaC28EC3F61d100daF4d40471f1852");
