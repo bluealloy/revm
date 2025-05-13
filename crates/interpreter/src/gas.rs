@@ -17,7 +17,7 @@ pub struct Gas {
     /// Refunded gas. This is used only at the end of execution.
     refunded: i64,
     /// Memoisation of values for memory expansion cost.
-    memory: MemoryGas,
+    pub memory: MemoryGas,
 }
 
 impl Gas {
