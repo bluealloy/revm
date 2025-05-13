@@ -94,7 +94,7 @@ pub fn output<
     // TODO, make this more generic and nice.
     // FrameResult should be a generic that returns gas and interpreter result.
     result: FrameResult,
-) -> ResultAndState<HALTREASON> {
+) -> ExecutionResult<HALTREASON> {
     // Used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
     let final_gas_used = result.gas().spent() - gas_refunded;
@@ -104,7 +104,7 @@ pub fn output<
     // Reset journal and return present state.
     let JournalOutput { state, logs } = context.journal().finalize();
 
-    let result = match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
+    return match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,
@@ -128,6 +128,4 @@ pub fn output<
             )
         }
     };
-
-    ResultAndState { result, state }
 }

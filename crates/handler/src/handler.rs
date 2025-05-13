@@ -3,8 +3,8 @@ use crate::{
     execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
     FrameResult, ItemOrResult,
 };
-use context::result::FromStringError;
-use context::{JournalOutput, LocalContextTr, TransactionType};
+use context::result::{ExecutionResult, FromStringError};
+use context::{Evm, JournalOutput, LocalContextTr, TransactionType};
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -12,6 +12,7 @@ use context_interface::{
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
+use state::EvmState;
 use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
@@ -77,7 +78,7 @@ pub trait Handler {
     fn run(
         &mut self,
         evm: &mut Self::Evm,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
@@ -95,7 +96,7 @@ pub trait Handler {
     fn run_system_call(
         &mut self,
         evm: &mut Self::Evm,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.
@@ -118,11 +119,13 @@ pub trait Handler {
     fn run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
-        let exec_result = self.execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, exec_result, init_and_floor_gas, eip7702_refund)
+        let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
+        self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
+        // Prepare transaction output
+        self.output(evm, exec_result)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -191,20 +194,19 @@ pub trait Handler {
     fn post_execution(
         &self,
         evm: &mut Self::Evm,
-        mut exec_result: FrameResult,
+        exec_result: &mut FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<(), Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
-        self.refund(evm, &mut exec_result, eip7702_gas_refund);
+        self.refund(evm, exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
-        self.eip7623_check_gas_floor(evm, &mut exec_result, init_and_floor_gas);
+        self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
         // Return unused gas to caller
-        self.reimburse_caller(evm, &mut exec_result)?;
+        self.reimburse_caller(evm, exec_result)?;
         // Pay transaction fees to beneficiary
-        self.reward_beneficiary(evm, &mut exec_result)?;
-        // Prepare transaction output
-        self.output(evm, exec_result)
+        self.reward_beneficiary(evm, exec_result)?;
+        Ok(())
     }
 
     /* VALIDATION */
@@ -465,7 +467,7 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
@@ -478,7 +480,7 @@ pub trait Handler {
         evm.ctx().local().clear();
         // Clear journal
         evm.ctx().journal().clear();
-        Ok(output)
+        Ok((output.result, output.state))
     }
 
     /// Handles cleanup when an error occurs during execution.
@@ -490,7 +492,7 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
         error: Self::Error,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // clean up local context. Initcode cache needs to be discarded.
         evm.ctx().local().clear();
         // Clean up journal state if error occurs

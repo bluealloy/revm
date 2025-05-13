@@ -1,8 +1,6 @@
-use crate::{
-    instructions::InstructionProvider, EthFrame, Handler, MainnetHandler, PrecompileProvider,
-};
+use crate::{instructions::InstructionProvider, EthFrame, MainnetHandler, PrecompileProvider};
 use context::{
-    result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
+    result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     Block, ContextSetters, ContextTr, Database, Evm, JournalOutput, JournalTr, Transaction,
 };
 use database_interface::DatabaseCommit;
@@ -12,7 +10,7 @@ use state::EvmState;
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
     /// Output of transaction execution.
-    type Output;
+    type ExecutionResult;
     // Output state
     type State;
     /// Error type
@@ -22,60 +20,85 @@ pub trait ExecuteEvm {
     /// Block type.
     type Block: Block;
 
-    /// Set the transaction.
-    fn set_tx(&mut self, tx: Self::Tx);
-
     /// Set the block.
     fn set_block(&mut self, block: Self::Block);
 
-    fn transact_continue(&mut self, tx: Self::Tx) -> Result<Self::Output, Self::Error>;
+    /// Execute transaction and store state inside journal. Returns output of transaction execution.
+    ///
+    /// Previously this function returned both output and state. Now it returns only the output and the state
+    /// can be obtained by calling `finalize` function. Function with same behavior is `transact_finalize`.
+    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
+    /// Finalize execution, clearing journal and returning state.
     fn finalize(&mut self) -> Self::State;
 
     /// Transact the given transaction.
     ///
-    /// Internally sets transaction in context and use `replay` to execute the transaction.
-    fn transact(&mut self, tx: Self::Tx) -> Result<(Self::Output, Self::State), Self::Error> {
-        let output = self.transact_continue(tx)?;
+    /// Internally calls combo of `transact_continue` and `finalize` functions.
+    fn transact_finalize(
+        &mut self,
+        tx: Self::Tx,
+    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+        let output = self.transact(tx)?;
         let state = self.finalize();
         Ok((output, state))
     }
 
-    fn multi_transact(
+    /// Execute multiple transaction without finalizing.
+    ///
+    /// This method offers adding additional transactions to the execution, or allow execution last transaction
+    /// with Inspect mode.
+    fn transact_multi(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<Vec<Self::Output>, Self::Error> {
+    ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let mut outputs = Vec::new();
         for tx in txs {
-            outputs.push(self.transact_continue(tx)?);
+            outputs.push(self.transact(tx)?);
         }
         Ok(outputs)
     }
 
-    fn multi_transact_finalize(
+    /// Execute multiple transaction and finalize.
+    ///
+    /// Finalization returns both the list of execution results and all state changes from execution.
+    fn transact_multi_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<(Vec<Self::Output>, Self::State), Self::Error> {
-        let output = self.multi_transact(txs)?;
+    ) -> Result<(Vec<Self::ExecutionResult>, Self::State), Self::Error> {
+        let output = self.transact_multi(txs)?;
         let state = self.finalize();
         Ok((output, state))
     }
 
-    fn clear_state(&mut self);
+    /// Pops last transaction from journal, reverting state to previous transaction.
+    ///
+    /// In case there is no transaction to pop, it does nothing.
+    fn revert(&mut self);
+
+    /// Pops all transactions from journal, clearing it.
+    fn revert_all(&mut self);
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
 pub trait ExecuteCommitEvm: ExecuteEvm {
-    /// Commit output of transaction execution.
-    type CommitOutput;
+    fn commit(&mut self, state: Self::State);
 
     /// Transact the transaction and commit to the state.
-    fn replay_commit(&mut self) -> Self::CommitOutput;
+    fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        let (output, state) = self.transact_finalize(tx)?;
+        self.commit(state);
+        Ok(output)
+    }
 
-    /// Transact the transaction and commit to the state.
-    fn transact_commit(&mut self, tx: Self::Tx) -> Self::CommitOutput {
-        self.set_tx(tx);
-        self.replay_commit()
+    fn transact_multi_commit(
+        &mut self,
+        txs: impl Iterator<Item = Self::Tx>,
+    ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
+        let outputs = self.transact_multi(txs)?;
+        let state = self.finalize();
+        self.commit(state);
+        Ok(outputs)
     }
 }
 
@@ -85,7 +108,7 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    type Output = ExecutionResult<HaltReason>;
+    type ExecutionResult = ExecutionResult<HaltReason>;
     type State = EvmState;
     type Error = EVMError<<CTX::Db as Database>::Error, InvalidTransaction>;
 
@@ -93,29 +116,28 @@ where
 
     type Block = <CTX as ContextTr>::Block;
 
-    fn transact_continue(&mut self, tx: Self::Tx) -> Result<Self::Output, Self::Error> {
-        todo!("");
+    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        //todo!("");
         // TODO run should return output without state.
-        // let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        // t.run(self)
+        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        t.run(self)
     }
 
     fn finalize(&mut self) -> Self::State {
-        todo!();
+        todo!("");
         //self.journal().finalize()
-    }
-
-    fn clear_state(&mut self) {
-        todo!();
-        //self.journal().revert_last()
-    }
-
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.ctx.set_tx(tx);
     }
 
     fn set_block(&mut self, block: Self::Block) {
         self.ctx.set_block(block);
+    }
+
+    fn revert(&mut self) {
+        todo!();
+    }
+
+    fn revert_all(&mut self) {
+        todo!();
     }
 }
 
@@ -126,15 +148,7 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    type CommitOutput = Result<
-        ExecutionResult<HaltReason>,
-        EVMError<<CTX::Db as Database>::Error, InvalidTransaction>,
-    >;
-
-    fn replay_commit(&mut self) -> Self::CommitOutput {
-        self.replay().map(|r| {
-            self.db().commit(r.state);
-            r.result
-        })
+    fn commit(&mut self, state: Self::State) {
+        self.db().commit(state);
     }
 }

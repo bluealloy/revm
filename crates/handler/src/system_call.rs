@@ -47,7 +47,7 @@ pub trait SystemCallEvm: ExecuteEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<(Self::Output, Self::State), Self::Error>;
+    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error>;
 }
 
 /// Extension of the [`SystemCallEvm`] trait that adds a method that commits the state after execution.
@@ -57,7 +57,7 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Self::CommitOutput;
+    ) -> Result<Self::ExecutionResult, Self::Error>;
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm for Evm<CTX, INSP, INST, PRECOMPILES>
@@ -71,7 +71,7 @@ where
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<(Self::Output, Self::State), Self::Error> {
+    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
         // set tx fields.
         self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
         // create handler
@@ -94,11 +94,11 @@ where
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Self::CommitOutput {
+    ) -> Result<Self::ExecutionResult, Self::Error> {
         self.transact_system_call(system_contract_address, data)
-            .map(|r| {
-                self.db().commit(r.state);
-                r.result
+            .map(|(result, state)| {
+                self.db().commit(state);
+                result
             })
     }
 }
@@ -135,12 +135,10 @@ mod tests {
             // block with number 1 will set storage at slot 0.
             .modify_block_chained(|b| b.number = 1)
             .build_mainnet();
-        let res = my_evm
+        let (result, state) = my_evm
             .transact_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
-        let result = res.result;
-        let state = res.state;
         assert_eq!(
             result,
             ExecutionResult::Success {
