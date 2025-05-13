@@ -21,7 +21,7 @@ use revm::{
 // Type alias for Optimism context
 pub trait OpContextTr:
     ContextTr<
-    Journal: JournalTr<FinalOutput = JournalOutput>,
+    Journal: JournalTr<State = EvmState>,
     Tx: OpTxTr,
     Cfg: Cfg<Spec = OpSpecId>,
     Chain = L1BlockInfo,
@@ -31,7 +31,7 @@ pub trait OpContextTr:
 
 impl<T> OpContextTr for T where
     T: ContextTr<
-        Journal: JournalTr<FinalOutput = JournalOutput>,
+        Journal: JournalTr<State = EvmState>,
         Tx: OpTxTr,
         Cfg: Cfg<Spec = OpSpecId>,
         Chain = L1BlockInfo,

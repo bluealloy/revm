@@ -1,7 +1,9 @@
-use crate::{instructions::InstructionProvider, EthFrame, MainnetHandler, PrecompileProvider};
+use crate::{
+    instructions::InstructionProvider, EthFrame, Handler, MainnetHandler, PrecompileProvider,
+};
 use context::{
     result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-    Block, ContextSetters, ContextTr, Database, Evm, JournalOutput, JournalTr, Transaction,
+    Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
@@ -104,7 +106,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
-    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>> + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -117,8 +119,7 @@ where
     type Block = <CTX as ContextTr>::Block;
 
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        //todo!("");
-        // TODO run should return output without state.
+        self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self)
     }
@@ -143,8 +144,7 @@ where
 
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
-    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>
-        + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {

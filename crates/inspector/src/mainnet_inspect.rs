@@ -3,7 +3,7 @@ use crate::{
     inspect::{InspectCommitEvm, InspectEvm},
     Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler, JournalExt,
 };
-use context::{ContextSetters, ContextTr, Evm, JournalOutput, JournalTr};
+use context::{ContextSetters, ContextTr, Evm, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
     instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
@@ -13,12 +13,13 @@ use interpreter::{
     interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
     InterpreterTypes,
 };
+use state::EvmState;
 
 // Implementing InspectorHandler for MainnetHandler.
 impl<EVM, ERROR, FRAME> InspectorHandler for MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: InspectorEvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM>,
@@ -31,7 +32,7 @@ where
 // Implementing InspectEvm for Evm
 impl<CTX, INSP, INST, PRECOMPILES> InspectEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
+    CTX: ContextSetters + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -42,7 +43,7 @@ where
         self.inspector = inspector;
     }
 
-    fn inspect_replay(&mut self) -> Self::Output {
+    fn inspect_replay(&mut self) -> Self::ExecutionResult {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
             _phantom: core::marker::PhantomData,
         };
@@ -55,12 +56,12 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt, Db: DatabaseCommit>,
+        + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Db: DatabaseCommit>,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn inspect_replay_commit(&mut self) -> Self::CommitOutput {
+    fn inspect_replay_commit(&mut self) -> Self::ExecutionResult {
         self.inspect_replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result

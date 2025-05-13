@@ -28,7 +28,7 @@ where
     TX: OpTxTr,
     CFG: Cfg<Spec = OpSpecId>,
     DB: Database,
-    JOURNAL: JournalTr<Database = DB, FinalOutput = JournalOutput>,
+    JOURNAL: JournalTr<Database = DB, State = EvmState>,
 {
     type Context = Self;
 

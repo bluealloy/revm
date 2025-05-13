@@ -1,5 +1,5 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
-use super::{JournalEntryTr, JournalOutput};
+use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
@@ -88,6 +88,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
     }
 
+    /// Returns the logs
+    #[inline]
+    pub fn take_logs(&mut self) -> Vec<Log> {
+        mem::take(&mut self.logs)
+    }
+
     /// Prepare for next transaction.
     ///
     /// This function is used to prepare for next transaction. It will save the current journal
@@ -126,13 +132,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// warm_preloaded_addresses will contain precompiles addresses.
     /// Precompile addresses
     #[inline]
-    pub fn clear_and_take_output(&mut self) -> JournalOutput {
-        // self.depth = 0;
-        // // TODO for tests
-        // return JournalOutput {
-        //     state: HashMap::default(),
-        //     logs: Vec::new(),
-        // };
+    pub fn clear_and_take_output(&mut self) -> EvmState {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -153,7 +153,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_preloaded_addresses.clone_from(precompiles);
 
         let state = mem::take(state);
-        let logs = mem::take(logs);
+        logs.clear();
         transient_storage.clear();
 
         // todo history logs.
@@ -161,7 +161,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal_history.clear();
         *depth = 0;
 
-        JournalOutput { state, logs }
+        state
     }
 
     /// Return reference to state.

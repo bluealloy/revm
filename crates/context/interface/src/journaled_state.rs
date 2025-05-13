@@ -12,7 +12,7 @@ use state::{
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     type Database: Database;
-    type FinalOutput;
+    type State;
 
     /// Creates new Journaled state.
     ///
@@ -194,10 +194,13 @@ pub trait JournalTr {
     /// Returns the depth of the journal.
     fn depth(&self) -> usize;
 
+    /// Returns the logs.
+    fn take_logs(&mut self) -> Vec<Log>;
+
     /// Does cleanup and returns modified state.
     ///
     /// This resets the [JournalTr] to its initial state.
-    fn finalize(&mut self) -> Self::FinalOutput;
+    fn finalize(&mut self) -> Self::State;
 }
 
 /// Transfer and creation result

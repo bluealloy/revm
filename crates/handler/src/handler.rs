@@ -4,11 +4,11 @@ use crate::{
     FrameResult, ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
-use context::{Evm, JournalOutput, LocalContextTr, TransactionType};
+use context::{LocalContextTr, TransactionType};
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
-    result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
+    result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
@@ -53,7 +53,7 @@ impl<
 /// occurs during execution.
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
-    type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
+    type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
     /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate frames.
@@ -102,11 +102,21 @@ pub trait Handler {
         // call execution and than output.
         match self
             .execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.output(evm, exec_result))
+            .and_then(|exec_result| self.execution_result(evm, exec_result))
         {
-            Ok(output) => Ok(output),
+            out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }
+    }
+
+    fn run_system_call_finalize(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
+        let exec_result = self.run_system_call(evm)?;
+
+        let state = self.take_state(evm)?;
+        Ok((exec_result, state))
     }
 
     /// Called by [`Handler::run`] to execute the core handler logic.
@@ -119,13 +129,17 @@ pub trait Handler {
     fn run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
-    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
         self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
         // Prepare transaction output
-        self.output(evm, exec_result)
+        let exec_result = self.execution_result(evm, exec_result)?;
+        // Clear local context
+        evm.ctx().local().clear();
+
+        Ok(exec_result)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -463,24 +477,25 @@ pub trait Handler {
     /// This method, retrieves the final state from the journal, converts internal results to the external output format.
     /// Internal state is cleared and EVM is prepared for the next transaction.
     #[inline]
-    fn output(
-        &self,
+    fn execution_result(
+        &mut self,
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
             Ok(_) => (),
         }
 
-        let output = post_execution::output(evm.ctx(), result);
+        let exec_result = post_execution::output(evm.ctx(), result);
 
-        // Clear local context
-        evm.ctx().local().clear();
-        // Clear journal
-        evm.ctx().journal().clear();
-        Ok((output.result, output.state))
+        Ok(exec_result)
+    }
+
+    /// Finalize the state and return the [`EvmState`] changes
+    fn take_state(&mut self, evm: &mut Self::Evm) -> Result<EvmState, Self::Error> {
+        Ok(evm.ctx().journal().finalize())
     }
 
     /// Handles cleanup when an error occurs during execution.
@@ -495,8 +510,6 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // clean up local context. Initcode cache needs to be discarded.
         evm.ctx().local().clear();
-        // Clean up journal state if error occurs
-        evm.ctx().journal().clear();
         Err(error)
     }
 }

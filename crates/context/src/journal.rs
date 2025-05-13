@@ -84,19 +84,9 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
     }
 }
 
-/// Output of the journal after finalizing.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JournalOutput {
-    /// Changes or touched accounts that loads, created or changed in the journal.
-    pub state: EvmState,
-    /// Logs that were emitted by contract calls.
-    pub logs: Vec<Log>,
-}
-
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
-    type FinalOutput = JournalOutput;
+    type State = EvmState;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
@@ -268,7 +258,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn finalize(&mut self) -> Self::FinalOutput {
+    fn take_logs(&mut self) -> Vec<Log> {
+        self.inner.take_logs()
+    }
+
+    #[inline]
+    fn finalize(&mut self) -> EvmState {
         self.inner.clear_and_take_output()
     }
 }

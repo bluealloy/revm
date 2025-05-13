@@ -2,10 +2,11 @@ use crate::{
     instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
 };
-use context::{ContextSetters, ContextTr, Evm, JournalOutput, JournalTr, TxEnv};
+use context::{ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, Address, Bytes, TxKind};
+use state::EvmState;
 
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
 
@@ -47,7 +48,20 @@ pub trait SystemCallEvm: ExecuteEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error>;
+    ) -> Result<Self::ExecutionResult, Self::Error>;
+
+    /// Transact the system call and finalize.
+    ///
+    /// Internally calls combo of `transact_system_call` and `finalize` functions.
+    fn transact_system_call_finalize(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+        let result = self.transact_system_call(system_contract_address, data)?;
+        let state = self.finalize();
+        Ok((result, state))
+    }
 }
 
 /// Extension of the [`SystemCallEvm`] trait that adds a method that commits the state after execution.
@@ -62,8 +76,7 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
 
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
-    CTX: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Tx: SystemCallTx>
-        + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -71,7 +84,7 @@ where
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+    ) -> Result<Self::ExecutionResult, Self::Error> {
         // set tx fields.
         self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
         // create handler
@@ -82,11 +95,8 @@ where
 
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
-    CTX: ContextTr<
-            Journal: JournalTr<FinalOutput = JournalOutput>,
-            Db: DatabaseCommit,
-            Tx: SystemCallTx,
-        > + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
+        + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -95,7 +105,7 @@ where
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.transact_system_call(system_contract_address, data)
+        self.transact_system_call_finalize(system_contract_address, data)
             .map(|(result, state)| {
                 self.db().commit(state);
                 result
@@ -136,7 +146,7 @@ mod tests {
             .modify_block_chained(|b| b.number = 1)
             .build_mainnet();
         let (result, state) = my_evm
-            .transact_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
+            .transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
         assert_eq!(
