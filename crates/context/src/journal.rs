@@ -241,7 +241,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn clear(&mut self) {
         // Clears the inner journal state. Preserving only the spec and precompile addresses.
-        let _ = self.inner.clear_and_take_output();
+        let _ = self.inner.clear_and_take_state();
     }
 
     #[inline]
@@ -258,12 +258,28 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn take_logs(&mut self) -> Vec<Log> {
+    fn commit_tx(&mut self) -> Vec<Log> {
+        self.transaction_id += 1;
         self.inner.take_logs()
     }
 
     #[inline]
-    fn finalize(&mut self) -> EvmState {
-        self.inner.clear_and_take_output()
+    fn discard_tx(&mut self) {
+        self.inner.discard_current_tx();
+    }
+
+    /// Using Journal entries reverts current state to the state before transaction started.
+    ///
+    /// If present journal is not empty it will discard this journal and will not touch history.
+    ///
+    /// If called second time the last transaction from history will be reverted.
+    fn revert_tx(&mut self) {
+        self.inner.revert_tx();
+    }
+
+    /// Clear current journal reseting it to initial state and return changes state.
+    #[inline]
+    fn finalize(&mut self) -> Self::State {
+        self.inner.clear_and_take_state()
     }
 }

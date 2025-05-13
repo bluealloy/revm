@@ -98,8 +98,8 @@ pub fn output<CTX: ContextTr<Journal: JournalTr<State = EvmState>>, HALTREASON: 
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 
-    // Reset journal and return present state.
-    let logs = context.journal().take_logs();
+    // commit transaction and return logs. Journal is pushed to journal history.
+    let logs = context.journal().commit_tx();
 
     return match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {

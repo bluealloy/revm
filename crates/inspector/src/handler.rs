@@ -57,7 +57,7 @@ where
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund);
+        self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
         self.execution_result(evm, frame_result)
     }
 

@@ -43,7 +43,7 @@ where
         self.inspector = inspector;
     }
 
-    fn inspect_replay(&mut self) -> Self::ExecutionResult {
+    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
             _phantom: core::marker::PhantomData,
         };
@@ -61,12 +61,6 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn inspect_replay_commit(&mut self) -> Self::ExecutionResult {
-        self.inspect_replay().map(|r| {
-            self.ctx().db().commit(r.state);
-            r.result
-        })
-    }
 }
 
 // Implementing InspectorEvmTr for Evm

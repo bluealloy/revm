@@ -84,7 +84,16 @@ pub trait ExecuteEvm {
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
 pub trait ExecuteCommitEvm: ExecuteEvm {
+    /// Commit the state.
     fn commit(&mut self, state: Self::State);
+
+    /// Finalize the state and commit it to the database.
+    ///
+    /// Internally calls `finalize` and `commit` functions.
+    fn commit_inner(&mut self) {
+        let state = self.finalize();
+        self.commit(state);
+    }
 
     /// Transact the transaction and commit to the state.
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
@@ -93,6 +102,9 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
         Ok(output)
     }
 
+    /// Transact multiple transactions and commit to the state.
+    ///
+    /// Internally calls `transact_multi` and `commit` functions.
     fn transact_multi_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -125,8 +137,7 @@ where
     }
 
     fn finalize(&mut self) -> Self::State {
-        todo!("");
-        //self.journal().finalize()
+        self.journal().finalize()
     }
 
     fn set_block(&mut self, block: Self::Block) {
@@ -134,7 +145,7 @@ where
     }
 
     fn revert(&mut self) {
-        todo!();
+        self.journal().revert_tx();
     }
 
     fn revert_all(&mut self) {

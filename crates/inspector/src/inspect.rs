@@ -14,28 +14,27 @@ pub trait InspectEvm: ExecuteEvm {
     /// `Evm` with `with_inspector` function.
     fn set_inspector(&mut self, inspector: Self::Inspector);
 
-    /// Inspect the EVM with the current inspector and previous transaction.
-    fn inspect_replay(&mut self) -> Self::ExecutionResult;
+    /// Inspect the EVM with the given transaction.
+    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Inspect the EVM with the given inspector and transaction.
-    fn inspect(&mut self, tx: Self::Tx, inspector: Self::Inspector) -> Self::ExecutionResult {
-        self.set_tx(tx);
-        self.inspect_replay_with_inspector(inspector)
-    }
-
-    /// Inspect the EVM with the current inspector and previous transaction by replaying it.
-    fn inspect_replay_with_inspector(
+    fn inspect(
         &mut self,
+        tx: Self::Tx,
         inspector: Self::Inspector,
-    ) -> Self::ExecutionResult {
+    ) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_inspector(inspector);
-        self.inspect_replay()
+        self.inspect_with_tx(tx)
     }
 
-    /// Inspect the EVM with the given transaction.
-    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Self::ExecutionResult {
-        self.set_tx(tx);
-        self.inspect_replay()
+    /// Inspect the EVM
+    fn inspect_with_tx_finalize(
+        &mut self,
+        tx: Self::Tx,
+    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+        let output = self.inspect_with_tx(tx)?;
+        let state = self.finalize();
+        Ok((output, state))
     }
 }
 
@@ -44,28 +43,15 @@ pub trait InspectEvm: ExecuteEvm {
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
-    /// Inspect the EVM with the current inspector and previous transaction, similar to [`InspectEvm::inspect_replay`]
-    /// and commit the state diff to the database.
-    fn inspect_replay_commit(&mut self) -> Self::ExecutionResult;
-
-    /// Inspects commit with the given inspector and previous transaction, similar to [`InspectEvm::inspect_replay_with_inspector`]
-    /// and commit the state diff to the database.
-    fn inspect_replay_commit_with_inspector(
-        &mut self,
-        inspector: Self::Inspector,
-    ) -> Self::ExecutionResult {
-        self.set_inspector(inspector);
-        self.inspect_replay_commit()
-    }
-
     /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_replay_with_inspector`]
     /// and commit the state diff to the database.
-    fn inspect_replay_with_inspector(
+    fn inspect_with_tx_commit(
         &mut self,
-        inspector: Self::Inspector,
-    ) -> Self::ExecutionResult {
-        self.set_inspector(inspector);
-        self.inspect_replay_commit()
+        tx: Self::Tx,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        let output = self.inspect_with_tx(tx)?;
+        self.commit_inner();
+        Ok(output)
     }
 
     /// Inspect the EVM with the given transaction and inspector similar to [`InspectEvm::inspect`]
@@ -74,8 +60,9 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
-    ) -> Self::ExecutionResult {
-        self.set_tx(tx);
-        self.inspect_replay_commit_with_inspector(inspector)
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        let output = self.inspect(tx, inspector)?;
+        self.commit_inner();
+        Ok(output)
     }
 }

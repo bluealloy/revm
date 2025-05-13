@@ -79,7 +79,7 @@ impl GasInspector {
 mod tests {
     use super::*;
     use crate::{InspectEvm, Inspector};
-    use context::Context;
+    use context::{Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
@@ -140,18 +140,18 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let ctx = Context::mainnet()
-            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .modify_tx_chained(|tx| {
-                tx.caller = BENCH_CALLER;
-                tx.kind = TxKind::Call(BENCH_TARGET);
-                tx.gas_limit = 21100;
-            });
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode.clone()));
 
         let mut evm = ctx.build_mainnet_with_inspector(StackInspector::default());
 
         // Run evm.
-        evm.inspect_replay().unwrap();
+        evm.inspect_with_tx(TxEnv {
+            caller: BENCH_CALLER,
+            kind: TxKind::Call(BENCH_TARGET),
+            gas_limit: 21100,
+            ..Default::default()
+        })
+        .unwrap();
 
         let inspector = &evm.inspector;
 
@@ -255,7 +255,13 @@ mod tests {
 
         let mut evm = ctx.build_mainnet_with_inspector(inspector);
 
-        let _ = evm.inspect_replay().unwrap();
+        let _ = evm
+            .inspect_with_tx(TxEnv {
+                caller: BENCH_CALLER,
+                kind: TxKind::Call(BENCH_TARGET),
+                ..Default::default()
+            })
+            .unwrap();
         assert_eq!(evm.inspector.return_buffer.len(), 3);
         assert_eq!(
             evm.inspector.return_buffer,
