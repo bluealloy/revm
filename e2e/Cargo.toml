@@ -6,7 +6,7 @@ resolver = "2"
 
 [dependencies]
 fluentbase-sdk = { path = "../../crates/sdk" }
-fluentbase-genesis = { path = "../../crates/genesis", default-features = false, features = ["generate-genesis"] }
+fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 
 revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
     "ethersdb",
@@ -34,9 +34,15 @@ walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
+std = [
+    "fluentbase-genesis/std",
+    "fluentbase-sdk/std",
+]
+
 default = [
+    "std",
     #    "debug-print",
-    "wasmtime"
+    "wasmtime",
 ]
 debug-print = [
     "revm/debug-print",
