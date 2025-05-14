@@ -383,7 +383,10 @@ impl TxEnvBuilder {
     }
 
     /// Set the authorization list
-    pub fn authorization_list(mut self, authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>) -> Self {
+    pub fn authorization_list(
+        mut self,
+        authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
+    ) -> Self {
         self.authorization_list = authorization_list;
         if !self.authorization_list.is_empty() {
             self.tx_type = TransactionType::Eip7702 as u8;
