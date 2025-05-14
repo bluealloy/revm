@@ -22,7 +22,7 @@ pub fn run(criterion: &mut Criterion) {
     let mut evm = context.build_mainnet();
     criterion.bench_function("analysis", |b| {
         b.iter(|| {
-            let _ = evm.transact_commit(tx.clone());
+            let _ = evm.transact_finalize(tx.clone());
         });
     });
 }

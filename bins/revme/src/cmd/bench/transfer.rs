@@ -1,3 +1,4 @@
+use context::TxEnv;
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
@@ -9,19 +10,21 @@ use revm::{
 pub fn run(criterion: &mut Criterion) {
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
-        .modify_tx_chained(|tx| {
-            // Execution globals block hash/gas_limit/coinbase/timestamp..
-            tx.caller = BENCH_CALLER;
-            tx.kind = TxKind::Call(BENCH_TARGET);
-            tx.value = U256::from(1);
-            tx.gas_price = 0;
-            tx.gas_priority_fee = None;
-        })
         .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
         .build_mainnet();
+
+    let tx = TxEnv {
+        caller: BENCH_CALLER,
+        kind: TxKind::Call(BENCH_TARGET),
+        value: U256::from(1),
+        gas_price: 0,
+        gas_priority_fee: None,
+        ..Default::default()
+    };
+
     criterion.bench_function("transfer", |b| {
         b.iter(|| {
-            let _ = evm.replay().unwrap();
+            let _ = evm.transact_finalize(tx.clone()).unwrap();
         })
     });
 }

@@ -406,12 +406,12 @@ pub fn execute_test_suite(
                     let mut evm = evm_context.build_mainnet_with_inspector(
                         TracerEip3155::buffered(stderr()).without_summary(),
                     );
-                    let res = evm.inspect_replay_commit();
+                    let res = evm.inspect_with_tx_commit(&tx);
                     let db = evm.ctx.journaled_state.database;
                     (db, res)
                 } else {
                     let mut evm = evm_context.build_mainnet();
-                    let res = evm.replay_commit();
+                    let res = evm.transact_commit(&tx);
                     let db = evm.ctx.journaled_state.database;
                     (db, res)
                 };
@@ -461,7 +461,7 @@ pub fn execute_test_suite(
                         TracerEip3155::buffered(stderr()).without_summary(),
                     );
 
-                let _ = evm.inspect_replay_commit();
+                let _ = evm.inspect_with_tx_commit(&tx);
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);

@@ -101,7 +101,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr<State = EvmState>>, HALTREASON: 
     // commit transaction and return logs. Journal is pushed to journal history.
     let logs = context.journal().commit_tx();
 
-    return match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
+    match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,
@@ -124,5 +124,5 @@ pub fn output<CTX: ContextTr<Journal: JournalTr<State = EvmState>>, HALTREASON: 
                 flag, instruction_result
             )
         }
-    };
+    }
 }

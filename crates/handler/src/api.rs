@@ -27,16 +27,24 @@ pub trait ExecuteEvm {
 
     /// Execute transaction and store state inside journal. Returns output of transaction execution.
     ///
-    /// Previously this function returned both output and state. Now it returns only the output and the state
-    /// can be obtained by calling `finalize` function. Function with same behavior is `transact_finalize`.
+    /// # Return Value
+    /// Returns only the execution result
+    ///
+    /// # State Management
+    /// State changes are stored in the internal journal.
+    /// To retrieve the state, call [`ExecuteEvm::finalize`] after transaction execution.
+    ///
+    /// # History Note
+    /// Previously this function returned both output and state.
+    /// Now it follows a two-step process: execute then finalize.
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
-    /// Finalize execution, clearing journal and returning state.
+    /// Finalize execution, clearing the journal and returning the accumulated state changes.
     fn finalize(&mut self) -> Self::State;
 
-    /// Transact the given transaction.
+    /// Transact the given transaction and finalize in a single operation.
     ///
-    /// Internally calls combo of `transact_continue` and `finalize` functions.
+    /// Internally calls [`ExecuteEvm::transact`] followed by [`ExecuteEvm::finalize`].
     fn transact_finalize(
         &mut self,
         tx: Self::Tx,
@@ -46,10 +54,10 @@ pub trait ExecuteEvm {
         Ok((output, state))
     }
 
-    /// Execute multiple transaction without finalizing.
+    /// Execute multiple transactions without finalizing the state.
     ///
-    /// This method offers adding additional transactions to the execution, or allow execution last transaction
-    /// with Inspect mode.
+    /// Returns a vector of execution results. State changes are accumulated in the journal
+    /// but not finalized. Call [`ExecuteEvm::finalize`] after execution to retrieve state changes.
     fn transact_multi(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -61,9 +69,9 @@ pub trait ExecuteEvm {
         Ok(outputs)
     }
 
-    /// Execute multiple transaction and finalize.
+    /// Execute multiple transactions and finalize the state in a single operation.
     ///
-    /// Finalization returns both the list of execution results and all state changes from execution.
+    /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
     fn transact_multi_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -73,12 +81,13 @@ pub trait ExecuteEvm {
         Ok((output, state))
     }
 
-    /// Pops last transaction from journal, reverting state to previous transaction.
+    /// Reverts the most recent transaction in the journal.
     ///
-    /// In case there is no transaction to pop, it does nothing.
+    /// Pops the last transaction from the journal, reverting all state changes made by that transaction.
+    /// If the journal is empty, this method does nothing.
     fn revert(&mut self);
 
-    /// Pops all transactions from journal, clearing it.
+    /// Reverts all transactions in the journal, clearing it completely.
     fn revert_all(&mut self);
 }
 
