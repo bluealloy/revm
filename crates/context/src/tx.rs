@@ -252,6 +252,173 @@ impl Transaction for TxEnv {
     // }
 }
 
+/// Builder for constructing [`TxEnv`] instances
+#[derive(Default, Debug)]
+pub struct TxEnvBuilder {
+    tx_type: u8,
+    caller: Address,
+    gas_limit: u64,
+    gas_price: u128,
+    kind: TxKind,
+    value: U256,
+    data: Bytes,
+    nonce: u64,
+    chain_id: Option<u64>,
+    access_list: AccessList,
+    gas_priority_fee: Option<u128>,
+    blob_hashes: Vec<B256>,
+    max_fee_per_blob_gas: u128,
+    authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
+}
+
+impl TxEnvBuilder {
+    /// Create a new builder with default values
+    pub fn new() -> Self {
+        Self {
+            tx_type: 0,
+            caller: Address::default(),
+            gas_limit: 30_000_000,
+            gas_price: 0,
+            kind: TxKind::Call(Address::default()),
+            value: U256::ZERO,
+            data: Bytes::default(),
+            nonce: 0,
+            chain_id: Some(1), // Mainnet chain ID is 1
+            access_list: Default::default(),
+            gas_priority_fee: None,
+            blob_hashes: Vec::new(),
+            max_fee_per_blob_gas: 0,
+            authorization_list: Vec::new(),
+        }
+    }
+
+    /// Set the transaction type
+    pub fn tx_type(mut self, tx_type: u8) -> Self {
+        self.tx_type = tx_type;
+        self
+    }
+
+    /// Set the caller address
+    pub fn caller(mut self, caller: Address) -> Self {
+        self.caller = caller;
+        self
+    }
+
+    /// Set the gas limit
+    pub fn gas_limit(mut self, gas_limit: u64) -> Self {
+        self.gas_limit = gas_limit;
+        self
+    }
+
+    /// Set the gas price
+    pub fn gas_price(mut self, gas_price: u128) -> Self {
+        self.gas_price = gas_price;
+        self
+    }
+
+    /// Set the transaction kind
+    pub fn kind(mut self, kind: TxKind) -> Self {
+        self.kind = kind;
+        self
+    }
+
+    /// Set the transaction value
+    pub fn value(mut self, value: U256) -> Self {
+        self.value = value;
+        self
+    }
+
+    /// Set the transaction data
+    pub fn data(mut self, data: Bytes) -> Self {
+        self.data = data;
+        self
+    }
+
+    /// Set the transaction nonce
+    pub fn nonce(mut self, nonce: u64) -> Self {
+        self.nonce = nonce;
+        self
+    }
+
+    /// Set the chain ID
+    pub fn chain_id(mut self, chain_id: Option<u64>) -> Self {
+        self.chain_id = chain_id;
+        self
+    }
+
+    /// Set the access list
+    pub fn access_list(mut self, access_list: AccessList) -> Self {
+        self.access_list = access_list;
+        if !self.access_list.0.is_empty() {
+            self.tx_type = TransactionType::Eip2930 as u8;
+        }
+        self
+    }
+
+    /// Set the gas priority fee
+    pub fn gas_priority_fee(mut self, gas_priority_fee: Option<u128>) -> Self {
+        self.gas_priority_fee = gas_priority_fee;
+        if gas_priority_fee.is_some() {
+            self.tx_type = TransactionType::Eip1559 as u8;
+        }
+        self
+    }
+
+    /// Set the blob hashes
+    pub fn blob_hashes(mut self, blob_hashes: Vec<B256>) -> Self {
+        self.blob_hashes = blob_hashes;
+        if !self.blob_hashes.is_empty() {
+            self.tx_type = TransactionType::Eip4844 as u8;
+        }
+        self
+    }
+
+    /// Set the max fee per blob gas
+    pub fn max_fee_per_blob_gas(mut self, max_fee_per_blob_gas: u128) -> Self {
+        self.max_fee_per_blob_gas = max_fee_per_blob_gas;
+        if max_fee_per_blob_gas > 0 {
+            self.tx_type = TransactionType::Eip4844 as u8;
+        }
+        self
+    }
+
+    /// Set the authorization list
+    pub fn authorization_list(mut self, authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>) -> Self {
+        self.authorization_list = authorization_list;
+        if !self.authorization_list.is_empty() {
+            self.tx_type = TransactionType::Eip7702 as u8;
+        }
+        self
+    }
+
+    /// Build the final [`TxEnv`]
+    pub fn build(self) -> TxEnv {
+        TxEnv {
+            tx_type: self.tx_type,
+            caller: self.caller,
+            gas_limit: self.gas_limit,
+            gas_price: self.gas_price,
+            kind: self.kind,
+            value: self.value,
+            data: self.data,
+            nonce: self.nonce,
+            chain_id: self.chain_id,
+            access_list: self.access_list,
+            gas_priority_fee: self.gas_priority_fee,
+            blob_hashes: self.blob_hashes,
+            max_fee_per_blob_gas: self.max_fee_per_blob_gas,
+            authorization_list: self.authorization_list,
+        }
+    }
+}
+
+impl TxEnv {
+    /// Create a new builder for constructing a [`TxEnv`]
+    pub fn builder() -> TxEnvBuilder {
+        TxEnvBuilder::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
