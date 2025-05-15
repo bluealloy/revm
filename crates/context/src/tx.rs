@@ -255,7 +255,7 @@ impl Transaction for TxEnv {
 /// Builder for constructing [`TxEnv`] instances
 #[derive(Default, Debug)]
 pub struct TxEnvBuilder {
-    tx_type: u8,
+    tx_type: Option<u8>,
     caller: Address,
     gas_limit: u64,
     gas_price: u128,
@@ -275,7 +275,7 @@ impl TxEnvBuilder {
     /// Create a new builder with default values
     pub fn new() -> Self {
         Self {
-            tx_type: 0,
+            tx_type: None,
             caller: Address::default(),
             gas_limit: 30_000_000,
             gas_price: 0,
@@ -293,7 +293,7 @@ impl TxEnvBuilder {
     }
 
     /// Set the transaction type
-    pub fn tx_type(mut self, tx_type: u8) -> Self {
+    pub fn tx_type(mut self, tx_type: Option<u8>) -> Self {
         self.tx_type = tx_type;
         self
     }
@@ -350,7 +350,7 @@ impl TxEnvBuilder {
     pub fn access_list(mut self, access_list: AccessList) -> Self {
         self.access_list = access_list;
         if !self.access_list.0.is_empty() {
-            self.tx_type = TransactionType::Eip2930 as u8;
+            self.tx_type = Some(TransactionType::Eip2930 as u8);
         }
         self
     }
@@ -359,7 +359,7 @@ impl TxEnvBuilder {
     pub fn gas_priority_fee(mut self, gas_priority_fee: Option<u128>) -> Self {
         self.gas_priority_fee = gas_priority_fee;
         if gas_priority_fee.is_some() {
-            self.tx_type = TransactionType::Eip1559 as u8;
+            self.tx_type = Some(TransactionType::Eip1559 as u8);
         }
         self
     }
@@ -368,7 +368,7 @@ impl TxEnvBuilder {
     pub fn blob_hashes(mut self, blob_hashes: Vec<B256>) -> Self {
         self.blob_hashes = blob_hashes;
         if !self.blob_hashes.is_empty() {
-            self.tx_type = TransactionType::Eip4844 as u8;
+            self.tx_type = Some(TransactionType::Eip4844 as u8);
         }
         self
     }
@@ -377,7 +377,7 @@ impl TxEnvBuilder {
     pub fn max_fee_per_blob_gas(mut self, max_fee_per_blob_gas: u128) -> Self {
         self.max_fee_per_blob_gas = max_fee_per_blob_gas;
         if max_fee_per_blob_gas > 0 {
-            self.tx_type = TransactionType::Eip4844 as u8;
+            self.tx_type = Some(TransactionType::Eip4844 as u8);
         }
         self
     }
@@ -389,15 +389,15 @@ impl TxEnvBuilder {
     ) -> Self {
         self.authorization_list = authorization_list;
         if !self.authorization_list.is_empty() {
-            self.tx_type = TransactionType::Eip7702 as u8;
+            self.tx_type = Some(TransactionType::Eip7702 as u8);
         }
         self
     }
 
     /// Build the final [`TxEnv`]
-    pub fn build(self) -> TxEnv {
-        TxEnv {
-            tx_type: self.tx_type,
+    pub fn build(self) -> Result<TxEnv, DeriveTxTypeError> {
+        let mut tx = TxEnv {
+            tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
             gas_limit: self.gas_limit,
             gas_price: self.gas_price,
@@ -411,7 +411,11 @@ impl TxEnvBuilder {
             blob_hashes: self.blob_hashes,
             max_fee_per_blob_gas: self.max_fee_per_blob_gas,
             authorization_list: self.authorization_list,
-        }
+        };
+
+        tx.derive_tx_type()?;
+
+        Ok(tx)
     }
 }
 
