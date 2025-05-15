@@ -106,6 +106,10 @@ fn skip_test(path: &Path) -> bool {
         | "InitCollision.json"
         | "InitCollisionParis.json"
 
+        // Malformed value.
+        | "ValueOverflow.json"
+        | "ValueOverflowParis.json"
+
         // These tests are passing, but they take a lot of time to execute so we are going to skip them.
         | "Call50000_sha256.json"
         | "static_Call50000_sha256.json"
