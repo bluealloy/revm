@@ -438,7 +438,7 @@ opcodes! {
     0x1B => SHL  => stack_io(2, 1);
     0x1C => SHR  => stack_io(2, 1);
     0x1D => SAR  => stack_io(2, 1);
-    // 0x1E
+    0x1E => CLZ => stack_io(1, 1);
     // 0x1F
     0x20 => KECCAK256 => stack_io(2, 1);
     // 0x21

@@ -27,6 +27,17 @@ pub fn gt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *op2 = U256::from(op1 > *op2);
 }
 
+pub fn clz<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
+    gas!(interpreter, gas::VERYLOW);
+    popn_top!([], op1, interpreter);
+
+    let leading_zeros = op1.leading_zeros();
+    *op1 = U256::from(leading_zeros);
+}
+
 pub fn slt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
