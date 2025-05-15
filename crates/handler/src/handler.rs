@@ -136,8 +136,6 @@ pub trait Handler {
         self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
         // Prepare transaction output
         let exec_result = self.execution_result(evm, exec_result)?;
-        // Clear local context
-        evm.ctx().local().clear();
 
         Ok(exec_result)
     }

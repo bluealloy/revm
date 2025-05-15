@@ -30,6 +30,10 @@ pub trait ExecuteEvm {
     /// # Return Value
     /// Returns only the execution result
     ///
+    /// # Error Handling
+    /// If the transaction fails, the journal will revert all changes of given transaction.
+    /// For quicker error handling, use [`ExecuteEvm::transact_finalize`] that will drop the journal.
+    ///
     /// # State Management
     /// State changes are stored in the internal journal.
     /// To retrieve the state, call [`ExecuteEvm::finalize`] after transaction execution.
@@ -40,17 +44,26 @@ pub trait ExecuteEvm {
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Finalize execution, clearing the journal and returning the accumulated state changes.
+    ///
+    /// # State Management
+    /// Journal is cleared and can be used for next transaction.
     fn finalize(&mut self) -> Self::State;
 
     /// Transact the given transaction and finalize in a single operation.
     ///
     /// Internally calls [`ExecuteEvm::transact`] followed by [`ExecuteEvm::finalize`].
+    ///
+    /// # Outcome of Error
+    ///
+    /// If the transaction fails, the journal is considered broken.
     fn transact_finalize(
         &mut self,
         tx: Self::Tx,
     ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
-        let output = self.transact(tx)?;
+        let output_or_error = self.transact(tx);
+        // finalize will clear the journal
         let state = self.finalize();
+        let output = output_or_error?;
         Ok((output, state))
     }
 
@@ -58,13 +71,21 @@ pub trait ExecuteEvm {
     ///
     /// Returns a vector of execution results. State changes are accumulated in the journal
     /// but not finalized. Call [`ExecuteEvm::finalize`] after execution to retrieve state changes.
+    ///
+    /// # Outcome of Error
+    ///
+    /// If any transaction fails, the journal is finalized and the last error is returned.
+    ///
+    /// TODO add tx index to the error.
     fn transact_multi(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let mut outputs = Vec::new();
         for tx in txs {
-            outputs.push(self.transact(tx)?);
+            outputs.push(self.transact(tx).inspect_err(|_| {
+                let _ = self.finalize();
+            })?);
         }
         Ok(outputs)
     }
@@ -76,19 +97,11 @@ pub trait ExecuteEvm {
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<(Vec<Self::ExecutionResult>, Self::State), Self::Error> {
+        // on error transact_multi will clear the journal
         let output = self.transact_multi(txs)?;
         let state = self.finalize();
         Ok((output, state))
     }
-
-    /// Reverts the most recent transaction in the journal.
-    ///
-    /// Pops the last transaction from the journal, reverting all state changes made by that transaction.
-    /// If the journal is empty, this method does nothing.
-    fn revert(&mut self);
-
-    /// Reverts all transactions in the journal, clearing it completely.
-    fn revert_all(&mut self);
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -134,15 +147,15 @@ where
     type ExecutionResult = ExecutionResult<HaltReason>;
     type State = EvmState;
     type Error = EVMError<<CTX::Db as Database>::Error, InvalidTransaction>;
-
     type Tx = <CTX as ContextTr>::Tx;
-
     type Block = <CTX as ContextTr>::Block;
 
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        t.run(self)
+        t.run(self).inspect_err(|_| {
+            let _ = self.journal().discard_tx();
+        })
     }
 
     fn finalize(&mut self) -> Self::State {
@@ -151,14 +164,6 @@ where
 
     fn set_block(&mut self, block: Self::Block) {
         self.ctx.set_block(block);
-    }
-
-    fn revert(&mut self) {
-        self.journal().revert_tx();
-    }
-
-    fn revert_all(&mut self) {
-        todo!();
     }
 }
 
