@@ -1,4 +1,6 @@
 use crate::{utilities::right_pad, Precompile, PrecompileResult, PrecompileWithAddress};
+#[allow(unused_imports)]
+use k256 as _;
 use revm_primitives::{Bytes, PrecompileOutput, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
