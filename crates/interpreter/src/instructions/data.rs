@@ -84,8 +84,17 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 #[cfg(test)]
 mod test {
+    #[cfg(not(feature = "std"))]
+    extern crate alloc;
+
     use bytecode::{Bytecode, Eof};
     use primitives::{b256, bytes, Bytes};
+
+    #[cfg(not(target_has_atomic = "ptr"))]
+    use alloc::rc::Rc as Arc;
+    #[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+    use alloc::sync::Arc;
+    #[cfg(all(feature = "std", target_has_atomic = "ptr"))]
     use std::sync::Arc;
 
     use super::*;

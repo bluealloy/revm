@@ -113,9 +113,18 @@ impl LegacyAnalyzedBytecode {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(feature = "std"))]
+    extern crate alloc;
+
     use super::*;
     use crate::{opcode, LegacyRawBytecode};
     use bitvec::{bitvec, order::Lsb0};
+
+    #[cfg(not(target_has_atomic = "ptr"))]
+    use alloc::rc::Rc as Arc;
+    #[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+    use alloc::sync::Arc;
+    #[cfg(all(feature = "std", target_has_atomic = "ptr"))]
     use std::sync::Arc;
 
     #[test]

@@ -8,7 +8,8 @@ use primitives::{Address, B256};
 /// are warm loaded before transaction execution.
 ///
 /// Number of account and storage slots is used to calculate initial tx gas cost.
-#[auto_impl(&, Box, Arc, Rc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, Box, Arc, Rc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, Box, Rc))]
 pub trait AccessListItemTr {
     /// Returns account address.
     fn address(&self) -> &Address;

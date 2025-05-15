@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 use super::frame_data::*;
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
@@ -29,7 +32,14 @@ use primitives::{
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
-use std::{boxed::Box, sync::Arc};
+use std::boxed::Box;
+
+#[cfg(not(target_has_atomic = "ptr"))]
+use alloc::rc::Rc as Arc;
+#[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
+#[cfg(all(feature = "std", target_has_atomic = "ptr"))]
+use std::sync::Arc;
 
 /// Call frame trait
 pub trait Frame: Sized {

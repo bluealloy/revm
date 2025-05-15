@@ -1,8 +1,19 @@
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 use super::JumpTable;
 use crate::opcode;
 use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
-use std::{sync::Arc, vec, vec::Vec};
+
+#[cfg(not(target_has_atomic = "ptr"))]
+use alloc::rc::Rc as Arc;
+#[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
+#[cfg(all(feature = "std", target_has_atomic = "ptr"))]
+use std::sync::Arc;
+
+use std::{vec, vec::Vec};
 
 /// Analyze the bytecode to find the jumpdests. Used to create a jump table
 /// that is needed for [`crate::LegacyAnalyzedBytecode`].

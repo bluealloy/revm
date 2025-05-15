@@ -3,7 +3,8 @@ use core::fmt::Debug;
 use core::hash::Hash;
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
-#[auto_impl(&, &mut, Box, Arc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, &mut, Box, Arc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, &mut, Box))]
 pub trait Cfg {
     type Spec: Into<SpecId> + Clone;
 

@@ -2,7 +2,8 @@ use auto_impl::auto_impl;
 use primitives::{Address, U256};
 
 /// Authorization trait.
-#[auto_impl(&, Box, Arc, Rc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, Box, Arc, Rc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, Box, Rc))]
 pub trait AuthorizationTr {
     /// Authority address.
     ///
