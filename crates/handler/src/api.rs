@@ -8,6 +8,7 @@ use context::{
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
+use std::vec::Vec;
 
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
@@ -93,6 +94,7 @@ pub trait ExecuteEvm {
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
     /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
+    #[allow(clippy::type_complexity)]
     fn transact_multi_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -153,9 +155,7 @@ where
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        t.run(self).inspect_err(|_| {
-            let _ = self.journal().discard_tx();
-        })
+        t.run(self).inspect_err(|_| self.journal().discard_tx())
     }
 
     fn finalize(&mut self) -> Self::State {

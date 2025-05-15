@@ -8,6 +8,7 @@ use state::{
     bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
     Account, Bytecode,
 };
+use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
@@ -170,7 +171,9 @@ pub trait JournalTr {
     }
 
     /// Called at the end of the transaction to clean all residue data from journal.
-    fn clear(&mut self);
+    fn clear(&mut self) {
+        let _ = self.finalize();
+    }
 
     /// Creates a checkpoint of the current state. State can be revert to this point
     /// if needed.

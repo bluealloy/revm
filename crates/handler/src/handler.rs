@@ -49,8 +49,16 @@ impl<
 ///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,
 ///     and rewards beneficiary
 ///
+///
 /// The [`Handler::catch_error`] method handles cleanup of intermediate state if an error
 /// occurs during execution.
+///
+/// # Returns
+///
+/// Returns execution status, error, gas spend and logs. State change is not returned and it is
+/// contained inside Context Journal. This setup allows multiple transactions to be chain executed.
+///
+/// To finalize the execution and obtain changed state, call [`JournalTr::finalize`] function.
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>;
@@ -74,6 +82,15 @@ pub trait Handler {
     /// calls [`Handler::catch_error`] to handle the error and cleanup.
     ///
     /// The [`Handler::catch_error`] method ensures intermediate state is properly cleared.
+    ///
+    /// # Error handling
+    ///
+    /// In case of error, the journal can be in an inconsistent state and should be cleared by calling
+    /// [`JournalTr::discard_tx`] method or dropped.
+    ///
+    /// # Returns
+    ///
+    /// Returns execution result, error, gas spend and logs.
     #[inline]
     fn run(
         &mut self,
@@ -92,6 +109,14 @@ pub trait Handler {
     ///
     /// It is used to call a system contracts and it skips all the `validation` and `pre-execution` and most of `post-execution` phases.
     /// For example it will not deduct the caller or reward the beneficiary.
+    ///
+    /// State changs can be obtained by calling [`JournalTr::finalize`] method from the [`EvmTr::Context`].
+    ///
+    /// # Error handling
+    ///
+    /// By design system call should not fail and should always succeed.
+    /// In case of an error (If fetching account/storage on rpc fails), the journal can be in an inconsistent
+    /// state and should be cleared by calling [`JournalTr::discard_tx`] method or dropped.
     #[inline]
     fn run_system_call(
         &mut self,
@@ -109,16 +134,6 @@ pub trait Handler {
         }
     }
 
-    fn run_system_call_finalize(
-        &mut self,
-        evm: &mut Self::Evm,
-    ) -> Result<(ExecutionResult<Self::HaltReason>, EvmState), Self::Error> {
-        let exec_result = self.run_system_call(evm)?;
-
-        let state = self.take_state(evm)?;
-        Ok((exec_result, state))
-    }
-
     /// Called by [`Handler::run`] to execute the core handler logic.
     ///
     /// Executes the four phases in sequence: [Handler::validate],
@@ -134,10 +149,9 @@ pub trait Handler {
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
         self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
-        // Prepare transaction output
-        let exec_result = self.execution_result(evm, exec_result)?;
 
-        Ok(exec_result)
+        // Prepare the output
+        self.execution_result(evm, exec_result)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -489,11 +503,6 @@ pub trait Handler {
         let exec_result = post_execution::output(evm.ctx(), result);
 
         Ok(exec_result)
-    }
-
-    /// Finalize the state and return the [`EvmState`] changes
-    fn take_state(&mut self, evm: &mut Self::Evm) -> Result<EvmState, Self::Error> {
-        Ok(evm.ctx().journal().finalize())
     }
 
     /// Handles cleanup when an error occurs during execution.

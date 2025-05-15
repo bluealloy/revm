@@ -133,7 +133,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Discard the current transaction, by reverting the journal entrie and incrementing the transaction id.
-    pub fn discard_current_tx(&mut self) {
+    pub fn discard_tx(&mut self) {
         self.commit_tx();
         // pop the last journal history.
         let entries = self.journal_history.pop().unwrap_or_default();
@@ -151,7 +151,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn revert_tx(&mut self) {
         if !self.journal.is_empty() {
-            self.discard_current_tx();
+            self.discard_tx();
             return;
         }
 
@@ -173,7 +173,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Note: Precompile addresses and spec are preserved and initial state of
     /// warm_preloaded_addresses will contain precompiles addresses.
     #[inline]
-    pub fn clear_and_take_state(&mut self) -> EvmState {
+    pub fn finalize(&mut self) -> EvmState {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {

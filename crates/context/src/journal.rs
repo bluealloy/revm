@@ -239,12 +239,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn clear(&mut self) {
-        // Clears the inner journal state. Preserving only the spec and precompile addresses.
-        let _ = self.inner.clear_and_take_state();
-    }
-
-    #[inline]
     fn create_account_checkpoint(
         &mut self,
         caller: Address,
@@ -265,7 +259,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     #[inline]
     fn discard_tx(&mut self) {
-        self.inner.discard_current_tx();
+        self.inner.discard_tx();
     }
 
     /// Using Journal entries reverts current state to the state before transaction started.
@@ -280,6 +274,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     /// Clear current journal reseting it to initial state and return changes state.
     #[inline]
     fn finalize(&mut self) -> Self::State {
-        self.inner.clear_and_take_state()
+        self.inner.finalize()
     }
 }
