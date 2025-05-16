@@ -95,7 +95,7 @@ phf = { version = "0.11", default-features = false }
 
 # revme
 clap = { version = "4", features = ["derive"] }
-criterion = { package = "codspeed-criterion-compat", version = "2.7" }
+criterion = { package = "codspeed-criterion-compat", version = "2.10" }
 
 # serde
 serde = { version = "1.0", default-features = false }
