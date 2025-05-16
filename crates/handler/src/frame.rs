@@ -10,7 +10,7 @@ use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
-    Cfg, Database, Transaction,
+    Cfg, Database,
 };
 use core::cmp::min;
 use interpreter::{
@@ -183,7 +183,7 @@ where
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // Make account warm and loaded
+        // Make account warm and loaded.
         let _ = context
             .journal()
             .load_account_delegated(inputs.bytecode_address)?;
@@ -320,25 +320,20 @@ where
         // }
 
         // Fetch balance of caller.
-        let caller_balance = context
-            .journal()
-            .load_account(inputs.caller)?
-            .data
-            .info
-            .balance;
+        let caller_info = &mut context.journal().load_account(inputs.caller)?.data.info;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_info.balance < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
         // Increase nonce of caller and check if it overflows
-        let old_nonce;
-        if let Some(nonce) = context.journal().inc_account_nonce(inputs.caller)? {
-            old_nonce = nonce - 1;
-        } else {
+        let old_nonce = caller_info.nonce;
+        let Some(new_nonce) = old_nonce.checked_add(1) else {
             return return_error(InstructionResult::Return);
-        }
+        };
+        caller_info.nonce = new_nonce;
+        context.journal().nonce_bump_journal_entry(inputs.caller);
 
         // Create address
         let mut init_code_hash = B256::ZERO;
@@ -425,25 +420,25 @@ where
                 input,
                 created_address,
             } => (input.clone(), initcode.clone(), Some(*created_address)),
-            EOFCreateKind::Tx { initdata } => {
+            EOFCreateKind::Tx { .. } => {
                 // Decode eof and init code.
                 // TODO : Handle inc_nonce handling more gracefully.
-                let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
-                    context.journal().inc_account_nonce(inputs.caller)?;
-                    return return_error(InstructionResult::InvalidEOFInitCode);
-                };
+                // let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
+                //     context.journal().inc_account_nonce(inputs.caller)?;
+                //     return return_error(InstructionResult::InvalidEOFInitCode);
+                // };
 
-                if eof.validate().is_err() {
-                    // TODO : (EOF) New error type.
-                    context.journal().inc_account_nonce(inputs.caller)?;
-                    return return_error(InstructionResult::InvalidEOFInitCode);
-                }
+                // if eof.validate().is_err() {
+                //     // TODO : (EOF) New error type.
+                //     context.journal().inc_account_nonce(inputs.caller)?;
+                //     return return_error(InstructionResult::InvalidEOFInitCode);
+                // }
 
-                // Use nonce from tx to calculate address.
-                let tx = context.tx();
-                let create_address = tx.caller().create(tx.nonce());
-
-                (CallInput::Bytes(input), eof, Some(create_address))
+                // // Use nonce from tx to calculate address.
+                // let tx = context.tx();
+                // let create_address = tx.caller().create(tx.nonce());
+                unreachable!("EOF is disabled");
+                //(CallInput::Bytes(input), eof, Some(create_address))
             }
         };
 
@@ -453,22 +448,22 @@ where
         }
 
         // Fetch balance of caller.
-        let caller_balance = context
-            .journal()
-            .load_account(inputs.caller)?
-            .map(|a| a.info.balance);
+        let caller = context.journal().load_account(inputs.caller)?.data;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance.data < inputs.value {
+        if caller.info.balance < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
         // Increase nonce of caller and check if it overflows
-        let Some(nonce) = context.journal().inc_account_nonce(inputs.caller)? else {
+        let Some(new_nonce) = caller.info.nonce.checked_add(1) else {
             // Can't happen on mainnet.
             return return_error(InstructionResult::Return);
         };
-        let old_nonce = nonce - 1;
+        caller.info.nonce = new_nonce;
+        context.journal().nonce_bump_journal_entry(inputs.caller);
+
+        let old_nonce = new_nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 

@@ -8,18 +8,17 @@ use crate::{
 use revm::{
     context::{result::InvalidTransaction, LocalContextTr},
     context_interface::{
-        result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
+        result::{EVMError, ExecutionResult, FromStringError},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        handler::EvmTrError, pre_execution::validate_account_nonce_and_code, EvmTr, Frame,
-        FrameResult, Handler, MainnetHandler,
+        handler::EvmTrError, post_execution::reimburse_caller,
+        pre_execution::validate_account_nonce_and_code, EvmTr, Frame, FrameResult, Handler,
+        MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
-    primitives::{hardfork::SpecId, HashMap, U256},
-    state::Account,
-    Database,
+    primitives::{hardfork::SpecId, U256},
 };
 use std::boxed::Box;
 
@@ -267,26 +266,17 @@ where
         evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.mainnet.reimburse_caller(evm, exec_result)?;
+        let mut additional_refund = U256::ZERO;
 
-        let context = evm.ctx();
-        if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            let caller = context.tx().caller();
-            let spec = context.cfg().spec();
-            let operator_fee_refund = context.chain().operator_fee_refund(exec_result.gas(), spec);
-
-            let caller_account = context.journal().load_account(caller)?;
-
-            // In additional to the normal transaction fee, additionally refund the caller
-            // for the operator fee.
-            caller_account.data.info.balance = caller_account
-                .data
-                .info
-                .balance
-                .saturating_add(operator_fee_refund);
+        if evm.ctx().tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
+            let spec = evm.ctx().cfg().spec();
+            additional_refund = evm
+                .ctx()
+                .chain()
+                .operator_fee_refund(exec_result.gas(), spec);
         }
 
-        Ok(())
+        reimburse_caller(evm.ctx(), exec_result.gas_mut(), additional_refund).map_err(From::from)
     }
 
     fn refund(
@@ -347,23 +337,19 @@ where
                 );
             }
             // Send the L1 cost of the transaction to the L1 Fee Vault.
-            let mut l1_fee_vault_account = ctx.journal().load_account(L1_FEE_RECIPIENT)?;
-            l1_fee_vault_account.mark_touch();
-            l1_fee_vault_account.info.balance += l1_cost;
+            ctx.journal().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
 
             // Send the base fee of the transaction to the Base Fee Vault.
-            let mut base_fee_vault_account =
-                evm.ctx().journal().load_account(BASE_FEE_RECIPIENT)?;
-            base_fee_vault_account.mark_touch();
-            base_fee_vault_account.info.balance += U256::from(basefee.saturating_mul(
-                (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
-            ));
+            ctx.journal().balance_incr(
+                BASE_FEE_RECIPIENT,
+                U256::from(basefee.saturating_mul(
+                    (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
+                )),
+            )?;
 
             // Send the operator fee of the transaction to the coinbase.
-            let mut operator_fee_vault_account =
-                evm.ctx().journal().load_account(OPERATOR_FEE_RECIPIENT)?;
-            operator_fee_vault_account.mark_touch();
-            operator_fee_vault_account.data.info.balance += operator_fee_cost;
+            ctx.journal()
+                .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
         }
         Ok(())
     }
@@ -402,6 +388,10 @@ where
             let mint = tx.mint();
             let is_system_tx = tx.is_system_transaction();
             let gas_limit = tx.gas_limit();
+
+            // Discard all changes of this transaction.
+            evm.ctx().journal().discard_tx();
+
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
             // gas reported must be altered depending on the Hardfork. This is
@@ -411,24 +401,14 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let account = {
-                let mut acc = Account::from(
-                    evm.ctx()
-                        .db()
-                        .basic(caller)
-                        .unwrap_or_default()
-                        .unwrap_or_default(),
-                );
-                acc.info.nonce = acc.info.nonce.saturating_add(1);
-                acc.info.balance = acc
-                    .info
-                    .balance
-                    .saturating_add(U256::from(mint.unwrap_or_default()));
-                acc.mark_touch();
-                acc
-            };
-            let state = HashMap::from_iter([(caller, account)]);
-            // TODO(multi_tx) state should be in a hashmap.
+            let acc = evm.ctx().journal().load_account(caller)?.data;
+
+            acc.info.nonce = acc.info.nonce.saturating_add(1);
+            acc.info.balance = acc
+                .info
+                .balance
+                .saturating_add(U256::from(mint.unwrap_or_default()));
+            acc.mark_touch();
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
@@ -440,12 +420,9 @@ where
                 0
             };
             // clear the journal
-            Ok(ResultAndState {
-                result: ExecutionResult::Halt {
-                    reason: OpHaltReason::FailedDeposit,
-                    gas_used,
-                },
-                state,
+            Ok(ExecutionResult::Halt {
+                reason: OpHaltReason::FailedDeposit,
+                gas_used,
             })
         } else {
             Err(error)
@@ -454,8 +431,7 @@ where
         evm.ctx().chain().clear_tx_l1_cost();
         evm.ctx().local().clear();
 
-        todo!();
-        // output
+        output
     }
 }
 

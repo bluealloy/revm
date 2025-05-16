@@ -39,7 +39,7 @@ mod test {
         // convert to optimism context
         let mut evm = ctx.build_op_with_inspector(NoOpInspector {});
         // execute
-        let _ = evm.transact(OpTransaction::default());
+        let _ = evm.transact_finalize(OpTransaction::default());
         // inspect
         let _ = evm.inspect_with_tx(OpTransaction::default());
     }

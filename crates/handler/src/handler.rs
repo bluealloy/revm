@@ -12,6 +12,7 @@ use context_interface::{
     Cfg, Database, JournalTr, Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
+use primitives::U256;
 use state::EvmState;
 use std::{vec, vec::Vec};
 
@@ -471,7 +472,8 @@ pub trait Handler {
         evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
+        post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut(), U256::ZERO)
+            .map_err(From::from)
     }
 
     /// Transfers transaction fees to the block beneficiary's account.

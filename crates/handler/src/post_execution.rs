@@ -27,24 +27,23 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
 }
 
+#[inline]
 pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
+    additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
     let caller = context.tx().caller();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Return balance of not spend gas.
-    let caller_account = context.journal().load_account(caller)?;
-
-    let reimbursed =
-        effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
-    caller_account.data.info.balance = caller_account
-        .data
-        .info
-        .balance
-        .saturating_add(U256::from(reimbursed));
+    context.journal().balance_incr(
+        caller,
+        U256::from(
+            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
+        ) + additional_refund,
+    )?;
 
     Ok(())
 }
@@ -54,11 +53,9 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
-    let block = context.block();
-    let tx = context.tx();
-    let beneficiary = block.beneficiary();
-    let basefee = block.basefee() as u128;
-    let effective_gas_price = tx.effective_gas_price(basefee);
+    let beneficiary = context.block().beneficiary();
+    let basefee = context.block().basefee() as u128;
+    let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
@@ -68,17 +65,11 @@ pub fn reward_beneficiary<CTX: ContextTr>(
         effective_gas_price
     };
 
-    let coinbase_account = context.journal().load_account(beneficiary)?;
-
-    coinbase_account.data.mark_touch();
-    coinbase_account.data.info.balance =
-        coinbase_account
-            .data
-            .info
-            .balance
-            .saturating_add(U256::from(
-                coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128,
-            ));
+    // reward beneficiary
+    context.journal().balance_incr(
+        beneficiary,
+        U256::from(coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128),
+    )?;
 
     Ok(())
 }

@@ -89,11 +89,22 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
-    /// Increments the nonce of the account.
-    fn inc_account_nonce(
+    /// Increments the balance of the account.
+    fn balance_incr(
         &mut self,
         address: Address,
-    ) -> Result<Option<u64>, <Self::Database as Database>::Error>;
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error>;
+
+    /// Decrements the balance of the account.
+    fn balance_decr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error>;
+
+    /// Increments the nonce of the account.
+    fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
     fn load_account(

@@ -82,7 +82,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
-            journal: Vec::new(),
+            journal: Vec::with_capacity(100),
             journal_history: Vec::new(),
             transaction_id: 0,
             depth: 0,
@@ -126,6 +126,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
 
         journal_history.push(mem::take(journal));
+        *journal = Vec::with_capacity(100);
         // Load precompiles into warm_preloaded_addresses.
         warm_preloaded_addresses.clone_from(precompiles);
         *transaction_id += 1;
@@ -284,24 +285,55 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.set_code_with_hash(address, code, hash)
     }
 
-    /// Increments the nonce of the account.
-    ///
-    /// # Returns
-    ///
-    /// Returns the new nonce if it did not overflow, otherwise returns `None`.
+    /// Increments the balance of the account.
     #[inline]
-    pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
-        let account = self.state.get_mut(&address).unwrap();
-        // Check if nonce is going to overflow.
-        if account.info.nonce == u64::MAX {
-            return None;
+    pub fn balance_incr<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), DB::Error> {
+        let account = self.load_account(db, address)?.data;
+        account.info.balance = account.info.balance.saturating_add(balance);
+
+        // march account as touched.
+        if !account.is_touched() {
+            account.mark_touch();
+            self.journal.push(ENTRY::account_touched(address));
         }
-        Self::touch_account(&mut self.journal, address, account);
+
+        // add journal entry for balance increment.
+        self.journal.push(ENTRY::balance_incr(address, balance));
+        Ok(())
+    }
+
+    /// Decrements the balance of the account.
+    ///
+    #[inline]
+    pub fn balance_decr<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), DB::Error> {
+        let account = self.load_account(db, address)?.data;
+        account.info.balance = account.info.balance.saturating_sub(balance);
+
+        // march account as touched.
+        if !account.is_touched() {
+            account.mark_touch();
+            self.journal.push(ENTRY::account_touched(address));
+        }
+
+        // add journal entry for balance increment.
+        self.journal.push(ENTRY::balance_decr(address, balance));
+        Ok(())
+    }
+
+    /// Increments the nonce of the account.
+    #[inline]
+    pub fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journal.push(ENTRY::nonce_changed(address));
-
-        account.info.nonce += 1;
-
-        Some(account.info.nonce)
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.

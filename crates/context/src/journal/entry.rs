@@ -31,6 +31,12 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for a balance transfer between accounts
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self;
 
+    /// Creates a journal entry for a balance increment.
+    fn balance_incr(address: Address, balance: U256) -> Self;
+
+    /// Creates a journal entry for a balance decrement.
+    fn balance_decr(address: Address, balance: U256) -> Self;
+
     /// Creates a journal entry for when an account's nonce is incremented.
     fn nonce_changed(address: Address) -> Self;
 
@@ -111,6 +117,17 @@ pub enum JournalEntry {
     AccountTouched {
         /// Address of account that is touched.
         address: Address,
+    },
+    /// Increment/Decrement balance
+    /// Action: Increment/Decrement balance
+    /// Revert: Revert to previous balance
+    BalanceChange {
+        /// Address of account that had its balance incremented.
+        address: Address,
+        /// Balance of account.
+        balance: U256,
+        /// Whether the balance is incremented or decremented.
+        is_increment: bool,
     },
     /// Transfer balance between two accounts
     /// Action: Transfer balance
@@ -205,6 +222,22 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::BalanceTransfer { from, to, balance }
     }
 
+    fn balance_incr(address: Address, balance: U256) -> Self {
+        JournalEntry::BalanceChange {
+            address,
+            balance,
+            is_increment: true,
+        }
+    }
+
+    fn balance_decr(address: Address, balance: U256) -> Self {
+        JournalEntry::BalanceChange {
+            address,
+            balance,
+            is_increment: false,
+        }
+    }
+
     fn account_created(address: Address) -> Self {
         JournalEntry::AccountCreated { address }
     }
@@ -279,6 +312,18 @@ impl JournalEntryTr for JournalEntry {
                 if address != target {
                     let target = state.get_mut(&target).unwrap();
                     target.info.balance -= had_balance;
+                }
+            }
+            JournalEntry::BalanceChange {
+                address,
+                balance,
+                is_increment,
+            } => {
+                let account = state.get_mut(&address).unwrap();
+                if is_increment {
+                    account.info.balance += balance;
+                } else {
+                    account.info.balance -= balance;
                 }
             }
             JournalEntry::BalanceTransfer { from, to, balance } => {
