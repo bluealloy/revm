@@ -113,7 +113,7 @@ mod failing_tests {
         // fn static_return50000_2("tests/GeneralStateTests/stStaticCall/static_Return50000_2.json");
 
         // infinite loop or a very long test
-        fn st_attack_test_contract_creation_spam("tests/GeneralStateTests/stAttackTest/ContractCreationSpam.json");
+        // fn st_attack_test_contract_creation_spam("tests/GeneralStateTests/stAttackTest/ContractCreationSpam.json");
     }
 }
 

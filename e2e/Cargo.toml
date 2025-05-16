@@ -6,7 +6,7 @@ resolver = "2"
 
 [dependencies]
 fluentbase-sdk = { path = "../../crates/sdk" }
-fluentbase-genesis = { path = "../../crates/genesis", default-features = false, features = ["generate-genesis"] }
+fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 
 revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
     "ethersdb",
@@ -14,7 +14,6 @@ revm = { package = "revm", path = "../crates/revm", default-features = false, fe
     "serde-json",
     "c-kzg",
     "blst",
-    "e2e",
 ] }
 
 hash-db = "=0.15"
@@ -35,14 +34,20 @@ walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
-default = [
-    #    "debug-print",
+std = [
+    "fluentbase-genesis/std",
+    "fluentbase-sdk/std",
 ]
 
-e2e = [
-    "revm/e2e",
+default = [
+    "std",
+    #    "debug-print",
+    "wasmtime",
 ]
-debug_use_fluent_storage = []
 debug-print = [
     "revm/debug-print",
 ]
+wasmtime = [
+    "revm/wasmtime",
+]
+

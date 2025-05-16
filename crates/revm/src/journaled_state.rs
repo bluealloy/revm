@@ -22,7 +22,7 @@ use crate::{
     },
 };
 use core::mem;
-use fluentbase_sdk::{is_self_gas_management_contract, is_system_precompile};
+use fluentbase_genesis::{is_self_gas_management_contract, is_system_precompile};
 use revm_interpreter::Eip7702CodeLoad;
 use std::vec::Vec;
 
@@ -190,9 +190,10 @@ impl JournaledState {
     /// use it only if you know that acc is warm
     /// Assume account is warm
     #[inline]
-    pub fn set_code(&mut self, address: Address, code: Bytecode) {
+    pub fn set_code(&mut self, address: Address, code: Bytecode) -> B256 {
         let hash = code.hash_slow();
-        self.set_code_with_hash(address, code, hash)
+        self.set_code_with_hash(address, code, hash);
+        hash
     }
 
     #[inline]

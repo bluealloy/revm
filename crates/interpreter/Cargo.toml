@@ -84,5 +84,4 @@ optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 kzg-rs = ["revm-primitives/kzg-rs"]
 rwasm = []
-e2e = ["revm-primitives/e2e"]
 debug-print = []

@@ -20,7 +20,6 @@ pub struct SystemInterruptionInputs {
 pub struct SystemInterruptionOutcome {
     pub inputs: Box<SystemInterruptionInputs>,
     pub result: InterpreterResult,
-    pub created_address: Option<Address>,
     pub is_frame: bool,
 }
 
@@ -33,12 +32,15 @@ impl SystemInterruptionOutcome {
                 output: Default::default(),
                 gas: gas_consumed,
             },
-            created_address: None,
             is_frame,
         }
     }
 
-    fn insert_frame_result(&mut self, mut result: InterpreterResult) {
+    pub fn insert_result(
+        &mut self,
+        mut result: InterpreterResult,
+        created_address: Option<Address>,
+    ) {
         // for frame result we take gas from result field
         // because it stores information about gas consumed before the call as well
         let mut gas = self.result.gas;
@@ -49,7 +51,7 @@ impl SystemInterruptionOutcome {
                 let refunded = result.gas.refunded();
                 gas.record_refund(refunded);
                 // for CREATE/CREATE2 calls, we need to write created address into output
-                if let Some(created_address) = self.created_address {
+                if let Some(created_address) = created_address {
                     result.output = created_address.into_array().into();
                 }
             }
@@ -65,23 +67,5 @@ impl SystemInterruptionOutcome {
         self.result.output = result.output;
         // we can rewrite here gas since it's adjusted with the consumed value
         self.result.gas = gas;
-    }
-
-    pub fn insert_result(&mut self, result: InterpreterResult) {
-        if self.is_frame {
-            // frame interruptions are caused by nested CALL/CREATE-like opcodes;
-            // it means that they charge cost for the entire gas limit we need to erase
-            self.insert_frame_result(result);
-        } else {
-            self.result.result = result.result;
-            self.result.output = result.output;
-            let mut gas = self.inputs.gas;
-            assert!(
-                gas.record_cost(result.gas.spent()),
-                "revm: interruption gas overflow"
-            );
-            gas.record_refund(result.gas.refunded());
-            self.result.gas = gas;
-        }
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     interpreter::Interpreter,
-    primitives::{Address, Output},
+    primitives::{Address, Bytecode, Output},
     JournalCheckpoint,
 };
 use core::ops::Range;
@@ -65,7 +65,6 @@ pub enum Frame {
 #[derive(Debug)]
 pub enum FrameResult {
     Call(CallOutcome),
-    InterruptedResult(SystemInterruptionOutcome),
     Create(CreateOutcome),
     EOFCreate(CreateOutcome),
 }
@@ -76,7 +75,6 @@ impl FrameResult {
     pub fn into_interpreter_result(self) -> InterpreterResult {
         match self {
             FrameResult::Call(outcome) => outcome.result,
-            FrameResult::InterruptedResult(outcome) => outcome.result,
             FrameResult::Create(outcome) => outcome.result,
             FrameResult::EOFCreate(outcome) => outcome.result,
         }
@@ -87,7 +85,6 @@ impl FrameResult {
     pub fn output(&self) -> Output {
         match self {
             FrameResult::Call(outcome) => Output::Call(outcome.result.output.clone()),
-            FrameResult::InterruptedResult(outcome) => Output::Call(outcome.result.output.clone()),
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
@@ -102,7 +99,6 @@ impl FrameResult {
     pub fn gas(&self) -> &Gas {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
-            FrameResult::InterruptedResult(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
             FrameResult::EOFCreate(outcome) => &outcome.result.gas,
         }
@@ -113,7 +109,6 @@ impl FrameResult {
     pub fn gas_mut(&mut self) -> &mut Gas {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
-            FrameResult::InterruptedResult(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
             FrameResult::EOFCreate(outcome) => &mut outcome.result.gas,
         }
@@ -124,7 +119,6 @@ impl FrameResult {
     pub fn interpreter_result(&self) -> &InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
-            FrameResult::InterruptedResult(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
             FrameResult::EOFCreate(outcome) => &outcome.result,
         }
@@ -135,9 +129,16 @@ impl FrameResult {
     pub fn interpreter_result_mut(&mut self) -> &mut InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
-            FrameResult::InterruptedResult(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
             FrameResult::EOFCreate(outcome) => &mut outcome.result,
+        }
+    }
+
+    #[inline]
+    pub fn created_address(&self) -> Option<Address> {
+        match self {
+            FrameResult::Create(outcome) => outcome.address,
+            _ => None,
         }
     }
 
@@ -199,6 +200,14 @@ impl Frame {
         matches!(self, Frame::Create { .. })
     }
 
+    pub fn is_rwasm_bytecode(&self) -> bool {
+        if let Bytecode::Rwasm(_) = &self.interpreter().contract.bytecode {
+            true
+        } else {
+            false
+        }
+    }
+
     /// Returns created address if frame is create otherwise returns None.
     pub fn created_address(&self) -> Option<Address> {
         match self {
@@ -238,16 +247,27 @@ impl Frame {
         self.frame_data_mut().interrupted_outcome = Some(interrupted_outcome);
     }
 
-    pub fn insert_interrupted_result(&mut self, result: InterpreterResult) {
+    pub fn insert_interrupted_result(&mut self, result: FrameResult) {
+        let created_address = if let FrameResult::Create(create_outcome) = &result {
+            create_outcome.address.or_else(|| {
+                // I don't know why EVM returns empty address and ok status in case of nonce
+                // overflow, I think nobody knows...
+                let is_nonce_overflow = create_outcome.result.result == InstructionResult::Return
+                    && create_outcome.address.is_none();
+                if is_nonce_overflow {
+                    Some(Address::ZERO)
+                } else {
+                    None
+                }
+            })
+        } else {
+            None
+        };
         self.frame_data_mut()
             .interrupted_outcome
             .as_mut()
             .unwrap()
-            .insert_result(result);
-    }
-
-    pub fn interrupted_outcome_mut(&mut self) -> &mut SystemInterruptionOutcome {
-        self.frame_data_mut().interrupted_outcome.as_mut().unwrap()
+            .insert_result(result.into_interpreter_result(), created_address);
     }
 
     pub fn is_interrupted_call(&self) -> bool {

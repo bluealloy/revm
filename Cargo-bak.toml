@@ -27,13 +27,11 @@ fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", b
 fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-poseidon = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
 #fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
 #fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
 #fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }
-#fluentbase-poseidon = { path = "../fluentbase/crates/poseidon", default-features = false }
 #fluentbase-genesis = { path = "../fluentbase/crates/genesis", default-features = false }
 #revm = { package = "revm", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
 #    "ethersdb",

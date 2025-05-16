@@ -11,11 +11,8 @@ use crate::{
         InstructionResult,
         SharedMemory,
     },
-    primitives::{Bytecode, EVMError, Spec},
-    rwasm::{
-        executor::{execute_rwasm_frame, execute_rwasm_resume},
-        syscall::execute_rwasm_interruption,
-    },
+    primitives::{EVMError, Spec},
+    rwasm::executor::{execute_rwasm_frame, execute_rwasm_resume},
     CallFrame,
     Context,
     CreateFrame,
@@ -25,7 +22,6 @@ use crate::{
 };
 use core::mem;
 use revm_interpreter::{
-    interpreter_action::SystemInterruptionInputs,
     opcode::InstructionTables,
     CallOutcome,
     EOFCreateInputs,
@@ -43,21 +39,31 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
     context: &mut Context<EXT, DB>,
 ) -> Result<InterpreterAction, EVMError<DB::Error>> {
-    if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
-        return Ok(execute_rwasm_resume(interrupted_outcome));
-    };
+    let is_rwasm_proxy_enabled = context.evm.cfg().enable_rwasm_proxy;
 
-    let is_create = frame.is_create();
-    let interpreter = frame.interpreter_mut();
-
-    if let Bytecode::Rwasm(rwasm_bytecode) = &interpreter.contract.bytecode {
-        return execute_rwasm_frame::<SPEC, EXT, DB>(
-            interpreter,
-            rwasm_bytecode.clone(),
-            context,
-            is_create,
-        );
+    if is_rwasm_proxy_enabled || frame.is_rwasm_bytecode() || frame.is_interrupted_call() {
+        loop {
+            let next_action = if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
+                execute_rwasm_resume::<SPEC, EXT, DB>(
+                    frame,
+                    shared_memory,
+                    context,
+                    interrupted_outcome,
+                )
+            } else {
+                execute_rwasm_frame::<SPEC, EXT, DB>(frame, shared_memory, context)
+            }?;
+            let result = match next_action {
+                InterpreterAction::Return { result } => result,
+                _ => return Ok(next_action),
+            };
+            if !frame.is_interrupted_call() {
+                return Ok(InterpreterAction::Return { result });
+            }
+        }
     }
+
+    let interpreter = frame.interpreter_mut();
 
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
 
@@ -105,16 +111,6 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_call_frame(&inputs)
-}
-
-/// Handle frame sub call.
-#[inline]
-pub fn system_interruption<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    inputs: Box<SystemInterruptionInputs>,
-    stack_frame: &mut Frame,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs, stack_frame)
 }
 
 #[inline]

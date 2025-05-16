@@ -132,7 +132,20 @@ impl SharedMemory {
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
-        self.buffer.resize(self.last_checkpoint + new_size, 0);
+        // TODO(dmitry123): "review the safeness of the new implementation for potential UB"
+        let new_len = self.last_checkpoint + new_size;
+        let old_len = self.buffer.len();
+        if new_len > old_len {
+            let additional = new_len - old_len;
+            self.buffer.reserve(additional);
+            unsafe {
+                let ptr = self.buffer.as_mut_ptr().add(old_len);
+                core::ptr::write_bytes(ptr, 0, new_len - old_len);
+            }
+        }
+        unsafe {
+            self.buffer.set_len(new_len);
+        }
     }
 
     /// Returns a byte slice of the memory region at the given offset.

@@ -216,9 +216,6 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
                 let call_inputs = call_input_stack.borrow_mut().pop().unwrap();
                 *outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome.clone());
             }
-            FrameResult::InterruptedResult(_) => {
-                // TODO(dmitry123): "do we need to support handlers?"
-            }
             FrameResult::Create(outcome) => {
                 let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
                 *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
