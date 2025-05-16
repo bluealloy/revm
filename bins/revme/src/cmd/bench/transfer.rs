@@ -37,4 +37,5 @@ pub fn run(criterion: &mut Criterion) {
             let _ = evm.transact_finalize(tx.clone()).unwrap();
         })
     });
+
 }

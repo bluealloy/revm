@@ -1,9 +1,10 @@
 use crate::{evm::OpEvm, transaction::OpTxTr, L1BlockInfo, OpSpecId};
 use revm::{
-    context::{Cfg, JournalOutput},
+    context::Cfg,
     context_interface::{Block, JournalTr},
     handler::instructions::EthInstructions,
     interpreter::interpreter::EthInterpreter,
+    state::EvmState,
     Context, Database,
 };
 

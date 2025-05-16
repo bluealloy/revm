@@ -368,14 +368,14 @@ where
         Ok(())
     }
 
-    fn output(
-        &self,
+    fn execution_result(
+        &mut self,
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
-        let result = self.mainnet.output(evm, result)?;
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        let result = self.mainnet.execution_result(evm, result)?;
         let result = result.map_haltreason(OpHaltReason::Base);
-        if result.result.is_halt() {
+        if result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
             // and the caller nonce will be incremented there.
@@ -392,7 +392,7 @@ where
         &self,
         evm: &mut Self::Evm,
         error: Self::Error,
-    ) -> Result<ResultAndState<Self::HaltReason>, Self::Error> {
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let output = if error.is_tx_error() && is_deposit {
             let ctx = evm.ctx();
@@ -428,6 +428,7 @@ where
                 acc
             };
             let state = HashMap::from_iter([(caller, account)]);
+            // TODO(multi_tx) state should be in a hashmap.
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
@@ -451,10 +452,10 @@ where
         };
         // do the cleanup
         evm.ctx().chain().clear_tx_l1_cost();
-        evm.ctx().journal().clear();
         evm.ctx().local().clear();
 
-        output
+        todo!();
+        // output
     }
 }
 
@@ -958,10 +959,10 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut evm = ctx.build_op();
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let mut handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
 
         assert_eq!(
-            handler.output(
+            handler.execution_result(
                 &mut evm,
                 FrameResult::Call(CallOutcome {
                     result: InterpreterResult {

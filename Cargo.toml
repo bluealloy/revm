@@ -17,7 +17,7 @@ members = [
     "crates/handler",
 
     # variants
-    #"crates/op-revm",
+    "crates/op-revm",
     "crates/inspector",
 
     # utility
@@ -63,7 +63,9 @@ alloy-rlp = { version = "0.3", default-features = false }
 alloy-sol-types = { version = "1.0.0", default-features = false }
 alloy-consensus = { version = "0.15.0", default-features = false }
 alloy-eips = { version = "0.15.0", default-features = false }
-alloy-provider = { version = "0.15.0", default-features = false, features = ["reqwest"] }
+alloy-provider = { version = "0.15.0", default-features = false, features = [
+    "reqwest",
+] }
 alloy-signer = { version = "0.15.0", default-features = false }
 alloy-signer-local = { version = "0.15.0", default-features = false }
 alloy-transport = { version = "0.15.0", default-features = false }
