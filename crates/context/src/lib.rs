@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! Implementation of OP Stack (Optimism) context, block, and transaction types for revm.
+//!
+//! Provides concrete types and environment setup for running revm in an Optimism-compatible
+//! context, including L1 block info, OP Stack transaction environment, and configuration.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

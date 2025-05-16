@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! State types and helpers for OP Stack (Optimism) execution in revm.
+//!
+//! Contains account, storage, and state transition logic tailored for OP Stack semantics,
+//! including special handling for account status, storage slots, and state clearing rules.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

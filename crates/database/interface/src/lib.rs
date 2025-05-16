@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! Database traits and helpers for OP Stack (Optimism) state management in revm.
+//!
+//! Defines database interfaces and wrappers for accessing and committing state in
+//! Optimism-compatible EVM environments, including support for async and in-memory DBs.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

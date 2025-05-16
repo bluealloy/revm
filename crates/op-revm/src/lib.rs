@@ -1,4 +1,12 @@
-//! Optimism-specific constants, types, and helpers.
+//! OP Stack (Optimism) integration for revm: provides types, constants, and helpers for L2 execution.
+//!
+//! This crate extends revm with Optimism-specific logic, including:
+//! - L1 fee calculation and storage slots
+//! - OP Stack transaction types and validation
+//! - L1 block info and context
+//! - OP Stack-specific precompiles and handler logic
+//!
+//! Use this crate when building EVM execution environments or tools for Optimism or compatible L2s.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 

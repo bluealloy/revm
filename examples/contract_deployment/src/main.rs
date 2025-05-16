@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example: Deploy and interact with a contract using OP Stack (Optimism) extensions in revm.
+//!
+//! Demonstrates contract creation, storage access, and transaction replay in an
+//! Optimism-compatible EVM context.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};

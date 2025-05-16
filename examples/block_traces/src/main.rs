@@ -1,4 +1,7 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example: Trace block execution with OP Stack (Optimism) support in revm.
+//!
+//! Shows how to fetch, execute, and trace Ethereum blocks using Optimism-specific
+//! context and helpers, including transaction replay and state management.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_consensus::Transaction;

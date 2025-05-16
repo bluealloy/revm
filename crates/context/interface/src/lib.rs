@@ -1,4 +1,8 @@
-//! Optimism-specific constants, types, and helpers.
+//! Shared interfaces and traits for OP Stack (Optimism) extensions to revm.
+//!
+//! Defines the core traits and types for block, transaction, context, and configuration
+//! used by Optimism-specific execution logic. These interfaces enable modular integration
+//! of OP Stack features into revm-based EVMs.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
