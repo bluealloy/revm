@@ -3,6 +3,7 @@ pub mod burntpix;
 pub mod evm_build;
 pub mod snailtracer;
 pub mod transfer;
+pub mod transfer_multi;
 
 use clap::{Parser, ValueEnum};
 
@@ -13,6 +14,7 @@ pub enum BenchName {
     Snailtracer,
     Transfer,
     EvmBuild,
+    TransferMulti,
 }
 
 impl BenchName {
@@ -21,6 +23,7 @@ impl BenchName {
         BenchName::Burntpix,
         BenchName::Snailtracer,
         BenchName::Transfer,
+        BenchName::TransferMulti,
         BenchName::EvmBuild,
     ];
 
@@ -31,6 +34,7 @@ impl BenchName {
             BenchName::Snailtracer => "snailtracer",
             BenchName::Transfer => "transfer",
             BenchName::EvmBuild => "evm-build",
+            BenchName::TransferMulti => "transfer-multi",
         }
     }
 }
@@ -77,6 +81,9 @@ impl Cmd {
             }
             BenchName::EvmBuild => {
                 evm_build::run(&mut criterion);
+            }
+            BenchName::TransferMulti => {
+                transfer_multi::run(&mut criterion);
             }
         }
     }

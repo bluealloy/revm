@@ -58,7 +58,7 @@ impl Backend {
 
 impl JournalTr for Backend {
     type Database = InMemoryDB;
-    type FinalOutput = JournalOutput;
+    type State = EvmState;
 
     fn new(database: InMemoryDB) -> Self {
         Self::new(SpecId::default(), database)

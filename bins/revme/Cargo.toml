@@ -12,7 +12,6 @@ repository.workspace = true
 # revm
 revm = { workspace = true, features = [
     "std",
-    "hashbrown",
     "c-kzg",
     "blst",
     "serde-json",

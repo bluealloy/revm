@@ -34,7 +34,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
+    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
     ERROR: EvmTrError<EVM>,
 {

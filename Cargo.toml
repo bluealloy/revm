@@ -24,15 +24,15 @@ members = [
     "crates/statetest-types",
 
     # examples
-    "examples/block_traces",
-    "examples/cheatcode_inspector",
-    "examples/contract_deployment",
-    "examples/database_components",
-    "examples/uniswap_get_reserves",
-    "examples/uniswap_v2_usdc_swap",
-    "examples/erc20_gas",
-    "examples/my_evm",
-    "examples/custom_opcodes",
+    # "examples/block_traces",
+    # "examples/cheatcode_inspector",
+    # "examples/contract_deployment",
+    # "examples/database_components",
+    # "examples/uniswap_get_reserves",
+    # "examples/uniswap_v2_usdc_swap",
+    # "examples/erc20_gas",
+    # "examples/my_evm",
+    # "examples/custom_opcodes",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
@@ -61,12 +61,14 @@ alloy-primitives = { version = "1.0", default-features = false }
 # alloy in examples, revme or feature flagged.
 alloy-rlp = { version = "0.3", default-features = false }
 alloy-sol-types = { version = "1.0.0", default-features = false }
-alloy-consensus = { version = "0.14.0", default-features = false }
-alloy-eips = { version = "0.14.0", default-features = false }
-alloy-provider = { version = "0.14.0", default-features = false }
-alloy-signer = { version = "0.14.0", default-features = false }
-alloy-signer-local = { version = "0.14.0", default-features = false }
-alloy-transport = { version = "0.14.0", default-features = false }
+alloy-consensus = { version = "0.15.0", default-features = false }
+alloy-eips = { version = "0.15.0", default-features = false }
+alloy-provider = { version = "0.15.0", default-features = false, features = [
+    "reqwest",
+] }
+alloy-signer = { version = "0.15.0", default-features = false }
+alloy-signer-local = { version = "0.15.0", default-features = false }
+alloy-transport = { version = "0.15.0", default-features = false }
 
 # precompiles
 ark-bls12-381 = { version = "0.5", default-features = false }
@@ -93,7 +95,7 @@ phf = { version = "0.11", default-features = false }
 
 # revme
 clap = { version = "4", features = ["derive"] }
-criterion = { package = "codspeed-criterion-compat", version = "2.7" }
+criterion = { package = "codspeed-criterion-compat", version = "2.10" }
 
 # serde
 serde = { version = "1.0", default-features = false }

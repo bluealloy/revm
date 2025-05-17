@@ -75,7 +75,6 @@ pub fn load_accounts<
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
     tx_nonce: u64,
-    bump_nonce: bool,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
 ) -> Result<(), InvalidTransaction> {
@@ -108,13 +107,6 @@ pub fn validate_account_nonce_and_code(
             _ => {}
         }
     }
-
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if bump_nonce {
-        // Nonce is already checked
-        caller_info.nonce = caller_info.nonce.saturating_add(1);
-    }
-
     Ok(())
 }
 
@@ -139,18 +131,25 @@ pub fn validate_against_state_and_deduct_caller<
     validate_account_nonce_and_code(
         &mut caller_account.info,
         tx.nonce(),
-        tx.kind().is_call(),
         is_eip3607_disabled,
         is_nonce_check_disabled,
     )?;
 
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+    if tx.kind().is_call() {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
+
     let max_balance_spending = tx.max_balance_spending()?;
+
+    let mut new_balance = caller_account.info.balance;
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
     if is_balance_check_disabled {
         // Make sure the caller's balance is at least the value of the transaction.
-        caller_account.info.balance = caller_account.info.balance.max(tx.value());
+        new_balance = caller_account.info.balance.max(tx.value());
     } else if max_balance_spending > caller_account.info.balance {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(max_balance_spending),
@@ -165,14 +164,15 @@ pub fn validate_against_state_and_deduct_caller<
         // subtracting max balance spending with value that is going to be deducted later in the call.
         let gas_balance_spending = effective_balance_spending - tx.value();
 
-        caller_account.info.balance = caller_account
-            .info
-            .balance
-            .saturating_sub(gas_balance_spending);
+        new_balance = new_balance.saturating_sub(gas_balance_spending);
     }
 
+    let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
     caller_account.mark_touch();
+    caller_account.info.balance = new_balance;
+
+    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
 }
 

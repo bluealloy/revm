@@ -18,7 +18,7 @@ pub fn transact_erc20evm<EVM>(
 ) -> Result<ResultAndState<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -34,7 +34,7 @@ pub fn transact_erc20evm_commit<EVM>(
 ) -> Result<ExecutionResult<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,

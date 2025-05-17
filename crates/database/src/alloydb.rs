@@ -121,7 +121,7 @@ mod tests {
     #[test]
     #[ignore = "flaky RPC"]
     fn can_get_basic() {
-        let client = ProviderBuilder::new().on_http(
+        let client = ProviderBuilder::new().connect_http(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
                 .parse()
                 .unwrap(),

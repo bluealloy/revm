@@ -20,7 +20,7 @@ type MyError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, Invali
 // Trait that allows to replay and transact the transaction.
 impl<CTX, INSP> ExecuteEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<Journal: JournalTr<FinalOutput = JournalOutput>>,
+    CTX: ContextSetters<Journal: JournalTr<State = EvmState>>,
 {
     type Output = Result<ResultAndState, MyError<CTX>>;
 
@@ -44,7 +44,7 @@ where
 // Trait allows replay_commit and transact_commit functionality.
 impl<CTX, INSP> ExecuteCommitEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<FinalOutput = JournalOutput>>,
+    CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState>>,
 {
     type CommitOutput = Result<ExecutionResult<HaltReason>, MyError<CTX>>;
 
@@ -59,7 +59,7 @@ where
 // Inspection trait.
 impl<CTX, INSP> InspectEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt>,
+    CTX: ContextSetters<Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
     type Inspector = INSP;
@@ -76,10 +76,7 @@ where
 // Inspect
 impl<CTX, INSP> InspectCommitEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<
-        Db: DatabaseCommit,
-        Journal: JournalTr<FinalOutput = JournalOutput> + JournalExt,
-    >,
+    CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
     fn inspect_replay_commit(&mut self) -> Self::CommitOutput {

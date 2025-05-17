@@ -306,7 +306,7 @@ mod tests {
     use bytecode::opcode;
     use context::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
-        Context,
+        Context, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
     use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
@@ -314,15 +314,14 @@ mod tests {
     fn deploy_contract(
         bytecode: Bytes,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
-        let ctx = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.kind = TxKind::Create;
-                tx.data = bytecode.clone();
-            })
-            .with_db(CacheDB::<EmptyDB>::default());
+        let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        evm.replay_commit()
+        evm.transact_commit(TxEnv {
+            kind: TxKind::Create,
+            data: bytecode.clone(),
+            ..Default::default()
+        })
     }
 
     #[test]
@@ -440,14 +439,14 @@ mod tests {
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.caller = tx_caller;
-                tx.kind = TxKind::Call(factory_address);
-                tx.data = Bytes::new();
-            })
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .replay_commit()
+            .transact_commit(TxEnv {
+                caller: tx_caller,
+                kind: TxKind::Call(factory_address),
+                data: Bytes::new(),
+                ..Default::default()
+            })
             .expect("call factory contract failed");
 
         match &call_result {
@@ -521,14 +520,14 @@ mod tests {
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.caller = tx_caller;
-                tx.kind = TxKind::Call(factory_address);
-                tx.data = Bytes::new();
-            })
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .replay_commit()
+            .transact_commit(TxEnv {
+                caller: tx_caller,
+                kind: TxKind::Call(factory_address),
+                data: Bytes::new(),
+                ..Default::default()
+            })
             .expect("call factory contract failed");
 
         match &call_result {

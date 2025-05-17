@@ -127,7 +127,7 @@ mod tests {
         bytecode::opcode,
         context::{
             result::{ExecutionResult, OutOfGasError},
-            BlockEnv, CfgEnv, TxEnv,
+            BlockEnv, CfgEnv, ContextTr, TxEnv,
         },
         context_interface::result::HaltReason,
         database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
@@ -152,16 +152,13 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
 
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-
-        let output = evm.replay().unwrap();
+        let (_, state) = evm.transact_finalize(tx).unwrap();
 
         // balance should be 100
         assert_eq!(
-            output
-                .state
-                .get(&Address::default())
-                .map(|a| a.info.balance),
+            state.get(&Address::default()).map(|a| a.info.balance),
             Some(U256::from(100))
         );
     }
@@ -181,21 +178,20 @@ mod tests {
                 [opcode::POP].into(),
             )));
 
-        // POP would return a halt.
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-
-        let output = evm.replay().unwrap();
+        let (result, state) = evm.transact_finalize(tx).unwrap();
 
         // balance should be 100 + previous balance
         assert_eq!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
                 gas_used: 30_000_000
             }
         );
         assert_eq!(
-            output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
+            state.get(&BENCH_CALLER).map(|a| a.info.balance),
             Some(U256::from(100) + BENCH_CALLER_BALANCE)
         );
     }
@@ -224,24 +220,26 @@ mod tests {
     #[test]
     fn test_tx_call_p256verify() {
         let ctx = p256verify_test_tx();
+        let tx = ctx.tx().clone();
 
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert successful call to P256VERIFY
-        assert!(output.result.is_success());
+        assert!(result.is_success());
     }
 
     #[test]
     fn test_halted_tx_call_p256verify() {
         let ctx = p256verify_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+        let tx = ctx.tx().clone();
 
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas for P256VERIFY
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -275,13 +273,14 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bn128_pair_fjord() {
         let ctx = bn128_pair_test_tx(OpSpecId::FJORD);
+        let tx = ctx.tx().clone();
 
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -292,13 +291,14 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bn128_pair_granite() {
         let ctx = bn128_pair_test_tx(OpSpecId::GRANITE);
+        let tx = ctx.tx().clone();
 
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert bails early because input size too big
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -319,13 +319,13 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -346,12 +346,13 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -394,13 +395,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails pre gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -411,13 +412,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
         let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -428,13 +429,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
         let ctx = g1_msm_test_tx();
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong layout
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -455,13 +456,13 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -482,13 +483,13 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -531,13 +532,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails pre gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -548,13 +549,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
         let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -565,13 +566,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
         let ctx = g2_msm_test_tx();
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong layout
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -613,13 +614,13 @@ mod tests {
     fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         let ctx = bl12_381_pairing_test_tx()
             .modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails pre gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -630,13 +631,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
         let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -647,13 +648,13 @@ mod tests {
     #[test]
     fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
         let ctx = bl12_381_pairing_test_tx();
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong layout
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -691,13 +692,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -708,13 +709,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
         let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -752,13 +753,13 @@ mod tests {
     #[test]
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert out of gas
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::OutOfGas(OutOfGasError::Precompile)),
                 ..
@@ -770,13 +771,13 @@ mod tests {
     fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
         let ctx =
             fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op();
-        let output = evm.replay().unwrap();
+        let (result, _) = evm.transact_finalize(tx).unwrap();
 
         // assert fails post gas check, because input is wrong size
         assert!(matches!(
-            output.result,
+            result,
             ExecutionResult::Halt {
                 reason: OpHaltReason::Base(HaltReason::PrecompileError),
                 ..
@@ -820,11 +821,11 @@ mod tests {
                 tx.base.caller = BENCH_CALLER;
                 tx.base.kind = TxKind::Call(BENCH_TARGET);
             });
-
+        let tx = ctx.tx().clone();
         let mut evm = ctx.build_op_with_inspector(LogInspector::default());
 
         // Run evm.
-        let _ = evm.inspect_replay().unwrap();
+        let _ = evm.inspect_with_tx_finalize(tx).unwrap();
 
         let inspector = &evm.0.inspector;
         assert!(!inspector.logs.is_empty());
