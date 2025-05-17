@@ -1,0 +1,9 @@
+{
+  "result": {
+    "Revert": {
+      "gas_used": 100,
+      "output": "0x"
+    }
+  },
+  "state": {}
+}
