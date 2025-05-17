@@ -15,17 +15,17 @@ pub fn run(criterion: &mut Criterion) {
     for i in 0..10000 {
         db.insert_account_info(
             (address + U256::from(i)).into_address(),
-            AccountInfo::from_balance(U256::from(100_000_000_000_000_000usize)),
+            AccountInfo::from_balance(U256::from(3_000_000_000u32)),
         );
     }
     db.insert_account_info(
         BENCH_TARGET,
-        AccountInfo::from_balance(U256::from(100_000_000_000_000_000usize)),
+        AccountInfo::from_balance(U256::from(3_000_000_000u32)),
     );
 
     db.insert_account_info(
         BENCH_CALLER,
-        AccountInfo::from_balance(U256::from(100_000_000_000_000_000usize)),
+        AccountInfo::from_balance(U256::from(3_000_000_000u32)),
     );
 
     let mut evm = Context::mainnet()
@@ -43,7 +43,12 @@ pub fn run(criterion: &mut Criterion) {
         ..Default::default()
     };
 
-    let txs = vec![tx.clone(); 500];
+    let target = U256::from(10000);
+    let mut txs = vec![tx.clone(); 500];
+
+    for (i, tx_mut) in txs.iter_mut().enumerate() {
+        tx_mut.kind = TxKind::Call((target + U256::from(i)).into_address());
+    }
 
     criterion.bench_function("transact_commit_500txs", |b| {
         b.iter(|| {

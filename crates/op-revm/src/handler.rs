@@ -96,7 +96,7 @@ where
         let is_balance_check_disabled = ctx.cfg().is_balance_check_disabled();
         let is_eip3607_disabled = ctx.cfg().is_eip3607_disabled();
         let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
-        let mint = ctx.tx().mint();
+        let mint = ctx.tx().mint().unwrap_or_default();
 
         let mut additional_cost = U256::ZERO;
 
@@ -130,42 +130,40 @@ where
 
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        // If the transaction is a deposit with a `mint` value, add the mint value
-        // in wei to the caller's balance. This should be persisted to the database
-        // prior to the rest of execution.
-        if is_deposit {
-            if let Some(mint) = mint {
-                caller_account.info.balance =
-                    caller_account.info.balance.saturating_add(U256::from(mint));
-            }
-            if tx.kind().is_call() {
-                caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-            }
-        } else {
+        if !is_deposit {
             // validates account nonce and code
             validate_account_nonce_and_code(
                 &mut caller_account.info,
                 tx.nonce(),
-                tx.kind().is_call(),
                 is_eip3607_disabled,
                 is_nonce_check_disabled,
             )?;
         }
 
+        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        if tx.kind().is_call() {
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
+
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
+
+        // If the transaction is a deposit with a `mint` value, add the mint value
+        // in wei to the caller's balance. This should be persisted to the database
+        // prior to the rest of execution.
+        let mut new_balance = caller_account.info.balance.saturating_add(U256::from(mint));
 
         // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
         // Transfer will be done inside `*_inner` functions.
         if is_balance_check_disabled {
             // Make sure the caller's balance is at least the value of the transaction.
             // this is not consensus critical, and it is used in testing.
-            caller_account.info.balance = caller_account.info.balance.max(tx.value());
-        } else if !is_deposit && max_balance_spending > caller_account.info.balance {
+            new_balance = caller_account.info.balance.max(tx.value());
+        } else if !is_deposit && max_balance_spending > new_balance {
             // skip max balance check for deposit transactions.
             // this check for deposit was skipped previously in `validate_tx_against_state` function
             return Err(InvalidTransaction::LackOfFundForMaxFee {
                 fee: Box::new(max_balance_spending),
-                balance: Box::new(caller_account.info.balance),
+                balance: Box::new(new_balance),
             }
             .into());
         } else {
@@ -184,14 +182,18 @@ where
             // In case of deposit additional cost will be zero.
             let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
 
-            caller_account.info.balance = caller_account
-                .info
-                .balance
-                .saturating_sub(op_gas_balance_spending);
+            new_balance = new_balance.saturating_sub(op_gas_balance_spending);
         }
 
+        let old_balance = caller_account.info.balance;
         // Touch account so we know it is changed.
         caller_account.mark_touch();
+        caller_account.info.balance = new_balance;
+
+        // NOTE: all changes to the caller account should journaled so in case of error
+        // we can revert the changes.
+        journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+
         Ok(())
     }
 

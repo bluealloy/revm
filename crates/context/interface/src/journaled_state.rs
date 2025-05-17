@@ -90,6 +90,14 @@ pub trait JournalTr {
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
     /// Increments the balance of the account.
+    fn caller_accounting_journal_entry(
+        &mut self,
+        address: Address,
+        old_balance: U256,
+        bump_nonce: bool,
+    );
+
+    /// Increments the balance of the account.
     fn balance_incr(
         &mut self,
         address: Address,

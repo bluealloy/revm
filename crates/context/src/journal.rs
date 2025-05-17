@@ -191,6 +191,17 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.touch(address);
     }
 
+    #[inline]
+    fn caller_accounting_journal_entry(
+        &mut self,
+        address: Address,
+        old_balance: U256,
+        bump_nonce: bool,
+    ) {
+        self.inner
+            .caller_accounting_journal_entry(address, old_balance, bump_nonce);
+    }
+
     /// Increments the balance of the account.
     #[inline]
     fn balance_incr(

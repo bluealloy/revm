@@ -31,7 +31,11 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for a balance transfer between accounts
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self;
 
+    /// Creates a journal entry for when an account's balance is changed.
+    fn balance_changed(address: Address, old_balance: U256) -> Self;
+
     /// Creates a journal entry for a balance increment.
+    /// TODO rename to balance_changed
     fn balance_incr(address: Address, balance: U256) -> Self;
 
     /// Creates a journal entry for a balance decrement.
@@ -118,9 +122,19 @@ pub enum JournalEntry {
         /// Address of account that is touched.
         address: Address,
     },
+    /// Balance changed
+    /// Action: Balance changed
+    /// Revert: Revert to previous balance
+    BalanceChangeOld {
+        /// Address of account that had its balance changed.
+        address: Address,
+        /// New balance of account.
+        old_balance: U256,
+    },
     /// Increment/Decrement balance
     /// Action: Increment/Decrement balance
     /// Revert: Revert to previous balance
+    /// TODO use old_balance
     BalanceChange {
         /// Address of account that had its balance incremented.
         address: Address,
@@ -218,6 +232,13 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::AccountTouched { address }
     }
 
+    fn balance_changed(address: Address, old_balance: U256) -> Self {
+        JournalEntry::BalanceChangeOld {
+            address,
+            old_balance,
+        }
+    }
+
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self {
         JournalEntry::BalanceTransfer { from, to, balance }
     }
@@ -313,6 +334,13 @@ impl JournalEntryTr for JournalEntry {
                     let target = state.get_mut(&target).unwrap();
                     target.info.balance -= had_balance;
                 }
+            }
+            JournalEntry::BalanceChangeOld {
+                address,
+                old_balance,
+            } => {
+                let account = state.get_mut(&address).unwrap();
+                account.info.balance = old_balance;
             }
             JournalEntry::BalanceChange {
                 address,

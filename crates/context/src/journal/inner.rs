@@ -285,6 +285,21 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.set_code_with_hash(address, code, hash)
     }
 
+    /// Add journal entry for caller accounting.
+    #[inline]
+    pub fn caller_accounting_journal_entry(
+        &mut self,
+        address: Address,
+        old_balance: U256,
+        bump_nonce: bool,
+    ) {
+        self.journal
+            .push(ENTRY::balance_changed(address, old_balance));
+        if bump_nonce {
+            self.journal.push(ENTRY::nonce_changed(address));
+        }
+    }
+
     /// Increments the balance of the account.
     #[inline]
     pub fn balance_incr<DB: Database>(
