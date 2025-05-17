@@ -12,7 +12,9 @@ const BYTES: &str = include_str!("analysis.hex");
 pub fn run(criterion: &mut Criterion) {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
     // BenchmarkDB is dummy state that implements Database trait.
-    let context = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+    let context = Context::mainnet()
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
+        .modify_cfg_chained(|c| c.disable_nonce_check = true);
     let tx = TxEnv {
         caller: BENCH_CALLER,
         kind: TxKind::Call(BENCH_TARGET),
@@ -22,7 +24,7 @@ pub fn run(criterion: &mut Criterion) {
     let mut evm = context.build_mainnet();
     criterion.bench_function("analysis", |b| {
         b.iter(|| {
-            let _ = evm.transact_finalize(tx.clone());
+            let _ = evm.transact(tx.clone());
         });
     });
 }

@@ -496,7 +496,7 @@ where
             depth,
             Interpreter::new(
                 memory,
-                ExtBytecode::new(Bytecode::Eof(Arc::new(initcode))),
+                ExtBytecode::new(Bytecode::Eof(initcode)),
                 interpreter_input,
                 false,
                 true,

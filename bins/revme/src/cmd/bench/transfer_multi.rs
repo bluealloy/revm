@@ -62,9 +62,9 @@ pub fn run(criterion: &mut Criterion) {
         b.iter(|| {
             for (i, tx) in txs.iter().enumerate() {
                 let _ = evm.transact(tx.clone()).unwrap();
-                //if i % 20 == 0 {
-                //evm.commit_inner();
-                //}
+                if i % 20 == 0 {
+                    evm.commit_inner();
+                }
             }
             evm.commit_inner();
         })

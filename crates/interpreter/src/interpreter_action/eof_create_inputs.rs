@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bytecode::Eof;
 use primitives::{Address, Bytes, U256};
 
@@ -20,7 +22,7 @@ pub enum EOFCreateKind {
         initdata: Bytes,
     },
     Opcode {
-        initcode: Eof,
+        initcode: Arc<Eof>,
         input: CallInput,
         created_address: Address,
     },
@@ -41,7 +43,7 @@ impl EOFCreateKind {
 impl Default for EOFCreateKind {
     fn default() -> Self {
         EOFCreateKind::Opcode {
-            initcode: Eof::default(),
+            initcode: Arc::new(Eof::default()),
             input: CallInput::Bytes(Bytes::default()),
             created_address: Address::default(),
         }
@@ -90,7 +92,7 @@ impl EOFCreateInputs {
             value,
             gas_limit,
             EOFCreateKind::Opcode {
-                initcode: eof_init_code,
+                initcode: Arc::new(eof_init_code),
                 input,
                 created_address,
             },

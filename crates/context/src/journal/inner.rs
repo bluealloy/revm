@@ -82,7 +82,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
-            journal: Vec::with_capacity(100),
+            journal: Vec::with_capacity(200),
             journal_history: Vec::new(),
             transaction_id: 0,
             depth: 0,
@@ -125,8 +125,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
 
-        journal_history.push(mem::take(journal));
-        *journal = Vec::with_capacity(100);
+        journal_history.push(mem::replace(journal, Vec::with_capacity(200)));
         // Load precompiles into warm_preloaded_addresses.
         warm_preloaded_addresses.clone_from(precompiles);
         *transaction_id += 1;
