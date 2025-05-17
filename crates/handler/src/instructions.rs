@@ -6,7 +6,8 @@ use interpreter::{
 use std::boxed::Box;
 
 /// Stores instructions for EVM.
-#[auto_impl(&, Arc, Rc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, Arc, Rc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, Rc))]
 pub trait InstructionProvider {
     /// Context type.
     type Context;

@@ -26,7 +26,8 @@ pub trait TransactionError: Debug + core::error::Error {}
 ///
 /// It can be extended to support new transaction types and only transaction types can be
 /// deprecated by not returning tx_type.
-#[auto_impl(&, Box, Arc, Rc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, Box, Arc, Rc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, Box, Rc))]
 pub trait Transaction {
     type AccessListItem<'a>: AccessListItemTr
     where
@@ -214,7 +215,8 @@ pub trait Transaction {
     }
 }
 
-#[auto_impl(&, &mut, Box, Arc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, &mut, Box, Arc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, &mut, Box))]
 pub trait TransactionGetter {
     type Transaction: Transaction;
 

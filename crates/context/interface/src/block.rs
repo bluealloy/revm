@@ -6,7 +6,8 @@ use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
 
 /// Trait for retrieving block information required for execution.
-#[auto_impl(&, &mut, Box, Arc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, &mut, Box, Arc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, &mut, Box))]
 pub trait Block {
     /// The number of ancestor blocks of this block (block height).
     fn number(&self) -> u64;
