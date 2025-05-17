@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.1.1](https://github.com/bluealloy/revm/compare/revm-precompile-v20.1.0...revm-precompile-v20.1.1) - 2025-05-17
+
+### Other
+
+- fixed dead link kzg_point_evaluation.rs ([#2508](https://github.com/bluealloy/revm/pull/2508))
+
 ## [20.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v20.0.0...revm-precompile-v20.1.0) - 2025-05-07
 
 Dependency bump
