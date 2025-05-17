@@ -373,6 +373,8 @@ where
             }
         }
         evm.ctx().chain().clear_tx_l1_cost();
+        evm.ctx().local().clear();
+
         Ok(result)
     }
 

@@ -232,7 +232,7 @@ pub trait JournalTr {
     /// If called second time the last transaction from history will be reverted.
     fn revert_tx(&mut self);
 
-    /// Clear current journal reseting it to initial state and return changes state.
+    /// Clear current journal resetting it to initial state and return changes state.
     fn finalize(&mut self) -> Self::State;
 }
 

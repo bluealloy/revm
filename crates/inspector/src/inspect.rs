@@ -43,7 +43,7 @@ pub trait InspectEvm: ExecuteEvm {
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
-    /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_replay_with_inspector`]
+    /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_with_tx`]
     /// and commit the state diff to the database.
     fn inspect_with_tx_commit(
         &mut self,

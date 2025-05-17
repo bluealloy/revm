@@ -305,7 +305,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.revert_tx();
     }
 
-    /// Clear current journal reseting it to initial state and return changes state.
+    /// Clear current journal resetting it to initial state and return changes state.
     #[inline]
     fn finalize(&mut self) -> Self::State {
         self.inner.finalize()

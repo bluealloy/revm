@@ -503,6 +503,7 @@ pub trait Handler {
         }
 
         let exec_result = post_execution::output(evm.ctx(), result);
+        evm.ctx().local().clear();
 
         Ok(exec_result)
     }
@@ -510,7 +511,7 @@ pub trait Handler {
     /// Handles cleanup when an error occurs during execution.
     ///
     /// Ensures the journal state is properly cleared before propagating the error.
-    /// On happy path journal is cleared in [`Handler::output`] method.
+    /// On happy path journal is cleared in [`Handler::execution_result`] method.
     #[inline]
     fn catch_error(
         &self,

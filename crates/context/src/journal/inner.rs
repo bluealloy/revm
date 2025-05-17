@@ -133,7 +133,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         mem::take(logs)
     }
 
-    /// Discard the current transaction, by reverting the journal entrie and incrementing the transaction id.
+    /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
     pub fn discard_tx(&mut self) {
         self.commit_tx();
         // pop the last journal history.

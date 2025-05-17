@@ -37,7 +37,7 @@ pub fn run(criterion: &mut Criterion) {
         caller: BENCH_CALLER,
         kind: TxKind::Call(BENCH_TARGET),
         value: U256::from(1),
-        gas_price: 1,
+        gas_price: 0,
         gas_priority_fee: None,
         gas_limit: 30_000,
         ..Default::default()
@@ -62,9 +62,9 @@ pub fn run(criterion: &mut Criterion) {
         b.iter(|| {
             for (i, tx) in txs.iter().enumerate() {
                 let _ = evm.transact(tx.clone()).unwrap();
-                if i % 20 == 0 {
-                    evm.commit_inner();
-                }
+                //if i % 20 == 0 {
+                //evm.commit_inner();
+                //}
             }
             evm.commit_inner();
         })
