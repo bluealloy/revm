@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v19.0.0...revm-primitives-v19.0.1) - 2025-05-17
+
+### Other
+
+- add Prague activation timestamp ([#2514](https://github.com/bluealloy/revm/pull/2514))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 ## [19.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v18.0.0...revm-primitives-v19.0.0) - 2025-05-07
 
 ### Added
