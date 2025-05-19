@@ -6,13 +6,13 @@ use revm::{
     state::EvmState,
 };
 
-use crate::test_utils::{compare_or_save_testdata, migrate_test_to_testdata};
+use crate::test_utils::compare_or_save_testdata;
 
 /// Example showing how to migrate an existing test to use the testdata comparison.
 /// 
 /// This example consists of:
 /// 1. The "original" test with standard assertions
-/// 2. The migration helper that wraps the original assertions
+/// 2. The migration approach - running assertions and saving testdata
 /// 3. The final migrated test that only uses testdata comparison
 #[test]
 fn migration_example() {
@@ -33,12 +33,11 @@ fn migration_example() {
     assert!(result.result.is_success());
     
     // 2. MIGRATION APPROACH
-    // When migrating, we can use the migrate_test_to_testdata function
-    // which will run the original assertions and also save the testdata
-    migrate_test_to_testdata("migration_example", &result, |res| {
-        // Include the original assertions here
-        assert!(res.result.is_success());
-    }).unwrap();
+    // When migrating a test, you can:
+    // a. First run your original assertions
+    assert!(result.result.is_success());
+    // b. Then save the testdata for future comparison
+    compare_or_save_testdata("migrated/migration_example.json", &result).unwrap();
 
     // 3. FINAL MIGRATED TEST
     // After migration is complete, the test can be simplified to just:
