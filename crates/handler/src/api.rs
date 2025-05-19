@@ -121,8 +121,8 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
     /// Transact the transaction and commit to the state.
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let (output, state) = self.transact_finalize(tx)?;
-        self.commit(state);
+        let output = self.transact(tx)?;
+        self.commit_inner();
         Ok(output)
     }
 
@@ -134,8 +134,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let outputs = self.transact_multi(txs)?;
-        let state = self.finalize();
-        self.commit(state);
+        self.commit_inner();
         Ok(outputs)
     }
 }

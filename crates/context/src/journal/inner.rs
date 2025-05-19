@@ -14,48 +14,6 @@ use primitives::{
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
-
-/// Journal history for a single transaction.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SingleTransactionJournal<ENTRY> {
-    /// The journal for the transaction.
-    pub journal: Vec<ENTRY>,
-    /// The transaction id.
-    pub transaction_id: usize,
-}
-
-impl<ENTRY: JournalEntryTr> Default for SingleTransactionJournal<ENTRY> {
-    fn default() -> Self {
-        Self::new(0)
-    }
-}
-
-impl<ENTRY: JournalEntryTr> SingleTransactionJournal<ENTRY> {
-    /// Creates a new single transaction journal.
-    pub fn new(transaction_id: usize) -> Self {
-        Self {
-            journal: Vec::new(),
-            transaction_id,
-        }
-    }
-
-    /// Creates a new single transaction journal with a given capacity.
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            journal: Vec::with_capacity(capacity),
-            transaction_id: 0,
-        }
-    }
-
-    /// Creates a new single transaction journal with a given transaction id.
-    pub fn with_transaction_id(transaction_id: usize) -> Self {
-        Self {
-            journal: Vec::new(),
-            transaction_id,
-        }
-    }
-}
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -333,9 +291,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         old_balance: U256,
         bump_nonce: bool,
     ) {
+        // account balance changed.
         self.journal
             .push(ENTRY::balance_changed(address, old_balance));
+        // account is touched.
+        self.journal.push(ENTRY::account_touched(address));
+
         if bump_nonce {
+            // nonce changed.
             self.journal.push(ENTRY::nonce_changed(address));
         }
     }

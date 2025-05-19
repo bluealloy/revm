@@ -96,7 +96,12 @@ where
         let is_balance_check_disabled = ctx.cfg().is_balance_check_disabled();
         let is_eip3607_disabled = ctx.cfg().is_eip3607_disabled();
         let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
-        let mint = ctx.tx().mint().unwrap_or_default();
+
+        let mint = if is_deposit {
+            ctx.tx().mint().unwrap_or_default()
+        } else {
+            0
+        };
 
         let mut additional_cost = U256::ZERO;
 
@@ -147,6 +152,9 @@ where
 
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
 
+        // old balance is journaled before mint is incremented.
+        let old_balance = caller_account.info.balance;
+
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
@@ -185,7 +193,6 @@ where
             new_balance = new_balance.saturating_sub(op_gas_balance_spending);
         }
 
-        let old_balance = caller_account.info.balance;
         // Touch account so we know it is changed.
         caller_account.mark_touch();
         caller_account.info.balance = new_balance;
@@ -405,7 +412,9 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let acc = evm.ctx().journal().load_account(caller)?.data;
+            let acc: &mut revm::state::Account = evm.ctx().journal().load_account(caller)?.data;
+
+            let old_balance = acc.info.balance;
 
             acc.info.nonce = acc.info.nonce.saturating_add(1);
             acc.info.balance = acc
@@ -413,6 +422,11 @@ where
                 .balance
                 .saturating_add(U256::from(mint.unwrap_or_default()));
             acc.mark_touch();
+
+            // add journal entry for accounts
+            evm.ctx()
+                .journal()
+                .caller_accounting_journal_entry(caller, old_balance, true);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit

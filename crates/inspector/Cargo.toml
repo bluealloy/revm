@@ -57,7 +57,7 @@ std = [
 	"primitives/std",
 	"state/std",
 ]
-tracer = [
+serde = [
 	"dep:serde",
 	"dep:serde_json",
 	"database/serde",
@@ -71,3 +71,4 @@ tracer = [
 
 # deprecated please use [`tracer`] feature instead
 serde-json = ["tracer"]
+tracer = ["serde", "dep:serde_json"]
