@@ -34,13 +34,6 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's balance is changed.
     fn balance_changed(address: Address, old_balance: U256) -> Self;
 
-    /// Creates a journal entry for a balance increment.
-    /// TODO rename to balance_changed
-    fn balance_incr(address: Address, balance: U256) -> Self;
-
-    /// Creates a journal entry for a balance decrement.
-    fn balance_decr(address: Address, balance: U256) -> Self;
-
     /// Creates a journal entry for when an account's nonce is incremented.
     fn nonce_changed(address: Address) -> Self;
 
@@ -70,8 +63,11 @@ pub trait JournalEntryTr {
     ///
     /// More information on what is reverted can be found in [`JournalEntry`] enum.
     ///
+    /// If transient storage is not provided, revert on transient storage will not be performed.
+    /// This is used when we revert whole transaction and know that transient storage is empty.
+    ///
     /// # Notes
-    ///   
+    ///
     /// The spurious dragon flag is used to skip revertion 0x000..0003 precompile. This
     /// Behaviour is special and it caused by bug in Geth and Parity that is explained in [PR#716](https://github.com/ethereum/EIPs/issues/716).
     ///
@@ -85,7 +81,7 @@ pub trait JournalEntryTr {
     fn revert(
         self,
         state: &mut EvmState,
-        transient_storage: &mut TransientStorage,
+        transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     );
 }
@@ -125,23 +121,11 @@ pub enum JournalEntry {
     /// Balance changed
     /// Action: Balance changed
     /// Revert: Revert to previous balance
-    BalanceChangeOld {
+    BalanceChange {
         /// Address of account that had its balance changed.
         address: Address,
         /// New balance of account.
         old_balance: U256,
-    },
-    /// Increment/Decrement balance
-    /// Action: Increment/Decrement balance
-    /// Revert: Revert to previous balance
-    /// TODO use old_balance
-    BalanceChange {
-        /// Address of account that had its balance incremented.
-        address: Address,
-        /// Balance of account.
-        balance: U256,
-        /// Whether the balance is incremented or decremented.
-        is_increment: bool,
     },
     /// Transfer balance between two accounts
     /// Action: Transfer balance
@@ -233,7 +217,7 @@ impl JournalEntryTr for JournalEntry {
     }
 
     fn balance_changed(address: Address, old_balance: U256) -> Self {
-        JournalEntry::BalanceChangeOld {
+        JournalEntry::BalanceChange {
             address,
             old_balance,
         }
@@ -241,22 +225,6 @@ impl JournalEntryTr for JournalEntry {
 
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self {
         JournalEntry::BalanceTransfer { from, to, balance }
-    }
-
-    fn balance_incr(address: Address, balance: U256) -> Self {
-        JournalEntry::BalanceChange {
-            address,
-            balance,
-            is_increment: true,
-        }
-    }
-
-    fn balance_decr(address: Address, balance: U256) -> Self {
-        JournalEntry::BalanceChange {
-            address,
-            balance,
-            is_increment: false,
-        }
     }
 
     fn account_created(address: Address) -> Self {
@@ -298,7 +266,7 @@ impl JournalEntryTr for JournalEntry {
     fn revert(
         self,
         state: &mut EvmState,
-        transient_storage: &mut TransientStorage,
+        transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     ) {
         match self {
@@ -335,24 +303,12 @@ impl JournalEntryTr for JournalEntry {
                     target.info.balance -= had_balance;
                 }
             }
-            JournalEntry::BalanceChangeOld {
+            JournalEntry::BalanceChange {
                 address,
                 old_balance,
             } => {
                 let account = state.get_mut(&address).unwrap();
                 account.info.balance = old_balance;
-            }
-            JournalEntry::BalanceChange {
-                address,
-                balance,
-                is_increment,
-            } => {
-                let account = state.get_mut(&address).unwrap();
-                if is_increment {
-                    account.info.balance += balance;
-                } else {
-                    account.info.balance -= balance;
-                }
             }
             JournalEntry::BalanceTransfer { from, to, balance } => {
                 // we don't need to check overflow and underflow when adding and subtracting the balance.
@@ -396,6 +352,9 @@ impl JournalEntryTr for JournalEntry {
                 key,
                 had_value,
             } => {
+                let Some(transient_storage) = transient_storage else {
+                    return;
+                };
                 let tkey = (address, key);
                 if had_value.is_zero() {
                     // if previous value is zero, remove it

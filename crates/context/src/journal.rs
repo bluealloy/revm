@@ -287,8 +287,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     #[inline]
     fn commit_tx(&mut self) -> Vec<Log> {
-        self.transaction_id += 1;
-        self.inner.take_logs()
+        self.inner.commit_tx()
     }
 
     #[inline]

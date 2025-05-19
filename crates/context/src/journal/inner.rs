@@ -15,6 +15,47 @@ use primitives::{
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
 
+/// Journal history for a single transaction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SingleTransactionJournal<ENTRY> {
+    /// The journal for the transaction.
+    pub journal: Vec<ENTRY>,
+    /// The transaction id.
+    pub transaction_id: usize,
+}
+
+impl<ENTRY: JournalEntryTr> Default for SingleTransactionJournal<ENTRY> {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
+impl<ENTRY: JournalEntryTr> SingleTransactionJournal<ENTRY> {
+    /// Creates a new single transaction journal.
+    pub fn new(transaction_id: usize) -> Self {
+        Self {
+            journal: Vec::new(),
+            transaction_id,
+        }
+    }
+
+    /// Creates a new single transaction journal with a given capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            journal: Vec::with_capacity(capacity),
+            transaction_id: 0,
+        }
+    }
+
+    /// Creates a new single transaction journal with a given transaction id.
+    pub fn with_transaction_id(transaction_id: usize) -> Self {
+        Self {
+            journal: Vec::new(),
+            transaction_id,
+        }
+    }
+}
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -31,10 +72,13 @@ pub struct JournalInner<ENTRY> {
     pub logs: Vec<Log>,
     /// The current call stack depth
     pub depth: usize,
-    /// The journal of state changes, one for each call
+    /// The journal of state changes, one for each transaction
     pub journal: Vec<ENTRY>,
     /// Previous journal entries. With multi transaction execution we contain both previous journal
     /// entries and current journal entries (Current Journal is inside [`Self::journal`]).
+    ///
+    /// It does not contain transaction_id as reverting transaction_id is not needed and can contain
+    /// present transaction_id. Imporant thing is that transaction_id gets incremented for new transaction.
     pub journal_history: Vec<Vec<ENTRY>>,
     /// Global transaction id that represent number of transactions executed (Including reverted ones).
     /// It can be different from number of `journal_history` as some transaction could be
@@ -103,6 +147,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// This function is used to prepare for next transaction. It will save the current journal
     /// and clear the journal for the next transaction.
+    ///
+    /// `commit_tx` is used even for discarding transactions so transaction_id will be incremented.
     pub fn commit_tx(&mut self) -> Vec<Log> {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
@@ -127,32 +173,28 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         journal_history.push(mem::replace(journal, Vec::with_capacity(200)));
         // Load precompiles into warm_preloaded_addresses.
+        // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
+        // at least after state clear EIP.
         warm_preloaded_addresses.clone_from(precompiles);
+        // increment transaction id.
         *transaction_id += 1;
         mem::take(logs)
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
     pub fn discard_tx(&mut self) {
-        self.commit_tx();
-        // pop the last journal history.
-        let entries = self.journal_history.pop().unwrap_or_default();
-
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state;
-        let transient_storage = &mut self.transient_storage;
-        // iterate over last N journals sets and revert our global state
-        entries.into_iter().rev().for_each(|entry| {
-            entry.revert(state, transient_storage, is_spurious_dragon_enabled);
-        });
+        // if there is no journal entries, there has not been any changes.
+        if self.journal.is_empty() {
+            return;
+        }
+        self.revert_tx();
     }
 
-    /// Revert the last transaction. Or if there are present journal entries it will discard them.
+    /// Revert the last transaction. Or if there are present journal entries it will only discard them.
     #[inline]
     pub fn revert_tx(&mut self) {
         if !self.journal.is_empty() {
-            self.discard_tx();
-            return;
+            self.commit_tx();
         }
 
         let Some(journal) = self.journal_history.pop() else {
@@ -161,10 +203,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
-        let transient_storage = &mut self.transient_storage;
         // iterate over last N journals sets and revert our global state
         journal.into_iter().rev().for_each(|entry| {
-            entry.revert(state, transient_storage, is_spurious_dragon_enabled);
+            entry.revert(state, None, is_spurious_dragon_enabled);
         });
     }
 
@@ -308,6 +349,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Result<(), DB::Error> {
         let account = self.load_account(db, address)?.data;
+        let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
 
         // march account as touched.
@@ -317,7 +359,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // add journal entry for balance increment.
-        self.journal.push(ENTRY::balance_incr(address, balance));
+        self.journal
+            .push(ENTRY::balance_changed(address, old_balance));
         Ok(())
     }
 
@@ -331,6 +374,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Result<(), DB::Error> {
         let account = self.load_account(db, address)?.data;
+        let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_sub(balance);
 
         // march account as touched.
@@ -340,7 +384,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // add journal entry for balance increment.
-        self.journal.push(ENTRY::balance_decr(address, balance));
+        self.journal
+            .push(ENTRY::balance_changed(address, old_balance));
         Ok(())
     }
 
@@ -505,7 +550,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .drain(checkpoint.journal_i..)
             .rev()
             .for_each(|entry| {
-                entry.revert(state, transient_storage, is_spurious_dragon_enabled);
+                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
             });
     }
 
