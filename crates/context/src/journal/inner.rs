@@ -36,7 +36,7 @@ pub struct JournalInner<ENTRY> {
     /// entries and current journal entries (Current Journal is inside [`Self::journal`]).
     ///
     /// It does not contain transaction_id as reverting transaction_id is not needed and can contain
-    /// present transaction_id. Imporant thing is that transaction_id gets incremented for new transaction.
+    /// present transaction_id. Important thing is that transaction_id gets incremented for new transaction.
     pub journal_history: Vec<Vec<ENTRY>>,
     /// Global transaction id that represent number of transactions executed (Including reverted ones).
     /// It can be different from number of `journal_history` as some transaction could be
