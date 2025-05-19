@@ -158,7 +158,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let Some(journal) = self.journal_history.pop() else {
             return;
         };
-
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         // iterate over last N journals sets and revert our global state

@@ -401,7 +401,7 @@ where
             let gas_limit = tx.gas_limit();
 
             // Discard all changes of this transaction.
-            evm.ctx().journal().discard_tx();
+            evm.ctx().journal().revert_tx();
 
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the

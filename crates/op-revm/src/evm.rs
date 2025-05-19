@@ -190,10 +190,9 @@ mod tests {
                 gas_used: 30_000_000
             }
         );
-        assert_eq!(
-            state.get(&BENCH_CALLER).map(|a| a.info.balance),
-            Some(U256::from(100) + BENCH_CALLER_BALANCE)
-        );
+        let caller = state.get(&BENCH_CALLER).unwrap();
+        assert_eq!(caller.info.balance, U256::from(100) + BENCH_CALLER_BALANCE);
+        assert_eq!(caller.info.nonce, 1);
     }
 
     fn p256verify_test_tx() -> Context<
