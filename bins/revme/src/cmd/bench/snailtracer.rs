@@ -12,6 +12,7 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+        .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet();
 
     let tx = TxEnv {

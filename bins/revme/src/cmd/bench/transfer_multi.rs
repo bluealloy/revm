@@ -44,13 +44,13 @@ pub fn run(criterion: &mut Criterion) {
     };
 
     let target = U256::from(10000);
-    let mut txs = vec![tx.clone(); 500];
+    let mut txs = vec![tx.clone(); 1000];
 
     for (i, tx_mut) in txs.iter_mut().enumerate() {
         tx_mut.kind = TxKind::Call((target + U256::from(i)).into_address());
     }
 
-    criterion.bench_function("transact_commit_500txs", |b| {
+    criterion.bench_function("transact_commit_1000txs", |b| {
         b.iter(|| {
             for tx in txs.iter() {
                 let _ = evm.transact_commit(tx.clone()).unwrap();
@@ -58,11 +58,11 @@ pub fn run(criterion: &mut Criterion) {
         })
     });
 
-    criterion.bench_function("transact_500tx_commit_inner_every_20", |b| {
+    criterion.bench_function("transact_1000tx_commit_inner_every_40", |b| {
         b.iter(|| {
             for (i, tx) in txs.iter().enumerate() {
                 let _ = evm.transact(tx.clone()).unwrap();
-                if i % 20 == 0 {
+                if i % 40 == 0 {
                     evm.commit_inner();
                 }
             }

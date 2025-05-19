@@ -61,6 +61,7 @@ serde = [
 	"bytecode/serde",
 	"context/serde",
 	"database/serde",
+	"inspector/serde",
 	"state/serde",
 ]
 arbitrary = ["primitives/arbitrary"]

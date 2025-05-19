@@ -36,7 +36,10 @@ pub fn run(criterion: &mut Criterion) {
 
     let db = init_db();
 
-    let mut evm = Context::mainnet().with_db(db).build_mainnet();
+    let mut evm = Context::mainnet()
+        .with_db(db)
+        .modify_cfg_chained(|c| c.disable_nonce_check = true)
+        .build_mainnet();
 
     let tx = TxEnv {
         caller: BENCH_CALLER,
