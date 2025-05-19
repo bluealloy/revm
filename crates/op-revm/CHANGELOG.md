@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.3](https://github.com/bluealloy/revm/compare/op-revm-v4.0.2...op-revm-v4.0.3) - 2025-05-19
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+
 ## [4.0.2](https://github.com/bluealloy/revm/compare/op-revm-v4.0.1...op-revm-v4.0.2) - 2025-05-09
 
 ### Fixed

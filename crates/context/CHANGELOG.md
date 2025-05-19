@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0](https://github.com/bluealloy/revm/compare/revm-context-v4.1.0...revm-context-v4.2.0) - 2025-05-19
+
+### Added
+
+- make Journal::set_code to be EIP-7702 zero address bytecode aware ([#2511](https://github.com/bluealloy/revm/pull/2511))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-context-v4.0.0...revm-context-v4.1.0) - 2025-05-07
 
 Dependency bump
