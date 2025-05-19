@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 # revms
-revm = { workspace = true, features = ["std", "serde-json"] }
+revm = { workspace = true, features = ["std", "tracer"] }
 
 # misc
 anyhow = "1.0.89"
