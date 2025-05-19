@@ -291,22 +291,21 @@ impl EvmStorageSlot {
         self.is_cold = true;
     }
 
-    /// Sets the transaction id of the storage slot.
-    #[inline]
-    pub fn set_transaction_id(&mut self, transaction_id: usize) {
-        self.transaction_id = transaction_id;
-    }
-
     /// Marks the storage slot as warm and sets transaction_id to the given value
     ///
     ///
     /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
-        let old_transition_id = core::mem::replace(&mut self.transaction_id, transaction_id);
-        let old_is_cold = core::mem::replace(&mut self.is_cold, false);
+        let same_id = self.transaction_id == transaction_id;
+        self.transaction_id = transaction_id;
+        let was_cold = core::mem::replace(&mut self.is_cold, false);
 
-        old_transition_id != transaction_id || old_is_cold
+        if same_id {
+            // only if transaction id is same we are returning was_cold.
+            return was_cold;
+        }
+        true
     }
 }
 
@@ -455,6 +454,27 @@ mod tests {
         let account = Account::default().with_cold_mark();
 
         assert!(account.status.contains(AccountStatus::Cold));
+    }
+
+    #[test]
+    fn test_storage_mark_warm_with_transaction_id() {
+        let mut slot = EvmStorageSlot::new(U256::ZERO, 0);
+        slot.is_cold = true;
+        slot.transaction_id = 0;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = false;
+        slot.transaction_id = 0;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = true;
+        slot.transaction_id = 1;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = false;
+        slot.transaction_id = 1;
+        // Only if transaction id is same and is_cold is false, return false.
+        assert!(!slot.mark_warm_with_transaction_id(1));
     }
 
     #[test]

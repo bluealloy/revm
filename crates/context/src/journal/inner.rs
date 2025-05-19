@@ -649,7 +649,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             match account.storage.entry(storage_key) {
                 Entry::Occupied(entry) => {
                     let slot = entry.into_mut();
-                    slot.set_transaction_id(self.transaction_id);
                     slot.mark_warm_with_transaction_id(self.transaction_id);
                 }
                 Entry::Vacant(entry) => {
