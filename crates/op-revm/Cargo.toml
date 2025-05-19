@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["secp256r1", "serde"] }
+revm = { workspace = true, features = ["secp256r1"] }
 auto_impl.workspace = true
 
 # static precompile sets.
@@ -42,7 +42,7 @@ alloy-primitives.workspace = true
 serde = { workspace = true, features = ["derive"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "serde"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"serde?/std",
 	"revm/std",
