@@ -128,7 +128,7 @@ async fn main() -> anyhow::Result<()> {
             gas_priority_fee: tx.max_priority_fee_per_gas(),
             chain_id: Some(chain_id),
             nonce: tx.nonce(),
-            access_list: tx.access_list().map(|al| al.clone()).unwrap_or_default(),
+            access_list: tx.access_list().cloned().unwrap_or_default(),
             kind: match tx.to() {
                 Some(to_address) => TxKind::Call(to_address),
                 None => TxKind::Create,
