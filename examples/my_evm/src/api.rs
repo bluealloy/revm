@@ -2,15 +2,16 @@ use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
     context::{
         result::{HaltReason, InvalidTransaction},
-        ContextSetters, JournalOutput,
+        ContextSetters,
     },
     context_interface::{
-        result::{EVMError, ExecutionResult, ResultAndState},
+        result::{EVMError, ExecutionResult},
         ContextTr, Database, JournalTr,
     },
     handler::{EvmTr, Handler},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::interpreter::EthInterpreter,
+    state::EvmState,
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
@@ -22,22 +23,26 @@ impl<CTX, INSP> ExecuteEvm for MyEvm<CTX, INSP>
 where
     CTX: ContextSetters<Journal: JournalTr<State = EvmState>>,
 {
-    type Output = Result<ResultAndState, MyError<CTX>>;
+    type State = EvmState;
+    type ExecutionResult = ExecutionResult<HaltReason>;
+    type Error = MyError<CTX>;
 
     type Tx = <CTX as ContextTr>::Tx;
 
     type Block = <CTX as ContextTr>::Block;
 
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.0.ctx.set_tx(tx);
-    }
-
     fn set_block(&mut self, block: Self::Block) {
         self.0.ctx.set_block(block);
     }
 
-    fn replay(&mut self) -> Self::Output {
-        MyHandler::default().run(self)
+    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        self.0.ctx.set_tx(tx);
+        let mut handler = MyHandler::default();
+        handler.run(self)
+    }
+
+    fn finalize(&mut self) -> Self::State {
+        self.ctx().journal().finalize()
     }
 }
 
@@ -46,13 +51,8 @@ impl<CTX, INSP> ExecuteCommitEvm for MyEvm<CTX, INSP>
 where
     CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState>>,
 {
-    type CommitOutput = Result<ExecutionResult<HaltReason>, MyError<CTX>>;
-
-    fn replay_commit(&mut self) -> Self::CommitOutput {
-        self.replay().map(|r| {
-            self.ctx().db().commit(r.state);
-            r.result
-        })
+    fn commit(&mut self, state: Self::State) {
+        self.ctx().db().commit(state);
     }
 }
 
@@ -68,8 +68,10 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_replay(&mut self) -> Self::Output {
-        MyHandler::default().inspect_run(self)
+    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        self.0.ctx.set_tx(tx);
+        let mut handler = MyHandler::default();
+        handler.inspect_run(self)
     }
 }
 
@@ -79,10 +81,4 @@ where
     CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
-    fn inspect_replay_commit(&mut self) -> Self::CommitOutput {
-        self.inspect_replay().map(|r| {
-            self.ctx().db().commit(r.state);
-            r.result
-        })
-    }
 }

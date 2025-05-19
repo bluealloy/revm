@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["std", "alloydb", "serde-json"] }
+revm = { workspace = true, features = ["std", "alloydb", "tracer"] }
 
 # tokio
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

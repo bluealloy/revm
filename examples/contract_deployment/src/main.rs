@@ -4,11 +4,10 @@
 use anyhow::{anyhow, bail};
 use revm::{
     bytecode::opcode,
-    context::Context,
+    context::{Context, TxEnv},
     context_interface::result::{ExecutionResult, Output},
     database::CacheDB,
     database_interface::EmptyDB,
-    handler::EvmTr,
     primitives::{hex, Bytes, StorageValue, TxKind},
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -48,17 +47,16 @@ const RUNTIME_BYTECODE: &[u8] = &[opcode::PUSH0, opcode::SLOAD];
 fn main() -> anyhow::Result<()> {
     let param = 0x42;
     let bytecode: Bytes = [INIT_CODE, RET, RUNTIME_BYTECODE, &[param]].concat().into();
-    let ctx = Context::mainnet()
-        .modify_tx_chained(|tx| {
-            tx.kind = TxKind::Create;
-            tx.data = bytecode.clone();
-        })
-        .with_db(CacheDB::<EmptyDB>::default());
+    let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
 
     let mut evm = ctx.build_mainnet();
 
-    println!("bytecode: {}", hex::encode(bytecode));
-    let ref_tx = evm.replay_commit()?;
+    println!("bytecode: {}", hex::encode(&bytecode));
+    let ref_tx = evm.transact_commit(TxEnv {
+        kind: TxKind::Create,
+        data: bytecode.clone(),
+        ..Default::default()
+    })?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..
@@ -68,15 +66,13 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    evm.ctx().modify_tx(|tx| {
-        tx.kind = TxKind::Call(address);
-        tx.data = Default::default();
-        tx.nonce += 1;
-    });
-
-    let result = evm.replay()?;
-    let Some(storage0) = result
-        .state
+    let (result, state) = evm.transact_finalize(TxEnv {
+        kind: TxKind::Call(address),
+        data: Default::default(),
+        nonce: 1,
+        ..Default::default()
+    })?;
+    let Some(storage0) = state
         .get(&address)
         .ok_or_else(|| anyhow!("Contract not found"))?
         .storage

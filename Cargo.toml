@@ -24,15 +24,15 @@ members = [
     "crates/statetest-types",
 
     # examples
-    # "examples/block_traces",
-    # "examples/cheatcode_inspector",
-    # "examples/contract_deployment",
-    # "examples/database_components",
-    # "examples/uniswap_get_reserves",
-    # "examples/uniswap_v2_usdc_swap",
-    # "examples/erc20_gas",
-    # "examples/my_evm",
-    # "examples/custom_opcodes",
+    "examples/block_traces",
+    #"examples/cheatcode_inspector",
+    "examples/contract_deployment",
+    "examples/database_components",
+    "examples/uniswap_get_reserves",
+    "examples/uniswap_v2_usdc_swap",
+    "examples/erc20_gas",
+    "examples/my_evm",
+    "examples/custom_opcodes",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

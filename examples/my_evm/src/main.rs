@@ -22,9 +22,9 @@ pub fn main() {
 
     // Evm Execute example
     let mut my_evm = MyEvm::new(Context::mainnet(), ());
-    let _res_and_state = my_evm.transact(TxEnv::default());
-    // or if you want to replay last tx.
-    let _res_and_state = my_evm.replay();
+    let _result = my_evm.transact(TxEnv::default());
+    // or if you want to obtain the state by finalizing execution
+    let _state = my_evm.finalize();
 
     // Evm Execute Commit example
     let mut my_evm = MyEvm::new(Context::mainnet().with_db(InMemoryDB::default()), ());

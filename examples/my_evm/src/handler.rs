@@ -1,8 +1,5 @@
 use revm::{
-    context::{
-        result::{EVMError, HaltReason, InvalidTransaction},
-        JournalOutput,
-    },
+    context::result::{EVMError, HaltReason, InvalidTransaction},
     context_interface::{ContextTr, JournalTr},
     handler::{
         instructions::InstructionProvider, EthFrame, EvmTr, FrameResult, Handler,
@@ -10,6 +7,7 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    state::EvmState,
     Database,
 };
 
