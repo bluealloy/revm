@@ -1,4 +1,4 @@
-use context::{ContextTr, TxEnv};
+use context::TxEnv;
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
@@ -25,10 +25,8 @@ pub fn run(criterion: &mut Criterion) {
     criterion.bench_function("transfer", |b| {
         b.iter(|| {
             let _ = evm.transact(tx.clone()).unwrap();
-            // clear caller and target, beneficiary stays the same.
-            // this effect the the benchmark results.
-            evm.journal().state.remove(&BENCH_CALLER);
-            evm.journal().state.remove(&BENCH_TARGET);
+            // caller, target and beneficiary stay loaded inside journal so they
+            // are not loaded again.
         })
     });
 

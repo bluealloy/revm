@@ -24,7 +24,7 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("snailtracer", |b| {
         b.iter(|| {
-            let _ = evm.transact_finalize(tx.clone()).unwrap();
+            let _ = evm.transact(tx.clone()).unwrap();
         })
     });
 }

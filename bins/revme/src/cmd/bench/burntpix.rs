@@ -48,7 +48,7 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("burntpix", |b| {
         b.iter(|| {
-            evm.transact_finalize(tx.clone()).unwrap();
+            evm.transact(tx.clone()).unwrap();
         })
     });
 
