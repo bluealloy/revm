@@ -385,6 +385,11 @@ mod tests {
         21_845, 5_461, 5_461, 87_381,
     ];
 
+    const OSAKA_GAS: [u64; 19] = [
+        151_198, 1_360, 1_360, 1_360, 500, 500, 682, 500, 500, 2_730, 682, 682, 10_922, 2_730,
+        2_730, 43_690, 10_922, 10_922, 174_762,
+    ];
+
     #[test]
     fn test_byzantium_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
@@ -416,9 +421,91 @@ mod tests {
     }
 
     #[test]
+    fn test_osaksa_modexp_gas() {
+        for (test, &test_gas) in TESTS.iter().zip(OSAKA_GAS.iter()) {
+            let input = hex::decode(test.input).unwrap();
+            let res = osaka_run(&input, 100_000_000).unwrap();
+            let expected = hex::decode(test.expected).unwrap();
+            assert_eq!(
+                res.gas_used, test_gas,
+                "used gas not matching for test: {}",
+                test.name
+            );
+            assert_eq!(res.bytes, expected, "test:{}", test.name);
+        }
+    }
+
+    #[test]
     fn test_berlin_modexp_empty_input() {
         let res = berlin_run(&Bytes::new(), 100_000).unwrap();
         let expected: Vec<u8> = Vec::new();
         assert_eq!(res.bytes, expected)
+    }
+
+    #[test]
+    fn test_osaka_modexp_input_len() {
+        #[derive(Debug)]
+        struct TestInput {
+            base_len: U256,
+            exp_len: U256,
+            mod_len: U256,
+            expected: Option<PrecompileError>,
+        }
+
+        impl TestInput {
+            fn input(&self) -> Bytes {
+                let mut input = vec![];
+                input.extend(&self.base_len.to_be_bytes::<32>());
+                input.extend(&self.exp_len.to_be_bytes::<32>());
+                input.extend(&self.mod_len.to_be_bytes::<32>());
+                Bytes::from(input)
+            }
+        }
+
+        let test_inputs = [
+            TestInput {
+                base_len: U256::from(1025),
+                exp_len: U256::from(1024),
+                mod_len: U256::from(1024),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+            },
+            TestInput {
+                base_len: U256::from(1024),
+                exp_len: U256::from(1025),
+                mod_len: U256::from(1024),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+            },
+            TestInput {
+                base_len: U256::from(1024),
+                exp_len: U256::from(1024),
+                mod_len: U256::from(1025),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+            },
+            TestInput {
+                base_len: U256::from(0),
+                exp_len: U256::from(0),
+                mod_len: U256::from(1025),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+            },
+            TestInput {
+                base_len: U256::from(1024),
+                exp_len: U256::from(1024),
+                mod_len: U256::from(1024),
+                expected: Some(PrecompileError::OutOfGas),
+            },
+            TestInput {
+                base_len: U256::from(0),
+                exp_len: U256::from(0),
+                mod_len: U256::from(0),
+                expected: None,
+            },
+        ];
+        for test in test_inputs {
+            let input = test.input();
+            let res = osaka_run(&input, 100_000_000).err();
+            if res != test.expected {
+                panic!("test failed: {:?} result: {:?}", test, res);
+            }
+        }
     }
 }
