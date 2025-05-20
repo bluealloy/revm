@@ -10,7 +10,7 @@ use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
-pub trait JournalEntryTr: Clone {
+pub trait JournalEntryTr {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
     fn account_warmed(address: Address) -> Self;
 
@@ -102,14 +102,14 @@ pub enum JournalEntry {
     /// Action: Mark account and transfer the balance
     /// Revert: Unmark the account and transfer balance back
     AccountDestroyed {
-        /// Whether the account had already been destroyed before this journal entry.
-        was_destroyed: bool,
+        /// Balance of account got transferred to target.
+        had_balance: U256,
         /// Address of account to be destroyed.
         address: Address,
         /// Address of account that received the balance.
         target: Address,
-        /// Balance of account got transferred to target.
-        had_balance: U256,
+        /// Whether the account had already been destroyed before this journal entry.
+        was_destroyed: bool,
     },
     /// Loading account does not mean that account will need to be added to MerkleTree (touched).
     /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
@@ -123,21 +123,21 @@ pub enum JournalEntry {
     /// Action: Balance changed
     /// Revert: Revert to previous balance
     BalanceChange {
-        /// Address of account that had its balance changed.
-        address: Address,
         /// New balance of account.
         old_balance: U256,
+        /// Address of account that had its balance changed.
+        address: Address,
     },
     /// Transfer balance between two accounts
     /// Action: Transfer balance
     /// Revert: Transfer balance back
     BalanceTransfer {
+        /// Balance that is transferred.
+        balance: U256,
         /// Address of account that sent the balance.
         from: Address,
         /// Address of account that received the balance.
         to: Address,
-        /// Balance that is transferred.
-        balance: U256,
     },
     /// Increment nonce
     /// Action: Increment nonce by one
@@ -159,32 +159,32 @@ pub enum JournalEntry {
     /// Action: Storage change
     /// Revert: Revert to previous value
     StorageChanged {
-        /// Address of account that had its storage changed.
-        address: Address,
         /// Key of storage slot that is changed.
         key: StorageKey,
         /// Previous value of storage slot.
         had_value: StorageValue,
+        /// Address of account that had its storage changed.
+        address: Address,
     },
     /// Entry used to track storage warming introduced by EIP-2929.
     /// Action: Storage warmed
     /// Revert: Revert to cold state
     StorageWarmed {
-        /// Address of account that had its storage warmed. By SLOAD or SSTORE opcode.
-        address: Address,
         /// Key of storage slot that is warmed.
         key: StorageKey,
+        /// Address of account that had its storage warmed. By SLOAD or SSTORE opcode.
+        address: Address,
     },
     /// It is used to track an EIP-1153 transient storage change.
     /// Action: Transient storage changed.
     /// Revert: Revert to previous value.
     TransientStorageChange {
-        /// Address of account that had its transient storage changed.
-        address: Address,
         /// Key of transient storage slot that is changed.
         key: StorageKey,
         /// Previous value of transient storage slot.
         had_value: StorageValue,
+        /// Address of account that had its transient storage changed.
+        address: Address,
     },
     /// Code changed
     /// Action: Account code changed

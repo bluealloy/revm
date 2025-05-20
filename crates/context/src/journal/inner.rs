@@ -138,11 +138,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // if there is no journal entries, there has not been any changes.
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
-        // iterate over last N journals sets and revert our global state
-        self.journal.iter().rev().for_each(|entry| {
-            entry
-                .clone()
-                .revert(state, None, is_spurious_dragon_enabled);
+        // iterate over all journals entries and revert our global state
+        self.journal.drain(..).rev().for_each(|entry| {
+            entry.revert(state, None, is_spurious_dragon_enabled);
         });
         self.journal.clear();
     }
