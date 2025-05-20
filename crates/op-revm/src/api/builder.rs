@@ -3,7 +3,7 @@ use revm::{
     context::Cfg,
     context_interface::{Block, JournalTr},
     handler::instructions::EthInstructions,
-    interpreter::interpreter::EthInterpreter,
+    interpreter::{interpreter::EthInterpreter, Host},
     state::EvmState,
     Context, Database,
 };
@@ -11,7 +11,7 @@ use revm::{
 /// Trait that allows for optimism OpEvm to be built.
 pub trait OpBuilder: Sized {
     /// Type of the context.
-    type Context;
+    type Context: Host;
 
     /// Build the op.
     fn build_op(self) -> OpEvm<Self::Context, (), EthInstructions<EthInterpreter, Self::Context>>;
