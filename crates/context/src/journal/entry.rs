@@ -102,12 +102,12 @@ pub enum JournalEntry {
     /// Action: Mark account and transfer the balance
     /// Revert: Unmark the account and transfer balance back
     AccountDestroyed {
+        /// Whether the account had already been destroyed before this journal entry.
+        was_destroyed: bool,
         /// Address of account to be destroyed.
         address: Address,
         /// Address of account that received the balance.
         target: Address,
-        /// Whether the account had already been destroyed before this journal entry.
-        was_destroyed: bool,
         /// Balance of account got transferred to target.
         had_balance: U256,
     },
