@@ -9,73 +9,71 @@ use crate::{
 };
 use primitives::{Bytes, U256};
 
-pub fn rjump<WIRE: InterpreterTypes, H: ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+pub fn rjump<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::BASE);
-    let offset = interpreter.bytecode.read_i16() as isize;
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::BASE);
+    let offset = context.interpreter.bytecode.read_i16() as isize;
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
-    interpreter.bytecode.relative_jump(offset + 2);
+    context.interpreter.bytecode.relative_jump(offset + 2);
 }
 
 pub fn rjumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::CONDITION_JUMP_GAS);
-    popn!([condition], interpreter);
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
+    popn!([condition], context.interpreter);
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
     let mut offset = 2;
     if !condition.is_zero() {
-        offset += interpreter.bytecode.read_i16() as isize;
+        offset += context.interpreter.bytecode.read_i16() as isize;
     }
 
-    interpreter.bytecode.relative_jump(offset);
+    context.interpreter.bytecode.relative_jump(offset);
 }
 
 pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::CONDITION_JUMP_GAS);
-    popn!([case], interpreter);
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
+    popn!([case], context.interpreter);
     let case = as_isize_saturated!(case);
 
-    let max_index = interpreter.bytecode.read_u8() as isize;
+    let max_index = context.interpreter.bytecode.read_u8() as isize;
     // For number of items we are adding 1 to max_index, multiply by 2 as each offset is 2 bytes
     // and add 1 for max_index itself. Note that revm already incremented the instruction pointer
     let mut offset = (max_index + 1) * 2 + 1;
 
     if case <= max_index {
-        offset += interpreter.bytecode.read_offset_i16(1 + case * 2) as isize;
+        offset += context.interpreter.bytecode.read_offset_i16(1 + case * 2) as isize;
     }
-    interpreter.bytecode.relative_jump(offset);
+    context.interpreter.bytecode.relative_jump(offset);
 }
 
-pub fn jump<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
-) {
-    gas!(interpreter, gas::MID);
-    popn!([target], interpreter);
-    jump_inner(interpreter, target);
+pub struct InstructionContext<'a, H: Host + ?Sized, ITy: InterpreterTypes> {
+    pub host: &'a mut H,
+    pub interpreter: &'a mut Interpreter<ITy>,
+}
+
+pub fn jump<ITy: InterpreterTypes, H: Host + ?Sized>(context: &mut InstructionContext<'_, H, ITy>) {
+    gas!(context.interpreter, gas::MID);
+    popn!([target], context.interpreter);
+    jump_inner(context.interpreter, target);
 }
 
 pub fn jumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::HIGH);
-    popn!([target, cond], interpreter);
+    gas!(context.interpreter, gas::HIGH);
+    popn!([target, cond], context.interpreter);
 
     if !cond.is_zero() {
-        jump_inner(interpreter, target);
+        jump_inner(context.interpreter, target);
     }
 }
 
@@ -93,29 +91,28 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 }
 
 pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::JUMPDEST);
+    gas!(context.interpreter, gas::JUMPDEST);
 }
 
 pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::LOW);
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::LOW);
 
-    let idx = interpreter.bytecode.read_u16() as usize;
+    let idx = context.interpreter.bytecode.read_u16() as usize;
     // Get target types
-    let Some(types) = interpreter.bytecode.code_info(idx) else {
+    let Some(types) = context.interpreter.bytecode.code_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
     };
 
     // Check max stack height for target code section.
     // Safe to subtract as max_stack_height is always more than inputs.
-    if interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        interpreter
+    if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
+        context
+            .interpreter
             .control
             .set_instruction_result(InstructionResult::StackOverflow);
         return;
@@ -123,73 +120,77 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     // Push current idx and PC to the callf stack.
     // PC is incremented by 2 to point to the next instruction after callf.
-    if !(interpreter
+    if !(context
+        .interpreter
         .sub_routine
-        .push(interpreter.bytecode.pc() + 2, idx))
+        .push(context.interpreter.bytecode.pc() + 2, idx))
     {
-        interpreter
+        context
+            .interpreter
             .control
             .set_instruction_result(InstructionResult::SubRoutineStackOverflow);
         return;
     };
-    let pc = interpreter
+    let pc = context
+        .interpreter
         .bytecode
         .code_section_pc(idx)
         .expect("Invalid code section index");
-    interpreter.bytecode.absolute_jump(pc);
+    context.interpreter.bytecode.absolute_jump(pc);
 }
 
 pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::RETF_GAS);
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::RETF_GAS);
 
-    let Some(jump) = interpreter.sub_routine.pop() else {
+    let Some(jump) = context.interpreter.sub_routine.pop() else {
         panic!("Expected function frame")
     };
 
-    interpreter.bytecode.absolute_jump(jump);
+    context.interpreter.bytecode.absolute_jump(jump);
 }
 
 pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::LOW);
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::LOW);
 
-    let idx = interpreter.bytecode.read_u16() as usize;
+    let idx = context.interpreter.bytecode.read_u16() as usize;
 
     // Get target types
-    let types = interpreter
+    let types = context
+        .interpreter
         .bytecode
         .code_info(idx)
         .expect("Invalid code section index");
 
     // Check max stack height for target code section.
-    if interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        interpreter
+    if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
+        context
+            .interpreter
             .control
             .set_instruction_result(InstructionResult::StackOverflow);
         return;
     }
-    interpreter.sub_routine.set_routine_idx(idx);
-    let pc = interpreter
+    context.interpreter.sub_routine.set_routine_idx(idx);
+    let pc = context
+        .interpreter
         .bytecode
         .code_section_pc(idx)
         .expect("Invalid code section index");
-    interpreter.bytecode.absolute_jump(pc);
+    context.interpreter.bytecode.absolute_jump(pc);
 }
 
-pub fn pc<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
-) {
-    gas!(interpreter, gas::BASE);
+pub fn pc<WIRE: InterpreterTypes, H: Host + ?Sized>(context: &mut InstructionContext<'_, H, WIRE>) {
+    gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
-    push!(interpreter, U256::from(interpreter.bytecode.pc() - 1));
+    push!(
+        context.interpreter,
+        U256::from(context.interpreter.bytecode.pc() - 1)
+    );
 }
 
 #[inline]
@@ -223,47 +224,45 @@ fn return_inner(
 }
 
 pub fn ret<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    return_inner(interpreter, InstructionResult::Return);
+    return_inner(context.interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
 pub fn revert<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    check!(interpreter, BYZANTIUM);
-    return_inner(interpreter, InstructionResult::Revert);
+    check!(context.interpreter, BYZANTIUM);
+    return_inner(context.interpreter, InstructionResult::Revert);
 }
 
 /// Stop opcode. This opcode halts the execution.
 pub fn stop<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    interpreter
+    context
+        .interpreter
         .control
         .set_instruction_result(InstructionResult::Stop);
 }
 
 /// Invalid opcode. This opcode halts the execution.
 pub fn invalid<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    interpreter
+    context
+        .interpreter
         .control
         .set_instruction_result(InstructionResult::InvalidFEOpcode);
 }
 
 /// Unknown opcode. This opcode halts the execution.
 pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    interpreter
+    context
+        .interpreter
         .control
         .set_instruction_result(InstructionResult::OpcodeNotFound);
 }

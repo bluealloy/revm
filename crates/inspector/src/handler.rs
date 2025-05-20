@@ -2,7 +2,7 @@ use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
 use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
-    instructions::InstructionTable,
+    instructions::{control::InstructionContext, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
@@ -282,7 +282,11 @@ where
         interpreter.bytecode.relative_jump(1);
 
         // Execute instruction.
-        instructions[opcode as usize](interpreter, context);
+        let mut instruction_context = InstructionContext {
+            interpreter,
+            host: context,
+        };
+        instructions[opcode as usize](&mut instruction_context);
 
         // check if new log is added
         let new_log = context.journal().logs().len();

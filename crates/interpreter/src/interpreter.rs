@@ -19,8 +19,8 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    interpreter_types::*, CallInput, Gas, Host, Instruction, InstructionResult, InstructionTable,
-    InterpreterAction,
+    instructions::control::InstructionContext, interpreter_types::*, CallInput, Gas, Host,
+    Instruction, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
@@ -135,7 +135,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
 
         // Execute instruction.
-        instruction_table[opcode as usize](self, host)
+        let mut context = InstructionContext {
+            interpreter: self,
+            host,
+        };
+        instruction_table[opcode as usize](&mut context)
     }
 
     /// Resets the control to the initial state. so that we can run the interpreter again.

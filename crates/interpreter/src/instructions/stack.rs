@@ -1,124 +1,122 @@
 use crate::{
     gas,
     instructions::utility::cast_slice_to_u256,
-    interpreter::Interpreter,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
     Host,
 };
 use primitives::U256;
 
+use super::control::InstructionContext;
+
 pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
+    gas!(context.interpreter, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
-    popn!([_i], interpreter);
+    popn!([_i], context.interpreter);
 }
 
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
 pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    check!(interpreter, SHANGHAI);
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::ZERO);
+    check!(context.interpreter, SHANGHAI);
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, U256::ZERO);
 }
 
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::VERYLOW);
-    push!(interpreter, U256::ZERO);
-    popn_top!([], top, interpreter);
+    gas!(context.interpreter, gas::VERYLOW);
+    push!(context.interpreter, U256::ZERO);
+    popn_top!([], top, context.interpreter);
 
-    let imm = interpreter.bytecode.read_slice(N);
+    let imm = context.interpreter.bytecode.read_slice(N);
     cast_slice_to_u256(imm, top);
 
     // Can ignore return. as relative N jump is safe operation
-    interpreter.bytecode.relative_jump(N as isize);
+    context.interpreter.bytecode.relative_jump(N as isize);
 }
 
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::VERYLOW);
-    if !interpreter.stack.dup(N) {
-        interpreter
+    gas!(context.interpreter, gas::VERYLOW);
+    if !context.interpreter.stack.dup(N) {
+        context
+            .interpreter
             .control
             .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
 }
 
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::VERYLOW);
+    gas!(context.interpreter, gas::VERYLOW);
     assert!(N != 0);
-    if !interpreter.stack.exchange(0, N) {
-        interpreter
+    if !context.interpreter.stack.exchange(0, N) {
+        context
+            .interpreter
             .control
             .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
 }
 
 pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.bytecode.read_u8();
-    if !interpreter.stack.dup(imm as usize + 1) {
-        interpreter
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::VERYLOW);
+    let imm = context.interpreter.bytecode.read_u8();
+    if !context.interpreter.stack.dup(imm as usize + 1) {
+        context
+            .interpreter
             .control
             .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-    interpreter.bytecode.relative_jump(1);
+    context.interpreter.bytecode.relative_jump(1);
 }
 
 pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.bytecode.read_u8();
-    if !interpreter.stack.exchange(0, imm as usize + 1) {
-        interpreter
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::VERYLOW);
+    let imm = context.interpreter.bytecode.read_u8();
+    if !context.interpreter.stack.exchange(0, imm as usize + 1) {
+        context
+            .interpreter
             .control
             .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-    interpreter.bytecode.relative_jump(1);
+    context.interpreter.bytecode.relative_jump(1);
 }
 
 pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    _host: &mut H,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(interpreter);
-    gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.bytecode.read_u8();
+    require_eof!(context.interpreter);
+    gas!(context.interpreter, gas::VERYLOW);
+    let imm = context.interpreter.bytecode.read_u8();
     let n = (imm >> 4) + 1;
     let m = (imm & 0x0F) + 1;
-    if !interpreter.stack.exchange(n as usize, m as usize) {
-        interpreter
+    if !context.interpreter.stack.exchange(n as usize, m as usize) {
+        context
+            .interpreter
             .control
             .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-    interpreter.bytecode.relative_jump(1);
+    context.interpreter.bytecode.relative_jump(1);
 }
 
 #[cfg(test)]
 mod test {
 
-    use super::*;
+    use crate::Interpreter;
     use crate::{host::DummyHost, instruction_table, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};
     use bytecode::Bytecode;
