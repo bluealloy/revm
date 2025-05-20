@@ -10,7 +10,7 @@ use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
-pub trait JournalEntryTr {
+pub trait JournalEntryTr: Clone {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
     fn account_warmed(address: Address) -> Self;
 

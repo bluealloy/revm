@@ -129,7 +129,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
 
-        journal_history.push(mem::replace(journal, Vec::new()));
+        // clone journal so we can use same capacity for next journal.
+        journal_history.push(journal.clone());
+        journal.clear();
+
         // Load precompiles into warm_preloaded_addresses.
         // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
         // at least after state clear EIP.
