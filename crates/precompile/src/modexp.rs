@@ -16,6 +16,9 @@ pub const BYZANTIUM: PrecompileWithAddress =
 pub const BERLIN: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
 
+/// `modexp` precompile with OSAKA gas rules.
+pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(5), osaka_run);
+
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
 pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -35,8 +38,8 @@ pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// See: <https://eips.ethereum.org/EIPS/eip-7823>
 /// Gas cost of berlin is modified from byzantium.
 pub fn osaka_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    run_inner::<_, true>(input, gas_limit, 200, |a, b, c, d| {
-        berlin_gas_calc(a, b, c, d)
+    run_inner::<_, true>(input, gas_limit, 500, |a, b, c, d| {
+        osaka_gas_calc(a, b, c, d)
     })
 }
 
@@ -89,7 +92,7 @@ where
     // cast exp len to the max size, it will fail later in gas calculation if it is too large.
     let exp_len = usize::try_from(exp_len).unwrap_or(usize::MAX);
 
-    // for EIP-7823 we need to check size of base and mod.
+    // for EIP-7823 we need to check size of imputs
     if OSAKA
         && (base_len > eip7823::INPUT_SIZE_LIMIT
             || mod_len > eip7823::INPUT_SIZE_LIMIT
@@ -142,45 +145,28 @@ where
 
 /// Calculate the gas cost for the modexp precompile with BYZANTIUM gas rules.
 pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
-    // Output of this function is bounded by 2^128
-    fn mul_complexity(x: u64) -> U256 {
-        if x <= 64 {
-            U256::from(x * x)
-        } else if x <= 1_024 {
-            U256::from(x * x / 4 + 96 * x - 3_072)
+    gas_calc::<0, 8, 20, _>(base_len, exp_len, mod_len, exp_highp, |max_len| -> U256 {
+        // Output of this function is bounded by 2^128
+        if max_len <= 64 {
+            U256::from(max_len * max_len)
+        } else if max_len <= 1_024 {
+            U256::from(max_len * max_len / 4 + 96 * max_len - 3_072)
         } else {
             // Up-cast to avoid overflow
-            let x = U256::from(x);
+            let x = U256::from(max_len);
             let x_sq = x * x; // x < 2^64 => x*x < 2^128 < 2^256 (no overflow)
             x_sq / U256::from(16) + U256::from(480) * x - U256::from(199_680)
         }
-    }
-
-    let mul = mul_complexity(core::cmp::max(mod_len, base_len));
-    let iter_count = U256::from(calculate_iteration_count::<8>(exp_len, exp_highp));
-    // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
-    let gas = (mul * iter_count) / U256::from(20);
-    gas.saturating_to()
+    })
 }
 
 /// Calculate gas cost according to EIP 2565:
 /// <https://eips.ethereum.org/EIPS/eip-2565>
-pub fn berlin_gas_calc(
-    base_length: u64,
-    exp_length: u64,
-    mod_length: u64,
-    exp_highp: &U256,
-) -> u64 {
-    fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> U256 {
-        let max_length = max(base_length, mod_length);
-        let words = U256::from(max_length.div_ceil(8));
+pub fn berlin_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
+    gas_calc::<200, 8, 3, _>(base_len, exp_len, mod_len, exp_highp, |max_len| -> U256 {
+        let words = U256::from(max_len.div_ceil(8));
         words * words
-    }
-
-    let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
-    let iteration_count = calculate_iteration_count::<8>(exp_length, exp_highp);
-    let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
-    max(200, gas.saturating_to())
+    })
 }
 
 /// Calculate gas cost according to EIP-7883:
@@ -190,42 +176,31 @@ pub fn berlin_gas_calc(
 /// 1. Increase minimal price from 200 to 500
 /// 2. Increase cost when exponent is larger than 32 bytes
 /// 3. Increase cost when base or modulus is larger than 32 bytes
-pub fn osaka_gas_calc<const MIN_PRICE: u64, const MULTIPLIER: u64>(
-    base_length: u64,
-    exp_length: u64,
-    mod_length: u64,
-    exp_highp: &U256,
-) -> u64 {
-    fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> U256 {
-        let max_length = max(base_length, mod_length);
-        let words = U256::from(max_length.div_ceil(8));
+pub fn osaka_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
+    gas_calc::<500, 16, 3, _>(base_len, exp_len, mod_len, exp_highp, |max_len| -> U256 {
+        let words = U256::from(max_len.div_ceil(8));
         let words_square = words * words;
-        if max_length > 32 {
+        if max_len > 32 {
             return words_square * U256::from(2);
         }
         words_square
-    }
-
-    let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
-    let iteration_count = calculate_iteration_count::<MULTIPLIER>(exp_length, exp_highp);
-    let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
-    max(MIN_PRICE, gas.saturating_to())
+    })
 }
 
 /// Calculate gas cost.
-pub fn gas_calc_inner<const MIN_PRICE: u64, const MULTIPLIER: u64, F>(
-    base_length: u64,
-    exp_length: u64,
-    mod_length: u64,
+pub fn gas_calc<const MIN_PRICE: u64, const MULTIPLIER: u64, const GAS_DIVISOR: u64, F>(
+    base_len: u64,
+    exp_len: u64,
+    mod_len: u64,
     exp_highp: &U256,
     calculate_multiplication_complexity: F,
 ) -> u64
 where
-    F: Fn(u64, u64) -> U256,
+    F: Fn(u64) -> U256,
 {
-    let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
-    let iteration_count = calculate_iteration_count::<MULTIPLIER>(exp_length, exp_highp);
-    let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
+    let multiplication_complexity = calculate_multiplication_complexity(max(base_len, mod_len));
+    let iteration_count = calculate_iteration_count::<MULTIPLIER>(exp_len, exp_highp);
+    let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(GAS_DIVISOR);
     max(MIN_PRICE, gas.saturating_to())
 }
 
