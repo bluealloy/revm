@@ -251,16 +251,16 @@ impl JournalTr for Backend {
         self.journaled_state.nonce_bump_journal_entry(address)
     }
 
+    fn take_logs(&mut self) -> Vec<Log> {
+        self.journaled_state.take_logs()
+    }
+
     fn commit_tx(&mut self) -> Vec<Log> {
         self.journaled_state.commit_tx()
     }
 
     fn discard_tx(&mut self) {
         self.journaled_state.discard_tx()
-    }
-
-    fn revert_tx(&mut self) {
-        self.journaled_state.revert_tx()
     }
 }
 

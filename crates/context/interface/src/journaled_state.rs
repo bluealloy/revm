@@ -216,6 +216,9 @@ pub trait JournalTr {
     /// Returns the depth of the journal.
     fn depth(&self) -> usize;
 
+    /// Take logs from journal.
+    fn take_logs(&mut self) -> Vec<Log>;
+
     /// Commit current transaction journal and returns transaction logs.
     fn commit_tx(&mut self) -> Vec<Log>;
 
@@ -224,13 +227,6 @@ pub trait JournalTr {
     /// This function is useful to discard intermediate state that is interrupted by error and it will not revert
     /// any already committed changes and it is safe to call it multiple times.
     fn discard_tx(&mut self);
-
-    /// Using Journal entries reverts current state to the state before transaction started.
-    ///
-    /// If present journal is not empty it will discard this journal and will not touch history.
-    ///
-    /// If called second time the last transaction from history will be reverted.
-    fn revert_tx(&mut self);
 
     /// Clear current journal resetting it to initial state and return changes state.
     fn finalize(&mut self) -> Self::State;

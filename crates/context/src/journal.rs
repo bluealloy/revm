@@ -286,6 +286,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
+    fn take_logs(&mut self) -> Vec<Log> {
+        self.inner.take_logs()
+    }
+
+    #[inline]
     fn commit_tx(&mut self) -> Vec<Log> {
         self.inner.commit_tx()
     }
@@ -293,15 +298,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn discard_tx(&mut self) {
         self.inner.discard_tx();
-    }
-
-    /// Using Journal entries reverts current state to the state before transaction started.
-    ///
-    /// If present journal is not empty it will discard this journal and will not touch history.
-    ///
-    /// If called second time the last transaction from history will be reverted.
-    fn revert_tx(&mut self) {
-        self.inner.revert_tx();
     }
 
     /// Clear current journal resetting it to initial state and return changes state.

@@ -32,12 +32,6 @@ pub struct JournalInner<ENTRY> {
     pub depth: usize,
     /// The journal of state changes, one for each transaction
     pub journal: Vec<ENTRY>,
-    /// Previous journal entries. With multi transaction execution we contain both previous journal
-    /// entries and current journal entries (Current Journal is inside [`Self::journal`]).
-    ///
-    /// It does not contain transaction_id as reverting transaction_id is not needed and can contain
-    /// present transaction_id. Important thing is that transaction_id gets incremented for new transaction.
-    pub journal_history: Vec<Vec<ENTRY>>,
     /// Global transaction id that represent number of transactions executed (Including reverted ones).
     /// It can be different from number of `journal_history` as some transaction could be
     /// reverted or had a error on execution.
@@ -85,7 +79,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
-            journal_history: Vec::default(),
             transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
@@ -116,7 +109,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
-            journal_history,
             transaction_id,
             spec,
             warm_preloaded_addresses,
@@ -129,9 +121,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
 
-        //journal_history.push(mem::take(journal));
         // Do nothing with journal history so we can skip cloning present journal.
-        let _ = journal_history;
         journal.clear();
 
         // Load precompiles into warm_preloaded_addresses.
@@ -145,29 +135,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
     pub fn discard_tx(&mut self) {
+        println!("discard_tx: {:?}", self.journal.len());
         // if there is no journal entries, there has not been any changes.
-        if self.journal.is_empty() {
-            return;
-        }
-        self.revert_tx();
-    }
-
-    /// Revert the last transaction. Or if there are present journal entries it will only discard them.
-    #[inline]
-    pub fn revert_tx(&mut self) {
-        if !self.journal.is_empty() {
-            self.commit_tx();
-        }
-
-        let Some(journal) = self.journal_history.pop() else {
-            return;
-        };
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         // iterate over last N journals sets and revert our global state
-        journal.into_iter().rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
+        self.journal.iter().rev().for_each(|entry| {
+            entry
+                .clone()
+                .revert(state, None, is_spurious_dragon_enabled);
         });
+        self.journal.clear();
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -184,7 +162,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
-            journal_history,
             transaction_id,
             spec,
             warm_preloaded_addresses,
@@ -201,7 +178,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // clear journal and journal history.
         journal.clear();
-        journal_history.clear();
         *depth = 0;
         // reset transaction id.
         *transaction_id = 0;

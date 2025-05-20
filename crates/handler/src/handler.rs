@@ -503,6 +503,9 @@ pub trait Handler {
         }
 
         let exec_result = post_execution::output(evm.ctx(), result);
+
+        // commit transaction
+        evm.ctx().journal().commit_tx();
         evm.ctx().local().clear();
 
         Ok(exec_result)

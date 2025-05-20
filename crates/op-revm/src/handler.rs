@@ -8,13 +8,15 @@ use crate::{
 use revm::{
     context::{result::InvalidTransaction, LocalContextTr},
     context_interface::{
+        context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        handler::EvmTrError, post_execution::reimburse_caller,
-        pre_execution::validate_account_nonce_and_code, EvmTr, Frame, FrameResult, Handler,
-        MainnetHandler,
+        handler::EvmTrError,
+        post_execution::{self, reimburse_caller},
+        pre_execution::validate_account_nonce_and_code,
+        EvmTr, Frame, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
@@ -320,46 +322,49 @@ where
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // Transfer fee to coinbase/beneficiary.
-        if !is_deposit {
-            self.mainnet.reward_beneficiary(evm, exec_result)?;
-            let basefee = evm.ctx().block().basefee() as u128;
-
-            // If the transaction is not a deposit transaction, fees are paid out
-            // to both the Base Fee Vault as well as the L1 Fee Vault.
-            let ctx = evm.ctx();
-            let enveloped = ctx.tx().enveloped_tx().cloned();
-            let spec = ctx.cfg().spec();
-            let l1_block_info = ctx.chain();
-
-            let Some(enveloped_tx) = &enveloped else {
-                return Err(ERROR::from_string(
-                    "[OPTIMISM] Failed to load enveloped transaction.".into(),
-                ));
-            };
-
-            let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
-            let mut operator_fee_cost = U256::ZERO;
-            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-                operator_fee_cost = l1_block_info.operator_fee_charge(
-                    enveloped_tx,
-                    U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
-                );
-            }
-            // Send the L1 cost of the transaction to the L1 Fee Vault.
-            ctx.journal().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
-
-            // Send the base fee of the transaction to the Base Fee Vault.
-            ctx.journal().balance_incr(
-                BASE_FEE_RECIPIENT,
-                U256::from(basefee.saturating_mul(
-                    (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
-                )),
-            )?;
-
-            // Send the operator fee of the transaction to the coinbase.
-            ctx.journal()
-                .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
+        if is_deposit {
+            return Ok(());
         }
+
+        self.mainnet.reward_beneficiary(evm, exec_result)?;
+        let basefee = evm.ctx().block().basefee() as u128;
+
+        // If the transaction is not a deposit transaction, fees are paid out
+        // to both the Base Fee Vault as well as the L1 Fee Vault.
+        let ctx = evm.ctx();
+        let enveloped = ctx.tx().enveloped_tx().cloned();
+        let spec = ctx.cfg().spec();
+        let l1_block_info = ctx.chain();
+
+        let Some(enveloped_tx) = &enveloped else {
+            return Err(ERROR::from_string(
+                "[OPTIMISM] Failed to load enveloped transaction.".into(),
+            ));
+        };
+
+        let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
+        let mut operator_fee_cost = U256::ZERO;
+        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            operator_fee_cost = l1_block_info.operator_fee_charge(
+                enveloped_tx,
+                U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+            );
+        }
+        // Send the L1 cost of the transaction to the L1 Fee Vault.
+        ctx.journal().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
+
+        // Send the base fee of the transaction to the Base Fee Vault.
+        ctx.journal().balance_incr(
+            BASE_FEE_RECIPIENT,
+            U256::from(basefee.saturating_mul(
+                (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
+            )),
+        )?;
+
+        // Send the operator fee of the transaction to the coinbase.
+        ctx.journal()
+            .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
+
         Ok(())
     }
 
@@ -368,21 +373,31 @@ where
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let result = self.mainnet.execution_result(evm, result)?;
-        let result = result.map_haltreason(OpHaltReason::Base);
-        if result.is_halt() {
+        match core::mem::replace(evm.ctx().error(), Ok(())) {
+            Err(ContextError::Db(e)) => return Err(e.into()),
+            Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
+            Ok(_) => (),
+        }
+
+        let exec_result =
+            post_execution::output(evm.ctx(), result).map_haltreason(OpHaltReason::Base);
+
+        if exec_result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
             // and the caller nonce will be incremented there.
             let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
             if is_deposit && evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH) {
+                // discard all changes of this transaction
+                evm.ctx().journal().discard_tx();
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
         }
+        evm.ctx().journal().commit_tx();
         evm.ctx().chain().clear_tx_l1_cost();
         evm.ctx().local().clear();
 
-        Ok(result)
+        Ok(exec_result)
     }
 
     fn catch_error(
@@ -400,8 +415,8 @@ where
             let is_system_tx = tx.is_system_transaction();
             let gas_limit = tx.gas_limit();
 
-            // Discard all changes of this transaction.
-            evm.ctx().journal().revert_tx();
+            // discard all changes of this transaction
+            evm.ctx().journal().discard_tx();
 
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
