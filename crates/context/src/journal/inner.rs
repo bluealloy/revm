@@ -129,7 +129,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
 
-        journal_history.push(mem::take(journal));
+        //journal_history.push(mem::take(journal));
+        // Do nothing with journal history so we can skip cloning present journal.
+        let _ = journal_history;
+        journal.clear();
 
         // Load precompiles into warm_preloaded_addresses.
         // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
