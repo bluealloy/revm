@@ -11,6 +11,10 @@ sync_tests:
 run_general_state_tests:
 	cargo test --package revm-rwasm-e2e --bin revm-rwasm-e2e tests::good_coverage_tests
 
+.PHONY: run_all_tests
+run_all_tests:
+	cargo test --release --package revm-rwasm-e2e --bin revm-rwasm-e2e
+
 .PHONY: help
 help:
 	cargo run --color=always --bin revm-rwasm-e2e -h
