@@ -1,13 +1,9 @@
-use context::{
-    result::{EVMError, InvalidTransaction},
-    ContextTr, TxEnv,
-};
+use context::{ContextTr, TxEnv};
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE};
 use revm::{
     bytecode::Bytecode,
     context_interface::JournalTr,
-    handler::{EthFrame, Handler, MainnetHandler},
     primitives::{TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -32,8 +28,6 @@ pub fn run(criterion: &mut Criterion) {
         b.iter(|| {
             i += 1;
             let _ = evm.transact(tx.clone()).unwrap();
-            // caller, target and beneficiary stay loaded inside journal so they
-            // are not loaded again.
         })
     });
 
@@ -54,10 +48,7 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("transfer_finalize", |b| {
         b.iter(|| {
-            let mut t =
-                MainnetHandler::<_, EVMError<_, InvalidTransaction>, EthFrame<_, _, _>>::default();
-            t.run(&mut evm).unwrap();
-            evm.journal().finalize();
+            let _ = evm.transact_finalize(tx.clone()).unwrap();
         })
     });
 }
