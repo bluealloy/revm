@@ -20,7 +20,7 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 // imports
 use crate::{
     instructions::control::InstructionContext, interpreter_types::*, CallInput, Gas, Host,
-    Instruction, InstructionResult, InstructionTable, InterpreterAction,
+    InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
@@ -117,31 +117,6 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
 }
 
 impl<IW: InterpreterTypes> Interpreter<IW> {
-    /// Executes the instruction at the current instruction pointer.
-    ///
-    /// Internally it will increment instruction pointer by one.
-    #[inline]
-    pub(crate) fn step<H: Host + ?Sized>(
-        &mut self,
-        instruction_table: &[Instruction<IW, H>; 256],
-        host: &mut H,
-    ) {
-        // Get current opcode.
-        let opcode = self.bytecode.opcode();
-
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        self.bytecode.relative_jump(1);
-
-        // Execute instruction.
-        let mut context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-        instruction_table[opcode as usize](&mut context)
-    }
-
     /// Resets the control to the initial state. so that we can run the interpreter again.
     #[inline]
     pub fn reset_control(&mut self) {
@@ -177,9 +152,13 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         self.reset_control();
 
-        // Main loop
-        while self.control.instruction_result().is_continue() {
-            self.step(instruction_table, host);
+        let mut context = InstructionContext {
+            interpreter: self,
+            host,
+        };
+
+        while context.can_continue() {
+            context.step(instruction_table);
         }
 
         self.take_next_action()

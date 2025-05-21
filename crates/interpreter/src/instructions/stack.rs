@@ -116,6 +116,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
 #[cfg(test)]
 mod test {
 
+    use crate::instructions::control::InstructionContext;
     use crate::Interpreter;
     use crate::{host::DummyHost, instruction_table, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};
@@ -133,11 +134,17 @@ mod test {
         interpreter.runtime_flag.is_eof = true;
         let _ = interpreter.stack.push(U256::from(10));
         let _ = interpreter.stack.push(U256::from(20));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.pop(), Ok(U256::from(20)));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.pop(), Ok(U256::from(10)));
-        interpreter.step(&table, &mut host);
+
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.pop(), Ok(U256::from(20)));
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.pop(), Ok(U256::from(10)));
+        context.step(&table);
         assert_eq!(
             interpreter.control.instruction_result,
             InstructionResult::StackOverflow
@@ -156,12 +163,18 @@ mod test {
         let _ = interpreter.stack.push(U256::from(10));
         let _ = interpreter.stack.push(U256::from(20));
         let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.peek(0), Ok(U256::from(20)));
-        assert_eq!(interpreter.stack.peek(1), Ok(U256::from(0)));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.peek(0), Ok(U256::from(10)));
-        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(20)));
+
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.peek(0), Ok(U256::from(20)));
+        assert_eq!(context.interpreter.stack.peek(1), Ok(U256::from(0)));
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.peek(0), Ok(U256::from(10)));
+        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(20)));
     }
 
     #[test]
@@ -179,11 +192,16 @@ mod test {
         let _ = interpreter.stack.push(U256::from(15));
         let _ = interpreter.stack.push(U256::from(0));
 
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.peek(1), Ok(U256::from(10)));
-        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(15)));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(1)));
-        assert_eq!(interpreter.stack.peek(4), Ok(U256::from(15)));
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.peek(1), Ok(U256::from(10)));
+        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(15)));
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(1)));
+        assert_eq!(context.interpreter.stack.peek(4), Ok(U256::from(15)));
     }
 }

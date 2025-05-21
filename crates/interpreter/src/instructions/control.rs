@@ -9,6 +9,8 @@ use crate::{
 };
 use primitives::{Bytes, U256};
 
+use super::Instruction;
+
 pub fn rjump<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) {
@@ -58,6 +60,30 @@ pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub struct InstructionContext<'a, H: Host + ?Sized, ITy: InterpreterTypes> {
     pub host: &'a mut H,
     pub interpreter: &'a mut Interpreter<ITy>,
+}
+
+impl<H: Host + ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
+    /// Executes the instruction at the current instruction pointer.
+    ///
+    /// Internally it will increment instruction pointer by one.
+    #[inline]
+    pub(crate) fn step(&mut self, instruction_table: &[Instruction<ITy, H>; 256]) {
+        // Get current opcode.
+        let opcode = self.interpreter.bytecode.opcode();
+
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        self.interpreter.bytecode.relative_jump(1);
+
+        // Execute instruction.
+        instruction_table[opcode as usize](self)
+    }
+
+    #[inline]
+    pub(crate) fn can_continue(&mut self) -> bool {
+        self.interpreter.control.instruction_result().is_continue()
+    }
 }
 
 pub fn jump<ITy: InterpreterTypes, H: Host + ?Sized>(context: &mut InstructionContext<'_, H, ITy>) {
@@ -289,7 +315,12 @@ mod test {
         let table = instruction_table();
         let mut host = DummyHost;
 
-        interpreter.step(&table, &mut host);
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
         assert_eq!(interpreter.bytecode.pc(), 5)
     }
 
@@ -307,11 +338,16 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
         let _ = interpreter.stack.push(U256::from(0));
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // Dont jump
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.bytecode.pc(), 3);
+        context.step(&table);
+        assert_eq!(context.interpreter.bytecode.pc(), 3);
         // Jumps to last opcode
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(interpreter.bytecode.pc(), 7);
     }
 
@@ -338,32 +374,37 @@ mod test {
         let table = instruction_table();
         let mut host = DummyHost;
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // More then max_index
-        let _ = interpreter.stack.push(U256::from(10));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.bytecode.pc(), 6);
+        let _ = context.interpreter.stack.push(U256::from(10));
+        context.step(&table);
+        assert_eq!(context.interpreter.bytecode.pc(), 6);
 
         // Cleanup
-        interpreter.step(&table, &mut host);
-        interpreter.step(&table, &mut host);
-        interpreter.step(&table, &mut host);
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.bytecode.pc(), 0);
+        context.step(&table);
+        context.step(&table);
+        context.step(&table);
+        context.step(&table);
+        assert_eq!(context.interpreter.bytecode.pc(), 0);
 
         // Jump to first index of vtable
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.bytecode.pc(), 7);
+        let _ = context.interpreter.stack.push(U256::from(0));
+        context.step(&table);
+        assert_eq!(context.interpreter.bytecode.pc(), 7);
 
         // Cleanup
-        interpreter.step(&table, &mut host);
-        interpreter.step(&table, &mut host);
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.bytecode.pc(), 0);
+        context.step(&table);
+        context.step(&table);
+        context.step(&table);
+        assert_eq!(context.interpreter.bytecode.pc(), 0);
 
         // Jump to second index of vtable
-        let _ = interpreter.stack.push(U256::from(1));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(1));
+        context.step(&table);
         assert_eq!(interpreter.bytecode.pc(), 8);
     }
 
@@ -417,29 +458,34 @@ mod test {
         interpreter.runtime_flag.is_eof = true;
         let base_pc = interpreter.bytecode.pc();
 
-        // CALLF
-        interpreter.step(&table, &mut host);
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
 
-        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
+        // CALLF
+        context.step(&table);
+
+        assert_eq!(context.interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
-            interpreter.sub_routine.return_stack[0],
+            context.interpreter.sub_routine.return_stack[0],
             SubRoutineReturnFrame::new(0, 3 + base_pc)
         );
         // points to second code section, at RETF opcode
-        assert_eq!(interpreter.bytecode.pc() - base_pc, 4);
+        assert_eq!(context.interpreter.bytecode.pc() - base_pc, 4);
 
         // RETF
-        interpreter.step(&table, &mut host);
+        context.step(&table);
 
-        assert_eq!(interpreter.sub_routine.current_code_idx, 0);
-        assert_eq!(interpreter.sub_routine.return_stack, Vec::new());
+        assert_eq!(context.interpreter.sub_routine.current_code_idx, 0);
+        assert_eq!(context.interpreter.sub_routine.return_stack, Vec::new());
         // we have returned from the second code section and next opcode is STOP
-        assert_eq!(interpreter.bytecode.pc() - base_pc, 3);
+        assert_eq!(context.interpreter.bytecode.pc() - base_pc, 3);
 
         // STOP
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Stop
         );
     }
@@ -455,21 +501,26 @@ mod test {
         interpreter.runtime_flag.is_eof = true;
         let base_pc = interpreter.bytecode.pc();
 
-        // CALLF
-        interpreter.step(&table, &mut host);
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
 
-        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
+        // CALLF
+        context.step(&table);
+
+        assert_eq!(context.interpreter.sub_routine.current_code_idx, 1);
         assert_eq!(
-            interpreter.sub_routine.return_stack[0],
+            context.interpreter.sub_routine.return_stack[0],
             SubRoutineReturnFrame::new(0, 3 + base_pc)
         );
         // program counter points to STOP of second code section.
-        assert_eq!(interpreter.bytecode.pc(), 3 + base_pc);
+        assert_eq!(context.interpreter.bytecode.pc(), 3 + base_pc);
 
         // STOP
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Stop
         );
     }
@@ -490,12 +541,17 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // CALLF
-        interpreter.step(&table, &mut host);
+        context.step(&table);
 
         // Stack overflow
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::StackOverflow
         );
     }
@@ -511,19 +567,24 @@ mod test {
         interpreter.runtime_flag.is_eof = true;
         let base_pc = interpreter.bytecode.pc();
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // JUMPF
-        interpreter.step(&table, &mut host);
+        context.step(&table);
 
         // fails after this line
-        assert_eq!(interpreter.sub_routine.current_code_idx, 1);
-        assert!(interpreter.sub_routine.return_stack.is_empty());
+        assert_eq!(context.interpreter.sub_routine.current_code_idx, 1);
+        assert!(context.interpreter.sub_routine.return_stack.is_empty());
         // program counter points to STOP of second code section.
-        assert_eq!(interpreter.bytecode.pc(), 3 + base_pc);
+        assert_eq!(context.interpreter.bytecode.pc(), 3 + base_pc);
 
         // STOP
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Stop
         );
     }
@@ -544,12 +605,17 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // JUMPF
-        interpreter.step(&table, &mut host);
+        context.step(&table);
 
         // Stack overflow
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::StackOverflow
         );
     }
