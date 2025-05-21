@@ -6,7 +6,12 @@ use crate::{
 };
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
-use primitives::{eip7823, Bytes, U256};
+use primitives::{
+    eip7823,
+    hash_map::{Entry, HashMap},
+    Bytes, U256,
+};
+use std::sync::{Mutex, OnceLock};
 
 /// `modexp` precompile with BYZANTIUM gas rules.
 pub const BYZANTIUM: PrecompileWithAddress =
@@ -31,6 +36,23 @@ pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// Gas cost of berlin is modified from byzantium.
 pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner::<_, false>(input, gas_limit, 200, |a, b, c, d| {
+        static MAP: OnceLock<Mutex<HashMap<Vec<u8>, u64>>> = OnceLock::new();
+
+        let mut map = MAP
+            .get_or_init(|| Mutex::new(HashMap::new()))
+            .lock()
+            .unwrap();
+
+        match map.entry(input.to_vec()) {
+            Entry::Occupied(mut entry) => {
+                *entry.get_mut() += 1;
+                println!("hit: {}", entry.get());
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(1);
+                println!("miss: {}", map.len());
+            }
+        }
         berlin_gas_calc(a, b, c, d)
     })
 }

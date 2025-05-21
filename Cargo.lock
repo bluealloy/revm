@@ -3841,6 +3841,7 @@ dependencies = [
  "once_cell",
  "p256",
  "rand 0.8.5",
+ "revm-bytecode",
  "revm-primitives",
  "ripemd",
  "rstest",
