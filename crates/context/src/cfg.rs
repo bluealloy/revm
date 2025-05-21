@@ -24,11 +24,10 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
-    /// Blob target count. EIP-7840 Add blob schedule to EL config files.
+    /// Blob max count. EIP-7840 Add blob schedule to EL config files.
     ///
-    /// If this config is not set, the default value will be used.
-    /// For cancun those are 3 and 6 and for prague those are 6 and 9.
-    pub blob_target_and_max_count: Option<(u64, u64)>,
+    /// If this config is not set, the check for max blobs will be skipped.
+    pub blob_max_count: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -83,7 +82,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_code_size: None,
             spec,
             disable_nonce_check: false,
-            blob_target_and_max_count: None, //vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
+            blob_max_count: None, //vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -110,7 +109,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_code_size: self.limit_contract_code_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
-            blob_target_and_max_count: self.blob_target_and_max_count,
+            blob_max_count: self.blob_max_count,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -124,20 +123,20 @@ impl<SPEC> CfgEnv<SPEC> {
         }
     }
 
-    /// Sets the blob target and max count over hardforks.
-    pub fn with_blob_max_and_target_count(mut self, blob_taget: u64, blob_max_count: u64) -> Self {
-        self.set_blob_max_and_target_count(blob_taget, blob_max_count);
+    /// Sets the blob target
+    pub fn with_blob_max_count(mut self, blob_max_count: u64) -> Self {
+        self.set_blob_max_count(blob_max_count);
         self
     }
 
-    /// Sets the blob target and max count over hardforks.
-    pub fn set_blob_max_and_target_count(&mut self, blob_target: u64, blob_max_count: u64) {
-        self.blob_target_and_max_count = Some((blob_target, blob_max_count));
+    /// Sets the blob target
+    pub fn set_blob_max_count(&mut self, blob_max_count: u64) {
+        self.blob_max_count = Some(blob_max_count);
     }
 
     /// Clears the blob target and max count over hardforks.
-    pub fn clear_blob_max_and_target_count(&mut self) {
-        self.blob_target_and_max_count = None;
+    pub fn clear_blob_max_count(&mut self) {
+        self.blob_max_count = None;
     }
 }
 
@@ -154,7 +153,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     #[inline]
     fn blob_max_count(&self) -> Option<u64> {
-        self.blob_target_and_max_count.map(|(_, max)| max)
+        self.blob_max_count
     }
 
     fn max_code_size(&self) -> usize {
