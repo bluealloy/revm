@@ -122,49 +122,54 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(eof);
         interpreter.runtime_flag.is_eof = true;
 
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
         // DATALOAD
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.data(), &vec![U256::from(0x01)]);
-        interpreter.stack.pop().unwrap();
+        let _ = context.interpreter.stack.push(U256::from(0));
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(0x01)]);
+        context.interpreter.stack.pop().unwrap();
 
         // DATALOADN
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.data(), &vec![U256::from(0x01)]);
-        interpreter.stack.pop().unwrap();
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(0x01)]);
+        context.interpreter.stack.pop().unwrap();
 
         // DATALOAD (padding)
-        let _ = interpreter.stack.push(U256::from(35));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(35));
+        context.step(&table);
 
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
-        interpreter.stack.pop().unwrap();
+        context.interpreter.stack.pop().unwrap();
 
         // DATALOADN (padding)
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
-        interpreter.stack.pop().unwrap();
+        context.interpreter.stack.pop().unwrap();
 
         // DATALOAD (out of bounds)
-        let _ = interpreter.stack.push(U256::from(36));
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.data(), &vec![U256::ZERO]);
-        interpreter.stack.pop().unwrap();
+        let _ = context.interpreter.stack.push(U256::from(36));
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.data(), &vec![U256::ZERO]);
+        context.interpreter.stack.pop().unwrap();
 
         // DATALOADN (out of bounds)
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.data(), &vec![U256::ZERO]);
-        interpreter.stack.pop().unwrap();
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.data(), &vec![U256::ZERO]);
+        context.interpreter.stack.pop().unwrap();
 
         // DATA SIZE
-        interpreter.step(&table, &mut host);
-        assert_eq!(interpreter.stack.data(), &vec![U256::from(36)]);
+        context.step(&table);
+        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(36)]);
     }
 
     #[test]
@@ -181,40 +186,46 @@ mod test {
         let _ = interpreter.stack.push(U256::from(32));
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
+
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
         assert_eq!(
-            *interpreter.memory.context_memory(),
+            *context.interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Padding)
         // size, offset mem_offset,
-        let _ = interpreter.stack.push(U256::from(2));
-        let _ = interpreter.stack.push(U256::from(35));
-        let _ = interpreter.stack.push(U256::from(1));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(2));
+        let _ = context.interpreter.stack.push(U256::from(35));
+        let _ = context.interpreter.stack.push(U256::from(1));
+        context.step(&table);
         assert_eq!(
-            *interpreter.memory.context_memory(),
+            *context.interpreter.memory.context_memory(),
             bytes!("0005000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Out of bounds)
         // size, offset mem_offset,
-        let _ = interpreter.stack.push(U256::from(2));
-        let _ = interpreter.stack.push(U256::from(37));
-        let _ = interpreter.stack.push(U256::from(1));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(2));
+        let _ = context.interpreter.stack.push(U256::from(37));
+        let _ = context.interpreter.stack.push(U256::from(1));
+        context.step(&table);
         assert_eq!(
-            *interpreter.memory.context_memory(),
+            *context.interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Size == 0)
         // mem_offset, offset, size
-        let _ = interpreter.stack.push(U256::from(0));
-        let _ = interpreter.stack.push(U256::from(37));
-        let _ = interpreter.stack.push(U256::from(1));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(0));
+        let _ = context.interpreter.stack.push(U256::from(37));
+        let _ = context.interpreter.stack.push(U256::from(1));
+        context.step(&table);
         assert_eq!(
             *interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")

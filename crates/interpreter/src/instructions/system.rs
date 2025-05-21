@@ -296,49 +296,56 @@ mod test {
         interpreter.return_data.set_buffer(bytes!(
             "000000000000000400000000000000030000000000000002000000000000000100"
         ));
-        interpreter.step(&table, &mut host);
+
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![U256::from_limbs([0x01, 0x02, 0x03, 0x04])]
         );
 
-        let _ = interpreter.stack.pop();
-        let _ = interpreter.stack.push(U256::from(1));
+        let _ = context.interpreter.stack.pop();
+        let _ = context.interpreter.stack.push(U256::from(1));
 
-        interpreter.step(&table, &mut host);
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![U256::from_limbs([0x0100, 0x0200, 0x0300, 0x0400])]
         );
 
-        let _ = interpreter.stack.pop();
-        let _ = interpreter.stack.push(U256::from(32));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.pop();
+        let _ = context.interpreter.stack.push(U256::from(32));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = interpreter.stack.pop();
-        let _ = interpreter
+        let _ = context.interpreter.stack.pop();
+        let _ = context
+            .interpreter
             .stack
-            .push(U256::from(interpreter.return_data.buffer().len()));
-        interpreter.step(&table, &mut host);
+            .push(U256::from(context.interpreter.return_data.buffer().len()));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            interpreter.stack.data(),
+            context.interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
     }
@@ -368,80 +375,88 @@ mod test {
         let _ = interpreter.stack.push(U256::from(32));
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
+
+        let mut context = InstructionContext {
+            interpreter: &mut interpreter,
+            host: &mut host,
+        };
+
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *interpreter.memory.slice(0..32),
-            interpreter.return_data.buffer()[0..32]
+            *context.interpreter.memory.slice(0..32),
+            context.interpreter.return_data.buffer()[0..32]
         );
 
         // Copying with partial out-of-bounds (should zero pad)
-        let _ = interpreter.stack.push(U256::from(64));
-        let _ = interpreter.stack.push(U256::from(16));
-        let _ = interpreter.stack.push(U256::from(64));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(64));
+        let _ = context.interpreter.stack.push(U256::from(16));
+        let _ = context.interpreter.stack.push(U256::from(64));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *interpreter.memory.slice(64..80),
-            interpreter.return_data.buffer()[16..32]
+            *context.interpreter.memory.slice(64..80),
+            context.interpreter.return_data.buffer()[16..32]
         );
-        assert_eq!(*interpreter.memory.slice(80..128), [0u8; 48]);
+        assert_eq!(*context.interpreter.memory.slice(80..128), [0u8; 48]);
 
         // Completely out-of-bounds (should be all zeros)
-        let _ = interpreter.stack.push(U256::from(32));
-        let _ = interpreter.stack.push(U256::from(96));
-        let _ = interpreter.stack.push(U256::from(128));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(32));
+        let _ = context.interpreter.stack.push(U256::from(96));
+        let _ = context.interpreter.stack.push(U256::from(128));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*interpreter.memory.slice(128..160), [0u8; 32]);
+        assert_eq!(*context.interpreter.memory.slice(128..160), [0u8; 32]);
 
         // Large offset
-        let _ = interpreter.stack.push(U256::from(32));
-        let _ = interpreter.stack.push(U256::MAX);
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(32));
+        let _ = context.interpreter.stack.push(U256::MAX);
+        let _ = context.interpreter.stack.push(U256::from(0));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
 
         // Offset just before the boundary of the return data buffer size
-        let _ = interpreter.stack.push(U256::from(32));
-        let _ = interpreter
-            .stack
-            .push(U256::from(interpreter.return_data.buffer().len() - 32));
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
+        let _ = context.interpreter.stack.push(U256::from(32));
+        let _ = context.interpreter.stack.push(U256::from(
+            context.interpreter.return_data.buffer().len() - 32,
+        ));
+        let _ = context.interpreter.stack.push(U256::from(0));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *interpreter.memory.slice(0..32),
-            interpreter.return_data.buffer()[interpreter.return_data.buffer().len() - 32..]
+            *context.interpreter.memory.slice(0..32),
+            context.interpreter.return_data.buffer()
+                [context.interpreter.return_data.buffer().len() - 32..]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = interpreter.stack.push(U256::from(32));
-        let _ = interpreter
+        let _ = context.interpreter.stack.push(U256::from(32));
+        let _ = context
+            .interpreter
             .stack
-            .push(U256::from(interpreter.return_data.buffer().len()));
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step(&table, &mut host);
+            .push(U256::from(context.interpreter.return_data.buffer().len()));
+        let _ = context.interpreter.stack.push(U256::from(0));
+        context.step(&table);
         assert_eq!(
-            interpreter.control.instruction_result,
+            context.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
     }
 }
