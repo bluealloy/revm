@@ -37,7 +37,7 @@ state.workspace = true
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "serde-json"]
 std = [
 	"interpreter/std",
 	"precompile/std",
