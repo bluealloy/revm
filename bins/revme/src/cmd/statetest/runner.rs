@@ -313,6 +313,13 @@ pub fn execute_test_suite(
 
             cfg.spec = spec_name.to_spec_id();
 
+            // set default max blobs number to be 9 for prague
+            if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
+                cfg.set_blob_max_count(9);
+            } else {
+                cfg.set_blob_max_count(6);
+            }
+
             // EIP-4844
             if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
                 block.set_blob_excess_gas_and_price(
