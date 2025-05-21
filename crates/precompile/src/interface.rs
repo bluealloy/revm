@@ -41,7 +41,7 @@ pub enum PrecompileError {
     ModexpExpOverflow,
     /// Modexp base overflow
     ModexpBaseOverflow,
-    /// Modexp input overflow
+    /// Modexp mod overflow
     ModexpModOverflow,
     /// Modexp limit all input sizes.
     ModexpEip7823LimitSize,

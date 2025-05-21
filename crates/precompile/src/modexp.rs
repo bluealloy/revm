@@ -421,7 +421,7 @@ mod tests {
     }
 
     #[test]
-    fn test_osaksa_modexp_gas() {
+    fn test_osaka_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(OSAKA_GAS.iter()) {
             let input = hex::decode(test.input).unwrap();
             let res = osaka_run(&input, 100_000_000).unwrap();

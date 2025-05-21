@@ -201,7 +201,7 @@ impl Precompiles {
 
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::prague()
+        Self::osaka()
     }
 
     /// Returns an iterator over the precompiles addresses.
