@@ -13,9 +13,10 @@ pub trait Cfg {
     fn spec(&self) -> Self::Spec;
 
     /// Returns the blob target and max count for the given spec id.
+    /// If it is None, check for max count will be skipped.
     ///
     /// EIP-7840: Add blob schedule to execution client configuration files
-    fn blob_max_count(&self, spec_id: SpecId) -> u64;
+    fn blob_max_count(&self) -> Option<u64>;
 
     fn max_code_size(&self) -> usize;
 
