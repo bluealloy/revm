@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v19.1.0...revm-interpreter-v19.2.0) - 2025-05-22
+
+### Added
+
+- expose Gas::memory field ([#2512](https://github.com/bluealloy/revm/pull/2512))
+- added CallInput::bytes<CTX>(ctx: &CTX) -> Bytes {} function ([#2507](https://github.com/bluealloy/revm/pull/2507))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+- fix clippy ([#2523](https://github.com/bluealloy/revm/pull/2523))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 ## [19.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v19.0.0...revm-interpreter-v19.1.0) - 2025-05-07
 
 Dependency bump

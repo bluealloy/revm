@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/bluealloy/revm/compare/revme-v5.0.0...revme-v5.1.0) - 2025-05-22
+
+### Added
+
+- make blob max number optional ([#2532](https://github.com/bluealloy/revm/pull/2532))
+
+### Other
+
+- Change legacy statetests repo ([#2519](https://github.com/bluealloy/revm/pull/2519))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revme-v4.1.0...revme-v5.0.0) - 2025-05-07
 
 Dependency bump
