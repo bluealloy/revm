@@ -3,7 +3,7 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 
 use crate::{
-    gas::{self, EOF_CREATE_GAS, MIN_CALLEE_GAS},
+    gas::{self, warm_cold_cost, CALLVALUE, EOF_CREATE_GAS, MIN_CALLEE_GAS, NEWACCOUNT},
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_action::FrameInput,
@@ -424,6 +424,38 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         }))),
         InstructionResult::CallOrCreate,
     );
+}
+
+pub fn gas2eth<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    host: &mut H,
+) {
+    popn_top!([addr], gas_amount, interpreter);
+    let addr = addr.into_address();
+    let gas_price = host.effective_gas_price();
+    // TODO: Is it safe to wrap here?
+    let wei_val = gas_amount.wrapping_mul(gas_price);
+
+    // TODO: Should we disallow this if it's a static call?
+    // The transfer cannot fail, so we "mint" `wei_val` for `addr`. We are
+    // allowed to mint here because we consume `gas_amount` below.
+    let Some((addr_was_cold, account_was_created)) = host.mint(addr, wei_val) else {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
+        return;
+    };
+
+    gas!(interpreter, as_u64_saturated!(gas_amount));
+    gas!(interpreter, warm_cold_cost(addr_was_cold));
+    if account_was_created {
+        gas!(interpreter, NEWACCOUNT);
+    }
+    if !wei_val.is_zero() {
+        gas!(interpreter, CALLVALUE);
+    }
+
+    *gas_amount = wei_val;
 }
 
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(

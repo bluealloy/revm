@@ -140,6 +140,10 @@ impl JournalTr for Backend {
         self.journaled_state.touch_account(address);
     }
 
+    fn mint(&mut self, account: Address, amount: U256) -> Result<(bool, bool), Infallible> {
+        self.journaled_state.mint(account, amount)
+    }
+
     fn transfer(
         &mut self,
         from: Address,

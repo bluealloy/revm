@@ -28,6 +28,9 @@ pub trait JournalEntryTr {
     /// If account is empty and touch it will be removed from the state (EIP-161 state clear EIP)
     fn account_touched(address: Address) -> Self;
 
+    /// Creates a journal entry for an increase in the balance of an account.
+    fn balance_increased(account: Address, amount: U256) -> Self;
+
     /// Creates a journal entry for a balance transfer between accounts
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self;
 
@@ -61,7 +64,7 @@ pub trait JournalEntryTr {
     /// More information on what is reverted can be found in [`JournalEntry`] enum.
     ///
     /// # Notes
-    ///   
+    ///
     /// The spurious dragon flag is used to skip revertion 0x000..0003 precompile. This
     /// Behaviour is special and it caused by bug in Geth and Parity that is explained in [PR#716](https://github.com/ethereum/EIPs/issues/716).
     ///
@@ -111,6 +114,15 @@ pub enum JournalEntry {
     AccountTouched {
         /// Address of account that is touched.
         address: Address,
+    },
+    /// Increase the balance of an account.
+    /// Action: Increase balance
+    /// Revert: Decrease balance
+    BalanceIncreased {
+        /// Address of the account that had its balance increased.
+        account: Address,
+        /// Amount to increase.
+        amount: U256,
     },
     /// Transfer balance between two accounts
     /// Action: Transfer balance
@@ -201,6 +213,10 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::AccountTouched { address }
     }
 
+    fn balance_increased(account: Address, amount: U256) -> Self {
+        JournalEntry::BalanceIncreased { account, amount }
+    }
+
     fn balance_transfer(from: Address, to: Address, balance: U256) -> Self {
         JournalEntry::BalanceTransfer { from, to, balance }
     }
@@ -280,6 +296,10 @@ impl JournalEntryTr for JournalEntry {
                     let target = state.get_mut(&target).unwrap();
                     target.info.balance -= had_balance;
                 }
+            }
+            JournalEntry::BalanceIncreased { account, amount } => {
+                let account = state.get_mut(&account).unwrap();
+                account.info.balance -= amount;
             }
             JournalEntry::BalanceTransfer { from, to, balance } => {
                 // we don't need to check overflow and underflow when adding and subtracting the balance.

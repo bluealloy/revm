@@ -187,6 +187,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
+    fn mint(&mut self, account: Address, amount: U256) -> Result<(bool, bool), DB::Error> {
+        self.inner.mint(&mut self.database, account, amount)
+    }
+
+    #[inline]
     fn transfer(
         &mut self,
         from: Address,
