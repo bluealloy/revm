@@ -9,7 +9,7 @@ use context_interface::{
 };
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
-use std::vec::Vec;
+use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
 /// including EIP-4844, EIP-7702, EIP-7873, etc.  It implements the [`Transaction`] trait, which is used inside the EVM to execute a transaction.
