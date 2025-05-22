@@ -14,7 +14,7 @@ use std::{vec, vec::Vec};
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
 /// including EIP-4844, EIP-7702, EIP-7873, etc.  It implements the [`Transaction`] trait, which is used inside the EVM to execute a transaction.
 ///
-/// [`TxEnvBuilder`] builder is recomended way to create a new [`TxEnv`] as it will automatically
+/// [`TxEnvBuilder`] builder is recommended way to create a new [`TxEnv`] as it will automatically
 /// set the transaction type based on the fields set.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
