@@ -33,12 +33,14 @@ once_cell = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
-anyhow.workspace = true
 rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc"] }
 alloy-primitives.workspace = true
+serde = { workspace = true, features = ["derive"] }
+revm = { workspace = true, features = ["secp256r1", "serde"] }
+op-revm = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -49,13 +51,15 @@ std = [
 	"once_cell/std",
 	"sha2/std",
 	"serde_json/std",
-	"alloy-primitives/std"
+	"alloy-primitives/std",
+	"op-revm/std"
 ]
 hashbrown = ["revm/hashbrown"]
 serde = [
 	"dep:serde",
 	"revm/serde",
-	"alloy-primitives/serde"
+	"alloy-primitives/serde",
+	"op-revm/serde"
 ]
 portable = ["revm/portable"]
 

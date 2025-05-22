@@ -55,7 +55,6 @@ std = [
 	"state/std",
 ]
 serde = [
-	"dep:serde",
 	"database/serde",
 	"context/serde",
 	"database-interface/serde",
@@ -64,4 +63,5 @@ serde = [
 	"primitives/serde",
 	"state/serde",
 ]
-serde-json = ["serde", "dep:serde_json"]
+# serde is used only for TracerEip33155
+serde-json = ["dep:serde", "dep:serde_json", "serde"]

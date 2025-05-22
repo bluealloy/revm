@@ -2975,9 +2975,9 @@ version = "4.0.2"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "anyhow",
  "auto_impl",
  "once_cell",
+ "op-revm",
  "revm",
  "rstest",
  "serde",
