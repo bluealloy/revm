@@ -52,9 +52,15 @@ std = [
 	"sha2/std",
 	"serde_json/std",
 	"alloy-primitives/std",
+	"op-revm/std"
 ]
 hashbrown = ["revm/hashbrown"]
-serde = ["dep:serde", "revm/serde", "alloy-primitives/serde"]
+serde = [
+	"dep:serde",
+	"revm/serde",
+	"alloy-primitives/serde",
+	"op-revm/serde"
+]
 portable = ["revm/portable"]
 
 dev = [
