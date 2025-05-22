@@ -1,9 +1,0 @@
-{
-  "result": {
-    "Halt": {
-      "gas_used": 100,
-      "reason": "OpcodeNotFound"
-    }
-  },
-  "state": {}
-}

@@ -1,13 +1,13 @@
 {
   "result": {
     "Success": {
+      "reason": "Stop",
+      "gas_used": 1000,
       "gas_refunded": 0,
-      "gas_used": 100,
       "logs": [],
       "output": {
-        "Call": "0x"
-      },
-      "reason": "Stop"
+        "Call": "0x040506"
+      }
     }
   },
   "state": {}
