@@ -8,7 +8,7 @@
     }
   },
   "state": {
-    "0x420000000000000000000000000000000000001b": {
+    "0x4200000000000000000000000000000000000019": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -80,10 +80,10 @@
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     },
-    "0x0000000000000000000000000000000000000000": {
+    "0x420000000000000000000000000000000000001b": {
       "info": {
         "balance": "0x0",
-        "nonce": 1,
+        "nonce": 0,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "code": {
           "LegacyAnalyzed": {
@@ -104,10 +104,10 @@
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     },
-    "0x4200000000000000000000000000000000000019": {
+    "0x0000000000000000000000000000000000000000": {
       "info": {
         "balance": "0x0",
-        "nonce": 0,
+        "nonce": 1,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "code": {
           "LegacyAnalyzed": {
