@@ -10,7 +10,7 @@ use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
 use std::vec::Vec;
 
-/// Touple containing evm execution result and state.s
+/// Tuple containing evm execution result and state.s
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultAndState<R, S> {
@@ -20,7 +20,7 @@ pub struct ResultAndState<R, S> {
     pub state: S,
 }
 
-/// Touple containing multiple execution results and state.
+/// Tuple containing multiple execution results and state.
 pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
 
 impl<R, S> ResultAndState<R, S> {
@@ -127,7 +127,7 @@ pub trait ExecuteEvm {
 
     /// Execute previous transaction and finalize it.
     ///
-    /// Doint it witout finalization
+    /// Doint it without finalization
     fn replay(&mut self)
         -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
 }
