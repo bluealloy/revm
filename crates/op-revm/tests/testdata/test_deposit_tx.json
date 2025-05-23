@@ -32,7 +32,6 @@
           }
         }
       },
-      "transaction_id": 0,
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     }
