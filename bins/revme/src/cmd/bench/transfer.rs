@@ -23,6 +23,8 @@ pub fn run(criterion: &mut Criterion) {
         ..Default::default()
     };
 
+    evm.ctx.tx = tx.clone();
+
     let mut i = 0;
     criterion.bench_function("transfer", |b| {
         b.iter(|| {
@@ -48,7 +50,7 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("transfer_finalize", |b| {
         b.iter(|| {
-            let _ = evm.transact_finalize(tx.clone()).unwrap();
+            let _ = evm.replay().unwrap();
         })
     });
 }
