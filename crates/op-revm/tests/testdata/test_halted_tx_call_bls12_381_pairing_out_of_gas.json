@@ -10,7 +10,7 @@
     }
   },
   "state": {
-    "0x4200000000000000000000000000000000000019": {
+    "0x000000000000000000000000000000000000000f": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -32,33 +32,9 @@
         }
       },
       "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
+      "status": "LoadedAsNotExisting"
     },
     "0x420000000000000000000000000000000000001b": {
-      "info": {
-        "balance": "0x0",
-        "nonce": 0,
-        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "code": {
-          "LegacyAnalyzed": {
-            "bytecode": "0x00",
-            "original_len": 0,
-            "jump_table": {
-              "order": "bitvec::order::Lsb0",
-              "head": {
-                "width": 8,
-                "index": 0
-              },
-              "bits": 0,
-              "data": []
-            }
-          }
-        }
-      },
-      "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
-    },
-    "0x420000000000000000000000000000000000001a": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -106,7 +82,7 @@
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     },
-    "0x000000000000000000000000000000000000000f": {
+    "0x4200000000000000000000000000000000000019": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -128,7 +104,31 @@
         }
       },
       "storage": {},
-      "status": "LoadedAsNotExisting"
+      "status": "Touched | LoadedAsNotExisting"
+    },
+    "0x420000000000000000000000000000000000001a": {
+      "info": {
+        "balance": "0x0",
+        "nonce": 0,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "storage": {},
+      "status": "Touched | LoadedAsNotExisting"
     }
   }
 }

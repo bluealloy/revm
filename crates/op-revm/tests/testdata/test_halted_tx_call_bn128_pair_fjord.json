@@ -10,7 +10,7 @@
     }
   },
   "state": {
-    "0x0000000000000000000000000000000000000008": {
+    "0x420000000000000000000000000000000000001b": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -32,7 +32,7 @@
         }
       },
       "storage": {},
-      "status": "LoadedAsNotExisting"
+      "status": "Touched | LoadedAsNotExisting"
     },
     "0x0000000000000000000000000000000000000000": {
       "info": {
@@ -58,7 +58,7 @@
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     },
-    "0x420000000000000000000000000000000000001a": {
+    "0x0000000000000000000000000000000000000008": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
@@ -80,9 +80,9 @@
         }
       },
       "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
+      "status": "LoadedAsNotExisting"
     },
-    "0x420000000000000000000000000000000000001b": {
+    "0x420000000000000000000000000000000000001a": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
