@@ -10,6 +10,26 @@ use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
 use std::vec::Vec;
 
+/// Touple containing evm execution result and state.s
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ResultAndState<R, S> {
+    /// Execution result
+    pub result: R,
+    /// Output State.
+    pub state: S,
+}
+
+/// Touple containing multiple execution results and state.
+pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
+
+impl<R, S> ResultAndState<R, S> {
+    /// Creates new ResultAndState.
+    pub fn new(result: R, state: S) -> Self {
+        Self { result, state }
+    }
+}
+
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
     /// Output of transaction execution.
@@ -60,12 +80,12 @@ pub trait ExecuteEvm {
     fn transact_finalize(
         &mut self,
         tx: Self::Tx,
-    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output_or_error = self.transact(tx);
         // finalize will clear the journal
         let state = self.finalize();
         let output = output_or_error?;
-        Ok((output, state))
+        Ok(ResultAndState::new(output, state))
     }
 
     /// Execute multiple transactions without finalizing the state.
@@ -94,16 +114,22 @@ pub trait ExecuteEvm {
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
     /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
-    #[allow(clippy::type_complexity)]
+    //#[allow(clippy::type_complexity)]
     fn transact_multi_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<(Vec<Self::ExecutionResult>, Self::State), Self::Error> {
+    ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         // on error transact_multi will clear the journal
-        let output = self.transact_multi(txs)?;
+        let result = self.transact_multi(txs)?;
         let state = self.finalize();
-        Ok((output, state))
+        Ok(ResultAndState::new(result, state))
     }
+
+    /// Execute previous transaction and finalize it.
+    ///
+    /// Doint it witout finalization
+    fn replay(&mut self)
+        -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -137,6 +163,15 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
         self.commit_inner();
         Ok(outputs)
     }
+
+    /// Replay the transaction and commit to the state.
+    ///
+    /// Internally calls `replay` and `commit` functions.
+    fn replay_commit(&mut self) -> Result<Self::ExecutionResult, Self::Error> {
+        let result = self.replay()?;
+        self.commit(result.state);
+        Ok(result.result)
+    }
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm for Evm<CTX, INSP, INST, PRECOMPILES>
@@ -163,6 +198,18 @@ where
 
     fn set_block(&mut self, block: Self::Block) {
         self.ctx.set_block(block);
+    }
+
+    fn replay(
+        &mut self,
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        t.run(self)
+            .inspect_err(|_| self.journal().discard_tx())
+            .map(|result| {
+                let state = self.finalize();
+                ResultAndState::new(result, state)
+            })
     }
 }
 

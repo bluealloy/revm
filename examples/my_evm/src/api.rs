@@ -8,7 +8,7 @@ use revm::{
         result::{EVMError, ExecutionResult},
         ContextTr, Database, JournalTr,
     },
-    handler::{EvmTr, Handler},
+    handler::{api::ResultAndState, EvmTr, Handler},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
@@ -43,6 +43,17 @@ where
 
     fn finalize(&mut self) -> Self::State {
         self.ctx().journal().finalize()
+    }
+
+    fn replay(
+        &mut self,
+    ) -> Result<revm::handler::api::ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>
+    {
+        let mut handler = MyHandler::default();
+        handler.run(self).map(|result| {
+            let state = self.finalize();
+            ResultAndState::new(result, state)
+        })
     }
 }
 

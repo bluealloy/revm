@@ -97,7 +97,7 @@ mod test {
 
         let mut evm = ctx.build_mainnet();
 
-        let (_, state) = evm
+        let state = evm
             .transact_finalize(TxEnv {
                 tx_type: TransactionType::Eip7702.into(),
                 gas_limit: 100_000,
@@ -106,7 +106,8 @@ mod test {
                 kind: TxKind::Call(signer.address()),
                 ..Default::default()
             })
-            .unwrap();
+            .unwrap()
+            .state;
 
         let auth_acc = state.get(&signer.address()).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));

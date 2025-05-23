@@ -69,7 +69,7 @@ pub enum SpecId {
     /// Activated at block 19426587 (Timestamp: 1710338135)
     CANCUN,
     /// Prague hard fork
-    /// Activated at block 22431086 (Timestamp: 1746612311)
+    /// Activated at block 22431084 (Timestamp: 1746612311)
     #[default]
     PRAGUE,
     /// Osaka hard fork

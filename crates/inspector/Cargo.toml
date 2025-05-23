@@ -1,7 +1,7 @@
 [package]
 name = "revm-inspector"
 description = "Revm inspector interface"
-version = "4.1.0"
+version = "5.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -58,8 +58,6 @@ std = [
 	"state/std",
 ]
 serde = [
-	"dep:serde",
-	"dep:serde_json",
 	"database/serde",
 	"context/serde",
 	"database-interface/serde",
@@ -70,5 +68,5 @@ serde = [
 ]
 
 # deprecated please use [`tracer`] feature instead
-serde-json = ["tracer"]
-tracer = ["serde", "dep:serde_json"]
+serde-json = ["dep:serde", "dep:serde_json", "serde"]
+tracer = ["serde-json"]

@@ -552,7 +552,8 @@ where
         InstructionProviderT::default(),
         PrecompileT::default(),
     );
-    let (_, state) = evm.inspect_with_tx_finalize(tx)?;
+
+    let state = evm.inspect_with_tx_finalize(tx)?.state;
 
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(state);

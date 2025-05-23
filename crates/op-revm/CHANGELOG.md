@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/op-revm-v4.0.2...op-revm-v5.0.0) - 2025-05-22
+
+### Added
+
+- *(op-revm)* add testdata comparison utility for EVM execution output ([#2525](https://github.com/bluealloy/revm/pull/2525))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+
 ## [4.0.2](https://github.com/bluealloy/revm/compare/op-revm-v4.0.1...op-revm-v4.0.2) - 2025-05-09
 
 ### Fixed

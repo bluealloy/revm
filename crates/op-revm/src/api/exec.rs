@@ -9,8 +9,8 @@ use revm::{
         Cfg, ContextTr, Database, JournalTr,
     },
     handler::{
-        instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, Handler,
-        PrecompileProvider, SystemCallTx,
+        api::ResultAndState, instructions::EthInstructions, system_call::SystemCallEvm, EthFrame,
+        Handler, PrecompileProvider, SystemCallTx,
     },
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
@@ -67,6 +67,16 @@ where
 
     fn finalize(&mut self) -> Self::State {
         self.0.ctx.journal().finalize()
+    }
+
+    fn replay(
+        &mut self,
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        h.run(self).map(|result| {
+            let state = self.finalize();
+            ResultAndState::new(result, state)
+        })
     }
 }
 

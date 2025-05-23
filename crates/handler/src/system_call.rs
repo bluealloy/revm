@@ -1,6 +1,6 @@
 use crate::{
-    instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
-    MainnetHandler, PrecompileProvider,
+    api::ResultAndState, instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm,
+    Handler, MainnetHandler, PrecompileProvider,
 };
 use context::{ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
@@ -57,10 +57,10 @@ pub trait SystemCallEvm: ExecuteEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<(Self::ExecutionResult, Self::State), Self::Error> {
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let result = self.transact_system_call(system_contract_address, data)?;
         let state = self.finalize();
-        Ok((result, state))
+        Ok(ResultAndState::new(result, state))
     }
 }
 
@@ -106,9 +106,9 @@ where
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.transact_system_call_finalize(system_contract_address, data)
-            .map(|(result, state)| {
-                self.db().commit(state);
-                result
+            .map(|output| {
+                self.db().commit(output.state);
+                output.result
             })
     }
 }
@@ -145,12 +145,12 @@ mod tests {
             // block with number 1 will set storage at slot 0.
             .modify_block_chained(|b| b.number = 1)
             .build_mainnet();
-        let (result, state) = my_evm
+        let output = my_evm
             .transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
         assert_eq!(
-            result,
+            output.result,
             ExecutionResult::Success {
                 reason: SuccessReason::Stop,
                 gas_used: 22143,
@@ -160,15 +160,16 @@ mod tests {
             }
         );
         // only system contract is updated and present
-        assert_eq!(state.len(), 1);
+        assert_eq!(output.state.len(), 1);
         assert_eq!(
-            state[&HISTORY_STORAGE_ADDRESS]
+            output.state[&HISTORY_STORAGE_ADDRESS]
                 .storage
                 .get(&StorageKey::from(0))
                 .map(|slot| slot.present_value)
                 .unwrap_or_default(),
             U256::from_be_bytes(block_hash.0),
-            "State is not updated {state:?}"
+            "State is not updated {:?}",
+            output.state
         );
     }
 }

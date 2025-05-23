@@ -4,7 +4,7 @@ use crate::{
     FrameResult, ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
-use context::{LocalContextTr, TransactionType};
+use context::LocalContextTr;
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -280,12 +280,12 @@ pub trait Handler {
     ///
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
-    fn apply_eip7873_eof_initcodes(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+    fn apply_eip7873_eof_initcodes(&self, _evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        Ok(())
+        /* TODO(EOF)
         if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
             return Ok(());
         }
-        Ok(())
-        /* TODO(EOF)
         let (tx, local) = evm.ctx().tx_local();
         local.insert_initcodes(&[]);
         tx.initcodes());

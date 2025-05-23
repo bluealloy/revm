@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v4.1.0...revm-statetest-types-v5.0.0) - 2025-05-22
+
+### Other
+
+- add TxEnvBuilder::build_fill ([#2536](https://github.com/bluealloy/revm/pull/2536))
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v4.0.0...revm-statetest-types-v4.1.0) - 2025-05-07
 
 Dependency bump

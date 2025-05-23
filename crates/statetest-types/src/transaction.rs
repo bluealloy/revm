@@ -75,12 +75,13 @@ impl TransactionParts {
             return Some(TransactionType::Eip7702);
         }
 
-        // And if it has initcodes it is EIP-7873 tx
-        if self.initcodes.is_some() {
-            // Target need to be present for EIP-7873 tx
-            self.to?;
-            return Some(TransactionType::Eip7873);
-        }
+        // TODO(EOF)
+        // // And if it has initcodes it is EIP-7873 tx
+        // if self.initcodes.is_some() {
+        //     // Target need to be present for EIP-7873 tx
+        //     self.to?;
+        //     return Some(TransactionType::Eip7873);
+        // }
 
         Some(tx_type)
     }

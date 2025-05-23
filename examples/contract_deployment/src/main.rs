@@ -66,22 +66,31 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    let (result, state) = evm.transact_finalize(TxEnv {
+    let output = evm.transact_finalize(TxEnv {
         kind: TxKind::Call(address),
         data: Default::default(),
         nonce: 1,
         ..Default::default()
     })?;
-    let Some(storage0) = state
+    let Some(storage0) = output
+        .state
         .get(&address)
         .ok_or_else(|| anyhow!("Contract not found"))?
         .storage
         .get::<StorageValue>(&Default::default())
     else {
-        bail!("Failed to write storage in the init code: {result:#?}");
+        bail!(
+            "Failed to write storage in the init code: {:#?}",
+            output.result
+        );
     };
 
     println!("storage U256(0) at {address}:  {storage0:#?}");
-    assert_eq!(storage0.present_value(), param.try_into()?, "{result:#?}");
+    assert_eq!(
+        storage0.present_value(),
+        param.try_into()?,
+        "{:#?}",
+        output.result
+    );
     Ok(())
 }

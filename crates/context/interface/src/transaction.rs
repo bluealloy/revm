@@ -110,9 +110,7 @@ pub trait Transaction {
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     fn calc_max_data_fee(&self) -> U256 {
-        let blob_gas = U256::from(self.total_blob_gas());
-        let max_blob_fee = U256::from(self.max_fee_per_blob_gas());
-        max_blob_fee.saturating_mul(blob_gas)
+        U256::from((self.total_blob_gas() as u128).saturating_mul(self.max_fee_per_blob_gas()))
     }
 
     /// Returns length of the authorization list.
@@ -171,9 +169,9 @@ pub trait Transaction {
     /// Return U256 or error if all values overflow U256 number.
     fn max_balance_spending(&self) -> Result<U256, InvalidTransaction> {
         // gas_limit * max_fee + value + additional_gas_cost
-        let mut max_balance_spending = U256::from(self.gas_limit())
-            .checked_mul(U256::from(self.max_fee_per_gas()))
-            .and_then(|gas_cost| gas_cost.checked_add(self.value()))
+        let mut max_balance_spending = (self.gas_limit() as u128)
+            .checked_mul(self.max_fee_per_gas())
+            .and_then(|gas_cost| U256::from(gas_cost).checked_add(self.value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         // add blob fee

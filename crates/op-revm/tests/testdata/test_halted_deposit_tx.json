@@ -1,0 +1,62 @@
+{
+  "result": {
+    "Halt": {
+      "reason": "FailedDeposit",
+      "gas_used": 30000000
+    }
+  },
+  "state": {
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
+      "info": {
+        "balance": "0x2386f26fc10064",
+        "nonce": 1,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "transaction_id": 0,
+      "storage": {},
+      "status": "Touched"
+    },
+    "0xffffffffffffffffffffffffffffffffffffffff": {
+      "info": {
+        "balance": "0x2386f26fc10000",
+        "nonce": 1,
+        "code_hash": "0x7b2ab94bb7d45041581aa3757ae020084674ccad6f75dc3750eb2ea8a92c4e9a",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x5000",
+            "original_len": 1,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 1,
+              "data": [
+                0
+              ]
+            }
+          }
+        }
+      },
+      "transaction_id": 0,
+      "storage": {},
+      "status": "Cold"
+    }
+  }
+}

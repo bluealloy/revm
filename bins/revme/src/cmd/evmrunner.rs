@@ -112,15 +112,16 @@ impl Cmd {
         }
 
         let time = Instant::now();
-        let (_, state) = if self.trace {
+        let state = if self.trace {
             evm.inspect_with_tx_finalize(tx.clone())
                 .map_err(|_| Errors::EVMError)?
+                .state
         } else {
             let out = evm
                 .transact_finalize(tx.clone())
                 .map_err(|_| Errors::EVMError)?;
-            println!("Result: {:#?}", out.0);
-            out
+            println!("Result: {:#?}", out.result);
+            out.state
         };
         let time = time.elapsed();
 

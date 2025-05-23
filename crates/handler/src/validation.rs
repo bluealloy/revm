@@ -49,7 +49,7 @@ pub fn validate_eip4844_tx(
     blobs: &[B256],
     max_blob_fee: u128,
     block_blob_gas_price: u128,
-    max_blobs: u64,
+    max_blobs: Option<u64>,
 ) -> Result<(), InvalidTransaction> {
     // Ensure that the user was willing to at least pay the current blob gasprice
     if block_blob_gas_price > max_blob_fee {
@@ -70,11 +70,13 @@ pub fn validate_eip4844_tx(
 
     // Ensure the total blob gas spent is at most equal to the limit
     // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-    if blobs.len() > max_blobs as usize {
-        return Err(InvalidTransaction::TooManyBlobs {
-            have: blobs.len(),
-            max: max_blobs as usize,
-        });
+    if let Some(max_blobs) = max_blobs {
+        if blobs.len() > max_blobs as usize {
+            return Err(InvalidTransaction::TooManyBlobs {
+                have: blobs.len(),
+                max: max_blobs as usize,
+            });
+        }
     }
     Ok(())
 }
@@ -161,7 +163,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.blob_versioned_hashes(),
                 tx.max_fee_per_blob_gas(),
                 context.block().blob_gasprice().unwrap_or_default(),
-                context.cfg().blob_max_count(spec_id),
+                context.cfg().blob_max_count(),
             )?;
         }
         TransactionType::Eip7702 => {
@@ -186,13 +188,12 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
         }
+        /* // TODO(EOF) EOF removed from spec.
         TransactionType::Eip7873 => {
             // Check if EIP-7873 transaction is enabled.
-            // TODO(EOF) EOF removed from spec.
-            //if !spec_id.is_enabled_in(SpecId::OSAKA) {
+            if !spec_id.is_enabled_in(SpecId::OSAKA) {
             return Err(InvalidTransaction::Eip7873NotSupported);
-            //}
-            /*
+            }
             // validate chain id
             if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
@@ -211,8 +212,8 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
-             */
         }
+        */
         TransactionType::Custom => {
             // Custom transaction type check is not done here.
         }

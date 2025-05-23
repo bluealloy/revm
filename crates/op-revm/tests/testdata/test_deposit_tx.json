@@ -1,0 +1,40 @@
+{
+  "result": {
+    "Success": {
+      "reason": "Stop",
+      "gas_used": 21000,
+      "gas_refunded": 0,
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      }
+    }
+  },
+  "state": {
+    "0x0000000000000000000000000000000000000000": {
+      "info": {
+        "balance": "0x64",
+        "nonce": 1,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "transaction_id": 0,
+      "storage": {},
+      "status": "Touched | LoadedAsNotExisting"
+    }
+  }
+}
