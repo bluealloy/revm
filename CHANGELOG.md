@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v74 tag
+date 23.05.2025
+
+Osaka devnet-0 support
+
+* `revm-primitives`: 19.0.0 -> 19.1.0 (✓ API compatible changes)
+* `revm-bytecode`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+* `revm-state`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+* `revm-database-interface`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+* `revm-context-interface`: 4.1.0 -> 5.0.0 (⚠ API breaking changes)
+* `revm-context`: 4.1.0 -> 5.0.0 (⚠ API breaking changes)
+* `revm-database`: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+* `revm-interpreter`: 19.1.0 -> 20.0.0 (✓ API compatible changes)
+* `revm-precompile`: 20.1.0 -> 21.0.0 (⚠ API breaking changes)
+* `revm-handler`: 4.1.0 -> 5.0.0 (✓ API compatible changes)
+* `revm-inspector`: 4.1.0 -> 5.0.0 (✓ API compatible changes)
+* `revm`: 23.1.0 -> 24.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 4.1.0 -> 5.0.0 (✓ API compatible changes)
+* `revme`: 5.0.0 -> 5.1.0 (✓ API compatible changes)
+* `op-revm`: 4.0.2 -> 5.0.0 (✓ API compatible changes)
+
 # v71 tag
 date: 09.05.2025
 
