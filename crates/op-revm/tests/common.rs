@@ -7,11 +7,17 @@ use revm::{
     primitives::Bytes,
     state::EvmState,
 };
-use serde::{de::DeserializeOwned, Serialize};
-use std::{fs, path::PathBuf};
 
 // Constant for testdata directory path
 pub(crate) const TESTS_TESTDATA: &str = "tests/testdata";
+
+#[cfg(not(feature = "serde"))]
+pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
+    _filename: &str,
+    _output: &ResultAndState<HaltReasonTy>,
+) {
+    // serde needs to be enabled to use this function
+}
 
 /// Compares or saves the execution output to a testdata file.
 ///
@@ -34,12 +40,14 @@ pub(crate) const TESTS_TESTDATA: &str = "tests/testdata";
 /// ```bash
 /// cargo test --features serde
 /// ```
+#[cfg(feature = "serde")]
 pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
     filename: &str,
     output: &ResultAndState<HaltReasonTy>,
 ) where
-    HaltReasonTy: Serialize + DeserializeOwned + PartialEq,
+    HaltReasonTy: serde::Serialize + serde::de::DeserializeOwned + PartialEq,
 {
+    use std::{fs, path::PathBuf};
     let tests_dir = PathBuf::from(TESTS_TESTDATA);
     let testdata_file = tests_dir.join(filename);
 

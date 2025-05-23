@@ -2977,7 +2977,6 @@ dependencies = [
  "alloy-sol-types",
  "auto_impl",
  "once_cell",
- "op-revm",
  "revm",
  "rstest",
  "serde",
