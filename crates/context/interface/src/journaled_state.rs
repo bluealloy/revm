@@ -80,6 +80,13 @@ pub trait JournalTr {
     /// Touches the account.
     fn touch_account(&mut self, address: Address);
 
+    /// Increases the balance of an account.
+    fn mint(
+        &mut self,
+        account: Address,
+        amount: U256,
+    ) -> Result<(bool, bool), <Self::Database as Database>::Error>;
+
     /// Transfers the balance from one account to another.
     fn transfer(
         &mut self,

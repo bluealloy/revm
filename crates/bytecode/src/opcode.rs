@@ -665,7 +665,7 @@ opcodes! {
     0xF9 => EXTDELEGATECALL => stack_io(3, 1);
     0xFA => STATICCALL      => stack_io(6, 1), not_eof;
     0xFB => EXTSTATICCALL   => stack_io(3, 1);
-    // 0xFC
+    0xFC => GAS2ETH      => stack_io(2, 1);
     0xFD => REVERT       => stack_io(2, 0), terminating;
     0xFE => INVALID      => stack_io(0, 0), terminating;
     0xFF => SELFDESTRUCT => stack_io(1, 0), not_eof, terminating;
@@ -768,8 +768,8 @@ mod tests {
                 eof_opcode_num += 1;
             }
         }
-        assert_eq!(opcode_num, 169);
-        assert_eq!(eof_opcode_num, 153);
+        assert_eq!(opcode_num, 170);
+        assert_eq!(eof_opcode_num, 154);
     }
 
     #[test]

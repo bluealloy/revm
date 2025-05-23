@@ -210,6 +210,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[EXTDELEGATECALL as usize] = contract::extdelegatecall;
     table[STATICCALL as usize] = contract::static_call;
     table[EXTSTATICCALL as usize] = contract::extstaticcall;
+    table[GAS2ETH as usize] = contract::gas2eth;
     table[REVERT as usize] = control::revert;
     table[INVALID as usize] = control::invalid;
     table[SELFDESTRUCT as usize] = host::selfdestruct;

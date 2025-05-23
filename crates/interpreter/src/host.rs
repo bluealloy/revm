@@ -82,6 +82,8 @@ pub trait Host {
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
     /// Balance, calls `ContextTr::journal().load_account(address)`
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+    /// Endow an account with some balance.
+    fn mint(&mut self, to: Address, balance: U256) -> Option<(bool, bool)>;
     /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
     /// Load account code, calls `ContextTr::journal().load_account_code(address)`
@@ -188,6 +190,16 @@ impl<CTX: ContextTr> Host for CTX {
         self.journal()
             .load_account(address)
             .map(|acc| acc.map(|a| a.info.balance))
+            .map_err(|e| {
+                *self.error() = Err(e.into());
+            })
+            .ok()
+    }
+
+    /// Increase the balance of `account` by `amount`.
+    fn mint(&mut self, account: Address, amount: U256) -> Option<(bool, bool)> {
+        self.journal()
+            .mint(account, amount)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -365,6 +377,10 @@ impl Host for DummyHost {
     }
 
     fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+        None
+    }
+
+    fn mint(&mut self, _to: Address, _balance: U256) -> Option<(bool, bool)> {
         None
     }
 

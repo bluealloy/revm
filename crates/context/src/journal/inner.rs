@@ -211,6 +211,41 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Some(account.info.nonce)
     }
 
+    /// Increases the balance of an account.
+    #[inline]
+    pub fn mint<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        account_addr: Address,
+        amount: U256,
+    ) -> Result<(bool, bool), DB::Error> {
+        if amount.is_zero() {
+            let state_load = self.load_account(db, account_addr)?;
+            let account_was_cold = state_load.is_cold;
+
+            let account = self.state.get_mut(&account_addr).unwrap();
+            Self::touch_account(&mut self.journal, account_addr, account);
+
+            return Ok((account_was_cold, account.is_empty()));
+        }
+
+        let state_load = self.load_account(db, account_addr)?;
+        let account_was_cold = state_load.is_cold;
+
+        let account = self.state.get_mut(&account_addr).unwrap();
+        Self::touch_account(&mut self.journal, account_addr, account);
+
+        let balance = account.info.balance;
+        let new_balance = balance.saturating_add(amount);
+        let increased = new_balance - balance;
+        account.info.set_balance(new_balance);
+
+        self.journal
+            .push(ENTRY::balance_increased(account_addr, increased));
+
+        Ok((account_was_cold, account.is_empty()))
+    }
+
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
     pub fn transfer<DB: Database>(
