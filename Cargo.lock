@@ -2971,7 +2971,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "op-revm"
-version = "4.1.0"
+version = "5.0.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3686,7 +3686,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "23.1.1"
+version = "24.0.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3775,7 +3775,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "4.2.0"
+version = "5.0.0"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3796,7 +3796,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "4.2.0"
+version = "5.0.0"
 dependencies = [
  "auto_impl",
  "revm-context",
@@ -3812,7 +3812,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "19.2.0"
+version = "20.0.0"
 dependencies = [
  "bincode",
  "revm-bytecode",
@@ -3870,7 +3870,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "4.1.1"
+version = "5.0.0"
 dependencies = [
  "revm",
  "serde",
