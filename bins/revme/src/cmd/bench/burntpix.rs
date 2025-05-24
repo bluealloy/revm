@@ -1,5 +1,6 @@
 pub mod static_data;
 
+use context::TxEnv;
 use criterion::Criterion;
 use primitives::{StorageKey, StorageValue};
 use static_data::{
@@ -37,17 +38,20 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(db)
-        .modify_tx_chained(|tx| {
-            tx.caller = BENCH_CALLER;
-            tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
-            tx.data = run_call_data.clone().into();
-            tx.gas_limit = u64::MAX;
-        })
+        .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet();
+
+    let tx = TxEnv {
+        caller: BENCH_CALLER,
+        kind: TxKind::Call(BURNTPIX_MAIN_ADDRESS),
+        data: run_call_data.clone().into(),
+        gas_limit: u64::MAX,
+        ..Default::default()
+    };
 
     criterion.bench_function("burntpix", |b| {
         b.iter(|| {
-            evm.replay().unwrap();
+            evm.transact(tx.clone()).unwrap();
         })
     });
 

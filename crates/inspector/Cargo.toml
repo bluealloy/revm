@@ -34,7 +34,10 @@ auto_impl.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
-serde_json = { workspace = true, features = ["alloc"], optional = true }
+serde_json = { workspace = true, features = [
+	"alloc",
+	"preserve_order",
+], optional = true }
 
 [dev-dependencies]
 database = { workspace = true, features = ["serde"] }
@@ -63,5 +66,7 @@ serde = [
 	"primitives/serde",
 	"state/serde",
 ]
-# serde is used only for TracerEip33155
+
+# deprecated please use [`tracer`] feature instead
 serde-json = ["dep:serde", "dep:serde_json", "serde"]
+tracer = ["serde-json"]

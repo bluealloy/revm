@@ -1,8 +1,7 @@
 use crate::handler::Erc20MainnetHandler;
 use revm::{
-    context::JournalOutput,
     context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         ContextTr, JournalTr,
     },
     database_interface::DatabaseCommit,
@@ -11,14 +10,17 @@ use revm::{
         PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    state::EvmState,
 };
+
+type Erc20Error<CTX> = EVMError<ContextTrDbError<CTX>, InvalidTransaction>;
 
 pub fn transact_erc20evm<EVM>(
     evm: &mut EVM,
-) -> Result<ResultAndState<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<(ExecutionResult<HaltReason>, EvmState), Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -26,15 +28,19 @@ where
         >,
     >,
 {
-    Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new().run(evm)
+    let mut handler = Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new();
+    handler.run(evm).map(|r| {
+        let state = evm.ctx().journal().finalize();
+        (r, state)
+    })
 }
 
 pub fn transact_erc20evm_commit<EVM>(
     evm: &mut EVM,
-) -> Result<ExecutionResult<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<ExecutionResult<HaltReason>, Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
@@ -42,8 +48,8 @@ where
         >,
     >,
 {
-    transact_erc20evm(evm).map(|r| {
-        evm.ctx().db().commit(r.state);
-        r.result
+    transact_erc20evm(evm).map(|(result, state)| {
+        evm.ctx().db().commit(state);
+        result
     })
 }

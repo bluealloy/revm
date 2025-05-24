@@ -72,7 +72,7 @@ mod test {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
-    use context::Context;
+    use context::{Context, TxEnv};
     use context_interface::{transaction::Authorization, TransactionType};
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{hardfork::SpecId, TxKind, U256};
@@ -93,20 +93,23 @@ mod test {
 
         let ctx = Context::mainnet()
             .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
-            .with_db(BenchmarkDB::new_bytecode(bytecode))
-            .modify_tx_chained(|tx| {
-                tx.tx_type = TransactionType::Eip7702.into();
-                tx.gas_limit = 100_000;
-                tx.authorization_list = vec![Either::Left(auth)];
-                tx.caller = EEADDRESS;
-                tx.kind = TxKind::Call(signer.address());
-            });
+            .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();
 
-        let ok = evm.replay().unwrap();
+        let state = evm
+            .transact_finalize(TxEnv {
+                tx_type: TransactionType::Eip7702.into(),
+                gas_limit: 100_000,
+                authorization_list: vec![Either::Left(auth)],
+                caller: EEADDRESS,
+                kind: TxKind::Call(signer.address()),
+                ..Default::default()
+            })
+            .unwrap()
+            .state;
 
-        let auth_acc = ok.state.get(&signer.address()).unwrap();
+        let auth_acc = state.get(&signer.address()).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
         assert_eq!(auth_acc.info.nonce, 1);
         assert_eq!(

@@ -8,11 +8,12 @@ use state::{
     bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
     Account, Bytecode,
 };
+use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     type Database: Database;
-    type FinalOutput;
+    type State;
 
     /// Creates new Journaled state.
     ///
@@ -88,11 +89,23 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
-    /// Increments the nonce of the account.
-    fn inc_account_nonce(
+    /// Increments the balance of the account.
+    fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
-    ) -> Result<Option<u64>, <Self::Database as Database>::Error>;
+        old_balance: U256,
+        bump_nonce: bool,
+    );
+
+    /// Increments the balance of the account.
+    fn balance_incr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error>;
+
+    /// Increments the nonce of the account.
+    fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
     fn load_account(
@@ -170,7 +183,9 @@ pub trait JournalTr {
     }
 
     /// Called at the end of the transaction to clean all residue data from journal.
-    fn clear(&mut self);
+    fn clear(&mut self) {
+        let _ = self.finalize();
+    }
 
     /// Creates a checkpoint of the current state. State can be revert to this point
     /// if needed.
@@ -194,10 +209,20 @@ pub trait JournalTr {
     /// Returns the depth of the journal.
     fn depth(&self) -> usize;
 
-    /// Does cleanup and returns modified state.
+    /// Take logs from journal.
+    fn take_logs(&mut self) -> Vec<Log>;
+
+    /// Commit current transaction journal and returns transaction logs.
+    fn commit_tx(&mut self);
+
+    /// Discard current transaction journal by removing journal entries and logs and incrementing the transaction id.
     ///
-    /// This resets the [JournalTr] to its initial state.
-    fn finalize(&mut self) -> Self::FinalOutput;
+    /// This function is useful to discard intermediate state that is interrupted by error and it will not revert
+    /// any already committed changes and it is safe to call it multiple times.
+    fn discard_tx(&mut self);
+
+    /// Clear current journal resetting it to initial state and return changes state.
+    fn finalize(&mut self) -> Self::State;
 }
 
 /// Transfer and creation result

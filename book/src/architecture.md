@@ -44,7 +44,7 @@ For inspection API to be enabled, [`Evm`](https://docs.rs/revm-context/1.0.0/rev
 
 ```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet().with_inspector(inspector);
-let _ = evm.inspect_with_tx(tx);
+let _ = evm.inspect_tx(tx);
 ```
 
 # EVM Framework

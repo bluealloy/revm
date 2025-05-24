@@ -3,25 +3,26 @@ use crate::{
     OpTransactionError,
 };
 use revm::{
-    context::{ContextSetters, JournalOutput},
+    context::{result::ResultAndState, ContextSetters},
     context_interface::{
-        result::{EVMError, ExecutionResult, ResultAndState},
+        result::{EVMError, ExecutionResult},
         Cfg, ContextTr, Database, JournalTr,
     },
     handler::{
-        instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, EvmTr, Handler,
+        instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, Handler,
         PrecompileProvider, SystemCallTx,
     },
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     primitives::{Address, Bytes},
+    state::EvmState,
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
 // Type alias for Optimism context
 pub trait OpContextTr:
     ContextTr<
-    Journal: JournalTr<FinalOutput = JournalOutput>,
+    Journal: JournalTr<State = EvmState>,
     Tx: OpTxTr,
     Cfg: Cfg<Spec = OpSpecId>,
     Chain = L1BlockInfo,
@@ -31,7 +32,7 @@ pub trait OpContextTr:
 
 impl<T> OpContextTr for T where
     T: ContextTr<
-        Journal: JournalTr<FinalOutput = JournalOutput>,
+        Journal: JournalTr<State = EvmState>,
         Tx: OpTxTr,
         Cfg: Cfg<Spec = OpSpecId>,
         Chain = L1BlockInfo,
@@ -48,23 +49,34 @@ where
     CTX: OpContextTr + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    type Output = Result<ResultAndState<OpHaltReason>, OpError<CTX>>;
-
     type Tx = <CTX as ContextTr>::Tx;
-
     type Block = <CTX as ContextTr>::Block;
-
-    fn set_tx(&mut self, tx: Self::Tx) {
-        self.0.ctx.set_tx(tx);
-    }
+    type State = EvmState;
+    type Error = OpError<CTX>;
+    type ExecutionResult = ExecutionResult<OpHaltReason>;
 
     fn set_block(&mut self, block: Self::Block) {
         self.0.ctx.set_block(block);
     }
 
-    fn replay(&mut self) -> Self::Output {
+    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        self.0.ctx.set_tx(tx);
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run(self)
+    }
+
+    fn finalize(&mut self) -> Self::State {
+        self.0.ctx.journal().finalize()
+    }
+
+    fn replay(
+        &mut self,
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        h.run(self).map(|result| {
+            let state = self.finalize();
+            ResultAndState::new(result, state)
+        })
     }
 }
 
@@ -74,13 +86,8 @@ where
     CTX: OpContextTr<Db: DatabaseCommit> + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    type CommitOutput = Result<ExecutionResult<OpHaltReason>, OpError<CTX>>;
-
-    fn replay_commit(&mut self) -> Self::CommitOutput {
-        self.replay().map(|r| {
-            self.ctx().db().commit(r.state);
-            r.result
-        })
+    fn commit(&mut self, state: Self::State) {
+        self.0.ctx.db().commit(state);
     }
 }
 
@@ -97,7 +104,8 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_replay(&mut self) -> Self::Output {
+    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        self.0.ctx.set_tx(tx);
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.inspect_run(self)
     }
@@ -110,12 +118,6 @@ where
     INSP: Inspector<CTX, EthInterpreter>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn inspect_replay_commit(&mut self) -> Self::CommitOutput {
-        self.inspect_replay().map(|r| {
-            self.ctx().db().commit(r.state);
-            r.result
-        })
-    }
 }
 
 impl<CTX, INSP, PRECOMPILE> SystemCallEvm
@@ -128,8 +130,10 @@ where
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Self::Output {
-        self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.0
+            .ctx
+            .set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run_system_call(self)
     }

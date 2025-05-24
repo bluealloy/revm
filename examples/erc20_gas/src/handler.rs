@@ -1,5 +1,5 @@
 use revm::{
-    context::{Cfg, JournalOutput},
+    context::Cfg,
     context_interface::{
         result::{HaltReason, InvalidTransaction},
         Block, ContextTr, JournalTr, Transaction,
@@ -10,6 +10,7 @@ use revm::{
     },
     interpreter::FrameInput,
     primitives::{hardfork::SpecId, U256},
+    state::EvmState,
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
@@ -34,7 +35,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
+    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>,
     FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
     ERROR: EvmTrError<EVM>,
 {
@@ -61,10 +62,13 @@ where
         validate_account_nonce_and_code(
             &mut caller_account.info,
             tx.nonce(),
-            tx.kind().is_call(),
             is_eip3607_disabled,
             is_nonce_check_disabled,
         )?;
+
+        if tx.kind().is_call() {
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
 
         // Touch account so we know it is changed.
         caller_account.mark_touch();

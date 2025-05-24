@@ -756,17 +756,21 @@ fn test_log_inspector() {
     ]);
     let bytecode = Bytecode::new_raw(contract_data);
 
-    let ctx = Context::op()
-        .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-        .modify_tx_chained(|tx| {
-            tx.base.caller = BENCH_CALLER;
-            tx.base.kind = TxKind::Call(BENCH_TARGET);
-        });
+    let ctx = Context::op().with_db(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     let mut evm = ctx.build_op_with_inspector(LogInspector::default());
 
+    let tx = OpTransaction {
+        base: TxEnv {
+            caller: BENCH_CALLER,
+            kind: TxKind::Call(BENCH_TARGET),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
     // Run evm.
-    let output = evm.inspect_replay().unwrap();
+    let output = evm.inspect_tx_finalize(tx).unwrap();
 
     let inspector = &evm.0.inspector;
     assert!(!inspector.logs.is_empty());

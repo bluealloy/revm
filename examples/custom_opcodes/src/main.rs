@@ -49,7 +49,7 @@ pub fn main() {
         .with_inspector(TracerEip3155::new_stdout().without_summary());
 
     // inspect the transaction.
-    let _ = evm.inspect_with_tx(TxEnv {
+    let _ = evm.inspect_tx(TxEnv {
         kind: TxKind::Call(BENCH_TARGET),
         ..Default::default()
     });

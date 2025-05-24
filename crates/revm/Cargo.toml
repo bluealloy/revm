@@ -58,10 +58,10 @@ serde = [
 	"primitives/serde",
 	"handler/serde",
 	"context-interface/serde",
-	"inspector/serde",
 	"bytecode/serde",
 	"context/serde",
 	"database/serde",
+	"inspector/serde",
 	"state/serde",
 ]
 arbitrary = ["primitives/arbitrary"]
@@ -72,7 +72,8 @@ asyncdb = ["database-interface/asyncdb"]
 alloydb = ["database/alloydb"]
 
 # Enables serde-json inside inspector crate
-serde-json = ["serde", "inspector/serde-json"]
+serde-json = ["serde", "inspector/tracer"]
+tracer = ["inspector/tracer"]
 
 dev = [
 	"memory_limit",

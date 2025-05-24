@@ -6,6 +6,7 @@ use alloy_eips::{BlockId, BlockNumberOrTag};
 use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
 use indicatif::ProgressBar;
 use revm::{
+    context::TxEnv,
     database::{AlloyDB, CacheDB, StateBuilder},
     database_interface::WrapDatabaseAsync,
     inspector::{inspectors::TracerEip3155, InspectEvm},
@@ -115,29 +116,26 @@ async fn main() -> anyhow::Result<()> {
     };
 
     for tx in transactions {
-        evm.modify_tx(|etx| {
-            etx.caller = tx.inner.signer();
-            etx.gas_limit = tx.gas_limit();
-            etx.gas_price = tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas());
-            etx.value = tx.value();
-            etx.data = tx.input().to_owned();
-            etx.gas_priority_fee = tx.max_priority_fee_per_gas();
-            etx.chain_id = Some(chain_id);
-            etx.nonce = tx.nonce();
-            if let Some(access_list) = tx.access_list() {
-                etx.access_list = access_list.clone()
-            } else {
-                etx.access_list = Default::default();
-            }
-
-            etx.kind = match tx.to() {
-                Some(to_address) => TxKind::Call(to_address),
-                None => TxKind::Create,
-            };
-        });
-
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap_or_default();
+
+        let tx = TxEnv {
+            caller: tx.inner.signer(),
+            gas_limit: tx.gas_limit(),
+            gas_price: tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()),
+            value: tx.value(),
+            data: tx.input().to_owned(),
+            gas_priority_fee: tx.max_priority_fee_per_gas(),
+            chain_id: Some(chain_id),
+            nonce: tx.nonce(),
+            access_list: tx.access_list().cloned().unwrap_or_default(),
+            kind: match tx.to() {
+                Some(to_address) => TxKind::Call(to_address),
+                None => TxKind::Create,
+            },
+            ..Default::default()
+        };
+
         let file_name = format!("traces/{}.json", tx_number);
         let write = OpenOptions::new()
             .write(true)
@@ -150,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
         let writer = FlushWriter::new(Arc::clone(&inner));
 
         // Inspect and commit the transaction to the EVM
-        let res = evm.inspect_replay_with_inspector(TracerEip3155::new(Box::new(writer)));
+        let res: Result<_, _> = evm.inspect(tx, TracerEip3155::new(Box::new(writer)));
 
         if let Err(error) = res {
             println!("Got error: {:?}", error);

@@ -1,3 +1,4 @@
+use context::TxEnv;
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
@@ -11,17 +12,20 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-        .modify_tx_chained(|tx| {
-            // Execution globals block hash/gas_limit/coinbase/timestamp..
-            tx.caller = BENCH_CALLER;
-            tx.kind = TxKind::Call(BENCH_TARGET);
-            tx.data = bytes!("30627b7c");
-            tx.gas_limit = 1_000_000_000;
-        })
+        .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet();
+
+    let tx = TxEnv {
+        caller: BENCH_CALLER,
+        kind: TxKind::Call(BENCH_TARGET),
+        data: bytes!("30627b7c"),
+        gas_limit: 1_000_000_000,
+        ..Default::default()
+    };
+
     criterion.bench_function("snailtracer", |b| {
         b.iter(|| {
-            let _ = evm.replay().unwrap();
+            let _ = evm.transact(tx.clone()).unwrap();
         })
     });
 }

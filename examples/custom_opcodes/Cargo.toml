@@ -22,4 +22,4 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm = {workspace = true, features = ["std", "serde-json"]}
+revm = {workspace = true, features = ["std", "tracer"]}

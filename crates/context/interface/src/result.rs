@@ -2,32 +2,29 @@ use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
-use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Tuple containing evm execution result and state.s
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<HaltReasonTy = HaltReason> {
-    /// Status of execution
-    pub result: ExecutionResult<HaltReasonTy>,
-    /// State that got updated
-    pub state: EvmState,
+pub struct ResultAndState<R, S> {
+    /// Execution result
+    pub result: R,
+    /// Output State.
+    pub state: S,
 }
 
-impl<HaltReasonTy> ResultAndState<HaltReasonTy> {
-    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_haltreason<F, OHR>(self, op: F) -> ResultAndState<OHR>
-    where
-        F: FnOnce(HaltReasonTy) -> OHR,
-    {
-        ResultAndState {
-            result: self.result.map_haltreason(op),
-            state: self.state,
-        }
+/// Tuple containing multiple execution results and state.
+pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
+
+impl<R, S> ResultAndState<R, S> {
+    /// Creates new ResultAndState.
+    pub fn new(result: R, state: S) -> Self {
+        Self { result, state }
     }
 }
 

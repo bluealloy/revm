@@ -437,11 +437,11 @@ impl BenchmarkDB {
 /// BYTECODE address
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
 pub const BENCH_TARGET: Address = FFADDRESS;
-pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10_000_000, 0, 0, 0]);
+pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 /// CALLER address
 pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 pub const BENCH_CALLER: Address = EEADDRESS;
-pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000, 0, 0, 0]);
+pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 
 impl Database for BenchmarkDB {
     type Error = Infallible;
