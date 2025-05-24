@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/bluealloy/revm/compare/op-revm-v5.0.0...op-revm-v5.1.0) - 2025-05-24
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- *(test)* preserve order of fields in json fixtures ([#2541](https://github.com/bluealloy/revm/pull/2541))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/op-revm-v4.0.2...op-revm-v5.0.0) - 2025-05-22
 
 ### Added
