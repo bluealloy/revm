@@ -6,7 +6,7 @@ use crate::{
 };
 use primitives::U256;
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
@@ -116,7 +116,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
 #[cfg(test)]
 mod test {
 
-    use crate::instructions::control::InstructionContext;
+    use crate::instructions::context::InstructionContext;
     use crate::Interpreter;
     use crate::{host::DummyHost, instruction_table, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};

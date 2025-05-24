@@ -1,5 +1,5 @@
 use super::{
-    control::InstructionContext,
+    context::InstructionContext,
     i256::{i256_div, i256_mod},
 };
 use crate::{

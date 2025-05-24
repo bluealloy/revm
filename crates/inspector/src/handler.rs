@@ -2,7 +2,7 @@ use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
 use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
-    instructions::{control::InstructionContext, InstructionTable},
+    instructions::{context::InstructionContext, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,

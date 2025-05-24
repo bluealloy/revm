@@ -7,7 +7,7 @@ use crate::{
 use core::cmp::min;
 use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,

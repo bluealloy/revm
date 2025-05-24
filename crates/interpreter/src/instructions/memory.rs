@@ -6,7 +6,7 @@ use crate::{
 use core::cmp::max;
 use primitives::U256;
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,

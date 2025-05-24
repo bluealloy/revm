@@ -7,7 +7,7 @@ use crate::{
 };
 use primitives::{B256, U256};
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,

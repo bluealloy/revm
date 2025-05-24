@@ -20,7 +20,7 @@ use core::cmp::max;
 use primitives::{eof::new_eof_address, hardfork::SpecId, Address, Bytes, B256, U256};
 use std::boxed::Box;
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 /// EOF Create instruction
 pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(

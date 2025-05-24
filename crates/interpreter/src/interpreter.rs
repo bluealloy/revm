@@ -19,7 +19,7 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    instructions::control::InstructionContext, interpreter_types::*, CallInput, Gas, Host,
+    instructions::context::InstructionContext, interpreter_types::*, CallInput, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
