@@ -9,10 +9,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   codspeed:
     runs-on: ubuntu-latest
