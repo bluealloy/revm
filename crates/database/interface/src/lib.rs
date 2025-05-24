@@ -64,7 +64,8 @@ pub trait DatabaseCommit {
 ///
 /// Use [`WrapDatabaseRef`] to provide [`Database`] implementation for a type
 /// that only implements this trait.
-#[auto_impl(&, &mut, Box, Rc, Arc)]
+#[cfg_attr(target_has_atomic = "ptr", auto_impl(&, &mut, Box, Rc, Arc))]
+#[cfg_attr(not(target_has_atomic = "ptr"), auto_impl(&, &mut, Box, Rc))]
 pub trait DatabaseRef {
     /// The database error type.
     type Error: DBErrorMarker + Error;

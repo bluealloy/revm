@@ -1,7 +1,17 @@
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 use bitvec::vec::BitVec;
 use once_cell::race::OnceBox;
 use primitives::hex;
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
+
+#[cfg(not(target_has_atomic = "ptr"))]
+use alloc::rc::Rc as Arc;
+#[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
+#[cfg(all(feature = "std", target_has_atomic = "ptr"))]
+use std::sync::Arc;
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
 #[derive(Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
@@ -16,6 +26,15 @@ impl Debug for JumpTable {
     }
 }
 
+#[cfg(not(target_has_atomic = "ptr"))]
+impl Default for JumpTable {
+    #[inline]
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
+
+#[cfg(any(target_has_atomic = "ptr", feature = "std"))]
 impl Default for JumpTable {
     #[inline]
     fn default() -> Self {
