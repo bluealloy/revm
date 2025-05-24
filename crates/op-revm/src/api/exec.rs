@@ -3,14 +3,14 @@ use crate::{
     OpTransactionError,
 };
 use revm::{
-    context::ContextSetters,
+    context::{result::ResultAndState, ContextSetters},
     context_interface::{
         result::{EVMError, ExecutionResult},
         Cfg, ContextTr, Database, JournalTr,
     },
     handler::{
-        api::ResultAndState, instructions::EthInstructions, system_call::SystemCallEvm, EthFrame,
-        Handler, PrecompileProvider, SystemCallTx,
+        instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, Handler,
+        PrecompileProvider, SystemCallTx,
     },
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
@@ -104,7 +104,7 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.inspect_run(self)

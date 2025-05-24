@@ -239,14 +239,6 @@ impl JournalTr for Backend {
         self.journaled_state.balance_incr(address, balance)
     }
 
-    fn balance_decr(
-        &mut self,
-        address: Address,
-        balance: U256,
-    ) -> Result<(), <Self::Database as Database>::Error> {
-        self.journaled_state.balance_decr(address, balance)
-    }
-
     fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journaled_state.nonce_bump_journal_entry(address)
     }
@@ -255,7 +247,7 @@ impl JournalTr for Backend {
         self.journaled_state.take_logs()
     }
 
-    fn commit_tx(&mut self) -> Vec<Log> {
+    fn commit_tx(&mut self) {
         self.journaled_state.commit_tx()
     }
 
@@ -553,7 +545,7 @@ where
         PrecompileT::default(),
     );
 
-    let state = evm.inspect_with_tx_finalize(tx)?.state;
+    let state = evm.inspect_tx_finalize(tx)?.state;
 
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(state);
@@ -606,7 +598,7 @@ fn main() -> anyhow::Result<()> {
         EthInstructions::default(),
         EthPrecompiles::default(),
     );
-    evm.inspect_with_tx_finalize(tx)?;
+    evm.inspect_tx_finalize(tx)?;
 
     // Sanity check
     assert_eq!(evm.inspector.call_count, 2);

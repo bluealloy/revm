@@ -100,7 +100,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// and clear the journal for the next transaction.
     ///
     /// `commit_tx` is used even for discarding transactions so transaction_id will be incremented.
-    pub fn commit_tx(&mut self) -> Vec<Log> {
+    pub fn commit_tx(&mut self) {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -130,19 +130,34 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_preloaded_addresses.clone_from(precompiles);
         // increment transaction id.
         *transaction_id += 1;
-        mem::take(logs)
+        logs.clear();
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
     pub fn discard_tx(&mut self) {
         // if there is no journal entries, there has not been any changes.
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state;
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            transaction_id,
+            spec,
+            warm_preloaded_addresses,
+            precompiles,
+        } = self;
+
+        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
-        self.journal.drain(..).rev().for_each(|entry| {
+        journal.drain(..).rev().for_each(|entry| {
             entry.revert(state, None, is_spurious_dragon_enabled);
         });
-        self.journal.clear();
+        transient_storage.clear();
+        *depth = 0;
+        logs.clear();
+        *transaction_id += 1;
+        warm_preloaded_addresses.clone_from(precompiles);
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -280,6 +295,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Increments the balance of the account.
+    ///
+    /// Mark account as touched.
     #[inline]
     pub fn balance_incr<DB: Database>(
         &mut self,
@@ -290,31 +307,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let account = self.load_account(db, address)?.data;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
-
-        // march account as touched.
-        if !account.is_touched() {
-            account.mark_touch();
-            self.journal.push(ENTRY::account_touched(address));
-        }
-
-        // add journal entry for balance increment.
-        self.journal
-            .push(ENTRY::balance_changed(address, old_balance));
-        Ok(())
-    }
-
-    /// Decrements the balance of the account.
-    ///
-    #[inline]
-    pub fn balance_decr<DB: Database>(
-        &mut self,
-        db: &mut DB,
-        address: Address,
-        balance: U256,
-    ) -> Result<(), DB::Error> {
-        let account = self.load_account(db, address)?.data;
-        let old_balance = account.info.balance;
-        account.info.balance = account.info.balance.saturating_sub(balance);
 
         // march account as touched.
         if !account.is_touched() {

@@ -1,14 +1,14 @@
 use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
     context::{
-        result::{HaltReason, InvalidTransaction},
+        result::{HaltReason, InvalidTransaction, ResultAndState},
         ContextSetters,
     },
     context_interface::{
         result::{EVMError, ExecutionResult},
         ContextTr, Database, JournalTr,
     },
-    handler::{api::ResultAndState, EvmTr, Handler},
+    handler::{EvmTr, Handler},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
@@ -47,8 +47,7 @@ where
 
     fn replay(
         &mut self,
-    ) -> Result<revm::handler::api::ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>
-    {
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let mut handler = MyHandler::default();
         handler.run(self).map(|result| {
             let state = self.finalize();
@@ -79,7 +78,7 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut handler = MyHandler::default();
         handler.inspect_run(self)

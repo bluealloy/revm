@@ -28,7 +28,7 @@ let out = evm.transact(tx);
 
 // or you can use powerful inspection tool to trace it
 let mut evm = evm.with_inspector(tracer);
-let out = evm.inspect_with_tx(tx);
+let out = evm.inspect_tx(tx);
 ```
 
 The Evm Framework API is somewhat complex to use, but this document provides a detailed explanation. It enables users to extend logic, incorporate various context types, and offers built-in support for inspection. For a practical example, you can refer to the [op-revm crate](https://github.com/op-rs/op-revm).

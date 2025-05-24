@@ -1,8 +1,8 @@
 use crate::{
-    api::ResultAndState, instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm,
-    Handler, MainnetHandler, PrecompileProvider,
+    instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
+    MainnetHandler, PrecompileProvider,
 };
-use context::{ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
+use context::{result::ResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, Address, Bytes, TxKind};

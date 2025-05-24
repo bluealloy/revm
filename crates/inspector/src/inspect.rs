@@ -1,4 +1,5 @@
-use handler::{api::ResultAndState, ExecuteCommitEvm, ExecuteEvm};
+use context::result::ResultAndState;
+use handler::{ExecuteCommitEvm, ExecuteEvm};
 
 /// InspectEvm is a API that allows inspecting the EVM.
 ///
@@ -15,7 +16,17 @@ pub trait InspectEvm: ExecuteEvm {
     fn set_inspector(&mut self, inspector: Self::Inspector);
 
     /// Inspect the EVM with the given transaction.
-    fn inspect_with_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
+    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
+
+    /// Inspect the EVM and finalize the state.
+    fn inspect_tx_finalize(
+        &mut self,
+        tx: Self::Tx,
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output = self.inspect_tx(tx)?;
+        let state = self.finalize();
+        Ok(ResultAndState::new(output, state))
+    }
 
     /// Inspect the EVM with the given inspector and transaction.
     fn inspect(
@@ -24,17 +35,7 @@ pub trait InspectEvm: ExecuteEvm {
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_inspector(inspector);
-        self.inspect_with_tx(tx)
-    }
-
-    /// Inspect the EVM
-    fn inspect_with_tx_finalize(
-        &mut self,
-        tx: Self::Tx,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_with_tx(tx)?;
-        let state = self.finalize();
-        Ok(ResultAndState::new(output, state))
+        self.inspect_tx(tx)
     }
 }
 
@@ -43,13 +44,10 @@ pub trait InspectEvm: ExecuteEvm {
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
-    /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_with_tx`]
+    /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_tx`]
     /// and commit the state diff to the database.
-    fn inspect_with_tx_commit(
-        &mut self,
-        tx: Self::Tx,
-    ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_with_tx(tx)?;
+    fn inspect_tx_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+        let output = self.inspect_tx(tx)?;
         self.commit_inner();
         Ok(output)
     }

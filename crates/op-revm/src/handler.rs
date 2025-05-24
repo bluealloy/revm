@@ -388,8 +388,6 @@ where
             // and the caller nonce will be incremented there.
             let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
             if is_deposit && evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH) {
-                // discard all changes of this transaction
-                evm.ctx().journal().discard_tx();
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
         }

@@ -523,6 +523,7 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // clean up local context. Initcode cache needs to be discarded.
         evm.ctx().local().clear();
+        evm.ctx().journal().discard_tx();
         Err(error)
     }
 }

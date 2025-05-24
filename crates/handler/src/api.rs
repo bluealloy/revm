@@ -2,33 +2,16 @@ use crate::{
     instructions::InstructionProvider, EthFrame, Handler, MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
+    result::{
+        EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState,
+        ResultVecAndState,
+    },
     Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
 use std::vec::Vec;
-
-/// Tuple containing evm execution result and state.s
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<R, S> {
-    /// Execution result
-    pub result: R,
-    /// Output State.
-    pub state: S,
-}
-
-/// Tuple containing multiple execution results and state.
-pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
-
-impl<R, S> ResultAndState<R, S> {
-    /// Creates new ResultAndState.
-    pub fn new(result: R, state: S) -> Self {
-        Self { result, state }
-    }
-}
 
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
@@ -189,7 +172,7 @@ where
     fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        t.run(self).inspect_err(|_| self.journal().discard_tx())
+        t.run(self)
     }
 
     fn finalize(&mut self) -> Self::State {
@@ -204,12 +187,10 @@ where
         &mut self,
     ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        t.run(self)
-            .inspect_err(|_| self.journal().discard_tx())
-            .map(|result| {
-                let state = self.finalize();
-                ResultAndState::new(result, state)
-            })
+        t.run(self).map(|result| {
+            let state = self.finalize();
+            ResultAndState::new(result, state)
+        })
     }
 }
 

@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use revm::{
+    context::result::ResultAndState,
     context_interface::result::{ExecutionResult, HaltReason, Output, SuccessReason},
-    handler::api::ResultAndState,
     primitives::Bytes,
     state::EvmState,
 };

@@ -104,13 +104,6 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
-    /// Decrements the balance of the account.
-    fn balance_decr(
-        &mut self,
-        address: Address,
-        balance: U256,
-    ) -> Result<(), <Self::Database as Database>::Error>;
-
     /// Increments the nonce of the account.
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
@@ -220,7 +213,7 @@ pub trait JournalTr {
     fn take_logs(&mut self) -> Vec<Log>;
 
     /// Commit current transaction journal and returns transaction logs.
-    fn commit_tx(&mut self) -> Vec<Log>;
+    fn commit_tx(&mut self);
 
     /// Discard current transaction journal by removing journal entries and logs and incrementing the transaction id.
     ///

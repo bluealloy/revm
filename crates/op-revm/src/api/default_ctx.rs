@@ -41,6 +41,6 @@ mod test {
         // execute
         let _ = evm.transact_finalize(OpTransaction::default());
         // inspect
-        let _ = evm.inspect_with_tx(OpTransaction::default());
+        let _ = evm.inspect_tx(OpTransaction::default());
     }
 }

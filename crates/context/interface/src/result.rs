@@ -8,6 +8,26 @@ pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
+/// Tuple containing evm execution result and state.s
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ResultAndState<R, S> {
+    /// Execution result
+    pub result: R,
+    /// Output State.
+    pub state: S,
+}
+
+/// Tuple containing multiple execution results and state.
+pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
+
+impl<R, S> ResultAndState<R, S> {
+    /// Creates new ResultAndState.
+    pub fn new(result: R, state: S) -> Self {
+        Self { result, state }
+    }
+}
+
 /// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -145,7 +145,7 @@ mod tests {
         let mut evm = ctx.build_mainnet_with_inspector(StackInspector::default());
 
         // Run evm.
-        evm.inspect_with_tx(TxEnv {
+        evm.inspect_tx(TxEnv {
             caller: BENCH_CALLER,
             kind: TxKind::Call(BENCH_TARGET),
             gas_limit: 21100,
@@ -256,7 +256,7 @@ mod tests {
         let mut evm = ctx.build_mainnet_with_inspector(inspector);
 
         let _ = evm
-            .inspect_with_tx(TxEnv {
+            .inspect_tx(TxEnv {
                 caller: BENCH_CALLER,
                 kind: TxKind::Call(BENCH_TARGET),
                 ..Default::default()
