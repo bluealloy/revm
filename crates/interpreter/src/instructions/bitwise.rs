@@ -1,4 +1,4 @@
-use super::{control::InstructionContext, i256::i256_cmp};
+use super::{context::InstructionContext, i256::i256_cmp};
 use crate::{
     gas,
     interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
@@ -159,7 +159,7 @@ mod tests {
         host::DummyHost,
         instructions::{
             bitwise::{byte, sar, shl, shr},
-            control::InstructionContext,
+            context::InstructionContext,
         },
         interpreter_types::LoopControl,
         Interpreter,

@@ -10,7 +10,7 @@ use crate::{
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-use super::control::InstructionContext;
+use super::context::InstructionContext;
 
 pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
