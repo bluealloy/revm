@@ -5,6 +5,7 @@ pub mod macros;
 pub mod arithmetic;
 pub mod bitwise;
 pub mod block_info;
+pub mod context;
 pub mod contract;
 pub mod control;
 pub mod data;
@@ -16,10 +17,10 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter_types::InterpreterTypes, Host, Interpreter};
+use crate::{interpreter_types::InterpreterTypes, Host};
 
 /// EVM opcode function signature.
-pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
+pub type Instruction<W, H> = fn(&mut context::InstructionContext<'_, H, W>);
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];

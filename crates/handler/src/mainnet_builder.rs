@@ -2,7 +2,7 @@ use crate::{instructions::EthInstructions, EthPrecompiles};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
-use interpreter::interpreter::EthInterpreter;
+use interpreter::{interpreter::EthInterpreter, Host};
 use primitives::hardfork::SpecId;
 
 pub type MainnetEvm<CTX, INSP = ()> =
@@ -11,7 +11,7 @@ pub type MainnetEvm<CTX, INSP = ()> =
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
 
 pub trait MainBuilder: Sized {
-    type Context;
+    type Context: Host;
 
     fn build_mainnet(self) -> MainnetEvm<Self::Context>;
 
