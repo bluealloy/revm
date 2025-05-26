@@ -9,7 +9,7 @@ use std::boxed::Box;
 #[auto_impl(&, Arc, Rc)]
 pub trait InstructionProvider {
     /// Context type.
-    type Context: Host;
+    type Context;
     /// Interpreter types.
     type InterpreterTypes: InterpreterTypes;
 
@@ -18,14 +18,13 @@ pub trait InstructionProvider {
 }
 
 /// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
-pub struct EthInstructions<WIRE: InterpreterTypes, HOST: Host> {
+pub struct EthInstructions<WIRE: InterpreterTypes, HOST> {
     pub instruction_table: Box<InstructionTable<WIRE, HOST>>,
 }
 
 impl<WIRE, HOST> Clone for EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
-    HOST: Host,
 {
     fn clone(&self) -> Self {
         Self {

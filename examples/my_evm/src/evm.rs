@@ -5,12 +5,12 @@ use revm::{
         EthPrecompiles, EvmTr,
     },
     inspector::{inspect_instructions, InspectorEvmTr, JournalExt},
-    interpreter::{interpreter::EthInterpreter, Host, Interpreter, InterpreterTypes},
+    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterTypes},
     Inspector,
 };
 
 /// MyEvm variant of the EVM.
-pub struct MyEvm<CTX: Host, INSP>(
+pub struct MyEvm<CTX, INSP>(
     pub Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>,
 );
 
