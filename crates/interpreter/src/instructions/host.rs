@@ -141,14 +141,15 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::BLOCKHASH);
     popn_top!([], number, interpreter);
 
-    let requested_number = as_u64_saturated!(number);
-
+    let requested_number = *number;
     let block_number = host.block_number();
 
     let Some(diff) = block_number.checked_sub(requested_number) else {
         *number = U256::ZERO;
         return;
     };
+
+    let diff = as_u64_saturated!(diff);
 
     // blockhash should push zero if number is same as current block number.
     if diff == 0 {
@@ -157,7 +158,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
-        let Some(hash) = host.block_hash(requested_number) else {
+        let Some(hash) = host.block_hash(as_u64_saturated!(requested_number)) else {
             interpreter
                 .control
                 .set_instruction_result(InstructionResult::FatalExternalError);

@@ -259,9 +259,9 @@ pub fn execute_test_suite(
         cfg.chain_id = 1;
 
         // Block env
-        block.number = unit.env.current_number.try_into().unwrap_or(u64::MAX);
+        block.number = unit.env.current_number;
         block.beneficiary = unit.env.current_coinbase;
-        block.timestamp = unit.env.current_timestamp.try_into().unwrap_or(u64::MAX);
+        block.timestamp = unit.env.current_timestamp;
         block.gas_limit = unit.env.current_gas_limit.try_into().unwrap_or(u64::MAX);
         block.basefee = unit
             .env

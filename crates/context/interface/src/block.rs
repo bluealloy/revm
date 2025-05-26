@@ -9,7 +9,7 @@ use primitives::{Address, B256, U256};
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Block {
     /// The number of ancestor blocks of this block (block height).
-    fn number(&self) -> u64;
+    fn number(&self) -> U256;
 
     /// Beneficiary (Coinbase, miner) is a address that have signed the block.
     ///
@@ -17,7 +17,7 @@ pub trait Block {
     fn beneficiary(&self) -> Address;
 
     /// The timestamp of the block in seconds since the UNIX epoch.
-    fn timestamp(&self) -> u64;
+    fn timestamp(&self) -> U256;
 
     /// The gas limit of the block.
     fn gas_limit(&self) -> u64;

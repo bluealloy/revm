@@ -7,14 +7,14 @@ use primitives::{Address, B256, U256};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height)
-    pub number: u64,
+    pub number: U256,
     /// Beneficiary (Coinbase or miner) is a address that have signed the block
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub beneficiary: Address,
 
     /// The timestamp of the block in seconds since the UNIX epoch
-    pub timestamp: u64,
+    pub timestamp: U256,
     /// The gas limit of the block
     pub gas_limit: u64,
     /// The base fee per gas, added in the London upgrade with [EIP-1559]
@@ -55,7 +55,7 @@ impl BlockEnv {
 
 impl Block for BlockEnv {
     #[inline]
-    fn number(&self) -> u64 {
+    fn number(&self) -> U256 {
         self.number
     }
 
@@ -65,7 +65,7 @@ impl Block for BlockEnv {
     }
 
     #[inline]
-    fn timestamp(&self) -> u64 {
+    fn timestamp(&self) -> U256 {
         self.timestamp
     }
 
@@ -98,9 +98,9 @@ impl Block for BlockEnv {
 impl Default for BlockEnv {
     fn default() -> Self {
         Self {
-            number: 0,
+            number: U256::ZERO,
             beneficiary: Address::ZERO,
-            timestamp: 1,
+            timestamp: U256::ONE,
             gas_limit: u64::MAX,
             basefee: 0,
             difficulty: U256::ZERO,
