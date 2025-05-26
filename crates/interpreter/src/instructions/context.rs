@@ -5,7 +5,7 @@ use crate::{
 
 use super::Instruction;
 
-pub struct InstructionContext<'a, H: Host + ?Sized, ITy: InterpreterTypes> {
+pub struct InstructionContext<'a, H: ?Sized, ITy: InterpreterTypes> {
     pub host: &'a mut H,
     pub interpreter: &'a mut Interpreter<ITy>,
 }
