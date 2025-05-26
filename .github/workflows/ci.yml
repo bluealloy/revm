@@ -38,13 +38,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "optimism,kzg-rs"]
+        features: ["", "kzg-rs"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: riscv32imac-unknown-none-elf
-      - run: cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
+      - run: |
+          cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p op-revm --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p revm-database --no-default-features
 
   check:
     name: check ${{ matrix.features }}
@@ -93,6 +96,18 @@ jobs:
         with:
           components: rustfmt
       - run: cargo fmt --all --check
+  
+  # Check crates correctly propagate features
+  feature-propagation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: run zepter
+        run: |
+          cargo install zepter -f --locked
+          zepter --version
+          time zepter run check
 
   typos-check:
     name: TyposCheck
@@ -102,6 +117,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: crate-ci/typos@v1.22.7
         with:
-          config: ./Typos.toml
+          config: ./typos.toml
           isolated: true
-

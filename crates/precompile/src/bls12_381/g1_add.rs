@@ -1,61 +1,42 @@
-use super::g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH};
-use crate::{u64_to_address, PrecompileWithAddress};
-use blst::{
-    blst_p1,
-    blst_p1_add_or_double_affine,
-    blst_p1_affine,
-    blst_p1_from_affine,
-    blst_p1_to_affine,
+//! BLS12-381 G1 add precompile. More details in [`g1_add`]
+use super::crypto_backend::{encode_g1_point, p1_add_affine, read_g1_no_subgroup_check};
+use super::utils::remove_g1_padding;
+use crate::bls12_381_const::{
+    G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g1_add));
-/// BLS12_G1ADD precompile address.
-pub const ADDRESS: u64 = 0x0b;
-/// Base gas fee for BLS12-381 g1_add operation.
-const BASE_GAS_FEE: u64 = 375;
-
-/// Input length of g1_add operation.
-const INPUT_LENGTH: usize = 256;
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_ADD_ADDRESS, g1_add);
 
 /// G1 addition call expects `256` bytes as an input that is interpreted as byte
 /// concatenation of two G1 points (`128` bytes each).
 /// Output is an encoding of addition operation result - single G1 point (`128`
 /// bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
-pub fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    if BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    if G1_ADD_BASE_GAS_FEE > gas_limit {
+        return Err(PrecompileError::OutOfGas);
     }
 
-    if input.len() != INPUT_LENGTH {
+    if input.len() != G1_ADD_INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "G1ADD input should be {INPUT_LENGTH} bytes, was {}",
+            "G1ADD input should be {G1_ADD_INPUT_LENGTH} bytes, was {}",
             input.len()
-        ))
-        .into());
+        )));
     }
 
-    // NB: There is no subgroup check for the G1 addition precompile.
+    let [a_x, a_y] = remove_g1_padding(&input[..PADDED_G1_LENGTH])?;
+    let [b_x, b_y] = remove_g1_padding(&input[PADDED_G1_LENGTH..])?;
+
+    // NB: There is no subgroup check for the G1 addition precompile because the time to do the subgroup
+    // check would be more than the time it takes to do the g1 addition.
     //
-    // So we set the subgroup checks here to `false`
-    let a_aff = &extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH], false)?;
-    let b_aff = &extract_g1_input(&input[G1_INPUT_ITEM_LENGTH..], false)?;
-
-    let mut b = blst_p1::default();
-    // SAFETY: b and b_aff are blst values.
-    unsafe { blst_p1_from_affine(&mut b, b_aff) };
-
-    let mut p = blst_p1::default();
-    // SAFETY: p, b and a_aff are blst values.
-    unsafe { blst_p1_add_or_double_affine(&mut p, &b, a_aff) };
-
-    let mut p_aff = blst_p1_affine::default();
-    // SAFETY: p_aff and p are blst values.
-    unsafe { blst_p1_to_affine(&mut p_aff, &p) };
+    // Users should be careful to note whether the points being added are indeed in the right subgroup.
+    let a_aff = &read_g1_no_subgroup_check(a_x, a_y)?;
+    let b_aff = &read_g1_no_subgroup_check(b_x, b_y)?;
+    let p_aff = p1_add_affine(a_aff, b_aff);
 
     let out = encode_g1_point(&p_aff);
-    Ok(PrecompileOutput::new(BASE_GAS_FEE, out))
+    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
 }

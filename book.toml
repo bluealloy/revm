@@ -1,10 +1,10 @@
 [book]
-authors = ["Colin Roberts, Waylon Jepsen", "Dragan Rakita"]
+authors = ["Dragan Rakita"]
 language = "en"
 multilingual = false
-src = "documentation/src"
-title = "Rust EVM"
+src = "book/src"
+title = "Revm - Rust Ethereum Virtual Machine"
 
 [output.linkcheck]
 optional = true
-follow-web-links = true
+follow-web-links = false

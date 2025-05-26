@@ -1,74 +1,116 @@
 use super::i256::i256_cmp;
 use crate::{
     gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
+    interpreter::Interpreter,
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
+    Host,
 };
 use core::cmp::Ordering;
+use primitives::U256;
 
-pub fn lt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn lt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
-pub fn gt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn gt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(op1 > *op2);
 }
 
-pub fn slt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn slt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
-pub fn sgt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sgt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
-pub fn eq<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn eq<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(op1 == *op2);
 }
 
-pub fn iszero<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn iszero<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1);
+    popn_top!([], op1, interpreter);
     *op1 = U256::from(op1.is_zero());
 }
 
-pub fn bitand<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitand<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
     *op2 = op1 & *op2;
 }
 
-pub fn bitor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitor<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = op1 | *op2;
 }
 
-pub fn bitxor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitxor<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     *op2 = op1 ^ *op2;
 }
 
-pub fn not<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn not<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1);
+    popn_top!([], op1, interpreter);
+
     *op1 = !*op1;
 }
 
-pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn byte<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
 
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
@@ -80,10 +122,14 @@ pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shl<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 << shift
@@ -93,10 +139,14 @@ pub fn shl<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shr<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
+
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 >> shift
@@ -106,10 +156,13 @@ pub fn shr<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    popn_top!([op1], op2, interpreter);
 
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
@@ -123,14 +176,18 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 
 #[cfg(test)]
 mod tests {
-    use crate::instructions::bitwise::{byte, sar, shl, shr};
-    use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, Env, LatestSpec, U256};
+    use crate::{
+        host::DummyHost,
+        instructions::bitwise::{byte, sar, shl, shr},
+        interpreter_types::LoopControl,
+        Interpreter,
+    };
+    use primitives::{uint, U256};
 
     #[test]
     fn test_shift_left() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -199,19 +256,18 @@ mod tests {
         }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
-            pop!(interpreter, res);
+            shl(&mut interpreter, &mut host);
+            let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
     }
 
     #[test]
     fn test_logical_shift_right() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -280,19 +336,18 @@ mod tests {
         }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
-            pop!(interpreter, res);
+            shr(&mut interpreter, &mut host);
+            let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
     }
 
     #[test]
     fn test_arithmetic_shift_right() {
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         struct TestCase {
             value: U256,
@@ -386,11 +441,10 @@ mod tests {
             }
 
         for test in test_cases {
-            host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
-            pop!(interpreter, res);
+            sar(&mut interpreter, &mut host);
+            let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
     }
@@ -403,8 +457,8 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
+        let mut host = DummyHost;
+        let mut interpreter = Interpreter::default();
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);
         let test_cases = (0..32)
@@ -425,7 +479,7 @@ mod tests {
             push!(interpreter, test.input);
             push!(interpreter, U256::from(test.index));
             byte(&mut interpreter, &mut host);
-            pop!(interpreter, res);
+            let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected, "Failed at index: {}", test.index);
         }
     }

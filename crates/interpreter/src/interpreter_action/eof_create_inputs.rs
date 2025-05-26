@@ -1,13 +1,17 @@
-use crate::primitives::{Address, Bytes, Eof, TxEnv, U256};
+use bytecode::Eof;
+use primitives::{Address, Bytes, U256};
+
+use super::CallInput;
 
 /// EOF create can be called from two places:
 /// * EOFCREATE opcode
 /// * Creation transaction.
 ///
-/// Creation transaction uses initdata and packs EOF and initdata inside it.
-/// This eof bytecode needs to be validated.
+/// Creation transaction uses initdata and packs EOF and initdata inside it,
+/// and this eof bytecode needs to be validated.
 ///
 /// Opcode creation uses already validated EOF bytecode, and input from Interpreter memory.
+///
 /// Address is already known and is passed as an argument.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +21,7 @@ pub enum EOFCreateKind {
     },
     Opcode {
         initcode: Eof,
-        input: Bytes,
+        input: CallInput,
         created_address: Address,
     },
 }
@@ -38,28 +42,28 @@ impl Default for EOFCreateKind {
     fn default() -> Self {
         EOFCreateKind::Opcode {
             initcode: Eof::default(),
-            input: Bytes::default(),
+            input: CallInput::Bytes(Bytes::default()),
             created_address: Address::default(),
         }
     }
 }
 
-/// Inputs for EOF create call.
+/// Inputs for EOF Create call
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateInputs {
-    /// Caller of Eof Craate
+    /// Caller of EOF Create
     pub caller: Address,
     /// Values of ether transferred
     pub value: U256,
-    /// Gas limit for the create call.
+    /// Gas limit for the create call
     pub gas_limit: u64,
     /// EOF Create kind
     pub kind: EOFCreateKind,
 }
 
 impl EOFCreateInputs {
-    /// Create new EOF crate input from transaction that has concatenated eof init code and calldata.
+    /// Creates new EOF Create input from transaction that has concatenated eof init code and calldata.
     ///
     /// Legacy transaction still have optional nonce so we need to obtain it.
     pub fn new(caller: Address, value: U256, gas_limit: u64, kind: EOFCreateKind) -> Self {
@@ -72,18 +76,6 @@ impl EOFCreateInputs {
         }
     }
 
-    /// Creates new EOFCreateInputs from transaction.
-    pub fn new_tx(tx: &TxEnv, gas_limit: u64) -> Self {
-        EOFCreateInputs::new(
-            tx.caller,
-            tx.value,
-            gas_limit,
-            EOFCreateKind::Tx {
-                initdata: tx.data.clone(),
-            },
-        )
-    }
-
     /// Returns a new instance of EOFCreateInput.
     pub fn new_opcode(
         caller: Address,
@@ -91,7 +83,7 @@ impl EOFCreateInputs {
         value: U256,
         eof_init_code: Eof,
         gas_limit: u64,
-        input: Bytes,
+        input: CallInput,
     ) -> EOFCreateInputs {
         EOFCreateInputs::new(
             caller,

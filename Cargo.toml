@@ -1,0 +1,168 @@
+[workspace]
+members = [
+    # binary 
+    "bins/revme",
+
+    # libraries
+    "crates/revm",
+    "crates/primitives",
+    "crates/interpreter",
+    "crates/precompile",
+    "crates/database",
+    "crates/database/interface",
+    "crates/bytecode",
+    "crates/state",
+    "crates/context",
+    "crates/context/interface",
+    "crates/handler",
+
+    # variants
+    "crates/op-revm",
+    "crates/inspector",
+
+    # utility
+    "crates/statetest-types",
+
+    # examples
+    "examples/block_traces",
+    "examples/cheatcode_inspector",
+    "examples/contract_deployment",
+    "examples/database_components",
+    "examples/uniswap_get_reserves",
+    "examples/uniswap_v2_usdc_swap",
+    "examples/erc20_gas",
+    "examples/my_evm",
+    "examples/custom_opcodes",
+]
+resolver = "2"
+default-members = ["crates/revm"]
+
+[workspace.dependencies]
+# revm
+revm = { path = "crates/revm", version = "23.1.0", default-features = false }
+primitives = { path = "crates/primitives", package = "revm-primitives", version = "19.0.0", default-features = false }
+bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "4.0.0", default-features = false }
+database = { path = "crates/database", package = "revm-database", version = "4.0.0", default-features = false }
+database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "4.0.0", default-features = false }
+state = { path = "crates/state", package = "revm-state", version = "4.0.0", default-features = false }
+interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "19.1.0", default-features = false }
+inspector = { path = "crates/inspector", package = "revm-inspector", version = "4.1.0", default-features = false }
+precompile = { path = "crates/precompile", package = "revm-precompile", version = "20.1.0", default-features = false }
+statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "4.1.0", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "4.1.0", default-features = false }
+context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "4.1.0", default-features = false }
+handler = { path = "crates/handler", package = "revm-handler", version = "4.1.0", default-features = false }
+
+# alloy 
+alloy-eip2930 = { version = "0.2.0", default-features = false }
+alloy-eip7702 = { version = "0.6.0", default-features = false }
+alloy-primitives = { version = "1.0", default-features = false }
+
+# alloy in examples, revme or feature flagged.
+alloy-rlp = { version = "0.3", default-features = false }
+alloy-sol-types = { version = "1.0.0", default-features = false }
+alloy-consensus = { version = "0.14.0", default-features = false }
+alloy-eips = { version = "0.14.0", default-features = false }
+alloy-provider = { version = "0.14.0", default-features = false }
+alloy-signer = { version = "0.14.0", default-features = false }
+alloy-signer-local = { version = "0.14.0", default-features = false }
+alloy-transport = { version = "0.14.0", default-features = false }
+
+# precompiles
+ark-bls12-381 = { version = "0.5", default-features = false }
+ark-bn254 = { version = "0.5", default-features = false }
+ark-ec = { version = "0.5", default-features = false }
+ark-ff = { version = "0.5", default-features = false }
+ark-serialize = { version = "0.5", default-features = false }
+aurora-engine-modexp = { version = "1.1", default-features = false }
+blst = "0.3.13"
+bn = { package = "substrate-bn", version = "0.6", default-features = false }
+c-kzg = { version = "2.1.1", default-features = false }
+k256 = { version = "0.13.3", default-features = false }
+libsecp256k1 = { version = "0.7", default-features = false }
+kzg-rs = { version = "0.2.4", default-features = false }
+secp256k1 = { version = "0.30", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+ripemd = { version = "0.1", default-features = false }
+p256 = { version = "0.13.2", default-features = false }
+
+# bytecode
+bitvec = { version = "1", default-features = false }
+paste = "1.0"
+phf = { version = "0.11", default-features = false }
+
+# revme
+clap = { version = "4", features = ["derive"] }
+criterion = { package = "codspeed-criterion-compat", version = "2.7" }
+
+# serde
+serde = { version = "1.0", default-features = false }
+serde_json = { version = "1.0", default-features = false }
+
+# misc
+auto_impl = "1.2.0"
+bitflags = { version = "2.6.0", default-features = false }
+cfg-if = { version = "1.0", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
+once_cell = { version = "1.19", default-features = false }
+rand = "0.8"
+tokio = "1.44"
+either = { version = "1.15.0", default-features = false }
+
+# dev-dependencies
+anyhow = "1.0.89"
+bincode = "1.3"
+eyre = "0.6.12"
+hash-db = "0.15"
+indicatif = "0.17"
+plain_hasher = "0.2"
+rstest = "0.24.0"
+serde_derive = "1.0"
+thiserror = "2.0"
+triehash = "0.8"
+walkdir = "2.5"
+
+[workspace.package]
+license = "MIT"
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+categories = ["no-std", "compilers", "cryptography::cryptocurrencies"]
+keywords = ["revm", "evm", "ethereum", "blockchain", "no_std"]
+repository = "https://github.com/bluealloy/revm"
+documentation = "https://bluealloy.github.io/revm/"
+homepage = ""
+edition = "2021"
+
+[workspace.lints]
+rust.missing_debug_implementations = "warn"
+rust.missing_docs = "warn"
+rust.rust_2018_idioms = { level = "deny", priority = -1 }
+rust.unreachable_pub = "warn"
+rust.unused_must_use = "deny"
+rustdoc.all = "warn"
+
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.release]
+codegen-units = 16
+debug = "line-tables-only"
+lto = "thin"
+opt-level = 3
+panic = "abort"
+strip = true
+
+# Use the `--profile profiling` flag to show symbols in release mode.
+# e.g. `cargo build --profile profiling`
+[profile.profiling]
+debug = 2
+inherits = "release"
+strip = false
+
+# Make sure debug symbols are in the bench profile
+[profile.bench]
+inherits = "profiling"
+
+[profile.ethtests]
+inherits = "test"
+opt-level = 3

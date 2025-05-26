@@ -6,6 +6,162 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.1.0](https://github.com/bluealloy/revm/compare/revm-v23.0.0...revm-v23.1.0) - 2025-05-07
+
+Dependency bump
+
+## [23.0.0](https://github.com/bluealloy/revm/compare/revm-v22.0.1...revm-v23.0.0) - 2025-05-07
+
+### Other
+
+- typos ([#2474](https://github.com/bluealloy/revm/pull/2474))
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+
+## [22.0.1](https://github.com/bluealloy/revm/compare/revm-v22.0.0..revm-v22.0.1) - 2025-04-15
+
+### Other
+
+## [22.0.0](https://github.com/bluealloy/revm/compare/revm-v21.0.0...revm-v22.0.0) - 2025-04-09
+
+### Added
+
+- support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
+- Reorder revm deps in Cargo.toml ([#2331](https://github.com/bluealloy/revm/pull/2331))
+
+## [21.0.0](https://github.com/bluealloy/revm/compare/revm-v20.0.0...revm-v21.0.0) - 2025-03-28
+
+### Added
+
+- Add JournalInner ([#2311](https://github.com/bluealloy/revm/pull/2311))
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Other
+
+- Propagate asyncdb feature flag from database-interface to revm  ([#2310](https://github.com/bluealloy/revm/pull/2310))
+
+## [20.0.0](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.7...revm-v20.0.0) - 2025-03-24
+
+### Other
+
+- updated the following local packages: revm-database, revm-precompile
+
+## [20.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.6...revm-v20.0.0-alpha.7) - 2025-03-21
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-context-interface, revm-context, revm-database, revm-interpreter, revm-precompile, revm-handler, revm-inspector
+
+## [20.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.5...revm-v20.0.0-alpha.6) - 2025-03-16
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-context-interface, revm-context, revm-precompile, revm-handler, revm-inspector
+
+## [20.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.4...revm-v20.0.0-alpha.5) - 2025-03-12
+
+### Other
+
+- updated the following local packages: revm-context-interface, revm-context, revm-interpreter, revm-handler, revm-inspector
+
+## [20.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.3...revm-v20.0.0-alpha.4) - 2025-03-11
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+## [20.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.2...revm-v20.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- *(precompiles)* add portable flag for bls ([#2174](https://github.com/bluealloy/revm/pull/2174))
+
+## [20.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-v20.0.0-alpha.1...revm-v20.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Other
+
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- examples to use main revm crate ([#2152](https://github.com/bluealloy/revm/pull/2152))
+- move mainnet builder to handler crate ([#2138](https://github.com/bluealloy/revm/pull/2138))
+- remove `optional_gas_refund` as unused ([#2132](https://github.com/bluealloy/revm/pull/2132))
+- export eip2930 eip7702 types from one place ([#2097](https://github.com/bluealloy/revm/pull/2097))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+- re-export all crates from `revm` ([#2088](https://github.com/bluealloy/revm/pull/2088))
+
+## [20.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-v19.5.0...revm-v20.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- Split Inspector trait from EthHandler into standalone crate (#2075)
+- integrate alloy-eips (#2078)
+- Evm structure (Cached Instructions and Precompiles) (#2049)
+- Context execution (#2013)
+- EthHandler trait (#2001)
+- *(EIP-7623)* adjuct floor gas check order (main) (#1991)
+- *(EIP-7623)* Increase calldata cost. backport from rel/v51 (#1965)
+- simplify Transaction trait (#1959)
+- expose precompile address in Journal, DB::Error: StdError (#1956)
+- integrate codspeed (#1935)
+- Make Ctx journal generic (#1933)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- push NonceChange to Journal in deduct_caller (#1804)
+- Merge validation/analyzis with Bytecode (#1793)
+- Restructuring Part3 inspector crate (#1788)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- to_plain_state (#1778)
+- *(example)* deploy bytecode from scratch (#1767)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- make macro crate-agnostic (#1802)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- API cleanup (#2067)
+- Add helpers with_inspector with_precompile (#2063)
+- Bump licence year to 2025 (#2058)
+- bump alloy versions to match latest (#2007)
+- align crates versions (#1983)
+- Make inspector use generics, rm associated types (#1934)
+- fix comments and docs into more sensible (#1920)
+- EVM transact, make output generic for POSTEXEC (#1931)
+- Move CfgEnv from context-interface to context crate (#1910)
+- bumps select alloy crates to 0.6 (#1854)
+- some no_std cleanup (#1834)
+- bump alloy to 0.4.2 (#1817)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+- *(deps)* bump anyhow from 1.0.88 to 1.0.89 (#1772)
+- simplify SuccessOrHalt trait bound (#1768)
+
+
+## [19.5.0](https://github.com/bluealloy/revm/compare/revm-v19.4.0...revm-v19.5.0) - 2025-02-11
+
+### Fixed
+
+- *(op-isthmus)* missing granite precompiles and disable eof (#2065)
+- *(op)* add operator fee scalar scaling factor on refund (#2050)
+- fix ethersdb.rs forking ([#2047](https://github.com/bluealloy/revm/pull/2047))
+
+## [19.4.0](https://github.com/bluealloy/revm/compare/revm-v19.3.0...revm-v19.4.0) - 2025-01-28
+
+### Added
+
+- Include EIP7702 address for extcodecopy ([#2016](https://github.com/bluealloy/revm/pull/2016))
+- add precompiles for BLS12-381 to isthmus ([#2000](https://github.com/bluealloy/revm/pull/2000))
+
+### Fixed
+
+- *(op)* isthmus compilation ([#2022](https://github.com/bluealloy/revm/pull/2022))
+
 ## [19.3.0](https://github.com/bluealloy/revm/compare/revm-v19.2.0...revm-v19.3.0) - 2025-01-13
 
 ### Added
@@ -227,7 +383,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add uniswap V2 WETH-USDC swap example ([#1353](https://github.com/bluealloy/revm/pull/1353))
 - *(interpreter)* add helpers for spending all gas ([#1360](https://github.com/bluealloy/revm/pull/1360))
 - add helper methods to CallInputs ([#1345](https://github.com/bluealloy/revm/pull/1345))
-- *(revm)* make `FrameOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
+- *(revm)* make `ItemOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
 - add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
 - EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
 - *(`db`)* Introduce `alloydb` ([#1257](https://github.com/bluealloy/revm/pull/1257))
@@ -914,7 +1070,7 @@ Changes:
 # v1.0.0
 date: 18.12.2021
 
-It feel's like that the lib is in the state that is okay to promote it to the v1 version. Other that that, a lot of optimizations are done and the inspector trait was rewritten.
+It feel's like that the lib is in the state that is okay to promote it to the v1 version. Other than that, a lot of optimizations are done and the inspector trait was rewritten.
 
 Changes: 
 *  web3 db

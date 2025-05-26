@@ -1,0 +1,40 @@
+[package]
+name = "revm-bytecode"
+description = "EVM Bytecodes"
+version = "4.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true
+
+[dependencies]
+# revm
+primitives.workspace = true
+
+# Jumpmap
+bitvec = { workspace = true, features = ["alloc"] }
+once_cell = { workspace = true, features = ["alloc"] }
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
+# parse opcode feature
+paste = { workspace = true, optional = true }
+phf = { workspace = true, features = ["macros"], optional = true }
+
+[features]
+default = ["std", "parse"]
+std = ["serde?/std", "primitives/std", "bitvec/std", "once_cell/std", "phf?/std"]
+hashbrown = ["primitives/hashbrown"]
+serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
+serde-json = ["serde"]
+parse = ["phf", "paste"]

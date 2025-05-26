@@ -1,0 +1,62 @@
+[package]
+name = "revm-context-interface"
+description = "Revm context interface crates"
+version = "4.1.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+primitives.workspace = true
+database-interface.workspace = true
+state.workspace = true
+alloy-eip7702 = { workspace = true, features = ["k256"] }
+alloy-eip2930.workspace = true
+
+# misc
+auto_impl.workspace = true
+either.workspace = true
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+	"derive",
+	"rc",
+], optional = true }
+
+[features]
+default = ["std"]
+std = [
+	"serde?/std",
+	"alloy-eip7702/std",
+	"alloy-eip2930/std",
+	"database-interface/std",
+	"primitives/std",
+	"state/std",
+	"either/std",
+]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"alloy-eip7702/serde",
+	"alloy-eip2930/serde",
+	"database-interface/serde",
+	"either/serde",
+]
+serde-json = ["serde"]

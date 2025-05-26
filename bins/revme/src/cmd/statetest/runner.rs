@@ -1,24 +1,32 @@
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
+use context::either::Either;
+use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
+use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
 use revm::{
-    db::EmptyDB,
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    interpreter::analysis::to_analysed,
-    primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TxKind, B256,
+    bytecode::Bytecode,
+    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
+    context_interface::{
+        block::calc_excess_blob_gas,
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
+        Cfg,
     },
-    Evm, State,
+    database_interface::EmptyDB,
+    primitives::{
+        eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Bytes, TxKind, B256,
+    },
+    Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
+use statetest_types::{SpecName, Test, TestSuite};
+
 use std::{
     convert::Infallible,
-    io::{stderr, stdout},
+    fmt::Debug,
+    io::stderr,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -30,9 +38,10 @@ use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Error)]
-#[error("Test {name} failed: {kind}")]
+#[error("Path: {path}\nName: {name}\nError: {kind}")]
 pub struct TestError {
     pub name: String,
+    pub path: String,
     pub kind: TestErrorKind,
 }
 
@@ -58,6 +67,10 @@ pub enum TestErrorKind {
     SerdeDeserialize(#[from] serde_json::Error),
     #[error("thread panicked")]
     Panic,
+    #[error("path does not exist")]
+    InvalidPath,
+    #[error("no JSON test files found in path")]
+    NoJsonFiles,
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -78,32 +91,8 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
-        // custom json parser. https://github.com/ethereum/tests/issues/971
-        |"ValueOverflow.json"| "ValueOverflowParis.json"
-
-        // precompiles having storage is not possible
-        | "RevertPrecompiledTouch_storage.json"
-        | "RevertPrecompiledTouch.json"
-
-        // txbyte is of type 02 and we don't parse tx bytes for this test to fail.
-        | "typeTwoBerlin.json"
-
-        // Need to handle Test errors
-        | "transactionIntinsicBug.json"
-
         // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-        | "HighGasPrice.json"
-        | "CREATE_HighNonce.json"
-        | "CREATE_HighNonceMinus1.json"
         | "CreateTransactionHighNonce.json"
-
-        // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in
-        // London/Berlin/TheMerge. https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
-        // It is expected to not execute these tests.
-        | "basefeeExample.json"
-        | "eip1559.json"
-        | "mergeTest.json"
 
         // Test with some storage check.
         | "RevertInCreateInInit_Paris.json"
@@ -118,7 +107,6 @@ fn skip_test(path: &Path) -> bool {
         | "InitCollisionParis.json"
 
         // These tests are passing, but they take a lot of time to execute so we are going to skip them.
-        | "loopExp.json"
         | "Call50000_sha256.json"
         | "static_Call50000_sha256.json"
         | "loopMul.json"
@@ -126,16 +114,17 @@ fn skip_test(path: &Path) -> bool {
     )
 }
 
-fn check_evm_execution<EXT>(
+fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    db: &mut State<EmptyDB>,
+    spec: SpecId,
     print_json_outcome: bool,
-) -> Result<(), TestError> {
+) -> Result<(), TestErrorKind> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
+    let state_root = state_merkle_trie_root(db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -155,7 +144,7 @@ fn check_evm_execution<EXT>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.cfg().spec_id,
+                "fork": spec,
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -176,9 +165,9 @@ fn check_evm_execution<EXT>(
     // Test where this happens: `tests/GeneralStateTests/stTransactionTest/NoSrcAccountCreate.json`
     // and you can check that we have only two "hash" values for before and after state clear.
     match (&test.expect_exception, exec_result) {
-        // do nothing
+        // Do nothing
         (None, Ok(result)) => {
-            // check output
+            // Check output
             if let Some((expected_output, output)) = expected_output.zip(result.output()) {
                 if expected_output != output {
                     let kind = TestErrorKind::UnexpectedOutput {
@@ -186,14 +175,11 @@ fn check_evm_execution<EXT>(
                         got_output: result.output().cloned(),
                     };
                     print_json_output(Some(kind.to_string()));
-                    return Err(TestError {
-                        name: test_name.to_string(),
-                        kind,
-                    });
+                    return Err(kind);
                 }
             }
         }
-        // return okay, exception is expected.
+        // Return okay, exception is expected.
         (Some(_), Err(_)) => return Ok(()),
         _ => {
             let kind = TestErrorKind::UnexpectedException {
@@ -201,10 +187,7 @@ fn check_evm_execution<EXT>(
                 got_exception: exec_result.clone().err().map(|e| e.to_string()),
             };
             print_json_output(Some(kind.to_string()));
-            return Err(TestError {
-                name: test_name.to_string(),
-                kind,
-            });
+            return Err(kind);
         }
     }
 
@@ -214,10 +197,7 @@ fn check_evm_execution<EXT>(
             expected: test.logs,
         };
         print_json_output(Some(kind.to_string()));
-        return Err(TestError {
-            name: test_name.to_string(),
-            kind,
-        });
+        return Err(kind);
     }
 
     if state_root != test.hash {
@@ -226,10 +206,7 @@ fn check_evm_execution<EXT>(
             expected: test.hash,
         };
         print_json_output(Some(kind.to_string()));
-        return Err(TestError {
-            name: test_name.to_string(),
-            kind,
-        });
+        return Err(kind);
     }
 
     print_json_output(None);
@@ -248,18 +225,21 @@ pub fn execute_test_suite(
     }
 
     let s = std::fs::read_to_string(path).unwrap();
+    let path = path.to_string_lossy().into_owned();
     let suite: TestSuite = serde_json::from_str(&s).map_err(|e| TestError {
-        name: path.to_string_lossy().into_owned(),
+        name: "Unknown".to_string(),
+        path: path.clone(),
         kind: e.into(),
     })?;
 
     for (name, unit) in suite.0 {
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new(false);
+        let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = to_analysed(Bytecode::new_raw(info.code));
-            let acc_info = revm::primitives::AccountInfo {
+            let bytecode = Bytecode::new_raw_checked(info.code.clone())
+                .unwrap_or(Bytecode::new_legacy(info.code));
+            let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
                 code: Some(bytecode),
@@ -268,41 +248,57 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Box::<Env>::default();
-        // for mainnet
-        env.cfg.chain_id = 1;
-        // env.cfg.spec_id is set down the road
+        let mut cfg = CfgEnv::default();
+        let mut block = BlockEnv::default();
+        let mut tx = TxEnv::default();
+        // For mainnet
+        cfg.chain_id = 1;
 
-        // block env
-        env.block.number = unit.env.current_number;
-        env.block.coinbase = unit.env.current_coinbase;
-        env.block.timestamp = unit.env.current_timestamp;
-        env.block.gas_limit = unit.env.current_gas_limit;
-        env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
-        env.block.difficulty = unit.env.current_difficulty;
-        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
-        env.block.prevrandao = unit.env.current_random;
+        // Block env
+        block.number = unit.env.current_number.try_into().unwrap_or(u64::MAX);
+        block.beneficiary = unit.env.current_coinbase;
+        block.timestamp = unit.env.current_timestamp.try_into().unwrap_or(u64::MAX);
+        block.gas_limit = unit.env.current_gas_limit.try_into().unwrap_or(u64::MAX);
+        block.basefee = unit
+            .env
+            .current_base_fee
+            .unwrap_or_default()
+            .try_into()
+            .unwrap_or(u64::MAX);
+        block.difficulty = unit.env.current_difficulty;
+        // After the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
+        block.prevrandao = unit.env.current_random;
 
-        // tx env
-        env.tx.caller = if let Some(address) = unit.transaction.sender {
+        // Tx env
+        tx.caller = if let Some(address) = unit.transaction.sender {
             address
         } else {
             recover_address(unit.transaction.secret_key.as_slice()).ok_or_else(|| TestError {
                 name: name.clone(),
+                path: path.clone(),
                 kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
             })?
         };
-        env.tx.gas_price = unit
+        tx.gas_price = unit
             .transaction
             .gas_price
             .or(unit.transaction.max_fee_per_gas)
-            .unwrap_or_default();
-        env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
+            .unwrap_or_default()
+            .try_into()
+            .unwrap_or(u128::MAX);
+        tx.gas_priority_fee = unit
+            .transaction
+            .max_priority_fee_per_gas
+            .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX"));
         // EIP-4844
-        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
-        env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
+        tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
+        tx.max_fee_per_blob_gas = unit
+            .transaction
+            .max_fee_per_blob_gas
+            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
+            .unwrap_or(u128::MAX);
 
-        // post and execution
+        // Post and execution
         for (spec_name, tests) in unit.post {
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
@@ -311,165 +307,180 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            // Enable EOF in Prague tests.
-            let spec_id = spec_name.to_spec_id();
+            cfg.spec = spec_name.to_spec_id();
 
             // EIP-4844
             if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-                env.block.set_blob_excess_gas_and_price(
+                block.set_blob_excess_gas_and_price(
                     current_excess_blob_gas.to(),
-                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
                 );
             } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
                 unit.env.parent_blob_gas_used,
                 unit.env.parent_excess_blob_gas,
             ) {
-                env.block.set_blob_excess_gas_and_price(
+                block.set_blob_excess_gas_and_price(
                     calc_excess_blob_gas(
                         parent_blob_gas_used.to(),
                         parent_excess_blob_gas.to(),
                         unit.env
                             .parent_target_blobs_per_block
                             .map(|i| i.to())
-                            .unwrap_or(3),
+                            .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
                     ),
-                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
                 );
             }
 
-            if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
-                // if spec is merge and prevrandao is not set, set it to default
-                env.block.prevrandao = Some(B256::default());
+            if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
+                // If spec is merge and prevrandao is not set, set it to default
+                block.prevrandao = Some(B256::default());
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                    if test.expect_exception.is_some() {
+                        continue;
+                    } else {
+                        panic!("Invalid transaction type without expected exception");
+                    }
+                };
+                tx.tx_type = tx_type as u8;
 
-                env.tx.data = unit
+                tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                tx.data = unit
                     .transaction
                     .data
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                env.tx.value = unit.transaction.value[test.indexes.value];
 
-                env.tx.access_list = unit
+                tx.nonce = u64::try_from(unit.transaction.nonce).unwrap();
+                tx.value = unit.transaction.value[test.indexes.value];
+
+                tx.access_list = unit
                     .transaction
                     .access_lists
                     .get(test.indexes.data)
-                    .and_then(Option::as_deref)
                     .cloned()
+                    .flatten()
                     .unwrap_or_default();
-                let Ok(auth_list) = test.eip7702_authorization_list() else {
-                    continue;
-                };
-                env.tx.authorization_list = auth_list;
+
+                // TODO(EOF)
+                //tx.initcodes = unit.transaction.initcodes.clone().unwrap_or_default();
+
+                tx.authorization_list = unit
+                    .transaction
+                    .authorization_list
+                    .clone()
+                    .map(|auth_list| {
+                        auth_list
+                            .into_iter()
+                            .map(|i| Either::Left(i.into()))
+                            .collect::<Vec<_>>()
+                    })
+                    .unwrap_or_default();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
                     None => TxKind::Create,
                 };
-                env.tx.transact_to = to;
+                tx.kind = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
-                let mut state = revm::db::State::builder()
+                cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = Evm::builder()
-                    .with_db(&mut state)
-                    .modify_env(|e| e.clone_from(&env))
-                    .with_spec_id(spec_id)
-                    .build();
 
-                // do the deed
-                let (e, exec_result) = if trace {
-                    let mut evm = evm
-                        .modify()
-                        .reset_handler_with_external_context(
-                            TracerEip3155::new(Box::new(stderr())).without_summary(),
-                        )
-                        .append_handler_register(inspector_handle_register)
-                        .build();
+                let evm_context = Context::mainnet()
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg)
+                    .with_db(&mut state);
 
-                    let timer = Instant::now();
-                    let res = evm.transact_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    let Err(e) = check_evm_execution(
-                        &test,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        &evm,
-                        print_json_outcome,
-                    ) else {
-                        continue;
-                    };
-                    // reset external context
-                    (e, res)
-                } else {
-                    let timer = Instant::now();
-                    let res = evm.transact_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    // dump state and traces if test failed
-                    let output = check_evm_execution(
-                        &test,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        &evm,
-                        print_json_outcome,
+                // Do the deed
+                let timer = Instant::now();
+                let (db, exec_result) = if trace {
+                    let mut evm = evm_context.build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
                     );
-                    let Err(e) = output else {
-                        continue;
-                    };
-                    (e, res)
+                    let res = evm.inspect_replay_commit();
+                    let db = evm.ctx.journaled_state.database;
+                    (db, res)
+                } else {
+                    let mut evm = evm_context.build_mainnet();
+                    let res = evm.replay_commit();
+                    let db = evm.ctx.journaled_state.database;
+                    (db, res)
+                };
+                *elapsed.lock().unwrap() += timer.elapsed();
+                let spec = cfg.spec();
+                // Dump state and traces if test failed
+                let output = check_evm_execution(
+                    &test,
+                    unit.out.as_ref(),
+                    &name,
+                    &exec_result,
+                    db,
+                    spec,
+                    print_json_outcome,
+                );
+                let Err(e) = output else {
+                    continue;
                 };
 
-                // print only once or
-                // if we are already in trace mode, just return error
+                // Print only once or if we are already in trace mode, just return error
+                // If trace is true that print_json_outcome will be also true.
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if trace || FAILED.swap(true, Ordering::SeqCst) {
-                    return Err(e);
+                if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
+                    return Err(TestError {
+                        name: name.clone(),
+                        path: path.clone(),
+                        kind: e,
+                    });
                 }
 
-                // re build to run with tracing
+                // Re-build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
-                let state = revm::db::State::builder()
+                cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
 
-                let path = path.display();
                 println!("\nTraces:");
-                let mut evm = Evm::builder()
-                    .with_spec_id(spec_id)
-                    .with_db(state)
-                    .with_env(env.clone())
-                    .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
-                    .append_handler_register(inspector_handle_register)
-                    .build();
-                let _ = evm.transact_commit();
+
+                let mut evm = Context::mainnet()
+                    .with_db(&mut state)
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg)
+                    .build_mainnet_with_inspector(
+                        TracerEip3155::buffered(stderr()).without_summary(),
+                    );
+
+                let _ = evm.inspect_replay_commit();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!("\nState after: {:#?}", evm.context.evm.db.cache);
-                println!("\nSpecification: {spec_id:?}");
-                println!("\nEnvironment: {env:#?}");
-                println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
+                println!(
+                    "\nState after: {:#?}",
+                    evm.ctx.journaled_state.database.cache
+                );
+                println!("\nSpecification: {:?}", cfg.spec);
+                println!("\nTx: {tx:#?}");
+                println!("Block: {block:#?}");
+                println!("Cfg: {cfg:#?}");
+                println!("\nTest name: {name:?} (index: {index}, path: {path:?}) failed:\n{e}");
 
-                return Err(e);
+                return Err(TestError {
+                    path: path.clone(),
+                    name: name.clone(),
+                    kind: e,
+                });
             }
         }
     }
@@ -483,11 +494,11 @@ pub fn run(
     mut print_outcome: bool,
     keep_going: bool,
 ) -> Result<(), TestError> {
-    // trace implies print_outcome
+    // Trace implies print_outcome
     if trace {
         print_outcome = true;
     }
-    // print_outcome or trace implies single_thread
+    // `print_outcome` or trace implies single_thread
     if print_outcome {
         single_thread = true;
     }
@@ -553,6 +564,7 @@ pub fn run(
             Ok(Err(e)) => thread_errors.push(e),
             Err(_) => thread_errors.push(TestError {
                 name: format!("thread {i} panicked"),
+                path: "".to_string(),
                 kind: TestErrorKind::Panic,
             }),
         }

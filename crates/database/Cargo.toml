@@ -1,0 +1,73 @@
+[package]
+name = "revm-database"
+description = "Revm Database implementations"
+version = "4.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+state.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+bytecode.workspace = true
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
+# alloydb
+tokio = { workspace = true, features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
+alloy-provider = { workspace = true, optional = true }
+alloy-eips = { workspace = true, optional = true }
+alloy-transport = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde_json = { workspace = true, features = ["alloc"] }
+anyhow.workspace = true
+rstest.workspace = true
+
+[features]
+default = ["std"]
+std = [
+	"serde?/std",
+	"alloy-eips?/std",
+	"bytecode/std",
+	"database-interface/std",
+	"primitives/std",
+	"state/std",
+	"serde_json/std"
+]
+serde = [
+	"dep:serde",
+	"alloy-eips?/serde",
+	"bytecode/serde",
+	"database-interface/serde",
+	"primitives/serde",
+	"state/serde"
+]
+alloydb = [
+    "std",
+    "database-interface/asyncdb",
+    "dep:tokio",
+    "dep:alloy-provider",
+    "dep:alloy-eips",
+    "dep:alloy-transport",
+]

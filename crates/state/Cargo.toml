@@ -1,0 +1,38 @@
+[package]
+name = "revm-state"
+description = "Revm state types"
+version = "4.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true
+
+[dependencies]
+# revm
+primitives.workspace = true
+bytecode.workspace = true
+
+# misc
+bitflags.workspace = true
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
+[features]
+default = ["std"]
+std = [
+	"serde?/std",
+	"primitives/std",
+	"bitflags/std",
+	"bytecode/std"
+]
+serde = ["dep:serde", "primitives/serde", "bitflags/serde", "bytecode/serde"]

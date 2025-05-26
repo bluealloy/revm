@@ -1,6 +1,6 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
 use core::ops::Range;
-use revm_primitives::Bytes;
+use primitives::Bytes;
 
 /// Represents the outcome of a call operation in a virtual machine.
 ///
@@ -19,9 +19,9 @@ pub struct CallOutcome {
 }
 
 impl CallOutcome {
-    /// Constructs a new `CallOutcome`.
+    /// Constructs a new [`CallOutcome`].
     ///
-    /// Creates an instance of `CallOutcome` with the given interpreter result and memory offset.
+    /// Creates an instance of [`CallOutcome`] with the given interpreter result and memory offset.
     ///
     /// # Arguments
     ///
@@ -40,7 +40,7 @@ impl CallOutcome {
     ///
     /// # Returns
     ///
-    /// A reference to the `InstructionResult`.
+    /// A reference to the [`InstructionResult`].
     pub fn instruction_result(&self) -> &InstructionResult {
         &self.result.result
     }
@@ -51,7 +51,7 @@ impl CallOutcome {
     ///
     /// # Returns
     ///
-    /// An instance of `Gas` representing the gas usage.
+    /// An instance of [`Gas`] representing the gas usage.
     pub fn gas(&self) -> Gas {
         self.result.gas
     }
@@ -62,7 +62,7 @@ impl CallOutcome {
     ///
     /// # Returns
     ///
-    /// A reference to the output data as `Bytes`.
+    /// A reference to the output data as [`Bytes`].
     pub fn output(&self) -> &Bytes {
         &self.result.output
     }
@@ -73,7 +73,7 @@ impl CallOutcome {
     ///
     /// # Returns
     ///
-    /// The starting index of the memory offset as `usize`.
+    /// The starting index of the memory offset as [`usize`].
     pub fn memory_start(&self) -> usize {
         self.memory_offset.start
     }
@@ -84,7 +84,7 @@ impl CallOutcome {
     ///
     /// # Returns
     ///
-    /// The length of the memory range as `usize`.
+    /// The length of the memory range as [`usize`].
     pub fn memory_length(&self) -> usize {
         self.memory_offset.len()
     }

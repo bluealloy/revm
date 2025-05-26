@@ -1,57 +1,28 @@
-use alloy_primitives::{address, Address};
+//! Global constants for the EVM
+//!
+//! Here you can find constants that dont belong to any EIP and are there for the genesis.
 
-/// EIP-170: Contract code size limit
-///
-/// By default, the limit is `0x6000` (~25kb)
-pub const MAX_CODE_SIZE: usize = 0x6000;
+use crate::eip170;
+use alloy_primitives::{b256, Address, B256};
 
-/// Number of block hashes that EVM can access in the past (pre-Prague).
+/// Number of block hashes that EVM can access in the past (pre-Prague)
 pub const BLOCK_HASH_HISTORY: u64 = 256;
 
-/// EIP-2935: Serve historical block hashes from state
-///
-/// Number of block hashes the EVM can access in the past (Prague).
-///
-/// # Note
-///
-/// This is named `HISTORY_SERVE_WINDOW` in the EIP.
-pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
-
-/// EIP-2935: Serve historical block hashes from state
-///
-/// The address where historical blockhashes are available.
-///
-/// # Note
-///
-/// This is named `HISTORY_STORAGE_ADDRESS` in the EIP.
-pub const BLOCKHASH_STORAGE_ADDRESS: Address = address!("25a219378dad9b3503c8268c9ca836a52427a4fb");
-
-/// EIP-3860: Limit and meter initcode
-///
-/// Limit of maximum initcode size is `2 * WASM_MAX_CODE_SIZE`.
-pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
-
-/// The address of precompile 3, which is handled specially in a few places.
+/// The address of precompile 3, which is handled specially in a few places
 pub const PRECOMPILE3: Address =
     Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
 
-// === EIP-4844 constants ===
+/// EVM interpreter stack limit
+pub const STACK_LIMIT: usize = 1024;
 
-/// Gas consumption of a single data blob (== blob byte size).
-pub const GAS_PER_BLOB: u64 = 1 << 17;
+/// EIP-3860: Limit and meter initcode
+///
+/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE`.
+pub const MAX_INITCODE_SIZE: usize = 2 * eip170::MAX_CODE_SIZE;
 
-/// Minimum gas price for data blobs.
-pub const MIN_BLOB_GASPRICE: u64 = 1;
+/// EVM call stack limit
+pub const CALL_STACK_LIMIT: u64 = 1024;
 
-/// Controls the maximum rate of change for blob gas price.
-pub const BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN: u64 = 3338477;
-
-/// Controls the maximum rate of change for blob gas price (Electra).
-/// EIP-7691: Blob throughput increase
-pub const BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA: u64 = 5007716;
-
-/// First version of the blob.
-pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
-
-/// Max call stack limit
-pub const MAX_CALL_STACK_LIMIT: u32 = 1024;
+/// The Keccak-256 hash of the empty string `""`.
+pub const KECCAK_EMPTY: B256 =
+    b256!("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");

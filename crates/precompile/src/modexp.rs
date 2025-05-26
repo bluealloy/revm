@@ -1,34 +1,39 @@
+//! Modexp precompile added in [`EIP-198`](https://eips.ethereum.org/EIPS/eip-198)
+//! and reprices in berlin hardfork with [`EIP-2565`](https://eips.ethereum.org/EIPS/eip-2565).
 use crate::{
-    primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
-    Error, Precompile, PrecompileResult, PrecompileWithAddress,
+    PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
-use revm_primitives::{Bytes, PrecompileOutput};
+use primitives::Bytes;
+use primitives::U256;
 
-pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(5),
-    Precompile::Standard(byzantium_run),
-);
+/// `modexp` precompile with BYZANTIUM gas rules.
+pub const BYZANTIUM: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);
 
+/// `modexp` precompile with BERLIN gas rules.
 pub const BERLIN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(5), Precompile::Standard(berlin_run));
+    PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-pub fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
 }
 
-pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+/// See: <https://eips.ethereum.org/EIPS/eip-2565>
+/// Gas cost of berlin is modified from byzantium.
+pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
 }
 
+/// Calculate the iteration count for the modexp precompile.
 pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     let mut iteration_count: u64 = 0;
 
@@ -44,32 +49,33 @@ pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     max(iteration_count, 1)
 }
 
+/// Run the modexp precompile.
 pub fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> PrecompileResult
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return Err(Error::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // The format of input is:
     // <length_of_BASE> <length_of_EXPONENT> <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>
     // Where every length is a 32-byte left-padded integer representing the number of bytes
-    // to be taken up by the next value
+    // to be taken up by the next value.
     const HEADER_LENGTH: usize = 96;
 
-    // Extract the header.
+    // Extract the header
     let base_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 0).into_owned());
     let exp_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 32).into_owned());
     let mod_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 64).into_owned());
 
-    // cast base and modulus to usize, it does not make sense to handle larger values
+    // Cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
-        return Err(Error::ModexpBaseOverflow.into());
+        return Err(PrecompileError::ModexpBaseOverflow);
     };
     let Ok(mod_len) = usize::try_from(mod_len) else {
-        return Err(Error::ModexpModOverflow.into());
+        return Err(PrecompileError::ModexpModOverflow);
     };
 
     // Handle a special case when both the base and mod length are zero.
@@ -79,7 +85,7 @@ where
 
     // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
-        return Err(Error::ModexpModOverflow.into());
+        return Err(PrecompileError::ModexpExpOverflow);
     };
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -89,7 +95,7 @@ where
     let input = input.get(HEADER_LENGTH..).unwrap_or_default();
 
     let exp_highp = {
-        // get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
+        // Get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
         let right_padded_highp = right_pad_with_offset::<32>(input, base_len);
         // If exp_len is less then 32 bytes get only exp_len bytes and do left padding.
         let out = left_pad::<32>(&right_padded_highp[..exp_highp_len]);
@@ -99,7 +105,7 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return Err(Error::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // Padding is needed if the input does not contain all 3 values.
@@ -112,22 +118,23 @@ where
     // Call the modexp.
     let output = modexp(base, exponent, modulus);
 
-    // left pad the result to modulus length. bytes will always by less or equal to modulus length.
+    // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(
         gas_cost,
         left_pad_vec(&output, mod_len).into_owned().into(),
     ))
 }
 
+/// Calculate the gas cost for the modexp precompile with BYZANTIUM gas rules.
 pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
-    // output of this function is bounded by 2^128
+    // Output of this function is bounded by 2^128
     fn mul_complexity(x: u64) -> U256 {
         if x <= 64 {
             U256::from(x * x)
         } else if x <= 1_024 {
             U256::from(x * x / 4 + 96 * x - 3_072)
         } else {
-            // up-cast to avoid overflow
+            // Up-cast to avoid overflow
             let x = U256::from(x);
             let x_sq = x * x; // x < 2^64 => x*x < 2^128 < 2^256 (no overflow)
             x_sq / U256::from(16) + U256::from(480) * x - U256::from(199_680)
@@ -141,8 +148,8 @@ pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: 
     gas.saturating_to()
 }
 
-// Calculate gas cost according to EIP 2565:
-// https://eips.ethereum.org/EIPS/eip-2565
+/// Calculate gas cost according to EIP 2565:
+/// <https://eips.ethereum.org/EIPS/eip-2565>
 pub fn berlin_gas_calc(
     base_length: u64,
     exp_length: u64,
@@ -168,7 +175,7 @@ pub fn berlin_gas_calc(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm_primitives::hex;
+    use primitives::hex;
     use std::vec::Vec;
 
     struct Test {
@@ -349,7 +356,7 @@ mod tests {
     #[test]
     fn test_byzantium_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap().into();
+            let input = hex::decode(test.input).unwrap();
             let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
@@ -364,7 +371,7 @@ mod tests {
     #[test]
     fn test_berlin_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BERLIN_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap().into();
+            let input = hex::decode(test.input).unwrap();
             let res = berlin_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(

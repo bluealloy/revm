@@ -6,6 +6,171 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v19.0.0...revm-interpreter-v19.1.0) - 2025-05-07
+
+Dependency bump
+
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v18.0.0...revm-interpreter-v19.0.0) - 2025-05-07
+
+### Added
+
+- *(Osaka)* disable EOF ([#2480](https://github.com/bluealloy/revm/pull/2480))
+- skip cloning of call input from shared memory ([#2462](https://github.com/bluealloy/revm/pull/2462))
+- Add a custom address to the CreateScheme. ([#2464](https://github.com/bluealloy/revm/pull/2464))
+- replace input Bytes and refactored code where required ([#2453](https://github.com/bluealloy/revm/pull/2453))
+- *(EOF)* Changes needed for devnet-1 ([#2377](https://github.com/bluealloy/revm/pull/2377))
+- Move SharedMemory buffer to context ([#2382](https://github.com/bluealloy/revm/pull/2382))
+
+### Fixed
+
+- *(inspector)* fix call return with Some ([#2469](https://github.com/bluealloy/revm/pull/2469))
+- skip account list for legacy ([#2400](https://github.com/bluealloy/revm/pull/2400))
+
+### Other
+
+- Add Bytecode address to Interpreter ([#2479](https://github.com/bluealloy/revm/pull/2479))
+- make ReturnDataImpl and LoopControlImpl public ([#2470](https://github.com/bluealloy/revm/pull/2470))
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- Replace InterpreterAction with InterpreterTypes::Output ([#2424](https://github.com/bluealloy/revm/pull/2424))
+- simplify reading signed integers ([#2456](https://github.com/bluealloy/revm/pull/2456))
+- *(revm-interpreter)* remove unused deps ([#2447](https://github.com/bluealloy/revm/pull/2447))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+
+## [18.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v17.0.0...revm-interpreter-v18.0.0) - 2025-04-09
+
+### Added
+
+- *(tests)* Add dupn, swapn and exhange tests ([#2343](https://github.com/bluealloy/revm/pull/2343))
+- support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
+
+### Other
+
+- *(test)* uncommented bitwise.rs and system.rs tests ([#2370](https://github.com/bluealloy/revm/pull/2370))
+- *(tests)* fix program counter for eof jump instructions ([#2368](https://github.com/bluealloy/revm/pull/2368))
+- fix tests in data.rs file ([#2365](https://github.com/bluealloy/revm/pull/2365))
+- remove redundant U256 conversions in instructions ([#2364](https://github.com/bluealloy/revm/pull/2364))
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+
+## [17.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0...revm-interpreter-v17.0.0) - 2025-03-28
+
+### Other
+
+- remove redundant clone ([#2293](https://github.com/bluealloy/revm/pull/2293))
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+- make number more readable ([#2300](https://github.com/bluealloy/revm/pull/2300))
+
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.7...revm-interpreter-v16.0.0) - 2025-03-24
+
+Stable version
+
+## [16.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.6...revm-interpreter-v16.0.0-alpha.7) - 2025-03-21
+
+### Added
+
+- allow reuse of API for calculating initial tx gas for tx ([#2215](https://github.com/bluealloy/revm/pull/2215))
+
+### Other
+
+- make clippy happy ([#2274](https://github.com/bluealloy/revm/pull/2274))
+- fix clippy ([#2238](https://github.com/bluealloy/revm/pull/2238))
+
+## [16.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.5...revm-interpreter-v16.0.0-alpha.6) - 2025-03-16
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-context-interface
+
+## [16.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.4...revm-interpreter-v16.0.0-alpha.5) - 2025-03-12
+
+### Added
+
+- add custom error to context ([#2197](https://github.com/bluealloy/revm/pull/2197))
+
+## [16.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.3...revm-interpreter-v16.0.0-alpha.4) - 2025-03-11
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+## [16.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.2...revm-interpreter-v16.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- set zero if blockhash is out of range ([#2173](https://github.com/bluealloy/revm/pull/2173))
+
+## [16.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v16.0.0-alpha.1...revm-interpreter-v16.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+- Standalone Host, remove default fn from context ([#2147](https://github.com/bluealloy/revm/pull/2147))
+- allow host to be implemented on custom context ([#2112](https://github.com/bluealloy/revm/pull/2112))
+
+### Other
+
+- JournalTr, JournalOutput, op only using revm crate ([#2155](https://github.com/bluealloy/revm/pull/2155))
+- docs and cleanup (rm Custom Inst) ([#2151](https://github.com/bluealloy/revm/pull/2151))
+- add immutable gas API to LoopControl ([#2134](https://github.com/bluealloy/revm/pull/2134))
+- expose popn macros ([#2113](https://github.com/bluealloy/revm/pull/2113))
+- Add docs to revm-bytecode crate ([#2108](https://github.com/bluealloy/revm/pull/2108))
+- fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- Evm structure (Cached Instructions and Precompiles) (#2049)
+- Add essential EIP-7756 tracing fields (#2023)
+- Context execution (#2013)
+- EthHandler trait (#2001)
+- *(EIP-7623)* adjuct floor gas check order (main) (#1991)
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- *(EIP-7623)* Increase calldata cost. backport from rel/v51 (#1965)
+- simplify Transaction trait (#1959)
+- align Block trait (#1957)
+- Make Ctx journal generic (#1933)
+- Restucturing Part7 Handler and Context rework (#1865)
+- *(interpreter)* impl Clone for Stack (#1820)
+- restructuring Part6 transaction crate (#1814)
+- Merge validation/analyzis with Bytecode (#1793)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- make macro crate-agnostic (#1802)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- add default generics for InterpreterTypes (#2070)
+- Check performance of gas with i64 [#1884](https://github.com/bluealloy/revm/pull/1884) ([#2062](https://github.com/bluealloy/revm/pull/2062))
+- Bump licence year to 2025 (#2058)
+- relax halt reason bounds (#2041)
+- remove duplicate instructions (#2029)
+- align crates versions (#1983)
+- Add bytecode hash in interpreter [#1888](https://github.com/bluealloy/revm/pull/1888) ([#1952](https://github.com/bluealloy/revm/pull/1952))
+- Make inspector use generics, rm associated types (#1934)
+- use MemoryOOG (#1941)
+- fix comments and docs into more sensible (#1920)
+- Move CfgEnv from context-interface to context crate (#1910)
+- implement serde for interpreter ([#1909](https://github.com/bluealloy/revm/pull/1909))
+- make ExtBytecode pointer private (#1904)
+- fix typos (#1868)
+- *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
+- refactor -copy common code (#1799)
+- add ReentrancySentryOOG for SSTORE (#1795)
+- simplify SuccessOrHalt trait bound (#1768)
+
+## [15.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.1.0...revm-interpreter-v15.2.0) - 2025-02-11
+
+### Other
+
+- revm v19.4.0 tag v54
+
 ## [15.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.0.0...revm-interpreter-v15.1.0) - 2025-01-13
 
 ### Added
@@ -178,7 +343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parse opcodes from strings ([#1358](https://github.com/bluealloy/revm/pull/1358))
 - *(interpreter)* add helpers for spending all gas ([#1360](https://github.com/bluealloy/revm/pull/1360))
 - add helper methods to CallInputs ([#1345](https://github.com/bluealloy/revm/pull/1345))
-- *(revm)* make `FrameOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
+- *(revm)* make `ItemOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
 - add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
 - EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
 - *(interpreter)* derive Eq for InterpreterAction ([#1262](https://github.com/bluealloy/revm/pull/1262))

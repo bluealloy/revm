@@ -1,0 +1,37 @@
+[package]
+name = "example-uniswap-get-reserves"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+revm = { workspace = true, features = ["std", "alloydb"] }
+
+# tokio
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-sol-types = { workspace = true, features = ["std"] }
+alloy-eips.workspace = true
+alloy-provider = { workspace = true, default-features = true }
+
+# misc
+anyhow.workspace = true

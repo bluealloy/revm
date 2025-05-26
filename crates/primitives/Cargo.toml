@@ -1,123 +1,42 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "revm primitives"
-edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "revm", "types"]
-license = "MIT"
 name = "revm-primitives"
-repository = "https://github.com/bluealloy/revm"
-version = "15.1.0"
-readme = "../../README.md"
+description = "Revm primitives types"
+version = "19.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unreachable_pub = "warn"
-unused_must_use = "deny"
-rust_2018_idioms = "deny"
-
-[lints.rustdoc]
-all = "warn"
+[lints]
+workspace = true
 
 [dependencies]
 # alloy
-alloy-eip2930 = { version = "0.1", default-features = false }
-alloy-eip7702 = { version = "0.5", default-features = false, features = [
-    "k256",
-] }
-alloy-primitives = { version = "0.8.21", default-features = false, features = [
-    "rlp",
-    "map",
-] }
+alloy-primitives = { workspace = true, features = ["rlp", "map"] }
 
 # mics
-auto_impl = "1.2"
-bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.6.0", default-features = false }
+num_enum = { version = "0.7.3", default-features = false }
 
-# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
-    "ethereum_kzg_settings",
-] }
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
-# Optionally use `kzg-rs` for a pure Rust implementation of KZG.
-kzg-rs = { version = "0.2.3", default-features = false, optional = true }
-
-# utility
-enumn = "0.1"
-cfg-if = "1"
-dyn-clone = "1.0"
-
-# optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
-[build-dependencies]
-hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg", "portable"]
+default = ["std"]
 std = [
-    "serde?/std",
-    "alloy-primitives/std",
-    "hex/std",
-    "bitvec/std",
-    "bitflags/std",
-    "alloy-eip7702/std",
-    "alloy-eip2930/std",
+	"alloy-primitives/std",
+	"serde?/std",
+	"num_enum/std"
 ]
+serde = ["dep:serde", "alloy-primitives/serde"]
+
 hashbrown = ["alloy-primitives/map-hashbrown"]
-serde = [
-    "dep:serde",
-    "alloy-primitives/serde",
-    "hex/serde",
-    "bitvec/serde",
-    "bitflags/serde",
-    "c-kzg?/serde",
-    "alloy-eip7702/serde",
-    "alloy-eip2930/serde",
-]
-arbitrary = [
-    "std",
-    "alloy-primitives/arbitrary",
-    "bitflags/arbitrary",
-    "alloy-eip7702/arbitrary",
-    "alloy-eip2930/arbitrary",
-]
+arbitrary = ["std", "alloy-primitives/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
-portable = ["c-kzg?/portable"]
-
-optimism = []
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = ["optimism"]
-negate-optimism-default-handler = []
-
-dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
-    "optional_beneficiary_reward",
-]
-memory_limit = []
-optional_balance_check = []
-optional_block_gas_limit = []
-optional_eip3607 = []
-optional_gas_refund = []
-optional_no_base_fee = []
-optional_beneficiary_reward = []
 rand = ["alloy-primitives/rand"]
-
-# See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg"]
-# `kzg-rs` is not audited but useful for `no_std` environment.
-#   use it with causing and default to `c-kzg` if possible!
-kzg-rs = ["dep:kzg-rs"]
-
-e2e = []

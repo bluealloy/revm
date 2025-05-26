@@ -1,0 +1,46 @@
+[package]
+name = "revm-database-interface"
+description = "Revm Database interface"
+version = "4.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+state.workspace = true
+primitives.workspace = true
+
+# misc
+auto_impl.workspace = true
+
+# Optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
+# asyncdb
+tokio = { workspace = true, optional = true }
+
+[dev-dependencies]
+anyhow.workspace = true
+rstest.workspace = true
+
+[features]
+default = ["std"]
+std = ["serde?/std", "primitives/std", "state/std"]
+serde = ["dep:serde", "primitives/serde", "state/serde"]
+asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]

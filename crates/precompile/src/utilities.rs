@@ -1,4 +1,5 @@
-use revm_primitives::{b256, Bytes, B256};
+//! Utility function that precompiles use, padding and converting between types.
+use primitives::{b256, Bytes, B256};
 use std::borrow::Cow;
 
 /// Right-pads the given slice at `offset` with zeroes until `LEN`.
@@ -73,7 +74,7 @@ pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
     }
 }
 
-/// Converts a boolean to a left-padded 32-byte `Bytes` value.
+/// Converts a boolean to a left-padded 32-byte [`Bytes`] value.
 ///
 /// This is optimized to not allocate at runtime by using 2 static arrays.
 #[inline]
@@ -81,13 +82,15 @@ pub const fn bool_to_bytes32(value: bool) -> Bytes {
     Bytes::from_static(&bool_to_b256(value).0)
 }
 
-/// Converts a boolean to a left-padded `B256` value.
+/// Converts a boolean to a left-padded [`B256`] value.
 ///
 /// This is optimized to not allocate at runtime by using 2 static arrays.
 #[inline]
 pub const fn bool_to_b256(value: bool) -> &'static B256 {
-    const TRUE: &B256 = &b256!("0000000000000000000000000000000000000000000000000000000000000001");
-    const FALSE: &B256 = &b256!("0000000000000000000000000000000000000000000000000000000000000000");
+    const TRUE: &B256 =
+        &b256!("0x0000000000000000000000000000000000000000000000000000000000000001");
+    const FALSE: &B256 =
+        &b256!("0x0000000000000000000000000000000000000000000000000000000000000000");
     if value {
         TRUE
     } else {

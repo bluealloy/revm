@@ -1,13 +1,53 @@
-use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
 use core::ops::Range;
-use std::boxed::Box;
+use primitives::{Address, Bytes, U256};
+
+/// Input enum for a call.
+///
+/// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CallInput {
+    /// The Range points to the SharedMemory buffer. Buffer can be found in [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
+    /// And can be accessed with `evm.ctx().local().shared_memory_buffer()`
+    ///
+    /// # Warning
+    ///
+    /// Use it with caution, CallInput shared buffer can be overridden if context from child call is returned so
+    /// recommendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
+    SharedBuffer(Range<usize>),
+    /// Bytes of the call data.
+    Bytes(Bytes),
+}
+
+impl CallInput {
+    /// Returns the length of the call input.
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Bytes(bytes) => bytes.len(),
+            Self::SharedBuffer(range) => range.len(),
+        }
+    }
+
+    /// Returns `true` if the call input is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl Default for CallInput {
+    /// Returns a default `CallInput` with an empty `Bytes`.
+    #[inline]
+    fn default() -> Self {
+        CallInput::Bytes(Bytes::default())
+    }
+}
 
 /// Inputs for a call.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The call data of the call.
-    pub input: Bytes,
+    pub input: CallInput,
     /// The return memory offset where the output of the call is written.
     ///
     /// In EOF, this range is invalid as EOF calls do not write output to memory.
@@ -28,7 +68,7 @@ pub struct CallInputs {
     pub caller: Address,
     /// Call value.
     ///
-    /// NOTE: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
+    /// **Note**: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
     ///
     /// Previously `transfer.value` or `context.apparent_value`.
     pub value: CallValue,
@@ -43,34 +83,6 @@ pub struct CallInputs {
 }
 
 impl CallInputs {
-    /// Creates new call inputs.
-    ///
-    /// Returns `None` if the transaction is not a call.
-    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TxKind::Call(target_address) = tx_env.transact_to else {
-            return None;
-        };
-        Some(CallInputs {
-            input: tx_env.data.clone(),
-            gas_limit,
-            target_address,
-            bytecode_address: target_address,
-            caller: tx_env.caller,
-            value: CallValue::Transfer(tx_env.value),
-            scheme: CallScheme::Call,
-            is_static: false,
-            is_eof: false,
-            return_memory_offset: 0..0,
-        })
-    }
-
-    /// Creates new boxed call inputs.
-    ///
-    /// Returns `None` if the transaction is not a call.
-    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
-        Self::new(tx_env, gas_limit).map(Box::new)
-    }
-
     /// Returns `true` if the call will transfer a non-zero value.
     #[inline]
     pub fn transfers_value(&self) -> bool {
@@ -111,7 +123,7 @@ impl CallInputs {
 
     /// Returns the call value, regardless of the transfer value type.
     ///
-    /// NOTE: this value may not necessarily be transferred from caller to callee, see [`CallValue`].
+    /// **Note**: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
     #[inline]
     pub const fn call_value(&self) -> U256 {
         self.value.get()
