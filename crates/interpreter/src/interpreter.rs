@@ -143,6 +143,9 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         }
     }
 
+    /// Executes the instruction at the current instruction pointer.
+    ///
+    /// Internally it will increment instruction pointer by one.
     #[inline]
     pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
         let context = InstructionContext {
@@ -152,6 +155,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         context.step(instruction_table);
     }
 
+    /// Executes the instruction at the current instruction pointer.
+    ///
+    /// Internally it will increment instruction pointer by one.
+    ///
+    /// This uses dummy Host.
     #[inline]
     pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
         let context = InstructionContext {
