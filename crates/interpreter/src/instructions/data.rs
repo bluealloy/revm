@@ -10,15 +10,15 @@ use primitives::{B256, U256};
 use super::context::InstructionContext;
 
 pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, DATA_LOAD_GAS);
-    popn_top!([], offset, context.interpreter);
+    require_eof!(ctx.interpreter);
+    gas!(ctx.interpreter, DATA_LOAD_GAS);
+    popn_top!([], offset, ctx.interpreter);
 
     let offset_usize = as_usize_saturated!(offset);
 
-    let slice = context.interpreter.bytecode.data_slice(offset_usize, 32);
+    let slice = ctx.interpreter.bytecode.data_slice(offset_usize, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
@@ -27,60 +27,59 @@ pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn data_loadn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, VERYLOW);
-    let offset = context.interpreter.bytecode.read_u16() as usize;
+    require_eof!(ctx.interpreter);
+    gas!(ctx.interpreter, VERYLOW);
+    let offset = ctx.interpreter.bytecode.read_u16() as usize;
 
-    let slice = context.interpreter.bytecode.data_slice(offset, 32);
+    let slice = ctx.interpreter.bytecode.data_slice(offset, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
 
-    push!(context.interpreter, B256::new(word).into());
+    push!(ctx.interpreter, B256::new(word).into());
 
     // Add +2 to the instruction pointer to skip the offset
-    context.interpreter.bytecode.relative_jump(2);
+    ctx.interpreter.bytecode.relative_jump(2);
 }
 
 pub fn data_size<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, BASE);
+    require_eof!(ctx.interpreter);
+    gas!(ctx.interpreter, BASE);
 
     push!(
-        context.interpreter,
-        U256::from(context.interpreter.bytecode.data_size())
+        ctx.interpreter,
+        U256::from(ctx.interpreter.bytecode.data_size())
     );
 }
 
 pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, VERYLOW);
-    popn!([mem_offset, offset, size], context.interpreter);
+    require_eof!(ctx.interpreter);
+    gas!(ctx.interpreter, VERYLOW);
+    popn!([mem_offset, offset, size], ctx.interpreter);
 
     // Sizes more than u64::MAX will spend all the gas in memory resize.
-    let size = as_usize_or_fail!(context.interpreter, size);
+    let size = as_usize_or_fail!(ctx.interpreter, size);
     // Size of zero should not change the memory
     if size == 0 {
         return;
     }
     // Fail if mem offset is big as it will spend all the gas
-    let mem_offset = as_usize_or_fail!(context.interpreter, mem_offset);
-    resize_memory!(context.interpreter, mem_offset, size);
+    let mem_offset = as_usize_or_fail!(ctx.interpreter, mem_offset);
+    resize_memory!(ctx.interpreter, mem_offset, size);
 
-    gas_or_fail!(context.interpreter, cost_per_word(size, VERYLOW));
+    gas_or_fail!(ctx.interpreter, cost_per_word(size, VERYLOW));
 
     let offset = as_usize_saturated!(offset);
-    let data = context.interpreter.bytecode.data();
+    let data = ctx.interpreter.bytecode.data();
 
     // Set data from the eof to the shared memory. Padded it with zeros.
-    context
-        .interpreter
+    ctx.interpreter
         .memory
         .set_data(mem_offset, offset, size, data);
 }
@@ -122,54 +121,54 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(eof);
         interpreter.runtime_flag.is_eof = true;
 
-        let mut context = InstructionContext {
+        let mut ctx = InstructionContext {
             interpreter: &mut interpreter,
             host: &mut host,
         };
 
         // DATALOAD
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(0x01)]);
-        context.interpreter.stack.pop().unwrap();
+        let _ = ctx.interpreter.stack.push(U256::from(0));
+        ctx.step(&table);
+        assert_eq!(ctx.interpreter.stack.data(), &vec![U256::from(0x01)]);
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATALOADN
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(0x01)]);
-        context.interpreter.stack.pop().unwrap();
+        ctx.step(&table);
+        assert_eq!(ctx.interpreter.stack.data(), &vec![U256::from(0x01)]);
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATALOAD (padding)
-        let _ = context.interpreter.stack.push(U256::from(35));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(35));
+        ctx.step(&table);
 
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
-        context.interpreter.stack.pop().unwrap();
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATALOADN (padding)
-        context.step(&table);
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![b256!("0500000000000000000000000000000000000000000000000000000000000000").into()]
         );
-        context.interpreter.stack.pop().unwrap();
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATALOAD (out of bounds)
-        let _ = context.interpreter.stack.push(U256::from(36));
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.data(), &vec![U256::ZERO]);
-        context.interpreter.stack.pop().unwrap();
+        let _ = ctx.interpreter.stack.push(U256::from(36));
+        ctx.step(&table);
+        assert_eq!(ctx.interpreter.stack.data(), &vec![U256::ZERO]);
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATALOADN (out of bounds)
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.data(), &vec![U256::ZERO]);
-        context.interpreter.stack.pop().unwrap();
+        ctx.step(&table);
+        assert_eq!(ctx.interpreter.stack.data(), &vec![U256::ZERO]);
+        ctx.interpreter.stack.pop().unwrap();
 
         // DATA SIZE
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.data(), &vec![U256::from(36)]);
+        ctx.step(&table);
+        assert_eq!(ctx.interpreter.stack.data(), &vec![U256::from(36)]);
     }
 
     #[test]
@@ -187,45 +186,45 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 
-        let mut context = InstructionContext {
+        let mut ctx = InstructionContext {
             interpreter: &mut interpreter,
             host: &mut host,
         };
 
-        context.step(&table);
+        ctx.step(&table);
         assert_eq!(
-            *context.interpreter.memory.context_memory(),
+            *ctx.interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Padding)
         // size, offset mem_offset,
-        let _ = context.interpreter.stack.push(U256::from(2));
-        let _ = context.interpreter.stack.push(U256::from(35));
-        let _ = context.interpreter.stack.push(U256::from(1));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(2));
+        let _ = ctx.interpreter.stack.push(U256::from(35));
+        let _ = ctx.interpreter.stack.push(U256::from(1));
+        ctx.step(&table);
         assert_eq!(
-            *context.interpreter.memory.context_memory(),
+            *ctx.interpreter.memory.context_memory(),
             bytes!("0005000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Out of bounds)
         // size, offset mem_offset,
-        let _ = context.interpreter.stack.push(U256::from(2));
-        let _ = context.interpreter.stack.push(U256::from(37));
-        let _ = context.interpreter.stack.push(U256::from(1));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(2));
+        let _ = ctx.interpreter.stack.push(U256::from(37));
+        let _ = ctx.interpreter.stack.push(U256::from(1));
+        ctx.step(&table);
         assert_eq!(
-            *context.interpreter.memory.context_memory(),
+            *ctx.interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")
         );
 
         // Data copy (Size == 0)
         // mem_offset, offset, size
-        let _ = context.interpreter.stack.push(U256::from(0));
-        let _ = context.interpreter.stack.push(U256::from(37));
-        let _ = context.interpreter.stack.push(U256::from(1));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(0));
+        let _ = ctx.interpreter.stack.push(U256::from(37));
+        let _ = ctx.interpreter.stack.push(U256::from(1));
+        ctx.step(&table);
         assert_eq!(
             *interpreter.memory.context_memory(),
             bytes!("0000000000000000000000000000000000000000000000000000000000000001")

@@ -8,32 +8,24 @@ use primitives::U256;
 use super::context::InstructionContext;
 
 pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.host.effective_gas_price())
-    );
+    gas!(ctx.interpreter, gas::BASE);
+    push!(ctx.interpreter, U256::from(ctx.host.effective_gas_price()));
 }
 
-pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context.host.caller().into_word().into()
-    );
+pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(ctx: &mut InstructionContext<'_, H, WIRE>) {
+    gas!(ctx.interpreter, gas::BASE);
+    push!(ctx.interpreter, ctx.host.caller().into_word().into());
 }
 
 // EIP-4844: Shard Blob Transactions
 pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], index, context.interpreter);
+    check!(ctx.interpreter, CANCUN);
+    gas!(ctx.interpreter, gas::VERYLOW);
+    popn_top!([], index, ctx.interpreter);
     let i = as_usize_saturated!(index);
-    *index = context.host.blob_hash(i).unwrap_or_default();
+    *index = ctx.host.blob_hash(i).unwrap_or_default();
 }

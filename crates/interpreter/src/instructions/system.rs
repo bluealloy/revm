@@ -13,89 +13,77 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 use super::context::InstructionContext;
 
 pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    popn_top!([offset], top, context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, top);
-    gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
+    popn_top!([offset], top, ctx.interpreter);
+    let len = as_usize_or_fail!(ctx.interpreter, top);
+    gas_or_fail!(ctx.interpreter, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, from, len);
-        primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
+        let from = as_usize_or_fail!(ctx.interpreter, offset);
+        resize_memory!(ctx.interpreter, from, len);
+        primitives::keccak256(ctx.interpreter.memory.slice_len(from, len).as_ref())
     };
     *top = hash.into();
 }
 
 pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        context
-            .interpreter
-            .input
-            .target_address()
-            .into_word()
-            .into()
+        ctx.interpreter,
+        ctx.interpreter.input.target_address().into_word().into()
     );
 }
 
-pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
+pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(ctx: &mut InstructionContext<'_, H, WIRE>) {
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        context
-            .interpreter
-            .input
-            .caller_address()
-            .into_word()
-            .into()
+        ctx.interpreter,
+        ctx.interpreter.input.caller_address().into_word().into()
     );
 }
 
 pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        U256::from(context.interpreter.bytecode.bytecode_len())
+        ctx.interpreter,
+        U256::from(ctx.interpreter.bytecode.bytecode_len())
     );
 }
 
 pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    popn!([memory_offset, code_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    popn!([memory_offset, code_offset, len], ctx.interpreter);
+    let len = as_usize_or_fail!(ctx.interpreter, len);
+    let Some(memory_offset) = memory_resize(ctx.interpreter, memory_offset, len) else {
         return;
     };
     let code_offset = as_usize_saturated!(code_offset);
 
     // Note: This can't panic because we resized memory to fit.
-    context.interpreter.memory.set_data(
+    ctx.interpreter.memory.set_data(
         memory_offset,
         code_offset,
         len,
-        context.interpreter.bytecode.bytecode_slice(),
+        ctx.interpreter.bytecode.bytecode_slice(),
     );
 }
 
 pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::VERYLOW);
+    gas!(ctx.interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
-    popn_top!([], offset_ptr, context.interpreter);
+    popn_top!([], offset_ptr, ctx.interpreter);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
-    let input = context.interpreter.input.input();
+    let input = ctx.interpreter.input.input();
     let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
@@ -104,14 +92,14 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
-        match context.interpreter.input.input() {
+        match ctx.interpreter.input.input() {
             CallInput::Bytes(bytes) => {
                 unsafe {
                     ptr::copy_nonoverlapping(bytes.as_ptr().add(offset), word.as_mut_ptr(), count)
                 };
             }
             CallInput::SharedBuffer(range) => {
-                let input_slice = context.interpreter.memory.global_slice(range.clone());
+                let input_slice = ctx.interpreter.memory.global_slice(range.clone());
                 unsafe {
                     ptr::copy_nonoverlapping(
                         input_slice.as_ptr().add(offset),
@@ -126,41 +114,40 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        U256::from(context.interpreter.input.input().len())
+        ctx.interpreter,
+        U256::from(ctx.interpreter.input.input().len())
     );
 }
 
 pub fn callvalue<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.interpreter.input.call_value());
+    gas!(ctx.interpreter, gas::BASE);
+    push!(ctx.interpreter, ctx.interpreter.input.call_value());
 }
 
 pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    popn!([memory_offset, data_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    popn!([memory_offset, data_offset, len], ctx.interpreter);
+    let len = as_usize_or_fail!(ctx.interpreter, len);
+    let Some(memory_offset) = memory_resize(ctx.interpreter, memory_offset, len) else {
         return;
     };
 
     let data_offset = as_usize_saturated!(data_offset);
-    match context.interpreter.input.input() {
+    match ctx.interpreter.input.input() {
         CallInput::Bytes(bytes) => {
-            context
-                .interpreter
+            ctx.interpreter
                 .memory
                 .set_data(memory_offset, data_offset, len, bytes.as_ref());
         }
         CallInput::SharedBuffer(range) => {
-            context.interpreter.memory.set_data_from_global(
+            ctx.interpreter.memory.set_data_from_global(
                 memory_offset,
                 data_offset,
                 len,
@@ -172,63 +159,62 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    check!(context.interpreter, BYZANTIUM);
-    gas!(context.interpreter, gas::BASE);
+    check!(ctx.interpreter, BYZANTIUM);
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        U256::from(context.interpreter.return_data.buffer().len())
+        ctx.interpreter,
+        U256::from(ctx.interpreter.return_data.buffer().len())
     );
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    check!(context.interpreter, BYZANTIUM);
-    popn!([memory_offset, offset, len], context.interpreter);
+    check!(ctx.interpreter, BYZANTIUM);
+    popn!([memory_offset, offset, len], ctx.interpreter);
 
-    let len = as_usize_or_fail!(context.interpreter, len);
+    let len = as_usize_or_fail!(ctx.interpreter, len);
     let data_offset = as_usize_saturated!(offset);
 
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     // This behavior is changed in EOF.
     let data_end = data_offset.saturating_add(len);
-    if data_end > context.interpreter.return_data.buffer().len()
-        && !context.interpreter.runtime_flag.is_eof()
+    if data_end > ctx.interpreter.return_data.buffer().len()
+        && !ctx.interpreter.runtime_flag.is_eof()
     {
-        context
-            .interpreter
+        ctx.interpreter
             .control
             .set_instruction_result(InstructionResult::OutOfOffset);
         return;
     }
 
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    let Some(memory_offset) = memory_resize(ctx.interpreter, memory_offset, len) else {
         return;
     };
 
     // Note: This can't panic because we resized memory to fit.
-    context.interpreter.memory.set_data(
+    ctx.interpreter.memory.set_data(
         memory_offset,
         data_offset,
         len,
-        context.interpreter.return_data.buffer(),
+        ctx.interpreter.return_data.buffer(),
     );
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
 pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    ctx: &mut InstructionContext<'_, H, WIRE>,
 ) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], offset, context.interpreter);
+    require_eof!(ctx.interpreter);
+    gas!(ctx.interpreter, gas::VERYLOW);
+    popn_top!([], offset, ctx.interpreter);
     let offset_usize = as_usize_saturated!(offset);
 
     let mut output = [0u8; 32];
-    if let Some(available) = context
+    if let Some(available) = ctx
         .interpreter
         .return_data
         .buffer()
@@ -237,20 +223,18 @@ pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     {
         let copy_len = available.min(32);
         output[..copy_len].copy_from_slice(
-            &context.interpreter.return_data.buffer()[offset_usize..offset_usize + copy_len],
+            &ctx.interpreter.return_data.buffer()[offset_usize..offset_usize + copy_len],
         );
     }
 
     *offset = B256::from(output).into();
 }
 
-pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
+pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(ctx: &mut InstructionContext<'_, H, WIRE>) {
+    gas!(ctx.interpreter, gas::BASE);
     push!(
-        context.interpreter,
-        U256::from(context.interpreter.control.gas().remaining())
+        ctx.interpreter,
+        U256::from(ctx.interpreter.control.gas().remaining())
     );
 }
 
@@ -297,55 +281,55 @@ mod test {
             "000000000000000400000000000000030000000000000002000000000000000100"
         ));
 
-        let mut context = InstructionContext {
+        let mut ctx = InstructionContext {
             interpreter: &mut interpreter,
             host: &mut host,
         };
 
-        context.step(&table);
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![U256::from_limbs([0x01, 0x02, 0x03, 0x04])]
         );
 
-        let _ = context.interpreter.stack.pop();
-        let _ = context.interpreter.stack.push(U256::from(1));
+        let _ = ctx.interpreter.stack.pop();
+        let _ = ctx.interpreter.stack.push(U256::from(1));
 
-        context.step(&table);
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![U256::from_limbs([0x0100, 0x0200, 0x0300, 0x0400])]
         );
 
-        let _ = context.interpreter.stack.pop();
-        let _ = context.interpreter.stack.push(U256::from(32));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.pop();
+        let _ = ctx.interpreter.stack.push(U256::from(32));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = context.interpreter.stack.pop();
-        let _ = context
+        let _ = ctx.interpreter.stack.pop();
+        let _ = ctx
             .interpreter
             .stack
-            .push(U256::from(context.interpreter.return_data.buffer().len()));
-        context.step(&table);
+            .push(U256::from(ctx.interpreter.return_data.buffer().len()));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            ctx.interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
     }
@@ -376,87 +360,87 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 
-        let mut context = InstructionContext {
+        let mut ctx = InstructionContext {
             interpreter: &mut interpreter,
             host: &mut host,
         };
 
-        context.step(&table);
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(0..32),
-            context.interpreter.return_data.buffer()[0..32]
+            *ctx.interpreter.memory.slice(0..32),
+            ctx.interpreter.return_data.buffer()[0..32]
         );
 
         // Copying with partial out-of-bounds (should zero pad)
-        let _ = context.interpreter.stack.push(U256::from(64));
-        let _ = context.interpreter.stack.push(U256::from(16));
-        let _ = context.interpreter.stack.push(U256::from(64));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(64));
+        let _ = ctx.interpreter.stack.push(U256::from(16));
+        let _ = ctx.interpreter.stack.push(U256::from(64));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(64..80),
-            context.interpreter.return_data.buffer()[16..32]
+            *ctx.interpreter.memory.slice(64..80),
+            ctx.interpreter.return_data.buffer()[16..32]
         );
-        assert_eq!(*context.interpreter.memory.slice(80..128), [0u8; 48]);
+        assert_eq!(*ctx.interpreter.memory.slice(80..128), [0u8; 48]);
 
         // Completely out-of-bounds (should be all zeros)
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::from(96));
-        let _ = context.interpreter.stack.push(U256::from(128));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(32));
+        let _ = ctx.interpreter.stack.push(U256::from(96));
+        let _ = ctx.interpreter.stack.push(U256::from(128));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(128..160), [0u8; 32]);
+        assert_eq!(*ctx.interpreter.memory.slice(128..160), [0u8; 32]);
 
         // Large offset
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::MAX);
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(32));
+        let _ = ctx.interpreter.stack.push(U256::MAX);
+        let _ = ctx.interpreter.stack.push(U256::from(0));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*ctx.interpreter.memory.slice(0..32), [0u8; 32]);
 
         // Offset just before the boundary of the return data buffer size
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::from(
-            context.interpreter.return_data.buffer().len() - 32,
-        ));
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+        let _ = ctx.interpreter.stack.push(U256::from(32));
+        let _ = ctx
+            .interpreter
+            .stack
+            .push(U256::from(ctx.interpreter.return_data.buffer().len() - 32));
+        let _ = ctx.interpreter.stack.push(U256::from(0));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(0..32),
-            context.interpreter.return_data.buffer()
-                [context.interpreter.return_data.buffer().len() - 32..]
+            *ctx.interpreter.memory.slice(0..32),
+            ctx.interpreter.return_data.buffer()[ctx.interpreter.return_data.buffer().len() - 32..]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context
+        let _ = ctx.interpreter.stack.push(U256::from(32));
+        let _ = ctx
             .interpreter
             .stack
-            .push(U256::from(context.interpreter.return_data.buffer().len()));
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+            .push(U256::from(ctx.interpreter.return_data.buffer().len()));
+        let _ = ctx.interpreter.stack.push(U256::from(0));
+        ctx.step(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            ctx.interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*ctx.interpreter.memory.slice(0..32), [0u8; 32]);
     }
 }
