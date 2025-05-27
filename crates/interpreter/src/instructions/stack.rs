@@ -2,13 +2,12 @@ use crate::{
     gas,
     instructions::utility::cast_slice_to_u256,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
-    Host,
 };
 use primitives::U256;
 
 use crate::InstructionContext;
 
-pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
     popn!([_i], context.interpreter);
@@ -17,13 +16,13 @@ pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, SHANGHAI);
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, U256::ZERO);
 }
 
-pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -37,7 +36,7 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     context.interpreter.bytecode.relative_jump(N as isize);
 }
 
-pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -49,7 +48,7 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -62,7 +61,7 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
@@ -75,7 +74,7 @@ pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     context.interpreter.bytecode.relative_jump(1);
 }
 
-pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
@@ -88,9 +87,7 @@ pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     context.interpreter.bytecode.relative_jump(1);
 }
 
-pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();

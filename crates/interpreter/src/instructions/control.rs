@@ -5,13 +5,13 @@ use crate::{
         EofCodeInfo, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag,
         StackTr, SubRoutineStack,
     },
-    Host, InstructionResult, InterpreterAction, InterpreterResult,
+    InstructionResult, InterpreterAction, InterpreterResult,
 };
 use primitives::{Bytes, U256};
 
 use crate::InstructionContext;
 
-pub fn rjump<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn rjump<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::BASE);
     let offset = context.interpreter.bytecode.read_i16() as isize;
@@ -20,7 +20,7 @@ pub fn rjump<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     context.interpreter.bytecode.relative_jump(offset + 2);
 }
 
-pub fn rjumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn rjumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
     popn!([condition], context.interpreter);
@@ -34,7 +34,7 @@ pub fn rjumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     context.interpreter.bytecode.relative_jump(offset);
 }
 
-pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn rjumpv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
     popn!([case], context.interpreter);
@@ -51,13 +51,13 @@ pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     context.interpreter.bytecode.relative_jump(offset);
 }
 
-pub fn jump<ITy: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, ITy>) {
+pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
     gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
 
-pub fn jumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
 
@@ -79,13 +79,13 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
     interpreter.bytecode.absolute_jump(target);
 }
 
-pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::LOW);
 
@@ -126,7 +126,7 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     context.interpreter.bytecode.absolute_jump(pc);
 }
 
-pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn retf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::RETF_GAS);
 
@@ -137,7 +137,7 @@ pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     context.interpreter.bytecode.absolute_jump(jump);
 }
 
-pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::LOW);
 
@@ -167,7 +167,7 @@ pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     context.interpreter.bytecode.absolute_jump(pc);
 }
 
-pub fn pc<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
@@ -206,18 +206,18 @@ fn return_inner(
     );
 }
 
-pub fn ret<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     return_inner(context.interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, BYZANTIUM);
     return_inner(context.interpreter, InstructionResult::Revert);
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     context
         .interpreter
         .control
@@ -225,7 +225,7 @@ pub fn stop<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     context
         .interpreter
         .control
@@ -233,7 +233,7 @@ pub fn invalid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     context
         .interpreter
         .control

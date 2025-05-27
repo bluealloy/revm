@@ -1,16 +1,13 @@
 use crate::{
     gas,
     interpreter_types::{InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
-    Host,
 };
 use core::cmp::max;
 use primitives::U256;
 
 use crate::InstructionContext;
 
-pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
@@ -19,9 +16,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
 }
 
-pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
@@ -32,9 +27,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .set(offset, &value.to_be_bytes::<32>());
 }
 
-pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
@@ -42,9 +35,7 @@ pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context.interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
-pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -53,9 +44,7 @@ pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);
 

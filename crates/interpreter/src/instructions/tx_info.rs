@@ -17,9 +17,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,

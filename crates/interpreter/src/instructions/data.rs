@@ -3,15 +3,12 @@ use crate::{
     interpreter_types::{
         EofData, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr,
     },
-    Host,
 };
 use primitives::{B256, U256};
 
 use crate::InstructionContext;
 
-pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn data_load<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, DATA_LOAD_GAS);
     popn_top!([], offset, context.interpreter);
@@ -26,9 +23,7 @@ pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn data_loadn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, VERYLOW);
     let offset = context.interpreter.bytecode.read_u16() as usize;
@@ -44,9 +39,7 @@ pub fn data_loadn<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context.interpreter.bytecode.relative_jump(2);
 }
 
-pub fn data_size<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn data_size<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, BASE);
 
@@ -56,9 +49,7 @@ pub fn data_size<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn data_copy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, VERYLOW);
     popn!([mem_offset, offset, size], context.interpreter);

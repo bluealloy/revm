@@ -322,7 +322,9 @@ pub fn pop_extcall_target_address(
     Some(Address::from_word(target_address))
 }
 
-pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(mut context: InstructionContext<'_, H, WIRE>) {
+pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     require_eof!(context.interpreter);
 
     // Pop target address

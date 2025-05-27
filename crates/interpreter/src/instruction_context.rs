@@ -1,4 +1,4 @@
-use crate::{interpreter_types::Jumps, Host, Interpreter, InterpreterTypes};
+use crate::{interpreter_types::Jumps, Interpreter, InterpreterTypes};
 
 use super::Instruction;
 
@@ -7,7 +7,7 @@ pub struct InstructionContext<'a, H: ?Sized, ITy: InterpreterTypes> {
     pub interpreter: &'a mut Interpreter<ITy>,
 }
 
-impl<H: Host + ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
+impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.

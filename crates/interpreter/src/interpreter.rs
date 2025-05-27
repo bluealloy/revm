@@ -144,11 +144,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 
     #[inline]
-    pub fn step<H: Host + ?Sized>(
-        &mut self,
-        instruction_table: &InstructionTable<IW, H>,
-        host: &mut H,
-    ) {
+    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
         let context = InstructionContext {
             interpreter: self,
             host,
@@ -167,7 +163,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
     /// Executes the interpreter until it returns or stops.
     #[inline]
-    pub fn run_plain<H: Host + ?Sized>(
+    pub fn run_plain<H: ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,

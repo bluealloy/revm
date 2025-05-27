@@ -5,16 +5,14 @@ use crate::{
         InputsTr, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
         StackTr,
     },
-    CallInput, Host, InstructionResult,
+    CallInput, InstructionResult,
 };
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
 use crate::InstructionContext;
 
-pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
     gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
@@ -28,7 +26,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *top = hash.into();
 }
 
-pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -41,7 +39,7 @@ pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
     );
 }
 
-pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -54,9 +52,7 @@ pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     );
 }
 
-pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -64,9 +60,7 @@ pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
@@ -83,9 +77,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
     popn_top!([], offset_ptr, context.interpreter);
@@ -121,9 +113,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *offset_ptr = word.into();
 }
 
-pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -131,16 +121,12 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn callvalue<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.interpreter.input.call_value());
 }
 
-pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
@@ -167,9 +153,7 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, BYZANTIUM);
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -179,9 +163,7 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, BYZANTIUM);
     popn!([memory_offset, offset, len], context.interpreter);
 
@@ -215,9 +197,7 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
-pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn returndataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], offset, context.interpreter);
@@ -240,7 +220,7 @@ pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *offset = B256::from(output).into();
 }
 
-pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,

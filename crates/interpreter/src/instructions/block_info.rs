@@ -8,9 +8,7 @@ use primitives::{hardfork::SpecId::*, U256};
 use crate::InstructionContext;
 
 /// EIP-1344: ChainID opcode
-pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, ISTANBUL);
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.host.chain_id());
@@ -65,9 +63,7 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, LONDON);
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.host.basefee());
