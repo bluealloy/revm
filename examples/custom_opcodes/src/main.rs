@@ -10,7 +10,7 @@ use revm::{
     interpreter::{
         interpreter::EthInterpreter,
         interpreter_types::{Immediates, Jumps},
-        Interpreter,
+        InstructionContext,
     },
     primitives::TxKind,
     state::Bytecode,
@@ -38,9 +38,9 @@ pub fn main() {
     // insert our custom opcode
     instructions.insert_instruction(
         MY_STATIC_JUMP,
-        |interpreter: &mut Interpreter<EthInterpreter>, _| {
-            let offset = interpreter.bytecode.read_i16();
-            interpreter.bytecode.relative_jump(offset as isize);
+        |ctx: InstructionContext<'_, _, EthInterpreter>| {
+            let offset = ctx.interpreter.bytecode.read_i16();
+            ctx.interpreter.bytecode.relative_jump(offset as isize);
         },
     );
 

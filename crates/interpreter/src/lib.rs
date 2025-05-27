@@ -12,6 +12,7 @@ mod macros;
 
 pub mod gas;
 pub mod host;
+pub mod instruction_context;
 mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
@@ -25,6 +26,7 @@ pub use context_interface::{
 };
 pub use gas::{Gas, InitialAndFloorGas};
 pub use host::Host;
+pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
