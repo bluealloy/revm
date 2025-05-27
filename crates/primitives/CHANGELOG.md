@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.2.0](https://github.com/bluealloy/revm/compare/revm-primitives-v19.1.0...revm-primitives-v19.2.0) - 2025-05-27
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [19.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v19.0.0...revm-primitives-v19.1.0) - 2025-05-22
 
 ### Added

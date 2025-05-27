@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v5.0.0...revm-inspector-v6.0.0) - 2025-05-27
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v4.1.0...revm-inspector-v5.0.0) - 2025-05-22
 
 ### Added

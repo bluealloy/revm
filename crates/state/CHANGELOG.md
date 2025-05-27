@@ -12,6 +12,12 @@ Dependency bump
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-state-v4.0.1...revm-state-v5.0.0) - 2025-05-27
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [4.0.1](https://github.com/bluealloy/revm/compare/revm-state-v4.0.0...revm-state-v4.0.1) - 2025-05-22
 
 ### Other

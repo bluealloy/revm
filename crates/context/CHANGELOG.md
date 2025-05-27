@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-context-v5.0.0...revm-context-v6.0.0) - 2025-05-27
+
+### Added
+
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-context-v4.1.0...revm-context-v5.0.0) - 2025-05-22
 
 ### Added
