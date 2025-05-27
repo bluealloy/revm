@@ -7,10 +7,10 @@ use crate::{
 use core::cmp::min;
 use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
@@ -40,7 +40,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
 pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
     gas!(context.interpreter, gas::LOW);
@@ -59,7 +59,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
@@ -84,7 +84,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1052: EXTCODEHASH opcode
 pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
@@ -108,7 +108,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!(
         [address, memory_offset, code_offset, len_u256],
@@ -147,7 +147,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
@@ -182,7 +182,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([], index, context.interpreter);
 
@@ -205,7 +205,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
 
@@ -259,7 +259,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
@@ -275,7 +275,7 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
@@ -288,7 +288,7 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn log<const N: usize, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+    context: InstructionContext<'_, H, impl InterpreterTypes>,
 ) {
     require_non_staticcall!(context.interpreter);
 
@@ -327,7 +327,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 }
 
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);

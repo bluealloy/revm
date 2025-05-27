@@ -19,8 +19,8 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    instructions::context::InstructionContext, interpreter_types::*, CallInput, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, CallInput, Gas,
+    Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
@@ -143,6 +143,28 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         }
     }
 
+    #[inline]
+    pub fn step<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) {
+        let context = InstructionContext {
+            interpreter: self,
+            host,
+        };
+        context.step(instruction_table);
+    }
+
+    #[inline]
+    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
+        let context = InstructionContext {
+            interpreter: self,
+            host: &mut DummyHost,
+        };
+        context.step(instruction_table);
+    }
+
     /// Executes the interpreter until it returns or stops.
     #[inline]
     pub fn run_plain<H: Host + ?Sized>(
@@ -152,12 +174,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         self.reset_control();
 
-        let mut context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-
-        while context.can_continue() {
+        while self.control.instruction_result().is_continue() {
+            let context = InstructionContext {
+                interpreter: self,
+                host,
+            };
             context.step(instruction_table);
         }
 

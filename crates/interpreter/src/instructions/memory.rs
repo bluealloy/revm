@@ -6,10 +6,10 @@ use crate::{
 use core::cmp::max;
 use primitives::U256;
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], top, context.interpreter);
@@ -20,7 +20,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -33,7 +33,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -43,7 +43,7 @@ pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -54,7 +54,7 @@ pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 // EIP-5656: MCOPY - Memory copying instruction
 pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);

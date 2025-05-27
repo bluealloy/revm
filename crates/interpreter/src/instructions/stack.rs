@@ -6,11 +6,9 @@ use crate::{
 };
 use primitives::U256;
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
-pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
     popn!([_i], context.interpreter);
@@ -19,16 +17,14 @@ pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, SHANGHAI);
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, U256::ZERO);
 }
 
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     push!(context.interpreter, U256::ZERO);
@@ -42,7 +38,7 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     if !context.interpreter.stack.dup(N) {
@@ -54,7 +50,7 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     assert!(N != 0);
@@ -66,9 +62,7 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
@@ -81,9 +75,7 @@ pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context.interpreter.bytecode.relative_jump(1);
 }
 
-pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
@@ -97,7 +89,7 @@ pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
@@ -115,10 +107,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 #[cfg(test)]
 mod test {
-
-    use crate::instructions::context::InstructionContext;
-    use crate::Interpreter;
-    use crate::{host::DummyHost, instruction_table, InstructionResult};
+    use crate::{instruction_table, InstructionResult, Interpreter};
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};
     use bytecode::Bytecode;
     use primitives::{Bytes, U256};
@@ -129,22 +118,16 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(bytecode);
 
         let table = instruction_table();
-        let mut host = DummyHost;
 
         interpreter.runtime_flag.is_eof = true;
         let _ = interpreter.stack.push(U256::from(10));
         let _ = interpreter.stack.push(U256::from(20));
 
-        let mut context = InstructionContext {
-            interpreter: &mut interpreter,
-            host: &mut host,
-        };
-
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.pop(), Ok(U256::from(20)));
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.pop(), Ok(U256::from(10)));
-        context.step(&table);
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.pop(), Ok(U256::from(20)));
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.pop(), Ok(U256::from(10)));
+        interpreter.step_dummy(&table);
         assert_eq!(
             interpreter.control.instruction_result,
             InstructionResult::StackOverflow
@@ -157,24 +140,18 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(bytecode);
 
         let table = instruction_table();
-        let mut host = DummyHost;
         interpreter.runtime_flag.is_eof = true;
 
         let _ = interpreter.stack.push(U256::from(10));
         let _ = interpreter.stack.push(U256::from(20));
         let _ = interpreter.stack.push(U256::from(0));
 
-        let mut context = InstructionContext {
-            interpreter: &mut interpreter,
-            host: &mut host,
-        };
-
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.peek(0), Ok(U256::from(20)));
-        assert_eq!(context.interpreter.stack.peek(1), Ok(U256::from(0)));
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.peek(0), Ok(U256::from(10)));
-        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(20)));
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.peek(0), Ok(U256::from(20)));
+        assert_eq!(interpreter.stack.peek(1), Ok(U256::from(0)));
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.peek(0), Ok(U256::from(10)));
+        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(20)));
     }
 
     #[test]
@@ -183,7 +160,6 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(bytecode);
 
         let table = instruction_table();
-        let mut host = DummyHost;
         interpreter.runtime_flag.is_eof = true;
 
         let _ = interpreter.stack.push(U256::from(1));
@@ -192,16 +168,11 @@ mod test {
         let _ = interpreter.stack.push(U256::from(15));
         let _ = interpreter.stack.push(U256::from(0));
 
-        let mut context = InstructionContext {
-            interpreter: &mut interpreter,
-            host: &mut host,
-        };
-
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.peek(1), Ok(U256::from(10)));
-        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(15)));
-        context.step(&table);
-        assert_eq!(context.interpreter.stack.peek(2), Ok(U256::from(1)));
-        assert_eq!(context.interpreter.stack.peek(4), Ok(U256::from(15)));
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.peek(1), Ok(U256::from(10)));
+        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(15)));
+        interpreter.step_dummy(&table);
+        assert_eq!(interpreter.stack.peek(2), Ok(U256::from(1)));
+        assert_eq!(interpreter.stack.peek(4), Ok(U256::from(15)));
     }
 }

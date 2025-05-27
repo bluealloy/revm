@@ -5,10 +5,10 @@ use crate::{
 };
 use primitives::U256;
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -18,7 +18,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -29,7 +29,7 @@ pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 // EIP-4844: Shard Blob Transactions
 pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     gas!(context.interpreter, gas::VERYLOW);

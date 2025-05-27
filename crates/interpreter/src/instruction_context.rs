@@ -1,7 +1,4 @@
-use crate::{
-    interpreter_types::{Jumps, LoopControl},
-    Host, Interpreter, InterpreterTypes,
-};
+use crate::{interpreter_types::Jumps, Host, Interpreter, InterpreterTypes};
 
 use super::Instruction;
 
@@ -15,7 +12,7 @@ impl<H: Host + ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step(&mut self, instruction_table: &[Instruction<ITy, H>; 256]) {
+    pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
         // Get current opcode.
         let opcode = self.interpreter.bytecode.opcode();
 
@@ -26,10 +23,5 @@ impl<H: Host + ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
 
         // Execute instruction.
         instruction_table[opcode as usize](self)
-    }
-
-    #[inline]
-    pub(crate) fn can_continue(&mut self) -> bool {
-        self.interpreter.control.instruction_result().is_continue()
     }
 }

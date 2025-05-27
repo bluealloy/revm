@@ -1,41 +1,30 @@
-use super::{
-    context::InstructionContext,
-    i256::{i256_div, i256_mod},
-};
+use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
     interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
-    Host,
+    Host, InstructionContext,
 };
 use primitives::U256;
 
-pub fn add<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn add<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub fn mul<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn mul<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub fn sub<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn sub<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_sub(*op2);
 }
 
-pub fn div<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn div<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
@@ -43,17 +32,13 @@ pub fn div<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn sdiv<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn sdiv<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_div(op1, *op2);
 }
 
-pub fn rem<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn rem<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
@@ -61,33 +46,25 @@ pub fn rem<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn smod<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn smod<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_mod(op1, *op2)
 }
 
-pub fn addmod<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn addmod<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
     *op3 = op1.add_mod(op2, *op3)
 }
 
-pub fn mulmod<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn mulmod<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn exp<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn exp<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     let spec_id = context.interpreter.runtime_flag.spec_id();
     popn_top!([op1], op2, context.interpreter);
     gas_or_fail!(context.interpreter, gas::exp_cost(spec_id, *op2));
@@ -124,7 +101,7 @@ pub fn exp<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
 pub fn signextend<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([ext], x, context.interpreter);

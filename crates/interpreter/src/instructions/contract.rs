@@ -20,11 +20,11 @@ use core::cmp::max;
 use primitives::{eof::new_eof_address, hardfork::SpecId, Address, Bytes, B256, U256};
 use std::boxed::Box;
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 /// EOF Create instruction
 pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
     require_non_staticcall!(context.interpreter);
@@ -93,7 +93,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// Instruction to create a new EOF contract from a transaction initcode.
 pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     // TODO(EOF) only accepted in EOF.
     require_eof!(context.interpreter);
@@ -160,7 +160,7 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn return_contract<H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+    context: InstructionContext<'_, H, impl InterpreterTypes>,
 ) {
     if !context.interpreter.runtime_flag.is_eof_init() {
         context
@@ -251,6 +251,7 @@ pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Op
     ))
 }
 
+#[inline]
 pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
     target: Address,
@@ -321,9 +322,7 @@ pub fn pop_extcall_target_address(
     Some(Address::from_word(target_address))
 }
 
-pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(mut context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
 
     // Pop target address
@@ -346,7 +345,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     }
 
-    let Some(gas_limit) = extcall_gas_calc(context, target_address, has_transfer) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, has_transfer) else {
         return;
     };
 
@@ -369,7 +368,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
 
@@ -383,7 +382,7 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(gas_limit) = extcall_gas_calc(context, target_address, false) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false) else {
         return;
     };
 
@@ -406,7 +405,7 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
 
@@ -420,7 +419,7 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(gas_limit) = extcall_gas_calc(context, target_address, false) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false) else {
         return;
     };
 
@@ -443,7 +442,7 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
 
@@ -524,9 +523,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     );
 }
 
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
@@ -589,7 +586,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = Address::from_word(B256::from(to));
@@ -644,7 +641,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
@@ -692,7 +689,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);

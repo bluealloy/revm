@@ -10,10 +10,10 @@ use crate::{
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
@@ -28,9 +28,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *top = hash.into();
 }
 
-pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -43,9 +41,7 @@ pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
-pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -59,7 +55,7 @@ pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -69,7 +65,7 @@ pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -88,7 +84,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
@@ -126,7 +122,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -136,14 +132,14 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn callvalue<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.interpreter.input.call_value());
 }
 
 pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -172,7 +168,7 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     gas!(context.interpreter, gas::BASE);
@@ -184,7 +180,7 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([memory_offset, offset, len], context.interpreter);
@@ -220,7 +216,7 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
 pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
@@ -244,9 +240,7 @@ pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *offset = B256::from(output).into();
 }
 
-pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
-) {
+pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -274,7 +268,7 @@ pub fn memory_resize(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{host::DummyHost, instruction_table, InstructionResult};
+    use crate::{instruction_table, InstructionResult};
     use bytecode::{opcode::RETURNDATACOPY, opcode::RETURNDATALOAD, Bytecode};
     use primitives::{bytes, Bytes};
 
@@ -289,7 +283,6 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(bytecode);
 
         let table = instruction_table();
-        let mut host = DummyHost;
         interpreter.runtime_flag.is_eof = true;
 
         let _ = interpreter.stack.push(U256::from(0));
@@ -297,55 +290,49 @@ mod test {
             "000000000000000400000000000000030000000000000002000000000000000100"
         ));
 
-        let mut context = InstructionContext {
-            interpreter: &mut interpreter,
-            host: &mut host,
-        };
-
-        context.step(&table);
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.stack.data(),
+            interpreter.stack.data(),
             &vec![U256::from_limbs([0x01, 0x02, 0x03, 0x04])]
         );
 
-        let _ = context.interpreter.stack.pop();
-        let _ = context.interpreter.stack.push(U256::from(1));
+        let _ = interpreter.stack.pop();
+        let _ = interpreter.stack.push(U256::from(1));
 
-        context.step(&table);
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            interpreter.stack.data(),
             &vec![U256::from_limbs([0x0100, 0x0200, 0x0300, 0x0400])]
         );
 
-        let _ = context.interpreter.stack.pop();
-        let _ = context.interpreter.stack.push(U256::from(32));
-        context.step(&table);
+        let _ = interpreter.stack.pop();
+        let _ = interpreter.stack.push(U256::from(32));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = context.interpreter.stack.pop();
-        let _ = context
-            .interpreter
+        let _ = interpreter.stack.pop();
+        let _ = interpreter
             .stack
-            .push(U256::from(context.interpreter.return_data.buffer().len()));
-        context.step(&table);
+            .push(U256::from(interpreter.return_data.buffer().len()));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            context.interpreter.stack.data(),
+            interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
     }
@@ -363,7 +350,6 @@ mod test {
         let mut interpreter = Interpreter::default().with_bytecode(bytecode);
 
         let table = instruction_table();
-        let mut host = DummyHost;
         interpreter.runtime_flag.is_eof = true;
 
         interpreter.return_data.set_buffer(bytes!(
@@ -376,87 +362,80 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
         let _ = interpreter.stack.push(U256::from(0));
 
-        let mut context = InstructionContext {
-            interpreter: &mut interpreter,
-            host: &mut host,
-        };
-
-        context.step(&table);
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(0..32),
-            context.interpreter.return_data.buffer()[0..32]
+            *interpreter.memory.slice(0..32),
+            interpreter.return_data.buffer()[0..32]
         );
 
         // Copying with partial out-of-bounds (should zero pad)
-        let _ = context.interpreter.stack.push(U256::from(64));
-        let _ = context.interpreter.stack.push(U256::from(16));
-        let _ = context.interpreter.stack.push(U256::from(64));
-        context.step(&table);
+        let _ = interpreter.stack.push(U256::from(64));
+        let _ = interpreter.stack.push(U256::from(16));
+        let _ = interpreter.stack.push(U256::from(64));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(64..80),
-            context.interpreter.return_data.buffer()[16..32]
+            *interpreter.memory.slice(64..80),
+            interpreter.return_data.buffer()[16..32]
         );
-        assert_eq!(*context.interpreter.memory.slice(80..128), [0u8; 48]);
+        assert_eq!(*interpreter.memory.slice(80..128), [0u8; 48]);
 
         // Completely out-of-bounds (should be all zeros)
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::from(96));
-        let _ = context.interpreter.stack.push(U256::from(128));
-        context.step(&table);
+        let _ = interpreter.stack.push(U256::from(32));
+        let _ = interpreter.stack.push(U256::from(96));
+        let _ = interpreter.stack.push(U256::from(128));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(128..160), [0u8; 32]);
+        assert_eq!(*interpreter.memory.slice(128..160), [0u8; 32]);
 
         // Large offset
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::MAX);
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+        let _ = interpreter.stack.push(U256::from(32));
+        let _ = interpreter.stack.push(U256::MAX);
+        let _ = interpreter.stack.push(U256::from(0));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
 
         // Offset just before the boundary of the return data buffer size
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context.interpreter.stack.push(U256::from(
-            context.interpreter.return_data.buffer().len() - 32,
-        ));
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+        let _ = interpreter.stack.push(U256::from(32));
+        let _ = interpreter
+            .stack
+            .push(U256::from(interpreter.return_data.buffer().len() - 32));
+        let _ = interpreter.stack.push(U256::from(0));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
         assert_eq!(
-            *context.interpreter.memory.slice(0..32),
-            context.interpreter.return_data.buffer()
-                [context.interpreter.return_data.buffer().len() - 32..]
+            *interpreter.memory.slice(0..32),
+            interpreter.return_data.buffer()[interpreter.return_data.buffer().len() - 32..]
         );
 
         // Offset right at the boundary of the return data buffer size
-        let _ = context.interpreter.stack.push(U256::from(32));
-        let _ = context
-            .interpreter
+        let _ = interpreter.stack.push(U256::from(32));
+        let _ = interpreter
             .stack
-            .push(U256::from(context.interpreter.return_data.buffer().len()));
-        let _ = context.interpreter.stack.push(U256::from(0));
-        context.step(&table);
+            .push(U256::from(interpreter.return_data.buffer().len()));
+        let _ = interpreter.stack.push(U256::from(0));
+        interpreter.step_dummy(&table);
         assert_eq!(
-            context.interpreter.control.instruction_result,
+            interpreter.control.instruction_result,
             InstructionResult::Continue
         );
-        assert_eq!(*context.interpreter.memory.slice(0..32), [0u8; 32]);
+        assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
     }
 }

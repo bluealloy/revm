@@ -5,11 +5,11 @@ use crate::{
 };
 use primitives::{hardfork::SpecId::*, U256};
 
-use super::context::InstructionContext;
+use crate::InstructionContext;
 
 /// EIP-1344: ChainID opcode
 pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
     gas!(context.interpreter, gas::BASE);
@@ -17,7 +17,7 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -27,21 +27,21 @@ pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.host.timestamp());
 }
 
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, U256::from(context.host.block_number()));
 }
 
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     if context
@@ -58,7 +58,7 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.host.gas_limit());
@@ -66,7 +66,7 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-3198: BASEFEE opcode
 pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, LONDON);
     gas!(context.interpreter, gas::BASE);
@@ -75,7 +75,7 @@ pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-7516: BLOBBASEFEE opcode
 pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, WIRE>,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     gas!(context.interpreter, gas::BASE);
