@@ -9,9 +9,7 @@ use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HIST
 
 use crate::InstructionContext;
 
-pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
     let Some(balance) = context.host.balance(address) else {
@@ -152,14 +150,15 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
 
-    let requested_number = as_u64_saturated!(number);
-
+    let requested_number = *number;
     let block_number = context.host.block_number();
 
     let Some(diff) = block_number.checked_sub(requested_number) else {
         *number = U256::ZERO;
         return;
     };
+
+    let diff = as_u64_saturated!(diff);
 
     // blockhash should push zero if number is same as current block number.
     if diff == 0 {
@@ -168,7 +167,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
-        let Some(hash) = context.host.block_hash(requested_number) else {
+        let Some(hash) = context.host.block_hash(as_u64_saturated!(requested_number)) else {
             context
                 .interpreter
                 .control
@@ -181,9 +180,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], index, context.interpreter);
 
     let Some(value) = context
@@ -204,9 +201,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *index = value.data;
 }
 
-pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_non_staticcall!(context.interpreter);
 
     popn!([index, value], context.interpreter);
@@ -258,9 +253,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
     gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
@@ -274,9 +267,7 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
 

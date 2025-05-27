@@ -143,7 +143,7 @@ mod tests {
         let mut my_evm = Context::mainnet()
             .with_db(db)
             // block with number 1 will set storage at slot 0.
-            .modify_block_chained(|b| b.number = 1)
+            .modify_block_chained(|b| b.number = U256::ONE)
             .build_mainnet();
         let output = my_evm
             .transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into())

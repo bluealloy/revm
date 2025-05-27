@@ -704,7 +704,7 @@ mod tests {
 
     #[test]
     fn test_reload_l1_block_info_isthmus() {
-        const BLOCK_NUM: u64 = 100;
+        const BLOCK_NUM: U256 = uint!(100_U256);
         const L1_BASE_FEE: U256 = uint!(1_U256);
         const L1_BLOB_BASE_FEE: U256 = uint!(2_U256);
         const L1_BASE_FEE_SCALAR: u64 = 3;
@@ -745,7 +745,7 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
-                l2_block: BLOCK_NUM + 1, // ahead by one block
+                l2_block: BLOCK_NUM + U256::from(1), // ahead by one block
                 ..Default::default()
             })
             .with_block(BlockEnv {

@@ -10,7 +10,7 @@ use revm::{
     database::{AlloyDB, CacheDB, StateBuilder},
     database_interface::WrapDatabaseAsync,
     inspector::{inspectors::TracerEip3155, InspectEvm},
-    primitives::TxKind,
+    primitives::{TxKind, U256},
     Context, MainBuilder, MainContext,
 };
 use std::fs::create_dir_all;
@@ -78,9 +78,9 @@ async fn main() -> anyhow::Result<()> {
     let ctx = Context::mainnet()
         .with_db(&mut state)
         .modify_block_chained(|b| {
-            b.number = block.header.number;
+            b.number = U256::from(block.header.number);
             b.beneficiary = block.header.beneficiary;
-            b.timestamp = block.header.timestamp;
+            b.timestamp = U256::from(block.header.timestamp);
 
             b.difficulty = block.header.difficulty;
             b.gas_limit = block.header.gas_limit;

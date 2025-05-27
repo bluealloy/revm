@@ -26,7 +26,7 @@ pub trait Host {
     /// Block prevrandao, calls ContextTr::block().prevrandao()
     fn prevrandao(&self) -> Option<U256>;
     /// Block number, calls ContextTr::block().number()
-    fn block_number(&self) -> u64;
+    fn block_number(&self) -> U256;
     /// Block timestamp, calls ContextTr::block().timestamp()
     fn timestamp(&self) -> U256;
     /// Block beneficiary, calls ContextTr::block().beneficiary()
@@ -113,7 +113,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.block().prevrandao().map(|r| r.into_u256())
     }
 
-    fn block_number(&self) -> u64 {
+    fn block_number(&self) -> U256 {
         self.block().number()
     }
 
@@ -295,8 +295,8 @@ impl Host for DummyHost {
         None
     }
 
-    fn block_number(&self) -> u64 {
-        0
+    fn block_number(&self) -> U256 {
+        U256::ZERO
     }
 
     fn timestamp(&self) -> U256 {
