@@ -6,7 +6,11 @@ use crate::{
     utils::{read_i16, read_u16},
 };
 use primitives::{
-    constants::{MAX_INITCODE_SIZE, STACK_LIMIT},
+    constants::{
+        STACK_LIMIT,
+    },
+    eip7907::{MAX_INITCODE_SIZE},
+
     Bytes,
 };
 

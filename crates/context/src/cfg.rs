@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
+use primitives::{eip7907::MAX_CODE_SIZE, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,7 +20,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// Useful to increase this because of tests.
     ///
-    /// By default it is `0x6000` (~25kb).
+    /// By default it is `0x40000` (~262kb).
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
