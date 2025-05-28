@@ -1,6 +1,6 @@
 //! This module contains [`BlockEnv`] and it implements [`Block`] trait.
 use context_interface::block::{BlobExcessGasAndPrice, Block};
-use primitives::{Address, B256, U256};
+use primitives::{eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, Address, B256, U256};
 
 /// The block environment
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -47,9 +47,15 @@ pub struct BlockEnv {
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobExcessGasAndPrice`].
-    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64, is_prague: bool) {
-        self.blob_excess_gas_and_price =
-            Some(BlobExcessGasAndPrice::new(excess_blob_gas, is_prague));
+    pub fn set_blob_excess_gas_and_price(
+        &mut self,
+        excess_blob_gas: u64,
+        base_fee_update_fraction: u64,
+    ) {
+        self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(
+            excess_blob_gas,
+            base_fee_update_fraction,
+        ));
     }
 }
 
@@ -105,7 +111,10 @@ impl Default for BlockEnv {
             basefee: 0,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::ZERO),
-            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0, false)),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(
+                0,
+                BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE,
+            )),
         }
     }
 }

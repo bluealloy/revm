@@ -324,7 +324,7 @@ pub fn execute_test_suite(
             if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
                 block.set_blob_excess_gas_and_price(
                     current_excess_blob_gas.to(),
-                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
+                    cfg.blob_base_fee_update_fraction(),
                 );
             } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
                 unit.env.parent_blob_gas_used,
@@ -339,7 +339,7 @@ pub fn execute_test_suite(
                             .map(|i| i.to())
                             .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
                     ),
-                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
+                    cfg.blob_base_fee_update_fraction(),
                 );
             }
 
