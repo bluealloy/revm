@@ -107,8 +107,8 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 mod tests {
     use super::*;
     use primitives::eip4844::{
-        self, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE,
-        GAS_PER_BLOB, TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
+        self, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
+        TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
     };
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
@@ -171,7 +171,7 @@ mod tests {
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L60
     #[test]
-    fn test_calc_blob_fee() {
+    fn test_calc_blob_fee_cancun() {
         let blob_fee_vectors = &[
             (0, 1),
             (2314057, 1),
@@ -188,7 +188,7 @@ mod tests {
         ];
 
         for &(excess, expected) in blob_fee_vectors {
-            let actual = calc_blob_gasprice(excess, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE);
+            let actual = calc_blob_gasprice(excess, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN);
             assert_eq!(actual, expected, "test: {excess}");
         }
     }
