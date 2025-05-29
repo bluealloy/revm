@@ -546,7 +546,6 @@ where
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
             InterpreterAction::Return(result) => result,
-            InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
         };
 
         // Handle return from frame

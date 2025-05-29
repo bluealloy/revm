@@ -32,16 +32,13 @@ impl AsMut<Self> for FrameInput {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// New frame
     NewFrame(FrameInput),
     /// Interpreter finished execution.
     Return(InterpreterResult),
-    /// No action
-    #[default]
-    None,
 }
 
 impl InterpreterAction {
@@ -58,16 +55,6 @@ impl InterpreterAction {
     /// Returns `true` if action is return.
     pub fn is_return(&self) -> bool {
         matches!(self, InterpreterAction::Return { .. })
-    }
-
-    /// Returns `true` if action is none.
-    pub fn is_none(&self) -> bool {
-        matches!(self, InterpreterAction::None)
-    }
-
-    /// Returns `true` if action is some.
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
     }
 
     /// Returns [`InterpreterResult`] if action is return.
