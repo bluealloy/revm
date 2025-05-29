@@ -33,6 +33,14 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// If this config is not set, the check for max blobs will be skipped.
     pub blob_max_count: Option<u64>,
+    /// Blob base fee update fraction. EIP-4844 Blob base fee update fraction.
+    ///
+    /// If this config is not set, the blob base fee update fraction will be set to the default value.
+    /// See also [CfgEnv::blob_base_fee_update_fraction].
+    ///
+    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
+    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
+    pub blob_base_fee_update_fraction: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -79,6 +87,25 @@ impl CfgEnv {
     }
 }
 
+impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
+    /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
+    ///
+    /// If this field is not set, return the default value for the spec.
+    ///
+    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
+    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
+    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
+        self.blob_base_fee_update_fraction.unwrap_or_else(|| {
+            let spec: SpecId = self.spec.into();
+            if spec.is_enabled_in(SpecId::PRAGUE) {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
+            } else {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+            }
+        })
+    }
+}
+
 impl<SPEC> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
@@ -87,7 +114,8 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_code_size: None,
             spec,
             disable_nonce_check: false,
-            blob_max_count: None, //vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
+            blob_max_count: None,
+            blob_base_fee_update_fraction: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -115,6 +143,7 @@ impl<SPEC> CfgEnv<SPEC> {
             spec,
             disable_nonce_check: self.disable_nonce_check,
             blob_max_count: self.blob_max_count,
+            blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]

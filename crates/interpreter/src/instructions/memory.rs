@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
 };
 use core::cmp::max;
 use primitives::U256;

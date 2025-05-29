@@ -1,4 +1,4 @@
-use primitives::eip4844::{self, MIN_BLOB_GASPRICE};
+use primitives::eip4844::MIN_BLOB_GASPRICE;
 
 /// Structure holding block blob excess gas and it calculates blob fee
 ///
@@ -18,8 +18,8 @@ pub struct BlobExcessGasAndPrice {
 
 impl BlobExcessGasAndPrice {
     /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
-    pub fn new(excess_blob_gas: u64, is_prague: bool) -> Self {
-        let blob_gasprice = calc_blob_gasprice(excess_blob_gas, is_prague);
+    pub fn new(excess_blob_gas: u64, blob_base_fee_update_fraction: u64) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas, blob_base_fee_update_fraction);
         Self {
             excess_blob_gas,
             blob_gasprice,
@@ -34,7 +34,7 @@ impl BlobExcessGasAndPrice {
         parent_excess_blob_gas: u64,
         parent_blob_gas_used: u64,
         parent_target_blob_gas_per_block: u64,
-        is_prague: bool,
+        blob_base_fee_update_fraction: u64,
     ) -> Self {
         Self::new(
             calc_excess_blob_gas(
@@ -42,7 +42,7 @@ impl BlobExcessGasAndPrice {
                 parent_blob_gas_used,
                 parent_target_blob_gas_per_block,
             ),
-            is_prague,
+            blob_base_fee_update_fraction,
         )
     }
 }
@@ -65,15 +65,11 @@ pub fn calc_excess_blob_gas(
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
 /// (`get_blob_gasprice`).
 #[inline]
-pub fn calc_blob_gasprice(excess_blob_gas: u64, is_prague: bool) -> u128 {
+pub fn calc_blob_gasprice(excess_blob_gas: u64, blob_base_fee_update_fraction: u64) -> u128 {
     fake_exponential(
         MIN_BLOB_GASPRICE,
         excess_blob_gas,
-        if is_prague {
-            eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
-        } else {
-            eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
-        },
+        blob_base_fee_update_fraction,
     )
 }
 
@@ -111,7 +107,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 mod tests {
     use super::*;
     use primitives::eip4844::{
-        BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
+        self, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
         TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
     };
 
@@ -175,7 +171,7 @@ mod tests {
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L60
     #[test]
-    fn test_calc_blob_fee() {
+    fn test_calc_blob_fee_cancun() {
         let blob_fee_vectors = &[
             (0, 1),
             (2314057, 1),
@@ -192,7 +188,7 @@ mod tests {
         ];
 
         for &(excess, expected) in blob_fee_vectors {
-            let actual = calc_blob_gasprice(excess, false);
+            let actual = calc_blob_gasprice(excess, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN);
             assert_eq!(actual, expected, "test: {excess}");
         }
     }

@@ -1,7 +1,8 @@
 use crate::{
     gas,
     instructions::utility::cast_slice_to_u256,
-    interpreter_types::{Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTr},
+    interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
+    InstructionResult,
 };
 use primitives::U256;
 
@@ -41,10 +42,7 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 ) {
     gas!(context.interpreter, gas::VERYLOW);
     if !context.interpreter.stack.dup(N) {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
     }
 }
 
@@ -54,10 +52,7 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     gas!(context.interpreter, gas::VERYLOW);
     assert!(N != 0);
     if !context.interpreter.stack.exchange(0, N) {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
     }
 }
 
@@ -66,10 +61,7 @@ pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
     if !context.interpreter.stack.dup(imm as usize + 1) {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
     }
     context.interpreter.bytecode.relative_jump(1);
 }
@@ -79,10 +71,7 @@ pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     gas!(context.interpreter, gas::VERYLOW);
     let imm = context.interpreter.bytecode.read_u8();
     if !context.interpreter.stack.exchange(0, imm as usize + 1) {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
     }
     context.interpreter.bytecode.relative_jump(1);
 }
@@ -94,17 +83,14 @@ pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     let n = (imm >> 4) + 1;
     let m = (imm & 0x0F) + 1;
     if !context.interpreter.stack.exchange(n as usize, m as usize) {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
     }
     context.interpreter.bytecode.relative_jump(1);
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{instruction_table, InstructionResult, Interpreter};
+    use crate::{instruction_table, InstructionResult, Interpreter, InterpreterAction};
     use bytecode::opcode::{DUPN, EXCHANGE, STOP, SWAPN};
     use bytecode::Bytecode;
     use primitives::{Bytes, U256};
@@ -125,9 +111,10 @@ mod test {
         interpreter.step_dummy(&table);
         assert_eq!(interpreter.stack.pop(), Ok(U256::from(10)));
         interpreter.step_dummy(&table);
+        let gas = interpreter.gas;
         assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::StackOverflow
+            interpreter.take_next_action(),
+            InterpreterAction::new_halt(InstructionResult::StackOverflow, gas)
         );
     }
 
