@@ -1,7 +1,7 @@
 use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     InstructionContext,
 };
 use primitives::U256;

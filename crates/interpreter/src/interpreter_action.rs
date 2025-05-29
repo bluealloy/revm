@@ -9,8 +9,9 @@ pub use call_outcome::CallOutcome;
 pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
+use primitives::Bytes;
 
-use crate::InterpreterResult;
+use crate::{Gas, InstructionResult, InterpreterResult};
 use std::boxed::Box;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,16 +32,13 @@ impl AsMut<Self> for FrameInput {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// New frame
     NewFrame(FrameInput),
     /// Interpreter finished execution.
-    Return { result: InterpreterResult },
-    /// No action
-    #[default]
-    None,
+    Return(InterpreterResult),
 }
 
 impl InterpreterAction {
@@ -59,23 +57,47 @@ impl InterpreterAction {
         matches!(self, InterpreterAction::Return { .. })
     }
 
-    /// Returns `true` if action is none.
-    pub fn is_none(&self) -> bool {
-        matches!(self, InterpreterAction::None)
-    }
-
-    /// Returns `true` if action is some.
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
-    }
-
     /// Returns [`InterpreterResult`] if action is return.
     ///
     /// Else it returns [None].
     pub fn into_result_return(self) -> Option<InterpreterResult> {
         match self {
-            InterpreterAction::Return { result } => Some(result),
+            InterpreterAction::Return(result) => Some(result),
             _ => None,
         }
+    }
+
+    /// Returns [`InstructionResult`] if action is return.
+    ///
+    /// Else it returns [None].
+    pub fn instruction_result(&self) -> Option<InstructionResult> {
+        match self {
+            InterpreterAction::Return(result) => Some(result.result),
+            _ => None,
+        }
+    }
+
+    /// Create new frame action with the given frame input.
+    pub fn new_frame(frame_input: FrameInput) -> Self {
+        Self::NewFrame(frame_input)
+    }
+
+    /// Create new halt action with the given result and gas.
+    pub fn new_halt(result: InstructionResult, gas: Gas) -> Self {
+        Self::Return(InterpreterResult::new(result, Bytes::new(), gas))
+    }
+
+    /// Create new return action with the given result, output and gas.
+    pub fn new_return(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+        Self::Return(InterpreterResult::new(result, output, gas))
+    }
+
+    /// Create new stop action.
+    pub fn new_stop() -> Self {
+        Self::Return(InterpreterResult::new(
+            InstructionResult::Stop,
+            Bytes::new(),
+            Gas::new(0),
+        ))
     }
 }

@@ -5,7 +5,7 @@ use crate::{
         EofCodeInfo, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag,
         StackTr, SubRoutineStack,
     },
-    InstructionResult, InterpreterAction, InterpreterResult,
+    InstructionResult, InterpreterAction,
 };
 use primitives::{Bytes, U256};
 
@@ -70,9 +70,7 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::InvalidJump);
+        interpreter.halt(InstructionResult::InvalidJump);
         return;
     }
     // SAFETY: `is_valid_jump` ensures that `dest` is in bounds.
@@ -98,10 +96,7 @@ pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     // Check max stack height for target code section.
     // Safe to subtract as max_stack_height is always more than inputs.
     if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
         return;
     }
 
@@ -114,8 +109,7 @@ pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::SubRoutineStackOverflow);
+            .halt(InstructionResult::SubRoutineStackOverflow);
         return;
     };
     let pc = context
@@ -152,10 +146,7 @@ pub fn jumpf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 
     // Check max stack height for target code section.
     if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackOverflow);
         return;
     }
     context.interpreter.sub_routine.set_routine_idx(idx);
@@ -193,17 +184,13 @@ fn return_inner(
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 
-    let gas = *interpreter.control.gas();
-    interpreter.control.set_next_action(
-        InterpreterAction::Return {
-            result: InterpreterResult {
-                output,
-                gas,
-                result: instruction_result,
-            },
-        },
-        instruction_result,
-    );
+    interpreter
+        .bytecode
+        .set_action(InterpreterAction::new_return(
+            instruction_result,
+            output,
+            interpreter.gas,
+        ));
 }
 
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
@@ -218,26 +205,17 @@ pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 
 /// Stop opcode. This opcode halts the execution.
 pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    context
-        .interpreter
-        .control
-        .set_instruction_result(InstructionResult::Stop);
+    context.interpreter.halt(InstructionResult::Stop);
 }
 
 /// Invalid opcode. This opcode halts the execution.
 pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    context
-        .interpreter
-        .control
-        .set_instruction_result(InstructionResult::InvalidFEOpcode);
+    context.interpreter.halt(InstructionResult::InvalidFEOpcode);
 }
 
 /// Unknown opcode. This opcode halts the execution.
 pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    context
-        .interpreter
-        .control
-        .set_instruction_result(InstructionResult::OpcodeNotFound);
+    context.interpreter.halt(InstructionResult::OpcodeNotFound);
 }
 
 #[cfg(test)]
@@ -407,10 +385,7 @@ mod test {
 
         // STOP
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Stop
-        );
+        assert!(interpreter.bytecode.is_end());
     }
 
     #[test]
@@ -436,10 +411,7 @@ mod test {
 
         // STOP
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Stop
-        );
+        assert!(interpreter.bytecode.is_end());
     }
 
     #[test]
@@ -462,8 +434,8 @@ mod test {
 
         // Stack overflow
         assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::StackOverflow
+            interpreter.take_next_action(),
+            InterpreterAction::new_halt(InstructionResult::StackOverflow, interpreter.gas)
         );
     }
 
@@ -488,10 +460,7 @@ mod test {
 
         // STOP
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Stop
-        );
+        assert!(interpreter.bytecode.is_end());
     }
 
     #[test]
@@ -512,10 +481,11 @@ mod test {
         // JUMPF
         interpreter.step_dummy(&table);
 
+        let gas = interpreter.gas;
         // Stack overflow
         assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::StackOverflow
+            interpreter.take_next_action(),
+            InterpreterAction::new_halt(InstructionResult::StackOverflow, gas)
         );
     }
 }
