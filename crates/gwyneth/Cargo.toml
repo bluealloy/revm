@@ -1,0 +1,24 @@
+[package]
+name = "gwyneth-revm"
+version = "0.1.0"
+license.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+revm.workspace = true
+auto_impl.workspace = true
+
+# optional
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+
+[lints]
+workspace = true
+
+[features]
+serde = ["dep:serde", "revm/serde"]
