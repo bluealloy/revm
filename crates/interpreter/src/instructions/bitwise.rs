@@ -1,7 +1,7 @@
 use super::i256::i256_cmp;
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     InstructionContext,
 };
 use core::cmp::Ordering;
@@ -136,7 +136,6 @@ mod tests {
     use crate::{
         host::DummyHost,
         instructions::bitwise::{byte, sar, shl, shr},
-        interpreter_types::LoopControl,
         InstructionContext, Interpreter,
     };
     use primitives::{uint, U256};

@@ -8,11 +8,8 @@ use core::fmt::Debug;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
-    // Success Codes
-    #[default]
-    /// Execution should continue to the next one.
-    Continue = 0x00,
     /// Encountered a `STOP` opcode
+    #[default]
     Stop,
     /// Return from the current call.
     Return,
@@ -34,10 +31,6 @@ pub enum InstructionResult {
     InvalidEOFInitCode,
     /// `ExtDelegateCall` calling a non EOF contract.
     InvalidExtDelegateCallTarget,
-
-    // Action Codes
-    /// Indicates a call or contract creation.
-    CallOrCreate = 0x20,
 
     // Error Codes
     /// Out of gas error.
@@ -161,8 +154,7 @@ impl From<HaltReason> for InstructionResult {
 #[macro_export]
 macro_rules! return_ok {
     () => {
-        $crate::InstructionResult::Continue
-            | $crate::InstructionResult::Stop
+        $crate::InstructionResult::Stop
             | $crate::InstructionResult::Return
             | $crate::InstructionResult::SelfDestruct
             | $crate::InstructionResult::ReturnContract
@@ -228,11 +220,6 @@ impl InstructionResult {
         matches!(self, crate::return_ok!() | crate::return_revert!())
     }
 
-    #[inline]
-    pub const fn is_continue(self) -> bool {
-        matches!(self, InstructionResult::Continue)
-    }
-
     /// Returns whether the result is a revert.
     #[inline]
     pub const fn is_revert(self) -> bool {
@@ -249,10 +236,6 @@ impl InstructionResult {
 /// Internal results that are not exposed externally
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum InternalResult {
-    /// Internal instruction that signals Interpreter should continue running.
-    InternalContinue,
-    /// Internal instruction that signals call or create.
-    InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
     /// Internal to ExtDelegateCall
@@ -315,13 +298,11 @@ impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
 impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonTr> {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
-            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), // Check for first call is done separately.
             InstructionResult::OutOfGas => {
@@ -400,18 +381,16 @@ mod tests {
 
     #[test]
     fn all_results_are_covered() {
-        match InstructionResult::Continue {
+        match InstructionResult::Stop {
             return_error!() => {}
             return_revert!() => {}
             return_ok!() => {}
-            InstructionResult::CallOrCreate => {}
         }
     }
 
     #[test]
     fn test_results() {
         let ok_results = vec![
-            InstructionResult::Continue,
             InstructionResult::Stop,
             InstructionResult::Return,
             InstructionResult::SelfDestruct,

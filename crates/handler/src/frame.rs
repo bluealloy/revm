@@ -16,7 +16,7 @@ use core::cmp::min;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
+    interpreter_types::{ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
     CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
     InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
@@ -545,7 +545,7 @@ where
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
-            InterpreterAction::Return { result } => result,
+            InterpreterAction::Return(result) => result,
             InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
         };
 
@@ -644,20 +644,14 @@ where
 
                 // Return unspend gas.
                 if ins_result.is_ok_or_revert() {
-                    interpreter
-                        .control
-                        .gas_mut()
-                        .erase_cost(out_gas.remaining());
+                    interpreter.gas.erase_cost(out_gas.remaining());
                     interpreter
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
                 if ins_result.is_ok() {
-                    interpreter
-                        .control
-                        .gas_mut()
-                        .record_refund(out_gas.refunded());
+                    interpreter.gas.record_refund(out_gas.refunded());
                 }
             }
             FrameResult::Create(outcome) => {
@@ -680,7 +674,7 @@ where
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let this_gas = interpreter.control.gas_mut();
+                let this_gas = &mut interpreter.gas;
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
@@ -714,7 +708,7 @@ where
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let this_gas = interpreter.control.gas_mut();
+                let this_gas = &mut interpreter.gas;
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }

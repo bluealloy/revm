@@ -1,7 +1,7 @@
 use crate::{
     gas::{self, warm_cold_cost, CALL_STIPEND},
     instructions::utility::{IntoAddress, IntoU256},
-    interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
+    interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
 };
 use core::cmp::min;
@@ -15,8 +15,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
     let Some(balance) = context.host.balance(address) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
@@ -49,8 +48,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
     push!(context.interpreter, balance.data);
@@ -64,8 +62,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(code) = context.host.load_account_code(address) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
@@ -90,8 +87,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(code_hash) = context.host.load_account_code_hash(address) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
@@ -116,8 +112,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(code) = context.host.load_account_code(address) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -170,8 +165,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
         let Some(hash) = context.host.block_hash(as_u64_saturated!(requested_number)) else {
             context
                 .interpreter
-                .control
-                .set_instruction_result(InstructionResult::FatalExternalError);
+                .halt(InstructionResult::FatalExternalError);
             return;
         };
         U256::from_be_bytes(hash.0)
@@ -189,8 +183,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -213,8 +206,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -224,12 +216,11 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         .runtime_flag
         .spec_id()
         .is_enabled_in(ISTANBUL)
-        && context.interpreter.control.gas().remaining() <= CALL_STIPEND
+        && context.interpreter.gas.remaining() <= CALL_STIPEND
     {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::ReentrancySentryOOG);
+            .halt(InstructionResult::ReentrancySentryOOG);
         return;
     }
     gas!(
@@ -241,14 +232,10 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         )
     );
 
-    context
-        .interpreter
-        .control
-        .gas_mut()
-        .record_refund(gas::sstore_refund(
-            context.interpreter.runtime_flag.spec_id(),
-            &state_load.data,
-        ));
+    context.interpreter.gas.record_refund(gas::sstore_refund(
+        context.interpreter.runtime_flag.spec_id(),
+        &state_load.data,
+    ));
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -294,17 +281,11 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     if context.interpreter.stack.len() < N {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(InstructionResult::StackUnderflow);
+        context.interpreter.halt(InstructionResult::StackUnderflow);
         return;
     }
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(InstructionResult::StackUnderflow);
+        context.interpreter.halt(InstructionResult::StackUnderflow);
         return;
     };
 
@@ -330,8 +311,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -343,11 +323,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .is_enabled_in(LONDON)
         && !res.previously_destroyed
     {
-        context
-            .interpreter
-            .control
-            .gas_mut()
-            .record_refund(gas::SELFDESTRUCT)
+        context.interpreter.gas.record_refund(gas::SELFDESTRUCT)
     }
 
     gas!(
@@ -355,8 +331,5 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         gas::selfdestruct_cost(context.interpreter.runtime_flag.spec_id(), res)
     );
 
-    context
-        .interpreter
-        .control
-        .set_instruction_result(InstructionResult::SelfDestruct);
+    context.interpreter.halt(InstructionResult::SelfDestruct);
 }

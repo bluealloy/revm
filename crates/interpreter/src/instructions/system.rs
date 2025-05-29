@@ -2,8 +2,7 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        InputsTr, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
-        StackTr,
+        InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
     CallInput, InstructionResult,
 };
@@ -176,10 +175,7 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
     if data_end > context.interpreter.return_data.buffer().len()
         && !context.interpreter.runtime_flag.is_eof()
     {
-        context
-            .interpreter
-            .control
-            .set_instruction_result(InstructionResult::OutOfOffset);
+        context.interpreter.halt(InstructionResult::OutOfOffset);
         return;
     }
 
@@ -224,7 +220,7 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
-        U256::from(context.interpreter.control.gas().remaining())
+        U256::from(context.interpreter.gas.remaining())
     );
 }
 
@@ -248,7 +244,7 @@ pub fn memory_resize(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{instruction_table, InstructionResult};
+    use crate::{instruction_table, interpreter_types::LoopControl};
     use bytecode::{opcode::RETURNDATACOPY, opcode::RETURNDATALOAD, Bytecode};
     use primitives::{bytes, Bytes};
 
@@ -280,10 +276,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(1));
 
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             interpreter.stack.data(),
             &vec![U256::from_limbs([0x0100, 0x0200, 0x0300, 0x0400])]
@@ -292,10 +285,7 @@ mod test {
         let _ = interpreter.stack.pop();
         let _ = interpreter.stack.push(U256::from(32));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
@@ -307,10 +297,7 @@ mod test {
             .stack
             .push(U256::from(interpreter.return_data.buffer().len()));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             interpreter.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
@@ -343,10 +330,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(0));
 
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             *interpreter.memory.slice(0..32),
             interpreter.return_data.buffer()[0..32]
@@ -357,10 +341,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(16));
         let _ = interpreter.stack.push(U256::from(64));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             *interpreter.memory.slice(64..80),
             interpreter.return_data.buffer()[16..32]
@@ -372,10 +353,7 @@ mod test {
         let _ = interpreter.stack.push(U256::from(96));
         let _ = interpreter.stack.push(U256::from(128));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(*interpreter.memory.slice(128..160), [0u8; 32]);
 
         // Large offset
@@ -383,10 +361,7 @@ mod test {
         let _ = interpreter.stack.push(U256::MAX);
         let _ = interpreter.stack.push(U256::from(0));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
 
         // Offset just before the boundary of the return data buffer size
@@ -396,10 +371,7 @@ mod test {
             .push(U256::from(interpreter.return_data.buffer().len() - 32));
         let _ = interpreter.stack.push(U256::from(0));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(
             *interpreter.memory.slice(0..32),
             interpreter.return_data.buffer()[interpreter.return_data.buffer().len() - 32..]
@@ -412,10 +384,7 @@ mod test {
             .push(U256::from(interpreter.return_data.buffer().len()));
         let _ = interpreter.stack.push(U256::from(0));
         interpreter.step_dummy(&table);
-        assert_eq!(
-            interpreter.control.instruction_result,
-            InstructionResult::Continue
-        );
+        assert!(interpreter.bytecode.is_not_end());
         assert_eq!(*interpreter.memory.slice(0..32), [0u8; 32]);
     }
 }

@@ -10,7 +10,6 @@ mod subroutine_stack;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
-pub use loop_control::LoopControl as LoopControlImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
@@ -30,12 +29,12 @@ use primitives::{hardfork::SpecId, Address, Bytes, U256};
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub bytecode: WIRE::Bytecode,
+    pub gas: Gas,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,
     pub memory: WIRE::Memory,
     pub input: WIRE::Input,
     pub sub_routine: WIRE::SubRoutineStack,
-    pub control: WIRE::Control,
     pub runtime_flag: WIRE::RuntimeFlag,
     pub extend: WIRE::Extend,
 }
@@ -65,7 +64,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             memory,
             input: inputs,
             sub_routine: SubRoutineImpl::default(),
-            control: LoopControlImpl::new(gas_limit),
+            gas: Gas::new(gas_limit),
             runtime_flag,
             extend: EXT::default(),
         }
@@ -110,37 +109,40 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type ReturnData = ReturnDataImpl;
     type Input = InputsImpl;
     type SubRoutineStack = SubRoutineImpl;
-    type Control = LoopControlImpl;
     type RuntimeFlag = RuntimeFlags;
     type Extend = EXT;
     type Output = InterpreterAction;
 }
 
 impl<IW: InterpreterTypes> Interpreter<IW> {
-    /// Resets the control to the initial state. so that we can run the interpreter again.
-    #[inline]
-    pub fn reset_control(&mut self) {
-        self.control
-            .set_next_action(InterpreterAction::None, InstructionResult::Continue);
-    }
-
     /// Takes the next action from the control and returns it.
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
-        let action = self.control.take_next_action();
+        let action = core::mem::replace(self.bytecode.action(), InterpreterAction::None);
         if action != InterpreterAction::None {
             return action;
         }
-        // If not, return action without output as it is a halt.
-        InterpreterAction::Return {
-            result: InterpreterResult {
-                result: self.control.instruction_result(),
-                // Return empty bytecode
-                output: Bytes::new(),
-                gas: *self.control.gas(),
-            },
-        }
+        panic!("Interpreter halted");
+    }
+
+    /// Halt the interpreter with the given result.
+    ///
+    /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    pub fn halt(&mut self, result: InstructionResult) {
+        self.bytecode
+            .set_action(InterpreterAction::new_halt(result, self.gas));
+    }
+
+    /// Return with the given output.
+    ///
+    /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    pub fn return_with_output(&mut self, output: Bytes) {
+        self.bytecode.set_action(InterpreterAction::new_return(
+            InstructionResult::Return,
+            output,
+            self.gas,
+        ));
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -176,15 +178,22 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        self.reset_control();
+        while self.bytecode.is_not_end() {
+            // Get current opcode.
+            let opcode = self.bytecode.opcode();
 
-        while self.control.instruction_result().is_continue() {
+            // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+            // it will do noop and just stop execution of this contract
+            self.bytecode.relative_jump(1);
             let context = InstructionContext {
                 interpreter: self,
                 host,
             };
-            context.step(instruction_table);
+            // Execute instruction.
+            instruction_table[opcode as usize](context);
         }
+        self.bytecode.revert_to_previous_pointer();
 
         self.take_next_action()
     }

@@ -83,7 +83,7 @@ mod tests {
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
-        interpreter_types::{Jumps, LoopControl, ReturnData},
+        interpreter_types::{Jumps, ReturnData},
         CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
     };
     use primitives::{Address, Bytes, TxKind};
@@ -98,16 +98,16 @@ mod tests {
 
     impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for StackInspector {
         fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            self.gas_inspector.initialize_interp(interp.control.gas());
+            self.gas_inspector.initialize_interp(&interp.gas);
         }
 
         fn step(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
             self.pc = interp.bytecode.pc();
-            self.gas_inspector.step(interp.control.gas());
+            self.gas_inspector.step(&interp.gas);
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            self.gas_inspector.step_end(interp.control.gas_mut());
+            self.gas_inspector.step_end(&mut interp.gas);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
         }

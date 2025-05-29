@@ -69,23 +69,23 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         salt.to_be_bytes().into(),
     );
 
-    let gas_limit = context.interpreter.control.gas().remaining_63_of_64_parts();
+    let gas_limit = context.interpreter.gas.remaining_63_of_64_parts();
     gas!(context.interpreter, gas_limit);
 
     // Send container for execution as all deployed containers are preverified to be valid EOF.
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
-            EOFCreateInputs::new_opcode(
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::EOFCreate(
+            Box::new(EOFCreateInputs::new_opcode(
                 context.interpreter.input.target_address(),
                 created_address,
                 value,
                 eof,
                 gas_limit,
                 CallInput::Bytes(input),
-            ),
-        ))),
-        InstructionResult::CallOrCreate,
-    );
+            )),
+        )));
 
     // jump over initcontainer index.
     context.interpreter.bytecode.relative_jump(1);
@@ -140,23 +140,23 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         salt.to_be_bytes().into(),
     );
 
-    let gas_limit = context.interpreter.control.gas().remaining_63_of_64_parts();
+    let gas_limit = context.interpreter.gas.remaining_63_of_64_parts();
     gas!(context.interpreter, gas_limit);
 
     // Send container for execution as all deployed containers are preverified to be valid EOF.
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
-            EOFCreateInputs::new_opcode(
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::EOFCreate(
+            Box::new(EOFCreateInputs::new_opcode(
                 context.interpreter.input.target_address(),
                 created_address,
                 value,
                 eof,
                 gas_limit,
                 CallInput::Bytes(input),
-            ),
-        ))),
-        InstructionResult::CallOrCreate,
-    );
+            )),
+        )));
 }
 
 pub fn return_contract<H: Host + ?Sized>(
@@ -165,8 +165,7 @@ pub fn return_contract<H: Host + ?Sized>(
     if !context.interpreter.runtime_flag.is_eof_init() {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::ReturnContractInNotInitEOF);
+            .halt(InstructionResult::ReturnContractInNotInitEOF);
         return;
     }
     let deploy_container_index = context.interpreter.bytecode.read_u8();
@@ -206,16 +205,14 @@ pub fn return_contract<H: Host + ?Sized>(
         // Aux data is too big
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::EofAuxDataOverflow);
+            .halt(InstructionResult::EofAuxDataOverflow);
         return;
     }
     if new_data_size < eof_header.data_size as usize {
         // Aux data is too small
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::EofAuxDataTooSmall);
+            .halt(InstructionResult::EofAuxDataTooSmall);
         return;
     }
     let new_data_size = (new_data_size as u16).to_be_bytes();
@@ -225,17 +222,15 @@ pub fn return_contract<H: Host + ?Sized>(
     let output: Bytes = output.into();
 
     let result = InstructionResult::ReturnContract;
-    let gas = *context.interpreter.control.gas();
-    context.interpreter.control.set_next_action(
-        crate::InterpreterAction::Return {
-            result: InterpreterResult {
-                output,
-                gas,
-                result,
-            },
-        },
-        result,
-    );
+    let gas = context.interpreter.gas;
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::Return(InterpreterResult {
+            output,
+            gas,
+            result,
+        }));
 }
 
 pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Option<Bytes> {
@@ -260,8 +255,7 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(account_load) = context.host.load_account_delegated(target) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return None;
     };
 
@@ -276,11 +270,10 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     // Calculate the gas available to callee as caller’s
     // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
-    let gas_reduce = max(context.interpreter.control.gas().remaining() / 64, 5000);
+    let gas_reduce = max(context.interpreter.gas.remaining() / 64, 5000);
     let gas_limit = context
         .interpreter
-        .control
-        .gas()
+        .gas
         .remaining()
         .saturating_sub(gas_reduce);
 
@@ -313,9 +306,7 @@ pub fn pop_extcall_target_address(
     let target_address = B256::from(target_address);
     // Check if target is left padded with zeroes.
     if target_address[..12].iter().any(|i| *i != 0) {
-        interpreter
-            .control
-            .set_instruction_result(InstructionResult::InvalidEXTCALLTarget);
+        interpreter.halt(InstructionResult::InvalidEXTCALLTarget);
         return None;
     }
     // Discard first 12 bytes.
@@ -342,8 +333,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if context.interpreter.runtime_flag.is_static() && has_transfer {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
+            .halt(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
 
@@ -352,21 +342,23 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
-            gas_limit,
-            target_address,
-            caller: context.interpreter.input.target_address(),
-            bytecode_address: target_address,
-            value: CallValue::Transfer(value),
-            scheme: CallScheme::ExtCall,
-            is_static: context.interpreter.runtime_flag.is_static(),
-            is_eof: true,
-            return_memory_offset: 0..0,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::Bytes(input),
+                gas_limit,
+                target_address,
+                caller: context.interpreter.input.target_address(),
+                bytecode_address: target_address,
+                value: CallValue::Transfer(value),
+                scheme: CallScheme::ExtCall,
+                is_static: context.interpreter.runtime_flag.is_static(),
+                is_eof: true,
+                return_memory_offset: 0..0,
+            },
+        ))));
 }
 
 pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -389,21 +381,23 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
-            gas_limit,
-            target_address: context.interpreter.input.target_address(),
-            caller: context.interpreter.input.caller_address(),
-            bytecode_address: target_address,
-            value: CallValue::Apparent(context.interpreter.input.call_value()),
-            scheme: CallScheme::ExtDelegateCall,
-            is_static: context.interpreter.runtime_flag.is_static(),
-            is_eof: true,
-            return_memory_offset: 0..0,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::Bytes(input),
+                gas_limit,
+                target_address: context.interpreter.input.target_address(),
+                caller: context.interpreter.input.caller_address(),
+                bytecode_address: target_address,
+                value: CallValue::Apparent(context.interpreter.input.call_value()),
+                scheme: CallScheme::ExtDelegateCall,
+                is_static: context.interpreter.runtime_flag.is_static(),
+                is_eof: true,
+                return_memory_offset: 0..0,
+            },
+        ))));
 }
 
 pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -426,21 +420,23 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
-            gas_limit,
-            target_address,
-            caller: context.interpreter.input.target_address(),
-            bytecode_address: target_address,
-            value: CallValue::Transfer(U256::ZERO),
-            scheme: CallScheme::ExtStaticCall,
-            is_static: true,
-            is_eof: true,
-            return_memory_offset: 0..0,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::Bytes(input),
+                gas_limit,
+                target_address,
+                caller: context.interpreter.input.target_address(),
+                bytecode_address: target_address,
+                value: CallValue::Transfer(U256::ZERO),
+                scheme: CallScheme::ExtStaticCall,
+                is_static: true,
+                is_eof: true,
+                return_memory_offset: 0..0,
+            },
+        ))));
 }
 
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
@@ -469,8 +465,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             if len > context.host.max_initcode_size() {
                 context
                     .interpreter
-                    .control
-                    .set_instruction_result(InstructionResult::CreateInitCodeSizeLimit);
+                    .halt(InstructionResult::CreateInitCodeSizeLimit);
                 return;
             }
             gas!(context.interpreter, gas::initcode_cost(len));
@@ -498,7 +493,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    let mut gas_limit = context.interpreter.control.gas().remaining();
+    let mut gas_limit = context.interpreter.gas.remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
     if context
@@ -513,16 +508,18 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Create(Box::new(CreateInputs {
-            caller: context.interpreter.input.target_address(),
-            scheme,
-            value,
-            init_code: code,
-            gas_limit,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Create(Box::new(
+            CreateInputs {
+                caller: context.interpreter.input.target_address(),
+                scheme,
+                value,
+                init_code: code,
+                gas_limit,
+            },
+        ))));
 }
 
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
@@ -535,8 +532,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     if context.interpreter.runtime_flag.is_static() && has_transfer {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
+            .halt(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
 
@@ -548,8 +544,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     let Some(account_load) = context.host.load_account_delegated(to) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -570,21 +565,23 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     }
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::SharedBuffer(input),
-            gas_limit,
-            target_address: to,
-            caller: context.interpreter.input.target_address(),
-            bytecode_address: to,
-            value: CallValue::Transfer(value),
-            scheme: CallScheme::Call,
-            is_static: context.interpreter.runtime_flag.is_static(),
-            is_eof: false,
-            return_memory_offset,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::SharedBuffer(input),
+                gas_limit,
+                target_address: to,
+                caller: context.interpreter.input.target_address(),
+                bytecode_address: to,
+                value: CallValue::Transfer(value),
+                scheme: CallScheme::Call,
+                is_static: context.interpreter.runtime_flag.is_static(),
+                is_eof: false,
+                return_memory_offset,
+            },
+        ))));
 }
 
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -604,8 +601,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(mut load) = context.host.load_account_delegated(to) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -625,21 +621,23 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::SharedBuffer(input),
-            gas_limit,
-            target_address: context.interpreter.input.target_address(),
-            caller: context.interpreter.input.target_address(),
-            bytecode_address: to,
-            value: CallValue::Transfer(value),
-            scheme: CallScheme::CallCode,
-            is_static: context.interpreter.runtime_flag.is_static(),
-            is_eof: false,
-            return_memory_offset,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::SharedBuffer(input),
+                gas_limit,
+                target_address: context.interpreter.input.target_address(),
+                caller: context.interpreter.input.target_address(),
+                bytecode_address: to,
+                value: CallValue::Transfer(value),
+                scheme: CallScheme::CallCode,
+                is_static: context.interpreter.runtime_flag.is_static(),
+                is_eof: false,
+                return_memory_offset,
+            },
+        ))));
 }
 
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -659,8 +657,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(mut load) = context.host.load_account_delegated(to) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
 
@@ -673,21 +670,23 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::SharedBuffer(input),
-            gas_limit,
-            target_address: context.interpreter.input.target_address(),
-            caller: context.interpreter.input.caller_address(),
-            bytecode_address: to,
-            value: CallValue::Apparent(context.interpreter.input.call_value()),
-            scheme: CallScheme::DelegateCall,
-            is_static: context.interpreter.runtime_flag.is_static(),
-            is_eof: false,
-            return_memory_offset,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::SharedBuffer(input),
+                gas_limit,
+                target_address: context.interpreter.input.target_address(),
+                caller: context.interpreter.input.caller_address(),
+                bytecode_address: to,
+                value: CallValue::Apparent(context.interpreter.input.call_value()),
+                scheme: CallScheme::DelegateCall,
+                is_static: context.interpreter.runtime_flag.is_static(),
+                is_eof: false,
+                return_memory_offset,
+            },
+        ))));
 }
 
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -707,8 +706,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(mut load) = context.host.load_account_delegated(to) else {
         context
             .interpreter
-            .control
-            .set_instruction_result(InstructionResult::FatalExternalError);
+            .halt(InstructionResult::FatalExternalError);
         return;
     };
     // Set `is_empty` to false as we are not creating this account.
@@ -719,19 +717,21 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
-    context.interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::SharedBuffer(input),
-            gas_limit,
-            target_address: to,
-            caller: context.interpreter.input.target_address(),
-            bytecode_address: to,
-            value: CallValue::Transfer(U256::ZERO),
-            scheme: CallScheme::StaticCall,
-            is_static: true,
-            is_eof: false,
-            return_memory_offset,
-        }))),
-        InstructionResult::CallOrCreate,
-    );
+    context
+        .interpreter
+        .bytecode
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
+            CallInputs {
+                input: CallInput::SharedBuffer(input),
+                gas_limit,
+                target_address: to,
+                caller: context.interpreter.input.target_address(),
+                bytecode_address: to,
+                value: CallValue::Transfer(U256::ZERO),
+                scheme: CallScheme::StaticCall,
+                is_static: true,
+                is_eof: false,
+                return_memory_offset,
+            },
+        ))));
 }

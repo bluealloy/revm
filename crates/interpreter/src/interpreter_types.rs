@@ -1,4 +1,4 @@
-use crate::{CallInput, Gas, InstructionResult, InterpreterAction};
+use crate::{CallInput, InterpreterAction};
 use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
@@ -6,24 +6,35 @@ use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
 pub trait Immediates {
+    /// Reads next 16 bits as signed integer from the bytecode.
     #[inline]
     fn read_i16(&self) -> i16 {
         self.read_u16() as i16
     }
+    /// Reads next 16 bits as unsigned integer from the bytecode.
     fn read_u16(&self) -> u16;
 
+    /// Reads next 8 bits as signed integer from the bytecode.
     #[inline]
     fn read_i8(&self) -> i8 {
         self.read_u8() as i8
     }
+
+    /// Reads next 8 bits as unsigned integer from the bytecode.
     fn read_u8(&self) -> u8;
 
+    /// Reads next 16 bits as signed integer from the bytecode at given offset.
     #[inline]
     fn read_offset_i16(&self, offset: isize) -> i16 {
         self.read_offset_u16(offset) as i16
     }
+
+    /// Reads next 16 bits as unsigned integer from the bytecode at given offset.
     fn read_offset_u16(&self, offset: isize) -> u16;
 
+    /// Reads next `len` bytes from the bytecode.
+    ///
+    /// Used by PUSH opcode.
     fn read_slice(&self, len: usize) -> &[u8];
 }
 
@@ -275,13 +286,25 @@ pub trait ReturnData {
     }
 }
 
+/// Trait controls execution of the loop.
 pub trait LoopControl {
-    fn set_instruction_result(&mut self, result: InstructionResult);
-    fn set_next_action(&mut self, action: InterpreterAction, result: InstructionResult);
-    fn gas(&self) -> &Gas;
-    fn gas_mut(&mut self) -> &mut Gas;
-    fn instruction_result(&self) -> InstructionResult;
-    fn take_next_action(&mut self) -> InterpreterAction;
+    /// Returns `true` if the loop should continue.
+    #[inline]
+    fn is_not_end(&self) -> bool {
+        !self.is_end()
+    }
+    /// Is end of the loop.
+    fn is_end(&self) -> bool;
+    /// Reverts to previous instruction pointer.
+    ///
+    /// After the loop is finished, the instruction pointer is set to the previous one.
+    fn revert_to_previous_pointer(&mut self);
+    /// Set return action and set instruction pointer to null. Preserve previous pointer
+    ///
+    /// Previous pointer can be restored by calling [`LoopControl::revert_to_previous_pointer`].
+    fn set_action(&mut self, action: InterpreterAction);
+    /// Takes next action.
+    fn action(&mut self) -> &mut InterpreterAction;
 }
 
 pub trait RuntimeFlag {
@@ -298,14 +321,20 @@ pub trait Interp {
     fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
+/// Trait
 pub trait InterpreterTypes {
     type Stack: StackTr;
     type Memory: MemoryTr;
-    type Bytecode: Jumps + Immediates + LegacyBytecode + EofData + EofContainer + EofCodeInfo;
+    type Bytecode: Jumps
+        + Immediates
+        + LoopControl
+        + LegacyBytecode
+        + EofData
+        + EofContainer
+        + EofCodeInfo;
     type ReturnData: ReturnData;
     type Input: InputsTr;
     type SubRoutineStack: SubRoutineStack;
-    type Control: LoopControl;
     type RuntimeFlag: RuntimeFlag;
     type Extend;
     type Output;

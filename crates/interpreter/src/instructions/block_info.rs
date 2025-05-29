@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
 use primitives::{hardfork::SpecId::*, U256};
