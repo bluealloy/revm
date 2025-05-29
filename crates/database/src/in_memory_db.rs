@@ -1,8 +1,10 @@
 use core::convert::Infallible;
-use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
+use database_interface::{
+    Database, DatabaseCommit, DatabaseRef, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE,
+    BENCH_TARGET, BENCH_TARGET_BALANCE,
+};
 use primitives::{
-    address, hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY,
-    U256,
+    hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
@@ -433,15 +435,6 @@ impl BenchmarkDB {
         Self(bytecode, hash)
     }
 }
-
-/// BYTECODE address
-pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
-pub const BENCH_TARGET: Address = FFADDRESS;
-pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
-/// CALLER address
-pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-pub const BENCH_CALLER: Address = EEADDRESS;
-pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 
 impl Database for BenchmarkDB {
     type Error = Infallible;
