@@ -12,9 +12,8 @@ pub struct ExtBytecode {
     base: Bytecode,
     bytecode_hash: Option<B256>,
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
-    ///
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
-    pub action: InterpreterAction,
+    pub action: Option<InterpreterAction>,
     previous_pointer: Option<*const u8>,
     instruction_pointer: *const u8,
 }
@@ -35,7 +34,7 @@ impl ExtBytecode {
             base,
             instruction_pointer,
             bytecode_hash: None,
-            action: InterpreterAction::None,
+            action: None,
             previous_pointer: None,
         }
     }
@@ -47,7 +46,7 @@ impl ExtBytecode {
             base,
             instruction_pointer,
             bytecode_hash: Some(hash),
-            action: InterpreterAction::None,
+            action: None,
             previous_pointer: None,
         }
     }
@@ -80,7 +79,7 @@ impl LoopControl for ExtBytecode {
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
-        self.action = action;
+        self.action = Some(action);
         self.previous_pointer = Some(core::mem::replace(
             &mut self.instruction_pointer,
             ptr::null(),
@@ -88,7 +87,7 @@ impl LoopControl for ExtBytecode {
     }
 
     #[inline]
-    fn action(&mut self) -> &mut InterpreterAction {
+    fn action(&mut self) -> &mut Option<InterpreterAction> {
         &mut self.action
     }
 }

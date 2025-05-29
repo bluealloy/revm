@@ -119,11 +119,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
         // Return next action if it is some.
-        let action = core::mem::replace(self.bytecode.action(), InterpreterAction::None);
-        if action != InterpreterAction::None {
-            return action;
-        }
-        panic!("Interpreter halted");
+        core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
     }
 
     /// Halt the interpreter with the given result.

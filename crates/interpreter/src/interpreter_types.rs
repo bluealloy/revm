@@ -304,7 +304,7 @@ pub trait LoopControl {
     /// Previous pointer can be restored by calling [`LoopControl::revert_to_previous_pointer`].
     fn set_action(&mut self, action: InterpreterAction);
     /// Takes next action.
-    fn action(&mut self) -> &mut InterpreterAction;
+    fn action(&mut self) -> &mut Option<InterpreterAction>;
 }
 
 pub trait RuntimeFlag {

@@ -274,7 +274,8 @@ where
             error: interp
                 .bytecode
                 .action()
-                .instruction_result()
+                .as_ref()
+                .and_then(|a| a.instruction_result())
                 .map(|ir| format!("{:?}", ir)),
             memory: self.memory.take(),
             storage: None,
