@@ -6,9 +6,9 @@ use primitives::{eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, Address, B256, U
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
-    /// The number of ancestor blocks of this block (block height)
+    /// The number of ancestor blocks of this block (block height).
     pub number: U256,
-    /// Beneficiary (Coinbase or miner) is a address that have signed the block
+    /// Beneficiary (Coinbase or miner) is a address that have signed the block.
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub beneficiary: Address,
