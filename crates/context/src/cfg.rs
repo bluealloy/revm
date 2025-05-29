@@ -8,12 +8,16 @@ use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
-    /// Chain ID of the EVM
-    ///
-    /// `chain_id` will be compared to the transaction's Chain ID.
+    /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
     pub chain_id: u64,
+
+    /// Whether to check the transaction's chain ID.
+    ///
+    /// If set to `false`, the transaction's chain ID check will be skipped.
+    pub tx_chain_id_check: bool,
+
     /// Specification for EVM represent the hardfork
     pub spec: SPEC,
     /// If some it will effects EIP-170: Contract code size limit.
@@ -106,6 +110,7 @@ impl<SPEC> CfgEnv<SPEC> {
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
             chain_id: 1,
+            tx_chain_id_check: false,
             limit_contract_code_size: None,
             spec,
             disable_nonce_check: false,
@@ -130,10 +135,23 @@ impl<SPEC> CfgEnv<SPEC> {
         self
     }
 
+    /// Enables the transaction's chain ID check.
+    pub fn enable_tx_chain_id_check(mut self) -> Self {
+        self.tx_chain_id_check = true;
+        self
+    }
+
+    /// Disables the transaction's chain ID check.
+    pub fn disable_tx_chain_id_check(mut self) -> Self {
+        self.tx_chain_id_check = false;
+        self
+    }
+
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,
+            tx_chain_id_check: self.tx_chain_id_check,
             limit_contract_code_size: self.limit_contract_code_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
@@ -178,6 +196,10 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     fn spec(&self) -> Self::Spec {
         self.spec
+    }
+
+    fn tx_chain_id_check(&self) -> bool {
+        self.tx_chain_id_check
     }
 
     #[inline]

@@ -3,11 +3,16 @@ use core::fmt::Debug;
 use core::hash::Hash;
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
+/// Configuration for the EVM.
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
     type Spec: Into<SpecId> + Clone;
 
+    /// Returns the chain ID of the EVM that is compared with the transaction's chain ID.
     fn chain_id(&self) -> u64;
+
+    /// Returns whether the transaction's chain ID check is enabled.
+    fn tx_chain_id_check(&self) -> bool;
 
     // Specification id that is set.
     fn spec(&self) -> Self::Spec;

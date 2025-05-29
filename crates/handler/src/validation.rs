@@ -96,15 +96,21 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         Some(context.block().basefee() as u128)
     };
 
+    let is_legacy_some = matches!(TransactionType::from(tx_type), TransactionType::Legacy)
+        && tx.chain_id().is_some();
+
+    // Check chain_id only if it is present in the legacy transaction.
+    // EIP-155: Simple replay attack protection
+    if is_legacy_some && !context.cfg().tx_chain_id_check() {
+        if let Some(chain_id) = tx.chain_id() {
+            if chain_id != context.cfg().chain_id() {
+                return Err(InvalidTransaction::InvalidChainId);
+            }
+        }
+    }
+
     match TransactionType::from(tx_type) {
         TransactionType::Legacy => {
-            // Check chain_id only if it is present in the legacy transaction.
-            // EIP-155: Simple replay attack protection
-            if let Some(chain_id) = tx.chain_id() {
-                if chain_id != context.cfg().chain_id() {
-                    return Err(InvalidTransaction::InvalidChainId);
-                }
-            }
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if tx.gas_price() < base_fee {
@@ -116,10 +122,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             // Enabled in BERLIN hardfork
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported);
-            }
-
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
             }
 
             // Gas price must be at least the basefee.
@@ -134,10 +136,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
 
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
@@ -147,10 +145,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         TransactionType::Eip4844 => {
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported);
-            }
-
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
             }
 
             validate_priority_fee_tx(
@@ -170,10 +164,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             // Check if EIP-7702 transaction is enabled.
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported);
-            }
-
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
             }
 
             validate_priority_fee_tx(
