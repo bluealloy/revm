@@ -1,7 +1,11 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip7907::MAX_CODE_SIZE, hardfork::SpecId};
+use primitives::{
+    eip170::MAX_CODE_SIZE_170,
+    eip7907::MAX_CODE_SIZE,
+    hardfork::SpecId,
+};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,11 +20,12 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub chain_id: u64,
     /// Specification for EVM represent the hardfork
     pub spec: SPEC,
-    /// If some it will effects EIP-170: Contract code size limit.
+    /// Contract code size limit override.
+    ///
+    /// If None, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    /// If Some, this specific limit will be used regardless of SpecId.
     ///
     /// Useful to increase this because of tests.
-    ///
-    /// By default it is `0x40000` (~262kb).
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
@@ -157,7 +162,15 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     fn max_code_size(&self) -> usize {
-        self.limit_contract_code_size.unwrap_or(MAX_CODE_SIZE)
+      self.limit_contract_code_size.unwrap_or_else(|| {
+          if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+              // EIP-7907
+              MAX_CODE_SIZE
+          } else {
+              // EIP-170
+              MAX_CODE_SIZE_170
+          }
+      })
     }
 
     fn is_eip3607_disabled(&self) -> bool {

@@ -2,7 +2,7 @@
 //!
 //! Here you can find constants that dont belong to any EIP and are there for the genesis.
 
-use crate::eip7907;
+use crate::{eip170, eip7907};
 use alloy_primitives::{b256, Address, B256};
 
 /// Number of block hashes that EVM can access in the past (pre-Prague)
@@ -17,7 +17,13 @@ pub const STACK_LIMIT: usize = 1024;
 
 /// EIP-3860: Limit and meter initcode
 ///
-/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE`.
+/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE_170` (EIP-170).
+/// Used for testing as chains haven't yet upgraded to EIP-7907.
+pub const MAX_INITCODE_SIZE_3860: usize = 2 * eip170::MAX_CODE_SIZE_170;
+
+/// EIP-7907: Limit and meter initcode
+///
+/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE` (EIP-7907).
 pub const MAX_INITCODE_SIZE: usize = 2 * eip7907::MAX_CODE_SIZE;
 
 /// EVM call stack limit
