@@ -53,55 +53,78 @@ impl<
     type Chain = CHAIN;
     type Local = LOCAL;
 
+    #[inline]
     fn tx(&self) -> &Self::Tx {
         &self.tx
     }
 
+    #[inline]
     fn block(&self) -> &Self::Block {
         &self.block
     }
 
+    #[inline]
     fn cfg(&self) -> &Self::Cfg {
         &self.cfg
     }
 
-    fn journal(&mut self) -> &mut Self::Journal {
+    #[inline]
+    fn journal(&self) -> &Self::Journal {
+        &self.journaled_state
+    }
+
+    #[inline]
+    fn journal_mut(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state
     }
 
+    #[inline]
     fn journal_ref(&self) -> &Self::Journal {
         &self.journaled_state
     }
 
-    fn db(&mut self) -> &mut Self::Db {
+    #[inline]
+    fn db(&self) -> &Self::Db {
         self.journaled_state.db()
     }
 
-    fn db_ref(&self) -> &Self::Db {
-        self.journaled_state.db_ref()
+    #[inline]
+    fn db_mut(&mut self) -> &mut Self::Db {
+        self.journaled_state.db_mut()
     }
 
-    fn chain(&mut self) -> &mut Self::Chain {
-        &mut self.chain
-    }
-
-    fn chain_ref(&self) -> &Self::Chain {
+    #[inline]
+    fn chain(&self) -> &Self::Chain {
         &self.chain
     }
 
-    fn local(&mut self) -> &mut Self::Local {
+    #[inline]
+    fn chain_mut(&mut self) -> &mut Self::Chain {
+        &mut self.chain
+    }
+
+    #[inline]
+    fn local(&self) -> &Self::Local {
+        &self.local
+    }
+
+    #[inline]
+    fn local_mut(&mut self) -> &mut Self::Local {
         &mut self.local
     }
 
+    #[inline]
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
 
-    fn tx_journal(&mut self) -> (&Self::Tx, &mut Self::Journal) {
+    #[inline]
+    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal) {
         (&self.tx, &mut self.journaled_state)
     }
 
-    fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local) {
+    #[inline]
+    fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local) {
         (&self.tx, &mut self.local)
     }
 }
@@ -375,7 +398,7 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(self.journaled_state.db());
+        f(self.journaled_state.db_mut());
     }
 
     /// Modifies the context journal.

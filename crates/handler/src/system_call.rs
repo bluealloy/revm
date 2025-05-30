@@ -107,7 +107,7 @@ where
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.transact_system_call_finalize(system_contract_address, data)
             .map(|output| {
-                self.db().commit(output.state);
+                self.db_mut().commit(output.state);
                 output.result
             })
     }

@@ -112,7 +112,7 @@ where
             // L1 block info is stored in the context for later use.
             // and it will be reloaded from the database if it is not for the current block.
             if ctx.chain().l2_block != block_number {
-                *ctx.chain() = L1BlockInfo::try_fetch(ctx.db(), block_number, spec)?;
+                *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
             }
 
             // account for additional cost of l1 fee and operator fee
@@ -123,7 +123,7 @@ where
                 .clone();
 
             // compute L1 cost
-            additional_cost = ctx.chain().calculate_tx_l1_cost(&enveloped_tx, spec);
+            additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
 
             // compute operator fee
             if spec.is_enabled_in(OpSpecId::ISTHMUS) {
@@ -133,7 +133,7 @@ where
             }
         }
 
-        let (tx, journal) = ctx.tx_journal();
+        let (tx, journal) = ctx.tx_journal_mut();
 
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
@@ -334,7 +334,7 @@ where
         let ctx = evm.ctx();
         let enveloped = ctx.tx().enveloped_tx().cloned();
         let spec = ctx.cfg().spec();
-        let l1_block_info = ctx.chain();
+        let l1_block_info = ctx.chain_mut();
 
         let Some(enveloped_tx) = &enveloped else {
             return Err(ERROR::from_string(
@@ -351,10 +351,10 @@ where
             );
         }
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        ctx.journal().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
+        ctx.journal_mut().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        ctx.journal().balance_incr(
+        ctx.journal_mut().balance_incr(
             BASE_FEE_RECIPIENT,
             U256::from(basefee.saturating_mul(
                 (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
@@ -362,7 +362,7 @@ where
         )?;
 
         // Send the operator fee of the transaction to the coinbase.
-        ctx.journal()
+        ctx.journal_mut()
             .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
 
         Ok(())
@@ -391,9 +391,9 @@ where
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
         }
-        evm.ctx().journal().commit_tx();
-        evm.ctx().chain().clear_tx_l1_cost();
-        evm.ctx().local().clear();
+        evm.ctx().journal_mut().commit_tx();
+        evm.ctx().chain_mut().clear_tx_l1_cost();
+        evm.ctx().local_mut().clear();
 
         Ok(exec_result)
     }
@@ -414,7 +414,7 @@ where
             let gas_limit = tx.gas_limit();
 
             // discard all changes of this transaction
-            evm.ctx().journal().discard_tx();
+            evm.ctx().journal_mut().discard_tx();
 
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
@@ -425,7 +425,7 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let acc: &mut revm::state::Account = evm.ctx().journal().load_account(caller)?.data;
+            let acc: &mut revm::state::Account = evm.ctx().journal_mut().load_account(caller)?.data;
 
             let old_balance = acc.info.balance;
 
@@ -438,7 +438,7 @@ where
 
             // add journal entry for accounts
             evm.ctx()
-                .journal()
+                .journal_mut()
                 .caller_accounting_journal_entry(caller, old_balance, true);
 
             // The gas used of a failed deposit post-regolith is the gas
@@ -459,8 +459,8 @@ where
             Err(error)
         };
         // do the cleanup
-        evm.ctx().chain().clear_tx_l1_cost();
-        evm.ctx().local().clear();
+        evm.ctx().chain_mut().clear_tx_l1_cost();
+        evm.ctx().local_mut().clear();
 
         output
     }
@@ -658,7 +658,7 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
+        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1010));
     }
 
@@ -698,7 +698,7 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
+        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1010));
     }
 
@@ -815,7 +815,7 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
+        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1));
     }
 
@@ -853,7 +853,7 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal().load_account(caller).unwrap();
+        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
         assert_eq!(account.info.balance, U256::from(1));
     }
 
@@ -1045,7 +1045,7 @@ mod tests {
         }
 
         // Check that the caller was reimbursed the correct amount of ETH.
-        let account = evm.ctx().journal().load_account(SENDER).unwrap();
+        let account = evm.ctx().journal_mut().load_account(SENDER).unwrap();
         assert_eq!(account.info.balance, expected_refund);
     }
 }

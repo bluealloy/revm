@@ -286,7 +286,7 @@ pub trait Handler {
         if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
             return Ok(());
         }
-        let (tx, local) = evm.ctx().tx_local();
+        let (tx, local) = evm.ctx().tx_local_mut();
         local.insert_initcodes(&[]);
         tx.initcodes());
         Ok(())
@@ -505,8 +505,8 @@ pub trait Handler {
         let exec_result = post_execution::output(evm.ctx(), result);
 
         // commit transaction
-        evm.ctx().journal().commit_tx();
-        evm.ctx().local().clear();
+        evm.ctx().journal_mut().commit_tx();
+        evm.ctx().local_mut().clear();
 
         Ok(exec_result)
     }
@@ -522,8 +522,8 @@ pub trait Handler {
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // clean up local context. Initcode cache needs to be discarded.
-        evm.ctx().local().clear();
-        evm.ctx().journal().discard_tx();
+        evm.ctx().local_mut().clear();
+        evm.ctx().journal_mut().discard_tx();
         Err(error)
     }
 }

@@ -21,10 +21,10 @@ pub trait JournalTr {
     fn new(database: Self::Database) -> Self;
 
     /// Returns the database.
-    fn db_ref(&self) -> &Self::Database;
+    fn db_mut(&mut self) -> &mut Self::Database;
 
     /// Returns the mutable database.
-    fn db(&mut self) -> &mut Self::Database;
+    fn db(&self) -> &Self::Database;
 
     /// Returns the storage value from Journal state.
     ///

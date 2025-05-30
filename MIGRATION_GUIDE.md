@@ -9,7 +9,7 @@
 * Breaking changed for EOF to support eof-devnet1. 
 * `SharedMemory` is not longer Rc<RefCell<>> and internally uses Rc<RefCell<Vec<u8>>> buffer.
     * No action if you dont use it inside Interpreter.
-* In `JournalExt` fn `last_journal()` is renamed to `journal()`
+* In `JournalExt` fn `last_journal_mut()` is renamed to `journal_mut()`
 * EOF is disabled from Osaka and not accessible.
 
 # v68 tag (revm v21.0.0) -> v70 tag ( revm v22.0.2)

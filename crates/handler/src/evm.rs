@@ -27,6 +27,11 @@ pub trait EvmTr {
     /// Returns a mutable reference to the execution context
     fn ctx(&mut self) -> &mut Self::Context;
 
+    /// Returns a mutable reference to the execution context
+    fn ctx_mut(&mut self) -> &mut Self::Context {
+        self.ctx()
+    }
+
     /// Returns an immutable reference to the execution context
     fn ctx_ref(&self) -> &Self::Context;
 

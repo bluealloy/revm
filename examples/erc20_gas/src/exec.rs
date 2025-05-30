@@ -30,7 +30,7 @@ where
 {
     let mut handler = Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new();
     handler.run(evm).map(|r| {
-        let state = evm.ctx().journal().finalize();
+        let state = evm.ctx().journal_mut().finalize();
         (r, state)
     })
 }
@@ -49,7 +49,7 @@ where
     >,
 {
     transact_erc20evm(evm).map(|(result, state)| {
-        evm.ctx().db().commit(state);
+        evm.ctx().db_mut().commit(state);
         result
     })
 }

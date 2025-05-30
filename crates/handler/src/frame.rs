@@ -185,11 +185,11 @@ where
 
         // Make account warm and loaded.
         let _ = context
-            .journal()
+            .journal_mut()
             .load_account_delegated(inputs.bytecode_address)?;
 
         // Create subroutine checkpoint
-        let checkpoint = context.journal().checkpoint();
+        let checkpoint = context.journal_mut().checkpoint();
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if let CallValue::Transfer(value) = inputs.value {
@@ -197,10 +197,10 @@ where
             // Target will get touched even if balance transferred is zero.
             if let Some(i) =
                 context
-                    .journal()
+                    .journal_mut()
                     .transfer(inputs.caller, inputs.target_address, value)?
             {
-                context.journal().checkpoint_revert(checkpoint);
+                context.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());
             }
         }
@@ -228,9 +228,9 @@ where
                 .map_err(ERROR::from_string)?
             {
                 if result.result.is_ok() {
-                    context.journal().checkpoint_commit();
+                    context.journal_mut().checkpoint_commit();
                 } else {
-                    context.journal().checkpoint_revert(checkpoint);
+                    context.journal_mut().checkpoint_revert(checkpoint);
                 }
                 return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                     result,
@@ -240,7 +240,7 @@ where
         }
 
         let account = context
-            .journal()
+            .journal_mut()
             .load_account_code(inputs.bytecode_address)?;
 
         let mut code_hash = account.info.code_hash();
@@ -248,7 +248,7 @@ where
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
             let account = &context
-                .journal()
+                .journal_mut()
                 .load_account_code(eip7702_bytecode.delegated_address)?
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
@@ -257,13 +257,13 @@ where
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
         if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
-            context.journal().checkpoint_revert(checkpoint);
+            context.journal_mut().checkpoint_revert(checkpoint);
             return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
-            context.journal().checkpoint_commit();
+            context.journal_mut().checkpoint_commit();
             return return_result(InstructionResult::Stop);
         }
 
@@ -320,7 +320,7 @@ where
         // }
 
         // Fetch balance of caller.
-        let caller_info = &mut context.journal().load_account(inputs.caller)?.data.info;
+        let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
 
         // Check if caller has enough balance to send to the created contract.
         if caller_info.balance < inputs.value {
@@ -333,7 +333,9 @@ where
             return return_error(InstructionResult::Return);
         };
         caller_info.nonce = new_nonce;
-        context.journal().nonce_bump_journal_entry(inputs.caller);
+        context
+            .journal_mut()
+            .nonce_bump_journal_entry(inputs.caller);
 
         // Create address
         let mut init_code_hash = B256::ZERO;
@@ -347,10 +349,10 @@ where
         };
 
         // warm load account.
-        context.journal().load_account(created_address)?;
+        context.journal_mut().load_account(created_address)?;
 
         // Create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match context.journal().create_account_checkpoint(
+        let checkpoint = match context.journal_mut().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
@@ -424,13 +426,13 @@ where
                 // Decode eof and init code.
                 // TODO : Handle inc_nonce handling more gracefully.
                 // let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
-                //     context.journal().inc_account_nonce(inputs.caller)?;
+                //     context.journal_mut().inc_account_nonce(inputs.caller)?;
                 //     return return_error(InstructionResult::InvalidEOFInitCode);
                 // };
 
                 // if eof.validate().is_err() {
                 //     // TODO : (EOF) New error type.
-                //     context.journal().inc_account_nonce(inputs.caller)?;
+                //     context.journal_mut().inc_account_nonce(inputs.caller)?;
                 //     return return_error(InstructionResult::InvalidEOFInitCode);
                 // }
 
@@ -448,7 +450,7 @@ where
         }
 
         // Fetch balance of caller.
-        let caller = context.journal().load_account(inputs.caller)?.data;
+        let caller = context.journal_mut().load_account(inputs.caller)?.data;
 
         // Check if caller has enough balance to send to the created contract.
         if caller.info.balance < inputs.value {
@@ -461,17 +463,19 @@ where
             return return_error(InstructionResult::Return);
         };
         caller.info.nonce = new_nonce;
-        context.journal().nonce_bump_journal_entry(inputs.caller);
+        context
+            .journal_mut()
+            .nonce_bump_journal_entry(inputs.caller);
 
         let old_nonce = new_nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
         // Load account so it needs to be marked as warm for access list.
-        context.journal().load_account(created_address)?;
+        context.journal_mut().load_account(created_address)?;
 
         // Create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match context.journal().create_account_checkpoint(
+        let checkpoint = match context.journal_mut().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
@@ -554,9 +558,9 @@ where
                 // return_call
                 // Revert changes or not.
                 if interpreter_result.result.is_ok() {
-                    context.journal().checkpoint_commit();
+                    context.journal_mut().checkpoint_commit();
                 } else {
-                    context.journal().checkpoint_revert(self.checkpoint);
+                    context.journal_mut().checkpoint_revert(self.checkpoint);
                 }
                 ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
@@ -566,7 +570,7 @@ where
             FrameData::Create(frame) => {
                 let max_code_size = context.cfg().max_code_size();
                 return_create(
-                    context.journal(),
+                    context.journal_mut(),
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
@@ -582,7 +586,7 @@ where
             FrameData::EOFCreate(frame) => {
                 let max_code_size = context.cfg().max_code_size();
                 return_eofcreate(
-                    context.journal(),
+                    context.journal_mut(),
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
