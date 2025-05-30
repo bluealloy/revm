@@ -42,7 +42,7 @@ where
     }
 
     fn finalize(&mut self) -> Self::State {
-        self.ctx().journal().finalize()
+        self.ctx().journal_mut().finalize()
     }
 
     fn replay(
@@ -62,7 +62,7 @@ where
     CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState>>,
 {
     fn commit(&mut self, state: Self::State) {
-        self.ctx().db().commit(state);
+        self.ctx().db_mut().commit(state);
     }
 }
 

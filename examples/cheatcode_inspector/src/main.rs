@@ -63,12 +63,12 @@ impl JournalTr for Backend {
         Self::new(SpecId::default(), database)
     }
 
-    fn db_ref(&self) -> &Self::Database {
-        self.journaled_state.db_ref()
+    fn db(&self) -> &Self::Database {
+        self.journaled_state.db()
     }
 
-    fn db(&mut self) -> &mut Self::Database {
-        self.journaled_state.db()
+    fn db_mut(&mut self) -> &mut Self::Database {
+        self.journaled_state.db_mut()
     }
 
     fn sload(
@@ -425,7 +425,7 @@ where
 
         // `transact` cheatcode would do this
         context
-            .journal()
+            .journal_mut()
             .method_that_takes_inspector_as_argument::<_, _, _, _, InstructionProviderT, PrecompileT>(
                 Env {
                     block: block.clone(),
@@ -437,7 +437,7 @@ where
 
         // `rollFork(bytes32 transaction)` cheatcode would do this
         context
-            .journal()
+            .journal_mut()
             .method_that_constructs_inspector::<_, _, _, InstructionProviderT, PrecompileT>(
                 Env { block, tx, cfg },
             )?;

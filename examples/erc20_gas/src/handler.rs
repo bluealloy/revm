@@ -54,7 +54,7 @@ where
         let caller = context.tx().caller();
         let value = context.tx().value();
 
-        let (tx, journal) = context.tx_journal();
+        let (tx, journal) = context.tx_journal_mut();
 
         // Load caller's account.
         let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -80,7 +80,7 @@ where
 
         let account_balance_slot = erc_address_storage(tx.caller());
         let account_balance = context
-            .journal()
+            .journal_mut()
             .sload(TOKEN, account_balance_slot)
             .map(|v| v.data)
             .unwrap_or_default();

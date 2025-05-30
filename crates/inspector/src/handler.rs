@@ -262,7 +262,7 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    let mut log_num = context.journal().logs().len();
+    let mut log_num = context.journal_mut().logs().len();
     // Main loop
     while interpreter.bytecode.is_not_end() {
         // Get current opcode.
@@ -287,10 +287,10 @@ where
         instructions[opcode as usize](instruction_context);
 
         // check if new log is added
-        let new_log = context.journal().logs().len();
+        let new_log = context.journal_mut().logs().len();
         if log_num < new_log {
             // as there is a change in log number this means new log is added
-            let log = context.journal().logs().last().unwrap().clone();
+            let log = context.journal_mut().logs().last().unwrap().clone();
             inspector.log(interpreter, context, log);
             log_num = new_log;
         }
@@ -306,7 +306,7 @@ where
     // handle selfdestruct
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            match context.journal().journal().last() {
+            match context.journal_mut().journal().last() {
                 Some(JournalEntry::AccountDestroyed {
                     address,
                     target,

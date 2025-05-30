@@ -95,11 +95,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    fn db_ref(&self) -> &Self::Database {
+    fn db(&self) -> &Self::Database {
         &self.database
     }
 
-    fn db(&mut self) -> &mut Self::Database {
+    fn db_mut(&mut self) -> &mut Self::Database {
         &mut self.database
     }
 

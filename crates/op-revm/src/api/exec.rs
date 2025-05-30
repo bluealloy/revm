@@ -66,7 +66,7 @@ where
     }
 
     fn finalize(&mut self) -> Self::State {
-        self.0.ctx.journal().finalize()
+        self.0.ctx.journal_mut().finalize()
     }
 
     fn replay(
@@ -87,7 +87,7 @@ where
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn commit(&mut self, state: Self::State) {
-        self.0.ctx.db().commit(state);
+        self.0.ctx.db_mut().commit(state);
     }
 }
 
