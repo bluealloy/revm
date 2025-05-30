@@ -20,6 +20,18 @@ pub enum TransactionType {
     Custom = 0xFF,
 }
 
+impl TransactionType {
+    /// Returns true if the transaction type is legacy.
+    pub fn is_legacy(&self) -> bool {
+        matches!(self, Self::Legacy)
+    }
+
+    /// Returns true if the transaction type is custom.
+    pub fn is_custom(&self) -> bool {
+        matches!(self, Self::Custom)
+    }
+}
+
 impl PartialEq<u8> for TransactionType {
     fn eq(&self, other: &u8) -> bool {
         (*self as u8) == *other

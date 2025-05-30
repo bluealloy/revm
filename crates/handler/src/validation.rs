@@ -96,20 +96,22 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         Some(context.block().basefee() as u128)
     };
 
-    let is_legacy_some = matches!(TransactionType::from(tx_type), TransactionType::Legacy)
-        && tx.chain_id().is_some();
+    let tx_type = TransactionType::from(tx_type);
 
-    // Check chain_id only if it is present in the legacy transaction.
+    // Check chain_id if config is enabled.
     // EIP-155: Simple replay attack protection
-    if is_legacy_some && !context.cfg().tx_chain_id_check() {
+    if context.cfg().tx_chain_id_check() {
         if let Some(chain_id) = tx.chain_id() {
             if chain_id != context.cfg().chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
             }
+        } else if !tx_type.is_legacy() && !tx_type.is_custom() {
+            // Legacy transaction are the only one that can omit chain_id.
+            return Err(InvalidTransaction::MissingChainId);
         }
     }
 
-    match TransactionType::from(tx_type) {
+    match tx_type {
         TransactionType::Legacy => {
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {

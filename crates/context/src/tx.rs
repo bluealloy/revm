@@ -42,8 +42,6 @@ pub struct TxEnv {
 
     /// The chain ID of the transaction
     ///
-    /// If set to [`None`], no checks are performed.
-    ///
     /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
     ///
     /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155

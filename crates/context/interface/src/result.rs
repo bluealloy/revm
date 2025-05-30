@@ -330,6 +330,8 @@ pub enum InvalidTransaction {
     CreateInitCodeSizeLimit,
     /// Transaction chain id does not match the config chain id.
     InvalidChainId,
+    /// Missing chain id.
+    MissingChainId,
     /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
     /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
@@ -445,6 +447,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "create initcode size limit")
             }
             Self::InvalidChainId => write!(f, "invalid chain ID"),
+            Self::MissingChainId => write!(f, "missing chain ID"),
             Self::AccessListNotSupported => write!(f, "access list not supported"),
             Self::MaxFeePerBlobGasNotSupported => {
                 write!(f, "max fee per blob gas not supported")
