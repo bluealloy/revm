@@ -185,6 +185,11 @@ pub trait Transaction {
     }
 
     /// Returns the effective balance that is going to be spent that depends on base_fee
+    /// Multiplication for gas are done in u128 type (saturated) and value is added as U256 type.
+    ///
+    /// # Reason
+    ///
+    /// This is done for performance reasons and it is known to be safe as there is no more that u128::MAX value of eth in existence.
     ///
     /// This is always strictly less than [`Self::max_balance_spending`].
     ///
@@ -195,16 +200,16 @@ pub trait Transaction {
         blob_price: u128,
     ) -> Result<U256, InvalidTransaction> {
         // gas_limit * max_fee + value + additional_gas_cost
-        let mut effective_balance_spending = U256::from(self.gas_limit())
-            .checked_mul(U256::from(self.effective_gas_price(base_fee)))
-            .and_then(|gas_cost| gas_cost.checked_add(self.value()))
+        let mut effective_balance_spending = (self.gas_limit() as u128)
+            .checked_mul(self.effective_gas_price(base_fee))
+            .and_then(|gas_cost| U256::from(gas_cost).checked_add(self.value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         // add blob fee
         if self.tx_type() == TransactionType::Eip4844 {
             let blob_gas = self.total_blob_gas() as u128;
             effective_balance_spending = effective_balance_spending
-                .checked_add(U256::from(blob_price).saturating_mul(U256::from(blob_gas)))
+                .checked_add(U256::from(blob_price.saturating_mul(blob_gas)))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
         }
 
