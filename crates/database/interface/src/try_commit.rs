@@ -1,7 +1,16 @@
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 use crate::DatabaseCommit;
 use core::{convert::Infallible, error::Error, fmt};
 use primitives::{Address, HashMap};
 use state::Account;
+
+#[cfg(not(target_has_atomic = "ptr"))]
+use alloc::rc::Rc as Arc;
+#[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
+#[cfg(all(feature = "std", target_has_atomic = "ptr"))]
 use std::sync::Arc;
 
 /// EVM database commit interface that can fail.
@@ -59,8 +68,17 @@ where
 
 #[cfg(test)]
 mod test {
+    #[cfg(not(feature = "std"))]
+    extern crate alloc;
+
     use super::*;
     use crate::DatabaseCommit;
+
+    #[cfg(not(target_has_atomic = "ptr"))]
+    use alloc::rc::Rc as Arc;
+    #[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+    use alloc::sync::Arc;
+    #[cfg(all(feature = "std", target_has_atomic = "ptr"))]
     use std::sync::Arc;
 
     struct MockDb;

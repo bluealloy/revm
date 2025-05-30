@@ -4,6 +4,8 @@
 //! - Legacy bytecode with jump table analysis. Found in [`LegacyAnalyzedBytecode`]
 //! - EOF ( EMV Object Format) bytecode introduced in Osaka that.
 //! - EIP-7702 bytecode, introduces in Prague and contains address to delegated account.
+#[cfg(not(feature = "std"))]
+extern crate alloc;
 
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
@@ -12,6 +14,12 @@ use crate::{
 };
 use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
+
+#[cfg(not(target_has_atomic = "ptr"))]
+use alloc::rc::Rc as Arc;
+#[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+use alloc::sync::Arc;
+#[cfg(all(feature = "std", target_has_atomic = "ptr"))]
 use std::sync::Arc;
 
 /// Main bytecode structure with all variants.
@@ -216,7 +224,16 @@ impl Bytecode {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(feature = "std"))]
+    extern crate alloc;
+
     use super::{Bytecode, Eof};
+
+    #[cfg(not(target_has_atomic = "ptr"))]
+    use alloc::rc::Rc as Arc;
+    #[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
+    use alloc::sync::Arc;
+    #[cfg(all(feature = "std", target_has_atomic = "ptr"))]
     use std::sync::Arc;
 
     #[test]
