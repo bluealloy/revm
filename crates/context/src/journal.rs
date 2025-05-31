@@ -176,8 +176,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
-        self.inner
-            .initial_account_load(&mut self.database, address, storage_keys)?;
+        self.inner.load_account_optional_with_storage(
+            &mut self.database,
+            address,
+            false,
+            storage_keys,
+        )?;
         Ok(())
     }
 
