@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v5.0.0...revm-statetest-types-v6.0.0) - 2025-05-31
+
+### Other
+
+- unify calling of journal account loading
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v4.1.0...revm-statetest-types-v5.0.0) - 2025-05-22
 
 ### Other
