@@ -47,9 +47,7 @@ impl Account {
         if SpecId::is_enabled_in(spec, SpecId::SPURIOUS_DRAGON) {
             self.is_empty()
         } else {
-            let loaded_not_existing = self.is_loaded_as_not_existing();
-            let is_not_touched = !self.is_touched();
-            loaded_not_existing && is_not_touched
+            self.is_loaded_as_not_existing_not_touched()
         }
     }
 
@@ -114,6 +112,11 @@ impl Account {
     /// existing and empty were two separate states.
     pub fn is_loaded_as_not_existing(&self) -> bool {
         self.status.contains(AccountStatus::LoadedAsNotExisting)
+    }
+
+    /// Is account loaded as not existing from database and not touched.
+    pub fn is_loaded_as_not_existing_not_touched(&self) -> bool {
+        self.is_loaded_as_not_existing() && !self.is_touched()
     }
 
     /// Is account newly created in this transaction.
