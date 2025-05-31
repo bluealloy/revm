@@ -23,6 +23,6 @@ Options:
 Eth tests are a suite of tests from the Ethereum Foundation that are used to test EVM implementations.
 Part of these tests are included in the revm repository in the `tests` folder.
 
-Download eth tests `git clone https://github.com/ethereum/tests`. They can be run with `revme` using the following command:
-`cargo run --release -p revme -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests`
+Download eth tests `git clone -b v17.0 https://github.com/ethereum/tests` and legacy tests `git clone git@github.com:ethereum/legacytests.git`. They can be run with `revme` using the following command:
+`cargo run --release -p revme -- statetest tests/GeneralStateTests/ legacytests/Constantinople/GeneralStateTests`
 All statetest that can be run by revme can be found in the `GeneralStateTests` folder.
