@@ -6,6 +6,7 @@ use context::either::Either;
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
+use primitives::U256;
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -256,7 +257,12 @@ pub fn execute_test_suite(
         let mut block = BlockEnv::default();
         let mut tx = TxEnv::default();
         // For mainnet
-        cfg.chain_id = 1;
+        cfg.chain_id = unit
+            .env
+            .current_chain_id
+            .unwrap_or(U256::ONE)
+            .try_into()
+            .unwrap_or(1);
 
         // Block env
         block.number = unit.env.current_number.try_into().unwrap_or(u64::MAX);
