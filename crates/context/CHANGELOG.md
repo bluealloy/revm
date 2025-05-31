@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-context-v5.0.0...revm-context-v6.0.0) - 2025-05-31
+
+### Added
+
+- added TxEnv::new_bench() add util function ([#2556](https://github.com/bluealloy/revm/pull/2556))
+- Config blob basefee fraction ([#2551](https://github.com/bluealloy/revm/pull/2551))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- unify calling of journal account loading ([#2561](https://github.com/bluealloy/revm/pull/2561))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(cfg)* add tx_chain_id_check fields. Optimize effective gas cost calc ([#2557](https://github.com/bluealloy/revm/pull/2557))
+- add dot to trigger ci ([#2552](https://github.com/bluealloy/revm/pull/2552))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-context-v4.1.0...revm-context-v5.0.0) - 2025-05-22
 
 ### Added

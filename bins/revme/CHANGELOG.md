@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revme-v5.1.0...revme-v6.0.0) - 2025-05-31
+
+### Added
+
+- Config blob basefee fraction ([#2551](https://github.com/bluealloy/revm/pull/2551))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- unify calling of journal account loading ([#2561](https://github.com/bluealloy/revm/pull/2561))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(cfg)* add tx_chain_id_check fields. Optimize effective gas cost calc ([#2557](https://github.com/bluealloy/revm/pull/2557))
+- add gas-cost-estimator selected bytecodes ([#2555](https://github.com/bluealloy/revm/pull/2555))
+
 ## [5.1.0](https://github.com/bluealloy/revm/compare/revme-v5.0.0...revme-v5.1.0) - 2025-05-22
 
 ### Added
