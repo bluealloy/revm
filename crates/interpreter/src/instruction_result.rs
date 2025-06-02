@@ -98,6 +98,26 @@ pub enum InstructionResult {
     EofAuxDataTooSmall,
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
+
+    // Fluentbase error codes
+    RootCallOnly = 0x80,
+    MalformedBuiltinParams,
+    CallDepthOverflow,
+    NonNegativeExitCode,
+    UnknownError,
+    InputOutputOutOfBounds,
+    // rWasm trap error codes
+    UnreachableCodeReached = 0x90,
+    MemoryOutOfBounds,
+    TableOutOfBounds,
+    IndirectCallToNull,
+    IntegerDivisionByZero,
+    IntegerOverflow,
+    BadConversionToInteger,
+    BadSignature,
+    OutOfFuel,
+    GrowthOperationLimited,
+    UnresolvedFunction,
 }
 
 impl From<TransferError> for InstructionResult {
@@ -154,6 +174,25 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
             HaltReason::SubRoutineStackOverflow => Self::SubRoutineStackOverflow,
             HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
+
+            // Fluentbase error codes
+            HaltReason::RootCallOnly => Self::RootCallOnly,
+            HaltReason::MalformedBuiltinParams => Self::MalformedBuiltinParams,
+            HaltReason::CallDepthOverflow => Self::CallDepthOverflow,
+            HaltReason::NonNegativeExitCode => Self::NonNegativeExitCode,
+            HaltReason::UnknownError => Self::UnknownError,
+            HaltReason::InputOutputOutOfBounds => Self::InputOutputOutOfBounds,
+            HaltReason::UnreachableCodeReached => Self::UnreachableCodeReached,
+            HaltReason::MemoryOutOfBounds => Self::MemoryOutOfBounds,
+            HaltReason::TableOutOfBounds => Self::TableOutOfBounds,
+            HaltReason::IndirectCallToNull => Self::IndirectCallToNull,
+            HaltReason::IntegerDivisionByZero => Self::IntegerDivisionByZero,
+            HaltReason::IntegerOverflow => Self::IntegerOverflow,
+            HaltReason::BadConversionToInteger => Self::BadConversionToInteger,
+            HaltReason::BadSignature => Self::BadSignature,
+            HaltReason::OutOfFuel => Self::OutOfFuel,
+            HaltReason::GrowthOperationLimited => Self::GrowthOperationLimited,
+            HaltReason::UnresolvedFunction => Self::UnresolvedFunction,
         }
     }
 }
@@ -213,6 +252,23 @@ macro_rules! return_error {
             | $crate::InstructionResult::EofAuxDataTooSmall
             | $crate::InstructionResult::EofAuxDataOverflow
             | $crate::InstructionResult::InvalidEXTCALLTarget
+            | $crate::InstructionResult::RootCallOnly
+            | $crate::InstructionResult::MalformedBuiltinParams
+            | $crate::InstructionResult::CallDepthOverflow
+            | $crate::InstructionResult::NonNegativeExitCode
+            | $crate::InstructionResult::UnknownError
+            | $crate::InstructionResult::InputOutputOutOfBounds
+            | $crate::InstructionResult::UnreachableCodeReached
+            | $crate::InstructionResult::MemoryOutOfBounds
+            | $crate::InstructionResult::TableOutOfBounds
+            | $crate::InstructionResult::IndirectCallToNull
+            | $crate::InstructionResult::IntegerDivisionByZero
+            | $crate::InstructionResult::IntegerOverflow
+            | $crate::InstructionResult::BadConversionToInteger
+            | $crate::InstructionResult::BadSignature
+            | $crate::InstructionResult::OutOfFuel
+            | $crate::InstructionResult::GrowthOperationLimited
+            | $crate::InstructionResult::UnresolvedFunction
     };
 }
 
@@ -390,6 +446,36 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
             }
+            // Fluentbase error codes
+            InstructionResult::RootCallOnly => Self::Halt(HaltReason::RootCallOnly.into()),
+            InstructionResult::MalformedBuiltinParams => {
+                Self::Halt(HaltReason::MalformedBuiltinParams.into())
+            }
+            InstructionResult::CallDepthOverflow => Self::Halt(HaltReason::CallDepthOverflow.into()),
+            InstructionResult::NonNegativeExitCode => Self::Halt(HaltReason::NonNegativeExitCode.into()),
+            InstructionResult::UnknownError => Self::Halt(HaltReason::UnknownError.into()),
+            InstructionResult::InputOutputOutOfBounds => {
+                Self::Halt(HaltReason::InputOutputOutOfBounds.into())
+            }
+            InstructionResult::UnreachableCodeReached => {
+                Self::Halt(HaltReason::UnreachableCodeReached.into())
+            }
+            InstructionResult::MemoryOutOfBounds => Self::Halt(HaltReason::MemoryOutOfBounds.into()),
+            InstructionResult::TableOutOfBounds => Self::Halt(HaltReason::TableOutOfBounds.into()),
+            InstructionResult::IndirectCallToNull => Self::Halt(HaltReason::IndirectCallToNull.into()),
+            InstructionResult::IntegerDivisionByZero => {
+                Self::Halt(HaltReason::IntegerDivisionByZero.into())
+            }
+            InstructionResult::IntegerOverflow => Self::Halt(HaltReason::IntegerOverflow.into()),
+            InstructionResult::BadConversionToInteger => {
+                Self::Halt(HaltReason::BadConversionToInteger.into())
+            }
+            InstructionResult::BadSignature => Self::Halt(HaltReason::BadSignature.into()),
+            InstructionResult::OutOfFuel => Self::Halt(HaltReason::OutOfFuel.into()),
+            InstructionResult::GrowthOperationLimited => {
+                Self::Halt(HaltReason::GrowthOperationLimited.into())
+            }
+            InstructionResult::UnresolvedFunction => Self::Halt(HaltReason::UnresolvedFunction.into()),
         }
     }
 }

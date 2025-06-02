@@ -24,6 +24,8 @@ pub enum Bytecode {
     Eof(Arc<Eof>),
     /// EIP-7702 delegated bytecode
     Eip7702(Eip7702Bytecode),
+    /// An Rwasm bytecode
+    Rwasm(Bytes),
 }
 
 impl Default for Bytecode {
@@ -115,6 +117,7 @@ impl Bytecode {
                 let eip7702 = Eip7702Bytecode::new_raw(bytes)?;
                 Ok(Self::Eip7702(eip7702))
             }
+            Some(prefix) if prefix == &crate::RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytes)),
             _ => Ok(Self::new_legacy(bytes)),
         }
     }
@@ -141,6 +144,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.body.code,
             Self::Eip7702(code) => code.raw(),
+            Self::Rwasm(bytes) => bytes,
         }
     }
 
@@ -165,6 +169,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.raw,
             Self::Eip7702(code) => code.raw(),
+            Self::Rwasm(bytes) => bytes,
         }
     }
 
@@ -181,6 +186,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
+            Self::Rwasm(bytes) => bytes.clone(),
         }
     }
 
@@ -191,6 +197,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
+            Self::Rwasm(bytes) => bytes,
         }
     }
 

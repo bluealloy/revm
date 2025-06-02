@@ -4,7 +4,6 @@
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
-
 // Mainnet related handlers.
 
 pub mod api;
@@ -22,6 +21,7 @@ pub mod pre_execution;
 mod precompile_provider;
 pub mod system_call;
 pub mod validation;
+mod rwasm;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};

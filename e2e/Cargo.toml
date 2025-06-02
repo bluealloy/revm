@@ -8,13 +8,7 @@ resolver = "2"
 fluentbase-sdk = { path = "../../crates/sdk" }
 fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 
-revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
+revm = { path = "../crates/revm", version = "23.1.0", default-features = false, features = ["std", "serde-json", "serde"] }
 
 hash-db = "=0.15"
 hex = "0.4"

@@ -1,5 +1,5 @@
-use revm::primitives::SpecId;
 use serde::Deserialize;
+use revm::primitives::hardfork::SpecId;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash, Clone, Copy)]
 pub enum SpecName {

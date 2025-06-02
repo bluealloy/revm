@@ -26,3 +26,6 @@ rustc-ice-*
 
 # Fixtures
 /test-fixtures
+
+e2e/tests
+e2e/Cargo.lock

@@ -37,3 +37,8 @@ pub use eof::{
 pub use iter::BytecodeIterator;
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode};
 pub use opcode::OpCode;
+use primitives::Bytes;
+
+/// Rwasm magic number in array form.
+pub static RWASM_MAGIC_BYTES: Bytes = primitives::bytes!("ef52");
+pub static WASM_MAGIC_BYTES: Bytes = primitives::bytes!("0061736d");

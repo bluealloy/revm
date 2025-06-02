@@ -1,3 +1,4 @@
+use core::cell::Ref;
 use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::ContextTr;
@@ -112,7 +113,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                     r = slice;
                     r.as_ref()
                 } else {
-                    &[]
+                    &[][..]
                 }
             }
             CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),

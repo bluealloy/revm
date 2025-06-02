@@ -35,7 +35,6 @@ precompile.workspace = true
 primitives.workspace = true
 state.workspace = true
 
-
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
@@ -101,3 +100,5 @@ bn = ["precompile/bn"]
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.
 portable = ["precompile/portable"]
+debug-print = ["handler/debug-print"]
+wasmtime = ["handler/wasmtime"]

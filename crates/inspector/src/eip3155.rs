@@ -1,3 +1,4 @@
+use core::cell::Ref;
 use crate::inspectors::GasInspector;
 use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
@@ -227,7 +228,7 @@ where
         self.stack.clear();
         interp.stack.clone_into(&mut self.stack);
         self.memory = if self.include_memory {
-            Some(hex::encode_prefixed(
+            Some(hex::encode_prefixed::<&[u8]>(
                 interp.memory.slice(0..interp.memory.size()).as_ref(),
             ))
         } else {

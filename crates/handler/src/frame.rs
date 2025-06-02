@@ -1,18 +1,17 @@
 use super::frame_data::*;
-use crate::{
-    instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
-    FrameInitOrResult, FrameOrResult, ItemOrResult,
-};
+use crate::{instructions::InstructionProvider, precompile_provider::PrecompileProvider, rwasm, EvmTr, FrameInitOrResult, FrameOrResult, ItemOrResult};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
-use context::LocalContextTr;
+use context::{Context, LocalContextTr};
 use context_interface::context::ContextError;
-use context_interface::ContextTr;
+use context_interface::{Block, ContextTr};
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
     Cfg, Database, Transaction,
 };
 use core::cmp::min;
+use core::mem::take;
+use core::str::from_utf8;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
@@ -30,6 +29,12 @@ use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{boxed::Box, sync::Arc};
+use bytecode::eip7702::Eip7702Bytecode;
+use fluentbase_runtime::instruction::exec::SyscallExec;
+use fluentbase_runtime::RuntimeContext;
+use fluentbase_sdk::{compile_wasm_to_rwasm_with_config, default_compilation_config, BlockContextV1, BytecodeOrHash, ContractContextV1, ExitCode, SharedContextInput, SharedContextInputV1, TxContextV1, FUEL_DENOM_RATE, PRECOMPILE_EVM_RUNTIME, STATE_DEPLOY, STATE_MAIN, WASM_MAGIC_BYTES};
+use interpreter::interpreter_types::{InputsTr, LegacyBytecode};
+use crate::rwasm::SystemInterruptionOutcome;
 
 /// Call frame trait
 pub trait Frame: Sized {
@@ -70,6 +75,9 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
     pub interpreter: Interpreter<IW>,
+
+    /// Info about interrupted call (for rwasm execution)
+    pub interrupted_outcome: Option<SystemInterruptionOutcome>,
 }
 
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
@@ -108,7 +116,11 @@ where
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        let next_action = context.run_interpreter(&mut self.interpreter);
+        let next_action = if context.ctx().cfg().is_rwasm_proxy_disabled() {
+            context.run_interpreter(&mut self.interpreter)
+        } else {
+            rwasm::run_rwasm_loop(self, context)?
+        };
         self.process_next_action(context, next_action)
     }
 
@@ -141,7 +153,43 @@ where
             depth,
             interpreter,
             checkpoint,
+            interrupted_outcome: None,
         }
+    }
+
+    pub fn insert_interrupted_outcome(&mut self, interrupted_outcome: SystemInterruptionOutcome) {
+        self.interrupted_outcome = Some(interrupted_outcome);
+    }
+
+    pub fn insert_interrupted_result(&mut self, result: FrameResult) {
+        let created_address = if let FrameResult::Create(create_outcome) = &result {
+            create_outcome.address.or_else(|| {
+                // I don't know why EVM returns empty address and ok status in case of nonce
+                // overflow, I think nobody knows...
+                let is_nonce_overflow = create_outcome.result.result == InstructionResult::Return
+                    && create_outcome.address.is_none();
+                if is_nonce_overflow {
+                    Some(Address::ZERO)
+                } else {
+                    None
+                }
+            })
+        } else {
+            None
+        };
+        self
+            .interrupted_outcome
+            .as_mut()
+            .unwrap()
+            .insert_result(result.into_interpreter_result(), created_address);
+    }
+
+    pub fn is_interrupted_call(&self) -> bool {
+        self.interrupted_outcome.is_some()
+    }
+
+    pub fn take_interrupted_outcome(&mut self) -> Option<SystemInterruptionOutcome> {
+        self.interrupted_outcome.take()
     }
 }
 
@@ -163,6 +211,7 @@ where
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+        println!("[make_call_frame] with inputs: {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
         let (context, precompiles) = evm.ctx_precompiles();
@@ -205,18 +254,19 @@ where
             }
         }
 
-        let interpreter_input = InputsImpl {
+        let mut interpreter_input = InputsImpl {
             target_address: inputs.target_address,
             caller_address: inputs.caller,
             bytecode_address: Some(inputs.bytecode_address),
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
+            rwasm_proxy_address: None,
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
-        if !is_ext_delegate_call {
+        if !is_ext_delegate_call && context.cfg().is_rwasm_proxy_disabled() {
             if let Some(result) = precompiles
                 .run(
                     context,
@@ -238,11 +288,11 @@ where
                 })));
             }
         }
-
+        println!("XXX: loading account in make_call_frame");
         let account = context
             .journal()
             .load_account_code(inputs.bytecode_address)?;
-
+        println!("XXX: loaded account in make_call_frame");
         let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -253,6 +303,10 @@ where
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
+
+            if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME {
+                interpreter_input.rwasm_proxy_address = Some(PRECOMPILE_EVM_RUNTIME);
+            }
         }
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -263,9 +317,11 @@ where
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
+            println!("XXX: bytecode is empty in make_call_frame");
             context.journal().checkpoint_commit();
             return return_result(InstructionResult::Stop);
         }
+        println!("XXX: interpreter input rwasm_proxy_address: {:?}", interpreter_input.rwasm_proxy_address);
 
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
@@ -295,6 +351,7 @@ where
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+        println!("[make_create_frame]");
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -365,8 +422,55 @@ where
             Err(e) => return return_error(e.into()),
         };
 
+        let (bytecode, constructor_params, rwasm_proxy_address) = if inputs.init_code.len()
+            > WASM_MAGIC_BYTES.len()
+            && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
+        {
+            let init_code = inputs.init_code.as_ref();
+            let mut config = default_compilation_config();
+            // TODO(khasan): check enable builtins gas
+
+            let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)
+            else {
+                return return_error(InstructionResult::Revert);
+            };
+            // for rwasm, we set bytecode before execution
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            // Create account, transfer funds and make the journal checkpoint.
+            let hash = bytecode.hash_slow();
+            context.journal().set_code_with_hash(created_address, bytecode.clone(), hash);
+            println!("XXX: set code with hash in make_create_frame to {:?}", created_address);
+            init_code_hash = hash;
+            (bytecode, compilation_result.constructor_params, None)
+        } else if !context.cfg().is_rwasm_proxy_disabled() {
+            // create a new EIP-7702 account that points to the EVM runtime system precompile
+            let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
+            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+            context.journal().set_code(created_address, bytecode);
+            // an original init code we pass as an input inside the runtime
+            // to execute deployment logic
+            let input = inputs.init_code.clone();
+            // we should reload bytecode here since it's an EIP-7702 account
+            let bytecode = context.journal().code(PRECOMPILE_EVM_RUNTIME)?;
+            // if it's a CREATE or CREATE2 call, then we should
+            // to recalculate init code hash to make sure it matches runtime hash
+            let code_hash = context.journal().code_hash(PRECOMPILE_EVM_RUNTIME)?;
+            init_code_hash = code_hash.data;
+            (
+                Bytecode::new_raw(bytecode.data),
+                input,
+                Some(PRECOMPILE_EVM_RUNTIME),
+            )
+        } else {
+            (
+                Bytecode::new_legacy(inputs.init_code.clone()),
+                Default::default(),
+                None,
+            )
+        };
+
         let bytecode = ExtBytecode::new_with_hash(
-            Bytecode::new_legacy(inputs.init_code.clone()),
+            bytecode,
             init_code_hash,
         );
 
@@ -374,8 +478,9 @@ where
             target_address: created_address,
             caller_address: inputs.caller,
             bytecode_address: None,
-            input: CallInput::Bytes(Bytes::new()),
+            input: CallInput::Bytes(constructor_params),
             call_value: inputs.value,
+            rwasm_proxy_address,
         };
         let gas_limit = inputs.gas_limit;
 
@@ -492,6 +597,7 @@ where
             bytecode_address: None,
             input,
             call_value: inputs.value,
+            rwasm_proxy_address: None,
         };
 
         let gas_limit = inputs.gas_limit;
@@ -601,7 +707,6 @@ where
                 )))
             }
         };
-
         Ok(result)
     }
 
@@ -790,8 +895,20 @@ pub fn return_create<JOURNAL: JournalTr>(
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
-    journal.set_code(address, bytecode);
+
+    // since rwasm is EOF, we use `ReturnContract`
+    // return result to indicate that EOF is created,
+    // but there is no need
+    // to update bytecode since it's immutable during the deployment process
+    // We called set_code for rwasm bytecode in `make_create_frame`
+    // TODO(khasan): can we remove this hack and get rid of set_code in `make_create_frame`?
+    let is_rwasm_contract_creation =
+        interpreter_result.result == InstructionResult::ReturnContract;
+    if !is_rwasm_contract_creation {
+        // Set code
+        println!("XXX: set code with hash in return_create to {:?}", address);
+        journal.set_code(address, bytecode);
+    }
 
     interpreter_result.result = InstructionResult::Return;
 }

@@ -5,6 +5,7 @@ mod constants;
 
 pub use calc::*;
 pub use constants::*;
+use fluentbase_sdk::FUEL_DENOM_RATE;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -157,6 +158,18 @@ impl Gas {
         }
 
         MemoryExtensionResult::Extended
+    }
+
+    #[inline]
+    pub fn record_denominated_cost(&mut self, fuel_cost: u64) -> bool {
+        // TODO(dmitry123): "we can't do round ceil here because we need to sync gas/fuel rates"
+        // self.record_cost((fuel_cost + FUEL_DENOM_RATE - 1) / FUEL_DENOM_RATE)
+        self.record_cost(fuel_cost / FUEL_DENOM_RATE)
+    }
+
+    #[inline]
+    pub fn record_denominated_refund(&mut self, fuel_refund: i64) {
+        self.record_refund(fuel_refund / FUEL_DENOM_RATE as i64)
     }
 }
 

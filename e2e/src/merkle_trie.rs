@@ -2,10 +2,12 @@ use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use revm::{
-    db::{states::plain_account::PlainStorage, PlainAccount},
-    primitives::{address, keccak256, AccountInfo, Address, Log, B256, U256},
+    primitives::{address, keccak256, Address, Log, B256, U256},
 };
 use triehash::sec_trie_root;
+use revm::database::PlainAccount;
+use revm::database::states::plain_account::PlainStorage;
+use revm::state::AccountInfo;
 
 pub fn log_rlp_hash(logs: &[Log]) -> B256 {
     let mut out = Vec::with_capacity(alloy_rlp::list_length(logs));

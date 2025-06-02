@@ -14,6 +14,7 @@ use primitives::{
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
+use fluentbase_genesis::{is_self_gas_management_contract, is_system_precompile};
 
 /// Inner journal state that contains journal and state changes.
 ///
@@ -382,7 +383,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let spec = self.spec;
         let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
-        let is_empty = account_load.state_clear_aware_is_empty(spec);
+        let mut is_empty = account_load.state_clear_aware_is_empty(spec);
+
+        // system precompiles are always empty...
+        if !is_empty && is_system_precompile(&target) {
+            is_empty = true;
+        }
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -390,8 +396,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
+            let next_balance = target_account.info.balance + acc_balance;
+            // don't touch a precompiled contract if it persists empty after balance increase,
+            // because these contracts are empty with non-empty code hash
+            // that causes modification of an empty account that violates EIP-161
             Self::touch_account(&mut self.journal, target, target_account);
-            target_account.info.balance += acc_balance;
+            target_account.info.balance = next_balance;
         }
 
         let acc = self.state.get_mut(&address).unwrap();
@@ -501,7 +511,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(db, address)?;
-            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+            // we need to skip this flag for the full EVM gas compatibility
+            // because all EVM contracts are represented though EIP-7702
+            if !is_self_gas_management_contract(&address) {
+                account_load
+                    .data
+                    .is_delegate_account_cold = Some(delegate_account.is_cold);
+            }
         }
 
         Ok(account_load)

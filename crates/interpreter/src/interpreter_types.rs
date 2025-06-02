@@ -40,6 +40,10 @@ pub trait InputsTr {
     fn input(&self) -> &CallInput;
     /// Returns call value of the call.
     fn call_value(&self) -> U256;
+
+    fn rwasm_proxy_address(&self) -> Option<Address> {
+        None
+    }
 }
 
 /// Trait needed for legacy bytecode.

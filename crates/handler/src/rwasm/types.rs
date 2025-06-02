@@ -1,12 +1,12 @@
-use crate::{return_ok, return_revert, Contract, Gas, InstructionResult, InterpreterResult};
-use fluentbase_types::SyscallInvocationParams;
-use primitives::Address;
+use fluentbase_sdk::SyscallInvocationParams;
 use std::boxed::Box;
+use bytecode::Bytecode;
+use interpreter::{return_ok, return_revert, Gas, InstructionResult, InterpreterResult};
+use primitives::{Address, B256, U256};
+use primitives::bytes::Bytes;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SystemInterruptionInputs {
-    pub contract: Contract,
     pub call_id: u32,
     pub syscall_params: SyscallInvocationParams,
     pub gas: Gas,
@@ -16,7 +16,6 @@ pub struct SystemInterruptionInputs {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct SystemInterruptionOutcome {
     pub inputs: Box<SystemInterruptionInputs>,
     pub result: InterpreterResult,

@@ -1,90 +1,91 @@
-use crate::{
-    interpreter::{
-        interpreter_action::{SystemInterruptionInputs, SystemInterruptionOutcome},
-        Gas,
-        InstructionResult,
-        InterpreterAction,
-        InterpreterResult,
-    },
-    primitives::{Bytecode, Bytes, EVMError, Spec},
-    rwasm::syscall::execute_rwasm_interruption,
-    Context,
-    Database,
-    Frame,
-};
+use interpreter::{return_ok, return_revert, FrameInput, Gas};
 use core::{mem::take, ops::Deref};
+use bytecode::Bytecode;
+use context_interface::{Block, Cfg, ContextTr, Transaction};
+use context_interface::result::FromStringError;
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
 };
-use fluentbase_sdk::{
-    codec::CompactABI,
-    BlockContextV1,
-    BytecodeOrHash,
-    ContractContextV1,
-    ExitCode,
-    SharedContextInput,
-    SharedContextInputV1,
-    SyscallInvocationParams,
-    TxContextV1,
-    B256,
-    FUEL_DENOM_RATE,
-    STATE_DEPLOY,
-    STATE_MAIN,
-};
-use revm_interpreter::{return_ok, return_revert, Contract, SharedMemory};
+use fluentbase_sdk::{codec::CompactABI, Address, BlockContextV1, BytecodeOrHash, Bytes, ContractContextV1, ExitCode, SharedContextInput, SharedContextInputV1, SyscallInvocationParams, TxContextV1, B256, FUEL_DENOM_RATE, STATE_DEPLOY, STATE_MAIN, U256};
+use interpreter::interpreter::EthInterpreter;
+use interpreter::{CallInput, InstructionResult, InterpreterAction, InterpreterResult};
+use interpreter::interpreter_types::{InputsTr, LoopControl, RuntimeFlag};
+use crate::{ContextTrDbError, EthFrame, EvmTr};
+use crate::rwasm::{execute_rwasm_interruption, SystemInterruptionInputs, SystemInterruptionOutcome};
 
-pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
-    stack_frame: &mut Frame,
-    _shared_memory: &mut SharedMemory,
-    context: &mut Context<EXT, DB>,
-) -> Result<InterpreterAction, EVMError<DB::Error>> {
-    let is_create: bool = stack_frame.is_create();
-    let interpreter = stack_frame.interpreter_mut();
-    let contract = take(&mut interpreter.contract);
-
-    let bytecode_address = contract.bytecode_address();
+pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    evm: &mut EVM,
+) -> Result<InterpreterAction, ERROR> {
+    println!("XXX executing RWASM frame");
+    let interpreter = &mut frame.interpreter;
+    let is_create: bool = matches!(frame.input, FrameInput::Create( .. ));
+    let is_static: bool = interpreter.runtime_flag.is_static();
+    let bytecode_address = interpreter.input.bytecode_address().cloned().unwrap_or_else(|| interpreter.input.target_address());
+    let context = evm.ctx();
 
     // encode input with all related context info
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
-        block: BlockContextV1::from(context.evm.env.deref()),
-        tx: TxContextV1::from(context.evm.env.deref()),
+        block: BlockContextV1 {
+            chain_id: context.cfg().chain_id(),
+            coinbase: Address::ZERO, // TODO(khasan) set correct value
+            timestamp: context.block().timestamp(),
+            number: context.block().number(),
+            difficulty: context.block().difficulty(),
+            prev_randao: context.block().prevrandao().unwrap(),
+            gas_limit: context.block().gas_limit(),
+            base_fee: U256::from(context.block().basefee()),
+        },
+        tx: TxContextV1 {
+            gas_limit: context.tx().gas_limit(),
+            nonce: context.tx().nonce(),
+            gas_price: U256::from(context.tx().gas_price()),
+            gas_priority_fee: context.tx().max_priority_fee_per_gas().map(|v| U256::from(v)),
+            origin: context.tx().caller(), // TODO(khasan) does origin == caller ?
+            value: context.tx().value(),
+        },
         contract: ContractContextV1 {
-            address: contract.target_address,
+            address: interpreter.input.target_address(),
             bytecode_address,
-            caller: contract.caller,
-            is_static: interpreter.is_static,
-            value: contract.call_value,
-            gas_limit: interpreter.gas.remaining(),
+            caller: context.tx().caller(),
+            is_static: interpreter.runtime_flag.is_static(),
+            value: context.tx().value(),
+            gas_limit: interpreter.control.gas().remaining(),
         },
     });
     let mut context_input = context_input
         .encode()
         .expect("revm: unable to encode shared context input")
         .to_vec();
-    context_input.extend_from_slice(contract.input.as_ref());
+    let input = interpreter.input.input().clone();
+    let bytes = match input {
+        CallInput::Bytes(vec) => vec,
+        _ => unreachable!("not bytes found in call input "), // TODO(khasan): this shared memory thing can be returned here?
+    };
+    context_input.extend_from_slice(&bytes);
 
-    // calculate bytecode hash
-    let rwasm_code_hash = contract
-        .hash
-        .filter(|v| v != &B256::ZERO)
-        .unwrap_or_else(|| unreachable!("revm: missing rwasm bytecode hash"));
-    let rwasm_bytecode = match &contract.bytecode {
+    let rwasm_code_hash = interpreter.bytecode.hash().unwrap();
+
+    let rwasm_bytecode = match &interpreter.bytecode.clone() {
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
         _ => unreachable!("revm: unexpected bytecode type"),
     };
+    println!("XXX {} len of rwasm bytecode", rwasm_bytecode.len());
     let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
     // fuel limit we denominate later to gas
     let fuel_limit = interpreter
+        .control
         .gas
         .remaining()
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let is_gas_free = contract
-        .eip7702_address
+    let is_gas_free = interpreter
+        .input
+        .rwasm_proxy_address
         .or_else(|| Some(bytecode_address))
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
         .is_some();
@@ -95,6 +96,8 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
         runtime_context = runtime_context.without_fuel();
     }
 
+    println!("XXX: interpreter input rwasm_proxy_address: {:?}", interpreter.input.rwasm_proxy_address);
+
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
         &mut runtime_context,
         bytecode_hash,
@@ -104,28 +107,27 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     );
 
     // make sure we have enough gas to charge from the call
-    if !interpreter.gas.record_denominated_cost(fuel_consumed) {
+    if !interpreter.control.gas.record_denominated_cost(fuel_consumed) {
         return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
                 output: Bytes::default(),
-                gas: interpreter.gas,
+                gas: interpreter.control.gas,
             },
         });
     }
-    interpreter.gas.record_denominated_refund(fuel_refunded);
+    interpreter.control.gas.record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
     let return_data: Bytes;
     return_data = runtime_context.into_return_data();
 
-    let is_static = interpreter.is_static;
-    let gas = interpreter.gas;
+    println!("XXX: return_data: {:?}", return_data);
 
-    process_exec_result::<SPEC, EXT, DB>(
-        stack_frame,
-        context,
-        contract,
+    let gas = interpreter.control.gas;
+    process_exec_result(
+        frame,
+        evm,
         exit_code,
         gas,
         return_data,
@@ -135,12 +137,13 @@ pub(crate) fn execute_rwasm_frame<SPEC: Spec, EXT, DB: Database>(
     )
 }
 
-pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
-    stack_frame: &mut Frame,
-    _shared_memory: &mut SharedMemory,
-    context: &mut Context<EXT, DB>,
+
+pub fn execute_rwasm_resume<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    evm: &mut EVM,
     outcome: SystemInterruptionOutcome,
-) -> Result<InterpreterAction, EVMError<DB::Error>> {
+) -> Result<InterpreterAction, ERROR> {
+    println!("XXX resuming RWASM frame");
     let SystemInterruptionOutcome {
         inputs,
         result,
@@ -214,10 +217,9 @@ pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
     // accumulate refunds (can be forwarded from an interrupted call)
     gas.record_denominated_refund(fuel_refunded);
 
-    process_exec_result::<SPEC, EXT, DB>(
-        stack_frame,
-        context,
-        inputs.contract,
+    process_exec_result::<EVM, ERROR>(
+        frame,
+        evm,
         exit_code,
         gas,
         return_data,
@@ -227,17 +229,17 @@ pub fn execute_rwasm_resume<SPEC: Spec, EXT, DB: Database>(
     )
 }
 
-fn process_exec_result<SPEC: Spec, EXT, DB: Database>(
-    stack_frame: &mut Frame,
-    context: &mut Context<EXT, DB>,
-    contract: Contract,
+fn process_exec_result<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,>(
+    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    evm: &mut EVM,
     exit_code: i32,
     gas: Gas,
     return_data: Bytes,
     is_create: bool,
     is_static: bool,
     is_gas_free: bool,
-) -> Result<InterpreterAction, EVMError<DB::Error>> {
+) -> Result<InterpreterAction, ERROR> {
+    println!("XXX process_exec_result: exit_code: {}, return_data: {:?}", exit_code, return_data);
     // if we have success or failed exit code
     if exit_code <= 0 {
         return Ok(process_halt(exit_code, return_data.clone(), is_create, gas));
@@ -263,7 +265,6 @@ fn process_exec_result<SPEC: Spec, EXT, DB: Database>(
     }
 
     let inputs = SystemInterruptionInputs {
-        contract,
         call_id,
         is_create,
         syscall_params: params,
@@ -272,7 +273,7 @@ fn process_exec_result<SPEC: Spec, EXT, DB: Database>(
         is_gas_free,
     };
 
-    execute_rwasm_interruption::<SPEC, EXT, DB>(context, inputs, stack_frame)
+    execute_rwasm_interruption::<EVM, ERROR>(frame, evm, inputs)
 }
 
 fn process_halt(
@@ -301,6 +302,7 @@ fn process_halt(
         #[cfg(feature = "debug-print")]
         trace_output(return_data.as_ref());
     }
+    println!("XXX process_halt: exit code: {:?}, return data: {:?}", exit_code, return_data);
     let result = match exit_code {
         ExitCode::Ok => {
             if is_create {
@@ -341,4 +343,29 @@ fn process_halt(
             gas,
         },
     }
+}
+
+pub fn run_rwasm_loop<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    evm: &mut EVM,
+) -> Result<InterpreterAction, ERROR> {
+    loop {
+        let next_action = if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
+            execute_rwasm_resume(
+                frame,
+                evm,
+                interrupted_outcome,
+            )
+        } else {
+            execute_rwasm_frame(frame, evm)
+        }?;
+        let result = match next_action {
+            InterpreterAction::Return { result } => result,
+            _ => return Ok(next_action),
+        };
+        if !frame.is_interrupted_call() {
+            return Ok(InterpreterAction::Return { result });
+        }
+    }
+
 }

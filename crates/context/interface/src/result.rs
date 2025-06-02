@@ -571,6 +571,26 @@ pub enum HaltReason {
     SubRoutineStackOverflow,
     /// Check for target address validity is only done inside subcall.
     InvalidEXTCALLTarget,
+
+    // Fluentbase error codes
+    RootCallOnly,
+    MalformedBuiltinParams,
+    CallDepthOverflow,
+    NonNegativeExitCode,
+    UnknownError,
+    InputOutputOutOfBounds,
+    UnreachableCodeReached,
+    MemoryOutOfBounds,
+    TableOutOfBounds,
+    IndirectCallToNull,
+    IntegerDivisionByZero,
+    IntegerOverflow,
+    BadConversionToInteger,
+    BadSignature,
+    OutOfFuel,
+    GrowthOperationLimited,
+    UnresolvedFunction,
+
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

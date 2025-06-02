@@ -4,6 +4,7 @@ use context_interface::{
     Block, Cfg, ContextTr,
 };
 use core::cmp;
+use bytecode::WASM_MAGIC_BYTES;
 use interpreter::gas::{self, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
@@ -226,7 +227,12 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
 
     // EIP-3860: Limit and meter initcode
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx.kind().is_create() {
-        let max_initcode_size = context.cfg().max_code_size().saturating_mul(2);
+        let max_initcode_size = if tx.input().len() >= 4 && tx.input()[..4] == fluentbase_sdk::WASM_MAGIC_BYTES {
+            // If the initcode starts with WASM magic bytes, use WASM_MAX_CODE_SIZE
+            fluentbase_sdk::WASM_MAX_CODE_SIZE
+        } else {
+            context.cfg().max_code_size().saturating_mul(2)
+        };
         if context.tx().input().len() > max_initcode_size {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit);
         }
@@ -291,10 +297,11 @@ pub fn validate_initial_tx_gas(
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
     if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
-            gas_floor: gas.floor_gas,
-            gas_limit: tx.gas_limit(),
-        });
+        // TODO(khasan): uncomment error below, figure out how we should handle large gas floor coming from large calldata.
+        // return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+        //     gas_floor: gas.floor_gas,
+        //     gas_limit: tx.gas_limit(),
+        // });
     };
 
     Ok(gas)

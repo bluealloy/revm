@@ -7,31 +7,6 @@ use fluentbase_genesis::devnet_genesis_from_file;
 use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME, PROTECTED_STORAGE_SLOT_0};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use revm::{
-    db::{states::plain_account::PlainStorage, EmptyDB},
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    primitives::{
-        calc_excess_blob_gas,
-        keccak256,
-        AccessListItem,
-        AccountInfo,
-        Bytecode,
-        Bytes,
-        EVMResultGeneric,
-        Eip7702Bytecode,
-        Env,
-        ExecutionResult,
-        SpecId,
-        TransactTo,
-        B256,
-        KECCAK_EMPTY,
-        U256,
-    },
-    CacheState,
-    Evm,
-    State,
-};
 use serde_json::json;
 use std::{
     convert::Infallible,
@@ -44,8 +19,23 @@ use std::{
     },
     time::{Duration, Instant},
 };
+use std::fmt::Debug;
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
+use revm::bytecode::Bytecode;
+use revm::bytecode::eip7702::Eip7702Bytecode;
+use revm::context::{BlockEnv, CfgEnv, Evm, TransactTo, TxEnv};
+use revm::context::result::{ExecutionResult, FromStringError};
+use revm::context::transaction::AccessListItem;
+use revm::context_interface::block::calc_excess_blob_gas;
+use revm::database::{CacheState, EmptyDB, InMemoryDB, State, StateBuilder};
+use revm::database::states::plain_account::PlainStorage;
+use revm::handler::{ContextTrDbError, EvmTr, MainnetContext};
+use revm::inspector::inspectors::TracerEip3155;
+use revm::{Context, ExecuteCommitEvm, Journal, MainBuilder, MainnetEvm};
+use revm::primitives::{keccak256, Bytes, B256, KECCAK_EMPTY, U256};
+use revm::primitives::hardfork::SpecId;
+use revm::state::AccountInfo;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -135,15 +125,15 @@ fn skip_test(path: &Path) -> bool {
     ) || path_str.contains("stEOF")
 }
 
-fn check_evm_execution<EXT1>(
+fn check_evm_execution<ERROR: Debug + ToString + Clone>(
     test: &Test,
     _spec_name: &SpecName,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result1: &EVMResultGeneric<ExecutionResult, Infallible>,
-    exec_result2: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    evm2: &Evm<'_, EXT1, &mut State<EmptyDB>>,
+    exec_result1: &Result<ExecutionResult, ERROR>,
+    exec_result2: &Result<ExecutionResult, ERROR>,
+    evm: &mut MainnetEvm<MainnetContext<State<InMemoryDB>>>,
+    evm2: &mut MainnetEvm<MainnetContext<State<InMemoryDB>>>,
     print_json_outcome: bool,
     genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
@@ -154,11 +144,10 @@ fn check_evm_execution<EXT1>(
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
 
-    let state_root1 = state_merkle_trie_root(evm.context.evm.db.cache.trie_account().into_iter());
+    let state_root1 = state_merkle_trie_root(evm.journaled_state.database.cache.trie_account().into_iter());
     let _state_root2 = state_merkle_trie_root(
-        evm2.context
-            .evm
-            .db
+        evm2.journaled_state
+            .database
             .cache
             .trie_account()
             .into_iter()
@@ -176,7 +165,7 @@ fn check_evm_execution<EXT1>(
                     "errorMsg": error.unwrap_or_default(),
                     "evmResult": exec_result1.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
                     "postLogsHash": logs_root1,
-                    "fork": evm.handler.cfg().spec_id,
+                    "fork": evm.ctx.cfg.spec,
                     "test": test_name,
                     "d": test.indexes.data,
                     "g": test.indexes.gas,
@@ -308,11 +297,8 @@ fn check_evm_execution<EXT1>(
     );
 
     // compare contracts
-    for (k, v) in evm.context.evm.db.cache.contracts.iter() {
-        let v2 = evm2
-            .context
-            .evm
-            .db
+    for (k, v) in evm.journaled_state.database.cache.contracts.iter() {
+        let v2 = evm2.journaled_state.database
             .cache
             .contracts
             .get(k)
@@ -320,14 +306,14 @@ fn check_evm_execution<EXT1>(
         // we compare only evm bytecode
         error_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
     }
-    let mut account_keys = evm.context.evm.db.cache.accounts.keys().collect::<Vec<_>>();
+    let mut account_keys = evm.journaled_state.database.cache.accounts.keys().collect::<Vec<_>>();
     account_keys.sort();
     for address in account_keys {
-        let v1 = evm.context.evm.db.cache.accounts.get(address).unwrap();
+        let v1 = evm.journaled_state.database.cache.accounts.get(address).unwrap();
         if cfg!(feature = "debug-print") {
             println!("comparing account (0x{})...", hex::encode(address));
         }
-        let v2 = evm2.context.evm.db.cache.accounts.get(address);
+        let v2 = evm2.journaled_state.database.cache.accounts.get(address);
         if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
             let a2 = v2
                 .expect("missing FLUENT account")
@@ -422,11 +408,11 @@ fn check_evm_execution<EXT1>(
         }
     }
 
-    for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
+    for (address, v1) in evm.journaled_state.database.cache.accounts.iter() {
         if cfg!(feature = "debug-print") {
             println!("comparing balances (0x{})...", hex::encode(address));
         }
-        let v2 = evm2.context.evm.db.cache.accounts.get(address);
+        let v2 = evm2.journaled_state.database.cache.accounts.get(address);
         if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
             let a2 = v2
                 .expect("missing FLUENT account")
@@ -600,37 +586,40 @@ pub fn execute_test_suite(
             }
         }
 
-        let mut env = Box::<Env>::default();
+        let mut cfg_env = CfgEnv::default();
+        let mut block_env = BlockEnv::default();
+        let mut tx_env = TxEnv::default();
+
         // for mainnet
-        env.cfg.chain_id = 1;
+        cfg_env.chain_id = 1;
         // env.cfg.spec_id is set down the road
 
         // block env
-        env.block.number = unit.env.current_number;
-        env.block.coinbase = unit.env.current_coinbase;
-        env.block.timestamp = unit.env.current_timestamp;
-        env.block.gas_limit = unit.env.current_gas_limit;
-        env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
-        env.block.difficulty = unit.env.current_difficulty;
+        block_env.number = unit.env.current_number.to();
+        block_env.beneficiary = unit.env.current_coinbase;
+        block_env.timestamp = unit.env.current_timestamp.to();
+        block_env.gas_limit = unit.env.current_gas_limit.to();
+        block_env.basefee = unit.env.current_base_fee.unwrap_or_default().to();
+        block_env.difficulty = unit.env.current_difficulty.to();
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty
         // opcode in EVM.
-        env.block.prevrandao = unit.env.current_random;
+        block_env.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-            env.block
+            block_env
                 .set_blob_excess_gas_and_price(current_excess_blob_gas.to(), true);
         } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
             unit.env.parent_blob_gas_used,
             unit.env.parent_excess_blob_gas,
         ) {
-            env.block.set_blob_excess_gas_and_price(
+            block_env.set_blob_excess_gas_and_price(
                 calc_excess_blob_gas(parent_blob_gas_used.to(), parent_excess_blob_gas.to(), 0),
                 true,
             );
         }
 
         // tx env
-        env.tx.caller = if let Some(address) = unit.transaction.sender {
+        tx_env.caller = if let Some(address) = unit.transaction.sender {
             address
         } else {
             recover_address(unit.transaction.secret_key.as_slice()).ok_or_else(|| TestError {
@@ -638,15 +627,16 @@ pub fn execute_test_suite(
                 kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
             })?
         };
-        env.tx.gas_price = unit
+        tx_env.gas_price = unit
             .transaction
             .gas_price
             .or(unit.transaction.max_fee_per_gas)
-            .unwrap_or_default();
-        env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
+            .unwrap_or_default()
+            .to();
+        tx_env.gas_priority_fee = unit.transaction.max_priority_fee_per_gas.map(|v| v.to());
         // EIP-4844
-        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
-        env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
+        tx_env.blob_hashes = unit.transaction.blob_versioned_hashes;
+        tx_env.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas.map(|v| v.to()).unwrap_or_default();
 
         // post and execution
         for (spec_name, tests) in unit.post {
@@ -670,17 +660,17 @@ pub fn execute_test_suite(
                     index,
                     hex::encode(test.txbytes.clone().unwrap_or_default().as_ref())
                 );
-                env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                tx_env.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
-                env.tx.data = unit
+                tx_env.data = unit
                     .transaction
                     .data
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                env.tx.value = unit.transaction.value[test.indexes.value];
+                tx_env.value = unit.transaction.value[test.indexes.value];
 
-                env.tx.access_list = unit
+                let access_list: Vec<AccessListItem> = unit
                     .transaction
                     .access_lists
                     .get(test.indexes.data)
@@ -692,106 +682,66 @@ pub fn execute_test_suite(
                         storage_keys: item.storage_keys.clone(),
                     })
                     .collect();
+                tx_env.access_list = access_list.into();
 
-                let to = match unit.transaction.to {
+                tx_env.kind = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
                     None => TransactTo::Create,
                 };
-                env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut cache2 = cache_state2.clone();
-                cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache2.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
 
-                let mut state = State::builder()
+                let mut state: State<InMemoryDB> = StateBuilder::default()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = Evm::builder()
-                    .with_db(&mut state)
-                    .modify_env(|e| *e = env.clone())
-                    .with_spec_id(spec_id)
-                    .build();
 
-                let mut state2 = State::builder()
+                let mut cfg_env2 = cfg_env.clone();
+                cfg_env2.disable_rwasm_proxy = true;
+                let mut evm = MainnetContext::new(state, spec_id)
+                    .with_cfg(cfg_env2)
+                    .with_block(block_env.clone())
+                    .build_mainnet();
+
+                let mut state2: State<InMemoryDB> = StateBuilder::default()
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
-                let mut evm2 = Evm::builder()
-                    .with_db(&mut state2)
-                    .modify_env(|e| {
-                        let mut new_env = env.clone();
-                        new_env.cfg.enable_rwasm_proxy = true;
-                        *e = new_env
-                    })
-                    .with_spec_id(spec_id)
-                    .build();
+                let mut evm2 = MainnetContext::new(state2, spec_id)
+                    .with_cfg(cfg_env.clone())
+                    .with_block(block_env.clone())
+                    .build_mainnet();
 
                 // do the deed
-                let (e, exec_result) = if trace {
-                    let mut evm = evm
-                        .modify()
-                        .reset_handler_with_external_context(
-                            TracerEip3155::new(Box::new(stderr())).without_summary(),
-                        )
-                        .append_handler_register(inspector_handle_register)
-                        .build();
-                    let mut evm2 = evm2
-                        .modify()
-                        .reset_handler_with_external_context(
-                            TracerEip3155::new(Box::new(stderr())).without_summary(),
-                        )
-                        .append_handler_register(inspector_handle_register)
-                        .build();
+                // if trace {
+                //     evm = evm.with_inspector(TracerEip3155::new(Box::new(stderr())).without_summary());
+                //     evm2 = evm2.with_inspector(TracerEip3155::new(Box::new(stderr())).without_summary());
+                // }
+                let timer = Instant::now();
+                println!("RUNNING EVM!!!");
+                let result_native = evm.transact_commit(tx_env.clone());
+                println!("\n\nRUNNING FLUENT!!!");
+                let result_fluent = evm2.transact_commit(tx_env.clone());
+                *elapsed.lock().unwrap() += timer.elapsed();
 
-                    let timer = Instant::now();
-                    let res = evm.transact_commit();
-
-                    let res2 = evm2.transact_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    let Err(e) = check_evm_execution(
-                        &test,
-                        &spec_name,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        &res2,
-                        &evm,
-                        &evm2,
-                        print_json_outcome,
-                        &genesis_addresses,
-                    ) else {
-                        continue;
-                    };
-                    // reset external context
-                    (e, res)
-                } else {
-                    let timer = Instant::now();
-                    println!("RUNNING EVM!!!");
-                    let res = evm.transact_commit();
-                    println!("\n\nRUNNING FLUENT!!!");
-                    let res2 = evm2.transact_commit();
-                    *elapsed.lock().unwrap() += timer.elapsed();
-
-                    // dump state and traces if test failed
-                    let output = check_evm_execution(
-                        &test,
-                        &spec_name,
-                        unit.out.as_ref(),
-                        &name,
-                        &res,
-                        &res2,
-                        &evm,
-                        &evm2,
-                        print_json_outcome,
-                        &genesis_addresses,
-                    );
-                    let Err(e) = output else {
-                        continue;
-                    };
-                    (e, res)
+                // dump state and traces if test failed
+                let output = check_evm_execution(
+                    &test,
+                    &spec_name,
+                    unit.out.as_ref(),
+                    &name,
+                    &result_native,
+                    &result_fluent,
+                    &mut evm,
+                    &mut evm2,
+                    print_json_outcome,
+                    &genesis_addresses,
+                );
+                let Err(e) = output else {
+                    continue;
                 };
 
                 // if we are already in trace mode, return error
@@ -801,43 +751,43 @@ pub fn execute_test_suite(
                 }
 
                 // re-build to run with tracing
-                let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut cache2 = cache_state2.clone();
-                cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let state = State::builder()
-                    .with_cached_prestate(cache)
-                    .with_bundle_update()
-                    .build();
+                // let mut cache = cache_state.clone();
+                // cache.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+                // let mut cache2 = cache_state2.clone();
+                // cache2.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+                // let state = State::builder()
+                //     .with_cached_prestate(cache)
+                //     .with_bundle_update()
+                //     .build();
                 // let state2 = State::builder()
                 //     .with_cached_prestate(cache2)
                 //     .with_bundle_update()
                 //     .build();
 
                 let path = path.display();
-                println!("\nTraces:");
-                let mut evm = Evm::builder()
-                    .with_spec_id(spec_id)
-                    .with_db(state)
-                    .with_env(env.clone())
-                    .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
-                    .append_handler_register(inspector_handle_register)
-                    .build();
+                // println!("\nTraces:");
+                // let mut evm = Evm::builder()
+                //     .with_spec_id(spec_id)
+                //     .with_db(state)
+                //     .with_env(env.clone())
+                //     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
+                //     .append_handler_register(inspector_handle_register)
+                //     .build();
                 // let mut evm2 = Rwasm::builder()
                 //     .with_spec_id(spec_id)
                 //     .with_db(state2)
                 //     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                 //     .append_handler_register(inspector_handle_register)
                 //     .build();
-                let _ = evm.transact_commit();
+                // let _ = evm.transact_commit();
                 // let _ = evm2.transact_commit();
 
-                println!("\nExecution result: {exec_result:#?}");
+                println!("\nExecution result: {result_native:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!("\nState after: {:#?}", evm.context.evm.db.cache);
+                println!("\nState after: {:#?}", evm.journaled_state.database.cache);
                 println!("\nSpecification: {spec_id:?}");
-                println!("\nEnvironment: {env:#?}");
+                // println!("\nEnvironment: {env:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
 
                 return Err(e);
