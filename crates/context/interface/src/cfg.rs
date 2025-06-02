@@ -1,4 +1,4 @@
-//! Configuration for the EVM. Containing [`SpecId`]`.
+//! Configuration for the EVM. Containing [`SpecId`].
 use auto_impl::auto_impl;
 use core::fmt::Debug;
 use core::hash::Hash;
