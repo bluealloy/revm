@@ -1,20 +1,78 @@
-use core::cmp::min;
+use crate::{
+    rwasm::{SystemInterruptionInputs, SystemInterruptionOutcome},
+    ContextTrDbError,
+    EthFrame,
+    EvmTr,
+};
 use bytecode::Bytecode;
-use context_interface::{Cfg, ContextTr, CreateScheme, JournalTr};
-use context_interface::result::FromStringError;
+use context_interface::{result::FromStringError, Cfg, ContextTr, CreateScheme, JournalTr};
+use core::cmp::min;
 use fluentbase_genesis::is_system_precompile;
-use fluentbase_sdk::{byteorder::{LittleEndian, ReadBytesExt}, calc_preimage_address, is_protected_storage_slot, keccak256, FUEL_DENOM_RATE, PRECOMPILE_EVM_RUNTIME, STATE_MAIN, SYSCALL_ID_BALANCE, SYSCALL_ID_CALL, SYSCALL_ID_CALL_CODE, SYSCALL_ID_CODE_COPY, SYSCALL_ID_CODE_HASH, SYSCALL_ID_CODE_SIZE, SYSCALL_ID_CREATE, SYSCALL_ID_CREATE2, SYSCALL_ID_DELEGATED_STORAGE, SYSCALL_ID_DELEGATE_CALL, SYSCALL_ID_DESTROY_ACCOUNT, SYSCALL_ID_EMIT_LOG, SYSCALL_ID_PREIMAGE_COPY, SYSCALL_ID_PREIMAGE_SIZE, SYSCALL_ID_SELF_BALANCE, SYSCALL_ID_STATIC_CALL, SYSCALL_ID_STORAGE_READ, SYSCALL_ID_STORAGE_WRITE, SYSCALL_ID_TRANSIENT_READ, SYSCALL_ID_TRANSIENT_WRITE, SYSCALL_ID_WRITE_PREIMAGE, WASM_MAGIC_BYTES, WASM_MAX_CODE_SIZE};
-use interpreter::interpreter::EthInterpreter;
-use interpreter::{gas, CallInput, CallInputs, CallScheme, CallValue, CreateInputs, FrameInput, Gas, Host, InstructionResult, InterpreterAction, InterpreterResult};
-use interpreter::gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost};
-use interpreter::interpreter_types::InputsTr;
-use primitives::{Address, Bytes, Log, LogData, B256, MAX_INITCODE_SIZE, U256};
-use primitives::bytes::Buf;
-use primitives::hardfork::{SpecId, BERLIN, ISTANBUL, TANGERINE};
-use crate::{ContextTrDbError, EthFrame, EvmTr};
-use crate::rwasm::{SystemInterruptionInputs, SystemInterruptionOutcome};
+use fluentbase_sdk::{
+    byteorder::{LittleEndian, ReadBytesExt},
+    calc_preimage_address,
+    is_protected_storage_slot,
+    keccak256,
+    FUEL_DENOM_RATE,
+    PRECOMPILE_EVM_RUNTIME,
+    STATE_MAIN,
+    SYSCALL_ID_BALANCE,
+    SYSCALL_ID_CALL,
+    SYSCALL_ID_CALL_CODE,
+    SYSCALL_ID_CODE_COPY,
+    SYSCALL_ID_CODE_HASH,
+    SYSCALL_ID_CODE_SIZE,
+    SYSCALL_ID_CREATE,
+    SYSCALL_ID_CREATE2,
+    SYSCALL_ID_DELEGATED_STORAGE,
+    SYSCALL_ID_DELEGATE_CALL,
+    SYSCALL_ID_DESTROY_ACCOUNT,
+    SYSCALL_ID_EMIT_LOG,
+    SYSCALL_ID_PREIMAGE_COPY,
+    SYSCALL_ID_PREIMAGE_SIZE,
+    SYSCALL_ID_SELF_BALANCE,
+    SYSCALL_ID_STATIC_CALL,
+    SYSCALL_ID_STORAGE_READ,
+    SYSCALL_ID_STORAGE_WRITE,
+    SYSCALL_ID_TRANSIENT_READ,
+    SYSCALL_ID_TRANSIENT_WRITE,
+    SYSCALL_ID_WRITE_PREIMAGE,
+    WASM_MAGIC_BYTES,
+    WASM_MAX_CODE_SIZE,
+};
+use interpreter::{
+    gas,
+    gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost},
+    interpreter::EthInterpreter,
+    interpreter_types::InputsTr,
+    CallInput,
+    CallInputs,
+    CallScheme,
+    CallValue,
+    CreateInputs,
+    FrameInput,
+    Gas,
+    Host,
+    InstructionResult,
+    InterpreterAction,
+    InterpreterResult,
+};
+use primitives::{
+    bytes::Buf,
+    hardfork::{SpecId, BERLIN, ISTANBUL, TANGERINE},
+    Address,
+    Bytes,
+    Log,
+    LogData,
+    B256,
+    MAX_INITCODE_SIZE,
+    U256,
+};
 
-pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+pub(crate) fn execute_rwasm_interruption<
+    EVM: EvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+>(
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     inputs: SystemInterruptionInputs,
@@ -115,16 +173,11 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
-            let value = journal
-                .sstore(target_address, slot, new_value)?;
+            let value = journal.sstore(target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
-                let gas_cost = sstore_cost(
-                    spec_id.clone(),
-                    &value.data,
-                    value.is_cold,
-                );
+                let gas_cost = sstore_cost(spec_id.clone(), &value.data, value.is_cold);
                 charge_gas!(gas_cost);
                 local_gas.record_refund(sstore_refund(spec_id, &value.data));
             }
@@ -217,6 +270,9 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
                 inputs.syscall_params.fuel_limit / FUEL_DENOM_RATE
             };
             charge_gas!(gas_limit);
+
+            #[cfg(feature = "debug-print")]
+            println!("SYSCALL_ID_STATIC_CALL: target_address={target_address}");
             // create call inputs
             let call_inputs = Box::new(CallInputs {
                 input: CallInput::Bytes(contract_input),
@@ -250,11 +306,7 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
             // set is_empty to false as we are not creating this account
             account_load.is_empty = false;
             // EIP-150: gas cost changes for IO-heavy operations
-            charge_gas!(gas::call_cost(
-                spec_id,
-                !value.is_zero(),
-                account_load
-            ));
+            charge_gas!(gas::call_cost(spec_id, !value.is_zero(), account_load));
             let mut gas_limit = if spec_id.is_enabled_in(TANGERINE) {
                 min(
                     local_gas.remaining_63_of_64_parts(),
@@ -270,7 +322,7 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
             }
             // create call inputs
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={}", target_address, target_address, target_address);
+            println!("SYSCALL_CALL_CODE_inputs: target_address={}, caller={}, bytecode_address={}, gas={:?}", target_address, target_address, target_address, gas_limit);
             let call_inputs = Box::new(CallInputs {
                 input: CallInput::Bytes(contract_input),
                 gas_limit,
@@ -393,7 +445,9 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
                 init_code,
                 gas_limit,
             });
-            return_frame!(InterpreterAction::NewFrame(FrameInput::Create(create_inputs)));
+            return_frame!(InterpreterAction::NewFrame(FrameInput::Create(
+                create_inputs
+            )));
         }
 
         SYSCALL_ID_EMIT_LOG => {
@@ -446,8 +500,7 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
             assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
-            let result = journal
-                .selfdestruct(target_address, target)?;
+            let result = journal.selfdestruct(target_address, target)?;
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DESTROY_ACCOUNT: target={target} result={result:?}",);
             // charge gas cost
@@ -649,11 +702,9 @@ pub(crate) fn execute_rwasm_interruption<EVM: EvmTr, ERROR: From<ContextTrDbErro
                 return_result!(FatalExternalError);
             };
             if !inputs.is_gas_free {
-                let Some(gas_cost) = gas::extcodecopy_cost(
-                    spec_id,
-                    account_load.data.len(),
-                    account_load.is_cold,
-                ) else {
+                let Some(gas_cost) =
+                    gas::extcodecopy_cost(spec_id, account_load.data.len(), account_load.is_cold)
+                else {
                     return_result!(OutOfGas);
                 };
                 charge_gas!(gas_cost);

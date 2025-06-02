@@ -1,40 +1,79 @@
 use super::frame_data::*;
-use crate::{instructions::InstructionProvider, precompile_provider::PrecompileProvider, rwasm, EvmTr, FrameInitOrResult, FrameOrResult, ItemOrResult};
-use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context::result::FromStringError;
-use context::{Context, LocalContextTr};
-use context_interface::context::ContextError;
-use context_interface::{Block, ContextTr};
-use context_interface::{
-    journaled_state::{JournalCheckpoint, JournalTr},
-    Cfg, Database, Transaction,
+use crate::{
+    instructions::InstructionProvider,
+    precompile_provider::PrecompileProvider,
+    rwasm,
+    rwasm::SystemInterruptionOutcome,
+    EvmTr,
+    FrameInitOrResult,
+    FrameOrResult,
+    ItemOrResult,
 };
-use core::cmp::min;
-use core::mem::take;
-use core::str::from_utf8;
+use bytecode::{eip7702::Eip7702Bytecode, Eof, EOF_MAGIC_BYTES};
+use context::{result::FromStringError, Context, LocalContextTr};
+use context_interface::{
+    context::ContextError,
+    journaled_state::{JournalCheckpoint, JournalTr},
+    Block,
+    Cfg,
+    ContextTr,
+    Database,
+    Transaction,
+};
+use core::{cmp::min, mem::take, str::from_utf8};
+use fluentbase_runtime::{instruction::exec::SyscallExec, RuntimeContext};
+use fluentbase_sdk::{
+    compile_wasm_to_rwasm_with_config,
+    default_compilation_config,
+    BlockContextV1,
+    BytecodeOrHash,
+    ContractContextV1,
+    ExitCode,
+    SharedContextInput,
+    SharedContextInputV1,
+    TxContextV1,
+    FUEL_DENOM_RATE,
+    PRECOMPILE_EVM_RUNTIME,
+    STATE_DEPLOY,
+    STATE_MAIN,
+    WASM_MAGIC_BYTES,
+};
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
-    CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
-    InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
+    interpreter_types::{InputsTr, LegacyBytecode, LoopControl, ReturnData, RuntimeFlag},
+    return_ok,
+    return_revert,
+    CallInput,
+    CallInputs,
+    CallOutcome,
+    CallValue,
+    CreateInputs,
+    CreateOutcome,
+    CreateScheme,
+    EOFCreateInputs,
+    EOFCreateKind,
+    FrameInput,
+    Gas,
+    InputsImpl,
+    InstructionResult,
+    Interpreter,
+    InterpreterAction,
+    InterpreterResult,
+    InterpreterTypes,
     SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+    keccak256,
+    Address,
+    Bytes,
+    B256,
+    U256,
 };
-use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
-use std::borrow::ToOwned;
-use std::{boxed::Box, sync::Arc};
-use bytecode::eip7702::Eip7702Bytecode;
-use fluentbase_runtime::instruction::exec::SyscallExec;
-use fluentbase_runtime::RuntimeContext;
-use fluentbase_sdk::{compile_wasm_to_rwasm_with_config, default_compilation_config, BlockContextV1, BytecodeOrHash, ContractContextV1, ExitCode, SharedContextInput, SharedContextInputV1, TxContextV1, FUEL_DENOM_RATE, PRECOMPILE_EVM_RUNTIME, STATE_DEPLOY, STATE_MAIN, WASM_MAGIC_BYTES};
-use interpreter::interpreter_types::{InputsTr, LegacyBytecode};
-use crate::rwasm::SystemInterruptionOutcome;
+use std::{borrow::ToOwned, boxed::Box, sync::Arc};
 
 /// Call frame trait
 pub trait Frame: Sized {
@@ -177,8 +216,7 @@ where
         } else {
             None
         };
-        self
-            .interrupted_outcome
+        self.interrupted_outcome
             .as_mut()
             .unwrap()
             .insert_result(result.into_interpreter_result(), created_address);
@@ -321,7 +359,10 @@ where
             context.journal().checkpoint_commit();
             return return_result(InstructionResult::Stop);
         }
-        println!("XXX: interpreter input rwasm_proxy_address: {:?}", interpreter_input.rwasm_proxy_address);
+        println!(
+            "XXX: interpreter input rwasm_proxy_address: {:?}",
+            interpreter_input.rwasm_proxy_address
+        );
 
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
@@ -438,8 +479,13 @@ where
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
             // Create account, transfer funds and make the journal checkpoint.
             let hash = bytecode.hash_slow();
-            context.journal().set_code_with_hash(created_address, bytecode.clone(), hash);
-            println!("XXX: set code with hash in make_create_frame to {:?}", created_address);
+            context
+                .journal()
+                .set_code_with_hash(created_address, bytecode.clone(), hash);
+            println!(
+                "XXX: set code with hash in make_create_frame to {:?}",
+                created_address
+            );
             init_code_hash = hash;
             (bytecode, compilation_result.constructor_params, None)
         } else if !context.cfg().is_rwasm_proxy_disabled() {
@@ -469,10 +515,7 @@ where
             )
         };
 
-        let bytecode = ExtBytecode::new_with_hash(
-            bytecode,
-            init_code_hash,
-        );
+        let bytecode = ExtBytecode::new_with_hash(bytecode, init_code_hash);
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
@@ -718,6 +761,14 @@ where
             Ok(_) => (),
         }
 
+        // if call is interrupted then we need to remember the interrupted state;
+        // the execution can be continued
+        // since the state is updated already
+        if self.is_interrupted_call() {
+            self.insert_interrupted_result(result);
+            return Ok(());
+        }
+
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
@@ -726,6 +777,12 @@ where
                 let returned_len = outcome.result.output.len();
 
                 let interpreter = &mut self.interpreter;
+
+                println!(
+                    "XXX gas before insertion in return_result: {:?}",
+                    interpreter.control.gas_mut()
+                );
+
                 let mem_length = outcome.memory_length();
                 let mem_start = outcome.memory_start();
                 interpreter.return_data.set_buffer(outcome.result.output);
@@ -769,6 +826,11 @@ where
                         .gas_mut()
                         .record_refund(out_gas.refunded());
                 }
+
+                println!(
+                    "XXX gas inserted in return_result: {:?}",
+                    interpreter.control.gas_mut()
+                );
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -895,15 +957,13 @@ pub fn return_create<JOURNAL: JournalTr>(
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-
     // since rwasm is EOF, we use `ReturnContract`
     // return result to indicate that EOF is created,
     // but there is no need
     // to update bytecode since it's immutable during the deployment process
     // We called set_code for rwasm bytecode in `make_create_frame`
     // TODO(khasan): can we remove this hack and get rid of set_code in `make_create_frame`?
-    let is_rwasm_contract_creation =
-        interpreter_result.result == InstructionResult::ReturnContract;
+    let is_rwasm_contract_creation = interpreter_result.result == InstructionResult::ReturnContract;
     if !is_rwasm_contract_creation {
         // Set code
         println!("XXX: set code with hash in return_create to {:?}", address);

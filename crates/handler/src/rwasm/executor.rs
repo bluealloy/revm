@@ -1,29 +1,64 @@
-use interpreter::{return_ok, return_revert, FrameInput, Gas};
-use core::{mem::take, ops::Deref};
+use crate::{
+    rwasm::{execute_rwasm_interruption, SystemInterruptionInputs, SystemInterruptionOutcome},
+    ContextTrDbError,
+    EthFrame,
+    EvmTr,
+};
 use bytecode::Bytecode;
-use context_interface::{Block, Cfg, ContextTr, Transaction};
-use context_interface::result::FromStringError;
+use context_interface::{result::FromStringError, Block, Cfg, ContextTr, Transaction};
+use core::{mem::take, ops::Deref};
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
 };
-use fluentbase_sdk::{codec::CompactABI, Address, BlockContextV1, BytecodeOrHash, Bytes, ContractContextV1, ExitCode, SharedContextInput, SharedContextInputV1, SyscallInvocationParams, TxContextV1, B256, FUEL_DENOM_RATE, STATE_DEPLOY, STATE_MAIN, U256};
-use interpreter::interpreter::EthInterpreter;
-use interpreter::{CallInput, InstructionResult, InterpreterAction, InterpreterResult};
-use interpreter::interpreter_types::{InputsTr, LoopControl, RuntimeFlag};
-use crate::{ContextTrDbError, EthFrame, EvmTr};
-use crate::rwasm::{execute_rwasm_interruption, SystemInterruptionInputs, SystemInterruptionOutcome};
+use fluentbase_sdk::{
+    codec::CompactABI,
+    Address,
+    BlockContextV1,
+    BytecodeOrHash,
+    Bytes,
+    ContractContextV1,
+    ExitCode,
+    SharedContextInput,
+    SharedContextInputV1,
+    SyscallInvocationParams,
+    TxContextV1,
+    B256,
+    FUEL_DENOM_RATE,
+    STATE_DEPLOY,
+    STATE_MAIN,
+    U256,
+};
+use interpreter::{
+    interpreter::EthInterpreter,
+    interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
+    return_ok,
+    return_revert,
+    CallInput,
+    FrameInput,
+    Gas,
+    InstructionResult,
+    InterpreterAction,
+    InterpreterResult,
+};
 
-pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+pub fn execute_rwasm_frame<
+    EVM: EvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+>(
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
     println!("XXX executing RWASM frame");
     let interpreter = &mut frame.interpreter;
-    let is_create: bool = matches!(frame.input, FrameInput::Create( .. ));
+    let is_create: bool = matches!(frame.input, FrameInput::Create(..));
     let is_static: bool = interpreter.runtime_flag.is_static();
-    let bytecode_address = interpreter.input.bytecode_address().cloned().unwrap_or_else(|| interpreter.input.target_address());
+    let bytecode_address = interpreter
+        .input
+        .bytecode_address()
+        .cloned()
+        .unwrap_or_else(|| interpreter.input.target_address());
     let context = evm.ctx();
 
     // encode input with all related context info
@@ -42,7 +77,10 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
             gas_limit: context.tx().gas_limit(),
             nonce: context.tx().nonce(),
             gas_price: U256::from(context.tx().gas_price()),
-            gas_priority_fee: context.tx().max_priority_fee_per_gas().map(|v| U256::from(v)),
+            gas_priority_fee: context
+                .tx()
+                .max_priority_fee_per_gas()
+                .map(|v| U256::from(v)),
             origin: context.tx().caller(), // TODO(khasan) does origin == caller ?
             value: context.tx().value(),
         },
@@ -62,7 +100,8 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
     let input = interpreter.input.input().clone();
     let bytes = match input {
         CallInput::Bytes(vec) => vec,
-        _ => unreachable!("not bytes found in call input "), // TODO(khasan): this shared memory thing can be returned here?
+        _ => unreachable!("not bytes found in call input "), /* TODO(khasan): this shared memory
+                                                              * thing can be returned here? */
     };
     context_input.extend_from_slice(&bytes);
 
@@ -96,7 +135,10 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
         runtime_context = runtime_context.without_fuel();
     }
 
-    println!("XXX: interpreter input rwasm_proxy_address: {:?}", interpreter.input.rwasm_proxy_address);
+    println!(
+        "XXX: interpreter input rwasm_proxy_address: {:?}",
+        interpreter.input.rwasm_proxy_address
+    );
 
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
         &mut runtime_context,
@@ -106,8 +148,17 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
     );
 
+    println!(
+        "XXX: fuel_consumed: {}, fuel_refunded: {}, exit_code: {}",
+        fuel_consumed, fuel_refunded, exit_code
+    );
+
     // make sure we have enough gas to charge from the call
-    if !interpreter.control.gas.record_denominated_cost(fuel_consumed) {
+    if !interpreter
+        .control
+        .gas
+        .record_denominated_cost(fuel_consumed)
+    {
         return Ok(InterpreterAction::Return {
             result: InterpreterResult {
                 result: InstructionResult::OutOfGas,
@@ -116,7 +167,10 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
             },
         });
     }
-    interpreter.control.gas.record_denominated_refund(fuel_refunded);
+    interpreter
+        .control
+        .gas
+        .record_denominated_refund(fuel_refunded);
 
     // extract return data from the execution context
     let return_data: Bytes;
@@ -137,8 +191,10 @@ pub fn execute_rwasm_frame<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context
     )
 }
 
-
-pub fn execute_rwasm_resume<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+pub fn execute_rwasm_resume<
+    EVM: EvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+>(
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     outcome: SystemInterruptionOutcome,
@@ -193,6 +249,11 @@ pub fn execute_rwasm_resume<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Contex
         inputs.syscall_params.fuel16_ptr,
     );
 
+    println!(
+        "XXX: fuel_consumed: {}, fuel_refunded: {}, exit_code: {}",
+        fuel_consumed, fuel_refunded, exit_code
+    );
+
     let return_data: Bytes;
     return_data = runtime_context.into_return_data();
 
@@ -229,7 +290,10 @@ pub fn execute_rwasm_resume<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Contex
     )
 }
 
-fn process_exec_result<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,>(
+fn process_exec_result<
+    EVM: EvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+>(
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     exit_code: i32,
@@ -239,7 +303,10 @@ fn process_exec_result<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> +
     is_static: bool,
     is_gas_free: bool,
 ) -> Result<InterpreterAction, ERROR> {
-    println!("XXX process_exec_result: exit_code: {}, return_data: {:?}", exit_code, return_data);
+    println!(
+        "XXX process_exec_result: exit_code: {}, return_data: {:?}",
+        exit_code, return_data
+    );
     // if we have success or failed exit code
     if exit_code <= 0 {
         return Ok(process_halt(exit_code, return_data.clone(), is_create, gas));
@@ -302,7 +369,10 @@ fn process_halt(
         #[cfg(feature = "debug-print")]
         trace_output(return_data.as_ref());
     }
-    println!("XXX process_halt: exit code: {:?}, return data: {:?}", exit_code, return_data);
+    println!(
+        "XXX process_halt: exit code: {:?}, return data: {:?}",
+        exit_code, return_data
+    );
     let result = match exit_code {
         ExitCode::Ok => {
             if is_create {
@@ -349,16 +419,22 @@ pub fn run_rwasm_loop<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + 
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
+    println!("XXX running RWASM loop");
     loop {
+        println!("XXX RWASM loop iteration");
+        println!(
+            "XXX gas before the execution {:?}",
+            frame.interpreter.control.gas
+        );
         let next_action = if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
-            execute_rwasm_resume(
-                frame,
-                evm,
-                interrupted_outcome,
-            )
+            execute_rwasm_resume(frame, evm, interrupted_outcome)
         } else {
             execute_rwasm_frame(frame, evm)
         }?;
+        println!(
+            "XXX gas after the execution {:?}",
+            frame.interpreter.control.gas
+        );
         let result = match next_action {
             InterpreterAction::Return { result } => result,
             _ => return Ok(next_action),
@@ -367,5 +443,4 @@ pub fn run_rwasm_loop<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + 
             return Ok(InterpreterAction::Return { result });
         }
     }
-
 }
