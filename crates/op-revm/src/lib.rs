@@ -18,7 +18,7 @@ pub mod transaction;
 
 pub use api::{
     builder::OpBuilder,
-    default_ctx::{DefaultOp, OpContext},
+    default_ctx::{OpContext, OptimismContext},
 };
 pub use evm::OpEvm;
 pub use l1block::L1BlockInfo;

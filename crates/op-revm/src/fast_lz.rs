@@ -111,7 +111,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::{builder::OpBuilder, default_ctx::DefaultOp};
+    use crate::api::{builder::OpBuilder, default_ctx::OpContext};
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
     use revm::{

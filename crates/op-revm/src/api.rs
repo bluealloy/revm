@@ -5,5 +5,5 @@ pub mod default_ctx;
 pub mod exec;
 
 pub use builder::OpBuilder;
-pub use default_ctx::DefaultOp;
+pub use default_ctx::OpContext;
 pub use exec::{OpContextTr, OpError};

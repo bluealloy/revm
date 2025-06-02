@@ -4,7 +4,7 @@ mod common;
 use common::compare_or_save_testdata;
 use op_revm::{
     precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE,
-    transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, L1BlockInfo, OpBuilder,
+    transaction::deposit::DEPOSIT_TRANSACTION_TYPE, L1BlockInfo, OpBuilder, OpContext,
     OpHaltReason, OpSpecId, OpTransaction,
 };
 use revm::{

@@ -7,16 +7,16 @@ use revm::{
 };
 
 /// Type alias for the default context type of the OpEvm.
-pub type OpContext<DB> =
+pub type OptimismContext<DB> =
     Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, DB, Journal<DB>, L1BlockInfo>;
 
 /// Trait that allows for a default context to be created.
-pub trait DefaultOp {
+pub trait OpContext {
     /// Create a default context.
-    fn op() -> OpContext<EmptyDB>;
+    fn op() -> Self;
 }
 
-impl DefaultOp for OpContext<EmptyDB> {
+impl OpContext for OptimismContext<EmptyDB> {
     fn op() -> Self {
         Context::mainnet()
             .with_tx(OpTransaction::default())

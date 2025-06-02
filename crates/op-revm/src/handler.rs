@@ -500,12 +500,12 @@ where
 mod tests {
     use super::*;
     use crate::{
-        api::default_ctx::OpContext,
+        api::default_ctx::OptimismContext,
         constants::{
             BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT, ECOTONE_L1_FEE_SCALARS_SLOT,
             L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT,
         },
-        DefaultOp, OpBuilder,
+        OpBuilder, OpContext,
     };
     use alloy_primitives::uint;
     use revm::{
@@ -523,7 +523,7 @@ mod tests {
 
     /// Creates frame result.
     fn call_last_frame_return(
-        ctx: OpContext<EmptyDB>,
+        ctx: OptimismContext<EmptyDB>,
         instruction_result: InstructionResult,
         gas: Gas,
     ) -> Gas {
