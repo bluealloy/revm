@@ -1,5 +1,12 @@
 //! Blob (EIP-4844) related functions and types. [`BlobExcessGasAndPrice`] is struct that helps with
 //! calculating blob gas price and excess blob gas.
+//!
+//! See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+//!
+//! [`calc_blob_gasprice`] and [`calc_excess_blob_gas`] are used to calculate the blob gas price and
+//! excess blob gas.
+//!
+//! [`BlobExcessGasAndPrice`] is used to store the blob gas price and excess blob gas.s
 use primitives::eip4844::MIN_BLOB_GASPRICE;
 
 /// Structure holding block blob excess gas and it calculates blob fee

@@ -1,3 +1,4 @@
+//! Contains Optimism specific precompiles.
 use crate::OpSpecId;
 use once_cell::race::OnceBox;
 use revm::{
@@ -14,11 +15,12 @@ use revm::{
 use std::boxed::Box;
 use std::string::String;
 
-// Optimism precompile provider
+/// Optimism precompile provider
 #[derive(Debug, Clone)]
 pub struct OpPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
+    /// Spec id of the precompile provider.
     spec: OpSpecId,
 }
 
@@ -45,7 +47,7 @@ impl OpPrecompiles {
         }
     }
 
-    // Precompiles getter.
+    /// Precompiles getter.
     #[inline]
     pub fn precompiles(&self) -> &'static Precompiles {
         self.inner.precompiles
@@ -136,15 +138,19 @@ impl Default for OpPrecompiles {
     }
 }
 
+/// Bn128 pair precompile.
 pub mod bn128_pair {
     use super::*;
 
+    /// Max input size for the bn128 pair precompile.
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
+    /// Bn128 pair precompile.
     pub const GRANITE: PrecompileWithAddress =
         PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
             run_pair(input, gas_limit)
         });
 
+    /// Run the bn128 pair precompile with Optimism input limit.
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength);
@@ -158,6 +164,7 @@ pub mod bn128_pair {
     }
 }
 
+/// Bls12_381 precompile.
 pub mod bls12_381 {
     use super::*;
     use revm::precompile::bls12_381_const::{G1_MSM_ADDRESS, G2_MSM_ADDRESS, PAIRING_ADDRESS};
@@ -165,17 +172,24 @@ pub mod bls12_381 {
     #[cfg(not(feature = "std"))]
     use crate::std::string::ToString;
 
+    /// Max input size for the g1 msm precompile.
     pub const ISTHMUS_G1_MSM_MAX_INPUT_SIZE: usize = 513760;
+    /// Max input size for the g2 msm precompile.
     pub const ISTHMUS_G2_MSM_MAX_INPUT_SIZE: usize = 488448;
+    /// Max input size for the pairing precompile.
     pub const ISTHMUS_PAIRING_MAX_INPUT_SIZE: usize = 235008;
 
+    /// G1 msm precompile.
     pub const ISTHMUS_G1_MSM: PrecompileWithAddress =
         PrecompileWithAddress(G1_MSM_ADDRESS, run_g1_msm);
+    /// G2 msm precompile.
     pub const ISTHMUS_G2_MSM: PrecompileWithAddress =
         PrecompileWithAddress(G2_MSM_ADDRESS, run_g2_msm);
+    /// Pairing precompile.
     pub const ISTHMUS_PAIRING: PrecompileWithAddress =
         PrecompileWithAddress(PAIRING_ADDRESS, run_pair);
 
+    /// Run the g1 msm precompile with Optimism input limit.
     pub fn run_g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
@@ -185,6 +199,7 @@ pub mod bls12_381 {
         precompile::bls12_381::g1_msm::g1_msm(input, gas_limit)
     }
 
+    /// Run the g2 msm precompile with Optimism input limit.
     pub fn run_g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
@@ -194,6 +209,7 @@ pub mod bls12_381 {
         precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
 
+    /// Run the pairing precompile with Optimism input limit.
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(

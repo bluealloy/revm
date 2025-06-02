@@ -1,6 +1,7 @@
+//! Optimism constants used in the Optimism EVM.
 use revm::primitives::{address, Address, U256};
 
-pub const ZERO_BYTE_COST: u64 = 4;
+/// The cost of a non-zero byte in the EVM.
 pub const NON_ZERO_BYTE_COST: u64 = 16;
 
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
@@ -22,8 +23,11 @@ pub const OPERATOR_FEE_CONSTANT_OFFSET: usize = 24;
 /// Allows users to use 6 decimal points of precision when specifying the operator_fee_scalar.
 pub const OPERATOR_FEE_SCALAR_DECIMAL: u64 = 1_000_000;
 
+/// The L1 base fee slot.
 pub const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
+/// The L1 overhead slot.
 pub const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
+/// The L1 scalar slot.
 pub const L1_SCALAR_SLOT: U256 = U256::from_limbs([6u64, 0, 0, 0]);
 
 /// [ECOTONE_L1_BLOB_BASE_FEE_SLOT] was added in the Ecotone upgrade and stores the L1 blobBaseFee attribute.

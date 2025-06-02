@@ -1,3 +1,4 @@
+//! Contains the `[OpTransactionError]` type.
 use core::fmt::Display;
 use revm::context_interface::{
     result::{EVMError, InvalidTransaction},
@@ -8,6 +9,7 @@ use revm::context_interface::{
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OpTransactionError {
+    /// Base transaction error.
     Base(InvalidTransaction),
     /// System transactions are not supported post-regolith hardfork.
     ///

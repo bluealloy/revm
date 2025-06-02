@@ -1,3 +1,4 @@
+//! Implementation of the [`ExecuteEvm`] trait for the [`OpEvm`].
 use crate::{
     evm::OpEvm, handler::OpHandler, transaction::OpTxTr, L1BlockInfo, OpHaltReason, OpSpecId,
     OpTransactionError,
@@ -19,7 +20,7 @@ use revm::{
     DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
-// Type alias for Optimism context
+/// Type alias for Optimism context
 pub trait OpContextTr:
     ContextTr<
     Journal: JournalTr<State = EvmState>,
@@ -41,7 +42,7 @@ impl<T> OpContextTr for T where
 }
 
 /// Type alias for the error type of the OpEvm.
-type OpError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, OpTransactionError>;
+pub type OpError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, OpTransactionError>;
 
 impl<CTX, INSP, PRECOMPILE> ExecuteEvm
     for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>

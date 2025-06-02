@@ -1,17 +1,21 @@
+//! Contains the `[L1BlockInfo]` type and its implementation.
 use crate::{
     constants::{
         BASE_FEE_SCALAR_OFFSET, BLOB_BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT,
         ECOTONE_L1_FEE_SCALARS_SLOT, EMPTY_SCALARS, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT,
         L1_OVERHEAD_SLOT, L1_SCALAR_SLOT, NON_ZERO_BYTE_COST, OPERATOR_FEE_CONSTANT_OFFSET,
         OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL, OPERATOR_FEE_SCALAR_OFFSET,
-        ZERO_BYTE_COST,
     },
     transaction::estimate_tx_compressed_size,
     OpSpecId,
 };
-use core::ops::Mul;
 use revm::{
-    database_interface::Database, interpreter::Gas, primitives::hardfork::SpecId, primitives::U256,
+    database_interface::Database,
+    interpreter::{
+        gas::{get_tokens_in_calldata, NON_ZERO_BYTE_MULTIPLIER_ISTANBUL, STANDARD_TOKEN_COST},
+        Gas,
+    },
+    primitives::{hardfork::SpecId, U256},
 };
 
 /// L1 block info
@@ -204,20 +208,15 @@ impl L1BlockInfo {
                 .wrapping_div(U256::from(1_000_000));
         };
 
-        let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
-            acc + if *byte == 0x00 {
-                ZERO_BYTE_COST
-            } else {
-                NON_ZERO_BYTE_COST
-            }
-        }));
+        // tokens in calldata where non-zero bytes are priced 4 times higher than zero bytes (Same as in Istanbul).
+        let mut tokens_in_transaction_data = get_tokens_in_calldata(input, true);
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
         if !spec_id.is_enabled_in(OpSpecId::REGOLITH) {
-            rollup_data_gas_cost += U256::from(NON_ZERO_BYTE_COST).mul(U256::from(68));
+            tokens_in_transaction_data += 68 * NON_ZERO_BYTE_MULTIPLIER_ISTANBUL;
         }
 
-        rollup_data_gas_cost
+        U256::from(tokens_in_transaction_data.saturating_mul(STANDARD_TOKEN_COST))
     }
 
     // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.

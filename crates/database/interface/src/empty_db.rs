@@ -1,3 +1,4 @@
+//! Empty database implementation.
 use crate::{DBErrorMarker, Database, DatabaseRef};
 use core::error::Error;
 use core::{convert::Infallible, fmt, marker::PhantomData};
@@ -46,6 +47,7 @@ impl<E> PartialEq for EmptyDBTyped<E> {
 impl<E> Eq for EmptyDBTyped<E> {}
 
 impl<E> EmptyDBTyped<E> {
+    /// Create a new empty database.
     pub fn new() -> Self {
         Self {
             _phantom: PhantomData,
