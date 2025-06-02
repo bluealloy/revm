@@ -1,3 +1,4 @@
+//! Local context trait [`LocalContextTr`] and related types.
 use core::{
     cell::{Ref, RefCell},
     ops::Range,

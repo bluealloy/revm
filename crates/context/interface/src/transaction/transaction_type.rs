@@ -1,3 +1,5 @@
+//! Transaction type enum.
+
 /// Transaction types of all Ethereum transaction
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

@@ -1,3 +1,4 @@
+//! Transaction trait [`Transaction`] and associated types.
 mod alloy_types;
 pub mod eip2930;
 pub mod eip7702;
@@ -28,9 +29,12 @@ pub trait TransactionError: Debug + core::error::Error {}
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
+    /// EIP-2930 Access list item type.
     type AccessListItem<'a>: AccessListItemTr
     where
         Self: 'a;
+
+    /// EIP-7702 Authorization type.
     type Authorization<'a>: AuthorizationTr
     where
         Self: 'a;
@@ -215,11 +219,4 @@ pub trait Transaction {
 
         Ok(effective_balance_spending)
     }
-}
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait TransactionGetter {
-    type Transaction: Transaction;
-
-    fn tx(&self) -> &Self::Transaction;
 }

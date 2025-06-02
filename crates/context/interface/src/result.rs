@@ -1,9 +1,19 @@
+//! Result of the EVM execution. Containing both execution result, state and errors.
+//!
+//! [`ExecutionResult`] is the result of the EVM execution.
+//!
+//! [`InvalidTransaction`] is the error that is returned when the transaction is invalid.
+//!
+//! [`InvalidHeader`] is the error that is returned when the header is invalid.
+//!
+//! [`SuccessReason`] is the reason that the transaction successfully completed.
 use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use std::{boxed::Box, string::String, vec::Vec};
 
+/// Trait for the halt reason.
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
@@ -34,17 +44,30 @@ impl<R, S> ResultAndState<R, S> {
 pub enum ExecutionResult<HaltReasonTy = HaltReason> {
     /// Returned successfully
     Success {
+        /// Reason for the success.
         reason: SuccessReason,
+        /// Gas used by the transaction.s
         gas_used: u64,
+        /// Gas refunded by the transaction.
         gas_refunded: u64,
+        /// Logs emitted by the transaction.
         logs: Vec<Log>,
+        /// Output of the transaction.
         output: Output,
     },
     /// Reverted by `REVERT` opcode that doesn't spend all gas
-    Revert { gas_used: u64, output: Bytes },
+    Revert {
+        /// Gas used by the transaction.
+        gas_used: u64,
+        /// Output of the transaction.
+        output: Bytes,
+    },
     /// Reverted for various reasons and spend all gas
     Halt {
+        /// Reason for the halt.
         reason: HaltReasonTy,
+        /// Gas used by the transaction.
+        ///
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
@@ -153,7 +176,9 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
+    /// Output of a call.
     Call(Bytes),
+    /// Output of a create.
     Create(Bytes, Option<Address>),
 }
 
@@ -205,7 +230,9 @@ impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
     }
 }
 
+/// Trait for converting a string to an [`EVMError::Custom`] error.
 pub trait FromStringError {
+    /// Converts a string to an [`EVMError::Custom`] error.
     fn from_string(value: String) -> Self;
 }
 
@@ -296,7 +323,9 @@ pub enum InvalidTransaction {
     /// - initial stipend gas
     /// - gas for access list and input data
     CallGasCostMoreThanGasLimit {
+        /// Initial gas for a Call.
         initial_gas: u64,
+        /// Gas limit for the transaction.
         gas_limit: u64,
     },
     /// Gas floor calculated from EIP-7623 Increase calldata cost
@@ -304,26 +333,36 @@ pub enum InvalidTransaction {
     ///
     /// Tx data is too large to be executed.
     GasFloorMoreThanGasLimit {
+        /// Gas floor calculated from EIP-7623 Increase calldata cost.
         gas_floor: u64,
+        /// Gas limit for the transaction.
         gas_limit: u64,
     },
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
     LackOfFundForMaxFee {
+        /// Fee for the transaction.
         fee: Box<U256>,
+        /// Balance of the sender.
         balance: Box<U256>,
     },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
     /// Nonce overflows in transaction.
     NonceOverflowInTransaction,
+    /// Nonce is too high.
     NonceTooHigh {
+        /// Nonce of the transaction.
         tx: u64,
+        /// Nonce of the state.
         state: u64,
     },
+    /// Nonce is too low.
     NonceTooLow {
+        /// Nonce of the transaction.
         tx: u64,
+        /// Nonce of the state.
         state: u64,
     },
     /// EIP-3860: Limit and meter initcode
@@ -348,7 +387,9 @@ pub enum InvalidTransaction {
     BlobCreateTransaction,
     /// Transaction has more then `max` blobs
     TooManyBlobs {
+        /// Maximum number of blobs allowed.
         max: usize,
+        /// Number of blobs in the transaction.
         have: usize,
     },
     /// Blob transaction contains a versioned hash with an incorrect version
@@ -526,9 +567,13 @@ impl fmt::Display for InvalidHeader {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SuccessReason {
+    /// Stop [`state::bytecode::opcode::STOP`] opcode.
     Stop,
+    /// Return [`state::bytecode::opcode::RETURN`] opcode.
     Return,
+    /// Self destruct opcode.
     SelfDestruct,
+    /// EOF [`state::bytecode::opcode::RETURNCONTRACT`] opcode.
     EofReturnContract,
 }
 
@@ -538,16 +583,27 @@ pub enum SuccessReason {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HaltReason {
+    /// Out of gas error.
     OutOfGas(OutOfGasError),
+    /// Opcode not found error.
     OpcodeNotFound,
+    /// Invalid FE opcode error.
     InvalidFEOpcode,
+    /// Invalid jump destination.
     InvalidJump,
+    /// The feature or opcode is not activated in hardfork.
     NotActivated,
+    /// Attempting to pop a value from an empty stack.
     StackUnderflow,
+    /// Attempting to push a value onto a full stack.
     StackOverflow,
+    /// Invalid memory or storage offset for [`state::bytecode::opcode::RETURNDATACOPY`].
     OutOfOffset,
+    /// Address collision during contract creation.
     CreateCollision,
+    /// Precompile error.
     PrecompileError,
+    /// Nonce overflow.
     NonceOverflow,
     /// Create init code size exceeds limit (runtime).
     CreateContractSizeLimit,
@@ -557,10 +613,15 @@ pub enum HaltReason {
     CreateInitCodeSizeLimit,
 
     /* Internal Halts that can be only found inside Inspector */
+    /// Overflow payment. Not possible to happen on mainnet.
     OverflowPayment,
+    /// State change during static call.
     StateChangeDuringStaticCall,
+    /// Call not allowed inside static call.
     CallNotAllowedInsideStatic,
+    /// Out of funds to pay for the call.
     OutOfFunds,
+    /// Call is too deep.
     CallTooDeep,
 
     /// Aux data overflow, new aux data is larger than [u16] max size.
@@ -573,20 +634,21 @@ pub enum HaltReason {
     InvalidEXTCALLTarget,
 }
 
+/// Out of gas errors.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OutOfGasError {
-    // Basic OOG error
+    /// Basic OOG error. Not enough gas to execute the opcode.
     Basic,
-    // Tried to expand past REVM limit
+    /// Tried to expand past memory limit.
     MemoryLimit,
-    // Basic OOG error from memory expansion
+    /// Basic OOG error from memory expansion
     Memory,
-    // Precompile threw OOG error
+    /// Precompile threw OOG error
     Precompile,
-    // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
-    // i.e. in `as_usize_or_fail`
+    /// When performing something that takes a U256 and casts down to a u64, if its too large this would fire
+    /// i.e. in `as_usize_or_fail`
     InvalidOperand,
-    // When performing SSTORE the gasleft is less than or equal to 2300
+    /// When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
 }

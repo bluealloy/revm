@@ -1,3 +1,4 @@
+//! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{Block, Cfg, Database, JournalTr, LocalContextTr, Transaction};
 use auto_impl::auto_impl;
@@ -148,12 +149,18 @@ impl SStoreResult {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
+    /// Whether the account had a value.
     pub had_value: bool,
+    /// Whether the target account exists.
     pub target_exists: bool,
+    /// Whether the account was previously destroyed.
     pub previously_destroyed: bool,
 }
 
+/// Trait for setting the transaction and block in the context.
 pub trait ContextSetters: ContextTr {
+    /// Set the transaction
     fn set_tx(&mut self, tx: Self::Tx);
+    /// Set the block
     fn set_block(&mut self, block: Self::Block);
 }

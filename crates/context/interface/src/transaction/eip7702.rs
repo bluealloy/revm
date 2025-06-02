@@ -1,3 +1,4 @@
+//! EIP-7702 Account Abstraction transaction interface.
 use auto_impl::auto_impl;
 use primitives::{Address, U256};
 
