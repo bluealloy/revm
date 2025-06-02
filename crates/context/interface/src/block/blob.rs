@@ -1,3 +1,5 @@
+//! Blob (EIP-4844) related functions and types. [`BlobExcessGasAndPrice`] is struct that helps with
+//! calculating blob gas price and excess blob gas.
 use primitives::eip4844::MIN_BLOB_GASPRICE;
 
 /// Structure holding block blob excess gas and it calculates blob fee

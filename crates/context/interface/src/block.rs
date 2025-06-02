@@ -1,3 +1,6 @@
+//! Block related types and functions.
+//!
+//! [`Block`] trait is used to retrieve block information required for execution.
 pub mod blob;
 
 pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};

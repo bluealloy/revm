@@ -1,3 +1,4 @@
+//! EIP-2930 Access list transaction interface.
 use auto_impl::auto_impl;
 use primitives::{Address, B256};
 

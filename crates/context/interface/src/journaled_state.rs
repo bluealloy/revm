@@ -1,3 +1,4 @@
+//! Journaled state trait [`JournalTr`] and related types.
 use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -12,7 +13,9 @@ use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
+    /// Database type that is used in the journal.
     type Database: Database;
+    /// State type that is returned by the journal after finalization.
     type State;
 
     /// Creates new Journaled state.
@@ -240,7 +243,9 @@ pub enum TransferError {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
+    /// Checkpoint to where on revert we will go back to.
     pub log_i: usize,
+    /// Checkpoint to where on revert we will go back to and revert other journal entries.
     pub journal_i: usize,
 }
 
