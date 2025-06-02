@@ -1,3 +1,4 @@
+//! Optimism builder trait [`OpBuilder`] used to build [`OpEvm`].
 use crate::{evm::OpEvm, transaction::OpTxTr, L1BlockInfo, OpSpecId};
 use revm::{
     context::Cfg,

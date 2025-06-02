@@ -24,12 +24,18 @@ use revm::{
 };
 use std::boxed::Box;
 
+/// Optimism handler extends the [`Handler`] with Optimism specific logic.
+#[derive(Debug, Clone)]
 pub struct OpHandler<EVM, ERROR, FRAME> {
+    /// Mainnet handler allows us to use functions from the mainnet handler inside optimism handler.
+    /// So we dont duplicate the logic
     pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
+    /// Phantom data to avoid type inference issues.
     pub _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
 impl<EVM, ERROR, FRAME> OpHandler<EVM, ERROR, FRAME> {
+    /// Create a new Optimism handler.
     pub fn new() -> Self {
         Self {
             mainnet: MainnetHandler::default(),
@@ -44,7 +50,11 @@ impl<EVM, ERROR, FRAME> Default for OpHandler<EVM, ERROR, FRAME> {
     }
 }
 
+/// Trait to check if the error is a transaction error.
+///
+/// Used in cache_error handler to catch deposit transaction that was halted.
 pub trait IsTxError {
+    /// Check if the error is a transaction error.
     fn is_tx_error(&self) -> bool;
 }
 

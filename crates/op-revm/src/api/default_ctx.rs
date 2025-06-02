@@ -1,3 +1,4 @@
+//! Contains trait [`DefaultOp`] used to create a default context.
 use crate::{L1BlockInfo, OpSpecId, OpTransaction};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},

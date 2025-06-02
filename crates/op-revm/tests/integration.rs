@@ -1,3 +1,4 @@
+//! Integration tests for the `op-revm` crate.
 mod common;
 
 use common::compare_or_save_testdata;

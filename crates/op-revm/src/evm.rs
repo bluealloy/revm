@@ -1,3 +1,4 @@
+//! Contains the `[OpEvm]` type and its implementation of the execution EVM traits.
 use crate::precompiles::OpPrecompiles;
 use revm::{
     context::{ContextSetters, Evm},
@@ -11,11 +12,15 @@ use revm::{
     Inspector,
 };
 
+/// Optimism EVM extends the [`Evm`] type with Optimism specific types and logic.
+#[derive(Debug, Clone)]
 pub struct OpEvm<CTX, INSP, I = EthInstructions<EthInterpreter, CTX>, P = OpPrecompiles>(
+    /// Inner EVM type.
     pub Evm<CTX, INSP, I, P>,
 );
 
 impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+    /// Create a new Optimism EVM.
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             ctx,
