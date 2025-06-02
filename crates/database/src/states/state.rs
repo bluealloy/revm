@@ -334,7 +334,7 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        Ok(self.database.basic_ref(address)?)
+        self.database.basic_ref(address)
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -353,7 +353,7 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        Ok(self.database.code_by_hash_ref(code_hash)?)
+        self.database.code_by_hash_ref(code_hash)
     }
 
     fn storage_ref(
@@ -404,7 +404,7 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         if let Some(entry) = self.block_hashes.get(&number) {
-            return Ok(entry.clone());
+            return Ok(*entry);
         }
         // If not found, load it from database
         self.database.block_hash_ref(number)
