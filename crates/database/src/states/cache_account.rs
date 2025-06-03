@@ -13,6 +13,12 @@ pub struct CacheAccount {
     pub status: AccountStatus,
 }
 
+impl From<BundleAccount> for CacheAccount {
+    fn from(account: BundleAccount) -> Self {
+        CacheAccount::from(&account)
+    }
+}
+
 impl From<&BundleAccount> for CacheAccount {
     fn from(account: &BundleAccount) -> Self {
         let storage = account
