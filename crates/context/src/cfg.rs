@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
+use primitives::{eip170::MAX_CODE_SIZE, eip7825, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -218,7 +218,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     fn tx_gas_limit_cap(&self) -> u64 {
         self.tx_gas_limit_cap
             .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
-                30_000_000
+                eip7825::TX_GAS_LIMIT_CAP
             } else {
                 u64::MAX
             })
