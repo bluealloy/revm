@@ -2,7 +2,6 @@ use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
-use crate::AccountStatus;
 use bytecode::Bytecode;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
@@ -319,18 +318,14 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     type Error = DB::Error;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        match self.cache.accounts.get(&address) {
-            Some(account) => {
-                // Account is already in cache
+        // Account is already in cache
+        if let Some(account) = self.cache.accounts.get(&address) {
+            return Ok(account.account_info());
+        }
+        // If bundle state is used, check if account is in bundle state
+        if self.use_preloaded_bundle {
+            if let Some(account) = self.bundle_state.account(&address) {
                 return Ok(account.account_info());
-            }
-            None => {
-                if self.use_preloaded_bundle {
-                    // Check if account is in bundle state
-                    if let Some(account) = self.bundle_state.account(&address) {
-                        return Ok(CacheAccount::from(account.clone()).account_info());
-                    }
-                }
             }
         }
         // If not found, load it from database
@@ -338,18 +333,14 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        match self.cache.contracts.get(&code_hash) {
-            Some(entry) => {
-                // Code is already in cache
-                return Ok(entry.clone());
-            }
-            None => {
-                if self.use_preloaded_bundle {
-                    // Check if code is in bundle state
-                    if let Some(entry) = self.bundle_state.contracts.get(&code_hash) {
-                        return Ok(entry.clone());
-                    }
-                }
+        // Check if code is in cache
+        if let Some(code) = self.cache.contracts.get(&code_hash) {
+            return Ok(code.clone());
+        }
+        // If bundle state is used, check if code is in bundle state
+        if self.use_preloaded_bundle {
+            if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
+                return Ok(code.clone());
             }
         }
         // If not found, load it from database
@@ -361,40 +352,17 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
-        match self.cache.accounts.get(&address) {
-            Some(acc_entry) => {
-                // Check if account is destroyed or not existing
-                if matches!(
-                    acc_entry.status,
-                    AccountStatus::Destroyed
-                        | AccountStatus::DestroyedAgain
-                        | AccountStatus::LoadedNotExisting
-                ) {
+        // Check if account is in cache, the account is not guaranteed to be loaded
+        if let Some(account) = self.cache.accounts.get(&address) {
+            if let Some(plain_account) = &account.account {
+                // If storage is known, we can return it
+                if let Some(storage_value) = plain_account.storage.get(&index) {
+                    return Ok(*storage_value);
+                }
+                // If account was destroyed or account is newly built
+                // we return zero and don't ask database.
+                if account.status.is_storage_known() {
                     return Ok(StorageValue::ZERO);
-                }
-
-                if let Some(entry) = acc_entry.storage_slot(index) {
-                    // Found in cache, return it
-                    return Ok(entry);
-                }
-            }
-            None => {
-                if self.use_preloaded_bundle {
-                    if let Some(account) = self.bundle_state.account(&address) {
-                        // Check if the account is destroyed or not existing
-                        if matches!(
-                            account.status,
-                            AccountStatus::Destroyed
-                                | AccountStatus::DestroyedAgain
-                                | AccountStatus::LoadedNotExisting
-                        ) {
-                            return Ok(StorageValue::ZERO);
-                        }
-                        if let Some(entry) = account.storage_slot(index) {
-                            // If found in bundle, return it
-                            return Ok(entry);
-                        }
-                    }
                 }
             }
         }
