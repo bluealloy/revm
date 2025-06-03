@@ -14,6 +14,7 @@ pub mod eip7702;
 pub mod eip7823;
 pub mod eof;
 pub mod hardfork;
+pub mod vec_map;
 
 pub use constants::*;
 

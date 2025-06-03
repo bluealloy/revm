@@ -9,7 +9,7 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use core::error::Error;
-use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
+use primitives::{address, vec_map::VecMap, Address, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
 
@@ -68,7 +68,7 @@ pub trait Database {
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: HashMap<Address, Account>);
+    fn commit(&mut self, changes: VecMap<Address, Account>);
 }
 
 /// EVM database interface.
@@ -137,7 +137,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: VecMap<Address, Account>) {
         self.0.commit(changes)
     }
 }
