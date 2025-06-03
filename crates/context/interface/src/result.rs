@@ -333,6 +333,13 @@ pub enum InvalidTransaction {
     CreateInitCodeSizeLimit,
     /// Transaction chain id does not match the config chain id.
     InvalidChainId,
+    /// Transaction gas limit is greater than the cap.
+    TxGasLimitGreaterThanCap {
+        /// Transaction gas limit.
+        gas_limit: u64,
+        /// Gas limit cap.
+        cap: u64,
+    },
     /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
     /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
@@ -407,6 +414,12 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::CallerGasLimitMoreThanBlock => {
                 write!(f, "caller gas limit exceeds the block gas limit")
+            }
+            Self::TxGasLimitGreaterThanCap { gas_limit, cap } => {
+                write!(
+                    f,
+                    "transaction gas limit ({gas_limit}) is greater than the cap ({cap})"
+                )
             }
             Self::CallGasCostMoreThanGasLimit {
                 initial_gas,

@@ -9,7 +9,15 @@ pub trait Cfg {
 
     fn chain_id(&self) -> u64;
 
-    // Specification id that is set.
+    /// Returns the gas limit cap for the transaction.
+    ///
+    /// Cap is introduced in [`EIP-7825: Transaction Gas Limit Cap`](https://eips.ethereum.org/EIPS/eip-7825)
+    /// with initial cap of 30M gas.
+    ///
+    /// Value before EIP-7825 is `u64::MAX`.
+    fn tx_gas_limit_cap(&self) -> u64;
+
+    /// Specification id
     fn spec(&self) -> Self::Spec;
 
     /// Returns the blob target and max count for the given spec id.

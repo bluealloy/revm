@@ -96,6 +96,15 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         Some(context.block().basefee() as u128)
     };
 
+    // EIP-7825: Transaction Gas Limit Cap
+    let cap = context.cfg().tx_gas_limit_cap();
+    if tx.gas_limit() > cap {
+        return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+            gas_limit: tx.gas_limit(),
+            cap,
+        });
+    }
+
     match TransactionType::from(tx_type) {
         TransactionType::Legacy => {
             // Check chain_id only if it is present in the legacy transaction.
