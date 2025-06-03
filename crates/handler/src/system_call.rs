@@ -5,7 +5,7 @@ use crate::{
 use context::{result::ResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
-use primitives::{address, Address, Bytes, TxKind};
+use primitives::{address, eip7825, Address, Bytes, TxKind};
 use state::EvmState;
 
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
@@ -27,7 +27,7 @@ impl SystemCallTx for TxEnv {
             caller: SYSTEM_ADDRESS,
             data,
             kind: TxKind::Call(system_contract_address),
-            gas_limit: 30_000_000,
+            gas_limit: eip7825::TX_GAS_LIMIT_CAP,
             ..Default::default()
         }
     }

@@ -9,7 +9,7 @@ use context_interface::{
 };
 use core::fmt::Debug;
 use database_interface::{BENCH_CALLER, BENCH_TARGET};
-use primitives::{Address, Bytes, TxKind, B256, U256};
+use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
 use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
@@ -274,7 +274,7 @@ impl TxEnvBuilder {
         Self {
             tx_type: None,
             caller: Address::default(),
-            gas_limit: 30_000_000,
+            gas_limit: eip7825::TX_GAS_LIMIT_CAP,
             gas_price: 0,
             kind: TxKind::Call(Address::default()),
             value: U256::ZERO,

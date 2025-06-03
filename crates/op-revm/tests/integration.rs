@@ -20,7 +20,7 @@ use revm::{
         Interpreter, InterpreterTypes,
     },
     precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
-    primitives::{Address, Bytes, Log, TxKind, U256},
+    primitives::{eip7825, Address, Bytes, Log, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal,
 };
@@ -76,7 +76,7 @@ fn test_halted_deposit_tx() {
         output.result,
         ExecutionResult::Halt {
             reason: OpHaltReason::FailedDeposit,
-            gas_used: 30_000_000
+            gas_used: eip7825::TX_GAS_LIMIT_CAP,
         }
     );
     assert_eq!(

@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
+use primitives::{eip170::MAX_CODE_SIZE, eip7825, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -40,6 +40,13 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
     /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
     pub blob_base_fee_update_fraction: Option<u64>,
+    /// Configures the gas limit cap for the transaction.
+    ///
+    /// If `None`, default value defined by spec will be used.
+    ///
+    /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
+    /// with initials cap of 30M.
+    pub tx_gas_limit_cap: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -115,6 +122,7 @@ impl<SPEC> CfgEnv<SPEC> {
             spec,
             disable_nonce_check: false,
             blob_max_count: None,
+            tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
@@ -155,6 +163,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_code_size: self.limit_contract_code_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
+            tx_gas_limit_cap: self.tx_gas_limit_cap,
             blob_max_count: self.blob_max_count,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             #[cfg(feature = "memory_limit")]
@@ -190,16 +199,29 @@ impl<SPEC> CfgEnv<SPEC> {
 impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     type Spec = SPEC;
 
+    #[inline]
     fn chain_id(&self) -> u64 {
         self.chain_id
     }
 
+    #[inline]
     fn spec(&self) -> Self::Spec {
         self.spec
     }
 
+    #[inline]
     fn tx_chain_id_check(&self) -> bool {
         self.tx_chain_id_check
+    }
+
+    #[inline]
+    fn tx_gas_limit_cap(&self) -> u64 {
+        self.tx_gas_limit_cap
+            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7825::TX_GAS_LIMIT_CAP
+            } else {
+                u64::MAX
+            })
     }
 
     #[inline]
