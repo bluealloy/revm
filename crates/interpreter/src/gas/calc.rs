@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::{
-    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction, TransactionType,
+    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction,
 };
 use primitives::{eip7702, hardfork::SpecId, U256};
 
@@ -437,22 +437,18 @@ pub fn calculate_initial_tx_gas(
 /// - Intrinsic gas
 /// - Number of tokens in calldata
 pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
-    let mut accounts = 0;
-    let mut storages = 0;
     // legacy is only tx type that does not have access list.
-    if tx.tx_type() != TransactionType::Legacy {
-        (accounts, storages) = tx
-            .access_list()
-            .map(|al| {
-                al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
-                    num_accounts += 1;
-                    num_storage_slots += item.storage_slots().count();
+    let (accounts, storages) = tx
+        .access_list()
+        .map(|al| {
+            al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                num_accounts += 1;
+                num_storage_slots += item.storage_slots().count();
 
-                    (num_accounts, num_storage_slots)
-                })
+                (num_accounts, num_storage_slots)
             })
-            .unwrap_or_default();
-    }
+        })
+        .unwrap_or_default();
 
     // Access initcodes only if tx is Eip7873.
     // TODO(EOF) Tx type is removed

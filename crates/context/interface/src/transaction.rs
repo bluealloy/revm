@@ -39,11 +39,6 @@ pub trait Transaction {
     where
         Self: 'a;
 
-    /// Returns the transaction type.
-    ///
-    /// Depending on this field other functions should be called.
-    fn tx_type(&self) -> u8;
-
     /// Caller aka Author aka transaction signer.
     ///
     /// Note : Common field for all transactions.
@@ -154,12 +149,6 @@ pub trait Transaction {
     ///
     /// While for transactions after Eip1559 it is minimum of max_fee and `base + max_priority_fee`.
     fn effective_gas_price(&self, base_fee: u128) -> u128 {
-        if self.tx_type() == TransactionType::Legacy as u8
-            || self.tx_type() == TransactionType::Eip2930 as u8
-        {
-            return self.gas_price();
-        }
-
         // for EIP-1559 tx and onwards gas_price represents maximum price.
         let max_price = self.gas_price();
         let Some(max_priority_fee) = self.max_priority_fee_per_gas() else {
@@ -179,12 +168,11 @@ pub trait Transaction {
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         // add blob fee
-        if self.tx_type() == TransactionType::Eip4844 {
-            let data_fee = self.calc_max_data_fee();
-            max_balance_spending = max_balance_spending
-                .checked_add(data_fee)
-                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-        }
+        let data_fee = self.calc_max_data_fee();
+        max_balance_spending = max_balance_spending
+            .checked_add(data_fee)
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
         Ok(max_balance_spending)
     }
 
@@ -210,12 +198,10 @@ pub trait Transaction {
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         // add blob fee
-        if self.tx_type() == TransactionType::Eip4844 {
-            let blob_gas = self.total_blob_gas() as u128;
-            effective_balance_spending = effective_balance_spending
-                .checked_add(U256::from(blob_price.saturating_mul(blob_gas)))
-                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-        }
+        let blob_gas = self.total_blob_gas() as u128;
+        effective_balance_spending = effective_balance_spending
+            .checked_add(U256::from(blob_price.saturating_mul(blob_gas)))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         Ok(effective_balance_spending)
     }

@@ -1,5 +1,5 @@
 //! Optimism transaction abstraction containing the `[OpTxTr]` trait and corresponding `[OpTransaction]` type.
-use super::deposit::{DepositTransactionParts, DEPOSIT_TRANSACTION_TYPE};
+use super::deposit::DepositTransactionParts;
 use auto_impl::auto_impl;
 use revm::{
     context::TxEnv,
@@ -25,9 +25,7 @@ pub trait OpTxTr: Transaction {
     fn is_system_transaction(&self) -> bool;
 
     /// Returns `true` if transaction is of type [`DEPOSIT_TRANSACTION_TYPE`].
-    fn is_deposit(&self) -> bool {
-        self.tx_type() == DEPOSIT_TRANSACTION_TYPE
-    }
+    fn is_deposit(&self) -> bool;
 }
 
 /// Optimism transaction.
@@ -43,7 +41,7 @@ pub struct OpTransaction<T: Transaction> {
     /// externally.
     pub enveloped_tx: Option<Bytes>,
     /// Deposit transaction parts.
-    pub deposit: DepositTransactionParts,
+    pub deposit: Option<DepositTransactionParts>,
 }
 
 impl<T: Transaction> OpTransaction<T> {
@@ -52,7 +50,7 @@ impl<T: Transaction> OpTransaction<T> {
         Self {
             base,
             enveloped_tx: None,
-            deposit: DepositTransactionParts::default(),
+            deposit: None,
         }
     }
 }
@@ -62,7 +60,7 @@ impl Default for OpTransaction<TxEnv> {
         Self {
             base: TxEnv::default(),
             enveloped_tx: Some(vec![0x00].into()),
-            deposit: DepositTransactionParts::default(),
+            deposit: None,
         }
     }
 }
@@ -82,10 +80,6 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         = T::Authorization<'a>
     where
         T: 'a;
-
-    fn tx_type(&self) -> u8 {
-        self.base.tx_type()
-    }
 
     fn caller(&self) -> Address {
         self.base.caller()
@@ -163,25 +157,27 @@ impl<T: Transaction> OpTxTr for OpTransaction<T> {
     }
 
     fn source_hash(&self) -> Option<B256> {
-        if self.tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            return None;
-        }
-        Some(self.deposit.source_hash)
+        self.deposit.as_ref().map(|d| d.source_hash)
     }
 
     fn mint(&self) -> Option<u128> {
-        self.deposit.mint
+        self.deposit.as_ref().and_then(|d| d.mint)
     }
 
     fn is_system_transaction(&self) -> bool {
-        self.deposit.is_system_transaction
+        self.deposit
+            .as_ref()
+            .map(|d| d.is_system_transaction)
+            .unwrap_or(false)
+    }
+
+    fn is_deposit(&self) -> bool {
+        self.deposit.is_some()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::deposit::DEPOSIT_TRANSACTION_TYPE;
-
     use super::*;
     use revm::primitives::{Address, B256};
 
@@ -189,21 +185,20 @@ mod tests {
     fn test_deposit_transaction_fields() {
         let op_tx = OpTransaction {
             base: TxEnv {
-                tx_type: DEPOSIT_TRANSACTION_TYPE,
                 gas_limit: 10,
                 gas_price: 100,
                 gas_priority_fee: Some(5),
                 ..Default::default()
             },
             enveloped_tx: None,
-            deposit: DepositTransactionParts {
+            deposit: Some(DepositTransactionParts {
                 is_system_transaction: false,
                 mint: Some(0u128),
                 source_hash: B256::default(),
-            },
+            }),
         };
         // Verify transaction type
-        assert_eq!(op_tx.tx_type(), DEPOSIT_TRANSACTION_TYPE);
+        assert!(op_tx.is_deposit());
         // Verify common fields access
         assert_eq!(op_tx.gas_limit(), 10);
         assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));

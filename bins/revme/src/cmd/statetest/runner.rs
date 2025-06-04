@@ -355,15 +355,6 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
-                    if test.expect_exception.is_some() {
-                        continue;
-                    } else {
-                        panic!("Invalid transaction type without expected exception");
-                    }
-                };
-                tx.tx_type = tx_type as u8;
-
                 tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
                 tx.data = unit
                     .transaction

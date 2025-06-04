@@ -1,7 +1,7 @@
 use context_interface::{
     context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
-    Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
+    Block, Cfg, Database, JournalTr, LocalContextTr, Transaction,
 };
 use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 
@@ -141,11 +141,8 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     fn blob_hash(&self, number: usize) -> Option<U256> {
-        let tx = &self.tx();
-        if tx.tx_type() != TransactionType::Eip4844 {
-            return None;
-        }
-        tx.blob_versioned_hashes()
+        self.tx()
+            .blob_versioned_hashes()
             .get(number)
             .map(|t| U256::from_be_bytes(t.0))
     }
