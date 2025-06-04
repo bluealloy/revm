@@ -188,9 +188,7 @@ impl<DB: Database> State<DB> {
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
                     // Load account from bundle state
-                    if let Some(account) =
-                        self.bundle_state.account(&address).cloned().map(Into::into)
-                    {
+                    if let Some(account) = self.bundle_state.account(&address).map(Into::into) {
                         return Ok(entry.insert(account));
                     }
                 }
