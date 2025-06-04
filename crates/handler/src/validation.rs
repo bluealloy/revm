@@ -121,7 +121,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         }
     }
 
-    if tx.access_list().is_some() && !spec_id.is_enabled_in(SpecId::BERLIN) {
+    if tx.access_list().is_some_and(|l| !l.is_empty()) && !spec_id.is_enabled_in(SpecId::BERLIN) {
         return Err(InvalidTransaction::Eip2930NotSupported);
     }
 
