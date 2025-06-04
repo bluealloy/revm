@@ -65,6 +65,8 @@ pub fn calc_excess_blob_gas(
     parent_excess_blob_gas: u64,
     parent_blob_gas_used: u64,
     parent_target_blob_gas_per_block: u64,
+    base_fee_per_gas: u64,
+    blob_base_cost: u64,
 ) -> u64 {
     (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(parent_target_blob_gas_per_block)
 }
