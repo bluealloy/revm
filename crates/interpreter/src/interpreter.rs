@@ -8,22 +8,27 @@ mod stack;
 mod subroutine_stack;
 
 // re-exports
+// imports
+use crate::{
+    interpreter_types::*,
+    CallInput,
+    Gas,
+    Host,
+    Instruction,
+    InstructionResult,
+    InstructionTable,
+    InterpreterAction,
+};
+use bytecode::{opcode::OPCODE_INFO, Bytecode};
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use loop_control::LoopControl as LoopControlImpl;
+use primitives::{hardfork::SpecId, Address, Bytes, U256};
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
-
-// imports
-use crate::{
-    interpreter_types::*, CallInput, Gas, Host, Instruction, InstructionResult, InstructionTable,
-    InterpreterAction,
-};
-use bytecode::Bytecode;
-use primitives::{hardfork::SpecId, Address, Bytes, U256};
 
 /// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
 #[derive(Debug, Clone)]
@@ -131,8 +136,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         let opcode = self.bytecode.opcode();
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last
+        // instruction it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
         // Execute instruction.

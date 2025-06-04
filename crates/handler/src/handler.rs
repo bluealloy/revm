@@ -1,15 +1,24 @@
-use crate::EvmTr;
 use crate::{
-    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
-    FrameResult, ItemOrResult,
+    execution,
+    post_execution,
+    pre_execution,
+    validation,
+    EvmTr,
+    Frame,
+    FrameInitOrResult,
+    FrameOrResult,
+    FrameResult,
+    ItemOrResult,
 };
-use context::result::FromStringError;
-use context::{JournalOutput, LocalContextTr, TransactionType};
-use context_interface::context::ContextError;
-use context_interface::ContextTr;
+use context::{result::FromStringError, JournalOutput, LocalContextTr, TransactionType};
 use context_interface::{
+    context::ContextError,
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultAndState},
-    Cfg, Database, JournalTr, Transaction,
+    Cfg,
+    ContextTr,
+    Database,
+    JournalTr,
+    Transaction,
 };
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use std::{vec, vec::Vec};
@@ -41,12 +50,12 @@ impl<
 /// their own method implementations.
 ///
 /// The handler logic consists of four phases:
-///   * Validation - Validates tx/block/config fields and loads caller account and validates initial gas requirements and
-///     balance checks.
+///   * Validation - Validates tx/block/config fields and loads caller account and validates initial
+///     gas requirements and balance checks.
 ///   * Pre-execution - Loads and warms accounts, deducts initial gas
 ///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
-///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,
-///     and rewards beneficiary
+///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller, and
+///     rewards beneficiary
 ///
 /// The [`Handler::catch_error`] method handles cleanup of intermediate state if an error
 /// occurs during execution.
@@ -55,7 +64,8 @@ pub trait Handler {
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
-    /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate frames.
+    /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate
+    /// frames.
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -89,8 +99,9 @@ pub trait Handler {
     ///
     /// System call is a special transaction where caller is a [`crate::SYSTEM_ADDRESS`]
     ///
-    /// It is used to call a system contracts and it skips all the `validation` and `pre-execution` and most of `post-execution` phases.
-    /// For example it will not deduct the caller or reward the beneficiary.
+    /// It is used to call a system contracts and it skips all the `validation` and `pre-execution`
+    /// and most of `post-execution` phases. For example it will not deduct the caller or reward
+    /// the beneficiary.
     #[inline]
     fn run_system_call(
         &mut self,
@@ -127,7 +138,8 @@ pub trait Handler {
 
     /// Validates the execution environment and transaction parameters.
     ///
-    /// Calculates initial and floor gas requirements and verifies they are covered by the gas limit.
+    /// Calculates initial and floor gas requirements and verifies they are covered by the gas
+    /// limit.
     ///
     /// Validation against state is done later in pre-execution phase in deduct_caller function.
     #[inline]
@@ -138,17 +150,20 @@ pub trait Handler {
 
     /// Prepares the EVM state for execution.
     ///
-    /// Loads the beneficiary account (EIP-3651: Warm COINBASE) and all accounts/storage from the access list (EIP-2929).
+    /// Loads the beneficiary account (EIP-3651: Warm COINBASE) and all accounts/storage from the
+    /// access list (EIP-2929).
     ///
     /// Deducts the maximum possible fee from the caller's balance.
     ///
-    /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
-    /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
+    /// For EIP-7702 transactions, applies the authorization list and delegates successful
+    /// authorizations. Returns the gas refund amount from EIP-7702. Authorizations are applied
+    /// before execution begins.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
-        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
+        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode
+        // Transaction.
         self.apply_eip7873_eof_initcodes(evm)?;
         let gas = self.apply_eip7702_auth_list(evm)?;
         Ok(gas)
@@ -179,8 +194,8 @@ pub trait Handler {
 
     /// Handles the final steps of transaction execution.
     ///
-    /// Calculates final refunds and validates the gas floor (EIP-7623) to ensure minimum gas is spent.
-    /// After EIP-7623, at least floor gas must be consumed.
+    /// Calculates final refunds and validates the gas floor (EIP-7623) to ensure minimum gas is
+    /// spent. After EIP-7623, at least floor gas must be consumed.
     ///
     /// Reimburses unused gas to the caller and rewards the beneficiary with transaction fees.
     /// The effective gas price determines rewards, with the base fee being burned.
@@ -458,8 +473,9 @@ pub trait Handler {
 
     /// Processes the final execution output.
     ///
-    /// This method, retrieves the final state from the journal, converts internal results to the external output format.
-    /// Internal state is cleared and EVM is prepared for the next transaction.
+    /// This method, retrieves the final state from the journal, converts internal results to the
+    /// external output format. Internal state is cleared and EVM is prepared for the next
+    /// transaction.
     #[inline]
     fn output(
         &self,

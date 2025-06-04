@@ -80,7 +80,7 @@ pub(crate) fn execute_rwasm_interruption<
     let mut local_gas = Gas::new(inputs.gas.remaining());
     let spec_id: SpecId = evm.ctx().cfg().spec().into();
     let journal = evm.ctx().journal();
-    let target_address = frame.interpreter.input.target_address();
+    let current_target_address = frame.interpreter.input.target_address();
 
     macro_rules! return_result {
         ($result:expr, $error:ident) => {{
@@ -146,7 +146,7 @@ pub(crate) fn execute_rwasm_interruption<
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_READ: slot={}", slot);
             // execute sload
-            let value = journal.sload(target_address, slot)?;
+            let value = journal.sload(current_target_address, slot)?;
             charge_gas!(sload_cost(spec_id, value.is_cold));
             let output: [u8; 32] = value.to_le_bytes();
             return_result!(output, Return)
@@ -173,7 +173,7 @@ pub(crate) fn execute_rwasm_interruption<
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
-            let value = journal.sstore(target_address, slot, new_value)?;
+            let value = journal.sstore(current_target_address, slot, new_value)?;
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
@@ -194,7 +194,7 @@ pub(crate) fn execute_rwasm_interruption<
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_CALL: target_address={target_address}, value={value}",);
+            println!("SYSCALL_CALL: callee_address={callee_address}, value={value}",);
             // for static calls with value greater than 0 - revert
             let has_transfer = !value.is_zero();
             if inputs.is_static && has_transfer {
@@ -235,7 +235,7 @@ pub(crate) fn execute_rwasm_interruption<
                 input: CallInput::Bytes(contract_input),
                 gas_limit,
                 target_address,
-                caller: target_address,
+                caller: current_target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
@@ -278,7 +278,7 @@ pub(crate) fn execute_rwasm_interruption<
                 input: CallInput::Bytes(contract_input),
                 gas_limit,
                 target_address,
-                caller: target_address,
+                caller: current_target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
@@ -326,8 +326,8 @@ pub(crate) fn execute_rwasm_interruption<
             let call_inputs = Box::new(CallInputs {
                 input: CallInput::Bytes(contract_input),
                 gas_limit,
-                target_address: target_address,
-                caller: target_address,
+                target_address: current_target_address,
+                caller: current_target_address,
                 bytecode_address: target_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
@@ -368,7 +368,7 @@ pub(crate) fn execute_rwasm_interruption<
             let call_inputs = Box::new(CallInputs {
                 input: CallInput::Bytes(contract_input),
                 gas_limit,
-                target_address,
+                target_address: current_target_address,
                 caller: frame.interpreter.input.caller_address(),
                 bytecode_address: target_address,
                 value: CallValue::Apparent(frame.interpreter.input.call_value()),
@@ -439,7 +439,7 @@ pub(crate) fn execute_rwasm_interruption<
             charge_gas!(gas_limit);
             // create inputs
             let create_inputs = Box::new(CreateInputs {
-                caller: target_address,
+                caller: current_target_address,
                 scheme,
                 value,
                 init_code,
@@ -483,7 +483,7 @@ pub(crate) fn execute_rwasm_interruption<
             charge_gas!(gas_cost);
             // write new log into the journal
             journal.log(Log {
-                address: target_address,
+                address: current_target_address,
                 // it's safe to go unchecked here because we do topics check upper
                 data: LogData::new_unchecked(topics, data),
             });
@@ -500,7 +500,7 @@ pub(crate) fn execute_rwasm_interruption<
             assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             // destroy an account
             let target = Address::from_slice(&inputs.syscall_params.input[0..20]);
-            let result = journal.selfdestruct(target_address, target)?;
+            let result = journal.selfdestruct(current_target_address, target)?;
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DESTROY_ACCOUNT: target={target} result={result:?}",);
             // charge gas cost
@@ -540,7 +540,7 @@ pub(crate) fn execute_rwasm_interruption<
                 MalformedBuiltinParams
             );
             let value = journal
-                .load_account(target_address)
+                .load_account(current_target_address)
                 .map(|acc| acc.map(|a| a.info.balance))?;
             charge_gas!(gas::LOW);
             let output: [u8; 32] = value.data.to_le_bytes();
@@ -771,7 +771,7 @@ pub(crate) fn execute_rwasm_interruption<
             );
             // read value from storage
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32].as_ref());
-            let value = journal.tload(target_address, slot);
+            let value = journal.tload(current_target_address, slot);
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_TRANSIENT_READ: slot={slot} value={value}");
             // charge gas
@@ -795,7 +795,7 @@ pub(crate) fn execute_rwasm_interruption<
             println!("SYSCALL_TRANSIENT_WRITE: slot={slot} value={value}");
             // charge gas
             charge_gas!(gas::WARM_STORAGE_READ_COST);
-            journal.tstore(target_address, slot, value);
+            journal.tstore(current_target_address, slot, value);
             // empty result
             return_result!(Bytes::new(), Return);
         }

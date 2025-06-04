@@ -9,7 +9,7 @@ use crate::{
     FrameOrResult,
     ItemOrResult,
 };
-use bytecode::{eip7702::Eip7702Bytecode, Eof, EOF_MAGIC_BYTES};
+use bytecode::{eip7702::Eip7702Bytecode, eof::printer::print, Eof, EOF_MAGIC_BYTES};
 use context::{result::FromStringError, Context, LocalContextTr};
 use context_interface::{
     context::ContextError,
@@ -21,6 +21,7 @@ use context_interface::{
     Transaction,
 };
 use core::{cmp::min, mem::take, str::from_utf8};
+use fluentbase_genesis::try_resolve_precompile_account_from_input;
 use fluentbase_runtime::{instruction::exec::SyscallExec, RuntimeContext};
 use fluentbase_sdk::{
     compile_wasm_to_rwasm_with_config,
@@ -249,7 +250,7 @@ where
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        println!("[make_call_frame] with inputs: {:?}", inputs);
+        println!("[make_call_frame] with inputs {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
         let (context, precompiles) = evm.ctx_precompiles();
@@ -326,11 +327,9 @@ where
                 })));
             }
         }
-        println!("XXX: loading account in make_call_frame");
         let account = context
             .journal()
             .load_account_code(inputs.bytecode_address)?;
-        println!("XXX: loaded account in make_call_frame");
         let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -345,6 +344,24 @@ where
             if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME {
                 interpreter_input.rwasm_proxy_address = Some(PRECOMPILE_EVM_RUNTIME);
             }
+            //
+            // if let Bytes(input) = inputs.input {
+            //     if let Some(precompiled_address) =
+            //         try_resolve_precompile_account_from_input(&input)
+            //     {
+            //         let account = &context
+            //             .journal()
+            //             .load_account_code(eip7702_bytecode.delegated_address)?
+            //             .info;
+            //         let account = &context.journal()
+            //             .load_code(precompiled_address, &mut self.inner.db)?;
+            //         // rewrite bytecode address and code hash, since rWasm rely on it
+            //         contract.bytecode_address = Some(precompiled_address);
+            //         contract.hash = Some(account.info.code_hash);
+            //         // rewrite bytecode
+            //         contract.bytecode = account.info.code.clone().unwrap_or_default();
+            //     }
+            // }
         }
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -355,14 +372,9 @@ where
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
-            println!("XXX: bytecode is empty in make_call_frame");
             context.journal().checkpoint_commit();
             return return_result(InstructionResult::Stop);
         }
-        println!(
-            "XXX: interpreter input rwasm_proxy_address: {:?}",
-            interpreter_input.rwasm_proxy_address
-        );
 
         // Create interpreter and executes call and push new CallStackFrame.
         Ok(ItemOrResult::Item(Self::new(
@@ -482,10 +494,6 @@ where
             context
                 .journal()
                 .set_code_with_hash(created_address, bytecode.clone(), hash);
-            println!(
-                "XXX: set code with hash in make_create_frame to {:?}",
-                created_address
-            );
             init_code_hash = hash;
             (bytecode, compilation_result.constructor_params, None)
         } else if !context.cfg().is_rwasm_proxy_disabled() {
@@ -778,11 +786,6 @@ where
 
                 let interpreter = &mut self.interpreter;
 
-                println!(
-                    "XXX gas before insertion in return_result: {:?}",
-                    interpreter.control.gas_mut()
-                );
-
                 let mem_length = outcome.memory_length();
                 let mem_start = outcome.memory_start();
                 interpreter.return_data.set_buffer(outcome.result.output);
@@ -826,11 +829,6 @@ where
                         .gas_mut()
                         .record_refund(out_gas.refunded());
                 }
-
-                println!(
-                    "XXX gas inserted in return_result: {:?}",
-                    interpreter.control.gas_mut()
-                );
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -966,7 +964,6 @@ pub fn return_create<JOURNAL: JournalTr>(
     let is_rwasm_contract_creation = interpreter_result.result == InstructionResult::ReturnContract;
     if !is_rwasm_contract_creation {
         // Set code
-        println!("XXX: set code with hash in return_create to {:?}", address);
         journal.set_code(address, bytecode);
     }
 

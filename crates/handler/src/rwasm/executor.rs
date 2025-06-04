@@ -50,7 +50,6 @@ pub fn execute_rwasm_frame<
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
-    println!("XXX executing RWASM frame");
     let interpreter = &mut frame.interpreter;
     let is_create: bool = matches!(frame.input, FrameInput::Create(..));
     let is_static: bool = interpreter.runtime_flag.is_static();
@@ -65,7 +64,7 @@ pub fn execute_rwasm_frame<
     let context_input = SharedContextInput::V1(SharedContextInputV1 {
         block: BlockContextV1 {
             chain_id: context.cfg().chain_id(),
-            coinbase: Address::ZERO, // TODO(khasan) set correct value
+            coinbase: context.block().beneficiary(),
             timestamp: context.block().timestamp(),
             number: context.block().number(),
             difficulty: context.block().difficulty(),
@@ -81,7 +80,7 @@ pub fn execute_rwasm_frame<
                 .tx()
                 .max_priority_fee_per_gas()
                 .map(|v| U256::from(v)),
-            origin: context.tx().caller(), // TODO(khasan) does origin == caller ?
+            origin: context.tx().caller(),
             value: context.tx().value(),
         },
         contract: ContractContextV1 {
@@ -111,7 +110,6 @@ pub fn execute_rwasm_frame<
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
         _ => unreachable!("revm: unexpected bytecode type"),
     };
-    println!("XXX {} len of rwasm bytecode", rwasm_bytecode.len());
     let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 
     // fuel limit we denominate later to gas
@@ -135,22 +133,12 @@ pub fn execute_rwasm_frame<
         runtime_context = runtime_context.without_fuel();
     }
 
-    println!(
-        "XXX: interpreter input rwasm_proxy_address: {:?}",
-        interpreter.input.rwasm_proxy_address
-    );
-
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
         &mut runtime_context,
         bytecode_hash,
         &context_input,
         fuel_limit,
         if is_create { STATE_DEPLOY } else { STATE_MAIN },
-    );
-
-    println!(
-        "XXX: fuel_consumed: {}, fuel_refunded: {}, exit_code: {}",
-        fuel_consumed, fuel_refunded, exit_code
     );
 
     // make sure we have enough gas to charge from the call
@@ -176,8 +164,6 @@ pub fn execute_rwasm_frame<
     let return_data: Bytes;
     return_data = runtime_context.into_return_data();
 
-    println!("XXX: return_data: {:?}", return_data);
-
     let gas = interpreter.control.gas;
     process_exec_result(
         frame,
@@ -199,7 +185,6 @@ pub fn execute_rwasm_resume<
     evm: &mut EVM,
     outcome: SystemInterruptionOutcome,
 ) -> Result<InterpreterAction, ERROR> {
-    println!("XXX resuming RWASM frame");
     let SystemInterruptionOutcome {
         inputs,
         result,
@@ -247,11 +232,6 @@ pub fn execute_rwasm_resume<
         fuel_consumed,
         fuel_refunded,
         inputs.syscall_params.fuel16_ptr,
-    );
-
-    println!(
-        "XXX: fuel_consumed: {}, fuel_refunded: {}, exit_code: {}",
-        fuel_consumed, fuel_refunded, exit_code
     );
 
     let return_data: Bytes;
@@ -303,10 +283,6 @@ fn process_exec_result<
     is_static: bool,
     is_gas_free: bool,
 ) -> Result<InterpreterAction, ERROR> {
-    println!(
-        "XXX process_exec_result: exit_code: {}, return_data: {:?}",
-        exit_code, return_data
-    );
     // if we have success or failed exit code
     if exit_code <= 0 {
         return Ok(process_halt(exit_code, return_data.clone(), is_create, gas));
@@ -369,10 +345,6 @@ fn process_halt(
         #[cfg(feature = "debug-print")]
         trace_output(return_data.as_ref());
     }
-    println!(
-        "XXX process_halt: exit code: {:?}, return data: {:?}",
-        exit_code, return_data
-    );
     let result = match exit_code {
         ExitCode::Ok => {
             if is_create {
@@ -419,22 +391,12 @@ pub fn run_rwasm_loop<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + 
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
-    println!("XXX running RWASM loop");
     loop {
-        println!("XXX RWASM loop iteration");
-        println!(
-            "XXX gas before the execution {:?}",
-            frame.interpreter.control.gas
-        );
         let next_action = if let Some(interrupted_outcome) = frame.take_interrupted_outcome() {
             execute_rwasm_resume(frame, evm, interrupted_outcome)
         } else {
             execute_rwasm_frame(frame, evm)
         }?;
-        println!(
-            "XXX gas after the execution {:?}",
-            frame.interpreter.control.gas
-        );
         let result = match next_action {
             InterpreterAction::Return { result } => result,
             _ => return Ok(next_action),
