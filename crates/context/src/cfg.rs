@@ -235,13 +235,13 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     fn max_code_size(&self) -> usize {
-      self.limit_contract_code_size.unwrap_or_else(|| {
-          if self.spec.into().is_enabled_in(SpecId::OSAKA) {
-              eip7907::MAX_CODE_SIZE
-          } else {
-              eip170::MAX_CODE_SIZE
-          }
-      })
+        self.limit_contract_code_size.unwrap_or_else(|| {
+            if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7907::MAX_CODE_SIZE
+            } else {
+                eip170::MAX_CODE_SIZE
+            }
+        })
     }
 
     fn is_eip3607_disabled(&self) -> bool {

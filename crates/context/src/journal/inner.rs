@@ -637,7 +637,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
         let mut load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
-                let account= entry.into_mut();
+                let account = entry.into_mut();
                 let is_cold = account.mark_warm();
                 StateCodeLoad {
                     data: account,
@@ -666,7 +666,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if load.is_cold {
             self.journal.push(ENTRY::account_warmed(address));
         }
-
         if load_code {
             let info = &mut load.data.info;
             if info.code.is_none() {

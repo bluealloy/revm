@@ -239,8 +239,8 @@ bitflags! {
         const LoadedAsNotExisting = 0b0001000;
         /// used to mark account as cold
         const Cold = 0b0010000;
-        /// EIP-7907: Code loaded (warm)
-        /// If code is loaded, account is loaded.
+        /// EIP-7907: Code loaded warm
+        /// If code is loaded, account should be loaded.
         const CodeLoaded = 0b0100000;
     }
 }
