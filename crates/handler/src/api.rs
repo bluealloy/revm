@@ -176,7 +176,7 @@ where
     }
 
     fn finalize(&mut self) -> Self::State {
-        self.journal().finalize()
+        self.journal_mut().finalize()
     }
 
     fn set_block(&mut self, block: Self::Block) {
@@ -201,6 +201,6 @@ where
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn commit(&mut self, state: Self::State) {
-        self.db().commit(state);
+        self.db_mut().commit(state);
     }
 }

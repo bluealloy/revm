@@ -1,3 +1,4 @@
+//! Optimism transaction abstraction containing the `[OpTxTr]` trait and corresponding `[OpTransaction]` type.
 use super::deposit::{DepositTransactionParts, DEPOSIT_TRANSACTION_TYPE};
 use auto_impl::auto_impl;
 use revm::{
@@ -8,11 +9,13 @@ use revm::{
 };
 use std::vec;
 
+/// Optimism Transaction trait.
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait OpTxTr: Transaction {
+    /// Enveloped transaction bytes.
     fn enveloped_tx(&self) -> Option<&Bytes>;
 
-    /// Source hash of the deposit transaction
+    /// Source hash of the deposit transaction.
     fn source_hash(&self) -> Option<B256>;
 
     /// Mint of the deposit transaction
@@ -27,9 +30,11 @@ pub trait OpTxTr: Transaction {
     }
 }
 
+/// Optimism transaction.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OpTransaction<T: Transaction> {
+    /// Base transaction fields.
     pub base: T,
     /// An enveloped EIP-2718 typed transaction
     ///
@@ -37,10 +42,12 @@ pub struct OpTransaction<T: Transaction> {
     /// opposed to requiring downstream apps to compute the cost
     /// externally.
     pub enveloped_tx: Option<Bytes>,
+    /// Deposit transaction parts.
     pub deposit: DepositTransactionParts,
 }
 
 impl<T: Transaction> OpTransaction<T> {
+    /// Create a new Optimism transaction.
     pub fn new(base: T) -> Self {
         Self {
             base,

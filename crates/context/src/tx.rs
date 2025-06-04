@@ -8,7 +8,8 @@ use context_interface::{
     },
 };
 use core::fmt::Debug;
-use primitives::{Address, Bytes, TxKind, B256, U256};
+use database_interface::{BENCH_CALLER, BENCH_TARGET};
+use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
 use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
@@ -40,8 +41,6 @@ pub struct TxEnv {
     pub nonce: u64,
 
     /// The chain ID of the transaction
-    ///
-    /// If set to [`None`], no checks are performed.
     ///
     /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
     ///
@@ -113,6 +112,16 @@ pub enum DeriveTxTypeError {
 }
 
 impl TxEnv {
+    /// Creates a new TxEnv with benchmark-specific values.
+    pub fn new_bench() -> Self {
+        Self {
+            caller: BENCH_CALLER,
+            kind: TxKind::Call(BENCH_TARGET),
+            gas_limit: 1_000_000_000,
+            ..Default::default()
+        }
+    }
+
     /// Derives tx type from transaction fields and sets it to `tx_type`.
     /// Returns error in case some fields were not set correctly.
     pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
@@ -265,7 +274,7 @@ impl TxEnvBuilder {
         Self {
             tx_type: None,
             caller: Address::default(),
-            gas_limit: 30_000_000,
+            gas_limit: eip7825::TX_GAS_LIMIT_CAP,
             gas_price: 0,
             kind: TxKind::Call(Address::default()),
             value: U256::ZERO,

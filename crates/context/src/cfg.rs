@@ -3,21 +3,25 @@ pub use context_interface::Cfg;
 
 use primitives::{
     eip170::MAX_CODE_SIZE_170,
+    eip7825,
     eip7907::MAX_CODE_SIZE,
     hardfork::SpecId,
 };
-
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
-    /// Chain ID of the EVM
-    ///
-    /// `chain_id` will be compared to the transaction's Chain ID.
+    /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
     pub chain_id: u64,
+
+    /// Whether to check the transaction's chain ID.
+    ///
+    /// If set to `false`, the transaction's chain ID check will be skipped.
+    pub tx_chain_id_check: bool,
+
     /// Specification for EVM represent the hardfork
     pub spec: SPEC,
     /// Contract code size limit override.
@@ -41,6 +45,13 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
     /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
     pub blob_base_fee_update_fraction: Option<u64>,
+    /// Configures the gas limit cap for the transaction.
+    ///
+    /// If `None`, default value defined by spec will be used.
+    ///
+    /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
+    /// with initials cap of 30M.
+    pub tx_gas_limit_cap: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -111,10 +122,12 @@ impl<SPEC> CfgEnv<SPEC> {
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
             chain_id: 1,
+            tx_chain_id_check: false,
             limit_contract_code_size: None,
             spec,
             disable_nonce_check: false,
             blob_max_count: None,
+            tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
@@ -135,13 +148,27 @@ impl<SPEC> CfgEnv<SPEC> {
         self
     }
 
+    /// Enables the transaction's chain ID check.
+    pub fn enable_tx_chain_id_check(mut self) -> Self {
+        self.tx_chain_id_check = true;
+        self
+    }
+
+    /// Disables the transaction's chain ID check.
+    pub fn disable_tx_chain_id_check(mut self) -> Self {
+        self.tx_chain_id_check = false;
+        self
+    }
+
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,
+            tx_chain_id_check: self.tx_chain_id_check,
             limit_contract_code_size: self.limit_contract_code_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
+            tx_gas_limit_cap: self.tx_gas_limit_cap,
             blob_max_count: self.blob_max_count,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             #[cfg(feature = "memory_limit")]
@@ -177,12 +204,29 @@ impl<SPEC> CfgEnv<SPEC> {
 impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     type Spec = SPEC;
 
+    #[inline]
     fn chain_id(&self) -> u64 {
         self.chain_id
     }
 
+    #[inline]
     fn spec(&self) -> Self::Spec {
         self.spec
+    }
+
+    #[inline]
+    fn tx_chain_id_check(&self) -> bool {
+        self.tx_chain_id_check
+    }
+
+    #[inline]
+    fn tx_gas_limit_cap(&self) -> u64 {
+        self.tx_gas_limit_cap
+            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7825::TX_GAS_LIMIT_CAP
+            } else {
+                u64::MAX
+            })
     }
 
     #[inline]

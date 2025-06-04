@@ -3,7 +3,7 @@ use super::{
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
 use bytecode::Bytecode;
-use database_interface::{Database, DatabaseCommit, EmptyDB};
+use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
 use state::{Account, AccountInfo};
 use std::{
@@ -311,6 +311,71 @@ impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, evm_state: HashMap<Address, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
+    }
+}
+
+impl<DB: DatabaseRef> DatabaseRef for State<DB> {
+    type Error = DB::Error;
+
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        // Account is already in cache
+        if let Some(account) = self.cache.accounts.get(&address) {
+            return Ok(account.account_info());
+        }
+        // If bundle state is used, check if account is in bundle state
+        if self.use_preloaded_bundle {
+            if let Some(account) = self.bundle_state.account(&address) {
+                return Ok(account.account_info());
+            }
+        }
+        // If not found, load it from database
+        self.database.basic_ref(address)
+    }
+
+    fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        // Check if code is in cache
+        if let Some(code) = self.cache.contracts.get(&code_hash) {
+            return Ok(code.clone());
+        }
+        // If bundle state is used, check if code is in bundle state
+        if self.use_preloaded_bundle {
+            if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
+                return Ok(code.clone());
+            }
+        }
+        // If not found, load it from database
+        self.database.code_by_hash_ref(code_hash)
+    }
+
+    fn storage_ref(
+        &self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        // Check if account is in cache, the account is not guaranteed to be loaded
+        if let Some(account) = self.cache.accounts.get(&address) {
+            if let Some(plain_account) = &account.account {
+                // If storage is known, we can return it
+                if let Some(storage_value) = plain_account.storage.get(&index) {
+                    return Ok(*storage_value);
+                }
+                // If account was destroyed or account is newly built
+                // we return zero and don't ask database.
+                if account.status.is_storage_known() {
+                    return Ok(StorageValue::ZERO);
+                }
+            }
+        }
+        // If not found, load it from database
+        self.database.storage_ref(address, index)
+    }
+
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        if let Some(entry) = self.block_hashes.get(&number) {
+            return Ok(*entry);
+        }
+        // If not found, load it from database
+        self.database.block_hash_ref(number)
     }
 }
 

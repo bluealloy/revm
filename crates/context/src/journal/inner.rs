@@ -558,39 +558,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         })
     }
 
-    /// Initial load of account. This load will not be tracked inside journal
-    #[inline]
-    pub fn initial_account_load<DB: Database>(
-        &mut self,
-        db: &mut DB,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<&mut Account, DB::Error> {
-        // load or get account.
-        let account = match self.state.entry(address) {
-            Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(vac) => vac.insert(
-                db.basic(address)?
-                    .map(|i| i.into())
-                    .unwrap_or(Account::new_not_existing(self.transaction_id)),
-            ),
-        };
-        // preload storages.
-        for storage_key in storage_keys.into_iter() {
-            match account.storage.entry(storage_key) {
-                Entry::Occupied(entry) => {
-                    let slot = entry.into_mut();
-                    slot.mark_warm_with_transaction_id(self.transaction_id);
-                }
-                Entry::Vacant(entry) => {
-                    let storage = db.storage(address, storage_key)?;
-                    entry.insert(EvmStorageSlot::new(storage, self.transaction_id));
-                }
-            }
-        }
-        Ok(account)
-    }
-
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
     pub fn load_account<DB: Database>(
@@ -598,7 +565,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false)
+        self.load_account_optional(db, address, false, [])
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -616,7 +583,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
+        let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -649,7 +616,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true)
+        self.load_account_optional(db, address, true, [])
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
@@ -659,6 +626,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
         load_code: bool,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
@@ -701,6 +669,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             }
         }
 
+        for storage_key in storage_keys.into_iter() {
+            sload_with_account(
+                load.data,
+                db,
+                &mut self.journal,
+                self.transaction_id,
+                address,
+                storage_key,
+            )?;
+        }
         Ok(load)
     }
 
@@ -719,33 +697,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
-        let is_newly_created = account.is_created();
-        let (value, is_cold) = match account.storage.entry(key) {
-            Entry::Occupied(occ) => {
-                let slot = occ.into_mut();
-                let is_cold = slot.mark_warm_with_transaction_id(self.transaction_id);
-                (slot.present_value, is_cold)
-            }
-            Entry::Vacant(vac) => {
-                // if storage was cleared, we don't need to ping db.
-                let value = if is_newly_created {
-                    StorageValue::ZERO
-                } else {
-                    db.storage(address, key)?
-                };
-
-                vac.insert(EvmStorageSlot::new(value, self.transaction_id));
-
-                (value, true)
-            }
-        };
-
-        if is_cold {
-            // add it to journal as cold loaded.
-            self.journal.push(ENTRY::storage_warmed(address, key));
-        }
-
-        Ok(StateLoad::new(value, is_cold))
+        sload_with_account(
+            account,
+            db,
+            &mut self.journal,
+            self.transaction_id,
+            address,
+            key,
+        )
     }
 
     /// Stores storage slot.
@@ -846,4 +805,43 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
+}
+
+/// Loads storage slot with account.
+#[inline]
+pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
+    account: &mut Account,
+    db: &mut DB,
+    journal: &mut Vec<ENTRY>,
+    transaction_id: usize,
+    address: Address,
+    key: StorageKey,
+) -> Result<StateLoad<StorageValue>, DB::Error> {
+    let is_newly_created = account.is_created();
+    let (value, is_cold) = match account.storage.entry(key) {
+        Entry::Occupied(occ) => {
+            let slot = occ.into_mut();
+            let is_cold = slot.mark_warm_with_transaction_id(transaction_id);
+            (slot.present_value, is_cold)
+        }
+        Entry::Vacant(vac) => {
+            // if storage was cleared, we don't need to ping db.
+            let value = if is_newly_created {
+                StorageValue::ZERO
+            } else {
+                db.storage(address, key)?
+            };
+
+            vac.insert(EvmStorageSlot::new(value, transaction_id));
+
+            (value, true)
+        }
+    };
+
+    if is_cold {
+        // add it to journal as cold loaded.
+        journal.push(ENTRY::storage_warmed(address, key));
+    }
+
+    Ok(StateLoad::new(value, is_cold))
 }

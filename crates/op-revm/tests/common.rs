@@ -1,3 +1,4 @@
+//! Common test utilities used to compare execution results against testdata.
 #![allow(dead_code)]
 
 use revm::{

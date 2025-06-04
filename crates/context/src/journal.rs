@@ -95,11 +95,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    fn db_ref(&self) -> &Self::Database {
+    fn db(&self) -> &Self::Database {
         &self.database
     }
 
-    fn db(&mut self) -> &mut Self::Database {
+    fn db_mut(&mut self) -> &mut Self::Database {
         &mut self.database
     }
 
@@ -167,7 +167,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.inner
-            .initial_account_load(&mut self.database, address, storage_keys)?;
+            .load_account_optional(&mut self.database, address, false, storage_keys)?;
         Ok(())
     }
 

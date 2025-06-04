@@ -38,7 +38,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Return balance of not spend gas.
-    context.journal().balance_incr(
+    context.journal_mut().balance_incr(
         caller,
         U256::from(
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
@@ -66,7 +66,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     };
 
     // reward beneficiary
-    context.journal().balance_incr(
+    context.journal_mut().balance_incr(
         beneficiary,
         U256::from(coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128),
     )?;
@@ -90,7 +90,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr<State = EvmState>>, HALTREASON: 
     let instruction_result = result.into_interpreter_result();
 
     // take logs from journal.
-    let logs = context.journal().take_logs();
+    let logs = context.journal_mut().take_logs();
 
     match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {

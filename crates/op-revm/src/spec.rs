@@ -1,21 +1,33 @@
+//! Contains the `[OpSpecId]` type and its implementation.
 use core::str::FromStr;
 use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
+/// Optimism spec id.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum OpSpecId {
+    /// Bedrock spec id.
     BEDROCK = 100,
+    /// Regolith spec id.
     REGOLITH,
+    /// Canyon spec id.
     CANYON,
+    /// Ecotone spec id.
     ECOTONE,
+    /// Fjord spec id.
     FJORD,
+    /// Granite spec id.
     GRANITE,
+    /// Holocene spec id.
     HOLOCENE,
+    /// Isthmus spec id.
     #[default]
     ISTHMUS,
+    /// Interop spec id.
     INTEROP,
+    /// Osaka spec id.
     OSAKA,
 }
 
@@ -31,6 +43,7 @@ impl OpSpecId {
         }
     }
 
+    /// Checks if the [`OpSpecId`] is enabled in the other [`OpSpecId`].
     pub const fn is_enabled_in(self, other: OpSpecId) -> bool {
         other as u8 <= self as u8
     }
@@ -81,14 +94,23 @@ impl From<OpSpecId> for &'static str {
 
 /// String identifiers for Optimism hardforks
 pub mod name {
+    /// Bedrock spec name.
     pub const BEDROCK: &str = "Bedrock";
+    /// Regolith spec name.
     pub const REGOLITH: &str = "Regolith";
+    /// Canyon spec name.
     pub const CANYON: &str = "Canyon";
+    /// Ecotone spec name.
     pub const ECOTONE: &str = "Ecotone";
+    /// Fjord spec name.
     pub const FJORD: &str = "Fjord";
+    /// Granite spec name.
     pub const GRANITE: &str = "Granite";
+    /// Holocene spec name.
     pub const HOLOCENE: &str = "Holocene";
+    /// Isthmus spec name.
     pub const ISTHMUS: &str = "Isthmus";
+    /// Interop spec name.
     pub const INTEROP: &str = "Interop";
 }
 

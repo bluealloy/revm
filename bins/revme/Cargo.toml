@@ -43,6 +43,7 @@ thiserror.workspace = true
 triehash.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
+csv = "1.1.6"
 
 [[bench]]
 name = "evm"

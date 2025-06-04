@@ -29,15 +29,15 @@ pub fn load_accounts<
     let gen_spec = context.cfg().spec();
     let spec = gen_spec.clone().into();
     // sets eth spec id in journal
-    context.journal().set_spec_id(spec);
+    context.journal_mut().set_spec_id(spec);
     let precompiles_changed = precompiles.set_spec(gen_spec);
-    let empty_warmed_precompiles = context.journal().precompile_addresses().is_empty();
+    let empty_warmed_precompiles = context.journal_mut().precompile_addresses().is_empty();
 
     if precompiles_changed || empty_warmed_precompiles {
         // load new precompile addresses into journal.
         // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
         context
-            .journal()
+            .journal_mut()
             .warm_precompiles(precompiles.warm_addresses().collect());
     }
 
@@ -45,11 +45,11 @@ pub fn load_accounts<
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         let coinbase = context.block().beneficiary();
-        context.journal().warm_account(coinbase);
+        context.journal_mut().warm_account(coinbase);
     }
 
     // Load access list
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
@@ -123,7 +123,7 @@ pub fn validate_against_state_and_deduct_caller<
     let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
     let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
 
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -191,7 +191,7 @@ pub fn apply_eip7702_auth_list<
     }
 
     let chain_id = context.cfg().chain_id();
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
 
     let mut refunded_accounts = 0;
     for authorization in tx.authorization_list() {
@@ -230,7 +230,7 @@ pub fn apply_eip7702_auth_list<
         }
 
         // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !authority_acc.is_empty() {
+        if !(authority_acc.is_empty() && authority_acc.is_loaded_as_not_existing_not_touched()) {
             refunded_accounts += 1;
         }
 
