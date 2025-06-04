@@ -122,7 +122,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         gas::extcodecopy_cost(
             context.interpreter.runtime_flag.spec_id(),
             len,
-            code.is_cold
+            code.is_cold,
+            code.is_code_cold
         )
     );
     if len == 0 {

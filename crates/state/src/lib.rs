@@ -106,6 +106,21 @@ impl Account {
         }
     }
 
+    /// Marks the account code as cold
+    pub fn mark_code_cold(&mut self) {
+        self.status -= AccountStatus::CodeLoaded;
+    }
+
+    /// Marks the account code as warm and return true if it was previously cold.
+    pub fn mark_code_warm(&mut self) -> bool {
+        if !self.status.contains(AccountStatus::CodeLoaded) {
+            self.status |= AccountStatus::CodeLoaded;
+            true
+        } else {
+            false
+        }
+    }
+
     /// Is account loaded as not existing from database.
     ///
     /// This is needed for pre spurious dragon hardforks where
@@ -224,6 +239,9 @@ bitflags! {
         const LoadedAsNotExisting = 0b0001000;
         /// used to mark account as cold
         const Cold = 0b0010000;
+        /// EIP-7907: Code loaded (warm)
+        /// If code is loaded, account is loaded.
+        const CodeLoaded = 0b0100000;
     }
 }
 
@@ -395,6 +413,28 @@ mod tests {
 
         // When marking cold account as warm, it should return true
         assert!(account.mark_warm());
+    }
+
+    #[test]
+    fn account_code_is_cold() {
+        let mut account = Account::default();
+
+        // Account code is not warm by default
+        assert!(!account.status.contains(crate::AccountStatus::CodeLoaded));
+
+        // When marking code as warm for first time, it should return is_code_cold=true
+        assert!(account.mark_code_warm());
+
+        // Account code should be warm
+        assert!(account.status.contains(crate::AccountStatus::CodeLoaded));
+
+        // When marking code as warm for second time, it should return is_code_cold=false
+        assert!(!account.mark_code_warm());
+
+        account.mark_code_cold();
+
+        // Account code should be cold
+        assert!(!account.status.contains(crate::AccountStatus::CodeLoaded));
     }
 
     #[test]

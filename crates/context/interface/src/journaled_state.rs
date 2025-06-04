@@ -120,7 +120,7 @@ pub trait JournalTr {
     fn load_account_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    ) -> Result<StateCodeLoad<&mut Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account delegated.
     fn load_account_delegated(
@@ -147,7 +147,7 @@ pub trait JournalTr {
     fn code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
+    ) -> Result<StateCodeLoad<Bytes>, <Self::Database as Database>::Error> {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
@@ -158,7 +158,7 @@ pub trait JournalTr {
             code.original_bytes()
         };
 
-        Ok(StateLoad::new(code, a.is_cold))
+        Ok(StateCodeLoad::new(code, a.is_cold, a.is_code_cold))
     }
 
     /// Gets code hash of account.
@@ -168,10 +168,10 @@ pub trait JournalTr {
     fn code_hash(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
+    ) -> Result<StateCodeLoad<B256>, <Self::Database as Database>::Error> {
         let acc = self.load_account_code(address)?;
         if acc.is_empty() {
-            return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
+            return Ok(StateCodeLoad::new(B256::ZERO, acc.is_cold, acc.is_code_cold));
         }
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
@@ -182,7 +182,7 @@ pub trait JournalTr {
             acc.info.code_hash
         };
 
-        Ok(StateLoad::new(hash, acc.is_cold))
+        Ok(StateCodeLoad::new(hash, acc.is_cold, acc.is_code_cold))
     }
 
     /// Called at the end of the transaction to clean all residue data from journal.
@@ -290,6 +290,53 @@ impl<T> StateLoad<T> {
     }
 }
 
+/// Duplicates StateLoad, adding code cold status.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct StateCodeLoad<T> {
+    /// Returned data
+    pub data: T,
+    /// Is account is cold loaded
+    pub is_cold: bool,
+    /// Is account code cold loaded
+    pub is_code_cold: bool,
+}
+
+impl<T> Deref for StateCodeLoad<T> {
+  type Target = T;
+
+  fn deref(&self) -> &Self::Target {
+      &self.data
+  }
+}
+
+impl<T> DerefMut for StateCodeLoad<T> {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+      &mut self.data
+  }
+}
+
+impl<T> StateCodeLoad<T> {
+    /// Returns a new [`StateCodeLoad`] with the given data and cold load statuses.
+    pub fn new(data: T, is_cold: bool, is_code_cold: bool) -> Self {
+        Self {
+            data,
+            is_cold,
+            is_code_cold,
+        }
+    }
+
+    /// Maps the data of the [`StateCodeLoad`] to a new value.
+    ///
+    /// Useful for transforming the data of the [`StateCodeLoad`] without changing the cold load statuses.
+    pub fn map<B, F>(self, f: F) -> StateCodeLoad<B>
+    where
+        F: FnOnce(T) -> B,
+    {
+        StateCodeLoad::new(f(self.data), self.is_cold, self.is_code_cold)
+    }
+}
+
 /// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -298,4 +345,8 @@ pub struct AccountLoad {
     pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
+    /// Is account code cold loaded
+    pub is_code_cold: bool,
+    /// Account code size
+    pub code_size: usize,
 }

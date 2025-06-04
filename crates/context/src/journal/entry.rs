@@ -57,6 +57,9 @@ pub trait JournalEntryTr {
         had_value: StorageValue,
     ) -> Self;
 
+    /// Creates a journal entry for when an account's code is loaded and marked as "warm" for gas metering
+    fn code_warmed(address: Address) -> Self;
+
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
 
@@ -186,6 +189,13 @@ pub enum JournalEntry {
         /// Address of account that had its transient storage changed.
         address: Address,
     },
+    /// Entry used to track code warming introduced by EIP-7907.
+    /// Action: Code warmed
+    /// Revert: Revert to cold state
+    CodeWarmed {
+        /// Address of account that had its code warmed.
+        address: Address,
+    },
     /// Code changed
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
@@ -258,6 +268,10 @@ impl JournalEntryTr for JournalEntry {
             key,
             had_value,
         }
+    }
+
+    fn code_warmed(address: Address) -> Self {
+        JournalEntry::CodeWarmed { address }
     }
 
     fn code_changed(address: Address) -> Self {
@@ -364,6 +378,9 @@ impl JournalEntryTr for JournalEntry {
                     // if not zero, reinsert old value to transient storage.
                     transient_storage.insert(tkey, had_value);
                 }
+            }
+            JournalEntry::CodeWarmed { address } => {
+                state.get_mut(&address).unwrap().mark_code_cold();
             }
             JournalEntry::CodeChange { address } => {
                 let acc = state.get_mut(&address).unwrap();
