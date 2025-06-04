@@ -2,9 +2,9 @@
 pub use context_interface::Cfg;
 
 use primitives::{
-    eip170::MAX_CODE_SIZE_170,
+    eip170,
     eip7825,
-    eip7907::MAX_CODE_SIZE,
+    eip7907,
     hardfork::SpecId,
 };
 /// EVM configuration
@@ -237,11 +237,9 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     fn max_code_size(&self) -> usize {
       self.limit_contract_code_size.unwrap_or_else(|| {
           if self.spec.into().is_enabled_in(SpecId::OSAKA) {
-              // EIP-7907
-              MAX_CODE_SIZE
+              eip7907::MAX_CODE_SIZE
           } else {
-              // EIP-170
-              MAX_CODE_SIZE_170
+              eip170::MAX_CODE_SIZE
           }
       })
     }

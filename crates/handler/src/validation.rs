@@ -310,7 +310,7 @@ mod tests {
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output}, CfgEnv, Context, TxEnv
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE_3860, MAX_INITCODE_SIZE, hardfork::SpecId};
+    use primitives::{address, Address, Bytes, TxKind, eip3860, eip7907, hardfork::SpecId};
 
     fn deploy_contract(
         bytecode: Bytes,
@@ -332,7 +332,7 @@ mod tests {
 
     #[test]
     fn test_eip3860_initcode_size_limit_failure() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE_3860 + 1];
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE + 1];
         let bytecode: Bytes = large_bytecode.into();
         let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(
@@ -345,7 +345,7 @@ mod tests {
 
     #[test]
     fn test_eip3860_initcode_size_limit_success_prague() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE_3860];
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE];
         let bytecode: Bytes = large_bytecode.into();
         let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
@@ -353,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_eip7907_initcode_size_limit_failure_osaka() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE + 1];
+        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE + 1];
         let bytecode: Bytes = large_bytecode.into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
         assert!(matches!(
@@ -366,7 +366,7 @@ mod tests {
 
     #[test]
     fn test_eip7907_initcode_size_limit_success_osaka() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE];
+        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE];
         let bytecode: Bytes = large_bytecode.into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
