@@ -597,7 +597,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         // Get code size if code exists, otherwise None
-        let code_size = account.info.code.as_ref().map(|code| code.original_bytes().len());
+        let code_size = account
+            .info
+            .code
+            .as_ref()
+            .map(|code| code.original_bytes().len());
 
         let mut account_load = StateLoad::new(
             AccountLoad {

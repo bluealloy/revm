@@ -171,7 +171,11 @@ pub trait JournalTr {
     ) -> Result<StateCodeLoad<B256>, <Self::Database as Database>::Error> {
         let acc = self.load_account_code(address)?;
         if acc.is_empty() {
-            return Ok(StateCodeLoad::new(B256::ZERO, acc.is_cold, acc.is_code_cold));
+            return Ok(StateCodeLoad::new(
+                B256::ZERO,
+                acc.is_cold,
+                acc.is_code_cold,
+            ));
         }
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
@@ -303,17 +307,17 @@ pub struct StateCodeLoad<T> {
 }
 
 impl<T> Deref for StateCodeLoad<T> {
-  type Target = T;
+    type Target = T;
 
-  fn deref(&self) -> &Self::Target {
-      &self.data
-  }
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
 }
 
 impl<T> DerefMut for StateCodeLoad<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-      &mut self.data
-  }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
 }
 
 impl<T> StateCodeLoad<T> {

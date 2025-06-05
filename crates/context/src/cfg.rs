@@ -1,12 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{
-    eip170,
-    eip7825,
-    eip7907,
-    hardfork::SpecId,
-};
+use primitives::{eip170, eip7825, eip7907, hardfork::SpecId};
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]

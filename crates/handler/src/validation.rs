@@ -307,10 +307,13 @@ mod tests {
     use crate::{ExecuteCommitEvm, MainBuilder, MainContext};
     use bytecode::opcode;
     use context::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output}, CfgEnv, Context, TxEnv
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
+        CfgEnv, Context, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, Address, Bytes, TxKind, eip3860, eip7825, eip7907, hardfork::SpecId};
+    use primitives::{
+        address, eip3860, eip7825, eip7907, hardfork::SpecId, Address, Bytes, TxKind,
+    };
 
     fn deploy_contract(
         bytecode: Bytes,
@@ -324,7 +327,9 @@ mod tests {
         let block_and_txn_gas_limit_cap = gas_limit.unwrap_or(eip7825::TX_GAS_LIMIT_CAP);
         cfg.tx_gas_limit_cap = Some(block_and_txn_gas_limit_cap);
 
-        let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default()).with_cfg(cfg);
+        let ctx = Context::mainnet()
+            .with_db(CacheDB::<EmptyDB>::default())
+            .with_cfg(cfg);
 
         let mut evm = ctx.build_mainnet();
         evm.transact_commit(TxEnv {
@@ -440,7 +445,13 @@ mod tests {
         ];
         let bytecode: Bytes = init_code.into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA), None);
-        assert!(matches!(result, Ok(ExecutionResult::Halt { reason: HaltReason::OutOfGas(..), gas_used: 30000000 },)));
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::OutOfGas(..),
+                gas_used: 30000000
+            },)
+        ));
     }
 
     #[test]
@@ -545,8 +556,8 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode, Some(SpecId::PRAGUE), None).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE), None)
+            .expect("factory contract deployment failed");
 
         // get factory contract address
         let factory_address = match &factory_result {
@@ -627,8 +638,8 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode, Some(SpecId::PRAGUE), None).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE), None)
+            .expect("factory contract deployment failed");
         // get factory contract address
         let factory_address = match &factory_result {
             ExecutionResult::Success { output, .. } => match output {
@@ -790,8 +801,8 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode, Some(SpecId::OSAKA), None).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::OSAKA), None)
+            .expect("factory contract deployment failed");
 
         // get factory contract address
         let factory_address = match &factory_result {

@@ -1,6 +1,6 @@
 //! EIP-3860: Limit and meter initcode
 
-use crate::{eip170};
+use crate::eip170;
 
 /// EIP-3860: Limit and meter initcode
 ///

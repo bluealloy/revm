@@ -5,14 +5,7 @@ use crate::{
     opcode::{self, OPCODE_INFO},
     utils::{read_i16, read_u16},
 };
-use primitives::{
-    constants::{
-        STACK_LIMIT,
-    },
-    eip7907,
-
-    Bytes,
-};
+use primitives::{constants::STACK_LIMIT, eip7907, Bytes};
 
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, vec, vec::Vec};

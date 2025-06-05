@@ -1,5 +1,5 @@
 use context_interface::{
-    context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad, StateCodeLoad},
+    context::{ContextTr, SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     journaled_state::AccountLoad,
     Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
 };

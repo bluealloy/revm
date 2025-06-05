@@ -113,7 +113,12 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool, is_code_cold: bool) -> Option<u64> {
+pub const fn extcodecopy_cost(
+    spec_id: SpecId,
+    len: usize,
+    is_cold: bool,
+    is_code_cold: bool,
+) -> Option<u64> {
     let mut base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         warm_cold_cost(is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
@@ -349,7 +354,6 @@ pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64
     gas
 }
 
-
 /// EIP-7907: Cold access cost for large contract code size
 ///
 /// calculate large_contract_cost = ceil32(excess_contract_size) * GAS_INIT_CODE_WORD_COST
@@ -357,9 +361,7 @@ pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64
 #[inline]
 pub const fn large_contract_code_size_cost(code_size: usize) -> u64 {
     if code_size > eip170::MAX_CODE_SIZE {
-        let excess_contract_size = code_size - eip170::MAX_CODE_SIZE;
-        let large_contract_cost = ((excess_contract_size as u64 + 31) / 32) * INITCODE_WORD_COST;
-        large_contract_cost
+        ((code_size - eip170::MAX_CODE_SIZE) as u64).div_ceil(32) * INITCODE_WORD_COST
     } else {
         0
     }
@@ -522,28 +524,28 @@ pub fn calc_tx_floor_cost(tokens_in_calldata: u64) -> u64 {
 
 #[cfg(test)]
 mod test {
-  use super::*;
+    use super::*;
 
-  #[test]
-  fn test_large_contract_code_size_cost() {
-    let code_size = 0x0;
-    let cost = large_contract_code_size_cost(code_size);
-    assert_eq!(cost, 0);
+    #[test]
+    fn test_large_contract_code_size_cost() {
+        let code_size = 0x0;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
 
-    let code_size = 0x1;
-    let cost = large_contract_code_size_cost(code_size);
-    assert_eq!(cost, 0);
+        let code_size = 0x1;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
 
-    let code_size = 0x6000;
-    let cost = large_contract_code_size_cost(code_size);
-    assert_eq!(cost, 0);
+        let code_size = 0x6000;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
 
-    let code_size = 0x6001;
-    let cost = large_contract_code_size_cost(code_size);
-    assert_eq!(cost, 2);
+        let code_size = 0x6001;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 2);
 
-    let code_size = 0x40000;
-    let cost = large_contract_code_size_cost(code_size);
-    assert_eq!(cost, 14_848);
-  }
+        let code_size = 0x40000;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 14_848);
+    }
 }
