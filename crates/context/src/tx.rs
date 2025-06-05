@@ -133,7 +133,6 @@ impl TxEnv {
             tx_type = TransactionType::Eip1559;
         }
 
-
         if self.max_fee_per_blob_gas.is_some() {
             if let TxKind::Call(_) = self.kind {
                 return Ok(TransactionType::Eip4844);
