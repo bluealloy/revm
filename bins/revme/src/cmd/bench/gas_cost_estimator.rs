@@ -34,9 +34,16 @@ pub fn run(criterion: &mut Criterion) {
         };
 
         criterion.bench_function(name, |b| {
-            b.iter(|| {
-                let _ = evm.transact(tx.clone()).unwrap();
-            })
+            b.iter_batched(
+                || {
+                    // create a transaction input
+                    tx.clone()
+                },
+                |input| {
+                    let _ = evm.transact(input).unwrap();
+                },
+                criterion::BatchSize::SmallInput,
+            );
         });
     }
 }

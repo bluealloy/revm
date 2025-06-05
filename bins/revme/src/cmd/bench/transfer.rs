@@ -27,10 +27,17 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut i = 0;
     criterion.bench_function("transfer", |b| {
-        b.iter(|| {
-            i += 1;
-            let _ = evm.transact(tx.clone()).unwrap();
-        })
+        b.iter_batched(
+            || {
+                // create a transfer input
+                tx.clone()
+            },
+            |input| {
+                i += 1;
+                evm.transact(input).unwrap();
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 
     let balance = evm
