@@ -122,8 +122,7 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool, is_cod
         20
     };
     if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold {
-        let large_contract_cost = large_contract_code_size_cost(len);
-        base_gas += large_contract_cost;
+        base_gas += large_contract_code_size_cost(len);
     }
     copy_cost(base_gas, len)
 }
@@ -303,8 +302,8 @@ pub const fn call_cost(
 
     // EIP-7907: Meter Contract Code Size And Increase Limit
     // If code is cold for a large contract, add cost to the gas.
-    if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold {
-        gas += large_contract_code_size_cost(code_size);
+    if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold && code_size.is_some() {
+        gas += large_contract_code_size_cost(code_size.unwrap());
     }
 
     // Transfer value cost

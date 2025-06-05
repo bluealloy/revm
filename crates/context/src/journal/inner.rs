@@ -596,12 +596,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
+        // Get code size if code exists, otherwise None
+        let code_size = account.info.code.as_ref().map(|code| code.original_bytes().len());
+
         let mut account_load = StateLoad::new(
             AccountLoad {
                 is_delegate_account_cold: None,
                 is_empty,
                 is_code_cold: account.is_code_cold,
-                code_size: account.info.code.as_ref().unwrap().original_bytes().len(),
+                code_size,
             },
             account.is_cold,
         );
@@ -640,14 +643,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
-        let mut load = match self.state.entry(address) {
+        let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
+                let is_code_cold = account.is_code_cold();
                 StateCodeLoad {
                     data: account,
                     is_cold,
-                    is_code_cold: true,
+                    is_code_cold,
                 }
             }
             Entry::Vacant(vac) => {
@@ -659,11 +663,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
                 // Precompiles among some other account are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
+                let is_code_cold = account.is_code_cold();
 
                 StateCodeLoad {
                     data: vac.insert(account),
                     is_cold,
-                    is_code_cold: true,
+                    is_code_cold,
                 }
             }
         };
@@ -682,13 +687,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 info.code = Some(code);
             }
 
-            // EIP-7907: mark account code as warm loaded and return if it is cold loaded
-            if self.spec.is_enabled_in(SpecId::OSAKA) {
-                load.is_code_cold = load.data.mark_code_warm();
-                // journal loading of cold account code.
-                if load.is_code_cold {
-                    self.journal.push(ENTRY::code_warmed(address));
-                }
+            // EIP-7907: mark account code as warm loaded and journal if it is warmed
+            if self.spec.is_enabled_in(SpecId::OSAKA) && load.is_code_cold {
+                load.data.mark_code_warm();
+                self.journal.push(ENTRY::code_warmed(address));
             }
         }
 

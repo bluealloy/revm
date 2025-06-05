@@ -348,5 +348,5 @@ pub struct AccountLoad {
     /// Is account code cold loaded
     pub is_code_cold: bool,
     /// Account code size
-    pub code_size: usize,
+    pub code_size: Option<usize>,
 }

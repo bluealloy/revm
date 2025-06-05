@@ -61,6 +61,11 @@ impl Account {
         self.status -= AccountStatus::SelfDestructed;
     }
 
+    /// Is account code cold.
+    pub fn is_code_cold(&self) -> bool {
+        !self.status.contains(AccountStatus::CodeLoaded)
+    }
+
     /// Is account marked for self destruct.
     pub fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
