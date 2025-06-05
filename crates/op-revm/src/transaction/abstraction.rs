@@ -125,11 +125,11 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.gas_price()
     }
 
-    fn blob_versioned_hashes(&self) -> Option<&[B256]> {
+    fn blob_versioned_hashes(&self) -> &[B256] {
         self.base.blob_versioned_hashes()
     }
 
-    fn max_fee_per_blob_gas(&self) -> u128 {
+    fn max_fee_per_blob_gas(&self) -> Option<u128> {
         self.base.max_fee_per_blob_gas()
     }
 

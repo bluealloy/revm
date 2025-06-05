@@ -88,17 +88,17 @@ pub trait Transaction {
     /// Returns vector of fixed size hash(32 bytes)
     ///
     /// Note : EIP-4844 transaction field.
-    fn blob_versioned_hashes(&self) -> Option<&[B256]>;
+    fn blob_versioned_hashes(&self) -> &[B256];
 
     /// Max fee per data gas
     ///
     /// Note : EIP-4844 transaction field.
-    fn max_fee_per_blob_gas(&self) -> u128;
+    fn max_fee_per_blob_gas(&self) -> Option<u128>;
 
     /// Total gas for all blobs. Max number of blocks is already checked
     /// so we dont need to check for overflow.
     fn total_blob_gas(&self) -> u64 {
-        GAS_PER_BLOB * self.blob_versioned_hashes().map(|b| b.len()).unwrap_or(0) as u64
+        GAS_PER_BLOB * self.blob_versioned_hashes().len() as u64
     }
 
     /// Calculates the maximum [EIP-4844] `data_fee` of the transaction.
@@ -109,7 +109,10 @@ pub trait Transaction {
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     fn calc_max_data_fee(&self) -> U256 {
-        U256::from((self.total_blob_gas() as u128).saturating_mul(self.max_fee_per_blob_gas()))
+        U256::from(
+            (self.total_blob_gas() as u128)
+                .saturating_mul(self.max_fee_per_blob_gas().unwrap_or_default()),
+        )
     }
 
     /// Returns length of the authorization list.

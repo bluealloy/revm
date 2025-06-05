@@ -302,17 +302,16 @@ pub fn execute_test_suite(
             .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX"));
         // EIP-4844
         if unit.transaction.blob_versioned_hashes.len() > 0 {
-            tx.blob_hashes = Some(unit.transaction.blob_versioned_hashes.clone());
+            tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
         } else if unit.transaction.tx_type == Some(3)
             || unit.transaction.max_fee_per_blob_gas.is_some()
         {
-            tx.blob_hashes = Some(vec![]);
+            tx.blob_hashes = vec![];
         }
         tx.max_fee_per_blob_gas = unit
             .transaction
             .max_fee_per_blob_gas
-            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-            .unwrap_or(u128::MAX);
+            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"));
 
         // Post and execution
         for (spec_name, tests) in unit.post {
