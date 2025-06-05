@@ -147,6 +147,10 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             return Err(InvalidTransaction::Eip4844NotSupported);
         }
 
+        if tx.kind().is_create() {
+            return Err(InvalidTransaction::BlobCreateTransaction);
+        }
+
         if blobs.is_empty() {
             return Err(InvalidTransaction::EmptyBlobs);
         }
