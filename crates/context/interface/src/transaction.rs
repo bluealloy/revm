@@ -88,7 +88,7 @@ pub trait Transaction {
     /// Returns vector of fixed size hash(32 bytes)
     ///
     /// Note : EIP-4844 transaction field.
-    fn blob_versioned_hashes(&self) -> &[B256];
+    fn blob_versioned_hashes(&self) -> Option<&[B256]>;
 
     /// Max fee per data gas
     ///
@@ -98,7 +98,7 @@ pub trait Transaction {
     /// Total gas for all blobs. Max number of blocks is already checked
     /// so we dont need to check for overflow.
     fn total_blob_gas(&self) -> u64 {
-        GAS_PER_BLOB * self.blob_versioned_hashes().len() as u64
+        GAS_PER_BLOB * self.blob_versioned_hashes().map(|b| b.len()).unwrap_or(0) as u64
     }
 
     /// Calculates the maximum [EIP-4844] `data_fee` of the transaction.

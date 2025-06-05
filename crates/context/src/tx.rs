@@ -66,7 +66,7 @@ pub struct TxEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_hashes: Vec<B256>,
+    pub blob_hashes: Option<Vec<B256>>,
 
     /// The max fee per blob gas
     ///
@@ -133,7 +133,7 @@ impl TxEnv {
             tx_type = TransactionType::Eip1559;
         }
 
-        if !self.blob_hashes.is_empty() || self.max_fee_per_blob_gas > 0 {
+        if !self.blob_hashes.is_none() || self.max_fee_per_blob_gas > 0 {
             if let TxKind::Call(_) = self.kind {
                 return Ok(TransactionType::Eip4844);
             } else {
@@ -229,8 +229,8 @@ impl Transaction for TxEnv {
         &self.data
     }
 
-    fn blob_versioned_hashes(&self) -> &[B256] {
-        &self.blob_hashes
+    fn blob_versioned_hashes(&self) -> Option<&[B256]> {
+        self.blob_hashes.as_ref().map(|b| b.as_slice())
     }
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
@@ -257,7 +257,7 @@ pub struct TxEnvBuilder {
     chain_id: Option<u64>,
     access_list: AccessList,
     gas_priority_fee: Option<u128>,
-    blob_hashes: Vec<B256>,
+    blob_hashes: Option<Vec<B256>>,
     max_fee_per_blob_gas: u128,
     authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
 }
@@ -277,7 +277,7 @@ impl TxEnvBuilder {
             chain_id: Some(1), // Mainnet chain ID is 1
             access_list: Default::default(),
             gas_priority_fee: None,
-            blob_hashes: Vec::new(),
+            blob_hashes: None,
             max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
         }
@@ -357,7 +357,7 @@ impl TxEnvBuilder {
 
     /// Set the blob hashes
     pub fn blob_hashes(mut self, blob_hashes: Vec<B256>) -> Self {
-        self.blob_hashes = blob_hashes;
+        self.blob_hashes = Some(blob_hashes);
         self
     }
 
@@ -400,8 +400,8 @@ impl TxEnvBuilder {
                     }
 
                     // blob hashes can be empty
-                    if self.blob_hashes.is_empty() {
-                        self.blob_hashes = vec![B256::default()];
+                    if self.blob_hashes.as_ref().is_none_or(|b| b.is_empty()) {
+                        self.blob_hashes = Some(vec![B256::default()]);
                     }
 
                     // target is required
@@ -500,7 +500,7 @@ impl TxEnvBuilder {
                     }
 
                     // blob hashes can be empty
-                    if self.blob_hashes.is_empty() {
+                    if self.blob_hashes.is_none() {
                         return Err(TxEnvBuildError::MissingBlobHashesForEip4844);
                     }
 

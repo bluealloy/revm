@@ -143,7 +143,7 @@ impl<CTX: ContextTr> Host for CTX {
     fn blob_hash(&self, number: usize) -> Option<U256> {
         self.tx()
             .blob_versioned_hashes()
-            .get(number)
+            .and_then(|b| b.get(number))
             .map(|t| U256::from_be_bytes(t.0))
     }
 

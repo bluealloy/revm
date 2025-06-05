@@ -142,13 +142,17 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         base_fee,
     )?;
 
-    if !tx.blob_versioned_hashes().is_empty() {
+    if let Some(blobs) = tx.blob_versioned_hashes() {
         if !spec_id.is_enabled_in(SpecId::CANCUN) {
             return Err(InvalidTransaction::Eip4844NotSupported);
         }
 
+        if blobs.is_empty() {
+            return Err(InvalidTransaction::EmptyBlobs);
+        }
+
         validate_eip4844_tx(
-            tx.blob_versioned_hashes(),
+            blobs,
             tx.max_fee_per_blob_gas(),
             context.block().blob_gasprice().unwrap_or_default(),
             context.cfg().blob_max_count(),
