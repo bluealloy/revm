@@ -1,5 +1,5 @@
 //! Context trait and related types.
-pub use crate::journaled_state::StateLoad;
+pub use crate::journaled_state::{StateCodeLoad, StateLoad};
 use crate::{Block, Cfg, Database, JournalTr, LocalContextTr, Transaction};
 use auto_impl::auto_impl;
 use primitives::StorageValue;

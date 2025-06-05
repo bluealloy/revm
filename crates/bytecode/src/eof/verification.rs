@@ -6,7 +6,11 @@ use crate::{
     utils::{read_i16, read_u16},
 };
 use primitives::{
-    constants::{MAX_INITCODE_SIZE, STACK_LIMIT},
+    constants::{
+        STACK_LIMIT,
+    },
+    eip7907,
+
     Bytes,
 };
 
@@ -24,7 +28,7 @@ pub fn validate_raw_eof_inner(
     raw: Bytes,
     first_code_type: Option<CodeType>,
 ) -> Result<Eof, EofError> {
-    if raw.len() > MAX_INITCODE_SIZE {
+    if raw.len() > eip7907::MAX_INITCODE_SIZE {
         return Err(EofError::Decode(EofDecodeError::InvalidEOFSize));
     }
     let eof = Eof::decode(raw)?;

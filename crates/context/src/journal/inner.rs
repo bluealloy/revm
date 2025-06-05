@@ -3,7 +3,7 @@ use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
+    journaled_state::{AccountLoad, JournalCheckpoint, StateCodeLoad, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -242,7 +242,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
-    /// Set code and its hash to the account.
+    /// Set code and its hash to the account. Marks account code warm.
     ///
     /// Note: Assume account is warm and that hash is calculated from code.
     #[inline]
@@ -254,6 +254,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
+
+        // EIP-7907 account code is loaded and considered warm.
+        if self.spec.is_enabled_in(SpecId::OSAKA) {
+            account.mark_code_warm();
+        }
     }
 
     /// Use it only if you know that acc is warm.
@@ -565,7 +570,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        // load code is false and code loaded state not used by fn callers so is_code_cold is not returned
         self.load_account_optional(db, address, false, [])
+            .map(|state_code_load| StateLoad {
+                data: state_code_load.data,
+                is_cold: state_code_load.is_cold,
+            })
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -586,15 +596,20 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
+        // Get code size if code exists, otherwise None
+        let code_size = account.info.code.as_ref().map(|code| code.original_bytes().len());
+
         let mut account_load = StateLoad::new(
             AccountLoad {
                 is_delegate_account_cold: None,
                 is_empty,
+                is_code_cold: account.is_code_cold,
+                code_size,
             },
             account.is_cold,
         );
 
-        // load delegate code if account is EIP-7702
+        // load delegate account if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(db, address)?;
@@ -615,7 +630,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+    ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
         self.load_account_optional(db, address, true, [])
     }
 
@@ -627,14 +642,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address: Address,
         load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+    ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
-                StateLoad {
+                let is_code_cold = account.is_code_cold();
+                StateCodeLoad {
                     data: account,
                     is_cold,
+                    is_code_cold,
                 }
             }
             Entry::Vacant(vac) => {
@@ -646,10 +663,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
                 // Precompiles among some other account are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
+                let is_code_cold = account.is_code_cold();
 
-                StateLoad {
+                StateCodeLoad {
                     data: vac.insert(account),
                     is_cold,
+                    is_code_cold,
                 }
             }
         };
@@ -666,6 +685,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     db.code_by_hash(info.code_hash)?
                 };
                 info.code = Some(code);
+            }
+
+            // EIP-7907: mark account code as warm loaded and journal if it is warmed
+            if self.spec.is_enabled_in(SpecId::OSAKA) && load.is_code_cold {
+                load.data.mark_code_warm();
+                self.journal.push(ENTRY::code_warmed(address));
             }
         }
 
