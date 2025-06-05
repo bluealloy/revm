@@ -35,6 +35,13 @@ precompile.workspace = true
 primitives.workspace = true
 state.workspace = true
 
+[dev-dependencies]
+alloy-sol-types.workspace = true
+sha2.workspace = true
+serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
+alloy-primitives.workspace = true
+serde = { workspace = true, features = ["derive"] }
+
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
