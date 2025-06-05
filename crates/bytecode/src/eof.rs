@@ -14,15 +14,24 @@ pub mod verification;
 
 pub use body::EofBody;
 pub use code_info::CodeInfo;
-pub use header::{
-    EofHeader, CODE_SECTION_SIZE, CONTAINER_SECTION_SIZE, KIND_CODE, KIND_CODE_INFO,
-    KIND_CONTAINER, KIND_DATA, KIND_TERMINAL,
-};
-pub use verification::*;
-
 use core::cmp::min;
+pub use header::{
+    EofHeader,
+    CODE_SECTION_SIZE,
+    CONTAINER_SECTION_SIZE,
+    KIND_CODE,
+    KIND_CODE_INFO,
+    KIND_CONTAINER,
+    KIND_DATA,
+    KIND_TERMINAL,
+};
 use primitives::{b256, bytes, Bytes, B256};
 use std::{fmt, vec, vec::Vec};
+pub use verification::*;
+
+/// Hash of EF01 bytes that is used for EXTCODEHASH when called from legacy bytecode.
+pub const EIP7702_MAGIC_HASH: B256 =
+    b256!("eadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329");
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =
@@ -99,7 +108,8 @@ impl Eof {
 
     /// Returns a slice of the raw bytes.
     /// If offset is greater than the length of the raw bytes, an empty slice is returned.
-    /// If len is greater than the length of the raw bytes, the slice is truncated to the length of the raw bytes.
+    /// If len is greater than the length of the raw bytes, the slice is truncated to the length of
+    /// the raw bytes.
     pub fn data_slice(&self, offset: usize, len: usize) -> &[u8] {
         self.body
             .data_section

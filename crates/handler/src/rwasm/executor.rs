@@ -38,6 +38,7 @@ use interpreter::{
     CallInput,
     FrameInput,
     Gas,
+    Host,
     InstructionResult,
     InterpreterAction,
     InterpreterResult,
@@ -86,9 +87,9 @@ pub fn execute_rwasm_frame<
         contract: ContractContextV1 {
             address: interpreter.input.target_address(),
             bytecode_address,
-            caller: context.tx().caller(),
+            caller: interpreter.input.caller_address,
             is_static: interpreter.runtime_flag.is_static(),
-            value: context.tx().value(),
+            value: interpreter.input.call_value,
             gas_limit: interpreter.control.gas().remaining(),
         },
     });

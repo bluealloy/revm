@@ -52,30 +52,30 @@ alloy-signer-local.workspace = true
 [features]
 default = ["std"]
 std = [
-	"serde?/std",
-	"alloy-eip7702/std",
-	"bytecode/std",
-	"context/std",
-	"context-interface/std",
-	"database/std",
-	"database-interface/std",
-	"interpreter/std",
-	"precompile/std",
-	"primitives/std",
-	"state/std",
+    "serde?/std",
+    "alloy-eip7702/std",
+    "bytecode/std",
+    "context/std",
+    "context-interface/std",
+    "database/std",
+    "database-interface/std",
+    "interpreter/std",
+    "precompile/std",
+    "primitives/std",
+    "state/std",
 ]
 serde = [
-	"dep:serde",
-	"primitives/serde",
-	"state/serde",
-	"context-interface/serde",
-	"alloy-eip7702/serde",
-	"bytecode/serde",
-	"context/serde",
-	"database/serde",
-	"database-interface/serde",
-	"interpreter/serde"
+    "dep:serde",
+    "primitives/serde",
+    "state/serde",
+    "context-interface/serde",
+    "alloy-eip7702/serde",
+    "bytecode/serde",
+    "context/serde",
+    "database/serde",
+    "database-interface/serde",
+    "interpreter/serde"
 ]
 serde-json = ["serde"]
-debug-print = []
+debug-print = ["fluentbase-runtime/debug-print"]
 wasmtime = ["fluentbase-runtime/wasmtime"]

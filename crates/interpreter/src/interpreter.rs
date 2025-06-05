@@ -141,7 +141,20 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
 
         // Execute instruction.
-        instruction_table[opcode as usize](self, host)
+        instruction_table[opcode as usize](self, host);
+
+        // #[cfg(feature = "debug-print")]
+        // {
+        //     let opcode_name = OPCODE_INFO[opcode as usize]
+        //         .map(|info| info.name())
+        //         .unwrap_or("UNKNOWN");
+        //     println!(
+        //         "EXECUTED OPCODE | {:12} | {:10?} | gas.remaining={}",
+        //         opcode_name,
+        //         self.control.instruction_result(),
+        //         self.control.gas().remaining()
+        //     );
+        // }
     }
 
     /// Resets the control to the initial state. so that we can run the interpreter again.

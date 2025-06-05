@@ -37,18 +37,19 @@ bincode = "1.3"
 [features]
 default = ["std"]
 std = [
-	"serde?/std",
-	"primitives/std",
-	"context-interface/std",
-	"bytecode/std"
+    "serde?/std",
+    "primitives/std",
+    "context-interface/std",
+    "bytecode/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 serde = [
-	"dep:serde",
-	"primitives/serde",
-	"bytecode/serde",
-	"context-interface/serde"
+    "dep:serde",
+    "primitives/serde",
+    "bytecode/serde",
+    "context-interface/serde"
 ]
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+debug-print = []

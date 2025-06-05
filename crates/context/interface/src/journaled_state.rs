@@ -3,8 +3,9 @@ use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{hardfork::SpecId, Address, Bytes, HashSet, Log, B256, U256};
 use state::{
-    bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
-    Account, Bytecode,
+    bytecode::{eof::EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+    Account,
+    Bytecode,
 };
 
 /// Trait that contains database and journal of all changes that were made to the state.
@@ -160,6 +161,8 @@ pub trait JournalTr {
 
         let hash = if code.is_eof() {
             EOF_MAGIC_HASH
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_HASH
         } else {
             acc.info.code_hash
         };

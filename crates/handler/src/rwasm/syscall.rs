@@ -42,9 +42,9 @@ use fluentbase_sdk::{
 };
 use interpreter::{
     gas,
-    gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost},
+    gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost, CALL_STIPEND},
     interpreter::EthInterpreter,
-    interpreter_types::InputsTr,
+    interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
     CallInput,
     CallInputs,
     CallScheme,
@@ -163,12 +163,11 @@ pub(crate) fn execute_rwasm_interruption<
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
-            // TODO(khasan): return this check for protected storage slot
-            // if inputs.contract.eip7702_address != Some(PRECOMPILE_EVM_RUNTIME)
-            //     && is_protected_storage_slot(slot)
-            // {
-            //     return_result!(MalformedBuiltinParams);
-            // }
+            if frame.interpreter.input.rwasm_proxy_address != Some(PRECOMPILE_EVM_RUNTIME)
+                && is_protected_storage_slot(slot)
+            {
+                return_result!(MalformedBuiltinParams);
+            }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
@@ -177,6 +176,15 @@ pub(crate) fn execute_rwasm_interruption<
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
+                if frame
+                    .interpreter
+                    .runtime_flag
+                    .spec_id()
+                    .is_enabled_in(ISTANBUL)
+                    && local_gas.remaining() <= CALL_STIPEND
+                {
+                    return_result!(OutOfGas);
+                }
                 let gas_cost = sstore_cost(spec_id.clone(), &value.data, value.is_cold);
                 charge_gas!(gas_cost);
                 local_gas.record_refund(sstore_refund(spec_id, &value.data));
@@ -194,7 +202,7 @@ pub(crate) fn execute_rwasm_interruption<
             let value = U256::from_le_slice(&inputs.syscall_params.input[20..52]);
             let contract_input = inputs.syscall_params.input.slice(52..);
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_CALL: callee_address={callee_address}, value={value}",);
+            println!("SYSCALL_CALL: callee_address={target_address}, value={value}",);
             // for static calls with value greater than 0 - revert
             let has_transfer = !value.is_zero();
             if inputs.is_static && has_transfer {
@@ -720,15 +728,13 @@ pub(crate) fn execute_rwasm_interruption<
             );
             let address = Address::from_slice(&inputs.syscall_params.input[..20]);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
-            #[cfg(feature = "debug-print")]
-            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot}");
 
             // delegated storage is allowed only for delegated accounts
-            // TODO(khasan): uncomment this thing related to eip7702_address back
-            // let Some(eip7702_address) = inputs.contract.eip7702_address else {
-            //     return_result!(MalformedBuiltinParams);
-            // };
+            let Some(rwasm_proxy_address) = frame.interpreter.input.rwasm_proxy_address else {
+                return_result!(MalformedBuiltinParams);
+            };
             // make sure the provided address is delegated to the same runtime
+
             let Ok(account) = journal.load_account_code(address) else {
                 return_result!(FatalExternalError);
             };
@@ -737,6 +743,10 @@ pub(crate) fn execute_rwasm_interruption<
             let mut output: [u8; U256::BYTES + 1 + 1] = [0u8; U256::BYTES + 1 + 1];
             output[32] = account.is_cold as u8;
             output[33] = account.data.is_empty() as u8;
+
+            #[cfg(feature = "debug-print")]
+            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot}");
+
             // don't charge gas for EVM_CODE_HASH_SLOT,
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
@@ -745,18 +755,17 @@ pub(crate) fn execute_rwasm_interruption<
             if !is_gas_free {
                 charge_gas!(sload_cost(spec_id, account.is_cold));
             }
-            // TODO(khasan): eip7702_address is not available here now, so this check is disabled
             // make sure both accounts are delegated to the same execution runtime
-            // match &account.info.code {
-            //     Some(Bytecode::Eip7702(eip7702_bytecode)) => {
-            //         if eip7702_bytecode.delegated_address != eip7702_address {
-            //             return_result!(output, Revert)
-            //         }
-            //     }
-            //     _ => {
-            //         return_result!(output, Revert)
-            //     }
-            // }
+            match &account.info.code {
+                Some(Bytecode::Eip7702(eip7702_bytecode)) => {
+                    if eip7702_bytecode.delegated_address != rwasm_proxy_address {
+                        return_result!(output, Revert)
+                    }
+                }
+                _ => {
+                    return_result!(output, Revert)
+                }
+            }
             // load slot from the storage
             let value = journal.sload(address, slot)?;
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());

@@ -16,6 +16,7 @@ use revm::{
         CfgEnv,
         Evm,
         TransactTo,
+        TransactionType::Eip1559,
         TxEnv,
     },
     context_interface::block::calc_excess_blob_gas,
@@ -628,6 +629,7 @@ pub fn execute_test_suite(
 
         // for mainnet
         cfg_env.chain_id = 1;
+        // cfg_env.blob_target_and_max_count;
         // env.cfg.spec_id is set down the road
 
         // block env
@@ -729,6 +731,7 @@ pub fn execute_test_suite(
                     None => TransactTo::Create,
                 };
 
+                tx_env.tx_type = Eip1559 as u8;
                 tx_env.nonce = unit.transaction.nonce.to();
 
                 let mut cache = cache_state.clone();
