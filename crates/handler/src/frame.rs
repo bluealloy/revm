@@ -782,7 +782,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
+    // Set code. Marks account code warm after successful create.
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;

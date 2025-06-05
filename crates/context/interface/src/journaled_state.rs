@@ -133,7 +133,7 @@ pub trait JournalTr {
 
     /// Sets bytecode and calculates hash.
     ///
-    /// Assume account is warm.
+    /// Assume account warm. In case of EIP-7907, marks code as warm.
     #[inline]
     fn set_code(&mut self, address: Address, code: Bytecode) {
         let hash = code.hash_slow();

@@ -303,7 +303,7 @@ pub const fn call_cost(
 
     // EIP-7907: Meter Contract Code Size And Increase Limit
     // If code is cold for a large contract, add cost to the gas.
-    if is_code_cold {
+    if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold {
         gas += large_contract_code_size_cost(code_size);
     }
 

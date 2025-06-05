@@ -242,7 +242,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
-    /// Set code and its hash to the account.
+    /// Set code and its hash to the account. Marks account code warm.
     ///
     /// Note: Assume account is warm and that hash is calculated from code.
     #[inline]
@@ -254,6 +254,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
+
+        // EIP-7907 account code is loaded and considered warm.
+        if self.spec.is_enabled_in(SpecId::OSAKA) {
+            account.mark_code_warm();
+        }
     }
 
     /// Use it only if you know that acc is warm.
@@ -678,11 +683,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             }
 
             // EIP-7907: mark account code as warm loaded and return if it is cold loaded
-            load.is_code_cold = load.data.mark_code_warm();
-        }
-        // journal loading of cold account code.
-        if load.is_code_cold {
-            self.journal.push(ENTRY::code_warmed(address));
+            if self.spec.is_enabled_in(SpecId::OSAKA) {
+                load.is_code_cold = load.data.mark_code_warm();
+                // journal loading of cold account code.
+                if load.is_code_cold {
+                    self.journal.push(ENTRY::code_warmed(address));
+                }
+            }
         }
 
         for storage_key in storage_keys.into_iter() {
