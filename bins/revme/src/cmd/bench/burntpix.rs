@@ -50,9 +50,16 @@ pub fn run(criterion: &mut Criterion) {
     };
 
     criterion.bench_function("burntpix", |b| {
-        b.iter(|| {
-            evm.transact(tx.clone()).unwrap();
-        })
+        b.iter_batched(
+            || {
+                // create a transaction input
+                tx.clone()
+            },
+            |input| {
+                evm.transact(input).unwrap();
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 
     //Collects the data and uses it to generate the svg after running the benchmark

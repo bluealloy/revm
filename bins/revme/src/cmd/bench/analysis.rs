@@ -23,8 +23,15 @@ pub fn run(criterion: &mut Criterion) {
     };
     let mut evm = context.build_mainnet();
     criterion.bench_function("analysis", |b| {
-        b.iter(|| {
-            let _ = evm.transact(tx.clone());
-        });
+        b.iter_batched(
+            || {
+                // create a transaction input
+                tx.clone()
+            },
+            |input| {
+                let _ = evm.transact(input);
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 }
