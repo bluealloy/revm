@@ -1,8 +1,8 @@
 use super::{Account, EvmStorageSlot};
-use primitives::{Address, HashMap, StorageKey, StorageValue};
+use primitives::{Address, HashMap, IndexMap, StorageKey, StorageValue};
 
 /// EVM State is a mapping from addresses to accounts.
-pub type EvmState = HashMap<Address, Account>;
+pub type EvmState = IndexMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage
 pub type TransientStorage = HashMap<(Address, StorageKey), StorageValue>;

@@ -4,7 +4,8 @@ use database_interface::{
     BENCH_TARGET, BENCH_TARGET_BALANCE,
 };
 use primitives::{
-    hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    hash_map::Entry, Address, HashMap, IndexMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY,
+    U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
@@ -187,7 +188,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: IndexMap<Address, Account>) {
         for (address, mut account) in changes {
             if !account.is_touched() {
                 continue;

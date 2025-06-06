@@ -3874,6 +3874,7 @@ name = "revm-primitives"
 version = "19.1.0"
 dependencies = [
  "alloy-primitives",
+ "indexmap 2.9.0",
  "num_enum",
  "serde",
 ]

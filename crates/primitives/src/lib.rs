@@ -31,3 +31,6 @@ pub use alloy_primitives::{
 pub type StorageKey = U256;
 /// type alias for storage values
 pub type StorageValue = U256;
+
+// reexport indexmap types
+pub use indexmap::{self, map as index_map, IndexMap};

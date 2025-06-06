@@ -10,7 +10,8 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    index_map, Address, HashMap, HashSet, IndexMap, Log, StorageKey, StorageValue, B256,
+    KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
@@ -75,7 +76,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state: HashMap::default(),
+            state: IndexMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
@@ -629,7 +630,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
-            Entry::Occupied(entry) => {
+            index_map::Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
                 StateLoad {
@@ -637,7 +638,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     is_cold,
                 }
             }
-            Entry::Vacant(vac) => {
+            index_map::Entry::Vacant(vac) => {
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
