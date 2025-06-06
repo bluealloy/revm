@@ -85,7 +85,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
     /// Disables "max fee must be less than or equal to max priority fee" check for EIP-1559 transactions.
-    /// 
     /// This is useful because some chains (e.g. Arbitrum) do not enforce this check.
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_priority_fee_check")]
