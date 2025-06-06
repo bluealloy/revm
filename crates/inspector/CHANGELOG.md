@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v5.0.1...revm-inspector-v6.0.0) - 2025-06-06
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- simplify Interpreter loop ([#2544](https://github.com/bluealloy/revm/pull/2544))
+- Add InstructionContext instead of Host and Interpreter ([#2548](https://github.com/bluealloy/revm/pull/2548))
+
 ## [5.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v5.0.0...revm-inspector-v5.0.1) - 2025-05-31
 
 ### Other
