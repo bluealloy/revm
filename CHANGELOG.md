@@ -1,5 +1,17 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v75 tag
+date: 31.05.2025
+
+Maintainance release.
+
+* `revm-context`: 5.0.0 -> 5.0.1
+* `revm-handler`: 5.0.0 -> 5.0.1
+* `revm-inspector`: 5.0.0 -> 5.0.1
+* `revm`: 24.0.0 -> 24.0.1
+* `revm-statetest-type`: 5.0.0 -> 6.0.0
+* `op-revm`: 5.0.0 -> 5.0.1
+
 # v74 tag
 date 23.05.2025
 
