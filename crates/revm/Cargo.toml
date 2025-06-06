@@ -44,7 +44,7 @@ serde = { workspace = true, features = ["derive"] }
 
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]
 std = [
 	"interpreter/std",
 	"precompile/std",
@@ -70,6 +70,7 @@ serde = [
 	"database/serde",
 	"inspector/serde",
 	"state/serde",
+	"alloy-primitives/serde",
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]

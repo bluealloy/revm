@@ -675,6 +675,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
         };
+
         // journal loading of cold account.
         if load.is_cold {
             self.journal.push(ENTRY::account_warmed(address));

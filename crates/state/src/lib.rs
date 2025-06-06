@@ -311,10 +311,10 @@ bitflags! {
         const Touched = 0b00000100;
         /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
         /// it became same state after EIP-161: State trie clearing
-        const LoadedAsNotExisting = 0b0001000;
+        const LoadedAsNotExisting = 0b00001000;
         /// used to mark account as cold.
         /// It is used only in local scope and it is reset on account loading.
-        const Cold = 0b0010000;
+        const Cold = 0b00010000;
     }
 }
 
