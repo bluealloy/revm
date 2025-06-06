@@ -29,11 +29,9 @@ pub fn validate_priority_fee_tx(
     base_fee: Option<u128>,
     ignore_priority_fee: bool,
 ) -> Result<(), InvalidTransaction> {
-    if !ignore_priority_fee {
-        if max_priority_fee > max_fee {
-            // Or gas_max_fee for eip1559
-            return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
-        }
+    if !ignore_priority_fee && max_priority_fee > max_fee {
+        // Or gas_max_fee for eip1559
+        return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
     }
 
     // Check minimal cost against basefee
