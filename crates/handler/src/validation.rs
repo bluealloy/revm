@@ -123,6 +123,8 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         });
     }
 
+    let disable_max_priority_check = context.cfg().is_priority_fee_check_disabled();
+
     match tx_type {
         TransactionType::Legacy => {
             // Gas price must be at least the basefee.
@@ -153,7 +155,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
-                context.cfg().is_priority_fee_check_disabled(),
+                disable_max_priority_check,
             )?;
         }
         TransactionType::Eip4844 => {
@@ -165,7 +167,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
-                context.cfg().is_priority_fee_check_disabled(),
+                disable_max_priority_check,
             )?;
 
             validate_eip4844_tx(
@@ -185,7 +187,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
-                context.cfg().is_priority_fee_check_disabled(),
+                disable_max_priority_check,
             )?;
 
             let auth_list_len = tx.authorization_list_len();
