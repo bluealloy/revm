@@ -3719,6 +3719,8 @@ dependencies = [
  "revm-precompile",
  "revm-primitives",
  "revm-state",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

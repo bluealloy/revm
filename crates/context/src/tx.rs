@@ -589,6 +589,47 @@ impl TxEnv {
     pub fn builder() -> TxEnvBuilder {
         TxEnvBuilder::new()
     }
+
+    /// Create a new builder for constructing a [`TxEnv`] with benchmark-specific values.
+    pub fn builder_for_bench() -> TxEnvBuilder {
+        TxEnv::new_bench().modify()
+    }
+
+    /// Modify the [`TxEnv`] by using builder pattern.
+    pub fn modify(self) -> TxEnvBuilder {
+        let TxEnv {
+            tx_type,
+            caller,
+            gas_limit,
+            gas_price,
+            kind,
+            value,
+            data,
+            nonce,
+            chain_id,
+            access_list,
+            gas_priority_fee,
+            blob_hashes,
+            max_fee_per_blob_gas,
+            authorization_list,
+        } = self;
+
+        TxEnvBuilder::new()
+            .tx_type(Some(tx_type))
+            .caller(caller)
+            .gas_limit(gas_limit)
+            .gas_price(gas_price)
+            .kind(kind)
+            .value(value)
+            .data(data)
+            .nonce(nonce)
+            .chain_id(chain_id)
+            .access_list(access_list)
+            .gas_priority_fee(gas_priority_fee)
+            .blob_hashes(blob_hashes)
+            .max_fee_per_blob_gas(max_fee_per_blob_gas)
+            .authorization_list(authorization_list)
+    }
 }
 
 #[cfg(test)]
