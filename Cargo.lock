@@ -3706,7 +3706,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "24.1.0"
+version = "25.0.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3784,7 +3784,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "4.1.0"
+version = "5.0.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -3845,7 +3845,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "21.1.0"
+version = "22.0.0"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",
@@ -3892,7 +3892,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "6.1.0"
+version = "7.0.0"
 dependencies = [
  "revm",
  "serde",

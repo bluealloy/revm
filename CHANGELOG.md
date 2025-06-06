@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v76
+date: 06.05.2025
+
+Introduction of multi transaction.
+
+* `revm-primitives`: 19.1.0 -> 19.2.0 (✓ API compatible changes)
+* `revm-bytecode`: 4.0.1 -> 4.1.0 (✓ API compatible changes)
+* `revm-state`: 4.0.1 -> 5.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 4.0.1 -> 5.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 5.0.0 -> 6.0.0 (⚠ API breaking changes)
+* `revm-context`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm-database`: 4.0.1 -> 5.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 20.0.0 -> 21.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 21.0.0 -> 22.0.0 (✓ API compatible changes)
+* `revm-handler`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm`: 24.0.1 -> 25.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revme`: 5.1.1 -> 6.0.0 (⚠ API breaking changes)
+* `op-revm`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+
 # v75 tag
 date: 31.05.2025
 
