@@ -147,22 +147,34 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
+                return Err(InvalidTransaction::InvalidChainId);
+            }
+
+            if !context.cfg().is_priority_fee_check_disabled() {
+                validate_priority_fee_tx(
+                    tx.max_fee_per_gas(),
+                    tx.max_priority_fee_per_gas().unwrap_or_default(),
+                    base_fee,
+                )?;
+            }
         }
         TransactionType::Eip4844 => {
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
+                return Err(InvalidTransaction::InvalidChainId);
+            }
+
+            if !context.cfg().is_priority_fee_check_disabled() {
+                validate_priority_fee_tx(
+                    tx.max_fee_per_gas(),
+                    tx.max_priority_fee_per_gas().unwrap_or_default(),
+                    base_fee,
+                )?;
+            }
 
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
@@ -177,11 +189,17 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip7702NotSupported);
             }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
+                return Err(InvalidTransaction::InvalidChainId);
+            }
+
+            if !context.cfg().is_priority_fee_check_disabled() {
+                validate_priority_fee_tx(
+                    tx.max_fee_per_gas(),
+                    tx.max_priority_fee_per_gas().unwrap_or_default(),
+                    base_fee,
+                )?;
+            }
 
             let auth_list_len = tx.authorization_list_len();
             // The transaction is considered invalid if the length of authorization_list is zero.

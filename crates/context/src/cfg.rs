@@ -84,6 +84,12 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
+    /// Disables "max fee must be less than or equal to max priority fee" check for EIP-1559 transactions.
+    /// 
+    /// This is useful because some chains (e.g. Arbitrum) do not enforce this check.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_priority_fee_check")]
+    pub disable_priority_fee_check: bool,
 }
 
 impl CfgEnv {
@@ -134,6 +140,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
+            #[cfg(feature = "optional_priority_fee_check")]
+            disable_priority_fee_check: false,
         }
     }
 
@@ -176,6 +184,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: self.disable_eip3607,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: self.disable_base_fee,
+            #[cfg(feature = "optional_priority_fee_check")]
+            disable_priority_fee_check: self.disable_priority_fee_check,
         }
     }
 
@@ -193,6 +203,13 @@ impl<SPEC> CfgEnv<SPEC> {
     /// Clears the blob target and max count over hardforks.
     pub fn clear_blob_max_count(&mut self) {
         self.blob_max_count = None;
+    }
+
+    /// Sets the disable priority fee check flag.
+    #[cfg(feature = "optional_priority_fee_check")]
+    pub fn with_disable_priority_fee_check(mut self, disable: bool) -> Self {
+        self.disable_priority_fee_check = disable;
+        self
     }
 }
 
@@ -272,6 +289,16 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optional_no_base_fee")] {
                 self.disable_base_fee
+            } else {
+                false
+            }
+        }
+    }
+
+    fn is_priority_fee_check_disabled(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_priority_fee_check")] {
+                self.disable_priority_fee_check
             } else {
                 false
             }
