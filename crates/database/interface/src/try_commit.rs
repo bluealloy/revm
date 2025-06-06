@@ -67,7 +67,7 @@ mod test {
     struct MockDb;
 
     impl DatabaseCommit for MockDb {
-        fn commit(&mut self, _changes: HashMap<Address, Account>) {}
+        fn commit(&mut self, _changes: IndexMap<Address, Account>) {}
     }
 
     #[test]
