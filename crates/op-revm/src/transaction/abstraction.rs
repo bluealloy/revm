@@ -24,7 +24,7 @@ pub trait OpTxTr: Transaction {
     /// Whether the transaction is a system transaction
     fn is_system_transaction(&self) -> bool;
 
-    /// Returns `true` if transaction is of type [`DEPOSIT_TRANSACTION_TYPE`].
+    /// Returns `true` if transaction is a deposit transaction.
     fn is_deposit(&self) -> bool;
 }
 
