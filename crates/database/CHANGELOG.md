@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-database-v4.0.1...revm-database-v5.0.0) - 2025-06-06
+
+### Added
+
+- *(database)* Implement DatabaseRef for State ([#2570](https://github.com/bluealloy/revm/pull/2570))
+- added TxEnv::new_bench() add util function ([#2556](https://github.com/bluealloy/revm/pull/2556))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- Avoid clone before converting ref BundleAccount to CacheAccount ([#2574](https://github.com/bluealloy/revm/pull/2574))
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+
 ## [4.0.1](https://github.com/bluealloy/revm/compare/revm-database-v4.0.0...revm-database-v4.0.1) - 2025-05-22
 
 ### Other

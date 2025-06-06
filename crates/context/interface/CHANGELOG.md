@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v5.0.0...revm-context-interface-v6.0.0) - 2025-06-06
+
+### Added
+
+- *(Osaka)* EIP-7825 tx limit cap ([#2575](https://github.com/bluealloy/revm/pull/2575))
+- Config blob basefee fraction ([#2551](https://github.com/bluealloy/revm/pull/2551))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- support functions for eip7918 ([#2579](https://github.com/bluealloy/revm/pull/2579))
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+- *(docs)* context crate lints ([#2565](https://github.com/bluealloy/revm/pull/2565))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(cfg)* add tx_chain_id_check fields. Optimize effective gas cost calc ([#2557](https://github.com/bluealloy/revm/pull/2557))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v4.1.0...revm-context-interface-v5.0.0) - 2025-05-22
 
 ### Added
