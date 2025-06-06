@@ -51,6 +51,9 @@ pub trait Cfg {
 
     /// Returns whether the base fee check is disabled.
     fn is_base_fee_check_disabled(&self) -> bool;
+
+    /// Returns whether the priority fee check is disabled.
+    fn is_priority_fee_check_disabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform
