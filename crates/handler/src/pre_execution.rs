@@ -7,10 +7,8 @@ use bytecode::Bytecode;
 use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
 use context_interface::ContextTr;
 use context_interface::{
-    journaled_state::JournalTr,
-    result::InvalidTransaction,
-    transaction::{Transaction, TransactionType},
-    Block, Cfg, Database,
+    journaled_state::JournalTr, result::InvalidTransaction, transaction::Transaction, Block, Cfg,
+    Database,
 };
 use core::cmp::Ordering;
 use primitives::StorageKey;
@@ -51,19 +49,17 @@ pub fn load_accounts<
     // Load access list
     let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
-    if tx.tx_type() != TransactionType::Legacy {
-        if let Some(access_list) = tx.access_list() {
-            for item in access_list {
-                let address = item.address();
-                let mut storage = item.storage_slots().peekable();
-                if storage.peek().is_none() {
-                    journal.warm_account(*address);
-                } else {
-                    journal.warm_account_and_storage(
-                        *address,
-                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
-                    )?;
-                }
+    if let Some(access_list) = tx.access_list() {
+        for item in access_list {
+            let address = item.address();
+            let mut storage = item.storage_slots().peekable();
+            if storage.peek().is_none() {
+                journal.warm_account(*address);
+            } else {
+                journal.warm_account_and_storage(
+                    *address,
+                    storage.map(|i| StorageKey::from_be_bytes(i.0)),
+                )?;
             }
         }
     }
@@ -184,12 +180,6 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
-    let tx = context.tx();
-    // Return if there is no auth list.
-    if tx.tx_type() != TransactionType::Eip7702 {
-        return Ok(0);
-    }
-
     let chain_id = context.cfg().chain_id();
     let (tx, journal) = context.tx_journal_mut();
 

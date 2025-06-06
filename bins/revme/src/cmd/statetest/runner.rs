@@ -305,8 +305,7 @@ pub fn execute_test_suite(
         tx.max_fee_per_blob_gas = unit
             .transaction
             .max_fee_per_blob_gas
-            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-            .unwrap_or(u128::MAX);
+            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"));
 
         // Post and execution
         for (spec_name, tests) in unit.post {
@@ -355,15 +354,6 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
-                    if test.expect_exception.is_some() {
-                        continue;
-                    } else {
-                        panic!("Invalid transaction type without expected exception");
-                    }
-                };
-                tx.tx_type = tx_type as u8;
-
                 tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
                 tx.data = unit
                     .transaction

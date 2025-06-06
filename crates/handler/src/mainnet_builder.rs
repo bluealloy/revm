@@ -73,7 +73,7 @@ mod test {
         Bytecode,
     };
     use context::{Context, TxEnv};
-    use context_interface::{transaction::Authorization, TransactionType};
+    use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{hardfork::SpecId, TxKind, U256};
     use primitives::{StorageKey, StorageValue};
@@ -99,7 +99,6 @@ mod test {
 
         let state = evm
             .transact_finalize(TxEnv {
-                tx_type: TransactionType::Eip7702.into(),
                 gas_limit: 100_000,
                 authorization_list: vec![Either::Left(auth)],
                 caller: EEADDRESS,

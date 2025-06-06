@@ -1,6 +1,6 @@
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{Transaction, TransactionType},
+    transaction::Transaction,
     Block, Cfg, ContextTr,
 };
 use core::cmp;
@@ -87,7 +87,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
     spec_id: SpecId,
 ) -> Result<(), InvalidTransaction> {
     // Check if the transaction's chain id is correct
-    let tx_type = context.tx().tx_type();
     let tx = context.tx();
 
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
@@ -96,8 +95,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         Some(context.block().basefee() as u128)
     };
 
-    let tx_type = TransactionType::from(tx_type);
-
     // Check chain_id if config is enabled.
     // EIP-155: Simple replay attack protection
     if context.cfg().tx_chain_id_check() {
@@ -105,9 +102,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             if chain_id != context.cfg().chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
             }
-        } else if !tx_type.is_legacy() && !tx_type.is_custom() {
-            // Legacy transaction are the only one that can omit chain_id.
-            return Err(InvalidTransaction::MissingChainId);
         }
     }
 
@@ -120,105 +114,54 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         });
     }
 
-    match tx_type {
-        TransactionType::Legacy => {
-            // Gas price must be at least the basefee.
-            if let Some(base_fee) = base_fee {
-                if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
-                }
-            }
+    // Gas price must be at least the basefee.
+    if let Some(base_fee) = base_fee {
+        if tx.max_fee_per_gas() < base_fee {
+            return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
-        TransactionType::Eip2930 => {
-            // Enabled in BERLIN hardfork
-            if !spec_id.is_enabled_in(SpecId::BERLIN) {
-                return Err(InvalidTransaction::Eip2930NotSupported);
-            }
+    }
 
-            // Gas price must be at least the basefee.
-            if let Some(base_fee) = base_fee {
-                if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
-                }
-            }
+    if tx.access_list().is_some_and(|mut l| l.next().is_some())
+        && !spec_id.is_enabled_in(SpecId::BERLIN)
+    {
+        return Err(InvalidTransaction::Eip2930NotSupported);
+    }
+
+    if tx.max_priority_fee_per_gas().is_some() && !spec_id.is_enabled_in(SpecId::LONDON) {
+        return Err(InvalidTransaction::Eip1559NotSupported);
+    }
+
+    if tx.authorization_list_len() > 0 && !spec_id.is_enabled_in(SpecId::PRAGUE) {
+        return Err(InvalidTransaction::Eip7702NotSupported);
+    }
+
+    validate_priority_fee_tx(
+        tx.max_fee_per_gas(),
+        tx.max_priority_fee_per_gas()
+            .unwrap_or(tx.max_fee_per_gas()),
+        base_fee,
+    )?;
+
+    if let Some(blob_fee) = tx.max_fee_per_blob_gas() {
+        if !spec_id.is_enabled_in(SpecId::CANCUN) {
+            return Err(InvalidTransaction::Eip4844NotSupported);
         }
-        TransactionType::Eip1559 => {
-            if !spec_id.is_enabled_in(SpecId::LONDON) {
-                return Err(InvalidTransaction::Eip1559NotSupported);
-            }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
+        if tx.kind().is_create() {
+            return Err(InvalidTransaction::BlobCreateTransaction);
         }
-        TransactionType::Eip4844 => {
-            if !spec_id.is_enabled_in(SpecId::CANCUN) {
-                return Err(InvalidTransaction::Eip4844NotSupported);
-            }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
-
-            validate_eip4844_tx(
-                tx.blob_versioned_hashes(),
-                tx.max_fee_per_blob_gas(),
-                context.block().blob_gasprice().unwrap_or_default(),
-                context.cfg().blob_max_count(),
-            )?;
+        if tx.blob_versioned_hashes().is_empty() {
+            return Err(InvalidTransaction::EmptyBlobs);
         }
-        TransactionType::Eip7702 => {
-            // Check if EIP-7702 transaction is enabled.
-            if !spec_id.is_enabled_in(SpecId::PRAGUE) {
-                return Err(InvalidTransaction::Eip7702NotSupported);
-            }
 
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
-
-            let auth_list_len = tx.authorization_list_len();
-            // The transaction is considered invalid if the length of authorization_list is zero.
-            if auth_list_len == 0 {
-                return Err(InvalidTransaction::EmptyAuthorizationList);
-            }
-        }
-        /* // TODO(EOF) EOF removed from spec.
-        TransactionType::Eip7873 => {
-            // Check if EIP-7873 transaction is enabled.
-            if !spec_id.is_enabled_in(SpecId::OSAKA) {
-            return Err(InvalidTransaction::Eip7873NotSupported);
-            }
-            // validate chain id
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
-            // validate initcodes.
-            validate_eip7873_initcodes(tx.initcodes())?;
-
-            // InitcodeTransaction is invalid if the to is nil.
-            if tx.kind().is_create() {
-                return Err(InvalidTransaction::Eip7873MissingTarget);
-            }
-
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-            )?;
-        }
-        */
-        TransactionType::Custom => {
-            // Custom transaction type check is not done here.
-        }
-    };
+        validate_eip4844_tx(
+            tx.blob_versioned_hashes(),
+            blob_fee,
+            context.block().blob_gasprice().unwrap_or_default(),
+            context.cfg().blob_max_count(),
+        )?;
+    }
 
     // Check if gas_limit is more than block_gas_limit
     if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()

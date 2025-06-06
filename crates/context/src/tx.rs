@@ -20,8 +20,6 @@ use std::{vec, vec::Vec};
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// Transaction type
-    pub tx_type: u8,
     /// Caller aka Author aka transaction signer
     pub caller: Address,
     /// The gas limit of the transaction.
@@ -75,7 +73,7 @@ pub struct TxEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub max_fee_per_blob_gas: u128,
+    pub max_fee_per_blob_gas: Option<u128>,
 
     /// List of authorizations
     ///
@@ -124,19 +122,20 @@ impl TxEnv {
 
     /// Derives tx type from transaction fields and sets it to `tx_type`.
     /// Returns error in case some fields were not set correctly.
-    pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
+    pub fn derive_tx_type(&self) -> Result<TransactionType, DeriveTxTypeError> {
+        let mut tx_type = TransactionType::Legacy;
+
         if !self.access_list.0.is_empty() {
-            self.tx_type = TransactionType::Eip2930 as u8;
+            tx_type = TransactionType::Eip2930;
         }
 
         if self.gas_priority_fee.is_some() {
-            self.tx_type = TransactionType::Eip1559 as u8;
+            tx_type = TransactionType::Eip1559;
         }
 
-        if !self.blob_hashes.is_empty() || self.max_fee_per_blob_gas > 0 {
+        if self.max_fee_per_blob_gas.is_some() {
             if let TxKind::Call(_) = self.kind {
-                self.tx_type = TransactionType::Eip4844 as u8;
-                return Ok(());
+                return Ok(TransactionType::Eip4844);
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip4844);
             }
@@ -144,8 +143,7 @@ impl TxEnv {
 
         if !self.authorization_list.is_empty() {
             if let TxKind::Call(_) = self.kind {
-                self.tx_type = TransactionType::Eip7702 as u8;
-                return Ok(());
+                return Ok(TransactionType::Eip7702);
             } else {
                 return Err(DeriveTxTypeError::MissingTargetForEip7702);
             }
@@ -161,7 +159,7 @@ impl TxEnv {
         //     }
         // }
 
-        Ok(())
+        Ok(tx_type)
     }
 
     /// Insert a list of signed authorizations into the authorization list.
@@ -178,10 +176,6 @@ impl TxEnv {
 impl Transaction for TxEnv {
     type AccessListItem<'a> = &'a AccessListItem;
     type Authorization<'a> = &'a Either<SignedAuthorization, RecoveredAuthorization>;
-
-    fn tx_type(&self) -> u8 {
-        self.tx_type
-    }
 
     fn kind(&self) -> TxKind {
         self.kind
@@ -219,7 +213,7 @@ impl Transaction for TxEnv {
         self.gas_price
     }
 
-    fn max_fee_per_blob_gas(&self) -> u128 {
+    fn max_fee_per_blob_gas(&self) -> Option<u128> {
         self.max_fee_per_blob_gas
     }
 
@@ -264,7 +258,7 @@ pub struct TxEnvBuilder {
     access_list: AccessList,
     gas_priority_fee: Option<u128>,
     blob_hashes: Vec<B256>,
-    max_fee_per_blob_gas: u128,
+    max_fee_per_blob_gas: Option<u128>,
     authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
 }
 
@@ -283,8 +277,8 @@ impl TxEnvBuilder {
             chain_id: Some(1), // Mainnet chain ID is 1
             access_list: Default::default(),
             gas_priority_fee: None,
-            blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: 0,
+            blob_hashes: vec![],
+            max_fee_per_blob_gas: None,
             authorization_list: Vec::new(),
         }
     }
@@ -363,13 +357,13 @@ impl TxEnvBuilder {
 
     /// Set the blob hashes
     pub fn blob_hashes(mut self, blob_hashes: Vec<B256>) -> Self {
-        self.blob_hashes = blob_hashes;
+        self.blob_hashes.extend(blob_hashes);
         self
     }
 
     /// Set the max fee per blob gas
     pub fn max_fee_per_blob_gas(mut self, max_fee_per_blob_gas: u128) -> Self {
-        self.max_fee_per_blob_gas = max_fee_per_blob_gas;
+        self.max_fee_per_blob_gas = Some(max_fee_per_blob_gas);
         self
     }
 
@@ -447,7 +441,6 @@ impl TxEnvBuilder {
         }
 
         let mut tx = TxEnv {
-            tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
             gas_limit: self.gas_limit,
             gas_price: self.gas_price,
@@ -538,8 +531,7 @@ impl TxEnvBuilder {
             }
         }
 
-        let mut tx = TxEnv {
-            tx_type: self.tx_type.unwrap_or(0),
+        let tx = TxEnv {
             caller: self.caller,
             gas_limit: self.gas_limit,
             gas_price: self.gas_price,
@@ -636,13 +628,8 @@ impl TxEnv {
 mod tests {
     use super::*;
 
-    fn effective_gas_setup(
-        tx_type: TransactionType,
-        gas_price: u128,
-        gas_priority_fee: Option<u128>,
-    ) -> u128 {
+    fn effective_gas_setup(gas_price: u128, gas_priority_fee: Option<u128>) -> u128 {
         let tx = TxEnv {
-            tx_type: tx_type as u8,
             gas_price,
             gas_priority_fee,
             ..Default::default()
@@ -653,70 +640,9 @@ mod tests {
 
     #[test]
     fn test_effective_gas_price() {
-        assert_eq!(90, effective_gas_setup(TransactionType::Legacy, 90, None));
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Legacy, 90, Some(0))
-        );
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Legacy, 90, Some(10))
-        );
-        assert_eq!(
-            120,
-            effective_gas_setup(TransactionType::Legacy, 120, Some(10))
-        );
-        assert_eq!(90, effective_gas_setup(TransactionType::Eip2930, 90, None));
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip2930, 90, Some(0))
-        );
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip2930, 90, Some(10))
-        );
-        assert_eq!(
-            120,
-            effective_gas_setup(TransactionType::Eip2930, 120, Some(10))
-        );
-        assert_eq!(90, effective_gas_setup(TransactionType::Eip1559, 90, None));
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip1559, 90, Some(0))
-        );
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip1559, 90, Some(10))
-        );
-        assert_eq!(
-            110,
-            effective_gas_setup(TransactionType::Eip1559, 120, Some(10))
-        );
-        assert_eq!(90, effective_gas_setup(TransactionType::Eip4844, 90, None));
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip4844, 90, Some(0))
-        );
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip4844, 90, Some(10))
-        );
-        assert_eq!(
-            110,
-            effective_gas_setup(TransactionType::Eip4844, 120, Some(10))
-        );
-        assert_eq!(90, effective_gas_setup(TransactionType::Eip7702, 90, None));
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip7702, 90, Some(0))
-        );
-        assert_eq!(
-            90,
-            effective_gas_setup(TransactionType::Eip7702, 90, Some(10))
-        );
-        assert_eq!(
-            110,
-            effective_gas_setup(TransactionType::Eip7702, 120, Some(10))
-        );
+        assert_eq!(90, effective_gas_setup(90, None));
+        assert_eq!(90, effective_gas_setup(90, Some(0)));
+        assert_eq!(90, effective_gas_setup(90, Some(10)));
+        assert_eq!(110, effective_gas_setup(120, Some(10)));
     }
 }

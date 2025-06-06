@@ -3,9 +3,8 @@ mod common;
 
 use common::compare_or_save_testdata;
 use op_revm::{
-    precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE,
-    transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, L1BlockInfo, OpBuilder,
-    OpHaltReason, OpSpecId, OpTransaction,
+    precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE, transaction::deposit::DepositTransactionParts,
+    DefaultOp, L1BlockInfo, OpBuilder, OpHaltReason, OpSpecId, OpTransaction,
 };
 use revm::{
     bytecode::opcode,
@@ -31,8 +30,10 @@ fn test_deposit_tx() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
             tx.enveloped_tx = None;
-            tx.deposit.mint = Some(100);
-            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            tx.deposit = Some(DepositTransactionParts {
+                mint: Some(100),
+                ..Default::default()
+            });
         })
         .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
 
@@ -56,8 +57,10 @@ fn test_halted_deposit_tx() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
             tx.enveloped_tx = None;
-            tx.deposit.mint = Some(100);
-            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            tx.deposit = Some(DepositTransactionParts {
+                mint: Some(100),
+                ..Default::default()
+            });
             tx.base.caller = BENCH_CALLER;
             tx.base.kind = TxKind::Call(BENCH_TARGET);
         })
