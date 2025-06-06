@@ -28,6 +28,7 @@ pub trait InspectEvm: ExecuteEvm {
         Ok(ResultAndState::new(output, state))
     }
 
+    /// Inspect the EVM with the given inspector and transaction, and finalize the state.
     fn inspect_finalize(
         &mut self,
         tx: Self::Tx,
