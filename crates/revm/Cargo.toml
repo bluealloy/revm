@@ -36,12 +36,8 @@ primitives.workspace = true
 state.workspace = true
 
 [dev-dependencies]
-alloy-sol-types.workspace = true
-sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
-alloy-primitives.workspace = true
 serde = { workspace = true, features = ["derive"] }
-
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]
@@ -57,6 +53,8 @@ std = [
 	"inspector/std",
 	"primitives/std",
 	"state/std",
+	"serde/std",
+	"serde_json/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
 serde = [
@@ -70,7 +68,6 @@ serde = [
 	"database/serde",
 	"inspector/serde",
 	"state/serde",
-	"alloy-primitives/serde",
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]

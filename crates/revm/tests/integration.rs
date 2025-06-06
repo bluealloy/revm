@@ -1,11 +1,10 @@
 //! Integration tests for the `op-revm` crate.
 mod common;
 
-use alloy_primitives::KECCAK256_EMPTY;
 use common::compare_or_save_testdata;
 use context::ContextTr;
 use database::BENCH_CALLER;
-use primitives::{b256, hardfork::SpecId, Bytes, TxKind};
+use primitives::{b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY};
 use revm::{
     bytecode::opcode,
     context::TxEnv,
@@ -55,7 +54,7 @@ fn test_selfdestruct_multi_tx() {
 
     let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
 
-    assert_eq!(destroyed_acc.info.code_hash, KECCAK256_EMPTY);
+    assert_eq!(destroyed_acc.info.code_hash, KECCAK_EMPTY);
     assert_eq!(destroyed_acc.info.nonce, 0);
     assert_eq!(destroyed_acc.info.code, Some(Bytecode::default()));
 
