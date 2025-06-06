@@ -21,7 +21,7 @@ pub use constants::*;
 
 // Reexport alloy primitives.
 
-pub use alloy_primitives::map::{self, hash_map, hash_set, HashMap, HashSet};
+pub use alloy_primitives::map::{self, hash_map, hash_set, HashMap, HashSet, IndexEntry, IndexMap};
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
     Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
@@ -31,6 +31,3 @@ pub use alloy_primitives::{
 pub type StorageKey = U256;
 /// type alias for storage values
 pub type StorageValue = U256;
-
-// reexport indexmap types
-pub use indexmap::{self, map as index_map, IndexMap};

@@ -10,7 +10,7 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    index_map, Address, HashMap, HashSet, IndexMap, Log, StorageKey, StorageValue, B256,
+    Address, HashMap, HashSet, IndexEntry, IndexMap, Log, StorageKey, StorageValue, B256,
     KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
@@ -630,7 +630,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
-            index_map::Entry::Occupied(entry) => {
+            IndexEntry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
                 StateLoad {
@@ -638,7 +638,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     is_cold,
                 }
             }
-            index_map::Entry::Vacant(vac) => {
+            IndexEntry::Vacant(vac) => {
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {

@@ -59,6 +59,7 @@ alloy-eip2930 = { version = "0.2.1", default-features = false }
 alloy-eip7702 = { version = "0.6.1", default-features = false }
 alloy-primitives = { version = "1.1.2", default-features = false, features = [
     "sha3-keccak",
+    "map-indexmap",
 ] }
 
 # alloy in examples, revme or feature flagged.
@@ -111,7 +112,6 @@ once_cell = { version = "1.19", default-features = false }
 rand = "0.8"
 tokio = "1.44"
 either = { version = "1.15.0", default-features = false }
-indexmap = { version = "2.9.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0.89"
