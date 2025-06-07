@@ -305,7 +305,7 @@ pub trait LoopControl {
     fn set_action(&mut self, action: InterpreterAction);
     /// Takes next action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
-    ///Returns instruction result
+    /// Returns instruction result
     fn instruction_result(&self) -> Option<InstructionResult>;
 }
 
