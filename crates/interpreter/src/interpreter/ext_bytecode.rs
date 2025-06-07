@@ -93,7 +93,9 @@ impl LoopControl for ExtBytecode {
 
     #[inline]
     fn instruction_result(&self) -> Option<InstructionResult> {
-        self.action.as_ref().unwrap().instruction_result()
+        self.action
+            .as_ref()
+            .and_then(|action| action.instruction_result())
     }
 }
 
