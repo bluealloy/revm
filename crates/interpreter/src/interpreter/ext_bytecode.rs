@@ -1,5 +1,5 @@
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
-use crate::{interpreter_types::LoopControl, InterpreterAction};
+use crate::{interpreter_types::LoopControl, InstructionResult, InterpreterAction};
 use bytecode::{eof::CodeInfo, utils::read_u16, Bytecode};
 use core::{ops::Deref, ptr};
 use primitives::{Bytes, B256};
@@ -89,6 +89,11 @@ impl LoopControl for ExtBytecode {
     #[inline]
     fn action(&mut self) -> &mut Option<InterpreterAction> {
         &mut self.action
+    }
+
+    #[inline]
+    fn instruction_result(&self) -> Option<InstructionResult> {
+        self.action.as_ref().unwrap().instruction_result()
     }
 }
 
