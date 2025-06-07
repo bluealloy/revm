@@ -19,7 +19,7 @@ use crate::{
     InstructionTable,
     InterpreterAction,
 };
-use bytecode::{opcode::OPCODE_INFO, Bytecode};
+use bytecode::Bytecode;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use loop_control::LoopControl as LoopControlImpl;

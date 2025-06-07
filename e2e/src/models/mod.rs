@@ -12,7 +12,7 @@ pub use self::spec::SpecName;
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct TestUnit {
     /// Test info is optional
     #[serde(default, rename = "_info")]
@@ -42,6 +42,12 @@ pub struct Test {
 
     /// Logs root
     pub logs: B256,
+
+    /// Output state.
+    ///
+    /// Note: Not used.
+    #[serde(default)]
+    state: HashMap<Address, AccountInfo>,
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,

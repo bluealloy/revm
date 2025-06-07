@@ -6,7 +6,6 @@ use crate::{
 };
 use bytecode::Bytecode;
 use context_interface::{result::FromStringError, Block, Cfg, ContextTr, Transaction};
-use core::{mem::take, ops::Deref};
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
@@ -14,7 +13,6 @@ use fluentbase_runtime::{
 };
 use fluentbase_sdk::{
     codec::CompactABI,
-    Address,
     BlockContextV1,
     BytecodeOrHash,
     Bytes,
@@ -24,7 +22,6 @@ use fluentbase_sdk::{
     SharedContextInputV1,
     SyscallInvocationParams,
     TxContextV1,
-    B256,
     FUEL_DENOM_RATE,
     STATE_DEPLOY,
     STATE_MAIN,
@@ -38,13 +35,12 @@ use interpreter::{
     CallInput,
     FrameInput,
     Gas,
-    Host,
     InstructionResult,
     InterpreterAction,
     InterpreterResult,
 };
 
-pub fn execute_rwasm_frame<
+pub(crate) fn execute_rwasm_frame<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
@@ -178,7 +174,7 @@ pub fn execute_rwasm_frame<
     )
 }
 
-pub fn execute_rwasm_resume<
+pub(crate) fn execute_rwasm_resume<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
@@ -388,7 +384,10 @@ fn process_halt(
     }
 }
 
-pub fn run_rwasm_loop<EVM: EvmTr, ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError>(
+pub(crate) fn run_rwasm_loop<
+    EVM: EvmTr,
+    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+>(
     frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {

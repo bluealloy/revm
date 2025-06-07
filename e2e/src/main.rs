@@ -2,6 +2,8 @@ pub mod merkle_trie;
 pub mod models;
 mod runner;
 #[cfg(test)]
+mod short_tests;
+#[cfg(test)]
 mod tests;
 pub mod utils;
 

@@ -2,6 +2,6 @@ mod executor;
 mod syscall;
 mod types;
 
-pub use executor::*;
-pub use syscall::*;
-pub use types::*;
+pub(crate) use executor::*;
+pub(crate) use syscall::*;
+pub(crate) use types::*;

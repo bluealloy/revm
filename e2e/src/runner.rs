@@ -10,39 +10,26 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     bytecode::{eip7702::Eip7702Bytecode, Bytecode},
     context::{
-        result::{ExecutionResult, FromStringError},
+        result::ExecutionResult,
         transaction::AccessListItem,
         BlockEnv,
         CfgEnv,
-        Evm,
         TransactTo,
         TransactionType::Eip1559,
         TxEnv,
     },
     context_interface::block::calc_excess_blob_gas,
-    database::{
-        states::plain_account::PlainStorage,
-        CacheState,
-        EmptyDB,
-        InMemoryDB,
-        State,
-        StateBuilder,
-    },
-    handler::{ContextTrDbError, EvmTr, MainnetContext},
-    inspector::inspectors::TracerEip3155,
+    database::{states::plain_account::PlainStorage, CacheState, InMemoryDB, State, StateBuilder},
+    handler::MainnetContext,
     primitives::{hardfork::SpecId, keccak256, Bytes, B256, KECCAK_EMPTY, U256},
     state::AccountInfo,
-    Context,
     ExecuteCommitEvm,
-    Journal,
     MainBuilder,
     MainnetEvm,
 };
 use serde_json::json;
 use std::{
-    convert::Infallible,
     fmt::Debug,
-    io::{stderr, stdout},
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -739,7 +726,7 @@ pub fn execute_test_suite(
                 let mut cache2 = cache_state2.clone();
                 cache2.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
 
-                let mut state: State<InMemoryDB> = StateBuilder::default()
+                let state: State<InMemoryDB> = StateBuilder::default()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
@@ -751,7 +738,7 @@ pub fn execute_test_suite(
                     .with_block(block_env.clone())
                     .build_mainnet();
 
-                let mut state2: State<InMemoryDB> = StateBuilder::default()
+                let state2: State<InMemoryDB> = StateBuilder::default()
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();

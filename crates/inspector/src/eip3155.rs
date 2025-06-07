@@ -1,11 +1,16 @@
-use core::cell::Ref;
-use crate::inspectors::GasInspector;
-use crate::Inspector;
+use crate::{inspectors::GasInspector, Inspector};
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-    InterpreterResult, InterpreterTypes, Stack,
+    CallInputs,
+    CallOutcome,
+    CreateInputs,
+    CreateOutcome,
+    EOFCreateInputs,
+    Interpreter,
+    InterpreterResult,
+    InterpreterTypes,
+    Stack,
 };
 use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;
@@ -151,7 +156,8 @@ impl TracerEip3155 {
         self
     }
 
-    /// Include a memory field for each step. This significantly increases processing time and output size.
+    /// Include a memory field for each step. This significantly increases processing time and
+    /// output size.
     pub fn with_memory(mut self) -> Self {
         self.include_memory = true;
         self

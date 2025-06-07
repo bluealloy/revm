@@ -29,10 +29,19 @@ pub use bytecode::Bytecode;
 pub use decode_errors::BytecodeDecodeError;
 pub use eof::{
     verification::{
-        validate_eof, validate_eof_code, validate_eof_codes, validate_eof_inner, validate_raw_eof,
-        validate_raw_eof_inner, CodeType, EofValidationError,
+        validate_eof,
+        validate_eof_code,
+        validate_eof_codes,
+        validate_eof_inner,
+        validate_raw_eof,
+        validate_raw_eof_inner,
+        CodeType,
+        EofValidationError,
     },
-    Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
+    Eof,
+    EOF_MAGIC,
+    EOF_MAGIC_BYTES,
+    EOF_MAGIC_HASH,
 };
 pub use iter::BytecodeIterator;
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode};
@@ -41,4 +50,5 @@ use primitives::Bytes;
 
 /// Rwasm magic number in array form.
 pub static RWASM_MAGIC_BYTES: Bytes = primitives::bytes!("ef52");
+/// Wasm magic number in array form.
 pub static WASM_MAGIC_BYTES: Bytes = primitives::bytes!("0061736d");

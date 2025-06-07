@@ -44,7 +44,7 @@ use interpreter::{
     gas,
     gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost, CALL_STIPEND},
     interpreter::EthInterpreter,
-    interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
+    interpreter_types::{InputsTr, RuntimeFlag},
     CallInput,
     CallInputs,
     CallScheme,
@@ -52,7 +52,6 @@ use interpreter::{
     CreateInputs,
     FrameInput,
     Gas,
-    Host,
     InstructionResult,
     InterpreterAction,
     InterpreterResult,
@@ -176,14 +175,8 @@ pub(crate) fn execute_rwasm_interruption<
             // TODO(dmitry123): "is there better way how to solve the problem?"
             let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
             if !is_gas_free {
-                if frame
-                    .interpreter
-                    .runtime_flag
-                    .spec_id()
-                    .is_enabled_in(ISTANBUL)
-                    && local_gas.remaining() <= CALL_STIPEND
-                {
-                    return_result!(OutOfGas);
+                if local_gas.remaining() <= CALL_STIPEND {
+                    return_result!(ReentrancySentryOOG);
                 }
                 let gas_cost = sstore_cost(spec_id.clone(), &value.data, value.is_cold);
                 charge_gas!(gas_cost);

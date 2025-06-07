@@ -1,9 +1,7 @@
 use fluentbase_sdk::SyscallInvocationParams;
-use std::boxed::Box;
-use bytecode::Bytecode;
 use interpreter::{return_ok, return_revert, Gas, InstructionResult, InterpreterResult};
-use primitives::{Address, B256, U256};
-use primitives::bytes::Bytes;
+use primitives::Address;
+use std::boxed::Box;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SystemInterruptionInputs {

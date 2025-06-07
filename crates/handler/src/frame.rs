@@ -9,40 +9,27 @@ use crate::{
     FrameOrResult,
     ItemOrResult,
 };
-use bytecode::{eip7702::Eip7702Bytecode, eof::printer::print, Eof, EOF_MAGIC_BYTES};
-use context::{result::FromStringError, Context, LocalContextTr};
+use bytecode::{eip7702::Eip7702Bytecode, Eof, EOF_MAGIC_BYTES};
+use context::{result::FromStringError, LocalContextTr};
 use context_interface::{
     context::ContextError,
     journaled_state::{JournalCheckpoint, JournalTr},
-    Block,
     Cfg,
     ContextTr,
     Database,
     Transaction,
 };
-use core::{cmp::min, mem::take, str::from_utf8};
-use fluentbase_genesis::try_resolve_precompile_account_from_input;
-use fluentbase_runtime::{instruction::exec::SyscallExec, RuntimeContext};
+use core::cmp::min;
 use fluentbase_sdk::{
     compile_wasm_to_rwasm_with_config,
     default_compilation_config,
-    BlockContextV1,
-    BytecodeOrHash,
-    ContractContextV1,
-    ExitCode,
-    SharedContextInput,
-    SharedContextInputV1,
-    TxContextV1,
-    FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
-    STATE_DEPLOY,
-    STATE_MAIN,
     WASM_MAGIC_BYTES,
 };
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{InputsTr, LegacyBytecode, LoopControl, ReturnData, RuntimeFlag},
+    interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok,
     return_revert,
     CallInput,
@@ -250,7 +237,7 @@ where
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        println!("[make_call_frame] with inputs {:?}", inputs);
+        // println!("[make_call_frame] with inputs {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
         let (context, precompiles) = evm.ctx_precompiles();
@@ -480,7 +467,7 @@ where
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
             let init_code = inputs.init_code.as_ref();
-            let mut config = default_compilation_config();
+            let config = default_compilation_config();
             // TODO(khasan): check enable builtins gas
 
             let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)

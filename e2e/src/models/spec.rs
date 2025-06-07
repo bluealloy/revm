@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use revm::primitives::hardfork::SpecId;
+use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash, Clone, Copy)]
 pub enum SpecName {
@@ -26,6 +26,7 @@ pub enum SpecName {
     Merge,
     Shanghai,
     Cancun,
+    Prague,
     #[serde(other)]
     Unknown,
 }
@@ -47,6 +48,7 @@ impl SpecName {
             Self::Merge => SpecId::MERGE,
             Self::Shanghai => SpecId::SHANGHAI,
             Self::Cancun => SpecId::CANCUN,
+            Self::Prague => SpecId::PRAGUE,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overridden with PETERSBURG")
             }
