@@ -1,89 +1,76 @@
-use super::frame_data::*;
-use crate::{
-    instructions::InstructionProvider,
-    precompile_provider::PrecompileProvider,
-    EvmTr,
-    FrameInitOrResult,
-    FrameOrResult,
-    ItemOrResult,
-};
-use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context::{result::FromStringError, LocalContextTr};
-use context_interface::{
-    context::ContextError,
-    journaled_state::{JournalCheckpoint, JournalTr},
-    Cfg,
-    ContextTr,
-    Database,
-    Transaction,
-};
-use core::cmp::min;
-use interpreter::{
-    gas,
-    interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
-    return_ok,
-    return_revert,
-    CallInput,
-    CallInputs,
-    CallOutcome,
-    CallValue,
-    CreateInputs,
-    CreateOutcome,
-    CreateScheme,
-    EOFCreateInputs,
-    EOFCreateKind,
-    FrameInput,
-    Gas,
-    InputsImpl,
-    InstructionResult,
-    Interpreter,
-    InterpreterAction,
-    InterpreterResult,
-    InterpreterTypes,
-    SharedMemory,
-};
-use primitives::{
-    constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
+use core::{cmp::min, marker::PhantomData};
+use fluentbase_sdk::{
+    compile_wasm_to_rwasm_with_config,
+    default_compilation_config,
     keccak256,
     Address,
     Bytes,
     B256,
+    PRECOMPILE_EVM_RUNTIME,
     U256,
+    WASM_MAGIC_BYTES,
 };
-use state::Bytecode;
-use std::{borrow::ToOwned, boxed::Box, sync::Arc};
+use revm::{
+    bytecode::{eip7702::Eip7702Bytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
+    context::{
+        journaled_state::JournalCheckpoint,
+        result::FromStringError,
+        Cfg,
+        ContextTr,
+        CreateScheme,
+        JournalTr,
+        LocalContextTr,
+        Transaction,
+    },
+    context_interface::context::ContextError,
+    handler::{
+        instructions::InstructionProvider,
+        return_create,
+        return_eofcreate,
+        CallFrame,
+        CreateFrame,
+        EOFCreateFrame,
+        EvmTr,
+        Frame,
+        FrameData,
+        FrameInitOrResult,
+        FrameOrResult,
+        FrameResult,
+        ItemOrResult,
+        PrecompileProvider,
+    },
+    inspector::{InspectorEvmTr, InspectorFrame},
+    interpreter::{
+        interpreter::{EthInterpreter, ExtBytecode},
+        interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
+        return_ok,
+        return_revert,
+        CallInput,
+        CallInputs,
+        CallOutcome,
+        CallValue,
+        CreateInputs,
+        CreateOutcome,
+        EOFCreateInputs,
+        EOFCreateKind,
+        FrameInput,
+        Gas,
+        InputsImpl,
+        InstructionResult,
+        Interpreter,
+        InterpreterAction,
+        InterpreterResult,
+        InterpreterTypes,
+        SharedMemory,
+    },
+    primitives::CALL_STACK_LIMIT,
+    Database,
+};
+use std::sync::Arc;
 
-/// Call frame trait
-pub trait Frame: Sized {
-    type Evm;
-    type FrameInit;
-    type FrameResult;
-    type Error;
-
-    fn init_first(
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error>;
-
-    fn init(
-        &mut self,
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error>;
-
-    fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
-
-    fn return_result(
-        &mut self,
-        evm: &mut Self::Evm,
-        result: Self::FrameResult,
-    ) -> Result<(), Self::Error>;
-}
-
-pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
-    phantom: core::marker::PhantomData<(EVM, ERROR)>,
+pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
+    phantom: PhantomData<(EVM, ERROR)>,
     /// Data of the frame.
     data: FrameData,
     /// Input data for the frame.
@@ -94,9 +81,11 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
     pub interpreter: Interpreter<IW>,
+    /// Info about interrupted call (for rwasm execution)
+    pub interrupted_outcome: Option<SystemInterruptionOutcome>,
 }
 
-impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
+impl<EVM, ERROR> Frame for RwasmFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
@@ -105,7 +94,7 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+    ERROR: From<revm::handler::ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type Evm = EVM;
     type FrameInit = FrameInput;
@@ -128,11 +117,11 @@ where
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         // Create new context from shared memory.
         let memory = self.interpreter.memory.new_child_context();
-        EthFrame::init_with_context(evm, self.depth + 1, frame_input, memory)
+        RwasmFrame::init_with_context(evm, self.depth + 1, frame_input, memory)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        let next_action = context.run_interpreter(&mut self.interpreter);
+        let next_action = run_rwasm_loop(self, context)?;
         self.process_next_action(context, next_action)
     }
 
@@ -145,13 +134,13 @@ where
     }
 }
 
-pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
+pub(crate) type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
-impl<CTX, ERROR, IW> EthFrame<CTX, ERROR, IW>
+impl<CTX, ERROR, IW> RwasmFrame<CTX, ERROR, IW>
 where
     IW: InterpreterTypes,
 {
-    pub fn new(
+    pub(crate) fn new(
         data: FrameData,
         input: FrameInput,
         depth: usize,
@@ -165,23 +154,61 @@ where
             depth,
             interpreter,
             checkpoint,
+            interrupted_outcome: None,
         }
+    }
+
+    pub(crate) fn insert_interrupted_outcome(
+        &mut self,
+        interrupted_outcome: SystemInterruptionOutcome,
+    ) {
+        self.interrupted_outcome = Some(interrupted_outcome);
+    }
+
+    pub(crate) fn insert_interrupted_result(&mut self, result: FrameResult) {
+        let created_address = if let FrameResult::Create(create_outcome) = &result {
+            create_outcome.address.or_else(|| {
+                // I don't know why EVM returns empty address and ok status in case of nonce
+                // overflow, I think nobody knows...
+                let is_nonce_overflow = create_outcome.result.result == InstructionResult::Return
+                    && create_outcome.address.is_none();
+                if is_nonce_overflow {
+                    Some(Address::ZERO)
+                } else {
+                    None
+                }
+            })
+        } else {
+            None
+        };
+        self.interrupted_outcome
+            .as_mut()
+            .unwrap()
+            .insert_result(result.into_interpreter_result(), created_address);
+    }
+
+    pub(crate) fn is_interrupted_call(&self) -> bool {
+        self.interrupted_outcome.is_some()
+    }
+
+    pub(crate) fn take_interrupted_outcome(&mut self) -> Option<SystemInterruptionOutcome> {
+        self.interrupted_outcome.take()
     }
 }
 
-impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
+impl<EVM, ERROR> RwasmFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
         Context: ContextTr,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>>,
+    ERROR: From<revm::handler::ContextTrDbError<EVM::Context>>,
     ERROR: FromStringError,
 {
     /// Make call frame
     #[inline]
-    pub fn make_call_frame(
+    pub(crate) fn make_call_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
@@ -190,7 +217,7 @@ where
         // println!("[make_call_frame] with inputs {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
-        let (context, precompiles) = evm.ctx_precompiles();
+        let context = evm.ctx();
 
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
@@ -230,7 +257,7 @@ where
             }
         }
 
-        let interpreter_input = InputsImpl {
+        let mut interpreter_input = InputsImpl {
             target_address: inputs.target_address,
             caller_address: inputs.caller,
             bytecode_address: Some(inputs.bytecode_address),
@@ -242,28 +269,29 @@ where
         let gas_limit = inputs.gas_limit;
 
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
-        if !is_ext_delegate_call {
-            if let Some(result) = precompiles
-                .run(
-                    context,
-                    &inputs.bytecode_address,
-                    &interpreter_input,
-                    is_static,
-                    gas_limit,
-                )
-                .map_err(ERROR::from_string)?
-            {
-                if result.result.is_ok() {
-                    context.journal().checkpoint_commit();
-                } else {
-                    context.journal().checkpoint_revert(checkpoint);
-                }
-                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                    result,
-                    memory_offset: inputs.return_memory_offset.clone(),
-                })));
-            }
-        }
+        // TODO(dmitry123): "we don't support precompiles, maybe just disable them?"
+        // if !is_ext_delegate_call {
+        //     if let Some(result) = precompiles
+        //         .run(
+        //             context,
+        //             &inputs.bytecode_address,
+        //             &interpreter_input,
+        //             is_static,
+        //             gas_limit,
+        //         )
+        //         .map_err(ERROR::from_string)?
+        //     {
+        //         if result.result.is_ok() {
+        //             context.journal().checkpoint_commit();
+        //         } else {
+        //             context.journal().checkpoint_revert(checkpoint);
+        //         }
+        //         return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+        //             result,
+        //             memory_offset: inputs.return_memory_offset.clone(),
+        //         })));
+        //     }
+        // }
         let account = context
             .journal()
             .load_account_code(inputs.bytecode_address)?;
@@ -277,6 +305,28 @@ where
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
+
+            if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME {
+                interpreter_input.rwasm_proxy_address = Some(PRECOMPILE_EVM_RUNTIME);
+            }
+
+            // if let Bytes(input) = inputs.input {
+            //     if let Some(precompiled_address) =
+            //         try_resolve_precompile_account_from_input(&input)
+            //     {
+            //         let account = &context
+            //             .journal()
+            //             .load_account_code(eip7702_bytecode.delegated_address)?
+            //             .info;
+            //         let account = &context.journal()
+            //             .load_code(precompiled_address, &mut self.inner.db)?;
+            //         // rewrite bytecode address and code hash, since rWasm rely on it
+            //         contract.bytecode_address = Some(precompiled_address);
+            //         contract.hash = Some(account.info.code_hash);
+            //         // rewrite bytecode
+            //         contract.bytecode = account.info.code.clone().unwrap_or_default();
+            //     }
+            // }
         }
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -313,13 +363,13 @@ where
 
     /// Make create frame.
     #[inline]
-    pub fn make_create_frame(
+    pub(crate) fn make_create_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        println!("[make_create_frame]");
+        // println!("[make_create_frame]");
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -390,11 +440,44 @@ where
             Err(e) => return return_error(e.into()),
         };
 
-        let (bytecode, constructor_params, rwasm_proxy_address) = (
-            Bytecode::new_legacy(inputs.init_code.clone()),
-            Default::default(),
-            None,
-        );
+        let (bytecode, constructor_params, rwasm_proxy_address) = if inputs.init_code.len()
+            > WASM_MAGIC_BYTES.len()
+            && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
+        {
+            let init_code = inputs.init_code.as_ref();
+            let config = default_compilation_config();
+            // TODO(khasan): check enable builtins gas
+            let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)
+            else {
+                return return_error(InstructionResult::Revert);
+            };
+            // for rwasm, we set bytecode before execution
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            // Create account, transfer funds and make the journal checkpoint.
+            context
+                .journal()
+                .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
+            (bytecode, compilation_result.constructor_params, None)
+        } else {
+            // create a new EIP-7702 account that points to the EVM runtime system precompile
+            let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
+            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+            context.journal().set_code(created_address, bytecode);
+            // an original init code we pass as an input inside the runtime
+            // to execute deployment logic
+            let input = inputs.init_code.clone();
+            // we should reload bytecode here since it's an EIP-7702 account
+            let bytecode = context.journal().code(PRECOMPILE_EVM_RUNTIME)?;
+            // if it's a CREATE or CREATE2 call, then we should
+            // to recalculate init code hash to make sure it matches runtime hash
+            let code_hash = context.journal().code_hash(PRECOMPILE_EVM_RUNTIME)?;
+            init_code_hash = code_hash.data;
+            (
+                Bytecode::new_raw(bytecode.data),
+                input,
+                Some(PRECOMPILE_EVM_RUNTIME),
+            )
+        };
 
         let bytecode = ExtBytecode::new_with_hash(bytecode, init_code_hash);
 
@@ -427,7 +510,7 @@ where
 
     /// Make create frame.
     #[inline]
-    pub fn make_eofcreate_frame(
+    pub(crate) fn make_eofcreate_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
@@ -542,7 +625,7 @@ where
         )))
     }
 
-    pub fn init_with_context(
+    pub(crate) fn init_with_context(
         evm: &mut EVM,
         depth: usize,
         frame_init: FrameInput,
@@ -556,7 +639,7 @@ where
     }
 }
 
-impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter>
+impl<EVM, ERROR> RwasmFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
         Context: ContextTr,
@@ -566,9 +649,9 @@ where
             InterpreterTypes = EthInterpreter,
         >,
     >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
+    ERROR: From<revm::handler::ContextTrDbError<EVM::Context>> + FromStringError,
 {
-    pub fn process_next_action(
+    pub(crate) fn process_next_action(
         &mut self,
         evm: &mut EVM,
         next_action: InterpreterAction,
@@ -640,6 +723,14 @@ where
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(ERROR::from_string(e)),
             Ok(_) => (),
+        }
+
+        // if call is interrupted then we need to remember the interrupted state;
+        // the execution can be continued
+        // since the state is updated already
+        if self.is_interrupted_call() {
+            self.insert_interrupted_result(result);
+            return Ok(());
         }
 
         // Insert result to the top frame.
@@ -770,109 +861,32 @@ where
     }
 }
 
-pub fn return_create<JOURNAL: JournalTr>(
-    journal: &mut JOURNAL,
-    checkpoint: JournalCheckpoint,
-    interpreter_result: &mut InterpreterResult,
-    address: Address,
-    max_code_size: usize,
-    spec_id: SpecId,
-) {
-    // If return is not ok revert and return.
-    if !interpreter_result.result.is_ok() {
-        journal.checkpoint_revert(checkpoint);
-        return;
-    }
-    // Host error if present on execution
-    // If ok, check contract creation limit and calculate gas deduction on output len.
-    //
-    // EIP-3541: Reject new contract code starting with the 0xEF byte
-    if spec_id.is_enabled_in(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-        return;
+/// Impl InspectorFrame for EthFrame.
+impl<EVM, ERROR> InspectorFrame for RwasmFrame<EVM, ERROR, EthInterpreter>
+where
+    EVM: EvmTr<
+            Context: ContextTr,
+            Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
+            Instructions: InstructionProvider<
+                Context = EVM::Context,
+                InterpreterTypes = EthInterpreter,
+            >,
+        > + InspectorEvmTr,
+    ERROR: From<revm::handler::ContextTrDbError<EVM::Context>> + FromStringError,
+{
+    type IT = EthInterpreter;
+
+    fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
+        let interpreter = self.interpreter();
+        let next_action = evm.run_inspect_interpreter(interpreter);
+        self.process_next_action(evm, next_action)
     }
 
-    // EIP-170: Contract code size limit
-    // By default limit is 0x6000 (~25kb)
-    if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
-    }
-    let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
-    if !interpreter_result.gas.record_cost(gas_for_code) {
-        // Record code deposit gas cost and check if we are out of gas.
-        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
-        // final gas fee for adding the contract code to the state, the contract
-        // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-        if spec_id.is_enabled_in(HOMESTEAD) {
-            journal.checkpoint_revert(checkpoint);
-            interpreter_result.result = InstructionResult::OutOfGas;
-            return;
-        } else {
-            interpreter_result.output = Bytes::new();
-        }
-    }
-    // If we have enough gas we can commit changes.
-    journal.checkpoint_commit();
-
-    // Do analysis of bytecode straight away.
-    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
-
-    // since rwasm is EOF, we use `ReturnContract`
-    // return result to indicate that EOF is created,
-    // but there is no need
-    // to update bytecode since it's immutable during the deployment process
-    // We called set_code for rwasm bytecode in `make_create_frame`
-    // TODO(khasan): can we remove this hack and get rid of set_code in `make_create_frame`?
-    let is_rwasm_contract_creation = interpreter_result.result == InstructionResult::ReturnContract;
-    if !is_rwasm_contract_creation {
-        // Set code
-        journal.set_code(address, bytecode);
+    fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
+        &mut self.interpreter
     }
 
-    interpreter_result.result = InstructionResult::Return;
-}
-
-pub fn return_eofcreate<JOURNAL: JournalTr>(
-    journal: &mut JOURNAL,
-    checkpoint: JournalCheckpoint,
-    interpreter_result: &mut InterpreterResult,
-    address: Address,
-    max_code_size: usize,
-) {
-    // Note we still execute RETURN opcode and return the bytes.
-    // In EOF those opcodes should abort execution.
-    //
-    // In RETURN gas is still protecting us from ddos and in oog,
-    // behaviour will be same as if it failed on return.
-    //
-    // Bytes of RETURN will drained in `insert_eofcreate_outcome`.
-    if interpreter_result.result != InstructionResult::ReturnContract {
-        journal.checkpoint_revert(checkpoint);
-        return;
+    fn frame_input(&self) -> &FrameInput {
+        &self.input
     }
-
-    if interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
-    }
-
-    // Deduct gas for code deployment.
-    let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
-    if !interpreter_result.gas.record_cost(gas_for_code) {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::OutOfGas;
-        return;
-    }
-
-    journal.checkpoint_commit();
-
-    // Decode bytecode has a performance hit, but it has reasonable restrains.
-    let bytecode = Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
-
-    // Eof bytecode is going to be hashed.
-    journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
 }

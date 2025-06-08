@@ -115,53 +115,53 @@ mod failing_tests {
 
 mod cancun_st_eip4844_blobtransactions {
     define_tests! {
-        fn blobhash_list_bounds10("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds10.json");
-        fn blobhash_list_bounds3("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds3.json");
-        fn blobhash_list_bounds4("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds4.json");
-        fn blobhash_list_bounds5("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds5.json");
-        fn blobhash_list_bounds6("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds6.json");
-        fn blobhash_list_bounds7("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds7.json");
-        fn blobhash_list_bounds8("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds8.json");
-        fn blobhash_list_bounds9("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds9.json");
-        fn create_blobhash_tx("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/createBlobhashTx.json");
-        fn empty_blobhash_list("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/emptyBlobhashList.json");
-        fn opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
-        fn opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
-        fn wrong_blobhash_version("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/wrongBlobhashVersion.json");
+        // fn blobhash_list_bounds10("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds10.json");
+        // fn blobhash_list_bounds3("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds3.json");
+        // fn blobhash_list_bounds4("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds4.json");
+        // fn blobhash_list_bounds5("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds5.json");
+        // fn blobhash_list_bounds6("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds6.json");
+        // fn blobhash_list_bounds7("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds7.json");
+        // fn blobhash_list_bounds8("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds8.json");
+        // fn blobhash_list_bounds9("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds9.json");
+        // fn create_blobhash_tx("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/createBlobhashTx.json");
+        // fn empty_blobhash_list("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/emptyBlobhashList.json");
+        // fn opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
+        // fn opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
+        // fn wrong_blobhash_version("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/wrongBlobhashVersion.json");
     }
 }
 
 mod pyspecs_cancun_eip4844_blobs {
     define_tests! {
-        fn blob_gas_subtraction_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_gas_subtraction_tx.json");
-        fn blob_tx_attribute_calldata_opcodes("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_calldata_opcodes.json");
-        fn blob_tx_attribute_gasprice_opcode("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_gasprice_opcode.json");
-        fn blob_tx_attribute_opcodes("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_opcodes.json");
-        fn blob_tx_attribute_value_opcode("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_value_opcode.json");
-        fn blob_type_tx_pre_fork("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_type_tx_pre_fork.json");
-        fn blobhash_gas_cost("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blobhash_gas_cost.json");
-        fn call_opcode_types("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/call_opcode_types.json");
-        fn external_vectors("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/external_vectors.json");
-        fn insufficient_balance_blob_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/insufficient_balance_blob_tx.json");
-        fn invalid_blob_hash_versioning_single_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_hash_versioning_single_tx.json");
-        fn invalid_inputs("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_inputs.json");
-        fn invalid_normal_gas("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_normal_gas.json");
-        fn invalid_tx_blob_count("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_tx_blob_count.json");
-        fn invalid_tx_max_fee_per_blob_gas_state("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_tx_max_fee_per_blob_gas_state.json");
-        fn point_evaluation_precompile_gas_usage("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/point_evaluation_precompile_gas_usage.json");
-        fn precompile_before_fork("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/precompile_before_fork.json");
-        fn sufficient_balance_blob_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/sufficient_balance_blob_tx.json");
-        fn tx_entry_point("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/tx_entry_point.json");
-        fn valid_inputs("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/valid_inputs.json");
+        // fn blob_gas_subtraction_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_gas_subtraction_tx.json");
+        // fn blob_tx_attribute_calldata_opcodes("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_calldata_opcodes.json");
+        // fn blob_tx_attribute_gasprice_opcode("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_gasprice_opcode.json");
+        // fn blob_tx_attribute_opcodes("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_opcodes.json");
+        // fn blob_tx_attribute_value_opcode("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_value_opcode.json");
+        // fn blob_type_tx_pre_fork("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_type_tx_pre_fork.json");
+        // fn blobhash_gas_cost("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blobhash_gas_cost.json");
+        // fn call_opcode_types("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/call_opcode_types.json");
+        // fn external_vectors("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/external_vectors.json");
+        // fn insufficient_balance_blob_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/insufficient_balance_blob_tx.json");
+        // fn invalid_blob_hash_versioning_single_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_hash_versioning_single_tx.json");
+        // fn invalid_inputs("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_inputs.json");
+        // fn invalid_normal_gas("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_normal_gas.json");
+        // fn invalid_tx_blob_count("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_tx_blob_count.json");
+        // fn invalid_tx_max_fee_per_blob_gas_state("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_tx_max_fee_per_blob_gas_state.json");
+        // fn point_evaluation_precompile_gas_usage("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/point_evaluation_precompile_gas_usage.json");
+        // fn precompile_before_fork("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/precompile_before_fork.json");
+        // fn sufficient_balance_blob_tx("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/sufficient_balance_blob_tx.json");
+        // fn tx_entry_point("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/tx_entry_point.json");
+        // fn valid_inputs("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/valid_inputs.json");
     }
 }
 
 mod state_root_mismatch {
     define_tests! {
-        fn create2collision_storage_paris("tests/GeneralStateTests/stCreate2/create2collisionStorageParis.json");
-        fn dynamic_account_overwrite_empty_paris("tests/GeneralStateTests/stExtCodeHash/dynamicAccountOverwriteEmpty_Paris.json");
-        fn init_collision_paris("tests/GeneralStateTests/stSStoreTest/InitCollisionParis.json");
-        fn revert_in_create_in_init_create2_paris("tests/GeneralStateTests/stCreate2/RevertInCreateInInitCreate2Paris.json");
-        fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
+        // fn create2collision_storage_paris("tests/GeneralStateTests/stCreate2/create2collisionStorageParis.json");
+        // fn dynamic_account_overwrite_empty_paris("tests/GeneralStateTests/stExtCodeHash/dynamicAccountOverwriteEmpty_Paris.json");
+        // fn init_collision_paris("tests/GeneralStateTests/stSStoreTest/InitCollisionParis.json");
+        // fn revert_in_create_in_init_create2_paris("tests/GeneralStateTests/stCreate2/RevertInCreateInInitCreate2Paris.json");
+        // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
     }
 }

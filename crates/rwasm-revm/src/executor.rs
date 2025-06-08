@@ -1,11 +1,8 @@
 use crate::{
-    rwasm::{execute_rwasm_interruption, SystemInterruptionInputs, SystemInterruptionOutcome},
-    ContextTrDbError,
-    EthFrame,
-    EvmTr,
+    frame::{ContextTrDbError, RwasmFrame},
+    syscall::execute_rwasm_interruption,
+    types::{SystemInterruptionInputs, SystemInterruptionOutcome},
 };
-use bytecode::Bytecode;
-use context_interface::{result::FromStringError, Block, Cfg, ContextTr, Transaction};
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
@@ -27,24 +24,29 @@ use fluentbase_sdk::{
     STATE_MAIN,
     U256,
 };
-use interpreter::{
-    interpreter::EthInterpreter,
-    interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
-    return_ok,
-    return_revert,
-    CallInput,
-    FrameInput,
-    Gas,
-    InstructionResult,
-    InterpreterAction,
-    InterpreterResult,
+use revm::{
+    bytecode::Bytecode,
+    context::{result::FromStringError, Block, Cfg, ContextTr, Transaction},
+    handler::EvmTr,
+    interpreter::{
+        interpreter::EthInterpreter,
+        interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
+        return_ok,
+        return_revert,
+        CallInput,
+        FrameInput,
+        Gas,
+        InstructionResult,
+        InterpreterAction,
+        InterpreterResult,
+    },
 };
 
 pub(crate) fn execute_rwasm_frame<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
-    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    frame: &mut RwasmFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
     let interpreter = &mut frame.interpreter;
@@ -178,7 +180,7 @@ pub(crate) fn execute_rwasm_resume<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
-    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    frame: &mut RwasmFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     outcome: SystemInterruptionOutcome,
 ) -> Result<InterpreterAction, ERROR> {
@@ -208,13 +210,15 @@ pub(crate) fn execute_rwasm_resume<
         return_revert!() => ExitCode::Panic,
         // a special case for frame execution where we always return `Err` as a failed call/create
         _ if is_frame => ExitCode::Err,
-        InstructionResult::OutOfGas => ExitCode::OutOfFuel,
-        // InstructionResult::MalformedBuiltinParams => ExitCode::MalformedBuiltinParams,
-        // InstructionResult::PrecompileError => ExitCode::PrecompileError,
-        // TODO(dmitry123): "don't panic here, for tests only"
-        _ => {
-            unreachable!("revm: not supported result code: {:?}", result.result)
-        }
+        // out of gas error codes
+        InstructionResult::OutOfGas
+        | InstructionResult::MemoryOOG
+        | InstructionResult::MemoryLimitOOG
+        | InstructionResult::PrecompileOOG
+        | InstructionResult::InvalidOperandOOG
+        | InstructionResult::ReentrancySentryOOG => ExitCode::OutOfFuel,
+        // don't map other error codes
+        _ => ExitCode::UnknownError,
     };
 
     let mut runtime_context = RuntimeContext::root(0);
@@ -271,7 +275,7 @@ fn process_exec_result<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
-    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    frame: &mut RwasmFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     exit_code: i32,
     gas: Gas,
@@ -388,7 +392,7 @@ pub(crate) fn run_rwasm_loop<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
-    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    frame: &mut RwasmFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
 ) -> Result<InterpreterAction, ERROR> {
     loop {

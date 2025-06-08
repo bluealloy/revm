@@ -1,18 +1,20 @@
 use crate::{
-    rwasm::{SystemInterruptionInputs, SystemInterruptionOutcome},
-    ContextTrDbError,
-    EthFrame,
-    EvmTr,
+    frame::{ContextTrDbError, RwasmFrame},
+    types::{SystemInterruptionInputs, SystemInterruptionOutcome},
 };
-use bytecode::Bytecode;
-use context_interface::{result::FromStringError, Cfg, ContextTr, CreateScheme, JournalTr};
 use core::cmp::min;
 use fluentbase_genesis::is_system_precompile;
 use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
+    bytes::Buf,
     calc_preimage_address,
     is_protected_storage_slot,
     keccak256,
+    Address,
+    Bytes,
+    Log,
+    LogData,
+    B256,
     FUEL_DENOM_RATE,
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
@@ -37,42 +39,41 @@ use fluentbase_sdk::{
     SYSCALL_ID_TRANSIENT_READ,
     SYSCALL_ID_TRANSIENT_WRITE,
     SYSCALL_ID_WRITE_PREIMAGE,
+    U256,
     WASM_MAGIC_BYTES,
     WASM_MAX_CODE_SIZE,
 };
-use interpreter::{
-    gas,
-    gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost, CALL_STIPEND},
-    interpreter::EthInterpreter,
-    interpreter_types::{InputsTr, RuntimeFlag},
-    CallInput,
-    CallInputs,
-    CallScheme,
-    CallValue,
-    CreateInputs,
-    FrameInput,
-    Gas,
-    InstructionResult,
-    InterpreterAction,
-    InterpreterResult,
-};
-use primitives::{
-    bytes::Buf,
-    hardfork::{SpecId, BERLIN, ISTANBUL, TANGERINE},
-    Address,
-    Bytes,
-    Log,
-    LogData,
-    B256,
-    MAX_INITCODE_SIZE,
-    U256,
+use revm::{
+    bytecode::Bytecode,
+    context::{result::FromStringError, Cfg, ContextTr, CreateScheme, JournalTr},
+    handler::EvmTr,
+    interpreter::{
+        gas,
+        gas::{sload_cost, sstore_cost, sstore_refund, warm_cold_cost, CALL_STIPEND},
+        interpreter::EthInterpreter,
+        interpreter_types::InputsTr,
+        CallInput,
+        CallInputs,
+        CallScheme,
+        CallValue,
+        CreateInputs,
+        FrameInput,
+        Gas,
+        InstructionResult,
+        InterpreterAction,
+        InterpreterResult,
+    },
+    primitives::{
+        hardfork::{SpecId, BERLIN, ISTANBUL, TANGERINE},
+        MAX_INITCODE_SIZE,
+    },
 };
 
 pub(crate) fn execute_rwasm_interruption<
     EVM: EvmTr,
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 >(
-    frame: &mut EthFrame<EVM, ERROR, EthInterpreter>,
+    frame: &mut RwasmFrame<EVM, ERROR, EthInterpreter>,
     evm: &mut EVM,
     inputs: SystemInterruptionInputs,
 ) -> Result<InterpreterAction, ERROR> {

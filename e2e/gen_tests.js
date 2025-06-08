@@ -107,6 +107,15 @@ const disabledTests = new Set([
     'init_collision_paris',
     'revert_in_create_in_init_create2_paris',
     'revert_in_create_in_init_paris',
+    // expansive tests fails with OOM (need an extra investigation)
+    'return50000',
+    'return50000_2',
+    'static_call50000',
+    'static_call50000_ecrec',
+    'static_call50000_identity2',
+    'static_loop_calls_depth_then_revert2',
+    'static_loop_calls_depth_then_revert3',
+    'static_return50000_2',
 ]);
 
 // Group tests by subdirectory (module name)

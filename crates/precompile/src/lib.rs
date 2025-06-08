@@ -61,7 +61,8 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64).div_ceil(32) * word + base
 }
 
-/// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
+/// Precompiles contain map of precompile addresses to functions and HashSet of precompile
+/// addresses.
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles
@@ -111,8 +112,9 @@ impl Precompiles {
             precompiles.extend([
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the
+                // elliptic curve alt_bn128. EIP-197: Precompiled contracts for
+                // optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
                 bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
@@ -319,20 +321,25 @@ pub enum PrecompileSpecId {
     /// Frontier spec.
     HOMESTEAD,
     /// Byzantium spec introduced
-    /// * [EIP-198](https://eips.ethereum.org/EIPS/eip-198) a EIP-198: Big integer modular exponentiation (at 0x05 address).
-    /// * [EIP-196](https://eips.ethereum.org/EIPS/eip-196) a bn_add (at 0x06 address) and bn_mul (at 0x07 address) precompile
+    /// * [EIP-198](https://eips.ethereum.org/EIPS/eip-198) a EIP-198: Big integer modular
+    ///   exponentiation (at 0x05 address).
+    /// * [EIP-196](https://eips.ethereum.org/EIPS/eip-196) a bn_add (at 0x06 address) and bn_mul
+    ///   (at 0x07 address) precompile
     /// * [EIP-197](https://eips.ethereum.org/EIPS/eip-197) a bn_pair (at 0x08 address) precompile
     BYZANTIUM,
     /// Istanbul spec introduced
-    /// * [`EIP-152: Add BLAKE2 compression function`](https://eips.ethereum.org/EIPS/eip-152) `F` precompile (at 0x09 address).
-    /// * [`EIP-1108: Reduce alt_bn128 precompile gas costs`](https://eips.ethereum.org/EIPS/eip-1108). It reduced the
-    ///   gas cost of the bn_add, bn_mul, and bn_pair precompiles.
+    /// * [`EIP-152: Add BLAKE2 compression function`](https://eips.ethereum.org/EIPS/eip-152) `F`
+    ///   precompile (at 0x09 address).
+    /// * [`EIP-1108: Reduce alt_bn128 precompile gas costs`](https://eips.ethereum.org/EIPS/eip-1108).
+    ///   It reduced the gas cost of the bn_add, bn_mul, and bn_pair precompiles.
     ISTANBUL,
     /// Berlin spec made a change to:
-    /// * [`EIP-2565: ModExp Gas Cost`](https://eips.ethereum.org/EIPS/eip-2565). It changed the gas cost of the modexp precompile.
+    /// * [`EIP-2565: ModExp Gas Cost`](https://eips.ethereum.org/EIPS/eip-2565). It changed the
+    ///   gas cost of the modexp precompile.
     BERLIN,
     /// Cancun spec added
-    /// * [`EIP-4844: Shard Blob Transactions`](https://eips.ethereum.org/EIPS/eip-4844). It added the KZG point evaluation precompile (at 0x0A address).
+    /// * [`EIP-4844: Shard Blob Transactions`](https://eips.ethereum.org/EIPS/eip-4844). It added
+    ///   the KZG point evaluation precompile (at 0x0A address).
     CANCUN,
     /// Prague spec added bls precompiles [`EIP-2537: Precompile for BLS12-381 curve operations`](https://eips.ethereum.org/EIPS/eip-2537).
     /// * `BLS12_G1ADD` at address 0x0b

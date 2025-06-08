@@ -1,6 +1,5 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
-
 use primitives::{eip170::MAX_CODE_SIZE, hardfork::SpecId};
 use std::{vec, vec::Vec};
 
@@ -30,7 +29,8 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Note : Items must be sorted by `SpecId`.
     pub blob_target_and_max_count: Vec<(SpecId, u64, u64)>,
     /// A hard memory limit in bytes beyond which
-    /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
+    /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be
+    /// resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
     /// a sane value to prevent memory allocation panics.
@@ -45,7 +45,8 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_balance_check")]
     pub disable_balance_check: bool,
-    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit.
+    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's
+    /// gas limit.
     ///
     /// To that end, you can disable the block gas limit validation.
     ///
@@ -54,7 +55,8 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub disable_block_gas_limit: bool,
     /// EIP-3607 rejects transactions from senders with deployed code
     ///
-    /// In development, it can be desirable to simulate calls from contracts, which this setting allows.
+    /// In development, it can be desirable to simulate calls from contracts, which this setting
+    /// allows.
     ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
@@ -66,12 +68,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
-
     // Fluent specific options
-
-    /// Disables the RWASM proxy used to run the EVM runtime.
-    /// When set to `true`, EVM contracts are executed using the native EVM backend.
-    pub disable_rwasm_proxy: bool,
     /// Disables fuel injection for builtins during RWASM translation.
     /// Defaults to `false`, meaning fuel consumption procedures are injected by default.
     pub disable_builtins_consume_fuel: bool,
@@ -103,7 +100,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
-            disable_rwasm_proxy: false,
             disable_builtins_consume_fuel: false,
         }
     }
@@ -132,7 +128,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: self.disable_eip3607,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: self.disable_base_fee,
-            disable_rwasm_proxy: false,
             disable_builtins_consume_fuel: false,
         }
     }
@@ -222,10 +217,6 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 false
             }
         }
-    }
-
-    fn is_rwasm_proxy_disabled(&self) -> bool {
-        self.disable_rwasm_proxy
     }
 }
 

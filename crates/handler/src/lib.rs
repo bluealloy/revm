@@ -21,13 +21,12 @@ pub mod pre_execution;
 mod precompile_provider;
 pub mod system_call;
 pub mod validation;
-mod rwasm;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::EvmTr;
 pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Frame};
-pub use frame_data::{FrameData, FrameResult};
+pub use frame_data::{CallFrame, CreateFrame, EOFCreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};

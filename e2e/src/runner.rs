@@ -27,6 +27,7 @@ use revm::{
     MainBuilder,
     MainnetEvm,
 };
+use rwasm_revm::{RwasmBuilder, RwasmContext, RwasmEvm};
 use serde_json::json;
 use std::{
     fmt::Debug,
@@ -137,7 +138,7 @@ fn check_evm_execution<ERROR: Debug + ToString + Clone>(
     exec_result1: &Result<ExecutionResult, ERROR>,
     exec_result2: &Result<ExecutionResult, ERROR>,
     evm: &mut MainnetEvm<MainnetContext<State<InMemoryDB>>>,
-    evm2: &mut MainnetEvm<MainnetContext<State<InMemoryDB>>>,
+    evm2: &mut RwasmEvm<RwasmContext<State<InMemoryDB>>>,
     print_json_outcome: bool,
     genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
@@ -731,8 +732,7 @@ pub fn execute_test_suite(
                     .with_bundle_update()
                     .build();
 
-                let mut cfg_env2 = cfg_env.clone();
-                cfg_env2.disable_rwasm_proxy = true;
+                let cfg_env2 = cfg_env.clone();
                 let mut evm = MainnetContext::new(state, spec_id)
                     .with_cfg(cfg_env2)
                     .with_block(block_env.clone())
@@ -742,10 +742,10 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
-                let mut evm2 = MainnetContext::new(state2, spec_id)
+                let mut evm2 = RwasmContext::new(state2, spec_id)
                     .with_cfg(cfg_env.clone())
                     .with_block(block_env.clone())
-                    .build_mainnet();
+                    .build_rwasm();
 
                 // do the deed
                 // if trace {

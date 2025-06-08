@@ -1,6 +1,5 @@
 use auto_impl::auto_impl;
-use core::fmt::Debug;
-use core::hash::Hash;
+use core::{fmt::Debug, hash::Hash};
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
 #[auto_impl(&, &mut, Box, Arc)]
@@ -28,8 +27,6 @@ pub trait Cfg {
     fn is_nonce_check_disabled(&self) -> bool;
 
     fn is_base_fee_check_disabled(&self) -> bool;
-
-    fn is_rwasm_proxy_disabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform

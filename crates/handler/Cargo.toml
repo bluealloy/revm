@@ -32,9 +32,6 @@ primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
 auto_impl.workspace = true
-fluentbase-sdk.workspace = true
-fluentbase-runtime.workspace = true
-fluentbase-genesis.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -77,5 +74,5 @@ serde = [
     "interpreter/serde"
 ]
 serde-json = ["serde"]
-debug-print = ["fluentbase-runtime/debug-print"]
-wasmtime = ["fluentbase-runtime/wasmtime"]
+debug-print = []
+wasmtime = []
