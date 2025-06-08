@@ -1,7 +1,7 @@
 use crate::{DBErrorMarker, Database, DatabaseRef};
 use core::error::Error;
 use core::{convert::Infallible, fmt, marker::PhantomData};
-use primitives::{keccak256, Address, B256, U256};
+use primitives::{keccak256, Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use std::string::ToString;
 
@@ -67,7 +67,11 @@ impl<E: DBErrorMarker + Error> Database for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         <Self as DatabaseRef>::storage_ref(self, address, index)
     }
 
@@ -91,8 +95,12 @@ impl<E: DBErrorMarker + Error> DatabaseRef for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn storage_ref(&self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
-        Ok(U256::default())
+    fn storage_ref(
+        &self,
+        _address: Address,
+        _index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        Ok(StorageValue::default())
     }
 
     #[inline]

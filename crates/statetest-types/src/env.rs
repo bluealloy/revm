@@ -5,6 +5,8 @@ use serde::Deserialize;
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Env {
+    #[serde(rename = "currentChainID")]
+    pub current_chain_id: Option<U256>,
     pub current_coinbase: Address,
     #[serde(default)]
     pub current_difficulty: U256,

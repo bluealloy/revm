@@ -81,6 +81,7 @@ impl Precompiles {
             PrecompileSpecId::BERLIN => Self::berlin(),
             PrecompileSpecId::CANCUN => Self::cancun(),
             PrecompileSpecId::PRAGUE => Self::prague(),
+            PrecompileSpecId::OSAKA => Self::osaka(),
         }
     }
 
@@ -190,9 +191,19 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Osaka spec.
+    pub fn osaka() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::prague().clone();
+            precompiles.extend([modexp::OSAKA]);
+            Box::new(precompiles)
+        })
+    }
+
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::prague()
+        Self::osaka()
     }
 
     /// Returns an iterator over the precompiles addresses.
@@ -350,6 +361,10 @@ pub enum PrecompileSpecId {
     /// * `BLS12_MAP_FP_TO_G1` at address 0x10
     /// * `BLS12_MAP_FP2_TO_G2` at address 0x11
     PRAGUE,
+    /// Osaka spec added changes to modexp precompile:
+    /// * [`EIP-7823: Set upper bounds for MODEXP`](https://eips.ethereum.org/EIPS/eip-7823).
+    /// * [`EIP-7883: ModExp Gas Cost Increase`](https://eips.ethereum.org/EIPS/eip-7883)
+    OSAKA,
 }
 
 impl From<SpecId> for PrecompileSpecId {
@@ -370,7 +385,8 @@ impl PrecompileSpecId {
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
-            PRAGUE | OSAKA => Self::PRAGUE,
+            PRAGUE => Self::PRAGUE,
+            OSAKA => Self::OSAKA,
         }
     }
 }

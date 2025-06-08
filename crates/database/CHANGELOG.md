@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.1](https://github.com/bluealloy/revm/compare/revm-database-v4.0.0...revm-database-v4.0.1) - 2025-05-22
+
+### Other
+
+- bump alloy libs ([#2533](https://github.com/bluealloy/revm/pull/2533))
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+- Storage Types Alias ([#2461](https://github.com/bluealloy/revm/pull/2461))
+
 
 ## [4.0.0](https://github.com/bluealloy/revm/compare/revm-database-v3.1.0...revm-database-v4.0.0) - 2025-05-07
 

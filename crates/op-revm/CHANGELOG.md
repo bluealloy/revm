@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/bluealloy/revm/compare/op-revm-v5.0.0...op-revm-v5.0.1) - 2025-05-31
+
+### Other
+
+- updated the following local packages: revm
+
+## [5.0.0](https://github.com/bluealloy/revm/compare/op-revm-v4.0.2...op-revm-v5.0.0) - 2025-05-22
+
+### Added
+
+- *(op-revm)* add testdata comparison utility for EVM execution output ([#2525](https://github.com/bluealloy/revm/pull/2525))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+
+## [4.0.2](https://github.com/bluealloy/revm/compare/op-revm-v4.0.1...op-revm-v4.0.2) - 2025-05-09
+
+### Fixed
+
+- *(op)* bump nonce on deposit ([#2503](https://github.com/bluealloy/revm/pull/2503))
+- *(op)* call cleanup on local context ([#2499](https://github.com/bluealloy/revm/pull/2499))
+
+### Other
+
+- *(op)* revert previous and localize fix ([#2504](https://github.com/bluealloy/revm/pull/2504))
+
+## [4.0.1](https://github.com/bluealloy/revm/compare/op-revm-v4.0.0...op-revm-v4.0.1) - 2025-05-09
+
+### Fixed
+
+- *(op)* mark caller account as touched ([#2495](https://github.com/bluealloy/revm/pull/2495))
+
+### Other
+
+- *(op)* Add test coverage to OP result module ([#2491](https://github.com/bluealloy/revm/pull/2491))
+- *(op)* Add test coverage to `OpTransactionError` ([#2490](https://github.com/bluealloy/revm/pull/2490))
+
 ## [4.0.0](https://github.com/bluealloy/revm/compare/op-revm-v3.1.0...op-revm-v4.0.0) - 2025-05-07
 
 Dependency bump

@@ -6,7 +6,7 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::result::InvalidTransaction,
+    context::{result::InvalidTransaction, LocalContextTr},
     context_interface::{
         result::{EVMError, ExecutionResult, FromStringError, ResultAndState},
         Block, Cfg, ContextTr, JournalTr, Transaction,
@@ -139,6 +139,9 @@ where
                 caller_account.info.balance =
                     caller_account.info.balance.saturating_add(U256::from(mint));
             }
+            if tx.kind().is_call() {
+                caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+            }
         } else {
             // validates account nonce and code
             validate_account_nonce_and_code(
@@ -188,6 +191,8 @@ where
                 .saturating_sub(op_gas_balance_spending);
         }
 
+        // Touch account so we know it is changed.
+        caller_account.mark_touch();
         Ok(())
     }
 
@@ -444,9 +449,10 @@ where
         } else {
             Err(error)
         };
-        // do cleanup
+        // do the cleanup
         evm.ctx().chain().clear_tx_l1_cost();
         evm.ctx().journal().clear();
+        evm.ctx().local().clear();
 
         output
     }

@@ -13,6 +13,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
+use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
@@ -60,7 +61,7 @@ pub fn load_accounts<
                 } else {
                     journal.warm_account_and_storage(
                         *address,
-                        storage.map(|i| U256::from_be_bytes(i.0)),
+                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
                     )?;
                 }
             }
@@ -228,8 +229,11 @@ pub fn apply_eip7702_auth_list<
             continue;
         }
 
+        let loaded_not_existing = authority_acc.is_loaded_as_not_existing();
+        let is_not_touched = !authority_acc.is_touched();
+        let loaded_not_existing_not_touched = loaded_not_existing && is_not_touched;
         // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !authority_acc.is_empty() {
+        if !(authority_acc.is_empty() && loaded_not_existing_not_touched) {
             refunded_accounts += 1;
         }
 

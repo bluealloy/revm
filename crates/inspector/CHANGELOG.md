@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v5.0.0...revm-inspector-v5.0.1) - 2025-05-31
+
+### Other
+
+- updated the following local packages: revm-context, revm-handler
+
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v4.1.0...revm-inspector-v5.0.0) - 2025-05-22
+
+### Added
+
+- *(op-revm)* add testdata comparison utility for EVM execution output ([#2525](https://github.com/bluealloy/revm/pull/2525))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-inspector-v4.0.0...revm-inspector-v4.1.0) - 2025-05-07
 
 Dependency bump

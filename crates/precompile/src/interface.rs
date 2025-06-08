@@ -43,6 +43,8 @@ pub enum PrecompileError {
     ModexpBaseOverflow,
     /// Modexp mod overflow
     ModexpModOverflow,
+    /// Modexp limit all input sizes.
+    ModexpEip7823LimitSize,
     /// Bn128 errors
     Bn128FieldPointNotAMember,
     /// Bn128 affine g failed to create
@@ -85,6 +87,7 @@ impl fmt::Display for PrecompileError {
             Self::ModexpExpOverflow => "modexp exp overflow",
             Self::ModexpBaseOverflow => "modexp base overflow",
             Self::ModexpModOverflow => "modexp mod overflow",
+            Self::ModexpEip7823LimitSize => "Modexp limit all input sizes.",
             Self::Bn128FieldPointNotAMember => "field point not a member of bn128 curve",
             Self::Bn128AffineGFailedToCreate => "failed to create affine g point for bn128 curve",
             Self::Bn128PairLength => "bn128 invalid pair length",

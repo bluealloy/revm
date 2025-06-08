@@ -6,6 +6,7 @@ use context::either::Either;
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
+use primitives::U256;
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
@@ -105,6 +106,10 @@ fn skip_test(path: &Path) -> bool {
         | "create2collisionStorageParis.json"
         | "InitCollision.json"
         | "InitCollisionParis.json"
+
+        // Malformed value.
+        | "ValueOverflow.json"
+        | "ValueOverflowParis.json"
 
         // These tests are passing, but they take a lot of time to execute so we are going to skip them.
         | "Call50000_sha256.json"
@@ -252,7 +257,12 @@ pub fn execute_test_suite(
         let mut block = BlockEnv::default();
         let mut tx = TxEnv::default();
         // For mainnet
-        cfg.chain_id = 1;
+        cfg.chain_id = unit
+            .env
+            .current_chain_id
+            .unwrap_or(U256::ONE)
+            .try_into()
+            .unwrap_or(1);
 
         // Block env
         block.number = unit.env.current_number.try_into().unwrap_or(u64::MAX);
@@ -308,6 +318,13 @@ pub fn execute_test_suite(
             }
 
             cfg.spec = spec_name.to_spec_id();
+
+            // set default max blobs number to be 9 for prague
+            if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
+                cfg.set_blob_max_count(9);
+            } else {
+                cfg.set_blob_max_count(6);
+            }
 
             // EIP-4844
             if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {

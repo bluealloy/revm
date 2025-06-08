@@ -11,6 +11,7 @@ pub mod constants;
 pub mod eip170;
 pub mod eip4844;
 pub mod eip7702;
+pub mod eip7823;
 pub mod eof;
 pub mod hardfork;
 
@@ -23,3 +24,8 @@ pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
     Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
 };
+
+/// type alias for storage keys
+pub type StorageKey = U256;
+/// type alias for storage values
+pub type StorageValue = U256;

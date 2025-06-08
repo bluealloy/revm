@@ -6,7 +6,7 @@ use alloy_provider::{
 use alloy_transport::TransportError;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
-use primitives::{Address, B256, U256};
+use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
@@ -99,7 +99,11 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         // This is not needed, as the code is already loaded with basic_ref
     }
 
-    async fn storage_async_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    async fn storage_async_ref(
+        &self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         Ok(self
             .provider
             .get_storage_at(address, index)
@@ -117,7 +121,7 @@ mod tests {
     #[test]
     #[ignore = "flaky RPC"]
     fn can_get_basic() {
-        let client = ProviderBuilder::new().on_http(
+        let client = ProviderBuilder::new().connect_http(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
                 .parse()
                 .unwrap(),
