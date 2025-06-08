@@ -27,8 +27,9 @@ pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
     base_fee: Option<u128>,
+    disable_priority_fee_check: bool,
 ) -> Result<(), InvalidTransaction> {
-    if max_priority_fee > max_fee {
+    if !disable_priority_fee_check && max_priority_fee > max_fee {
         // Or gas_max_fee for eip1559
         return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
     }
@@ -120,6 +121,8 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         });
     }
 
+    let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
+
     match tx_type {
         TransactionType::Legacy => {
             // Gas price must be at least the basefee.
@@ -146,11 +149,11 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
-
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
         }
         TransactionType::Eip4844 => {
@@ -162,6 +165,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
 
             validate_eip4844_tx(
@@ -181,6 +185,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
 
             let auth_list_len = tx.authorization_list_len();
