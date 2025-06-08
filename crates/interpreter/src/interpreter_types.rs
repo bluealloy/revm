@@ -306,7 +306,12 @@ pub trait LoopControl {
     /// Takes next action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
     /// Returns instruction result
-    fn instruction_result(&self) -> Option<InstructionResult>;
+    #[inline]
+    fn instruction_result(&mut self) -> Option<InstructionResult> {
+        self.action()
+            .as_ref()
+            .and_then(|action| action.instruction_result())
+    }
 }
 
 pub trait RuntimeFlag {
