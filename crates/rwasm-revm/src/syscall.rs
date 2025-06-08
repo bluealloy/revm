@@ -722,13 +722,10 @@ pub(crate) fn execute_rwasm_interruption<
             );
             let address = Address::from_slice(&inputs.syscall_params.input[..20]);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
-
             // delegated storage is allowed only for delegated accounts
             let Some(rwasm_proxy_address) = frame.interpreter.input.rwasm_proxy_address else {
                 return_result!(MalformedBuiltinParams);
             };
-            // make sure the provided address is delegated to the same runtime
-
             let Ok(account) = journal.load_account_code(address) else {
                 return_result!(FatalExternalError);
             };
@@ -737,10 +734,8 @@ pub(crate) fn execute_rwasm_interruption<
             let mut output: [u8; U256::BYTES + 1 + 1] = [0u8; U256::BYTES + 1 + 1];
             output[32] = account.is_cold as u8;
             output[33] = account.data.is_empty() as u8;
-
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot}");
-
             // don't charge gas for EVM_CODE_HASH_SLOT,
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition

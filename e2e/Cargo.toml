@@ -44,7 +44,6 @@ debug-print = [
     "rwasm-revm/debug-print",
 ]
 wasmtime = [
-    "revm/wasmtime",
     "rwasm-revm/wasmtime",
 ]
 

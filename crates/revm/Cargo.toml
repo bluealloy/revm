@@ -101,4 +101,3 @@ bn = ["precompile/bn"]
 # Binary can be executed on all systems.
 portable = ["precompile/portable"]
 debug-print = ["handler/debug-print", "interpreter/debug-print"]
-wasmtime = ["handler/wasmtime"]

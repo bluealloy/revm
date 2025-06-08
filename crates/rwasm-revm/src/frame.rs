@@ -1,5 +1,6 @@
 use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
 use core::{cmp::min, marker::PhantomData};
+use fluentbase_genesis::try_resolve_precompile_account_from_input;
 use fluentbase_sdk::{
     compile_wasm_to_rwasm_with_config,
     default_compilation_config,
@@ -8,6 +9,7 @@ use fluentbase_sdk::{
     Bytes,
     B256,
     PRECOMPILE_EVM_RUNTIME,
+    PRECOMPILE_SVM_RUNTIME,
     U256,
     WASM_MAGIC_BYTES,
 };
@@ -212,9 +214,8 @@ where
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CallInputs>,
+        mut inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        // println!("[make_call_frame] with inputs {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
         let context = evm.ctx();
@@ -305,28 +306,36 @@ where
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
-
-            if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME {
+            // for EVM runtime write rwasm proxy address (required for protected slot validation)
+            if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME
+                || eip7702_bytecode.delegated_address == PRECOMPILE_SVM_RUNTIME
+            {
                 interpreter_input.rwasm_proxy_address = Some(PRECOMPILE_EVM_RUNTIME);
             }
+        }
 
-            // if let Bytes(input) = inputs.input {
-            //     if let Some(precompiled_address) =
-            //         try_resolve_precompile_account_from_input(&input)
-            //     {
-            //         let account = &context
-            //             .journal()
-            //             .load_account_code(eip7702_bytecode.delegated_address)?
-            //             .info;
-            //         let account = &context.journal()
-            //             .load_code(precompiled_address, &mut self.inner.db)?;
-            //         // rewrite bytecode address and code hash, since rWasm rely on it
-            //         contract.bytecode_address = Some(precompiled_address);
-            //         contract.hash = Some(account.info.code_hash);
-            //         // rewrite bytecode
-            //         contract.bytecode = account.info.code.clone().unwrap_or_default();
-            //     }
-            // }
+        // TODO(dmitry123): "do we want to enable it for testnet?"
+        let precompiled_address = match &inputs.input {
+            CallInput::SharedBuffer(range) => {
+                if let Some(inputs_bytes) =
+                    context.local().shared_memory_buffer_slice(range.clone())
+                {
+                    try_resolve_precompile_account_from_input(&inputs_bytes)
+                } else {
+                    None
+                }
+            }
+            CallInput::Bytes(input_bytes) => {
+                try_resolve_precompile_account_from_input(input_bytes.as_ref())
+            }
+        };
+        if let Some(precompiled_address) = precompiled_address {
+            let account = &context.journal().load_account_code(precompiled_address)?;
+            // rewrite bytecode address and code hash, since rWasm rely on it
+            inputs.bytecode_address = precompiled_address;
+            code_hash = account.info.code_hash;
+            // rewrite bytecode
+            bytecode = account.info.code.clone().unwrap_or_default();
         }
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -369,7 +378,6 @@ where
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        // println!("[make_create_frame]");
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
