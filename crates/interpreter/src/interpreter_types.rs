@@ -1,4 +1,4 @@
-use crate::{CallInput, InterpreterAction};
+use crate::{CallInput, InstructionResult, InterpreterAction};
 use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
@@ -305,6 +305,13 @@ pub trait LoopControl {
     fn set_action(&mut self, action: InterpreterAction);
     /// Takes next action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
+    /// Returns instruction result
+    #[inline]
+    fn instruction_result(&mut self) -> Option<InstructionResult> {
+        self.action()
+            .as_ref()
+            .and_then(|action| action.instruction_result())
+    }
 }
 
 pub trait RuntimeFlag {
