@@ -1,0 +1,145 @@
+[
+  {
+    "Success": {
+      "reason": "Return",
+      "gas_used": 54260,
+      "gas_refunded": 0,
+      "logs": [],
+      "output": {
+        "Create": [
+          "0x61ffffff00",
+          "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2"
+        ]
+      }
+    }
+  },
+  {
+    "Success": {
+      "reason": "SelfDestruct",
+      "gas_used": 14302,
+      "gas_refunded": 14301,
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      }
+    }
+  },
+  {
+    "Success": {
+      "reason": "Return",
+      "gas_used": 54260,
+      "gas_refunded": 0,
+      "logs": [],
+      "output": {
+        "Create": [
+          "0x61ffffff00",
+          "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2"
+        ]
+      }
+    }
+  },
+  {
+    "0x0000000000000000000000000000000000000000": {
+      "info": {
+        "balance": "0x0",
+        "nonce": 0,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "transaction_id": 2,
+      "storage": {},
+      "status": "Touched | LoadedAsNotExisting"
+    },
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
+      "info": {
+        "balance": "0x2386f26fc10000",
+        "nonce": 1,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "transaction_id": 2,
+      "storage": {},
+      "status": "Touched"
+    },
+    "0x000000000000000000000000000000000000ffff": {
+      "info": {
+        "balance": "0x0",
+        "nonce": 0,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "original_len": 0,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 0,
+              "data": []
+            }
+          }
+        }
+      },
+      "transaction_id": 1,
+      "storage": {},
+      "status": "Touched | LoadedAsNotExisting"
+    },
+    "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2": {
+      "info": {
+        "balance": "0x0",
+        "nonce": 1,
+        "code_hash": "0x9125466aa9ef15459d85e7318f6d3bdc5f6978c0565bee37a8e768d7c202a67a",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x61ffffff00",
+            "original_len": 5,
+            "jump_table": {
+              "order": "bitvec::order::Lsb0",
+              "head": {
+                "width": 8,
+                "index": 0
+              },
+              "bits": 5,
+              "data": [
+                0
+              ]
+            }
+          }
+        }
+      },
+      "transaction_id": 2,
+      "storage": {},
+      "status": "Created | CreatedLocal | SelfDestructed | Touched | LoadedAsNotExisting"
+    }
+  }
+]

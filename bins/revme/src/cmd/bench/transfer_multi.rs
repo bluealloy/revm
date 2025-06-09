@@ -51,22 +51,36 @@ pub fn run(criterion: &mut Criterion) {
     }
 
     criterion.bench_function("transact_commit_1000txs", |b| {
-        b.iter(|| {
-            for tx in txs.iter() {
-                let _ = evm.transact_commit(tx.clone()).unwrap();
-            }
-        })
+        b.iter_batched(
+            || {
+                // create transaction inputs
+                txs.clone()
+            },
+            |inputs| {
+                for tx in inputs {
+                    let _ = evm.transact_commit(tx).unwrap();
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 
     criterion.bench_function("transact_1000tx_commit_inner_every_40", |b| {
-        b.iter(|| {
-            for (i, tx) in txs.iter().enumerate() {
-                let _ = evm.transact(tx.clone()).unwrap();
-                if i % 40 == 0 {
-                    evm.commit_inner();
+        b.iter_batched(
+            || {
+                // create transaction inputs
+                txs.clone()
+            },
+            |inputs| {
+                for (i, tx) in inputs.into_iter().enumerate() {
+                    let _ = evm.transact(tx).unwrap();
+                    if i % 40 == 0 {
+                        evm.commit_inner();
+                    }
                 }
-            }
-            evm.commit_inner();
-        })
+                evm.commit_inner();
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 }

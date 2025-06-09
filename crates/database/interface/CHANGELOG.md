@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v4.0.1...revm-database-interface-v5.0.0) - 2025-06-06
+
+### Added
+
+- added TxEnv::new_bench() add util function ([#2556](https://github.com/bluealloy/revm/pull/2556))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+
 ## [4.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v4.0.0...revm-database-interface-v4.0.1) - 2025-05-22
 
 ### Other

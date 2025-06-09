@@ -127,14 +127,17 @@ where
     CTX: OpContextTr<Tx: SystemCallTx> + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn transact_system_call(
+    fn transact_system_call_with_caller(
         &mut self,
+        caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.0
-            .ctx
-            .set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
+        self.0.ctx.set_tx(CTX::Tx::new_system_tx_with_caller(
+            caller,
+            system_contract_address,
+            data,
+        ));
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run_system_call(self)
     }

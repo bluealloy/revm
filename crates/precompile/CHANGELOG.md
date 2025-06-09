@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [22.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v21.0.0...revm-precompile-v22.0.0) - 2025-06-06
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [21.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v20.1.0...revm-precompile-v21.0.0) - 2025-05-22
 
 ### Added

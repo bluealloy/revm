@@ -1,7 +1,7 @@
 [package]
 name = "revm-context"
 description = "Revm context crates"
-version = "5.0.0"
+version = "6.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -60,9 +60,11 @@ dev = [
 	"optional_block_gas_limit",
 	"optional_eip3607",
 	"optional_no_base_fee",
+	"optional_priority_fee_check",
 ]
 memory_limit = []
 optional_balance_check = []
 optional_block_gas_limit = []
 optional_eip3607 = []
 optional_no_base_fee = []
+optional_priority_fee_check = []

@@ -2,7 +2,9 @@ use crate::{
     instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
 };
-use context::{result::ResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
+use context::{
+    result::ResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
+};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip7825, Address, Bytes, TxKind};
@@ -16,15 +18,28 @@ pub const SYSTEM_ADDRESS: Address = address!("0xffffffffffffffffffffffffffffffff
 /// The caller is set to be [`SYSTEM_ADDRESS`].
 ///
 /// It is used inside [`SystemCallEvm`] and [`SystemCallCommitEvm`] traits to prepare EVM for system call execution.
-pub trait SystemCallTx {
+pub trait SystemCallTx: Sized {
     /// Creates new transaction for system call.
-    fn new_system_tx(data: Bytes, system_contract_address: Address) -> Self;
+    fn new_system_tx(system_contract_address: Address, data: Bytes) -> Self {
+        Self::new_system_tx_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+
+    fn new_system_tx_with_caller(
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Self;
 }
 
 impl SystemCallTx for TxEnv {
-    fn new_system_tx(data: Bytes, system_contract_address: Address) -> Self {
+    fn new_system_tx_with_caller(
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Self {
         TxEnv {
-            caller: SYSTEM_ADDRESS,
+            tx_type: TransactionType::Legacy as u8,
+            caller,
             data,
             kind: TxKind::Call(system_contract_address),
             gas_limit: eip7825::TX_GAS_LIMIT_CAP,
@@ -44,11 +59,21 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// given values.
     ///
     /// Block values are taken into account and will determent how system call will be executed.
+    fn transact_system_call_with_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error>;
+
+    /// Calls [`SystemCallEvm::transact_system_call_with_caller`] with [`SYSTEM_ADDRESS`] as a caller.
     fn transact_system_call(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<Self::ExecutionResult, Self::Error>;
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.transact_system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
+    }
 
     /// Transact the system call and finalize.
     ///
@@ -58,7 +83,22 @@ pub trait SystemCallEvm: ExecuteEvm {
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let result = self.transact_system_call(system_contract_address, data)?;
+        self.transact_system_call_with_caller_finalize(
+            SYSTEM_ADDRESS,
+            system_contract_address,
+            data,
+        )
+    }
+
+    /// Calls [`SystemCallEvm::transact_system_call_with_caller`] and `finalize` functions.
+    fn transact_system_call_with_caller_finalize(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let result =
+            self.transact_system_call_with_caller(caller, system_contract_address, data)?;
         let state = self.finalize();
         Ok(ResultAndState::new(result, state))
     }
@@ -71,6 +111,16 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.transact_system_call_with_caller_commit(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+
+    /// Calls [`SystemCallCommitEvm::transact_system_call_commit`] with [`SYSTEM_ADDRESS`] as a caller.
+    fn transact_system_call_with_caller_commit(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error>;
 }
 
@@ -80,13 +130,18 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn transact_system_call(
+    fn transact_system_call_with_caller(
         &mut self,
+        caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         // set tx fields.
-        self.set_tx(CTX::Tx::new_system_tx(data, system_contract_address));
+        self.set_tx(CTX::Tx::new_system_tx_with_caller(
+            caller,
+            system_contract_address,
+            data,
+        ));
         // create handler
         let mut handler = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         handler.run_system_call(self)
@@ -100,12 +155,13 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn transact_system_call_commit(
+    fn transact_system_call_with_caller_commit(
         &mut self,
+        caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.transact_system_call_finalize(system_contract_address, data)
+        self.transact_system_call_with_caller_finalize(caller, system_contract_address, data)
             .map(|output| {
                 self.db_mut().commit(output.state);
                 output.result

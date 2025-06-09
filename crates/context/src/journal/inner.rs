@@ -1,4 +1,6 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
+use crate::entry::SelfdestructionRevertStatus;
+
 use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
@@ -424,10 +426,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // set account status to create.
-        target_acc.mark_created();
+        let is_created_globaly = target_acc.mark_created_locally();
 
         // this entry will revert set nonce.
-        last_journal.push(ENTRY::account_created(target_address));
+        last_journal.push(ENTRY::account_created(target_address, is_created_globaly));
         target_acc.info.code = None;
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
@@ -525,17 +527,25 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
-        let previously_destroyed = acc.is_selfdestructed();
+
+        let destroyed_status = if !acc.is_selfdestructed() {
+            SelfdestructionRevertStatus::GloballySelfdestroyed
+        } else if !acc.is_selfdestructed_locally() {
+            SelfdestructionRevertStatus::LocallySelfdestroyed
+        } else {
+            SelfdestructionRevertStatus::RepeatedSelfdestruction
+        };
+
         let is_cancun_enabled = spec.is_enabled_in(CANCUN);
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
-        let journal_entry = if acc.is_created() || !is_cancun_enabled {
-            acc.mark_selfdestruct();
+        let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
+            acc.mark_selfdestructed_locally();
             acc.info.balance = U256::ZERO;
             Some(ENTRY::account_destroyed(
                 address,
                 target,
-                previously_destroyed,
+                destroyed_status,
                 balance,
             ))
         } else if address != target {
@@ -557,7 +567,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             data: SelfDestructResult {
                 had_value: !balance.is_zero(),
                 target_exists: !is_empty,
-                previously_destroyed,
+                previously_destroyed: destroyed_status
+                    == SelfdestructionRevertStatus::RepeatedSelfdestruction,
             },
             is_cold,
         })
@@ -650,8 +661,20 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
-                let is_cold = account.mark_warm();
+                let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
+                // TODO
                 let is_code_cold = account.is_code_cold();
+                // if it is colad loaded we need to clear local flags that can interact with selfdestruct
+                if is_cold {
+                    // if it is cold loaded and we have selfdestructed locally it means that
+                    // account was selfdestructed in previous transaction and we need to clear its information and storage.
+                    if account.is_selfdestructed_locally() {
+                        account.selfdestruct();
+                        account.unmark_selfdestructed_locally();
+                    }
+                    // unmark locally created
+                    account.unmark_created_locally();
+                }
                 StateCodeLoad {
                     data: account,
                     is_cold,
@@ -676,6 +699,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
         };
+
         // journal loading of cold account.
         if load.is_cold {
             self.journal.push(ENTRY::account_warmed(address));

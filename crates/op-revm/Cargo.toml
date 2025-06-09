@@ -1,7 +1,7 @@
 [package]
 name = "op-revm"
 description = "Optimism variant of Revm"
-version = "5.0.0"
+version = "6.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -18,7 +18,7 @@ workspace = true
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["secp256r1"] }
+revm.workspace = true
 auto_impl.workspace = true
 
 # static precompile sets.

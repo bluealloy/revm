@@ -68,8 +68,16 @@ impl Default for OpTransaction<TxEnv> {
 }
 
 impl<TX: Transaction + SystemCallTx> SystemCallTx for OpTransaction<TX> {
-    fn new_system_tx(data: Bytes, system_contract_address: Address) -> Self {
-        OpTransaction::new(TX::new_system_tx(data, system_contract_address))
+    fn new_system_tx_with_caller(
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Self {
+        OpTransaction::new(TX::new_system_tx_with_caller(
+            caller,
+            system_contract_address,
+            data,
+        ))
     }
 }
 

@@ -5,7 +5,7 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
@@ -14,6 +14,8 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// Hash of the raw bytes in `code`, or [`KECCAK_EMPTY`].
     pub code_hash: B256,
+    /// Code size in bytes.
+    pub code_size: Option<CodeSize>,
     /// [`Bytecode`] data associated with this account.
     ///
     /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be
@@ -23,11 +25,22 @@ pub struct AccountInfo {
     pub code: Option<Bytecode>,
 }
 
+/// Code size, for legacy this can be uknown
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CodeSize {
+    /// Size is known.
+    Known(usize),
+    /// Legacy account, code size is unknown at this moment and additional fetch to db needs to be done.
+    Legacy,
+}
+
 impl Default for AccountInfo {
     fn default() -> Self {
         Self {
             balance: U256::ZERO,
             code_hash: KECCAK_EMPTY,
+            code_size: Some(CodeSize::Known(0)),
             code: Some(Bytecode::default()),
             nonce: 0,
         }
@@ -57,6 +70,7 @@ impl AccountInfo {
         Self {
             balance,
             nonce,
+            code_size: Some(CodeSize::Known(code.len())),
             code: Some(code),
             code_hash,
         }
@@ -71,6 +85,7 @@ impl AccountInfo {
         Self {
             balance: self.balance,
             nonce: self.nonce,
+            code_size: Some(CodeSize::Known(code.len())),
             code_hash: code.hash_slow(),
             code: Some(code),
         }
@@ -87,6 +102,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash,
+            code_size: None,
             code: None,
         }
     }
@@ -103,6 +119,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash,
+            code_size: Some(CodeSize::Known(code.len())),
             code: Some(code),
         }
     }
@@ -142,6 +159,7 @@ impl AccountInfo {
     #[inline]
     pub fn set_code_hash(&mut self, code_hash: B256) -> &mut Self {
         self.code = None;
+        self.code_size = None;
         self.code_hash = code_hash;
         self
     }
@@ -154,6 +172,7 @@ impl AccountInfo {
     #[inline]
     pub fn set_code(&mut self, code: Bytecode) -> &mut Self {
         self.code_hash = code.hash_slow();
+        self.code_size = Some(CodeSize::Known(code.len()));
         self.code = Some(code);
         self
     }
@@ -164,6 +183,7 @@ impl AccountInfo {
     /// It is on the caller's responsibility to ensure that the bytecode hash is correct.
     pub fn set_code_and_hash(&mut self, code: Bytecode, code_hash: B256) {
         self.code_hash = code_hash;
+        self.code_size = Some(CodeSize::Known(code.len()));
         self.code = Some(code);
     }
     /// Returns a copy of this account with the [`Bytecode`] removed.
@@ -183,6 +203,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash: self.code_hash,
+            code_size: self.code_size,
             code: None,
         }
     }
@@ -269,6 +290,7 @@ impl AccountInfo {
         AccountInfo {
             balance: U256::ZERO,
             nonce: 1,
+            code_size: Some(CodeSize::Known(bytecode.len())),
             code: Some(bytecode),
             code_hash: hash,
         }

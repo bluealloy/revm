@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/op-revm-v5.0.1...op-revm-v6.0.0) - 2025-06-06
+
+### Added
+
+- add with_caller for system_transact ([#2587](https://github.com/bluealloy/revm/pull/2587))
+- *(Osaka)* EIP-7825 tx limit cap ([#2575](https://github.com/bluealloy/revm/pull/2575))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Fixed
+
+- *(multitx)* Add local flags for create and selfdestruct ([#2581](https://github.com/bluealloy/revm/pull/2581))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+- *(op-revm)* impl type alias for Default OpEvm ([#2576](https://github.com/bluealloy/revm/pull/2576))
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(test)* preserve order of fields in json fixtures ([#2541](https://github.com/bluealloy/revm/pull/2541))
+
+## [5.0.1](https://github.com/bluealloy/revm/compare/op-revm-v5.0.0...op-revm-v5.0.1) - 2025-05-31
+
+### Other
+
+- updated the following local packages: revm
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/op-revm-v4.0.2...op-revm-v5.0.0) - 2025-05-22
 
 ### Added

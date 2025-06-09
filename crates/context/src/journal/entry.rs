@@ -21,7 +21,7 @@ pub trait JournalEntryTr {
     fn account_destroyed(
         address: Address,
         target: Address,
-        was_destroyed: bool,
+        destroyed_status: SelfdestructionRevertStatus,
         had_balance: U256,
     ) -> Self;
 
@@ -39,7 +39,7 @@ pub trait JournalEntryTr {
     fn nonce_changed(address: Address) -> Self;
 
     /// Creates a journal entry for when a new account is created
-    fn account_created(address: Address) -> Self;
+    fn account_created(address: Address, is_created_globaly: bool) -> Self;
 
     /// Creates a journal entry for when a storage slot is modified
     /// Records the previous value for reverting
@@ -90,6 +90,24 @@ pub trait JournalEntryTr {
     );
 }
 
+/// Status of selfdestruction revert.
+///
+/// Global selfdestruction means that selfdestruct is called for first time in global scope.
+///
+/// Locally selfdesturction that selfdestruct is called for first time in one transaction scope.
+///
+/// Repeated selfdestruction means local selfdesturction was already called in one transaction scope.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SelfdestructionRevertStatus {
+    /// Selfdestruct is called for first time in global scope.
+    GloballySelfdestroyed,
+    /// Selfdestruct is called for first time in one transaction scope.
+    LocallySelfdestroyed,
+    /// Selfdestruct is called again in one transaction scope.
+    RepeatedSelfdestruction,
+}
+
 /// Journal entries that are used to track changes to the state and are used to revert it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -111,8 +129,8 @@ pub enum JournalEntry {
         address: Address,
         /// Address of account that received the balance.
         target: Address,
-        /// Whether the account had already been destroyed before this journal entry.
-        was_destroyed: bool,
+        /// Status of selfdestruction revert.
+        destroyed_status: SelfdestructionRevertStatus,
     },
     /// Loading account does not mean that account will need to be added to MerkleTree (touched).
     /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
@@ -157,6 +175,8 @@ pub enum JournalEntry {
         /// Address of account that is created.
         /// On revert, this account will be set to empty.
         address: Address,
+        /// If account is created globally for first time.
+        is_created_globally: bool,
     },
     /// Entry used to track storage changes
     /// Action: Storage change
@@ -212,13 +232,13 @@ impl JournalEntryTr for JournalEntry {
     fn account_destroyed(
         address: Address,
         target: Address,
-        was_destroyed: bool, // if account had already been destroyed before this journal entry
-        had_balance: U256,
+        destroyed_status: SelfdestructionRevertStatus,
+        had_balance: StorageValue,
     ) -> Self {
         JournalEntry::AccountDestroyed {
             address,
             target,
-            was_destroyed,
+            destroyed_status,
             had_balance,
         }
     }
@@ -238,8 +258,11 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::BalanceTransfer { from, to, balance }
     }
 
-    fn account_created(address: Address) -> Self {
-        JournalEntry::AccountCreated { address }
+    fn account_created(address: Address, is_created_globally: bool) -> Self {
+        JournalEntry::AccountCreated {
+            address,
+            is_created_globally,
+        }
     }
 
     fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self {
@@ -298,19 +321,24 @@ impl JournalEntryTr for JournalEntry {
             JournalEntry::AccountDestroyed {
                 address,
                 target,
-                was_destroyed,
+                destroyed_status,
                 had_balance,
             } => {
                 let account = state.get_mut(&address).unwrap();
                 // set previous state of selfdestructed flag, as there could be multiple
                 // selfdestructs in one transaction.
-                if was_destroyed {
-                    // flag is still selfdestructed
-                    account.mark_selfdestruct();
-                } else {
-                    // flag that is not selfdestructed
-                    account.unmark_selfdestruct();
+                match destroyed_status {
+                    SelfdestructionRevertStatus::GloballySelfdestroyed => {
+                        account.unmark_selfdestruct();
+                        account.unmark_selfdestructed_locally();
+                    }
+                    SelfdestructionRevertStatus::LocallySelfdestroyed => {
+                        account.unmark_selfdestructed_locally();
+                    }
+                    // do nothing on repeated selfdestruction
+                    SelfdestructionRevertStatus::RepeatedSelfdestruction => (),
                 }
+
                 account.info.balance += had_balance;
 
                 if address != target {
@@ -335,9 +363,16 @@ impl JournalEntryTr for JournalEntry {
             JournalEntry::NonceChange { address } => {
                 state.get_mut(&address).unwrap().info.nonce -= 1;
             }
-            JournalEntry::AccountCreated { address } => {
+            JournalEntry::AccountCreated {
+                address,
+                is_created_globally,
+            } => {
                 let account = &mut state.get_mut(&address).unwrap();
-                account.unmark_created();
+                account.unmark_created_locally();
+                if is_created_globally {
+                    account.unmark_created();
+                }
+                // only account that have nonce == 0 can be created so it is safe to set it to 0.
                 account.info.nonce = 0;
             }
             JournalEntry::StorageWarmed { address, key } => {
