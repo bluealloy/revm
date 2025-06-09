@@ -73,7 +73,7 @@ mod failing_tests {
         // the same problem as above
         // fn self_destruct("tests/GeneralStateTests/stSolidityTest/SelfDestruct.json");
 
-        // this test can't pass because it relays on modified EVM precompiled contract,
+        // this test can't pass because it relays on a modified EVM precompiled contract,
         // and it causes gas miscalculation
         // fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
 
@@ -101,6 +101,7 @@ mod failing_tests {
 
         fn precomps_eip2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
         fn high_gas_price_paris("tests/GeneralStateTests/stTransactionTest/HighGasPriceParis.json");
+        fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
 
         // fn return50000("tests/GeneralStateTests/stQuadraticComplexityTest/Return50000.json");
         // fn return50000_2("tests/GeneralStateTests/stQuadraticComplexityTest/Return50000_2.json");

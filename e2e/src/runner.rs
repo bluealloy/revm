@@ -157,7 +157,8 @@ fn check_evm_execution<ERROR: Debug + ToString + Clone>(
             .into_iter(),
     );
     let _state_root2 = state_merkle_trie_root(
-        evm2.journaled_state
+        evm2.0
+            .journaled_state
             .database
             .cache
             .trie_account()
@@ -310,6 +311,7 @@ fn check_evm_execution<ERROR: Debug + ToString + Clone>(
     // compare contracts
     for (k, v) in evm.journaled_state.database.cache.contracts.iter() {
         let v2 = evm2
+            .0
             .journaled_state
             .database
             .cache
@@ -338,7 +340,7 @@ fn check_evm_execution<ERROR: Debug + ToString + Clone>(
         if cfg!(feature = "debug-print") {
             println!("comparing account (0x{})...", hex::encode(address));
         }
-        let v2 = evm2.journaled_state.database.cache.accounts.get(address);
+        let v2 = evm2.0.journaled_state.database.cache.accounts.get(address);
         if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
             let a2 = v2
                 .expect("missing FLUENT account")
@@ -437,7 +439,7 @@ fn check_evm_execution<ERROR: Debug + ToString + Clone>(
         if cfg!(feature = "debug-print") {
             println!("comparing balances (0x{})...", hex::encode(address));
         }
-        let v2 = evm2.journaled_state.database.cache.accounts.get(address);
+        let v2 = evm2.0.journaled_state.database.cache.accounts.get(address);
         if let Some(a1) = v1.account.as_ref().map(|v| &v.info) {
             let a2 = v2
                 .expect("missing FLUENT account")
