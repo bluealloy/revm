@@ -6,7 +6,7 @@ use crate::{
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
-use rug::Integer;
+use rug::{integer::Order::Msf, Integer};
 use std::vec::Vec;
 
 /// `modexp` precompile with BYZANTIUM gas rules.
@@ -23,9 +23,9 @@ pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_add
 /// GMP-based modular exponentiation implementation
 fn modexp_gmp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     // Convert byte slices to GMP integers
-    let base_int = Integer::from_digits(base, rug::integer::Order::Msf);
-    let exp_int = Integer::from_digits(exponent, rug::integer::Order::Msf);
-    let mod_int = Integer::from_digits(modulus, rug::integer::Order::Msf);
+    let base_int = Integer::from_digits(base, Msf);
+    let exp_int = Integer::from_digits(exponent, Msf);
+    let mod_int = Integer::from_digits(modulus, Msf);
 
     // Perform modular exponentiation using GMP's pow_mod
     let result = base_int.pow_mod(&exp_int, &mod_int).unwrap_or_default();
@@ -33,7 +33,7 @@ fn modexp_gmp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     // Convert result back to bytes
     let byte_count = (result.significant_bits() + 7) / 8;
     let mut output = vec![0u8; byte_count as usize];
-    result.write_digits(&mut output, rug::integer::Order::Msf);
+    result.write_digits(&mut output, Msf);
     output
 }
 
