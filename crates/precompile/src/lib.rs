@@ -19,6 +19,7 @@ pub mod interface;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
+pub mod modexp_openssl;
 pub mod secp256k1;
 #[cfg(feature = "secp256r1")]
 pub mod secp256r1;

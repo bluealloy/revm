@@ -1,10 +1,10 @@
 //! Modexp precompile added in [`EIP-198`](https://eips.ethereum.org/EIPS/eip-198)
 //! and reprices in berlin hardfork with [`EIP-2565`](https://eips.ethereum.org/EIPS/eip-2565).
+use crate::modexp_openssl::modexp;
 use crate::{
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
     PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
 
