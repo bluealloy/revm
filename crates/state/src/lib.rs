@@ -6,7 +6,7 @@ mod account_info;
 mod types;
 pub use bytecode;
 
-pub use account_info::AccountInfo;
+pub use account_info::{AccountInfo, CodeSize};
 pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
@@ -102,7 +102,7 @@ impl Account {
     }
 
     /// Marks the account as warm and return true if it was previously cold.
-    /// 
+    ///
     /// If transaction id is different, invalidate [`AccountStatus::CodeLoaded`] flag.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {

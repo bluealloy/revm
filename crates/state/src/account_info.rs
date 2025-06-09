@@ -5,7 +5,7 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
@@ -26,12 +26,12 @@ pub struct AccountInfo {
 }
 
 /// Code size, for legacy this can be uknown
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CodeSize {
-    /// Size is known.
+    /// Size is known and it is more than 24kb.
     Known(usize),
-    /// Legacy account, code size is unknown at this moment and additional fetch to db needs to be done.
+    /// Legacy account, code size is unknown but in context of EVM it does not matter.
     Legacy,
 }
 

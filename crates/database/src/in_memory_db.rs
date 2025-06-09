@@ -6,7 +6,7 @@ use database_interface::{
 use primitives::{
     hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, AccountInfo, Bytecode};
+use state::{Account, AccountInfo, Bytecode, CodeSize};
 use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
@@ -444,6 +444,7 @@ impl Database for BenchmarkDB {
             return Ok(Some(AccountInfo {
                 nonce: 1,
                 balance: BENCH_TARGET_BALANCE,
+                code_size: Some(CodeSize::Known(self.0.len())),
                 code: Some(self.0.clone()),
                 code_hash: self.1,
             }));
@@ -453,6 +454,7 @@ impl Database for BenchmarkDB {
                 nonce: 0,
                 balance: BENCH_CALLER_BALANCE,
                 code: None,
+                code_size: None,
                 code_hash: KECCAK_EMPTY,
             }));
         }

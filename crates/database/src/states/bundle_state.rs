@@ -882,6 +882,7 @@ mod tests {
             balance: U256::from(10),
             nonce: 1,
             code_hash: KECCAK_EMPTY,
+            code_size: None,
             code: None,
         };
 
@@ -933,6 +934,7 @@ mod tests {
                         nonce: 1,
                         balance: U256::from(10),
                         code_hash: KECCAK_EMPTY,
+                        code_size: None,
                         code: None,
                     }),
                     HashMap::from_iter([
@@ -947,6 +949,7 @@ mod tests {
                         nonce: 1,
                         balance: U256::from(10),
                         code_hash: KECCAK_EMPTY,
+                        code_size: None,
                         code: None,
                     }),
                     HashMap::default(),
@@ -978,6 +981,7 @@ mod tests {
                     nonce: 3,
                     balance: U256::from(20),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 }),
                 HashMap::from_iter([(slot1(), (StorageValue::from(0), StorageValue::from(15)))]),
@@ -988,6 +992,7 @@ mod tests {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 })),
                 vec![(slot1(), StorageValue::from(10))],
@@ -1005,6 +1010,7 @@ mod tests {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 },
             )
@@ -1019,6 +1025,7 @@ mod tests {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 },
             )
@@ -1038,6 +1045,7 @@ mod tests {
                     nonce: 3,
                     balance: U256::from(20),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 },
             )
@@ -1053,6 +1061,7 @@ mod tests {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
+                    code_size: None,
                     code: None,
                 })),
             )

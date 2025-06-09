@@ -46,6 +46,7 @@ async fn main() -> Result<()> {
     let acc_info = AccountInfo {
         nonce: 0_u64,
         balance: one_ether,
+        code_size: None,
         code_hash: KECCAK_EMPTY,
         code: None,
     };
