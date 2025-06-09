@@ -45,6 +45,10 @@ pub fn clz<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if op1.is_zero() {
         *op1 = U256::from_limbs([256, 0, 0, 0]);
         return;
+    } else if op1 == &U256::MAX {
+        // We need this special case to avoid returning 0 for the maximum value.
+        *op1 = U256::ZERO;
+        return;
     }
 
     let leading_zeros = op1.leading_zeros();
