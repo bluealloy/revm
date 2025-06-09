@@ -10,8 +10,8 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, IndexEntry, IndexMap, Log, StorageKey, StorageValue, B256,
-    KECCAK_EMPTY, U256,
+    Address, DefaultHashBuilder, HashMap, HashSet, IndexEntry, IndexMap, Log, StorageKey,
+    StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
