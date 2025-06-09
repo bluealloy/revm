@@ -18,7 +18,7 @@ workspace = true
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["secp256r1"] }
+revm.workspace = true
 auto_impl.workspace = true
 
 # static precompile sets.

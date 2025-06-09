@@ -66,7 +66,7 @@ blst = { workspace = true, optional = true }
 ark-bls12-381 = { workspace = true, features = ["curve"] }
 
 # p256verify precompile
-p256 = { workspace = true, optional = true, features = ["ecdsa"] }
+p256 = { workspace = true, features = ["ecdsa"] }
 
 # utils
 cfg-if.workspace = true
@@ -88,18 +88,15 @@ std = [
 	"secp256k1?/std",
 	"libsecp256k1?/std",
 	"aurora-engine-modexp/std",
-	"p256?/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
+	"p256/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
-
-# Enables the p256verify precompile.
-secp256r1 = ["dep:p256"]
 
 # These libraries may not work on all no_std platforms as they depend on C.
 

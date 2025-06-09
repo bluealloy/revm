@@ -20,7 +20,6 @@ pub mod interface;
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
-#[cfg(feature = "secp256r1")]
 pub mod secp256r1;
 pub mod utilities;
 
@@ -194,7 +193,7 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::prague().clone();
-            precompiles.extend([modexp::OSAKA]);
+            precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY]);
             Box::new(precompiles)
         })
     }
