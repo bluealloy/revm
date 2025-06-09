@@ -4,9 +4,10 @@ use crate::{
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
     PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
+use rug::Integer;
+use std::vec::Vec;
 
 /// `modexp` precompile with BYZANTIUM gas rules.
 pub const BYZANTIUM: PrecompileWithAddress =
@@ -18,6 +19,23 @@ pub const BERLIN: PrecompileWithAddress =
 
 /// `modexp` precompile with OSAKA gas rules.
 pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(5), osaka_run);
+
+/// GMP-based modular exponentiation implementation
+fn modexp_gmp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+    // Convert byte slices to GMP integers
+    let base_int = Integer::from_digits(base, rug::integer::Order::Msf);
+    let exp_int = Integer::from_digits(exponent, rug::integer::Order::Msf);
+    let mod_int = Integer::from_digits(modulus, rug::integer::Order::Msf);
+
+    // Perform modular exponentiation using GMP's pow_mod
+    let result = base_int.pow_mod(&exp_int, &mod_int).unwrap_or_default();
+
+    // Convert result back to bytes
+    let byte_count = (result.significant_bits() + 7) / 8;
+    let mut output = vec![0u8; byte_count as usize];
+    result.write_digits(&mut output, rug::integer::Order::Msf);
+    output
+}
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
@@ -134,7 +152,7 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = modexp(base, exponent, modulus);
+    let output = modexp_gmp(base, exponent, modulus);
 
     // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(
