@@ -1,12 +1,14 @@
 use bytecode::Bytecode;
+use serde::{Deserialize, Deserializer};
 use core::hash::{Hash, Hasher};
-use primitives::{B256, KECCAK_EMPTY, U256};
+use primitives::{Bytes, keccak256, B256, KECCAK_EMPTY, U256 , hex};
+use serde_json::Value;
 
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
 #[derive(Clone, Debug, Eq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
@@ -272,5 +274,44 @@ impl AccountInfo {
             code: Some(bytecode),
             code_hash: hash,
         }
+    }
+}
+
+
+impl<'de> serde::Deserialize<'de> for AccountInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+
+        let value: Value = Deserialize::deserialize(deserializer)?;
+
+        let balance_str = value.get("balance")
+            .and_then(Value::as_str)
+            .ok_or_else(|| serde::de::Error::custom("missing or invalid 'balance'"))?;
+        let balance = U256::from_str_radix(balance_str.trim_start_matches("0x"), 16)
+            .map_err(serde::de::Error::custom)?;
+
+        let nonce_str = value.get("nonce")
+            .and_then(Value::as_str)
+            .ok_or_else(|| serde::de::Error::custom("missing or invalid 'nonce'"))?;
+        let nonce = u64::from_str_radix(nonce_str.trim_start_matches("0x"), 16)
+            .map_err(serde::de::Error::custom)?;
+
+        let code_str = value.get("code")
+            .and_then(Value::as_str)
+            .ok_or_else(|| serde::de::Error::custom("missing or invalid 'code'"))?;
+        let code_bytes = hex::decode(code_str.trim_start_matches("0x"))
+            .map_err(serde::de::Error::custom)?;
+
+        let bytecode = Bytecode::new_raw(Bytes::from(code_bytes));
+        let code_hash = keccak256(bytecode.bytecode());
+
+        Ok(Self {
+            balance,
+            nonce,
+            code_hash,
+            code: Some(bytecode),
+        })
     }
 }
