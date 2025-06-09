@@ -76,7 +76,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state: IndexMap::with_capacity(256),
+            state: IndexMap::with_capacity_and_hasher(256, DefaultHashBuilder::default()),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
@@ -185,7 +185,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Load precompiles into warm_preloaded_addresses.
         warm_preloaded_addresses.clone_from(precompiles);
 
-        let state = mem::replace(state, IndexMap::with_capacity(256));
+        let state = mem::replace(
+            state,
+            IndexMap::with_capacity_and_hasher(256, DefaultHashBuilder::default()),
+        );
         logs.clear();
         transient_storage.clear();
 
