@@ -31,6 +31,7 @@ pub fn clz<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
+    check!(interpreter, OSAKA);
     gas!(interpreter, gas::VERYLOW);
     popn_top!([], op1, interpreter);
 
