@@ -20,6 +20,9 @@ workspace = true
 # revm
 primitives.workspace = true
 
+# nums
+rug = { workspace = true, features = ["integer"] }
+
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
 
@@ -38,9 +41,6 @@ libsecp256k1 = { workspace = true, features = [
 # SHA2-256 and RIPEMD-160
 sha2.workspace = true
 ripemd.workspace = true
-
-# modexp
-aurora-engine-modexp.workspace = true
 
 # Optionally use substrate implementation for eip1962
 bn = { workspace = true, optional = true }
@@ -87,7 +87,6 @@ std = [
 	"c-kzg?/std",
 	"secp256k1?/std",
 	"libsecp256k1?/std",
-	"aurora-engine-modexp/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
 	"ark-ec/std",
