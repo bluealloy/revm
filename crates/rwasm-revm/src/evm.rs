@@ -1,4 +1,3 @@
-use core::ops::{Deref, DerefMut};
 use revm::{
     context::{ContextSetters, Evm},
     context_interface::ContextTr,
@@ -17,19 +16,6 @@ use revm::{
 pub struct RwasmEvm<CTX, INSP = (), I = EthInstructions<EthInterpreter, CTX>, P = EthPrecompiles>(
     pub Evm<CTX, INSP, I, P>,
 );
-
-impl<CTX, INSP, I, P> Deref for RwasmEvm<CTX, INSP, I, P> {
-    type Target = Evm<CTX, INSP, I, P>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl<CTX, INSP, I, P> DerefMut for RwasmEvm<CTX, INSP, I, P> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 impl<CTX: ContextTr, INSP>
     RwasmEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>
