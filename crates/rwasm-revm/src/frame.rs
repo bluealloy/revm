@@ -424,11 +424,10 @@ where
         }
 
         // Create address
-        let mut init_code_hash = B256::ZERO;
+        let mut init_code_hash = keccak256(&inputs.init_code);
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
                 inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
@@ -461,7 +460,7 @@ where
             };
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
-            // Create account, transfer funds and make the journal checkpoint.
+            // create an account, transfer funds and make the journal checkpoint.
             context
                 .journal()
                 .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
