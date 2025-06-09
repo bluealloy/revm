@@ -13,6 +13,7 @@ use revm::{
     Inspector,
 };
 
+#[derive(Debug, Clone)]
 pub struct RwasmEvm<CTX, INSP = (), I = EthInstructions<EthInterpreter, CTX>, P = EthPrecompiles>(
     pub Evm<CTX, INSP, I, P>,
 );
