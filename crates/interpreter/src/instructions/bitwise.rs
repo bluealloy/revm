@@ -21,6 +21,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 }
 
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, OSAKA);
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
 
