@@ -161,9 +161,11 @@ mod tests {
     use crate::{
         host::DummyHost,
         instructions::bitwise::{byte, clz, sar, shl, shr},
-        InstructionContext, Interpreter,
+        interpreter::{ExtBytecode, InputsImpl, SharedMemory},
+        CallInput, InstructionContext, Interpreter,
     };
-    use primitives::{uint, U256};
+    use bytecode::Bytecode;
+    use primitives::{hardfork::SpecId, uint, Address, U256};
 
     #[test]
     fn test_shift_left() {
@@ -480,6 +482,7 @@ mod tests {
     #[test]
     fn test_clz() {
         let mut interpreter = Interpreter::default();
+        interpreter.set_spec_id(SpecId::OSAKA);
 
         struct TestCase {
             value: U256,
