@@ -6,7 +6,6 @@ use crate::{
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
-use rug::{integer::Order::Msf, Integer};
 use std::vec::Vec;
 
 /// `modexp` precompile with BYZANTIUM gas rules.
@@ -20,8 +19,10 @@ pub const BERLIN: PrecompileWithAddress =
 /// `modexp` precompile with OSAKA gas rules.
 pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(5), osaka_run);
 
+#[cfg(feature = "gmp")]
 /// GMP-based modular exponentiation implementation
-fn modexp_gmp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+    use rug::{integer::Order::Msf, Integer};
     // Convert byte slices to GMP integers
     let base_int = Integer::from_digits(base, Msf);
     let exp_int = Integer::from_digits(exponent, Msf);
@@ -31,10 +32,15 @@ fn modexp_gmp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     let result = base_int.pow_mod(&exp_int, &mod_int).unwrap_or_default();
 
     // Convert result back to bytes
-    let byte_count = (result.significant_bits() + 7) / 8;
+    let byte_count = result.significant_bits().div_ceil(8);
     let mut output = vec![0u8; byte_count as usize];
     result.write_digits(&mut output, Msf);
     output
+}
+
+#[cfg(not(feature = "gmp"))]
+fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+    aurora_engine_modexp::modexp(base, exponent, modulus)
 }
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
@@ -152,7 +158,7 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = modexp_gmp(base, exponent, modulus);
+    let output = modexp(base, exponent, modulus);
 
     // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(

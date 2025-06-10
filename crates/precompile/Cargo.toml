@@ -20,8 +20,10 @@ workspace = true
 # revm
 primitives.workspace = true
 
-# nums
-rug = { workspace = true, features = ["integer"] }
+# modexp precompiles
+aurora-engine-modexp.workspace = true
+# gmp wrapper 
+rug = { workspace = true, features = ["integer"], optional = true }
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
@@ -89,10 +91,11 @@ std = [
 	"libsecp256k1?/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
+	"aurora-engine-modexp/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
-	"p256/std"
+	"p256/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -119,6 +122,10 @@ blst = ["dep:blst"]
 
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
+
+# Use rug (that wraps gmp) for modexp precompile.
+# It is faster library but licences as GPL code, if enabled please make sure to follow the license.
+gmp = ["dep:rug"]
 
 [[bench]]
 name = "bench"

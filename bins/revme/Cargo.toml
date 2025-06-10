@@ -16,6 +16,7 @@ revm = { workspace = true, features = [
     "blst",
     "serde-json",
     "hashbrown",
+    "gmp",
 ] }
 primitives.workspace = true
 database.workspace = true
