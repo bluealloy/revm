@@ -27,7 +27,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Blob max count. EIP-7840 Add blob schedule to EL config files.
     ///
     /// If this config is not set, the check for max blobs will be skipped.
-    pub blob_max_count: Option<u64>,
+    pub max_blobs_per_tx: Option<u64>,
     /// Configures the gas limit cap for the transaction.
     ///
     /// If `None`, default value defined by spec will be used.
@@ -89,7 +89,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_code_size: None,
             spec,
             disable_nonce_check: false,
-            blob_max_count: None,
+            max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
@@ -118,7 +118,7 @@ impl<SPEC> CfgEnv<SPEC> {
             spec,
             disable_nonce_check: self.disable_nonce_check,
             tx_gas_limit_cap: self.tx_gas_limit_cap,
-            blob_max_count: self.blob_max_count,
+            max_blobs_per_tx: self.max_blobs_per_tx,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -133,19 +133,19 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Sets the blob target
-    pub fn with_blob_max_count(mut self, blob_max_count: u64) -> Self {
-        self.set_blob_max_count(blob_max_count);
+    pub fn with_max_blobs_per_tx(mut self, max_blobs_per_tx: u64) -> Self {
+        self.set_max_blobs_per_tx(max_blobs_per_tx);
         self
     }
 
     /// Sets the blob target
-    pub fn set_blob_max_count(&mut self, blob_max_count: u64) {
-        self.blob_max_count = Some(blob_max_count);
+    pub fn set_max_blobs_per_tx(&mut self, max_blobs_per_tx: u64) {
+        self.max_blobs_per_tx = Some(max_blobs_per_tx);
     }
 
     /// Clears the blob target and max count over hardforks.
-    pub fn clear_blob_max_count(&mut self) {
-        self.blob_max_count = None;
+    pub fn clear_max_blobs_per_tx(&mut self) {
+        self.max_blobs_per_tx = None;
     }
 }
 
@@ -173,8 +173,8 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     #[inline]
-    fn blob_max_count(&self) -> Option<u64> {
-        self.blob_max_count
+    fn max_blobs_per_tx(&self) -> Option<u64> {
+        self.max_blobs_per_tx
     }
 
     fn max_code_size(&self) -> usize {
@@ -240,6 +240,6 @@ mod test {
     #[test]
     fn blob_max_and_target_count() {
         let cfg: CfgEnv = Default::default();
-        assert_eq!(cfg.blob_max_count(), None);
+        assert_eq!(cfg.max_blobs_per_tx(), None);
     }
 }
