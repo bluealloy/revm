@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170, eip7825, eip7907, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, eip7907, hardfork::SpecId};
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -207,7 +207,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 if self.spec.into().is_enabled_in(SpecId::OSAKA) {
                     eip7907::MAX_INITCODE_SIZE
                 } else {
-                    eip170::MAX_INITCODE_SIZE
+                    eip3860::MAX_INITCODE_SIZE
                 }
             })
     }

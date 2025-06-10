@@ -234,7 +234,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 
-    // EIP-3860: Limit and meter initcode. Still valid with EIP-7907
+    // EIP-3860: Limit and meter initcode. Still valid with EIP-7907 and increase of initcode size.
     if spec_id.is_enabled_in(SpecId::SHANGHAI)
         && tx.kind().is_create()
         && context.tx().input().len() > context.cfg().max_initcode_size()

@@ -764,7 +764,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7907 increased this limit to 0x40000 (~262kb).
+    // EIP-7907 increased this limit to 0xc000 (~49kb).
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
