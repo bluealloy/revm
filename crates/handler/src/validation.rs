@@ -234,7 +234,7 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 
-    // EIP-3860: Limit and meter initcode
+    // EIP-3860: Limit and meter initcode. Still valid with EIP-7907
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx.kind().is_create() {
         let max_initcode_size = context.cfg().max_code_size().saturating_mul(2);
         if context.tx().input().len() > max_initcode_size {
@@ -319,15 +319,21 @@ mod tests {
         Context,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
+    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Address, Bytes, TxKind};
 
     fn deploy_contract(
         bytecode: Bytes,
+        spec_id: Option<SpecId>,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
             .modify_tx_chained(|tx| {
                 tx.kind = TxKind::Create;
                 tx.data = bytecode.clone();
+            })
+            .modify_cfg_chained(|c| {
+                if let Some(spec_id) = spec_id {
+                    c.spec = spec_id;
+                }
             })
             .with_db(CacheDB::<EmptyDB>::default());
 
@@ -337,9 +343,9 @@ mod tests {
 
     #[test]
     fn test_eip3860_initcode_size_limit_failure() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE + 1];
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE + 1];
         let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(
             result,
             Err(EVMError::Transaction(
@@ -349,11 +355,97 @@ mod tests {
     }
 
     #[test]
-    fn test_eip3860_initcode_size_limit_success() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE];
+    fn test_eip3860_initcode_size_limit_success_prague() {
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE];
         let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip7907_initcode_size_limit_failure_osaka() {
+        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE + 1];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(
+            result,
+            Err(EVMError::Transaction(
+                InvalidTransaction::CreateInitCodeSizeLimit
+            ))
+        ));
+    }
+
+    #[test]
+    fn test_eip7907_initcode_size_limit_success_osaka() {
+        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip7907_code_size_limit_failure() {
+        // EIP-7907: MAX_CODE_SIZE = 0x40000
+        // use the simplest method to return a contract code size greater than 0x40000
+        // PUSH3 0x40001 (greater than 0x40000) - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x04, 0x00, 0x01, // PUSH3 0x40001 (greater than 0x40000)
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::CreateContractSizeLimit,
+                ..
+            },)
+        ));
+    }
+
+    #[test]
+    fn test_eip7907_code_size_limit_success() {
+        // EIP-7907: MAX_CODE_SIZE = 0x40000, but the gas limit is 30000000 so only ~0x20000 size contract can be used
+        // use the  simplest method to return a contract code size equal to 0x20000
+        // PUSH3 0x20000 - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x02, 0x00, 0x00, // PUSH3 0x20000
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
+    }
+
+    /// EIP-7825: Transaction Gas Limit Cap in Osaka (at 30M gas) will effectively limit the code size
+    /// to below the EIP-7907 limit.
+    #[test]
+    fn test_eip7907_code_size_limit_passes_but_out_of_gas() {
+        // EIP-7907: MAX_CODE_SIZE = 0x40000
+        // use the  simplest method to return a contract code size equal to 0x40000
+        // PUSH3 0x40000 - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x04, 0x00, 0x00, // PUSH3 0x40000
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::OutOfGas(..),
+                gas_used: 30000000
+            },)
+        ));
     }
 
     #[test]
@@ -368,7 +460,7 @@ mod tests {
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(
             result,
             Ok(ExecutionResult::Halt {
@@ -390,7 +482,7 @@ mod tests {
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, None);
         assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
     }
 
@@ -436,8 +528,8 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE))
+            .expect("factory contract deployment failed");
 
         // get factory contract address
         let factory_address = match &factory_result {
@@ -518,8 +610,8 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE))
+            .expect("factory contract deployment failed");
         // get factory contract address
         let factory_address = match &factory_result {
             ExecutionResult::Success { output, .. } => match output {
