@@ -56,7 +56,7 @@ pub fn run(criterion: &mut Criterion) {
                 tx.clone()
             },
             |input| {
-                evm.transact(input).unwrap();
+                evm.transact_one(input).unwrap();
             },
             criterion::BatchSize::SmallInput,
         );

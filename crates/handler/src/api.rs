@@ -45,7 +45,7 @@ pub trait ExecuteEvm {
     /// # History Note
     /// Previously this function returned both output and state.
     /// Now it follows a two-step process: execute then finalize.
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Finalize execution, clearing the journal and returning the accumulated state changes.
     ///
@@ -60,11 +60,11 @@ pub trait ExecuteEvm {
     /// # Outcome of Error
     ///
     /// If the transaction fails, the journal is considered broken.
-    fn transact_finalize(
+    fn transact(
         &mut self,
         tx: Self::Tx,
     ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output_or_error = self.transact(tx);
+        let output_or_error = self.transact_one(tx);
         // finalize will clear the journal
         let state = self.finalize();
         let output = output_or_error?;
@@ -87,7 +87,7 @@ pub trait ExecuteEvm {
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let mut outputs = Vec::new();
         for tx in txs {
-            outputs.push(self.transact(tx).inspect_err(|_| {
+            outputs.push(self.transact_one(tx).inspect_err(|_| {
                 let _ = self.finalize();
             })?);
         }
@@ -130,7 +130,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
     /// Transact the transaction and commit to the state.
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.transact(tx)?;
+        let output = self.transact_one(tx)?;
         self.commit_inner();
         Ok(output)
     }
@@ -169,7 +169,7 @@ where
     type Tx = <CTX as ContextTr>::Tx;
     type Block = <CTX as ContextTr>::Block;
 
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self)

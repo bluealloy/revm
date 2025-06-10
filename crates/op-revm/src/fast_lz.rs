@@ -182,7 +182,7 @@ mod tests {
         tx.base.gas_limit = 3_000_000;
         tx.enveloped_tx = Some(Bytes::default());
 
-        let result = evm.transact(tx).unwrap();
+        let result = evm.transact_one(tx).unwrap();
 
         let output = result.output().unwrap();
         let evm_val = FastLz::fastLzCall::abi_decode_returns(output).unwrap();

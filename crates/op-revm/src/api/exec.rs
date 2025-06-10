@@ -60,7 +60,7 @@ where
         self.0.ctx.set_block(block);
     }
 
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run(self)

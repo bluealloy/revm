@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Execute transaction without writing to the DB
     let result = evm
-        .transact(TxEnv {
+        .transact_one(TxEnv {
             // fill in missing bits of env struct
             // change that to whatever caller you want to be
             caller: address!("0000000000000000000000000000000000000000"),
