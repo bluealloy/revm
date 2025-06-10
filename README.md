@@ -68,7 +68,7 @@ Revm is licensed under MIT Licence.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.
 
-If `gmt` feature flag is used, GPL code gets compiled, if enabled please make sure to follow this license.
+If `gmp` feature flag is used, GPL code gets compiled, if enabled please make sure to follow this license.
 
 ### Security
 
