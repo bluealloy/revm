@@ -459,12 +459,12 @@ where
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
-            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_module.serialize().into());
             // create an account, transfer funds and make the journal checkpoint.
             context
                 .journal()
                 .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
-            (bytecode, compilation_result.constructor_params, None)
+            (bytecode, compilation_result.constructor_params.into(), None)
         } else {
             // create a new EIP-7702 account that points to the EVM runtime system precompile
             let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);

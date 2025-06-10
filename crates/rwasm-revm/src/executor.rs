@@ -365,6 +365,7 @@ fn process_halt(
         ExitCode::NonNegativeExitCode => InstructionResult::NonNegativeExitCode,
         ExitCode::UnknownError => InstructionResult::UnknownError,
         ExitCode::InputOutputOutOfBounds => InstructionResult::InputOutputOutOfBounds,
+        ExitCode::PrecompileError => InstructionResult::PrecompileError,
         ExitCode::UnreachableCodeReached => InstructionResult::UnreachableCodeReached,
         ExitCode::MemoryOutOfBounds => InstructionResult::MemoryOutOfBounds,
         ExitCode::TableOutOfBounds => InstructionResult::TableOutOfBounds,
@@ -375,9 +376,7 @@ fn process_halt(
         ExitCode::StackOverflow => InstructionResult::StackOverflow,
         ExitCode::BadSignature => InstructionResult::BadSignature,
         ExitCode::OutOfFuel => InstructionResult::OutOfFuel,
-        ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
-        ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
-        ExitCode::PrecompileError => InstructionResult::PrecompileError,
+        ExitCode::UnknownExternalFunction => InstructionResult::UnknownExternalFunction,
     };
     InterpreterAction::Return {
         result: InterpreterResult {

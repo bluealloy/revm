@@ -19,7 +19,8 @@ pub struct ResultAndState<HaltReasonTy = HaltReason> {
 }
 
 impl<HaltReasonTy> ResultAndState<HaltReasonTy> {
-    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants
+    /// unchanged.
     pub fn map_haltreason<F, OHR>(self, op: F) -> ResultAndState<OHR>
     where
         F: FnOnce(HaltReasonTy) -> OHR,
@@ -63,7 +64,8 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
         matches!(self, Self::Success { .. })
     }
 
-    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants
+    /// unchanged.
     pub fn map_haltreason<F, OHR>(self, op: F) -> ExecutionResult<OHR>
     where
         F: FnOnce(HaltReasonTy) -> OHR,
@@ -134,7 +136,8 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
         }
     }
 
-    /// Consumes [`self`] and returns the logs if execution is successful, or an empty list otherwise.
+    /// Consumes [`self`] and returns the logs if execution is successful, or an empty list
+    /// otherwise.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
             Self::Success { logs, .. } => logs,
@@ -198,7 +201,8 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     Database(DBError),
     /// Custom error
     ///
-    /// Useful for handler registers where custom logic would want to return their own custom error.
+    /// Useful for handler registers where custom logic would want to return their own custom
+    /// error.
     Custom(String),
 }
 
@@ -225,7 +229,8 @@ impl<DB, TXE: From<InvalidTransaction>> From<InvalidTransaction> for EVMError<DB
 }
 
 impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidationErrorT> {
-    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants
+    /// unchanged.
     pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, TransactionValidationErrorT>
     where
         F: FnOnce(DBError) -> E,
@@ -283,9 +288,12 @@ impl<DBError, TransactionValidationErrorT> From<InvalidHeader>
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
-    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
-    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee and priority fee.
-    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner, often referred to as the "tip".
+    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify
+    /// two primary fee fields:
+    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee
+    ///   and priority fee.
+    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner,
+    ///   often referred to as the "tip".
     ///
     /// Provided `gas_priority_fee` exceeds the total `gas_max_fee`.
     PriorityFeeGreaterThanMaxFee,
@@ -312,7 +320,8 @@ pub enum InvalidTransaction {
     },
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
-    /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
+    /// Transaction account does not have enough amount of ether to cover transferred value and
+    /// gas_limit*gas_price.
     LackOfFundForMaxFee {
         fee: Box<U256>,
         balance: Box<U256>,
@@ -337,7 +346,8 @@ pub enum InvalidTransaction {
     AccessListNotSupported,
     /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
     MaxFeePerBlobGasNotSupported,
-    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
+    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun
+    /// hardfork.
     BlobVersionedHashesNotSupported,
     /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
     BlobGasPriceGreaterThanMax,
@@ -588,9 +598,7 @@ pub enum HaltReason {
     BadConversionToInteger,
     BadSignature,
     OutOfFuel,
-    GrowthOperationLimited,
-    UnresolvedFunction,
-
+    UnknownExternalFunction,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -604,8 +612,8 @@ pub enum OutOfGasError {
     Memory,
     // Precompile threw OOG error
     Precompile,
-    // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
-    // i.e. in `as_usize_or_fail`
+    // When performing something that takes a U256 and casts down to a u64, if its too large this
+    // would fire i.e. in `as_usize_or_fail`
     InvalidOperand,
     // When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
