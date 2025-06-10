@@ -2,7 +2,6 @@
 //!
 //! Here you can find constants that dont belong to any EIP and are there for the genesis.
 
-use crate::eip170;
 use alloy_primitives::{b256, Address, B256};
 
 /// Number of block hashes that EVM can access in the past (pre-Prague)
@@ -14,11 +13,6 @@ pub const PRECOMPILE3: Address =
 
 /// EVM interpreter stack limit
 pub const STACK_LIMIT: usize = 1024;
-
-/// EIP-3860: Limit and meter initcode
-///
-/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE`.
-pub const MAX_INITCODE_SIZE: usize = 2 * eip170::MAX_CODE_SIZE;
 
 /// EVM call stack limit
 pub const CALL_STACK_LIMIT: u64 = 1024;
