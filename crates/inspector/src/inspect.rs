@@ -29,18 +29,18 @@ pub trait InspectEvm: ExecuteEvm {
     }
 
     /// Inspect the EVM with the given inspector and transaction, and finalize the state.
-    fn inspect_finalize(
+    fn inspect(
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
     ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect(tx, inspector)?;
+        let output = self.inspect_one(tx, inspector)?;
         let state = self.finalize();
         Ok(ResultAndState::new(output, state))
     }
 
     /// Inspect the EVM with the given inspector and transaction.
-    fn inspect(
+    fn inspect_one(
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
@@ -70,7 +70,7 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
         tx: Self::Tx,
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect(tx, inspector)?;
+        let output = self.inspect_one(tx, inspector)?;
         self.commit_inner();
         Ok(output)
     }

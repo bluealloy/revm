@@ -117,9 +117,7 @@ impl Cmd {
                 .map_err(|_| Errors::EVMError)?
                 .state
         } else {
-            let out = evm
-                .transact(tx.clone())
-                .map_err(|_| Errors::EVMError)?;
+            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out.state
         };

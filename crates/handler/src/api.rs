@@ -81,7 +81,7 @@ pub trait ExecuteEvm {
     /// If any transaction fails, the journal is finalized and the last error is returned.
     ///
     /// TODO add tx index to the error.
-    fn transact_multi(
+    fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
@@ -98,12 +98,12 @@ pub trait ExecuteEvm {
     ///
     /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
     //#[allow(clippy::type_complexity)]
-    fn transact_multi_finalize(
+    fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         // on error transact_multi will clear the journal
-        let result = self.transact_multi(txs)?;
+        let result = self.transact_many(txs)?;
         let state = self.finalize();
         Ok(ResultAndState::new(result, state))
     }
@@ -138,11 +138,11 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Transact multiple transactions and commit to the state.
     ///
     /// Internally calls `transact_multi` and `commit` functions.
-    fn transact_multi_commit(
+    fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
-        let outputs = self.transact_multi(txs)?;
+        let outputs = self.transact_many(txs)?;
         self.commit_inner();
         Ok(outputs)
     }
