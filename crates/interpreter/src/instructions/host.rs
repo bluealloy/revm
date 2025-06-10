@@ -119,7 +119,12 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let len = as_usize_or_fail!(interpreter, len_u256);
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost(interpreter.runtime_flag.spec_id(), len, code.is_cold)
+        gas::extcodecopy_cost(
+            interpreter.runtime_flag.spec_id(),
+            len,
+            code.is_cold,
+            code.is_code_cold
+        )
     );
     if len == 0 {
         return;

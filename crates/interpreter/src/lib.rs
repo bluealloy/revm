@@ -20,7 +20,7 @@ pub mod interpreter_types;
 
 // Reexport primary types.
 pub use context_interface::{
-    context::{SStoreResult, SelfDestructResult, StateLoad},
+    context::{SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     CreateScheme,
 };
 pub use gas::{Gas, InitialAndFloorGas};

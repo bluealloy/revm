@@ -10,7 +10,7 @@ pub use inner::JournalInner;
 
 use bytecode::Bytecode;
 use context_interface::{
-    context::{SStoreResult, SelfDestructResult, StateLoad},
+    context::{SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
 };
 use core::ops::{Deref, DerefMut};
@@ -219,7 +219,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     fn load_account_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+    ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
         self.inner.load_code(&mut self.database, address)
     }
 
