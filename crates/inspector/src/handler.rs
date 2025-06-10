@@ -1,14 +1,15 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
-use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
+use handler::{
+    handler::FrameStack, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler,
+    ItemOrResult,
+};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionContext, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
-
-use std::{vec, vec::Vec};
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -146,9 +147,9 @@ where
         evm: &mut Self::Evm,
         frame: Self::Frame,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack: Vec<Self::Frame> = vec![frame];
+        let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let frame = frame_stack.last_mut().unwrap();
+            let (frame, new_frame) = frame_stack.get();
             let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
@@ -158,11 +159,12 @@ where
                         frame_end(context, inspector, &init, &mut output);
                         output
                     } else {
-                        match self.frame_init(frame, evm, init.clone())? {
+                        match self.frame_init(frame, new_frame, evm, init.clone())? {
                             ItemOrResult::Item(()) => {
                                 // only if new frame is created call initialize_interp hook.
                                 let (context, inspector) = evm.ctx_inspector();
                                 inspector.initialize_interp(frame.interpreter(), context);
+                                frame_stack.push();
                                 continue;
                             }
                             // Dont pop the frame as new frame was not created.
@@ -184,11 +186,10 @@ where
                 }
             };
 
-            let Some(frame) = frame_stack.last_mut() else {
+            if frame_stack.index() == 0 {
                 return Ok(result);
-            };
-
-            self.frame_return_result(frame, evm, result)?;
+            }
+            self.frame_return_result(frame_stack.get().0, evm, result)?;
         }
     }
 }

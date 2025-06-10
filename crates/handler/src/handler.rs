@@ -364,11 +364,12 @@ pub trait Handler {
     #[inline]
     fn frame_init(
         &mut self,
-        frame: &mut Self::Frame,
+        old_frame: &mut Self::Frame,
+        new_frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<ItemOrResult<(), <Self::Frame as Frame>::FrameResult>, Self::Error> {
-        Frame::init(frame, evm, frame_input)
+        Frame::init(old_frame, new_frame, evm, frame_input)
     }
 
     /// Executes a frame and returns either input for a new frame or the frame's result.
@@ -410,14 +411,14 @@ pub trait Handler {
     ) -> Result<FrameResult, Self::Error> {
         let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let frame = frame_stack.get();
+            let (frame, new_frame) = frame_stack.get();
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
-                    match self.frame_init(frame, evm, init)? {
+                    match self.frame_init(frame, new_frame, evm, init)? {
                         ItemOrResult::Item(()) => {
-                            frame_stack.push_uninit();
+                            frame_stack.push();
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -434,7 +435,7 @@ pub trait Handler {
             if frame_stack.index == 0 {
                 return Ok(result);
             }
-            self.frame_return_result(frame_stack.get(), evm, result)?;
+            self.frame_return_result(frame_stack.get().0, evm, result)?;
         }
     }
 
@@ -536,6 +537,7 @@ pub struct FrameStack<T> {
 
 impl<T> FrameStack<T> {
     /// Creates a new stack with the first item.
+    #[inline]
     pub fn new(first: T) -> Self {
         let mut this = Self {
             stack: Vec::new(),
@@ -545,16 +547,15 @@ impl<T> FrameStack<T> {
         this
     }
 
-    /// Increments the index, pushing the item created by the closure.
-    pub fn push(&mut self, value: impl FnOnce() -> T) {
-        self.index += 1;
-        if self.index == self.stack.len() {
-            self.stack.push(value());
-        }
+    /// Returns the current index of the stack.
+    #[inline]
+    pub fn index(&self) -> usize {
+        self.index
     }
 
     /// Increments the index, pushing an uninitialized item.
-    pub fn push_uninit(&mut self) {
+    #[inline]
+    pub fn push(&mut self) {
         self.index += 1;
         if self.index == self.stack.len() {
             self.stack.reserve(1);
@@ -563,14 +564,20 @@ impl<T> FrameStack<T> {
     }
 
     /// Decrements the index.
+    #[inline]
     pub fn pop(&mut self) {
         debug_assert!(self.index > 0);
         self.index -= 1;
     }
 
-    /// Returns the current item.
-    pub fn get(&mut self) -> &mut T {
-        unsafe { self.stack.get_unchecked_mut(self.index) }
+    /// Returns the current and the next item.
+    #[inline]
+    pub fn get(&mut self) -> (&mut T, &mut T) {
+        debug_assert!(self.stack.capacity() > self.index + 1);
+        unsafe {
+            let ptr = self.stack.as_mut_ptr().add(self.index);
+            (&mut *ptr, &mut *ptr.add(1))
+        }
     }
 }
 

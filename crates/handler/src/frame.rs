@@ -43,9 +43,10 @@ pub trait Frame: Sized {
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
-    // If Item(()) is returned, then `self` was re-initialized.
+    // If Item(()) is returned, then `new_frame` was initialized.
     fn init(
         &mut self,
+        new_frame: &mut Self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<ItemOrResult<(), Self::FrameResult>, Self::Error>;
@@ -102,13 +103,13 @@ where
 
     fn init(
         &mut self,
+        new_frame: &mut Self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<ItemOrResult<(), Self::FrameResult>, Self::Error> {
         // Create new context from shared memory.
         let memory = self.interpreter.memory.new_child_context();
-        let depth = self.depth + 1;
-        self.init_with_context(evm, depth, frame_input, memory)
+        new_frame.init_with_context(evm, self.depth + 1, frame_input, memory)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
