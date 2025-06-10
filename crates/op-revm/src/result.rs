@@ -17,6 +17,17 @@ impl From<HaltReason> for OpHaltReason {
     }
 }
 
+impl TryFrom<OpHaltReason> for HaltReason {
+    type Error = OpHaltReason;
+
+    fn try_from(value: OpHaltReason) -> Result<HaltReason, OpHaltReason> {
+        match value {
+            OpHaltReason::Base(reason) => Ok(reason),
+            OpHaltReason::FailedDeposit => Err(value),
+        }
+    }
+}
+
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
