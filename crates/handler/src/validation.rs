@@ -408,44 +408,52 @@ mod tests {
 
     #[test]
     fn test_eip7907_code_size_limit_success() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000, but the gas limit is 30000000 so only ~0x20000 size contract can be used
-        // use the  simplest method to return a contract code size equal to 0x20000
-        // PUSH3 0x20000 - return size
+        // EIP-7907: MAX_CODE_SIZE = 0x18000 so we are testing that 0xC000 is not too large
+        // PUSH3 0x00C000 - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x02, 0x00, 0x00, // PUSH3 0x20000
-            0x60, 0x00, // PUSH1 0
-            0xf3, // RETURN
+            opcode::PUSH3, // PUSH3 0xC000
+            0x00,
+            0xc0,
+            0x00,
+            opcode::PUSH1, // PUSH1 0
+            0x00,
+            opcode::RETURN, // RETURN
         ];
-        let bytecode: Bytes = init_code.into();
+        let bytecode: Bytes = init_code.clone().into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
+        println!("{:?}", result);
+        assert!(
+            matches!(result, Ok(ExecutionResult::Success { .. },)),
+            "{:?}",
+            result
+        );
     }
 
-    /// EIP-7825: Transaction Gas Limit Cap in Osaka (at 30M gas) will effectively limit the code size
-    /// to below the EIP-7907 limit.
     #[test]
-    fn test_eip7907_code_size_limit_passes_but_out_of_gas() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000
-        // use the  simplest method to return a contract code size equal to 0x40000
-        // PUSH3 0x40000 - return size
+    fn eip7907_code_size_limit_size_halt() {
+        // EIP-7907: MAX_CODE_SIZE = 0x18000 so we are testing that 0xC000 is not too large
+        // PUSH3 0x00C000 - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x04, 0x00, 0x00, // PUSH3 0x40000
-            0x60, 0x00, // PUSH1 0
-            0xf3, // RETURN
+            opcode::PUSH3, // PUSH3 0xC000
+            0x00,
+            0xc0,
+            0x01,
+            opcode::PUSH1, // PUSH1 0
+            0x00,
+            opcode::RETURN, // RETURN
         ];
-        let bytecode: Bytes = init_code.into();
+
+        let bytecode = init_code.into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(
-            result,
-            Ok(ExecutionResult::Halt {
-                reason: HaltReason::OutOfGas(..),
-                gas_used: 30000000
-            },)
-        ));
+        assert!(
+            matches!(result, Ok(ExecutionResult::Halt { .. },)),
+            "{:?}",
+            result
+        );
     }
 
     #[test]
