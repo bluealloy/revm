@@ -22,6 +22,14 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// Useful to increase this because of tests.
     pub limit_contract_code_size: Option<usize>,
+    /// Contract initcode size limit override.
+    ///
+    /// If None, the limit will check if `limit_contract_code_size` is set.
+    /// If it is set, it will double it for a limit.
+    /// If it is not set, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    ///
+    /// Useful to increase this because of tests.
+    pub limit_contract_initcode_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
     /// Blob max count. EIP-7840 Add blob schedule to EL config files.
@@ -87,6 +95,7 @@ impl<SPEC> CfgEnv<SPEC> {
         Self {
             chain_id: 1,
             limit_contract_code_size: None,
+            limit_contract_initcode_size: None,
             spec,
             disable_nonce_check: false,
             blob_max_count: None,
@@ -115,6 +124,7 @@ impl<SPEC> CfgEnv<SPEC> {
         CfgEnv {
             chain_id: self.chain_id,
             limit_contract_code_size: self.limit_contract_code_size,
+            limit_contract_initcode_size: self.limit_contract_initcode_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
             tx_gas_limit_cap: self.tx_gas_limit_cap,
@@ -185,6 +195,21 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 eip170::MAX_CODE_SIZE
             }
         })
+    }
+
+    fn max_initcode_size(&self) -> usize {
+        self.limit_contract_initcode_size
+            .or_else(|| {
+                self.limit_contract_code_size
+                    .map(|size| size.saturating_mul(2))
+            })
+            .unwrap_or_else(|| {
+                if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                    eip7907::MAX_INITCODE_SIZE
+                } else {
+                    eip170::MAX_INITCODE_SIZE
+                }
+            })
     }
 
     fn is_eip3607_disabled(&self) -> bool {

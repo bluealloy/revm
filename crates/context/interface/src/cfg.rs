@@ -28,6 +28,9 @@ pub trait Cfg {
 
     fn max_code_size(&self) -> usize;
 
+    /// Returns the max initcode size for the given spec id.
+    fn max_initcode_size(&self) -> usize;
+
     fn is_eip3607_disabled(&self) -> bool;
 
     fn is_balance_check_disabled(&self) -> bool;
