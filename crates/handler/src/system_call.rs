@@ -3,7 +3,7 @@ use crate::{
     MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::ResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
+    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
@@ -82,7 +82,7 @@ pub trait SystemCallEvm: ExecuteEvm {
         &mut self,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         self.transact_system_call_with_caller_finalize(
             SYSTEM_ADDRESS,
             system_contract_address,
@@ -96,11 +96,11 @@ pub trait SystemCallEvm: ExecuteEvm {
         caller: Address,
         system_contract_address: Address,
         data: Bytes,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let result =
             self.transact_system_call_with_caller(caller, system_contract_address, data)?;
         let state = self.finalize();
-        Ok(ResultAndState::new(result, state))
+        Ok(ExecResultAndState::new(result, state))
     }
 }
 

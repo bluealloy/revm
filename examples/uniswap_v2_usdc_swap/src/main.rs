@@ -95,7 +95,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
     let mut evm = Context::mainnet().with_db(alloy_db).build_mainnet();
 
     let result = evm
-        .transact(TxEnv {
+        .transact_one(TxEnv {
             // 0x1 because calling USDC proxy from zero address fails
             caller: address!("0000000000000000000000000000000000000001"),
             kind: TxKind::Call(token),
@@ -139,7 +139,7 @@ async fn get_amount_out(
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
     let result = evm
-        .transact(TxEnv {
+        .transact_one(TxEnv {
             caller: address!("0000000000000000000000000000000000000000"),
             kind: TxKind::Call(uniswap_v2_router),
             data: encoded.into(),
@@ -171,7 +171,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
     let result = evm
-        .transact(TxEnv {
+        .transact_one(TxEnv {
             caller: address!("0000000000000000000000000000000000000000"),
             kind: TxKind::Call(pair_address),
             data: encoded.into(),
