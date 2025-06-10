@@ -35,22 +35,6 @@ pub fn clz<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::VERYLOW);
     popn_top!([], op1, interpreter);
 
-    // From EIP-7939: Count leading zeros (CLZ) opcode
-    // ## The special 0 case
-    //
-    // 256 is the smallest number after 255. Returning a small number allows the result to be
-    // compared with minimal additional bytecode.
-    // For byte scanning operations, one can get the number of bytes to be skipped for a zero word
-    // by simply computing 256 >> 3, which gives 32.
-    if op1.is_zero() {
-        *op1 = U256::from_limbs([256, 0, 0, 0]);
-        return;
-    } else if op1 == &U256::MAX {
-        // We need this special case to avoid returning 0 for the maximum value.
-        *op1 = U256::ZERO;
-        return;
-    }
-
     let leading_zeros = op1.leading_zeros();
     *op1 = U256::from(leading_zeros);
 }
@@ -206,7 +190,7 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
 mod tests {
     use crate::{
         host::DummyHost,
-        instructions::bitwise::{byte, sar, shl, shr, clz},
+        instructions::bitwise::{byte, clz, sar, shl, shr},
         interpreter_types::LoopControl,
         Interpreter,
     };
