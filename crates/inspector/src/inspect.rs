@@ -1,4 +1,4 @@
-use context::result::ResultAndState;
+use context::result::{ExecResultAndState, ResultAndState};
 use handler::{ExecuteCommitEvm, ExecuteEvm};
 
 /// InspectEvm is a API that allows inspecting the EVM.
@@ -22,10 +22,10 @@ pub trait InspectEvm: ExecuteEvm {
     fn inspect_tx(
         &mut self,
         tx: Self::Tx,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output = self.inspect_one_tx(tx)?;
         let state = self.finalize();
-        Ok(ResultAndState::new(output, state))
+        Ok(ExecResultAndState::new(output, state))
     }
 
     /// Inspect the EVM with the given inspector and transaction, and finalize the state.
@@ -33,10 +33,10 @@ pub trait InspectEvm: ExecuteEvm {
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output = self.inspect_one(tx, inspector)?;
         let state = self.finalize();
-        Ok(ResultAndState::new(output, state))
+        Ok(ExecResultAndState::new(output, state))
     }
 
     /// Inspect the EVM with the given inspector and transaction.

@@ -14,7 +14,7 @@ pub(crate) const TESTS_TESTDATA: &str = "tests/testdata";
 #[cfg(not(feature = "serde"))]
 pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
     _filename: &str,
-    _output: &ResultAndState<ExecutionResult<HaltReasonTy>, EvmState>,
+    _output: &ResultAndState<HaltReasonTy, EvmState>,
 ) {
     // serde needs to be enabled to use this function
 }

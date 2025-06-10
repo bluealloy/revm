@@ -3,8 +3,8 @@ use crate::{
 };
 use context::{
     result::{
-        EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState,
-        ResultVecAndState,
+        EVMError, ExecResultAndState, ExecutionResult, HaltReason, InvalidTransaction,
+        ResultAndState, ResultVecAndState,
     },
     Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
@@ -63,12 +63,12 @@ pub trait ExecuteEvm {
     fn transact(
         &mut self,
         tx: Self::Tx,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output_or_error = self.transact_one(tx);
         // finalize will clear the journal
         let state = self.finalize();
         let output = output_or_error?;
-        Ok(ResultAndState::new(output, state))
+        Ok(ExecResultAndState::new(output, state))
     }
 
     /// Execute multiple transactions without finalizing the state.
@@ -105,14 +105,15 @@ pub trait ExecuteEvm {
         // on error transact_multi will clear the journal
         let result = self.transact_many(txs)?;
         let state = self.finalize();
-        Ok(ResultAndState::new(result, state))
+        Ok(ExecResultAndState::new(result, state))
     }
 
     /// Execute previous transaction and finalize it.
     ///
     /// Doint it without finalization
-    fn replay(&mut self)
-        -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
+    fn replay(
+        &mut self,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -183,9 +184,7 @@ where
         self.ctx.set_block(block);
     }
 
-    fn replay(
-        &mut self,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self).map(|result| {
             let state = self.finalize();

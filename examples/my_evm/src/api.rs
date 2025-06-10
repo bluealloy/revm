@@ -1,7 +1,7 @@
 use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
     context::{
-        result::{HaltReason, InvalidTransaction, ResultAndState},
+        result::{ExecResultAndState, HaltReason, InvalidTransaction, ResultAndState},
         ContextSetters,
     },
     context_interface::{
@@ -47,11 +47,11 @@ where
 
     fn replay(
         &mut self,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let mut handler = MyHandler::default();
         handler.run(self).map(|result| {
             let state = self.finalize();
-            ResultAndState::new(result, state)
+            ExecResultAndState::new(result, state)
         })
     }
 }

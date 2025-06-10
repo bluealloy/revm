@@ -4,7 +4,10 @@ use crate::{
     OpTransactionError,
 };
 use revm::{
-    context::{result::ResultAndState, ContextSetters},
+    context::{
+        result::{ExecResultAndState, ResultAndState},
+        ContextSetters,
+    },
     context_interface::{
         result::{EVMError, ExecutionResult},
         Cfg, ContextTr, Database, JournalTr,
@@ -72,11 +75,11 @@ where
 
     fn replay(
         &mut self,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.run(self).map(|result| {
             let state = self.finalize();
-            ResultAndState::new(result, state)
+            ExecResultAndState::new(result, state)
         })
     }
 }
