@@ -136,7 +136,7 @@ mod tests {
         }
 
         let left_inspector = Either::<NoOpInspector, DummyInsp>::Left(NoOpInspector);
-        let right_inspector = Either::<NoOpInspector, DummyInsp>::Right(DummyInsp::default());
+        let right_inspector = Either::<NoOpInspector, DummyInsp>::Right(DummyInsp);
 
         // These calls should compile successfully, proving that the Inspector trait is implemented
         let _left = _requires_inspector(left_inspector);
