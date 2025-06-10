@@ -1,8 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170::MAX_CODE_SIZE, eip7825, hardfork::SpecId};
-
+use primitives::{eip170, eip3860, eip7825, eip7907, hardfork::SpecId};
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -16,12 +15,21 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub chain_id: u64,
     /// Specification for EVM represent the hardfork
     pub spec: SPEC,
-    /// If some it will effects EIP-170: Contract code size limit.
+    /// Contract code size limit override.
+    ///
+    /// If None, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    /// If Some, this specific limit will be used regardless of SpecId.
     ///
     /// Useful to increase this because of tests.
-    ///
-    /// By default it is `0x6000` (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Contract initcode size limit override.
+    ///
+    /// If None, the limit will check if `limit_contract_code_size` is set.
+    /// If it is set, it will double it for a limit.
+    /// If it is not set, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    ///
+    /// Useful to increase this because of tests.
+    pub limit_contract_initcode_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
     /// Blob max count. EIP-7840 Add blob schedule to EL config files.
@@ -87,6 +95,7 @@ impl<SPEC> CfgEnv<SPEC> {
         Self {
             chain_id: 1,
             limit_contract_code_size: None,
+            limit_contract_initcode_size: None,
             spec,
             disable_nonce_check: false,
             max_blobs_per_tx: None,
@@ -115,6 +124,7 @@ impl<SPEC> CfgEnv<SPEC> {
         CfgEnv {
             chain_id: self.chain_id,
             limit_contract_code_size: self.limit_contract_code_size,
+            limit_contract_initcode_size: self.limit_contract_initcode_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
             tx_gas_limit_cap: self.tx_gas_limit_cap,
@@ -178,7 +188,28 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 
     fn max_code_size(&self) -> usize {
-        self.limit_contract_code_size.unwrap_or(MAX_CODE_SIZE)
+        self.limit_contract_code_size.unwrap_or_else(|| {
+            if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7907::MAX_CODE_SIZE
+            } else {
+                eip170::MAX_CODE_SIZE
+            }
+        })
+    }
+
+    fn max_initcode_size(&self) -> usize {
+        self.limit_contract_initcode_size
+            .or_else(|| {
+                self.limit_contract_code_size
+                    .map(|size| size.saturating_mul(2))
+            })
+            .unwrap_or_else(|| {
+                if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                    eip7907::MAX_INITCODE_SIZE
+                } else {
+                    eip3860::MAX_INITCODE_SIZE
+                }
+            })
     }
 
     fn is_eip3607_disabled(&self) -> bool {
