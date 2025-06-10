@@ -11,6 +11,7 @@ use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
+use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Trait for the halt reason.
@@ -21,7 +22,7 @@ impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltRe
 /// Tuple containing evm execution result and state.s
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<R, S> {
+pub struct ResultAndState<R, S = EvmState> {
     /// Execution result
     pub result: R,
     /// Output State.
