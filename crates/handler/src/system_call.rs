@@ -3,8 +3,7 @@ use crate::{
     MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::{ExecResultAndState, ResultAndState},
-    ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
+    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};

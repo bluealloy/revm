@@ -4,10 +4,7 @@ use crate::{
     OpTransactionError,
 };
 use revm::{
-    context::{
-        result::{ExecResultAndState, ResultAndState},
-        ContextSetters,
-    },
+    context::{result::ExecResultAndState, ContextSetters},
     context_interface::{
         result::{EVMError, ExecutionResult},
         Cfg, ContextTr, Database, JournalTr,

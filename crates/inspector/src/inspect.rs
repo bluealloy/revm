@@ -1,4 +1,4 @@
-use context::result::{ExecResultAndState, ResultAndState};
+use context::result::ExecResultAndState;
 use handler::{ExecuteCommitEvm, ExecuteEvm};
 
 /// InspectEvm is a API that allows inspecting the EVM.

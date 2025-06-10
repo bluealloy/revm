@@ -36,7 +36,7 @@ pub trait ExecuteEvm {
     ///
     /// # Error Handling
     /// If the transaction fails, the journal will revert all changes of given transaction.
-    /// For quicker error handling, use [`ExecuteEvm::transact_finalize`] that will drop the journal.
+    /// For quicker error handling, use [`ExecuteEvm::transact`] that will drop the journal.
     ///
     /// # State Management
     /// State changes are stored in the internal journal.
@@ -96,7 +96,7 @@ pub trait ExecuteEvm {
 
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
-    /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
+    /// Internally calls [`ExecuteEvm::transact_many`] followed by [`ExecuteEvm::finalize`].
     //#[allow(clippy::type_complexity)]
     fn transact_many_finalize(
         &mut self,

@@ -1,7 +1,7 @@
 use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
     context::{
-        result::{ExecResultAndState, HaltReason, InvalidTransaction, ResultAndState},
+        result::{ExecResultAndState, HaltReason, InvalidTransaction},
         ContextSetters,
     },
     context_interface::{
