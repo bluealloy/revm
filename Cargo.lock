@@ -3782,6 +3782,7 @@ name = "revm-inspector"
 version = "6.0.0"
 dependencies = [
  "auto_impl",
+ "either",
  "revm-context",
  "revm-database",
  "revm-database-interface",

@@ -73,7 +73,7 @@ pub fn run(criterion: &mut Criterion) {
             },
             |inputs| {
                 for (i, tx) in inputs.into_iter().enumerate() {
-                    let _ = evm.transact(tx).unwrap();
+                    let _ = evm.transact_one(tx).unwrap();
                     if i % 40 == 0 {
                         evm.commit_inner();
                     }

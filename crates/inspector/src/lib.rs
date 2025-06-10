@@ -10,6 +10,7 @@ extern crate alloc as std;
 
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
+mod either;
 mod gas;
 pub mod handler;
 mod inspect;

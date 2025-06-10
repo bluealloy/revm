@@ -771,7 +771,7 @@ fn test_log_inspector() {
     };
 
     // Run evm.
-    let output = evm.inspect_tx_finalize(tx).unwrap();
+    let output = evm.inspect_tx(tx).unwrap();
 
     let inspector = &evm.0.inspector;
     assert!(!inspector.logs.is_empty());

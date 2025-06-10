@@ -148,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
         let writer = FlushWriter::new(Arc::clone(&inner));
 
         // Inspect and commit the transaction to the EVM
-        let res: Result<_, _> = evm.inspect(tx, TracerEip3155::new(Box::new(writer)));
+        let res: Result<_, _> = evm.inspect_one(tx, TracerEip3155::new(Box::new(writer)));
 
         if let Err(error) = res {
             println!("Got error: {:?}", error);

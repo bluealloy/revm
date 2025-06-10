@@ -103,7 +103,7 @@ impl Cmd {
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
                 b.iter(|| {
-                    let _ = evm.transact_finalize(tx.clone()).unwrap();
+                    let _ = evm.transact(tx.clone()).unwrap();
                 })
             });
             criterion_group.finish();
@@ -113,13 +113,11 @@ impl Cmd {
 
         let time = Instant::now();
         let state = if self.trace {
-            evm.inspect_tx_finalize(tx.clone())
+            evm.inspect_tx(tx.clone())
                 .map_err(|_| Errors::EVMError)?
                 .state
         } else {
-            let out = evm
-                .transact_finalize(tx.clone())
-                .map_err(|_| Errors::EVMError)?;
+            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out.state
         };
