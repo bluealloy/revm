@@ -14,7 +14,7 @@ use context_interface::{
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use primitives::U256;
 use state::EvmState;
-use std::{vec, vec::Vec};
+use std::vec::Vec;
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
@@ -367,7 +367,7 @@ pub trait Handler {
         frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
+    ) -> Result<ItemOrResult<(), <Self::Frame as Frame>::FrameResult>, Self::Error> {
         Frame::init(frame, evm, frame_input)
     }
 
@@ -408,16 +408,16 @@ pub trait Handler {
         evm: &mut Self::Evm,
         frame: Self::Frame,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack: Vec<Self::Frame> = vec![frame];
+        let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let frame = frame_stack.last_mut().unwrap();
+            let frame = frame_stack.get();
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
                     match self.frame_init(frame, evm, init)? {
-                        ItemOrResult::Item(new_frame) => {
-                            frame_stack.push(new_frame);
+                        ItemOrResult::Item(()) => {
+                            frame_stack.push_uninit();
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -431,10 +431,10 @@ pub trait Handler {
                 }
             };
 
-            let Some(frame) = frame_stack.last_mut() else {
+            if frame_stack.index == 0 {
                 return Ok(result);
-            };
-            self.frame_return_result(frame, evm, result)?;
+            }
+            self.frame_return_result(frame_stack.get(), evm, result)?;
         }
     }
 
@@ -526,4 +526,54 @@ pub trait Handler {
         evm.ctx().journal_mut().discard_tx();
         Err(error)
     }
+}
+
+/// Non-empty, item re-using Vec.
+pub struct FrameStack<T> {
+    stack: Vec<T>,
+    index: usize,
+}
+
+impl<T> FrameStack<T> {
+    /// Creates a new stack with the first item.
+    pub fn new(first: T) -> Self {
+        let mut this = Self {
+            stack: Vec::new(),
+            index: 0,
+        };
+        this.stack.push(first);
+        this
+    }
+
+    /// Increments the index, pushing the item created by the closure.
+    pub fn push(&mut self, value: impl FnOnce() -> T) {
+        self.index += 1;
+        if self.index == self.stack.len() {
+            self.stack.push(value());
+        }
+    }
+
+    /// Increments the index, pushing an uninitialized item.
+    pub fn push_uninit(&mut self) {
+        self.index += 1;
+        if self.index == self.stack.len() {
+            self.stack.reserve(1);
+            unsafe { self.stack.set_len(self.stack.len() + 1) };
+        }
+    }
+
+    /// Decrements the index.
+    pub fn pop(&mut self) {
+        debug_assert!(self.index > 0);
+        self.index -= 1;
+    }
+
+    /// Returns the current item.
+    pub fn get(&mut self) -> &mut T {
+        unsafe { self.stack.get_unchecked_mut(self.index) }
+    }
+}
+
+pub(crate) fn empty_frame<T>() -> T {
+    unsafe { core::mem::MaybeUninit::uninit().assume_init() }
 }

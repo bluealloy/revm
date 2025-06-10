@@ -191,6 +191,9 @@ pub trait StackTr {
         self.len() == 0
     }
 
+    /// Clears the stack.
+    fn clear(&mut self);
+
     /// Pushes values to the stack.
     ///
     /// Returns `true` if push was successful, `false` if stack overflow.

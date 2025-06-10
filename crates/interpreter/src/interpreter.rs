@@ -24,7 +24,7 @@ use crate::{
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Address, Bytes, U256};
 
-/// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
+/// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
@@ -50,24 +50,55 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
-        let runtime_flag = RuntimeFlags {
+        let mut this = unsafe { core::mem::MaybeUninit::<Self>::uninit().assume_init() };
+        this.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            is_eof_init,
+            spec_id,
+            gas_limit,
+        );
+        this
+    }
+
+    pub fn clear(
+        &mut self,
+        memory: SharedMemory,
+        bytecode: ExtBytecode,
+        inputs: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+    ) {
+        let Self {
+            bytecode: bytecode2,
+            gas,
+            stack,
+            return_data,
+            memory: memory2,
+            input,
+            sub_routine,
+            runtime_flag,
+            extend,
+        } = self;
+        let is_eof = bytecode.is_eof();
+        *bytecode2 = bytecode;
+        *gas = Gas::new(gas_limit);
+        stack.clear();
+        return_data.0.clear();
+        *memory2 = memory;
+        *input = inputs;
+        sub_routine.clear();
+        *runtime_flag = RuntimeFlags {
             spec_id,
             is_static,
-            is_eof: bytecode.is_eof(),
+            is_eof,
             is_eof_init,
         };
-
-        Self {
-            bytecode,
-            stack: Stack::new(),
-            return_data: ReturnDataImpl::default(),
-            memory,
-            input: inputs,
-            sub_routine: SubRoutineImpl::default(),
-            gas: Gas::new(gas_limit),
-            runtime_flag,
-            extend: EXT::default(),
-        }
+        *extend = EXT::default();
     }
 
     /// Sets the bytecode that is going to be executed

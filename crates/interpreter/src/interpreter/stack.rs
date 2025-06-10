@@ -53,6 +53,11 @@ impl StackTr for Stack {
     }
 
     #[inline]
+    fn clear(&mut self) {
+        self.data.clear();
+    }
+
+    #[inline]
     fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
         if self.len() < N {
             return None;
