@@ -2,6 +2,7 @@ use crate::inspectors::GasInspector;
 use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
+    interpreter::PooledStack,
     interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
     InterpreterResult, InterpreterTypes, Stack,
@@ -205,6 +206,12 @@ impl TracerEip3155 {
 
 pub trait CloneStack {
     fn clone_into(&self, stack: &mut Vec<U256>);
+}
+
+impl CloneStack for PooledStack {
+    fn clone_into(&self, stack: &mut Vec<U256>) {
+        CloneStack::clone_into(&**self, stack);
+    }
 }
 
 impl CloneStack for Stack {

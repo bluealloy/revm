@@ -275,6 +275,7 @@ where
             FrameInput::Call(inputs),
             depth,
             Interpreter::new(
+                context.local().pull_stack().into(),
                 memory,
                 ExtBytecode::new_with_hash(bytecode, code_hash),
                 interpreter_input,
@@ -384,6 +385,7 @@ where
             FrameInput::Create(inputs),
             depth,
             Interpreter::new(
+                context.local().pull_stack().into(),
                 memory,
                 bytecode,
                 interpreter_input,
@@ -500,6 +502,7 @@ where
             FrameInput::EOFCreate(inputs),
             depth,
             Interpreter::new(
+                context.local().pull_stack().into(),
                 memory,
                 ExtBytecode::new(Bytecode::Eof(initcode)),
                 interpreter_input,

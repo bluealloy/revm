@@ -1,8 +1,11 @@
 //! Local context that is filled by execution.
 use bytecode::{CodeType, Eof};
-use context_interface::LocalContextTr;
+use context_interface::{
+    local::{LocalPool, PoolGuard},
+    LocalContextTr,
+};
 use core::cell::RefCell;
-use primitives::{keccak256, Bytes, HashMap, B256};
+use primitives::{keccak256, Bytes, HashMap, B256, U256};
 use std::{rc::Rc, vec::Vec};
 
 /// Local context that is filled by execution.
@@ -12,6 +15,8 @@ pub struct LocalContext {
     ///
     /// Used in EIP-7873 EOF - TXCREATE to fetch initcode by hash and cache its validation.
     pub initcode_mapping: HashMap<B256, Initcode>,
+    /// Pool of reusable stack buffers.
+    pub stack_pool: LocalPool<Vec<U256>>,
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
 }
@@ -20,6 +25,7 @@ impl Default for LocalContext {
     fn default() -> Self {
         Self {
             initcode_mapping: HashMap::default(),
+            stack_pool: LocalPool::new(),
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
         }
     }
@@ -46,6 +52,10 @@ impl LocalContextTr for LocalContext {
 
     fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         &self.shared_memory_buffer
+    }
+
+    fn pull_stack(&self) -> PoolGuard<Vec<U256>> {
+        self.stack_pool.pull(|| Vec::with_capacity(1024))
     }
 }
 
