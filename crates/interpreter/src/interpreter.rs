@@ -37,6 +37,9 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub sub_routine: WIRE::SubRoutineStack,
     pub runtime_flag: WIRE::RuntimeFlag,
     pub extend: WIRE::Extend,
+
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub cache: InterpreterCache,
 }
 
 impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
@@ -67,6 +70,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             gas: Gas::new(gas_limit),
             runtime_flag,
             extend: EXT::default(),
+            cache: InterpreterCache::default(),
         }
     }
 
@@ -95,6 +99,11 @@ impl Default for Interpreter<EthInterpreter> {
             u64::MAX,
         )
     }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct InterpreterCache {
+    pub selfbalance: Option<Option<U256>>,
 }
 
 /// Default types for Ethereum interpreter.

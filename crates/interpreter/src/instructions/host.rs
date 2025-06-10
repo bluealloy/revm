@@ -42,16 +42,23 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(context.interpreter, ISTANBUL);
     gas!(context.interpreter, gas::LOW);
 
-    let Some(balance) = context
-        .host
-        .balance(context.interpreter.input.target_address())
-    else {
+    let balance = context
+        .interpreter
+        .cache
+        .selfbalance
+        .get_or_insert_with(|| {
+            context
+                .host
+                .balance(context.interpreter.input.target_address())
+                .map(|load| load.data)
+        });
+    let Some(balance) = balance else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
-    push!(context.interpreter, balance.data);
+    push!(context.interpreter, *balance);
 }
 
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
