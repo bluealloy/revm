@@ -57,6 +57,7 @@ std = [
 	"interpreter/std",
 	"primitives/std",
 	"state/std",
+	"either/std"
 ]
 serde = [
 	"database/serde",
@@ -66,6 +67,7 @@ serde = [
 	"interpreter/serde",
 	"primitives/serde",
 	"state/serde",
+	"either/serde"
 ]
 
 # deprecated please use [`tracer`] feature instead
