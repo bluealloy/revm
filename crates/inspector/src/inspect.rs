@@ -16,14 +16,14 @@ pub trait InspectEvm: ExecuteEvm {
     fn set_inspector(&mut self, inspector: Self::Inspector);
 
     /// Inspect the EVM with the given transaction.
-    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
+    fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Inspect the EVM and finalize the state.
-    fn inspect_tx_finalize(
+    fn inspect_tx(
         &mut self,
         tx: Self::Tx,
     ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_tx(tx)?;
+        let output = self.inspect_one_tx(tx)?;
         let state = self.finalize();
         Ok(ResultAndState::new(output, state))
     }
@@ -46,7 +46,7 @@ pub trait InspectEvm: ExecuteEvm {
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_inspector(inspector);
-        self.inspect_tx(tx)
+        self.inspect_one_tx(tx)
     }
 }
 
@@ -58,7 +58,7 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
     /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_tx`]
     /// and commit the state diff to the database.
     fn inspect_tx_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_tx(tx)?;
+        let output = self.inspect_one_tx(tx)?;
         self.commit_inner();
         Ok(output)
     }

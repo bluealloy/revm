@@ -105,7 +105,7 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
         h.inspect_run(self)

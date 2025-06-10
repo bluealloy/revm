@@ -113,7 +113,7 @@ impl Cmd {
 
         let time = Instant::now();
         let state = if self.trace {
-            evm.inspect_tx_finalize(tx.clone())
+            evm.inspect_tx(tx.clone())
                 .map_err(|_| Errors::EVMError)?
                 .state
         } else {
