@@ -13,7 +13,7 @@ pub use input::InputsImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
-pub use stack::{Stack, STACK_LIMIT};
+pub use stack::{PooledStack, Stack, STACK_LIMIT};
 pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
@@ -41,7 +41,9 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
 
 impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     /// Create new interpreter
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
+        stack: PooledStack,
         memory: SharedMemory,
         bytecode: ExtBytecode,
         inputs: InputsImpl,
@@ -59,7 +61,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
         Self {
             bytecode,
-            stack: Stack::new(),
+            stack,
             return_data: ReturnDataImpl::default(),
             memory,
             input: inputs,
@@ -80,6 +82,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 impl Default for Interpreter<EthInterpreter> {
     fn default() -> Self {
         Interpreter::new(
+            PooledStack::new(),
             SharedMemory::new(),
             ExtBytecode::new(Bytecode::default()),
             InputsImpl {
@@ -103,7 +106,7 @@ pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
 }
 
 impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
-    type Stack = Stack;
+    type Stack = PooledStack;
     type Memory = SharedMemory;
     type Bytecode = ExtBytecode;
     type ReturnData = ReturnDataImpl;
@@ -269,6 +272,7 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
+            PooledStack::new(),
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl {

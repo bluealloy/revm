@@ -1,5 +1,6 @@
 use crate::InstructionResult;
-use core::{fmt, ptr};
+use context_interface::local::{LocalPool, PoolGuard};
+use core::{fmt, mem, ptr};
 use primitives::U256;
 use std::vec::Vec;
 
@@ -8,9 +9,94 @@ use super::StackTr;
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
+/// A pooled [`Stack`].
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+pub struct PooledStack {
+    inner: PoolGuard<Vec<U256>>,
+}
+
+impl From<PoolGuard<Vec<U256>>> for PooledStack {
+    fn from(value: PoolGuard<Vec<U256>>) -> Self {
+        debug_assert_eq!(value.capacity(), STACK_LIMIT);
+        Self { inner: value }
+    }
+}
+
+impl core::ops::Deref for PooledStack {
+    type Target = Stack;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        // SAFETY: `repr(transparent)`
+        unsafe { mem::transmute::<&Vec<U256>, &Stack>(&*self.inner) }
+    }
+}
+
+impl core::ops::DerefMut for PooledStack {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        // SAFETY: `repr(transparent)`
+        unsafe { mem::transmute::<&mut Vec<U256>, &mut Stack>(&mut *self.inner) }
+    }
+}
+
+impl StackTr for PooledStack {
+    #[inline]
+    fn len(&self) -> usize {
+        StackTr::len(&**self)
+    }
+
+    #[inline]
+    fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
+        StackTr::popn(&mut **self)
+    }
+
+    #[inline]
+    fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)> {
+        StackTr::popn_top(&mut **self)
+    }
+
+    #[inline]
+    fn exchange(&mut self, n: usize, m: usize) -> bool {
+        StackTr::exchange(&mut **self, n, m)
+    }
+
+    #[inline]
+    fn dup(&mut self, n: usize) -> bool {
+        StackTr::dup(&mut **self, n)
+    }
+
+    #[inline]
+    fn push(&mut self, value: U256) -> bool {
+        StackTr::push(&mut **self, value)
+    }
+}
+
+impl Default for PooledStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// Reset the length on drop, before putting it back into the pool.
+impl Drop for PooledStack {
+    fn drop(&mut self) {
+        self.inner.clear();
+    }
+}
+
+impl PooledStack {
+    pub fn new() -> Self {
+        Self {
+            inner: LocalPool::new().pull(|| Stack::new().into_data()),
+        }
+    }
+}
+
 /// EVM stack with [STACK_LIMIT] capacity of words.
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[repr(transparent)]
 pub struct Stack {
     /// The underlying data of the stack.
     data: Vec<U256>,
@@ -48,6 +134,7 @@ impl Clone for Stack {
 }
 
 impl StackTr for Stack {
+    #[inline]
     fn len(&self) -> usize {
         self.len()
     }
