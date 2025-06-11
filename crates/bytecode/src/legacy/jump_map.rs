@@ -135,18 +135,23 @@ mod tests {
 
     #[test]
     fn test_is_valid() {
-        let jump_table = JumpTable::from_slice(&[0x0D], 8);
+        let jump_table = JumpTable::from_slice(&[0x0D, 0x06], 13);
 
-        assert_eq!(jump_table.len, 8);
+        assert_eq!(jump_table.len, 13);
 
-        assert!(jump_table.is_valid(0));
+        assert!(jump_table.is_valid(0)); // valid
         assert!(!jump_table.is_valid(1));
-        assert!(jump_table.is_valid(2));
-        assert!(jump_table.is_valid(3));
+        assert!(jump_table.is_valid(2)); // valid
+        assert!(jump_table.is_valid(3)); // valid
         assert!(!jump_table.is_valid(4));
         assert!(!jump_table.is_valid(5));
         assert!(!jump_table.is_valid(6));
         assert!(!jump_table.is_valid(7));
+        assert!(!jump_table.is_valid(8));
+        assert!(jump_table.is_valid(9)); // valid
+        assert!(jump_table.is_valid(10)); // valid
+        assert!(!jump_table.is_valid(11));
+        assert!(!jump_table.is_valid(12));
     }
 }
 
