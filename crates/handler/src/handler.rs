@@ -1,7 +1,7 @@
 use crate::EvmTr;
 use crate::{
-    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
-    FrameResult, ItemOrResult,
+    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameResult,
+    ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
 use context::LocalContextTr;
@@ -197,9 +197,10 @@ pub trait Handler {
 
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.first_frame_init(evm, first_frame_input)?;
-        let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame)?,
+        let first_frame = frame_stack(evm).start_init();
+        let res = self.first_frame_init(first_frame, evm, first_frame_input)?;
+        let mut frame_result = match res {
+            ItemOrResult::Item(token) => self.run_exec_loop(evm, token)?,
             ItemOrResult::Result(result) => result,
         };
 
@@ -352,10 +353,11 @@ pub trait Handler {
     #[inline]
     fn first_frame_init(
         &mut self,
+        new_frame: OutFrame<'_, Self::Frame>,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Self::Frame::init_first(evm, frame_input)
+    ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
+        Self::Frame::init(None, new_frame, evm, frame_input)
     }
 
     /// Initializes a new frame from the provided frame input and previous frame.
@@ -369,7 +371,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
-        Frame::init(old_frame, new_frame, evm, frame_input)
+        Frame::init(Some(old_frame), new_frame, evm, frame_input)
     }
 
     /// Executes a frame and returns either input for a new frame or the frame's result.
@@ -407,10 +409,10 @@ pub trait Handler {
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        frame: Self::Frame,
+        token: FrameToken,
     ) -> Result<FrameResult, Self::Error> {
         let frame_stack = frame_stack::<Self::Frame>;
-        frame_stack(evm).init(frame);
+        frame_stack(evm).end_init(token);
         loop {
             let (frame, new_frame) = frame_stack(evm).get();
             let call_or_result = self.frame_call(frame, evm)?;
@@ -533,5 +535,5 @@ pub trait Handler {
 #[inline]
 fn frame_stack<'a, F: Frame<Evm: EvmTr>>(evm: &mut F::Evm) -> &'a mut FrameStack<F> {
     let f = evm.ctx_mut().local_mut().frame_stack();
-    unsafe { core::mem::transmute::<&mut FrameStack<u128>, &mut FrameStack<F>>(f) }
+    unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<F>>(f) }
 }

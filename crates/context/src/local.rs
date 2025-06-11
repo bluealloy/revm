@@ -14,7 +14,7 @@ pub struct LocalContext {
     pub initcode_mapping: HashMap<B256, Initcode>,
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
-    /// Frame stack used for managing frames during execution.
+    /// Frame stack used for pooling frames during execution.
     pub frame_stack: FrameStack<u128>,
 }
 

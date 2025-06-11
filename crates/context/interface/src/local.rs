@@ -30,15 +30,21 @@ impl<T> FrameStack<T> {
     }
 
     /// Initializes the stack with a single item.
-    pub fn init(&mut self, item: T) {
-        // debug_assert!(self.stack.is_empty(), "{}", self.stack.len());
-        // debug_assert_eq!(self.index, 0);
+    #[inline]
+    pub fn start_init(&mut self) -> OutFrame<'_, T> {
         self.index = 0;
-        if let Some(first) = self.stack.first_mut() {
-            // TODO opt
-            *first = item;
-        } else {
-            self.stack.push(item);
+        if self.stack.is_empty() {
+            self.stack.reserve(1);
+        }
+        self.out_frame_at(0)
+    }
+
+    /// Finishes initialization.
+    #[inline]
+    pub fn end_init(&mut self, token: FrameToken) {
+        token.assert();
+        if self.stack.is_empty() {
+            unsafe { self.stack.set_len(1) };
         }
     }
 
@@ -68,14 +74,16 @@ impl<T> FrameStack<T> {
     /// Returns the current item.
     #[inline]
     pub fn get(&mut self) -> (&mut T, OutFrame<'_, T>) {
-        debug_assert!(!self.stack.is_empty());
         debug_assert!(self.stack.capacity() > self.index + 1);
         unsafe {
             let ptr = self.stack.as_mut_ptr().add(self.index);
-            (
-                &mut *ptr,
-                OutFrame::new_maybe_uninit(ptr.add(1), self.index + 1 < self.stack.len()),
-            )
+            (&mut *ptr, self.out_frame_at(self.index + 1))
+        }
+    }
+
+    fn out_frame_at(&mut self, idx: usize) -> OutFrame<'_, T> {
+        unsafe {
+            OutFrame::new_maybe_uninit(self.stack.as_mut_ptr().add(idx), idx < self.stack.len())
         }
     }
 }
@@ -153,7 +161,7 @@ pub struct FrameToken(bool);
 impl FrameToken {
     /// Asserts that the frame token is initialized.
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn assert(&self) {
+    pub fn assert(self) {
         assert!(self.0, "FrameToken must be initialized before use");
     }
 }
@@ -193,7 +201,10 @@ mod tests {
     #[test]
     fn frame_stack() {
         let mut stack = FrameStack::new();
-        stack.init(1);
+        let mut frame = stack.start_init();
+        frame.get(|| 1);
+        let token = frame.consume();
+        stack.end_init(token);
 
         assert_eq!(stack.index(), 0);
         assert_eq!(stack.stack.len(), 1);

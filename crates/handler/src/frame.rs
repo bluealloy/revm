@@ -1,7 +1,7 @@
 use super::frame_data::*;
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
-    FrameInitOrResult, FrameOrResult, ItemOrResult,
+    FrameInitOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
@@ -14,7 +14,6 @@ use context_interface::{
     Cfg, Database,
 };
 use core::cmp::min;
-use core::mem::MaybeUninit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
@@ -40,14 +39,8 @@ pub trait Frame: Sized + Default {
     type FrameResult;
     type Error;
 
-    fn init_first(
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error>;
-
-    // If Item is returned, then `new_frame` was initialized.
     fn init(
-        &mut self,
+        old_frame: Option<&mut Self>,
         new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
@@ -118,31 +111,23 @@ where
     type FrameResult = FrameResult;
     type Error = ERROR;
 
-    fn init_first(
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error> {
-        let memory =
-            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        let mut this = MaybeUninit::uninit();
-        let slot = OutFrame::new_uninit(&mut this);
-        Self::init_with_context(slot, evm, 0, frame_input, memory).map(|r| {
-            r.map_frame(|token| {
-                token.assert();
-                unsafe { this.assume_init() }
-            })
-        })
-    }
-
     fn init(
-        &mut self,
+        old_frame: Option<&mut Self>,
         new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error> {
-        // Create new context from shared memory.
-        let memory = self.interpreter.memory.new_child_context();
-        Self::init_with_context(new_frame, evm, self.depth + 1, frame_input, memory)
+        let (depth, memory) = match old_frame {
+            Some(frame) => (
+                frame.depth + 1,
+                frame.interpreter.memory.new_child_context(),
+            ),
+            None => (
+                0,
+                SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone()),
+            ),
+        };
+        Self::init_with_context(new_frame, evm, depth, frame_input, memory)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {

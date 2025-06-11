@@ -1,8 +1,9 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
 use context::{
-    result::ExecutionResult, ContextTr, FrameStack, JournalEntry, LocalContextTr, Transaction,
+    result::ExecutionResult, ContextTr, FrameStack, FrameToken, JournalEntry, LocalContextTr,
+    Transaction,
 };
-use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
+use handler::{EvmTr, Frame, FrameInitOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
@@ -76,7 +77,7 @@ where
         let first_frame = self.inspect_first_frame_init(evm, first_frame_input)?;
 
         let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.inspect_run_exec_loop(evm, frame)?,
+            ItemOrResult::Item(token) => self.inspect_run_exec_loop(evm, token)?,
             ItemOrResult::Result(result) => result,
         };
 
@@ -98,21 +99,29 @@ where
         &mut self,
         evm: &mut Self::Evm,
         mut frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
+    ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
         let (ctx, inspector) = evm.ctx_inspector();
         if let Some(mut output) = frame_start(ctx, inspector, &mut frame_input) {
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }
-        let mut ret = self.first_frame_init(evm, frame_input.clone());
+
+        let frame_stack = frame_stack::<Self::Frame>;
+        let first_frame = frame_stack(evm).start_init();
+        let mut ret = self.first_frame_init(first_frame, evm, frame_input.clone());
 
         // only if new frame is created call initialize_interp hook.
-        if let Ok(ItemOrResult::Item(frame)) = &mut ret {
-            let (context, inspector) = evm.ctx_inspector();
-            inspector.initialize_interp(frame.interpreter(), context);
-        } else if let Ok(ItemOrResult::Result(result)) = &mut ret {
-            let (context, inspector) = evm.ctx_inspector();
-            frame_end(context, inspector, &frame_input, result);
+        match &mut ret {
+            Ok(ItemOrResult::Item(_)) => {
+                let interp = frame_stack(evm).get().0.interpreter();
+                let (context, inspector) = evm.ctx_inspector();
+                inspector.initialize_interp(interp, context);
+            }
+            Ok(ItemOrResult::Result(result)) => {
+                let (context, inspector) = evm.ctx_inspector();
+                frame_end(context, inspector, &frame_input, result);
+            }
+            _ => (),
         }
         ret
     }
@@ -144,10 +153,10 @@ where
     fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        frame: Self::Frame,
+        token: FrameToken,
     ) -> Result<FrameResult, Self::Error> {
         let frame_stack = frame_stack::<Self::Frame>;
-        frame_stack(evm).init(frame);
+        frame_stack(evm).end_init(token);
         loop {
             let (frame, new_frame) = frame_stack(evm).get();
             let call_or_result = self.inspect_frame_call(frame, evm)?;
@@ -333,5 +342,5 @@ where
 #[inline]
 fn frame_stack<'a, F: Frame<Evm: EvmTr>>(evm: &mut F::Evm) -> &'a mut FrameStack<F> {
     let f = evm.ctx_mut().local_mut().frame_stack();
-    unsafe { core::mem::transmute::<&mut FrameStack<u128>, &mut FrameStack<F>>(f) }
+    unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<F>>(f) }
 }
