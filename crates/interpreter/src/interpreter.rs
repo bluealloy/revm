@@ -44,42 +44,41 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     pub fn new(
         memory: SharedMemory,
         bytecode: ExtBytecode,
-        inputs: InputsImpl,
+        input: InputsImpl,
         is_static: bool,
         is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
-        let mut this = Self::default_ext();
-        this.clear(
-            memory,
-            bytecode,
-            inputs,
-            is_static,
-            is_eof_init,
-            spec_id,
-            gas_limit,
-        );
-        this
-    }
-
-    pub fn default_ext() -> Self {
+        let is_eof = bytecode.is_eof();
         Self {
-            bytecode: Default::default(),
-            gas: Gas::new(u64::MAX),
+            bytecode,
+            gas: Gas::new(gas_limit),
             stack: Default::default(),
             return_data: Default::default(),
-            memory: Default::default(),
-            input: Default::default(),
+            memory,
+            input,
             sub_routine: Default::default(),
             runtime_flag: RuntimeFlags {
-                is_static: false,
-                is_eof_init: false,
-                is_eof: false,
-                spec_id: Default::default(),
+                is_static,
+                is_eof_init,
+                is_eof,
+                spec_id,
             },
             extend: Default::default(),
         }
+    }
+
+    pub fn default_ext() -> Self {
+        Self::new(
+            SharedMemory::default(),
+            ExtBytecode::default(),
+            InputsImpl::default(),
+            false,
+            false,
+            SpecId::default(),
+            u64::MAX,
+        )
     }
 
     pub fn clear(

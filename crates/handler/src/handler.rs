@@ -411,14 +411,14 @@ pub trait Handler {
     ) -> Result<FrameResult, Self::Error> {
         let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let (frame, new_frame) = frame_stack.get();
+            let (frame, new_frame) = frame_stack.get(Default::default);
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
                     match self.frame_init(frame, new_frame, evm, init)? {
                         ItemOrResult::Item(()) => {
-                            frame_stack.push(Default::default);
+                            frame_stack.push();
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -427,15 +427,15 @@ pub trait Handler {
                 }
                 ItemOrResult::Result(result) => {
                     // Remove the frame that returned the result
+                    if frame_stack.index() == 0 {
+                        return Ok(result);
+                    }
                     frame_stack.pop();
                     result
                 }
             };
 
-            if frame_stack.index == 0 {
-                return Ok(result);
-            }
-            self.frame_return_result(frame_stack.get().0, evm, result)?;
+            self.frame_return_result(frame_stack.get(Default::default).0, evm, result)?;
         }
     }
 
@@ -553,30 +553,52 @@ impl<T> FrameStack<T> {
         self.index
     }
 
-    /// Increments the index, pushing the item created by the closure if needed.
+    /// Increments the index.
     #[inline]
-    pub fn push(&mut self, init: impl Fn() -> T) {
+    pub fn push(&mut self) {
         self.index += 1;
-        while self.index < self.stack.len() {
-            self.stack.push(init());
-        }
     }
 
     /// Decrements the index.
     #[inline]
     pub fn pop(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        }
+        self.index -= 1;
     }
 
     /// Returns the current and the next item.
     #[inline]
-    pub fn get(&mut self) -> (&mut T, &mut T) {
-        debug_assert!(self.stack.capacity() > self.index + 1);
+    pub fn get(&mut self, init: impl Fn() -> T) -> (&mut T, &mut T) {
+        while self.stack.len() <= self.index + 1 {
+            self.stack.push(init());
+        }
         unsafe {
             let ptr = self.stack.as_mut_ptr().add(self.index);
             (&mut *ptr, &mut *ptr.add(1))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn frame_stack() {
+        let mut stack = FrameStack::new(1);
+        assert_eq!(stack.index(), 0);
+        assert_eq!(stack.stack.len(), 1);
+        assert_eq!(stack.get(|| 2).0, &mut 1);
+        assert_eq!(stack.get(|| 2).1, &mut 2);
+        assert_eq!(stack.stack.len(), 2);
+        stack.push();
+        assert_eq!(stack.index(), 1);
+        assert_eq!(stack.get(|| 3).0, &mut 2);
+        assert_eq!(stack.get(|| 3).1, &mut 3);
+        assert_eq!(stack.stack.len(), 3);
+        stack.pop();
+        assert_eq!(stack.index(), 0);
+        assert_eq!(stack.get(|| 4).0, &mut 1);
+        assert_eq!(stack.get(|| 4).1, &mut 2);
+        assert_eq!(stack.stack.len(), 3);
     }
 }

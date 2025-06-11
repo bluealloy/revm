@@ -149,7 +149,7 @@ where
     ) -> Result<FrameResult, Self::Error> {
         let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let (frame, new_frame) = frame_stack.get();
+            let (frame, new_frame) = frame_stack.get(Default::default);
             let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
@@ -164,7 +164,7 @@ where
                                 // only if new frame is created call initialize_interp hook.
                                 let (context, inspector) = evm.ctx_inspector();
                                 inspector.initialize_interp(new_frame.interpreter(), context);
-                                frame_stack.push(Default::default);
+                                frame_stack.push();
                                 continue;
                             }
                             // Dont pop the frame as new frame was not created.
@@ -180,16 +180,16 @@ where
                     let (context, inspector) = evm.ctx_inspector();
                     frame_end(context, inspector, frame.frame_input(), &mut result);
 
-                    // Pop frame that returned result
+                    // Remove the frame that returned the result
+                    if frame_stack.index() == 0 {
+                        return Ok(result);
+                    }
                     frame_stack.pop();
                     result
                 }
             };
 
-            if frame_stack.index() == 0 {
-                return Ok(result);
-            }
-            self.frame_return_result(frame_stack.get().0, evm, result)?;
+            self.frame_return_result(frame_stack.get(Default::default).0, evm, result)?;
         }
     }
 }

@@ -337,7 +337,7 @@ where
             ExtBytecode::new_with_hash(bytecode, code_hash),
             interpreter_input,
             is_static,
-            is_ext_delegate_call,
+            false,
             context.cfg().spec().into(),
             gas_limit,
             checkpoint,
