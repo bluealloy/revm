@@ -26,6 +26,12 @@ impl Deref for ExtBytecode {
     }
 }
 
+impl Default for ExtBytecode {
+    fn default() -> Self {
+        Self::new(Bytecode::default())
+    }
+}
+
 impl ExtBytecode {
     /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
     pub fn new(base: Bytecode) -> Self {

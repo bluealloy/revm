@@ -85,3 +85,9 @@ pub enum CreateScheme {
         address: Address,
     },
 }
+
+impl Default for CreateScheme {
+    fn default() -> Self {
+        CreateScheme::Create
+    }
+}

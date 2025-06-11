@@ -32,7 +32,7 @@ use std::borrow::ToOwned;
 use std::{boxed::Box, sync::Arc};
 
 /// Call frame trait
-pub trait Frame: Sized {
+pub trait Frame: Sized + Default {
     type Evm;
     type FrameInit;
     type FrameResult;
@@ -74,6 +74,21 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     pub interpreter: Interpreter<IW>,
 }
 
+impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
+    fn default() -> Self {
+        Self {
+            phantom: core::marker::PhantomData,
+            data: FrameData::Call(CallFrame {
+                return_memory_range: 0..0,
+            }),
+            input: FrameInput::Create(Box::default()),
+            depth: 0,
+            checkpoint: JournalCheckpoint::default(),
+            interpreter: Interpreter::default(),
+        }
+    }
+}
+
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
@@ -96,7 +111,7 @@ where
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         let memory =
             SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        let mut this = crate::handler::empty_frame::<Self>();
+        let mut this = Self::default();
         this.init_with_context(evm, 0, frame_input, memory)
             .map(|r| r.map_frame(|()| this))
     }

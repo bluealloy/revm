@@ -418,7 +418,7 @@ pub trait Handler {
                 ItemOrResult::Item(init) => {
                     match self.frame_init(frame, new_frame, evm, init)? {
                         ItemOrResult::Item(()) => {
-                            frame_stack.push();
+                            frame_stack.push(Default::default);
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -553,21 +553,21 @@ impl<T> FrameStack<T> {
         self.index
     }
 
-    /// Increments the index, pushing an uninitialized item.
+    /// Increments the index, pushing the item created by the closure if needed.
     #[inline]
-    pub fn push(&mut self) {
+    pub fn push(&mut self, init: impl Fn() -> T) {
         self.index += 1;
-        if self.index == self.stack.len() {
-            self.stack.reserve(1);
-            unsafe { self.stack.set_len(self.stack.len() + 1) };
+        while self.index < self.stack.len() {
+            self.stack.push(init());
         }
     }
 
     /// Decrements the index.
     #[inline]
     pub fn pop(&mut self) {
-        debug_assert!(self.index > 0);
-        self.index -= 1;
+        if self.index > 0 {
+            self.index -= 1;
+        }
     }
 
     /// Returns the current and the next item.
@@ -579,8 +579,4 @@ impl<T> FrameStack<T> {
             (&mut *ptr, &mut *ptr.add(1))
         }
     }
-}
-
-pub(crate) fn empty_frame<T>() -> T {
-    unsafe { core::mem::MaybeUninit::uninit().assume_init() }
 }

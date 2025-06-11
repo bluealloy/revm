@@ -18,11 +18,11 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, CallInput, Gas,
-    Host, InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
-use primitives::{hardfork::SpecId, Address, Bytes, U256};
+use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
@@ -50,7 +50,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
-        let mut this = unsafe { core::mem::MaybeUninit::<Self>::uninit().assume_init() };
+        let mut this = Self::default_ext();
         this.clear(
             memory,
             bytecode,
@@ -61,6 +61,25 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             gas_limit,
         );
         this
+    }
+
+    pub fn default_ext() -> Self {
+        Self {
+            bytecode: Default::default(),
+            gas: Gas::new(u64::MAX),
+            stack: Default::default(),
+            return_data: Default::default(),
+            memory: Default::default(),
+            input: Default::default(),
+            sub_routine: Default::default(),
+            runtime_flag: RuntimeFlags {
+                is_static: false,
+                is_eof_init: false,
+                is_eof: false,
+                spec_id: Default::default(),
+            },
+            extend: Default::default(),
+        }
     }
 
     pub fn clear(
@@ -110,21 +129,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
 impl Default for Interpreter<EthInterpreter> {
     fn default() -> Self {
-        Interpreter::new(
-            SharedMemory::new(),
-            ExtBytecode::new(Bytecode::default()),
-            InputsImpl {
-                target_address: Address::ZERO,
-                bytecode_address: None,
-                caller_address: Address::ZERO,
-                input: CallInput::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        )
+        Self::default_ext()
     }
 }
 
@@ -296,19 +301,13 @@ mod tests {
     fn test_interpreter_serde() {
         use super::*;
         use bytecode::Bytecode;
-        use primitives::{Address, Bytes, U256};
+        use primitives::Bytes;
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                bytecode_address: None,
-                input: CallInput::Bytes(Bytes::default()),
-                call_value: U256::ZERO,
-            },
+            InputsImpl::default(),
             false,
             false,
             SpecId::default(),
