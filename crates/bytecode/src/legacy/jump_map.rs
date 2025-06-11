@@ -5,15 +5,23 @@ use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
 #[derive(Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct JumpTable {
     /// Actual bit vec
     pub table: Arc<BitVec<u8>>,
     /// Fast pointer that skips Arc overhead
-    #[cfg_attr(feature = "serde", serde(skip))]
     cached: *const u8,
     /// Number of bits in the table
     pub len: usize,
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for JumpTable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.table.serialize(serializer)
+    }
 }
 
 #[cfg(feature = "serde")]
