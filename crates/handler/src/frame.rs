@@ -83,6 +83,7 @@ impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
 }
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter> {
+    #[inline]
     fn empty() -> Self {
         Self::do_default(Interpreter::empty())
     }

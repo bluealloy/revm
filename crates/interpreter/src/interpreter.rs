@@ -73,6 +73,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         Self::do_default(SharedMemory::new())
     }
 
+    #[inline]
     pub fn empty() -> Self {
         Self::do_default(SharedMemory::empty())
     }
