@@ -33,7 +33,10 @@ impl<T> LocalPool<T> {
     /// Pulls a value from the pool, or initializes a new one using the provided function.
     pub fn pull(&self, init: impl FnOnce() -> T) -> PoolGuard<T> {
         let pool = self.clone();
-        let val = pool.0.borrow_mut().pop().unwrap_or_else(init);
+        let val = match pool.0.borrow_mut().pop() {
+            Some(val) => val,
+            None => init(),
+        };
         PoolGuard::new(pool, val)
     }
 
