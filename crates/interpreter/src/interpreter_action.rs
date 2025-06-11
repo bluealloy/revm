@@ -24,6 +24,7 @@ pub enum FrameInput {
     Create(Box<CreateInputs>),
     /// EOF `CREATE` instruction called.
     EOFCreate(Box<EOFCreateInputs>),
+    Empty,
 }
 
 impl AsMut<Self> for FrameInput {

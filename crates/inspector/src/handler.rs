@@ -215,6 +215,7 @@ pub fn frame_start<CTX, INTR: InterpreterTypes>(
                 return Some(FrameResult::EOFCreate(output));
             }
         }
+        FrameInput::Empty => unreachable!(),
     }
     None
 }

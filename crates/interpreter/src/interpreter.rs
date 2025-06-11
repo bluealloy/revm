@@ -71,7 +71,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     pub fn default_ext() -> Self {
         Self::new(
-            SharedMemory::default(),
+            SharedMemory::empty(),
             ExtBytecode::default(),
             InputsImpl::default(),
             false,

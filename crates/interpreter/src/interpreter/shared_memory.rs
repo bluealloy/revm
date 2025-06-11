@@ -108,6 +108,12 @@ impl SharedMemory {
         Self::with_capacity(4 * 1024) // from evmone
     }
 
+    /// Creates a new empty memory instance that can be shared between calls.
+    #[inline]
+    pub fn empty() -> Self {
+        Self::with_capacity(0)
+    }
+
     /// Creates a new memory instance with a given shared buffer.
     pub fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
         Self {

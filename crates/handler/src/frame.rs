@@ -81,7 +81,7 @@ impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
             data: FrameData::Call(CallFrame {
                 return_memory_range: 0..0,
             }),
-            input: FrameInput::Create(Box::default()),
+            input: FrameInput::Empty,
             depth: 0,
             checkpoint: JournalCheckpoint::default(),
             interpreter: Interpreter::default(),
@@ -580,6 +580,7 @@ where
             FrameInput::Call(inputs) => self.make_call_frame(evm, depth, memory, inputs),
             FrameInput::Create(inputs) => self.make_create_frame(evm, depth, memory, inputs),
             FrameInput::EOFCreate(inputs) => self.make_eofcreate_frame(evm, depth, memory, inputs),
+            FrameInput::Empty => unreachable!(),
         }
     }
 }
