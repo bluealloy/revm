@@ -25,7 +25,7 @@ jobs:
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
-        run: cargo codspeed build --profile profiling --workspace
+        run: cargo codspeed build --profile profiling --workspace --exclude '*example*' --exclude op-revm
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v3
         with:

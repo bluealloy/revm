@@ -11,6 +11,7 @@ use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
+use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Trait for the halt reason.
@@ -21,17 +22,20 @@ impl<T> HaltReasonTr for T where T: Clone + Debug + PartialEq + Eq + From<HaltRe
 /// Tuple containing evm execution result and state.s
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<R, S> {
+pub struct ExecResultAndState<R, S = EvmState> {
     /// Execution result
     pub result: R,
     /// Output State.
     pub state: S,
 }
 
-/// Tuple containing multiple execution results and state.
-pub type ResultVecAndState<R, S> = ResultAndState<Vec<R>, S>;
+/// Type alias for backwards compatibility.
+pub type ResultAndState<H = HaltReason> = ExecResultAndState<ExecutionResult<H>>;
 
-impl<R, S> ResultAndState<R, S> {
+/// Tuple containing multiple execution results and state.
+pub type ResultVecAndState<R, S> = ExecResultAndState<Vec<R>, S>;
+
+impl<R, S> ExecResultAndState<R, S> {
     /// Creates new ResultAndState.
     pub fn new(result: R, state: S) -> Self {
         Self { result, state }

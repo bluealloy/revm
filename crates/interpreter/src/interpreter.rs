@@ -162,6 +162,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         self.bytecode = ExtBytecode::new(bytecode);
         self
     }
+
+    /// Sets the specid for the interpreter.
+    pub fn set_spec_id(&mut self, spec_id: SpecId) {
+        self.runtime_flag.spec_id = spec_id;
+    }
 }
 
 impl Default for Interpreter<EthInterpreter> {

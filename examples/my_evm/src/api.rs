@@ -1,7 +1,7 @@
 use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
     context::{
-        result::{HaltReason, InvalidTransaction, ResultAndState},
+        result::{ExecResultAndState, HaltReason, InvalidTransaction},
         ContextSetters,
     },
     context_interface::{
@@ -35,7 +35,7 @@ where
         self.0.ctx.set_block(block);
     }
 
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut handler = MyHandler::default();
         handler.run(self)
@@ -47,11 +47,11 @@ where
 
     fn replay(
         &mut self,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let mut handler = MyHandler::default();
         handler.run(self).map(|result| {
             let state = self.finalize();
-            ResultAndState::new(result, state)
+            ExecResultAndState::new(result, state)
         })
     }
 }
@@ -78,7 +78,7 @@ where
         self.0.inspector = inspector;
     }
 
-    fn inspect_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
         let mut handler = MyHandler::default();
         handler.inspect_run(self)

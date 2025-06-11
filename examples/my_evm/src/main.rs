@@ -22,7 +22,7 @@ pub fn main() {
 
     // Evm Execute example
     let mut my_evm = MyEvm::new(Context::mainnet(), ());
-    let _result = my_evm.transact(TxEnv::default());
+    let _result = my_evm.transact_one(TxEnv::default());
     // or if you want to obtain the state by finalizing execution
     let _state = my_evm.finalize();
 
