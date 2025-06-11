@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    let output = evm.transact_finalize(TxEnv {
+    let output = evm.transact(TxEnv {
         kind: TxKind::Call(address),
         data: Default::default(),
         nonce: 1,

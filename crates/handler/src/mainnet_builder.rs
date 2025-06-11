@@ -98,7 +98,7 @@ mod test {
         let mut evm = ctx.build_mainnet();
 
         let state = evm
-            .transact_finalize(TxEnv {
+            .transact(TxEnv {
                 tx_type: TransactionType::Eip7702.into(),
                 gas_limit: 100_000,
                 authorization_list: vec![Either::Left(auth)],

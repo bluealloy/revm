@@ -3,8 +3,8 @@ use crate::{
 };
 use context::{
     result::{
-        EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState,
-        ResultVecAndState,
+        EVMError, ExecResultAndState, ExecutionResult, HaltReason, InvalidTransaction,
+        ResultAndState, ResultVecAndState,
     },
     Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
@@ -36,7 +36,7 @@ pub trait ExecuteEvm {
     ///
     /// # Error Handling
     /// If the transaction fails, the journal will revert all changes of given transaction.
-    /// For quicker error handling, use [`ExecuteEvm::transact_finalize`] that will drop the journal.
+    /// For quicker error handling, use [`ExecuteEvm::transact`] that will drop the journal.
     ///
     /// # State Management
     /// State changes are stored in the internal journal.
@@ -45,7 +45,7 @@ pub trait ExecuteEvm {
     /// # History Note
     /// Previously this function returned both output and state.
     /// Now it follows a two-step process: execute then finalize.
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Finalize execution, clearing the journal and returning the accumulated state changes.
     ///
@@ -60,15 +60,15 @@ pub trait ExecuteEvm {
     /// # Outcome of Error
     ///
     /// If the transaction fails, the journal is considered broken.
-    fn transact_finalize(
+    fn transact(
         &mut self,
         tx: Self::Tx,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output_or_error = self.transact(tx);
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output_or_error = self.transact_one(tx);
         // finalize will clear the journal
         let state = self.finalize();
         let output = output_or_error?;
-        Ok(ResultAndState::new(output, state))
+        Ok(ExecResultAndState::new(output, state))
     }
 
     /// Execute multiple transactions without finalizing the state.
@@ -81,13 +81,13 @@ pub trait ExecuteEvm {
     /// If any transaction fails, the journal is finalized and the last error is returned.
     ///
     /// TODO add tx index to the error.
-    fn transact_multi(
+    fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let mut outputs = Vec::new();
         for tx in txs {
-            outputs.push(self.transact(tx).inspect_err(|_| {
+            outputs.push(self.transact_one(tx).inspect_err(|_| {
                 let _ = self.finalize();
             })?);
         }
@@ -96,23 +96,24 @@ pub trait ExecuteEvm {
 
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
-    /// Internally calls [`ExecuteEvm::transact_multi`] followed by [`ExecuteEvm::finalize`].
+    /// Internally calls [`ExecuteEvm::transact_many`] followed by [`ExecuteEvm::finalize`].
     //#[allow(clippy::type_complexity)]
-    fn transact_multi_finalize(
+    fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         // on error transact_multi will clear the journal
-        let result = self.transact_multi(txs)?;
+        let result = self.transact_many(txs)?;
         let state = self.finalize();
-        Ok(ResultAndState::new(result, state))
+        Ok(ExecResultAndState::new(result, state))
     }
 
     /// Execute previous transaction and finalize it.
     ///
     /// Doint it without finalization
-    fn replay(&mut self)
-        -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
+    fn replay(
+        &mut self,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
 }
 
 /// Extension of the [`ExecuteEvm`] trait that adds a method that commits the state after execution.
@@ -130,7 +131,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
     /// Transact the transaction and commit to the state.
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.transact(tx)?;
+        let output = self.transact_one(tx)?;
         self.commit_inner();
         Ok(output)
     }
@@ -138,11 +139,11 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Transact multiple transactions and commit to the state.
     ///
     /// Internally calls `transact_multi` and `commit` functions.
-    fn transact_multi_commit(
+    fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
-        let outputs = self.transact_multi(txs)?;
+        let outputs = self.transact_many(txs)?;
         self.commit_inner();
         Ok(outputs)
     }
@@ -169,7 +170,7 @@ where
     type Tx = <CTX as ContextTr>::Tx;
     type Block = <CTX as ContextTr>::Block;
 
-    fn transact(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self)
@@ -183,9 +184,7 @@ where
         self.ctx.set_block(block);
     }
 
-    fn replay(
-        &mut self,
-    ) -> Result<ResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
         t.run(self).map(|result| {
             let state = self.finalize();

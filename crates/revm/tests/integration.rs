@@ -34,7 +34,7 @@ fn test_selfdestruct_multi_tx() {
 
     // trigger selfdestruct
     let result1 = evm
-        .transact(TxEnv::builder_for_bench().build_fill())
+        .transact_one(TxEnv::builder_for_bench().build_fill())
         .unwrap();
 
     let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
@@ -49,7 +49,7 @@ fn test_selfdestruct_multi_tx() {
 
     // call on destroyed account. This accounts gets loaded and should contain empty code_hash afterwards.
     let result2 = evm
-        .transact(TxEnv::builder_for_bench().nonce(1).build_fill())
+        .transact_one(TxEnv::builder_for_bench().nonce(1).build_fill())
         .unwrap();
 
     let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
@@ -77,7 +77,7 @@ pub fn test_multi_tx_create() {
         .build_mainnet();
 
     let result1 = evm
-        .transact(
+        .transact_one(
             TxEnv::builder_for_bench()
                 .kind(TxKind::Create)
                 .data(deployment_contract(SELFDESTRUCT_BYTECODE))
@@ -103,7 +103,7 @@ pub fn test_multi_tx_create() {
     );
 
     let result2 = evm
-        .transact(
+        .transact_one(
             TxEnv::builder_for_bench()
                 .nonce(1)
                 .kind(TxKind::Call(created_address))
@@ -139,7 +139,7 @@ pub fn test_multi_tx_create() {
 
     // re create the contract.
     let result3 = evm
-        .transact(
+        .transact_one(
             TxEnv::builder_for_bench()
                 .nonce(0)
                 .kind(TxKind::Create)

@@ -29,7 +29,7 @@ pub fn run(criterion: &mut Criterion) {
                 tx.clone()
             },
             |input| {
-                let _ = evm.transact(input);
+                let _ = evm.transact_one(input);
             },
             criterion::BatchSize::SmallInput,
         );

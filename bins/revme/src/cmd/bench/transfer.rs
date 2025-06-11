@@ -34,7 +34,7 @@ pub fn run(criterion: &mut Criterion) {
             },
             |input| {
                 i += 1;
-                evm.transact(input).unwrap();
+                evm.transact_one(input).unwrap();
             },
             criterion::BatchSize::SmallInput,
         );

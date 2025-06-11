@@ -545,7 +545,7 @@ where
         PrecompileT::default(),
     );
 
-    let state = evm.inspect_tx_finalize(tx)?.state;
+    let state = evm.inspect_tx(tx)?.state;
 
     // Persist the changes to the original backend.
     backend.journaled_state.database.commit(state);
@@ -598,7 +598,7 @@ fn main() -> anyhow::Result<()> {
         EthInstructions::default(),
         EthPrecompiles::default(),
     );
-    evm.inspect_tx_finalize(tx)?;
+    evm.inspect_tx(tx)?;
 
     // Sanity check
     assert_eq!(evm.inspector.call_count, 2);

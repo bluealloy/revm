@@ -20,6 +20,15 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
     *op2 = U256::from(op1 > *op2);
 }
 
+pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, OSAKA);
+    gas!(context.interpreter, gas::VERYLOW);
+    popn_top!([], op1, context.interpreter);
+
+    let leading_zeros = op1.leading_zeros();
+    *op1 = U256::from(leading_zeros);
+}
+
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -135,10 +144,10 @@ pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 mod tests {
     use crate::{
         host::DummyHost,
-        instructions::bitwise::{byte, sar, shl, shr},
+        instructions::bitwise::{byte, clz, sar, shl, shr},
         InstructionContext, Interpreter,
     };
-    use primitives::{uint, U256};
+    use primitives::{hardfork::SpecId, uint, U256};
 
     #[test]
     fn test_shift_left() {
@@ -449,6 +458,63 @@ mod tests {
             byte(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected, "Failed at index: {}", test.index);
+        }
+    }
+
+    #[test]
+    fn test_clz() {
+        let mut interpreter = Interpreter::default();
+        interpreter.set_spec_id(SpecId::OSAKA);
+
+        struct TestCase {
+            value: U256,
+            expected: U256,
+        }
+
+        uint! {
+            let test_cases = [
+                TestCase { value: 0x0_U256, expected: 256_U256 },
+                TestCase { value: 0x1_U256, expected: 255_U256 },
+                TestCase { value: 0x2_U256, expected: 254_U256 },
+                TestCase { value: 0x3_U256, expected: 254_U256 },
+                TestCase { value: 0x4_U256, expected: 253_U256 },
+                TestCase { value: 0x7_U256, expected: 253_U256 },
+                TestCase { value: 0x8_U256, expected: 252_U256 },
+                TestCase { value: 0xff_U256, expected: 248_U256 },
+                TestCase { value: 0x100_U256, expected: 247_U256 },
+                TestCase { value: 0xffff_U256, expected: 240_U256 },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256, // U256::MAX
+                    expected: 0_U256,
+                },
+                TestCase {
+                    value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256, // 1 << 255
+                    expected: 0_U256,
+                },
+                TestCase { // Smallest value with 1 leading zero
+                    value: 0x4000000000000000000000000000000000000000000000000000000000000000_U256, // 1 << 254
+                    expected: 1_U256,
+                },
+                TestCase { // Value just below 1 << 255
+                    value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    expected: 1_U256,
+                },
+            ];
+        }
+
+        for test in test_cases {
+            push!(interpreter, test.value);
+            let context = InstructionContext {
+                host: &mut DummyHost,
+                interpreter: &mut interpreter,
+            };
+            clz(context);
+            let res = interpreter.stack.pop().unwrap();
+            assert_eq!(
+                res, test.expected,
+                "CLZ for value {:#x} failed. Expected: {}, Got: {}",
+                test.value, test.expected, res
+            );
         }
     }
 }
