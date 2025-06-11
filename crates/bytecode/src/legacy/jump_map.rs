@@ -9,7 +9,7 @@ pub struct JumpTable {
     /// Actual bit vec
     pub table: Arc<BitVec<u8>>,
     /// Fast pointer that skips Arc overhead
-    cached: *const u8,
+    table_ptr: *const u8,
     /// Number of bits in the table
     pub len: usize,
 }
@@ -61,10 +61,14 @@ impl JumpTable {
     /// Create new JumpTable directly from an existing BitVec.
     pub fn new(jumps: BitVec<u8>) -> Self {
         let table = Arc::new(jumps);
-        let cached = table.as_raw_slice().as_ptr();
+        let table_ptr = table.as_raw_slice().as_ptr();
         let len = table.len();
 
-        Self { table, cached, len }
+        Self {
+            table,
+            table_ptr,
+            len,
+        }
     }
 
     /// Gets the raw bytes of the jump map.
@@ -93,17 +97,21 @@ impl JumpTable {
         unsafe { bitvec.set_len(bit_len) };
 
         let table = Arc::new(bitvec);
-        let cached = table.as_raw_slice().as_ptr();
+        let table_ptr = table.as_raw_slice().as_ptr();
         let len = table.len();
 
-        Self { table, cached, len }
+        Self {
+            table,
+            table_ptr,
+            len,
+        }
     }
 
     /// Checks if `pc` is a valid jump destination.
     /// Uses cached pointer and bit operations for faster access
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.len && unsafe { *self.cached.add(pc >> 3) & (1 << (pc & 7)) != 0 }
+        pc < self.len && unsafe { *self.table_ptr.add(pc >> 3) & (1 << (pc & 7)) != 0 }
     }
 }
 
@@ -219,7 +227,6 @@ mod bench_is_valid {
             table.is_valid(pc)
         });
 
-        // Performance assertions
         println!("Benchmark completed successfully!");
     }
 
