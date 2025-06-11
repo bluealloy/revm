@@ -319,7 +319,7 @@ mod tests {
         Context,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Address, Bytes, TxKind};
+    use primitives::{address, eip3860, hardfork::SpecId, Address, Bytes, TxKind};
 
     fn deploy_contract(
         bytecode: Bytes,
@@ -360,100 +360,6 @@ mod tests {
         let bytecode: Bytes = large_bytecode.into();
         let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
-    }
-
-    #[test]
-    fn test_eip7907_initcode_size_limit_failure_osaka() {
-        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE + 1];
-        let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(
-            result,
-            Err(EVMError::Transaction(
-                InvalidTransaction::CreateInitCodeSizeLimit
-            ))
-        ));
-    }
-
-    #[test]
-    fn test_eip7907_initcode_size_limit_success_osaka() {
-        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE];
-        let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
-    }
-
-    #[test]
-    fn test_eip7907_code_size_limit_failure() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000
-        // use the simplest method to return a contract code size greater than 0x40000
-        // PUSH3 0x40001 (greater than 0x40000) - return size
-        // PUSH1 0x00 - memory position 0
-        // RETURN - return uninitialized memory, will be filled with 0
-        let init_code = vec![
-            0x62, 0x04, 0x00, 0x01, // PUSH3 0x40001 (greater than 0x40000)
-            0x60, 0x00, // PUSH1 0
-            0xf3, // RETURN
-        ];
-        let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(
-            result,
-            Ok(ExecutionResult::Halt {
-                reason: HaltReason::CreateContractSizeLimit,
-                ..
-            },)
-        ));
-    }
-
-    #[test]
-    fn test_eip7907_code_size_limit_success() {
-        // EIP-7907: MAX_CODE_SIZE = 0x18000 so we are testing that 0xC000 is not too large
-        // PUSH3 0x00C000 - return size
-        // PUSH1 0x00 - memory position 0
-        // RETURN - return uninitialized memory, will be filled with 0
-        let init_code = vec![
-            opcode::PUSH3, // PUSH3 0xC000
-            0x00,
-            0xc0,
-            0x00,
-            opcode::PUSH1, // PUSH1 0
-            0x00,
-            opcode::RETURN, // RETURN
-        ];
-        let bytecode: Bytes = init_code.clone().into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        println!("{:?}", result);
-        assert!(
-            matches!(result, Ok(ExecutionResult::Success { .. },)),
-            "{:?}",
-            result
-        );
-    }
-
-    #[test]
-    fn eip7907_code_size_limit_size_halt() {
-        // EIP-7907: MAX_CODE_SIZE = 0x18000 so we are testing that 0xC000 is not too large
-        // PUSH3 0x00C000 - return size
-        // PUSH1 0x00 - memory position 0
-        // RETURN - return uninitialized memory, will be filled with 0
-        let init_code = vec![
-            opcode::PUSH3, // PUSH3 0xC000
-            0x00,
-            0xc0,
-            0x01,
-            opcode::PUSH1, // PUSH1 0
-            0x00,
-            opcode::RETURN, // RETURN
-        ];
-
-        let bytecode = init_code.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(
-            matches!(result, Ok(ExecutionResult::Halt { .. },)),
-            "{:?}",
-            result
-        );
     }
 
     #[test]

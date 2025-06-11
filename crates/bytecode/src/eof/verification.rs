@@ -5,7 +5,7 @@ use crate::{
     opcode::{self, OPCODE_INFO},
     utils::{read_i16, read_u16},
 };
-use primitives::{constants::STACK_LIMIT, eip7907, Bytes};
+use primitives::{constants::STACK_LIMIT, eip3860, Bytes};
 
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, vec, vec::Vec};
@@ -21,7 +21,7 @@ pub fn validate_raw_eof_inner(
     raw: Bytes,
     first_code_type: Option<CodeType>,
 ) -> Result<Eof, EofError> {
-    if raw.len() > eip7907::MAX_INITCODE_SIZE {
+    if raw.len() > eip3860::MAX_INITCODE_SIZE {
         return Err(EofError::Decode(EofDecodeError::InvalidEOFSize));
     }
     let eof = Eof::decode(raw)?;
