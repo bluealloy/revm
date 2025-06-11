@@ -365,10 +365,10 @@ pub trait Handler {
     fn frame_init(
         &mut self,
         old_frame: &mut Self::Frame,
-        new_frame: &mut Self::Frame,
+        new_frame: OutFrame<'_, Self::Frame>,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<ItemOrResult<(), <Self::Frame as Frame>::FrameResult>, Self::Error> {
+    ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
         Frame::init(old_frame, new_frame, evm, frame_input)
     }
 
@@ -411,14 +411,14 @@ pub trait Handler {
     ) -> Result<FrameResult, Self::Error> {
         let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
         loop {
-            let (frame, new_frame) = frame_stack.get(Default::default);
+            let (frame, new_frame) = frame_stack.get();
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
                     match self.frame_init(frame, new_frame, evm, init)? {
-                        ItemOrResult::Item(()) => {
-                            frame_stack.push();
+                        ItemOrResult::Item(token) => {
+                            frame_stack.push(token);
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -435,7 +435,7 @@ pub trait Handler {
                 }
             };
 
-            self.frame_return_result(frame_stack.get(Default::default).0, evm, result)?;
+            self.frame_return_result(frame_stack.get().0, evm, result)?;
         }
     }
 
@@ -555,7 +555,12 @@ impl<T> FrameStack<T> {
 
     /// Increments the index.
     #[inline]
-    pub fn push(&mut self) {
+    pub fn push(&mut self, token: FrameToken) {
+        token.assert();
+        if self.index + 1 == self.stack.len() {
+            unsafe { self.stack.set_len(self.stack.len() + 1) };
+            self.stack.reserve(1);
+        }
         self.index += 1;
     }
 
@@ -565,16 +570,75 @@ impl<T> FrameStack<T> {
         self.index -= 1;
     }
 
-    /// Returns the current and the next item.
+    /// Returns the current item.
     #[inline]
-    pub fn get(&mut self, init: impl Fn() -> T) -> (&mut T, &mut T) {
-        while self.stack.len() <= self.index + 1 {
-            self.stack.push(init());
-        }
+    pub fn get(&mut self) -> (&mut T, OutFrame<'_, T>) {
         unsafe {
             let ptr = self.stack.as_mut_ptr().add(self.index);
-            (&mut *ptr, &mut *ptr.add(1))
+            (
+                &mut *ptr,
+                OutFrame::new_maybe_uninit(ptr.add(1), self.index + 1 < self.stack.len()),
+            )
         }
+    }
+}
+
+/// A potentially initialized frame. Used when initializing a new frame in the main loop.
+pub struct OutFrame<'a, T> {
+    ptr: *mut T,
+    init: bool,
+    lt: core::marker::PhantomData<&'a mut T>,
+}
+
+impl<'a, T> OutFrame<'a, T> {
+    pub fn new_init(slot: &'a mut T) -> Self {
+        unsafe { Self::new_maybe_uninit(slot, true) }
+    }
+
+    pub fn new_uninit(slot: &'a mut core::mem::MaybeUninit<T>) -> Self {
+        unsafe { Self::new_maybe_uninit(slot.as_mut_ptr(), false) }
+    }
+
+    pub unsafe fn new_maybe_uninit(ptr: *mut T, init: bool) -> Self {
+        Self {
+            ptr,
+            init,
+            lt: Default::default(),
+        }
+    }
+
+    pub fn get(&mut self, f: impl FnOnce() -> T) -> &mut T {
+        if !self.init {
+            self.do_init(f);
+        }
+        unsafe { &mut *self.ptr }
+    }
+
+    #[cold]
+    fn do_init(&mut self, f: impl FnOnce() -> T) {
+        unsafe {
+            self.init = true;
+            self.ptr.write(f());
+        }
+    }
+
+    pub unsafe fn get_unchecked(&mut self) -> &mut T {
+        debug_assert!(self.init, "OutFrame must be initialized before use");
+        unsafe { &mut *self.ptr }
+    }
+
+    pub fn consume(self) -> FrameToken {
+        FrameToken(self.init)
+    }
+}
+
+/// Used to guarantee that a frame is initialized before use.
+pub struct FrameToken(bool);
+
+impl FrameToken {
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn assert(&self) {
+        assert!(self.0, "FrameToken must be initialized before use");
     }
 }
 
@@ -585,20 +649,30 @@ mod tests {
     #[test]
     fn frame_stack() {
         let mut stack = FrameStack::new(1);
+
         assert_eq!(stack.index(), 0);
         assert_eq!(stack.stack.len(), 1);
-        assert_eq!(stack.get(|| 2).0, &mut 1);
-        assert_eq!(stack.get(|| 2).1, &mut 2);
-        assert_eq!(stack.stack.len(), 2);
-        stack.push();
+
+        let (a, mut b) = stack.get();
+        assert_eq!(a, &mut 1);
+        assert!(!b.init);
+        assert_eq!(b.get(|| 2), &mut 2);
+        let token = b.consume();
+        stack.push(token);
+
         assert_eq!(stack.index(), 1);
-        assert_eq!(stack.get(|| 3).0, &mut 2);
-        assert_eq!(stack.get(|| 3).1, &mut 3);
-        assert_eq!(stack.stack.len(), 3);
+        assert_eq!(stack.stack.len(), 2);
+        let (a, b) = stack.get();
+        assert_eq!(a, &mut 2);
+        assert!(!b.init);
+
         stack.pop();
+
         assert_eq!(stack.index(), 0);
-        assert_eq!(stack.get(|| 4).0, &mut 1);
-        assert_eq!(stack.get(|| 4).1, &mut 2);
-        assert_eq!(stack.stack.len(), 3);
+        assert_eq!(stack.stack.len(), 2);
+        let (a, mut b) = stack.get();
+        assert_eq!(a, &mut 1);
+        assert!(b.init);
+        assert_eq!(unsafe { b.get_unchecked() }, &mut 2);
     }
 }

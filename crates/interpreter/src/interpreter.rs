@@ -70,8 +70,16 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     }
 
     pub fn default_ext() -> Self {
+        Self::do_default(SharedMemory::new())
+    }
+
+    pub fn empty() -> Self {
+        Self::do_default(SharedMemory::empty())
+    }
+
+    fn do_default(memory: SharedMemory) -> Self {
         Self::new(
-            SharedMemory::empty(),
+            memory,
             ExtBytecode::default(),
             InputsImpl::default(),
             false,
@@ -86,30 +94,30 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         &mut self,
         memory: SharedMemory,
         bytecode: ExtBytecode,
-        inputs: InputsImpl,
+        input: InputsImpl,
         is_static: bool,
         is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) {
         let Self {
-            bytecode: bytecode2,
+            bytecode: bytecode_ref,
             gas,
             stack,
             return_data,
-            memory: memory2,
-            input,
+            memory: memory_ref,
+            input: input_ref,
             sub_routine,
             runtime_flag,
             extend,
         } = self;
         let is_eof = bytecode.is_eof();
-        *bytecode2 = bytecode;
+        *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
         stack.clear();
         return_data.0.clear();
-        *memory2 = memory;
-        *input = inputs;
+        *memory_ref = memory;
+        *input_ref = input;
         sub_routine.clear();
         *runtime_flag = RuntimeFlags {
             spec_id,
