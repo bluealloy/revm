@@ -58,10 +58,9 @@ impl CallInput {
 }
 
 impl Default for CallInput {
-    /// Returns a default `CallInput` with an empty `Bytes`.
     #[inline]
     fn default() -> Self {
-        CallInput::Bytes(Bytes::default())
+        CallInput::SharedBuffer(0..0)
     }
 }
 
