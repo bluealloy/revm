@@ -176,6 +176,7 @@ where
     ERROR: FromStringError,
 {
     /// Clear and initialize a frame.
+    #[allow(clippy::too_many_arguments)]
     pub fn clear(
         &mut self,
         data: FrameData,

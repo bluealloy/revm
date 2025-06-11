@@ -81,6 +81,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn clear(
         &mut self,
         memory: SharedMemory,
