@@ -1,17 +1,14 @@
+use clap::Parser;
+use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
-    db::BenchmarkDB,
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    primitives::{Address, Bytecode, BytecodeDecodeError, TxKind},
-    Evm,
+    bytecode::{Bytecode, BytecodeDecodeError},
+    primitives::{hex, TxKind},
+    Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::io::Error as IoError;
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{borrow::Cow, fs};
-use structopt::StructOpt;
-
-extern crate alloc;
+use std::{io::Error as IoError, time::Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -29,95 +26,103 @@ pub enum Errors {
     BytecodeDecodeError(#[from] BytecodeDecodeError),
 }
 
-/// Evm runner command allows running arbitrary evm bytecode.
-/// Bytecode can be provided from cli or from file with --path option.
-#[derive(StructOpt, Debug)]
+/// Evm runner command allows running arbitrary evm bytecode
+///
+/// Bytecode can be provided from cli or from file with `--path` option.
+#[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Bytecode to be executed.
-    #[structopt(default_value = "")]
-    bytecode: String,
-    /// Path to file containing the evm bytecode.
-    /// Overrides the bytecode option.
-    #[structopt(long)]
+    /// Hex-encoded EVM bytecode to be executed
+    #[arg(required_unless_present = "path")]
+    bytecode: Option<String>,
+    /// Path to a file containing the hex-encoded EVM bytecode to be executed
+    ///
+    /// Overrides the positional `bytecode` argument.
+    #[arg(long)]
     path: Option<PathBuf>,
-    /// Run in benchmarking mode.
-    #[structopt(long)]
+    /// Whether to run in benchmarking mode
+    #[arg(long)]
     bench: bool,
-    /// Input bytes.
-    #[structopt(long, default_value = "")]
+    /// Hex-encoded input/calldata bytes
+    #[arg(long, default_value = "")]
     input: String,
-    /// Print the state.
-    #[structopt(long)]
+    /// Whether to print the state
+    #[arg(long)]
     state: bool,
-    /// Print the trace.
-    #[structopt(long)]
+    /// Whether to print the trace
+    #[arg(long)]
     trace: bool,
 }
 
 impl Cmd {
-    /// Run evm runner command.
+    /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
-            // check if path exists.
+            // Check if path exists.
             if !path.exists() {
                 return Err(Errors::PathNotExists);
             }
-            fs::read_to_string(path)?.to_owned().into()
+            fs::read_to_string(path)?.into()
+        } else if let Some(bytecode) = &self.bytecode {
+            bytecode.as_str().into()
         } else {
-            self.bytecode.as_str().into()
+            unreachable!()
         };
 
         let bytecode = hex::decode(bytecode_str.trim()).map_err(|_| Errors::InvalidBytecode)?;
         let input = hex::decode(self.input.trim())
             .map_err(|_| Errors::InvalidInput)?
             .into();
+
+        let mut db = BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(bytecode.into())?);
+
+        let nonce = db
+            .basic(BENCH_CALLER)
+            .unwrap()
+            .map_or(0, |account| account.nonce);
+
         // BenchmarkDB is dummy state that implements Database trait.
-        // the bytecode is deployed at zero address.
-        let mut evm = Evm::builder()
-            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(
-                bytecode.into(),
-            )?))
-            .modify_tx_env(|tx| {
-                // execution globals block hash/gas_limit/coinbase/timestamp..
-                tx.caller = "0x0000000000000000000000000000000000000001"
-                    .parse()
-                    .unwrap();
-                tx.transact_to = TxKind::Call(Address::ZERO);
+        // The bytecode is deployed at zero address.
+        let mut evm = Context::mainnet()
+            .with_db(db)
+            .modify_tx_chained(|tx| {
+                tx.caller = BENCH_CALLER;
+                tx.kind = TxKind::Call(BENCH_TARGET);
                 tx.data = input;
+                tx.nonce = nonce;
             })
-            .build();
+            .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
 
         if self.bench {
-            // Microbenchmark
-            let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-            microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.transact().unwrap();
+            let mut criterion = criterion::Criterion::default()
+                .warm_up_time(std::time::Duration::from_millis(300))
+                .measurement_time(std::time::Duration::from_secs(2))
+                .without_plots();
+            let mut criterion_group = criterion.benchmark_group("revme");
+            criterion_group.bench_function("evm", |b| {
+                b.iter(|| {
+                    let _ = evm.replay().unwrap();
+                })
             });
+            criterion_group.finish();
 
             return Ok(());
         }
 
+        let time = Instant::now();
         let out = if self.trace {
-            let mut evm = evm
-                .modify()
-                .reset_handler_with_external_context(TracerEip3155::new(
-                    Box::new(std::io::stdout()),
-                ))
-                .append_handler_register(inspector_handle_register)
-                .build();
-
-            evm.transact().map_err(|_| Errors::EVMError)?
+            evm.inspect_replay().map_err(|_| Errors::EVMError)?
         } else {
-            let out = evm.transact().map_err(|_| Errors::EVMError)?;
+            let out = evm.replay().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
             out
         };
+        let time = time.elapsed();
 
         if self.state {
             println!("State: {:#?}", out.state);
         }
 
+        println!("Elapsed: {:?}", time);
         Ok(())
     }
 }

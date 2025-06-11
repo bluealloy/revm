@@ -32,7 +32,10 @@ jobs:
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Run tests
-        run: mdbook test
+        run: |
+          cp README.md book/src/README.md
+          sed -i -e 's|../../README.md|./README.md|g' book/src/SUMMARY.md
+          mdbook test
 
   lint:
     runs-on: ubuntu-latest
@@ -78,7 +81,10 @@ jobs:
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Build book
-        run: mdbook build documentation
+        run: |
+          cp README.md book/src/README.md
+          sed -i -e 's|../../README.md|./README.md|g' book/src/SUMMARY.md
+          mdbook build book
 
       - name: Build docs
         run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo doc --all --no-deps
@@ -86,18 +92,18 @@ jobs:
       - name: Move docs to book folder
         run: |
           mkdir -p target/book/docs
-          mv target/doc documentation/book/docs
+          mv target/doc book/book/docs
 
       - name: Archive artifact
         shell: sh
         run: |
-          chmod -c -R +rX "documentation/book" |
+          chmod -c -R +rX "book/book" |
           while read line; do
              echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
           tar \
             --dereference --hard-dereference \
-            --directory "documentation/book" \
+            --directory "book/book" \
             -cvf "$RUNNER_TEMP/artifact.tar" \
             --exclude=.git \
             --exclude=.github \

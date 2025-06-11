@@ -1,0 +1,20 @@
+{
+  "result": {
+    "Halt": {
+      "reason": "FailedDeposit",
+      "gas_used": 30000000
+    }
+  },
+  "state": {
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
+      "info": {
+        "balance": "0x9896e4",
+        "nonce": 1,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code": null
+      },
+      "storage": {},
+      "status": "Touched"
+    }
+  }
+}

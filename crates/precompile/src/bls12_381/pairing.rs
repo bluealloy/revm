@@ -1,30 +1,16 @@
-use super::{
-    g1::{extract_g1_input, G1_INPUT_ITEM_LENGTH},
-    g2::{extract_g2_input, G2_INPUT_ITEM_LENGTH},
+//! BLS12-381 pairing precompile. More details in [`pairing`]
+use super::crypto_backend::{pairing_check, read_g1, read_g2};
+use super::utils::{remove_g1_padding, remove_g2_padding};
+use crate::bls12_381_const::{
+    PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
+    PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
 };
-use crate::{u64_to_address, PrecompileWithAddress};
-use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{
-    Bytes,
-    Precompile,
-    PrecompileError,
-    PrecompileOutput,
-    PrecompileResult,
-    B256,
-};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use primitives::B256;
+use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(pairing));
-/// BLS12_PAIRING precompile address.
-pub const ADDRESS: u64 = 0x0f;
-
-/// Multiplier gas fee for BLS12-381 pairing operation.
-const PAIRING_MULTIPLIER_BASE: u64 = 32600;
-/// Offset gas fee for BLS12-381 pairing operation.
-const PAIRING_OFFSET_BASE: u64 = 37700;
-/// Input length of pairing operation.
-const INPUT_LENGTH: usize = 384;
+pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDRESS, pairing);
 
 /// Pairing call expects 384*k (k being a positive integer) bytes as an inputs
 /// that is interpreted as byte concatenation of k slices. Each slice has the
@@ -38,76 +24,54 @@ const INPUT_LENGTH: usize = 384;
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % INPUT_LENGTH != 0 {
+    if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
-            "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
-        ))
-        .into());
+            "Pairing input length should be multiple of {PAIRING_INPUT_LENGTH}, was {input_len}"
+        )));
     }
 
-    let k = input_len / INPUT_LENGTH;
+    let k = input_len / PAIRING_INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
-    // Accumulator for the fp12 multiplications of the miller loops.
-    let mut acc = blst_fp12::default();
+    // Collect pairs of points for the pairing check
+    let mut pairs = Vec::with_capacity(k);
     for i in 0..k {
-        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        let encoded_g1_element =
+            &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH];
+        let encoded_g2_element = &input[i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH
+            ..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH + PADDED_G2_LENGTH];
+
+        // If either the G1 or G2 element is the encoded representation
+        // of the point at infinity, then these two points are no-ops
+        // in the pairing computation.
         //
-        // So we set the subgroup_check flag to `true`
-        let p1_aff = &extract_g1_input(
-            &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
-            true,
-        )?;
+        // Note: we do not skip the validation of these two elements even if
+        // one of them is the point at infinity because we could have G1 be
+        // the point at infinity and G2 be an invalid element or vice versa.
+        // In that case, the precompile should error because one of the elements
+        // was invalid.
+        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
+        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
+
+        let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
+        let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(encoded_g2_element)?;
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        //
-        // So we set the subgroup_check flag to `true`
-        let p2_aff = &extract_g2_input(
-            &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
-                ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
-            true,
-        )?;
+        // extract_g1_input and extract_g2_input perform the necessary checks
+        let p1_aff = read_g1(a_x, a_y)?;
+        let p2_aff = read_g2(b_x_0, b_x_1, b_y_0, b_y_1)?;
 
-        if i > 0 {
-            // After the first slice (i>0) we use cur_ml to store the current
-            // miller loop and accumulate with the previous results using a fp12
-            // multiplication.
-            let mut cur_ml = blst_fp12::default();
-            let mut res = blst_fp12::default();
-            // SAFETY: res, acc, cur_ml, p1_aff and p2_aff are blst values.
-            unsafe {
-                blst_miller_loop(&mut cur_ml, p2_aff, p1_aff);
-                blst_fp12_mul(&mut res, &acc, &cur_ml);
-            }
-            acc = res;
-        } else {
-            // On the first slice (i==0) there is no previous results and no need
-            // to accumulate.
-            // SAFETY: acc, p1_aff and p2_aff are blst values.
-            unsafe {
-                blst_miller_loop(&mut acc, p2_aff, p1_aff);
-            }
+        if !g1_is_zero & !g2_is_zero {
+            pairs.push((p1_aff, p2_aff));
         }
     }
+    let result = if pairing_check(&pairs) { 1 } else { 0 };
 
-    // SAFETY: ret and acc are blst values.
-    let mut ret = blst_fp12::default();
-    unsafe {
-        blst_final_exp(&mut ret, &acc);
-    }
-
-    let mut result: u8 = 0;
-    // SAFETY: ret is a blst value.
-    unsafe {
-        if blst_fp12_is_one(&ret) {
-            result = 1;
-        }
-    }
     Ok(PrecompileOutput::new(
         required_gas,
         B256::with_last_byte(result).into(),

@@ -7,70 +7,25 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-mod bytecode;
-mod constants;
-pub mod db;
+pub mod constants;
+pub mod eip170;
+pub mod eip4844;
 pub mod eip7702;
-pub mod env;
-#[cfg(target_arch = "wasm32")]
-mod keccak256;
-#[cfg(target_arch = "wasm32")]
-pub use keccak256::keccak256;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-pub mod kzg;
-pub mod precompile;
-pub mod result;
-pub mod specification;
-pub mod state;
-pub mod utilities;
-pub mod wasm;
+pub mod eip7823;
+pub mod eof;
+pub mod hardfork;
 
-pub use alloy_eip2930::{AccessList, AccessListItem};
-pub use alloy_primitives::{
-    self,
-    address,
-    b256,
-    bytes,
-    fixed_bytes,
-    hex,
-    hex_literal,
-    map::{self, hash_map, hash_set, HashMap, HashSet},
-    ruint,
-    uint,
-    Address,
-    Bytes,
-    FixedBytes,
-    Log,
-    LogData,
-    TxKind,
-    B256,
-    I256,
-    U256,
-};
-pub use bitvec;
-pub use bytecode::*;
 pub use constants::*;
-pub use eip7702::{
-    Authorization,
-    AuthorizationList,
-    Eip7702Bytecode,
-    Eip7702DecodeError,
-    PrimitiveSignature,
-    RecoveredAuthority,
-    RecoveredAuthorization,
-    SignedAuthorization,
-    EIP7702_MAGIC,
-    EIP7702_MAGIC_BYTES,
-    EIP7702_MAGIC_HASH,
+
+// Reexport alloy primitives.
+
+pub use alloy_primitives::map::{self, hash_map, hash_set, HashMap, HashSet};
+pub use alloy_primitives::{
+    self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
+    Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
 };
-pub use env::*;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-pub use kzg::{EnvKzgSettings, KzgSettings};
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
-use kzg_rs as _;
-pub use precompile::*;
-pub use result::*;
-pub use specification::*;
-pub use state::*;
-pub use utilities::*;
+
+/// type alias for storage keys
+pub type StorageKey = U256;
+/// type alias for storage values
+pub type StorageValue = U256;

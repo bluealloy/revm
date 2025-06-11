@@ -3,27 +3,39 @@ mod call_outcome;
 mod create_inputs;
 mod create_outcome;
 mod eof_create_inputs;
-mod system_interruption_inputs;
 
-use crate::InterpreterResult;
-pub use call_inputs::{CallInputs, CallScheme, CallValue};
+pub use call_inputs::{CallInput, CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
-pub use create_inputs::{CreateInputs, CreateScheme};
+pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
+
+use crate::InterpreterResult;
 use std::boxed::Box;
-pub use system_interruption_inputs::{SystemInterruptionInputs, SystemInterruptionOutcome};
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum FrameInput {
+    /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
+    /// or EOF `EXTCALL`, `EXTDELEGATECALL`, `EXTSTATICCALL` instruction called.
+    Call(Box<CallInputs>),
+    /// `CREATE` or `CREATE2` instruction called.
+    Create(Box<CreateInputs>),
+    /// EOF `CREATE` instruction called.
+    EOFCreate(Box<EOFCreateInputs>),
+}
+
+impl AsMut<Self> for FrameInput {
+    fn as_mut(&mut self) -> &mut Self {
+        self
+    }
+}
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
-    /// CALL, CALLCODE, DELEGATECALL, STATICCALL
-    /// or EOF EXT instruction called.
-    Call { inputs: Box<CallInputs> },
-    /// CREATE or CREATE2 instruction called.
-    Create { inputs: Box<CreateInputs> },
-    /// EOF CREATE instruction called.
-    EOFCreate { inputs: Box<EOFCreateInputs> },
+    /// New frame
+    NewFrame(FrameInput),
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
     /// No action
@@ -32,32 +44,34 @@ pub enum InterpreterAction {
 }
 
 impl InterpreterAction {
-    /// Returns true if action is call.
+    /// Returns `true` if action is call.
     pub fn is_call(&self) -> bool {
-        matches!(self, InterpreterAction::Call { .. })
+        matches!(self, InterpreterAction::NewFrame(FrameInput::Call(..)))
     }
 
-    /// Returns true if action is create.
+    /// Returns `true` if action is create.
     pub fn is_create(&self) -> bool {
-        matches!(self, InterpreterAction::Create { .. })
+        matches!(self, InterpreterAction::NewFrame(FrameInput::Create(..)))
     }
 
-    /// Returns true if action is return.
+    /// Returns `true` if action is return.
     pub fn is_return(&self) -> bool {
         matches!(self, InterpreterAction::Return { .. })
     }
 
-    /// Returns true if action is none.
+    /// Returns `true` if action is none.
     pub fn is_none(&self) -> bool {
         matches!(self, InterpreterAction::None)
     }
 
-    /// Returns true if action is some.
+    /// Returns `true` if action is some.
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }
 
-    /// Returns result if action is return.
+    /// Returns [`InterpreterResult`] if action is return.
+    ///
+    /// Else it returns [None].
     pub fn into_result_return(self) -> Option<InterpreterResult> {
         match self {
             InterpreterAction::Return { result } => Some(result),

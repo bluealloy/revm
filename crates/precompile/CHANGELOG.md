@@ -6,6 +6,196 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v20.1.0...revm-precompile-v21.0.0) - 2025-05-22
+
+### Added
+
+- *(Osaka)* modexp input limit and gas change, EIP-7823 and EIP-7883 ([#2531](https://github.com/bluealloy/revm/pull/2531))
+
+### Other
+
+- make crates.io version badge clickable ([#2526](https://github.com/bluealloy/revm/pull/2526))
+- fixed dead link kzg_point_evaluation.rs ([#2508](https://github.com/bluealloy/revm/pull/2508))
+
+## [20.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v20.0.0...revm-precompile-v20.1.0) - 2025-05-07
+
+Dependency bump
+
+## [20.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v19.0.0...revm-precompile-v20.0.0) - 2025-05-07
+
+### Added
+
+- skip cloning of call input from shared memory ([#2462](https://github.com/bluealloy/revm/pull/2462))
+
+### Fixed
+
+- *(isthmus)* Add input size limitations to bls12-381 {G1/G2} MSM + pairing ([#2406](https://github.com/bluealloy/revm/pull/2406))
+
+### Other
+
+- typos ([#2474](https://github.com/bluealloy/revm/pull/2474))
+- copy edit The Book ([#2463](https://github.com/bluealloy/revm/pull/2463))
+- make OPCODE_INFO a static ([#2459](https://github.com/bluealloy/revm/pull/2459))
+- bump dependency version ([#2431](https://github.com/bluealloy/revm/pull/2431))
+- fixed broken link ([#2421](https://github.com/bluealloy/revm/pull/2421))
+- *(docs)* precompile crate ([#2413](https://github.com/bluealloy/revm/pull/2413))
+- bump stable tests, introduce lints ([#2403](https://github.com/bluealloy/revm/pull/2403))
+
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v18.0.0...revm-precompile-v19.0.0) - 2025-04-09
+
+### Other
+
+- fixed `EIP` to `RIP` ([#2388](https://github.com/bluealloy/revm/pull/2388))
+- *(precompile)* remove unused dependencies ([#2378](https://github.com/bluealloy/revm/pull/2378))
+- add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
+- alloy 0.13 and kzg v2.1.0 ([#2342](https://github.com/bluealloy/revm/pull/2342))
+
+## [18.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0...revm-precompile-v18.0.0) - 2025-03-28
+
+### Added
+
+- Add arkworks wrapper for bls12-381 ([#2316](https://github.com/bluealloy/revm/pull/2316))
+- Add a wrapper for arkworks for EIP196 ([#2305](https://github.com/bluealloy/revm/pull/2305))
+
+### Other
+
+- [**breaking**] Move modulus constant into blst wrapper ([#2336](https://github.com/bluealloy/revm/pull/2336))
+- Remove TODO for NBITS and remove NBITS from blst MSM API ([#2337](https://github.com/bluealloy/revm/pull/2337))
+- remove no-std method for bls ([#2338](https://github.com/bluealloy/revm/pull/2338))
+- Move all benchmarks into their own module like eip2537 ([#2335](https://github.com/bluealloy/revm/pull/2335))
+- add bls12-381 benchmarks ([#2327](https://github.com/bluealloy/revm/pull/2327))
+- add encode_fp function ([#2328](https://github.com/bluealloy/revm/pull/2328))
+- clean up blst wrapper doc comment and types ([#2314](https://github.com/bluealloy/revm/pull/2314))
+- Move all blst related methods into blst wrapper ([#2313](https://github.com/bluealloy/revm/pull/2313))
+- Remove LATEST variant from SpecId enum ([#2299](https://github.com/bluealloy/revm/pull/2299))
+
+## [17.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.7...revm-precompile-v17.0.0) - 2025-03-24
+
+### Added
+
+- add bn_mul benchmark ([#2287](https://github.com/bluealloy/revm/pull/2287))
+
+### Other
+
+- *(op-precompiles)* Add missing g2 add tests ([#2253](https://github.com/bluealloy/revm/pull/2253))
+
+## [17.0.0-alpha.7](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.6...revm-precompile-v17.0.0-alpha.7) - 2025-03-21
+
+### Added
+
+- Return Fatal error on bls precompiles if in no_std ([#2249](https://github.com/bluealloy/revm/pull/2249))
+- bls special case G1/G2_MUL ([#2248](https://github.com/bluealloy/revm/pull/2248))
+- Remove PrecompileError from PrecompileProvider ([#2233](https://github.com/bluealloy/revm/pull/2233))
+
+### Other
+
+- add early exit for no-ops in EIP1962 and EIP2537 ([#2271](https://github.com/bluealloy/revm/pull/2271))
+- *(op-precompiles)* Check subset of l1 precompiles in op ([#2204](https://github.com/bluealloy/revm/pull/2204))
+- Add `g1_mul`, `g1_add` and `read_scalar` methods into substrate wrapper for bn128 ([#2264](https://github.com/bluealloy/revm/pull/2264))
+- *(op-precompiles)* clean up op tx tests ([#2242](https://github.com/bluealloy/revm/pull/2242))
+- Adds a wrapper around substrate-bn for EIP196 ([#2258](https://github.com/bluealloy/revm/pull/2258))
+- add invariant test for G1/G2 Mul ([#2247](https://github.com/bluealloy/revm/pull/2247))
+- add documentation for the gas related constants for EIP2537 ([#2246](https://github.com/bluealloy/revm/pull/2246))
+- add a safe blst wrapper ([#2223](https://github.com/bluealloy/revm/pull/2223))
+- Remove redundant bls12-381 constants and cleanup naming ([#2235](https://github.com/bluealloy/revm/pull/2235))
+- Add some documentation for the bls12-381 precompile constants ([#2222](https://github.com/bluealloy/revm/pull/2222))
+
+## [17.0.0-alpha.6](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.5...revm-precompile-v17.0.0-alpha.6) - 2025-03-16
+
+### Added
+
+- *(docs)* MyEvm example and book cleanup ([#2218](https://github.com/bluealloy/revm/pull/2218))
+
+## [17.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.4...revm-precompile-v17.0.0-alpha.5) - 2025-03-12
+
+### Other
+
+- updated the following local packages: revm-context-interface
+
+## [17.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.3...revm-precompile-v17.0.0-alpha.4) - 2025-03-11
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+### Other
+
+- *(precompile)* refactor out msm helper ([#2179](https://github.com/bluealloy/revm/pull/2179))
+
+## [17.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.2...revm-precompile-v17.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- *(precompiles)* add portable flag for bls ([#2174](https://github.com/bluealloy/revm/pull/2174))
+
+### Other
+
+- v59 release-plz update ([#2170](https://github.com/bluealloy/revm/pull/2170))
+
+## [17.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.1...revm-precompile-v17.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Fixed
+
+- *(blst)* Fix blst wrong constants values and usage ([#2102](https://github.com/bluealloy/revm/pull/2102))
+
+### Other
+
+- simplify bn128::run_pair ([#2137](https://github.com/bluealloy/revm/pull/2137))
+- export eip2930 eip7702 types from one place ([#2097](https://github.com/bluealloy/revm/pull/2097))
+- PrecompileErrors to PrecompileError ([#2103](https://github.com/bluealloy/revm/pull/2103))
+- Update broken link secp256r1.rs ([#2099](https://github.com/bluealloy/revm/pull/2099))
+- G1_msm base gas fee const correction ([#2100](https://github.com/bluealloy/revm/pull/2100))
+- Split blst constants out to individual file #2085
+- *(deps)* bump breaking deps ([#2093](https://github.com/bluealloy/revm/pull/2093))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
+## [17.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-precompile-v16.1.0...revm-precompile-v17.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- integrate codspeed (#1935)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- *(Inspector)* frame_end called multiple times (#2037)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- Bump licence year to 2025 (#2058)
+- bump kzg.rs (#2002)
+- align crates versions (#1983)
+- blst reprice, remove g1/g2 mul (#1981)
+- integrate rust-secp256k1 (#1915)
+- fix comments and docs into more sensible (#1920)
+- Rename PRAGUE_EOF to OSAKA (#1903)
+- *(precompile)* use secp256k1 global context for ecrecover (#1843)
+- fix some typos (#1800)
+- Replace `PrecompileError` variant ([#1797](https://github.com/bluealloy/revm/pull/1797))
+- *(deps)* bump once_cell from 1.19.0 to 1.20.0 (#1773)
+
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [16.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v16.0.0...revm-precompile-v16.1.0) - 2025-02-11
+
+### Other
+
+- revm v19.4.0 tag v54
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v15.0.0...revm-precompile-v16.0.0) - 2024-12-26
 
 ### Added

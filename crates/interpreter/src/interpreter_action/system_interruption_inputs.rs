@@ -1,6 +1,6 @@
 use crate::{return_ok, return_revert, Contract, Gas, InstructionResult, InterpreterResult};
 use fluentbase_types::SyscallInvocationParams;
-use revm_primitives::Address;
+use primitives::Address;
 use std::boxed::Box;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

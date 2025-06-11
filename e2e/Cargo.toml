@@ -8,13 +8,8 @@ resolver = "2"
 fluentbase-sdk = { path = "../../crates/sdk" }
 fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 
-revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
+revm = { path = "../crates/revm", default-features = false, features = ["std", "serde-json", "serde"] }
+rwasm-revm = { path = "../crates/rwasm-revm" }
 
 hash-db = "=0.15"
 hex = "0.4"
@@ -46,8 +41,9 @@ default = [
 ]
 debug-print = [
     "revm/debug-print",
+    "rwasm-revm/debug-print",
 ]
 wasmtime = [
-    "revm/wasmtime",
+    "rwasm-revm/wasmtime",
 ]
 

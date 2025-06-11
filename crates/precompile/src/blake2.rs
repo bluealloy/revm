@@ -1,33 +1,31 @@
-use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{Bytes, PrecompileOutput};
+//! Blake2 precompile. More details in [`run`]
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(9), Precompile::Standard(run));
+/// Blake2 precompile
+pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(9), run);
 
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    let input = &input[..];
-
+pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
-        return Err(Error::Blake2WrongLength.into());
+        return Err(PrecompileError::Blake2WrongLength);
     }
 
-    // rounds 4 bytes
+    // Rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
-        return Err(Error::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let f = match input[212] {
         1 => true,
         0 => false,
-        _ => return Err(Error::Blake2WrongFinalIndicatorFlag.into()),
+        _ => return Err(PrecompileError::Blake2WrongFinalIndicatorFlag),
     };
 
     let mut h = [0u64; 8];
@@ -54,6 +52,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     Ok(PrecompileOutput::new(gas_used, out.into()))
 }
 
+/// Blake2 algorithm
 pub mod algo {
     /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
     pub const SIGMA: [[usize; 16]; 10] = [
@@ -95,12 +94,12 @@ pub mod algo {
         v[b] = (v[b] ^ v[c]).rotate_right(63);
     }
 
-    // Compression function F takes as an argument the state vector "h",
-    // message block vector "m" (last block is padded with zeros to full
-    // block size, if required), 2w-bit offset counter "t", and final block
-    // indicator flag "f".  Local vector v[0..15] is used in processing.  F
-    // returns a new state vector.  The number of rounds, "r", is 12 for
-    // BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
+    /// Compression function F takes as an argument the state vector "h",
+    /// message block vector "m" (last block is padded with zeros to full
+    /// block size, if required), 2w-bit offset counter "t", and final block
+    /// indicator flag "f".  Local vector v[0..15] is used in processing.  F
+    /// returns a new state vector.  The number of rounds, "r", is 12 for
+    /// BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
     #[allow(clippy::many_single_char_names)]
     pub fn compress(rounds: usize, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
         let mut v = [0u64; 16];
