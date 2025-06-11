@@ -438,7 +438,7 @@ opcodes! {
     0x1B => SHL  => stack_io(2, 1);
     0x1C => SHR  => stack_io(2, 1);
     0x1D => SAR  => stack_io(2, 1);
-    // 0x1E
+    0x1E => CLZ => stack_io(1, 1);
     // 0x1F
     0x20 => KECCAK256 => stack_io(2, 1);
     // 0x21
@@ -768,8 +768,8 @@ mod tests {
                 eof_opcode_num += 1;
             }
         }
-        assert_eq!(opcode_num, 169);
-        assert_eq!(eof_opcode_num, 153);
+        assert_eq!(opcode_num, 170);
+        assert_eq!(eof_opcode_num, 154);
     }
 
     #[test]
