@@ -55,7 +55,8 @@ impl LocalContextTr for LocalContext {
     }
 
     fn pull_stack(&self) -> PoolGuard<Vec<U256>> {
-        self.stack_pool.pull(|| Vec::with_capacity(1024))
+        self.stack_pool
+            .pull(|| Vec::with_capacity(1024 * 1024 * 1024))
     }
 }
 
