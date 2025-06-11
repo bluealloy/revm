@@ -131,14 +131,14 @@ mod tests {
 
         assert_eq!(jump_table.len, 8);
 
-        assert_eq!(jump_table.is_valid(0), true);
-        assert_eq!(jump_table.is_valid(1), false);
-        assert_eq!(jump_table.is_valid(2), true);
-        assert_eq!(jump_table.is_valid(3), true);
-        assert_eq!(jump_table.is_valid(4), false);
-        assert_eq!(jump_table.is_valid(5), false);
-        assert_eq!(jump_table.is_valid(6), false);
-        assert_eq!(jump_table.is_valid(7), false);
+        assert!(jump_table.is_valid(0));
+        assert!(!jump_table.is_valid(1));
+        assert!(jump_table.is_valid(2));
+        assert!(jump_table.is_valid(3));
+        assert!(!jump_table.is_valid(4));
+        assert!(!jump_table.is_valid(5));
+        assert!(!jump_table.is_valid(6));
+        assert!(!jump_table.is_valid(7));
     }
 }
 
@@ -151,7 +151,7 @@ mod bench_is_valid {
     const TEST_SIZE: usize = 10_000;
 
     fn create_test_table() -> BitVec<u8> {
-        let mut bitvec = BitVec::from_vec(vec![0u8; (TEST_SIZE + 7) / 8]);
+        let mut bitvec = BitVec::from_vec(vec![0u8; TEST_SIZE.div_ceil(8)]);
         bitvec.resize(TEST_SIZE, false);
         for i in (0..TEST_SIZE).step_by(3) {
             bitvec.set(i, true);
