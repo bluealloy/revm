@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v4.1.0...revm-bytecode-v5.0.0) - 2025-06-11
+
+### Other
+
+- faster JumpTable bits lookup ([#2618](https://github.com/bluealloy/revm/pull/2618))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v4.0.1...revm-bytecode-v4.1.0) - 2025-06-06
 
 ### Added

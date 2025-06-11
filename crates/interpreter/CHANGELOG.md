@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v21.0.0...revm-interpreter-v21.1.0) - 2025-06-11
+
+### Added
+
+- added instruction_result fn in LoopControl trait  ([#2595](https://github.com/bluealloy/revm/pull/2595))
+
+### Other
+
+- make CallInput default 0..0 ([#2621](https://github.com/bluealloy/revm/pull/2621))
+
 ## [21.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v20.0.0...revm-interpreter-v21.0.0) - 2025-06-06
 
 ### Added

@@ -12,6 +12,12 @@ Dependency bump
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/bluealloy/revm/compare/revm-state-v5.0.0...revm-state-v5.0.1) - 2025-06-11
+
+### Other
+
+- updated the following local packages: revm-bytecode
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-state-v4.0.1...revm-state-v5.0.0) - 2025-06-06
 
 ### Added

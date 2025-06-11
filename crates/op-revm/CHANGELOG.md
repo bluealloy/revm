@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0](https://github.com/bluealloy/revm/compare/op-revm-v6.0.0...op-revm-v6.1.0) - 2025-06-11
+
+### Added
+
+- enable P256 in Osaka ([#2601](https://github.com/bluealloy/revm/pull/2601))
+
+### Other
+
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/op-revm-v5.0.1...op-revm-v6.0.0) - 2025-06-06
 
 ### Added

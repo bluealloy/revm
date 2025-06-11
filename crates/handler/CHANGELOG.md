@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v6.0.0...revm-handler-v7.0.0) - 2025-06-11
+
+### Added
+
+- change blob_max_count to max_blobs_per_tx ([#2608](https://github.com/bluealloy/revm/pull/2608))
+- add optional priority fee check configuration ([#2588](https://github.com/bluealloy/revm/pull/2588))
+
+### Other
+
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v5.0.1...revm-handler-v6.0.0) - 2025-06-06
 
 ### Added

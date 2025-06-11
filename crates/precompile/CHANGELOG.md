@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v22.0.0...revm-precompile-v23.0.0) - 2025-06-11
+
+### Added
+
+- add basic tests for modexp ([#2603](https://github.com/bluealloy/revm/pull/2603))
+- enable P256 in Osaka ([#2601](https://github.com/bluealloy/revm/pull/2601))
+
 ## [22.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v21.0.0...revm-precompile-v22.0.0) - 2025-06-06
 
 ### Added
