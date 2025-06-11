@@ -50,7 +50,7 @@ impl Default for JumpTable {
 }
 
 impl JumpTable {
-    // Create new JumpTable directly from an existing BitVec.
+    /// Create new JumpTable directly from an existing BitVec.
     pub fn new(jumps: BitVec<u8>) -> Self {
         let table = Arc::new(jumps);
         let cached = table.as_raw_slice().as_ptr();
