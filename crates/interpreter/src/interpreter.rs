@@ -85,6 +85,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn new_inner(
         stack: Stack,
         memory: SharedMemory,

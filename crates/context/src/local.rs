@@ -1,6 +1,6 @@
 //! Local context that is filled by execution.
 use bytecode::{CodeType, Eof};
-use context_interface::LocalContextTr;
+use context_interface::{local::FrameStack, LocalContextTr};
 use core::cell::RefCell;
 use primitives::{keccak256, Bytes, HashMap, B256};
 use std::{rc::Rc, vec::Vec};
@@ -14,6 +14,8 @@ pub struct LocalContext {
     pub initcode_mapping: HashMap<B256, Initcode>,
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
+    /// Frame stack used for managing frames during execution.
+    pub frame_stack: FrameStack<u128>,
 }
 
 impl Default for LocalContext {
@@ -21,6 +23,7 @@ impl Default for LocalContext {
         Self {
             initcode_mapping: HashMap::default(),
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
+            frame_stack: FrameStack::new(),
         }
     }
 }
@@ -46,6 +49,10 @@ impl LocalContextTr for LocalContext {
 
     fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         &self.shared_memory_buffer
+    }
+
+    fn frame_stack(&mut self) -> &mut FrameStack<u128> {
+        &mut self.frame_stack
     }
 }
 

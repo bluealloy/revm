@@ -1,9 +1,8 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
-use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
-use handler::{
-    handler::FrameStack, EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler,
-    ItemOrResult,
+use context::{
+    result::ExecutionResult, ContextTr, FrameStack, JournalEntry, LocalContextTr, Transaction,
 };
+use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
@@ -147,9 +146,10 @@ where
         evm: &mut Self::Evm,
         frame: Self::Frame,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack = FrameStack::<Self::Frame>::new(frame);
+        let frame_stack = frame_stack::<Self::Frame>;
+        frame_stack(evm).init(frame);
         loop {
-            let (frame, new_frame) = frame_stack.get();
+            let (frame, new_frame) = frame_stack(evm).get();
             let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
@@ -162,10 +162,10 @@ where
                         match self.frame_init(frame, new_frame, evm, init.clone())? {
                             ItemOrResult::Item(token) => {
                                 // only if new frame is created call initialize_interp hook.
+                                frame_stack(evm).push(token);
+                                let interp = frame_stack(evm).get().0.interpreter();
                                 let (context, inspector) = evm.ctx_inspector();
-                                frame_stack.push(token);
-                                inspector
-                                    .initialize_interp(frame_stack.get().0.interpreter(), context);
+                                inspector.initialize_interp(interp, context);
                                 continue;
                             }
                             // Dont pop the frame as new frame was not created.
@@ -182,15 +182,15 @@ where
                     frame_end(context, inspector, frame.frame_input(), &mut result);
 
                     // Remove the frame that returned the result
-                    if frame_stack.index() == 0 {
+                    if frame_stack(evm).index() == 0 {
                         return Ok(result);
                     }
-                    frame_stack.pop();
+                    frame_stack(evm).pop();
                     result
                 }
             };
 
-            self.frame_return_result(frame_stack.get().0, evm, result)?;
+            self.frame_return_result(frame_stack(evm).get().0, evm, result)?;
         }
     }
 }
@@ -328,4 +328,10 @@ where
     }
 
     next_action
+}
+
+#[inline]
+fn frame_stack<'a, F: Frame<Evm: EvmTr>>(evm: &mut F::Evm) -> &'a mut FrameStack<F> {
+    let f = evm.ctx_mut().local_mut().frame_stack();
+    unsafe { core::mem::transmute::<&mut FrameStack<u128>, &mut FrameStack<F>>(f) }
 }

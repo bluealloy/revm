@@ -19,5 +19,5 @@ pub use context::{ContextSetters, ContextTr};
 pub use database_interface::{DBErrorMarker, Database};
 pub use either;
 pub use journaled_state::JournalTr;
-pub use local::LocalContextTr;
+pub use local::{FrameStack, FrameToken, LocalContextTr, OutFrame};
 pub use transaction::{Transaction, TransactionType};

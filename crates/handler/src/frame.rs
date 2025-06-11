@@ -1,5 +1,4 @@
 use super::frame_data::*;
-use crate::handler::{FrameToken, OutFrame};
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
     FrameInitOrResult, FrameOrResult, ItemOrResult,
@@ -8,6 +7,7 @@ use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
 use context::LocalContextTr;
 use context_interface::context::ContextError;
+use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
