@@ -69,10 +69,11 @@ pub enum AnalysisKind {
 pub type TransactTo = TxKind;
 
 /// Create scheme
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`
+    #[default]
     Create,
     /// Create scheme of `CREATE2`
     Create2 {
@@ -84,10 +85,4 @@ pub enum CreateScheme {
         /// Custom contract creation address.
         address: Address,
     },
-}
-
-impl Default for CreateScheme {
-    fn default() -> Self {
-        CreateScheme::Create
-    }
 }
