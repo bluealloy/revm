@@ -50,11 +50,56 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
+        Self::new_inner(
+            Stack::new(),
+            memory,
+            bytecode,
+            input,
+            is_static,
+            is_eof_init,
+            spec_id,
+            gas_limit,
+        )
+    }
+
+    pub fn default_ext() -> Self {
+        Self::do_default(Stack::new(), SharedMemory::new())
+    }
+
+    /// Create a new invalid interpreter.
+    #[inline]
+    pub fn empty() -> Self {
+        Self::do_default(Stack::empty(), SharedMemory::empty())
+    }
+
+    fn do_default(stack: Stack, memory: SharedMemory) -> Self {
+        Self::new_inner(
+            stack,
+            memory,
+            ExtBytecode::default(),
+            InputsImpl::default(),
+            false,
+            false,
+            SpecId::default(),
+            u64::MAX,
+        )
+    }
+
+    fn new_inner(
+        stack: Stack,
+        memory: SharedMemory,
+        bytecode: ExtBytecode,
+        input: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+    ) -> Self {
         let is_eof = bytecode.is_eof();
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
-            stack: Default::default(),
+            stack,
             return_data: Default::default(),
             memory,
             input,
@@ -67,27 +112,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             },
             extend: Default::default(),
         }
-    }
-
-    pub fn default_ext() -> Self {
-        Self::do_default(SharedMemory::new())
-    }
-
-    #[inline]
-    pub fn empty() -> Self {
-        Self::do_default(SharedMemory::empty())
-    }
-
-    fn do_default(memory: SharedMemory) -> Self {
-        Self::new(
-            memory,
-            ExtBytecode::default(),
-            InputsImpl::default(),
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        )
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -115,7 +139,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         let is_eof = bytecode.is_eof();
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
-        stack.clear();
+        if stack.data().capacity() == 0 {
+            *stack = Stack::new();
+        } else {
+            stack.clear();
+        }
         return_data.0.clear();
         *memory_ref = memory;
         *input_ref = input;
