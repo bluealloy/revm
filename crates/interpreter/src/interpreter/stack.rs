@@ -100,7 +100,7 @@ impl Stack {
 
     /// Instantiate a new invalid Stack.
     #[inline]
-    pub fn empty() -> Self {
+    pub fn invalid() -> Self {
         Self { data: Vec::new() }
     }
 

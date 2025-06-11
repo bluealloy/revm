@@ -84,8 +84,8 @@ impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter> {
     #[inline]
-    fn empty() -> Self {
-        Self::do_default(Interpreter::empty())
+    fn invalid() -> Self {
+        Self::do_default(Interpreter::invalid())
     }
 
     fn do_default(interpreter: Interpreter<EthInterpreter>) -> Self {
@@ -346,7 +346,7 @@ where
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::empty).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -454,7 +454,7 @@ where
         };
         let gas_limit = inputs.gas_limit;
 
-        this.get(EthFrame::empty).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -572,7 +572,7 @@ where
         };
 
         let gas_limit = inputs.gas_limit;
-        this.get(EthFrame::empty).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             FrameInput::EOFCreate(inputs),
             depth,

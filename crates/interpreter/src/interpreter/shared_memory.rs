@@ -108,9 +108,9 @@ impl SharedMemory {
         Self::with_capacity(4 * 1024) // from evmone
     }
 
-    /// Creates a new empty memory instance that can be shared between calls.
+    /// Creates a new invalid memory instance.
     #[inline]
-    pub fn empty() -> Self {
+    pub fn invalid() -> Self {
         Self {
             buffer: None,
             my_checkpoint: 0,
