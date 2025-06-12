@@ -110,7 +110,7 @@ pub trait ExecuteEvm {
 
     /// Execute previous transaction and finalize it.
     ///
-    /// Doint it without finalization
+    /// Doing it without finalization
     fn replay(
         &mut self,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
