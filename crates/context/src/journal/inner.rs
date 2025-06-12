@@ -12,7 +12,8 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    Address, DefaultHashBuilder, HashMap, HashSet, IndexEntry, IndexMap, Log, StorageKey,
+    StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
@@ -77,7 +78,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state: HashMap::default(),
+            state: IndexMap::with_capacity_and_hasher(256, DefaultHashBuilder::default()),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
@@ -186,7 +187,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Load precompiles into warm_preloaded_addresses.
         reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
 
-        let state = mem::take(state);
+        let state = mem::replace(
+            state,
+            IndexMap::with_capacity_and_hasher(256, DefaultHashBuilder::default()),
+        );
         logs.clear();
         transient_storage.clear();
 
@@ -640,7 +644,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
-            Entry::Occupied(entry) => {
+            IndexEntry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
                 // if it is colad loaded we need to clear local flags that can interact with selfdestruct
@@ -659,7 +663,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     is_cold,
                 }
             }
-            Entry::Vacant(vac) => {
+            IndexEntry::Vacant(vac) => {
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
