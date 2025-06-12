@@ -76,7 +76,6 @@ impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
 }
 
 impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter> {
-    #[inline]
     fn invalid() -> Self {
         Self::do_default(Interpreter::invalid())
     }

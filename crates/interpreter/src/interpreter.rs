@@ -67,7 +67,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     }
 
     /// Create a new invalid interpreter.
-    #[inline]
     pub fn invalid() -> Self {
         Self::do_default(Stack::invalid(), SharedMemory::invalid())
     }
