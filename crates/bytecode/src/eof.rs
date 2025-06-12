@@ -7,7 +7,7 @@ mod body;
 mod code_info;
 mod decode_helpers;
 mod header;
-/// Pritty printer for the EOF bytecode. Enabled by `std` feature.
+/// Pretty printer for the EOF bytecode. Enabled by `std` feature.
 pub mod printer;
 /// Verification logic for the EOF bytecode.
 pub mod verification;
