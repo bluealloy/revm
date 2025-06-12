@@ -22,7 +22,7 @@ primitives.workspace = true
 
 # modexp precompiles
 aurora-engine-modexp.workspace = true
-# gmp wrapper 
+# gmp wrapper
 rug = { workspace = true, features = ["integer"], optional = true }
 
 # static precompile sets.
@@ -96,6 +96,7 @@ std = [
 	"ark-ff/std",
 	"ark-serialize/std",
 	"p256/std",
+    "rug/std"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]

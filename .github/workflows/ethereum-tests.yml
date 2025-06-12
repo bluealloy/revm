@@ -40,8 +40,6 @@ jobs:
         run: cargo install cross
 
       - name: Run tests
-        env:
-          ABI: ${{ 32 if matrix.target == 'i686-unknown-linux-gnu' }}
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
           legacytests/Cancun/GeneralStateTests/ \
