@@ -873,5 +873,8 @@ fn reset_preloaded_addresses(
     warm_preloaded_addresses: &mut HashSet<Address>,
     precompiles: &HashSet<Address>,
 ) {
+    if warm_preloaded_addresses.len() == precompiles.len() {
+        return;
+    }
     warm_preloaded_addresses.clone_from(precompiles);
 }
