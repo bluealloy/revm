@@ -9,7 +9,7 @@ use std::{rc::Rc, vec::Vec};
 /// Non-empty, item-pooling Vec.
 #[derive(Clone, Debug)]
 pub struct FrameStack<T> {
-    stack: Vec<T>,
+    stack: Vec<Box<T>>,
     index: usize,
 }
 
@@ -24,7 +24,7 @@ impl<T> FrameStack<T> {
     #[inline]
     pub fn new() -> Self {
         Self {
-            stack: Vec::new(),
+            stack: Vec::with_capacity(1025),
             index: 0,
         }
     }
@@ -101,19 +101,19 @@ impl<T> FrameStack<T> {
 /// A potentially initialized frame. Used when initializing a new frame in the main loop.
 #[allow(missing_debug_implementations)]
 pub struct OutFrame<'a, T> {
-    ptr: *mut T,
+    ptr: *mut Box<T>,
     init: bool,
     lt: core::marker::PhantomData<&'a mut T>,
 }
 
 impl<'a, T> OutFrame<'a, T> {
     /// Creates a new initialized `OutFrame` from a mutable reference to a type `T`.
-    pub fn new_init(slot: &'a mut T) -> Self {
+    pub fn new_init(slot: &'a mut Box<T>) -> Self {
         unsafe { Self::new_maybe_uninit(slot, true) }
     }
 
     /// Creates a new uninitialized `OutFrame` from a mutable reference to a `MaybeUninit<T>`.
-    pub fn new_uninit(slot: &'a mut core::mem::MaybeUninit<T>) -> Self {
+    pub fn new_uninit(slot: &'a mut core::mem::MaybeUninit<Box<T>>) -> Self {
         unsafe { Self::new_maybe_uninit(slot.as_mut_ptr(), false) }
     }
 
@@ -124,7 +124,7 @@ impl<'a, T> OutFrame<'a, T> {
     /// This method is unsafe because it assumes that the pointer is valid and points to a location
     /// where a type `T` can be stored. It also assumes that the `init` flag correctly reflects whether
     /// the type `T` has been initialized or not.
-    pub unsafe fn new_maybe_uninit(ptr: *mut T, init: bool) -> Self {
+    pub unsafe fn new_maybe_uninit(ptr: *mut Box<T>, init: bool) -> Self {
         Self {
             ptr,
             init,
@@ -133,7 +133,7 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     /// Returns a mutable reference to the type `T`, initializing it if it hasn't been initialized yet.
-    pub fn get(&mut self, f: impl FnOnce() -> T) -> &mut T {
+    pub fn get(&mut self, f: impl FnOnce() -> Box<T>) -> &mut T {
         if !self.init {
             self.do_init(f);
         }
@@ -141,7 +141,7 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     #[cold]
-    fn do_init(&mut self, f: impl FnOnce() -> T) {
+    fn do_init(&mut self, f: impl FnOnce() -> Box<T>) {
         unsafe {
             self.init = true;
             self.ptr.write(f());
@@ -212,7 +212,7 @@ mod tests {
     fn frame_stack() {
         let mut stack = FrameStack::new();
         let mut frame = stack.start_init();
-        frame.get(|| 1);
+        frame.get(|| Box::new(1));
         let token = frame.consume();
         stack.end_init(token);
 
@@ -223,7 +223,7 @@ mod tests {
         assert_eq!(a, &mut 1);
         let mut b = stack.get_next();
         assert!(!b.init);
-        assert_eq!(b.get(|| 2), &mut 2);
+        assert_eq!(b.get(|| Box::new(2)), &mut 2);
         let token = b.consume(); // TODO: remove
         stack.push(token);
 
