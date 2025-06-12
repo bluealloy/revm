@@ -72,6 +72,9 @@ pub trait JournalTr {
     /// Warms the account.
     fn warm_account(&mut self, address: Address);
 
+    /// Warms the coinbase account.
+    fn warm_coinbase_account(&mut self, address: Address);
+
     /// Warms the precompiles.
     fn warm_precompiles(&mut self, addresses: HashSet<Address>);
 
