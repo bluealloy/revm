@@ -129,7 +129,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Load precompiles into warm_preloaded_addresses.
         // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
         // at least after state clear EIP.
-        warm_preloaded_addresses.clone_from(precompiles);
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
@@ -159,7 +159,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
-        warm_preloaded_addresses.clone_from(precompiles);
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -184,7 +184,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
         // Load precompiles into warm_preloaded_addresses.
-        warm_preloaded_addresses.clone_from(precompiles);
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
 
         let state = mem::take(state);
         logs.clear();
@@ -867,4 +867,11 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     }
 
     Ok(StateLoad::new(value, is_cold))
+}
+
+fn reset_preloaded_addresses(
+    warm_preloaded_addresses: &mut HashSet<Address>,
+    precompiles: &HashSet<Address>,
+) {
+    warm_preloaded_addresses.retain(|a| precompiles.contains(a));
 }
