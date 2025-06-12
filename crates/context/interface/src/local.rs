@@ -65,6 +65,13 @@ impl<T> FrameStack<T> {
         self.index += 1;
     }
 
+    /// Clears the stack by setting the index to 0.
+    /// It does not destroy the stack.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.index = 0;
+    }
+
     /// Decrements the index.
     #[inline]
     pub fn pop(&mut self) {

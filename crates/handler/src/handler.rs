@@ -198,10 +198,17 @@ pub trait Handler {
 
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = frame_stack(evm).start_init();
-        let res = self.first_frame_init(first_frame, evm, first_frame_input)?;
+
+        let f = evm.ctx_mut().local_mut().frame_stack();
+        let frame_stack =
+            unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<Self::Frame>>(f) };
+
+        let res = self.first_frame_init(frame_stack.start_init(), evm, first_frame_input)?;
         let mut frame_result = match res {
-            ItemOrResult::Item(token) => self.run_exec_loop(evm, token)?,
+            ItemOrResult::Item(token) => {
+                frame_stack.end_init(token);
+                self.run_exec_loop(evm, frame_stack)?
+            }
             ItemOrResult::Result(result) => result,
         };
 
@@ -411,20 +418,18 @@ pub trait Handler {
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        token: FrameToken,
+        frame_stack: &mut FrameStack<Self::Frame>,
     ) -> Result<FrameResult, Self::Error> {
-        let frame_stack = frame_stack::<Self::Frame>;
-        frame_stack(evm).end_init(token);
         loop {
-            let frame = frame_stack(evm).get();
+            let frame = frame_stack.get();
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
-                    let new_frame = frame_stack(evm).get_next();
+                    let new_frame = frame_stack.get_next();
                     match self.frame_init(new_frame, evm, init)? {
                         ItemOrResult::Item(token) => {
-                            frame_stack(evm).push(token);
+                            frame_stack.push(token);
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -433,15 +438,15 @@ pub trait Handler {
                 }
                 ItemOrResult::Result(result) => {
                     // Remove the frame that returned the result
-                    if frame_stack(evm).index() == 0 {
+                    if frame_stack.index() == 0 {
                         return Ok(result);
                     }
-                    frame_stack(evm).pop();
+                    frame_stack.pop();
                     result
                 }
             };
 
-            self.frame_return_result(frame_stack(evm).get(), evm, result)?;
+            self.frame_return_result(frame_stack.get(), evm, result)?;
         }
     }
 
@@ -533,10 +538,4 @@ pub trait Handler {
         evm.ctx().journal_mut().discard_tx();
         Err(error)
     }
-}
-
-#[inline]
-fn frame_stack<'a, F: Frame<Evm: EvmTr>>(evm: &mut F::Evm) -> &'a mut FrameStack<F> {
-    let f = evm.ctx_mut().local_mut().frame_stack();
-    unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<F>>(f) }
 }

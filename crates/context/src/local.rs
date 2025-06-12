@@ -38,6 +38,7 @@ impl LocalContextTr for LocalContext {
 
     fn clear(&mut self) {
         self.initcode_mapping.clear();
+        self.frame_stack.clear();
         // Sets len to 0 but it will not shrink to drop the capacity.
         unsafe { self.shared_memory_buffer.borrow_mut().set_len(0) };
     }
