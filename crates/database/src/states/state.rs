@@ -208,7 +208,7 @@ impl<DB: Database> State<DB> {
     }
 
     // TODO : Make cache aware of transitions dropping by having global transition counter.
-    /// Takess the [`BundleState`] changeset from the [`State`], replacing it
+    /// Takes the [`BundleState`] changeset from the [`State`], replacing it
     /// with an empty one.
     ///
     /// This will not apply any pending [`TransitionState`].
