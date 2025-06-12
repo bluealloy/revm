@@ -4,7 +4,7 @@ use core::{
     ops::Range,
 };
 use primitives::{Bytes, B256};
-use std::{rc::Rc, vec::Vec};
+use std::{boxed::Box, rc::Rc, vec::Vec};
 
 /// Non-empty, item-pooling Vec.
 #[derive(Clone, Debug)]
