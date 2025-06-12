@@ -123,6 +123,6 @@ bn = ["dep:bn"]
 
 [[bench]]
 name = "bench"
-path = "benches/bench.rs"
+path = "bench/main.rs"
 harness = false
 required-features = ["secp256k1"]
