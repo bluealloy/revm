@@ -133,7 +133,11 @@ impl<ExtDB> CacheDB<ExtDB> {
     /// Inserts account info but not override storage
     pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
         self.insert_contract(&mut info);
-        self.cache.accounts.entry(address).or_default().info = info;
+        let account_entry = self.cache.accounts.entry(address).or_default();
+        account_entry.info = info;
+        if account_entry.account_state == AccountState::NotExisting {
+            account_entry.account_state = AccountState::None;
+        }
     }
 
     /// Wraps the cache in a [CacheDB], creating a nested cache.
