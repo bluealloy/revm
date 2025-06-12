@@ -873,7 +873,10 @@ fn reset_preloaded_addresses(
     warm_preloaded_addresses: &mut HashSet<Address>,
     precompiles: &HashSet<Address>,
 ) {
+    // `warm_preloaded_addresses` is append-only, and is initialized with `precompiles`.
+    // Avoid unnecessarily cloning if it hasn't changed.
     if warm_preloaded_addresses.len() == precompiles.len() {
+        debug_assert_eq!(warm_preloaded_addresses, precompiles);
         return;
     }
     warm_preloaded_addresses.clone_from(precompiles);
