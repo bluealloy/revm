@@ -73,12 +73,15 @@ impl<T> FrameStack<T> {
 
     /// Returns the current item.
     #[inline]
-    pub fn get(&mut self) -> (&mut T, OutFrame<'_, T>) {
+    pub fn get(&mut self) -> &mut T {
         debug_assert!(self.stack.capacity() > self.index + 1);
-        unsafe {
-            let ptr = self.stack.as_mut_ptr().add(self.index);
-            (&mut *ptr, self.out_frame_at(self.index + 1))
-        }
+        unsafe { &mut *self.stack.as_mut_ptr().add(self.index) }
+    }
+
+    /// Get next uninitialized item.
+    #[inline]
+    pub fn get_next(&mut self) -> OutFrame<'_, T> {
+        self.out_frame_at(self.index + 1)
     }
 
     fn out_frame_at(&mut self, idx: usize) -> OutFrame<'_, T> {
@@ -209,25 +212,28 @@ mod tests {
         assert_eq!(stack.index(), 0);
         assert_eq!(stack.stack.len(), 1);
 
-        let (a, mut b) = stack.get();
+        let a = stack.get();
         assert_eq!(a, &mut 1);
+        let mut b = stack.get_next();
         assert!(!b.init);
         assert_eq!(b.get(|| 2), &mut 2);
-        let token = b.consume();
+        let token = b.consume(); // TODO: remove
         stack.push(token);
 
         assert_eq!(stack.index(), 1);
         assert_eq!(stack.stack.len(), 2);
-        let (a, b) = stack.get();
+        let a = stack.get();
         assert_eq!(a, &mut 2);
+        let b = stack.get_next();
         assert!(!b.init);
 
         stack.pop();
 
         assert_eq!(stack.index(), 0);
         assert_eq!(stack.stack.len(), 2);
-        let (a, mut b) = stack.get();
+        let a = stack.get();
         assert_eq!(a, &mut 1);
+        let mut b = stack.get_next();
         assert!(b.init);
         assert_eq!(unsafe { b.get_unchecked() }, &mut 2);
     }

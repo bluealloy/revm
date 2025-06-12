@@ -5,7 +5,6 @@ use crate::{
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
-use context::LocalContextTr;
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
@@ -14,6 +13,7 @@ use context_interface::{
     Cfg, Database,
 };
 use core::cmp::min;
+use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
@@ -40,7 +40,6 @@ pub trait Frame: Sized + Default {
     type Error;
 
     fn init(
-        old_frame: Option<&mut Self>,
         new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
@@ -106,27 +105,16 @@ where
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type Evm = EVM;
-    type FrameInit = FrameInput;
+    type FrameInit = FrameInit;
     type FrameResult = FrameResult;
     type Error = ERROR;
 
     fn init(
-        old_frame: Option<&mut Self>,
         new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
+        frame_init: Self::FrameInit,
     ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error> {
-        let (depth, memory) = match old_frame {
-            Some(frame) => (
-                frame.depth + 1,
-                frame.interpreter.memory.new_child_context(),
-            ),
-            None => (
-                0,
-                SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone()),
-            ),
-        };
-        Self::init_with_context(new_frame, evm, depth, frame_input, memory)
+        Self::init_with_context(new_frame, evm, frame_init)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
@@ -575,11 +563,16 @@ where
     pub fn init_with_context(
         this: OutFrame<'_, Self>,
         evm: &mut EVM,
-        depth: usize,
-        frame_init: FrameInput,
-        memory: SharedMemory,
+        frame_init: FrameInit,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        match frame_init {
+        // TODO cleanup inner make functions
+        let FrameInit {
+            depth,
+            memory,
+            frame_input,
+        } = frame_init;
+
+        match frame_input {
             FrameInput::Call(inputs) => Self::make_call_frame(this, evm, depth, memory, inputs),
             FrameInput::Create(inputs) => Self::make_create_frame(this, evm, depth, memory, inputs),
             FrameInput::EOFCreate(inputs) => {
@@ -613,7 +606,15 @@ where
         // Run interpreter
 
         let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
+            InterpreterAction::NewFrame(frame_input) => {
+                return {
+                    Ok(ItemOrResult::Item(FrameInit {
+                        frame_input,
+                        depth: self.depth + 1,
+                        memory: self.interpreter.memory.new_child_context(),
+                    }))
+                }
+            }
             InterpreterAction::Return(result) => result,
         };
 

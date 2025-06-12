@@ -11,7 +11,7 @@ pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
 use primitives::Bytes;
 
-use crate::{Gas, InstructionResult, InterpreterResult};
+use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
 use std::boxed::Box;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -25,6 +25,17 @@ pub enum FrameInput {
     Create(Box<CreateInputs>),
     /// EOF `CREATE` instruction called.
     EOFCreate(Box<EOFCreateInputs>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct FrameInit {
+    /// depth of the next frame
+    pub depth: usize,
+    /// shared memory set to this shared context
+    pub memory: SharedMemory,
+    /// Data needed as input for Interpreter.
+    pub frame_input: FrameInput,
 }
 
 impl AsMut<Self> for FrameInput {

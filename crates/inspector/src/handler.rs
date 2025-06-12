@@ -98,28 +98,28 @@ where
     fn inspect_first_frame_init(
         &mut self,
         evm: &mut Self::Evm,
-        mut frame_input: <Self::Frame as Frame>::FrameInit,
+        mut frame_init: <Self::Frame as Frame>::FrameInit,
     ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
         let (ctx, inspector) = evm.ctx_inspector();
-        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_input) {
-            frame_end(ctx, inspector, &frame_input, &mut output);
+        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_init.frame_input) {
+            frame_end(ctx, inspector, &frame_init.frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }
 
         let frame_stack = frame_stack::<Self::Frame>;
         let first_frame = frame_stack(evm).start_init();
-        let mut ret = self.first_frame_init(first_frame, evm, frame_input.clone());
+        let mut ret = self.first_frame_init(first_frame, evm, frame_init.clone());
 
         // only if new frame is created call initialize_interp hook.
         match &mut ret {
             Ok(ItemOrResult::Item(_)) => {
-                let interp = frame_stack(evm).get().0.interpreter();
+                let interp = frame_stack(evm).get().interpreter();
                 let (context, inspector) = evm.ctx_inspector();
                 inspector.initialize_interp(interp, context);
             }
             Ok(ItemOrResult::Result(result)) => {
                 let (context, inspector) = evm.ctx_inspector();
-                frame_end(context, inspector, &frame_input, result);
+                frame_end(context, inspector, &frame_init.frame_input, result);
             }
             _ => (),
         }
@@ -158,21 +158,23 @@ where
         let frame_stack = frame_stack::<Self::Frame>;
         frame_stack(evm).end_init(token);
         loop {
-            let (frame, new_frame) = frame_stack(evm).get();
+            let frame = frame_stack(evm).get();
             let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(mut init) => {
                     let (context, inspector) = evm.ctx_inspector();
-                    if let Some(mut output) = frame_start(context, inspector, &mut init) {
-                        frame_end(context, inspector, &init, &mut output);
+                    if let Some(mut output) = frame_start(context, inspector, &mut init.frame_input)
+                    {
+                        frame_end(context, inspector, &init.frame_input, &mut output);
                         output
                     } else {
-                        match self.frame_init(frame, new_frame, evm, init.clone())? {
+                        let new_frame = frame_stack(evm).get_next();
+                        match self.frame_init(new_frame, evm, init.clone())? {
                             ItemOrResult::Item(token) => {
                                 // only if new frame is created call initialize_interp hook.
                                 frame_stack(evm).push(token);
-                                let interp = frame_stack(evm).get().0.interpreter();
+                                let interp = frame_stack(evm).get().interpreter();
                                 let (context, inspector) = evm.ctx_inspector();
                                 inspector.initialize_interp(interp, context);
                                 continue;
@@ -180,7 +182,7 @@ where
                             // Dont pop the frame as new frame was not created.
                             ItemOrResult::Result(mut result) => {
                                 let (context, inspector) = evm.ctx_inspector();
-                                frame_end(context, inspector, &init, &mut result);
+                                frame_end(context, inspector, &init.frame_input, &mut result);
                                 result
                             }
                         }
@@ -199,7 +201,7 @@ where
                 }
             };
 
-            self.frame_return_result(frame_stack(evm).get().0, evm, result)?;
+            self.frame_return_result(frame_stack(evm).get(), evm, result)?;
         }
     }
 }

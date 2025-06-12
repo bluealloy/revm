@@ -19,7 +19,7 @@ use revm::{
         EvmTr, Frame, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
-    interpreter::{interpreter::EthInterpreter, FrameInput, Gas},
+    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
     primitives::{hardfork::SpecId, U256},
 };
 use std::boxed::Box;
@@ -70,7 +70,7 @@ where
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInit>,
 {
     type Evm = EVM;
     type Error = ERROR;
@@ -491,7 +491,7 @@ where
         Evm = EVM,
         Error = ERROR,
         FrameResult = FrameResult,
-        FrameInit = FrameInput,
+        FrameInit = FrameInit,
         IT = EthInterpreter,
     >,
 {
