@@ -12,6 +12,12 @@ Dependency bump
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/bluealloy/revm/compare/revm-state-v5.0.0...revm-state-v5.1.0) - 2025-06-13
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-state-v4.0.1...revm-state-v5.0.0) - 2025-06-06
 
 ### Added
