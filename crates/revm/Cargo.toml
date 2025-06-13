@@ -33,6 +33,7 @@ inspector.workspace = true
 interpreter.workspace = true
 precompile.workspace = true
 primitives.workspace = true
+serde_json.workspace = true
 state.workspace = true
 
 [dev-dependencies]
