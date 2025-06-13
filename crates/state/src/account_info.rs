@@ -5,7 +5,7 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.

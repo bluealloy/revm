@@ -21,7 +21,7 @@ pub mod interpreter_types;
 
 // Reexport primary types.
 pub use context_interface::{
-    context::{SStoreResult, SelfDestructResult, StateLoad},
+    context::{SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     CreateScheme,
 };
 pub use gas::{Gas, InitialAndFloorGas};
@@ -37,4 +37,4 @@ pub use interpreter_action::{
     EOFCreateInputs, EOFCreateKind, FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
-pub use primitives::{constants::MAX_INITCODE_SIZE, eip170::MAX_CODE_SIZE};
+pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};

@@ -1,5 +1,5 @@
 use context_interface::{
-    context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
+    context::{ContextTr, SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     journaled_state::AccountLoad,
     Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
@@ -85,9 +85,11 @@ pub trait Host {
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
     /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
+    fn load_account_code(&mut self, address: Address) -> Option<StateCodeLoad<Bytes>>;
+    /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
+    fn load_account_code_size(&mut self, address: Address) -> Option<StateCodeLoad<usize>>;
     /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
+    fn load_account_code_hash(&mut self, address: Address) -> Option<StateCodeLoad<B256>>;
 }
 
 impl<CTX: ContextTr> Host for CTX {
@@ -194,7 +196,7 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
+    fn load_account_code(&mut self, address: Address) -> Option<StateCodeLoad<Bytes>> {
         self.journal_mut()
             .code(address)
             .map_err(|e| {
@@ -203,8 +205,17 @@ impl<CTX: ContextTr> Host for CTX {
             .ok()
     }
 
+    fn load_account_code_size(&mut self, address: Address) -> Option<StateCodeLoad<usize>> {
+        self.journal_mut()
+            .code_size(address)
+            .map_err(|e| {
+                *self.error() = Err(e.into());
+            })
+            .ok()
+    }
+
     /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
+    fn load_account_code_hash(&mut self, address: Address) -> Option<StateCodeLoad<B256>> {
         self.journal_mut()
             .code_hash(address)
             .map_err(|e| {
@@ -371,11 +382,15 @@ impl Host for DummyHost {
         None
     }
 
-    fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
+    fn load_account_code(&mut self, _address: Address) -> Option<StateCodeLoad<Bytes>> {
         None
     }
 
-    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateCodeLoad<B256>> {
+        None
+    }
+
+    fn load_account_code_size(&mut self, _address: Address) -> Option<StateCodeLoad<usize>> {
         None
     }
 }

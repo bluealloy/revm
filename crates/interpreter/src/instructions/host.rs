@@ -59,22 +59,26 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
+    let Some(code_size) = context.host.load_account_code_size(address) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code.is_cold));
+    let gas = if spec_id.is_enabled_in(OSAKA) {
+        5000
+    } else if spec_id.is_enabled_in(BERLIN) {
+        warm_cold_cost(code_size.is_cold)
     } else if spec_id.is_enabled_in(TANGERINE) {
-        gas!(context.interpreter, 700);
+        700
     } else {
-        gas!(context.interpreter, 20);
-    }
+        20
+    };
 
-    *top = U256::from(code.len());
+    gas!(context.interpreter, gas);
+
+    *top = U256::from(code_size.data);
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -122,7 +126,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         gas::extcodecopy_cost(
             context.interpreter.runtime_flag.spec_id(),
             len,
-            code.is_cold
+            code.is_cold,
+            code.is_code_cold
         )
     );
     if len == 0 {

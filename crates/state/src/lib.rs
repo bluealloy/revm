@@ -61,6 +61,11 @@ impl Account {
         self.status -= AccountStatus::SelfDestructed;
     }
 
+    /// Is account code cold.
+    pub fn is_code_cold(&self) -> bool {
+        !self.status.contains(AccountStatus::CodeLoaded)
+    }
+
     /// Is account marked for self destruct.
     pub fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
@@ -97,15 +102,18 @@ impl Account {
     }
 
     /// Marks the account as warm and return true if it was previously cold.
+    ///
+    /// If transaction id is different, invalidate [`AccountStatus::CodeLoaded`] flag.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
-        let same_id = self.transaction_id == transaction_id;
+        let same_id: bool = self.transaction_id == transaction_id;
         let is_cold = self.status.contains(AccountStatus::Cold);
 
         self.status -= AccountStatus::Cold;
         self.transaction_id = transaction_id;
 
         if !same_id {
+            self.status -= AccountStatus::CodeLoaded;
             return true;
         }
 
@@ -161,6 +169,21 @@ impl Account {
     #[inline]
     pub fn unmark_selfdestructed_locally(&mut self) {
         self.status -= AccountStatus::SelfDestructedLocal;
+    }
+
+    /// Marks the account code as cold
+    pub fn mark_code_cold(&mut self) {
+        self.status -= AccountStatus::CodeLoaded;
+    }
+
+    /// Marks the account code as warm and return true if it was previously cold.
+    pub fn mark_code_warm(&mut self) -> bool {
+        if !self.status.contains(AccountStatus::CodeLoaded) {
+            self.status |= AccountStatus::CodeLoaded;
+            true
+        } else {
+            false
+        }
     }
 
     /// Is account loaded as not existing from database.
@@ -292,6 +315,8 @@ bitflags! {
     /// This flag is fine to span across multiple transactions as it interucts with `Touched` flag this is used in global scope.
     ///
     /// `CreatedLocal`, `SelfdestructedLocal` and `Cold` flags are reset on first account loading of local scope.
+    ///
+    /// `CodeLoaded` is introduced in `EIP-7907: Meter Contract Code Size And Increase Limit`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
@@ -315,6 +340,9 @@ bitflags! {
         /// used to mark account as cold.
         /// It is used only in local scope and it is reset on account loading.
         const Cold = 0b00010000;
+        /// EIP-7907: Code loaded warm
+        /// If code is loaded, account should be loaded.
+        const CodeLoaded = 0b00100000;
     }
 }
 
@@ -486,6 +514,28 @@ mod tests {
 
         // When marking cold account as warm, it should return true
         assert!(account.mark_warm_with_transaction_id(0));
+    }
+
+    #[test]
+    fn account_code_is_cold() {
+        let mut account = Account::default();
+
+        // Account code is not warm by default
+        assert!(!account.status.contains(crate::AccountStatus::CodeLoaded));
+
+        // When marking code as warm for first time, it should return is_code_cold=true
+        assert!(account.mark_code_warm());
+
+        // Account code should be warm
+        assert!(account.status.contains(crate::AccountStatus::CodeLoaded));
+
+        // When marking code as warm for second time, it should return is_code_cold=false
+        assert!(!account.mark_code_warm());
+
+        account.mark_code_cold();
+
+        // Account code should be cold
+        assert!(!account.status.contains(crate::AccountStatus::CodeLoaded));
     }
 
     #[test]
