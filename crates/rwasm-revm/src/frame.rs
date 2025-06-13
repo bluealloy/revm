@@ -798,9 +798,7 @@ where
 
                 if instruction_result == InstructionResult::Revert {
                     // Save data to return data buffer if the create reverted
-                    interpreter
-                        .return_data
-                        .set_buffer(outcome.output().to_owned());
+                    interpreter.return_data.set_buffer(outcome.output().clone());
                 } else {
                     // Otherwise clear it. Note that RETURN opcode should abort.
                     interpreter.return_data.clear();
@@ -832,9 +830,7 @@ where
                 let interpreter = &mut self.interpreter;
                 if instruction_result == InstructionResult::Revert {
                     // Save data to return data buffer if the create reverted
-                    interpreter
-                        .return_data
-                        .set_buffer(outcome.output().to_owned());
+                    interpreter.return_data.set_buffer(outcome.output().clone());
                 } else {
                     // Otherwise clear it. Note that RETURN opcode should abort.
                     interpreter.return_data.clear()
