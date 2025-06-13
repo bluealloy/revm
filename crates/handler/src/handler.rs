@@ -111,7 +111,7 @@ pub trait Handler {
     /// It is used to call a system contracts and it skips all the `validation` and `pre-execution` and most of `post-execution` phases.
     /// For example it will not deduct the caller or reward the beneficiary.
     ///
-    /// State changs can be obtained by calling [`JournalTr::finalize`] method from the [`EvmTr::Context`].
+    /// State changes can be obtained by calling [`JournalTr::finalize`] method from the [`EvmTr::Context`].
     ///
     /// # Error handling
     ///
