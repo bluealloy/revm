@@ -1,20 +1,21 @@
 use crate::EvmTr;
 use crate::{
-    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
-    FrameResult, ItemOrResult,
+    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameResult,
+    ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
 use context::LocalContextTr;
 use context_interface::context::ContextError;
+use context_interface::local::{FrameStack, FrameToken, OutFrame};
 use context_interface::ContextTr;
 use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
     Cfg, Database, JournalTr, Transaction,
 };
-use interpreter::{FrameInput, Gas, InitialAndFloorGas};
+use interpreter::interpreter_action::FrameInit;
+use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
 use state::EvmState;
-use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
@@ -72,7 +73,7 @@ pub trait Handler {
         Evm = Self::Evm,
         Error = Self::Error,
         FrameResult = FrameResult,
-        FrameInit = FrameInput,
+        FrameInit = FrameInit,
     >;
     /// The halt reason type included in the output
     type HaltReason: HaltReasonTr;
@@ -197,9 +198,17 @@ pub trait Handler {
 
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.first_frame_init(evm, first_frame_input)?;
-        let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame)?,
+
+        let f = evm.ctx_mut().local_mut().frame_stack();
+        let frame_stack =
+            unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<Self::Frame>>(f) };
+
+        let res = self.first_frame_init(frame_stack.start_init(), evm, first_frame_input)?;
+        let mut frame_result = match res {
+            ItemOrResult::Item(token) => {
+                frame_stack.end_init(token);
+                self.run_exec_loop(evm, frame_stack)?
+            }
             ItemOrResult::Result(result) => result,
         };
 
@@ -312,13 +321,15 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
-    ) -> Result<FrameInput, Self::Error> {
-        let ctx: &<<Self as Handler>::Evm as EvmTr>::Context = evm.ctx_ref();
-        Ok(execution::create_init_frame(
-            ctx.tx(),
-            ctx.cfg().spec().into(),
-            gas_limit,
-        ))
+    ) -> Result<FrameInit, Self::Error> {
+        let memory =
+            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
+        let ctx = evm.ctx_ref();
+        Ok(FrameInit {
+            depth: 0,
+            memory,
+            frame_input: execution::create_init_frame(ctx.tx(), ctx.cfg().spec().into(), gas_limit),
+        })
     }
 
     /// Processes the result of the initial call and handles returned gas.
@@ -352,10 +363,11 @@ pub trait Handler {
     #[inline]
     fn first_frame_init(
         &mut self,
+        new_frame: OutFrame<'_, Self::Frame>,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Self::Frame::init_first(evm, frame_input)
+    ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
+        Self::Frame::init(new_frame, evm, frame_input)
     }
 
     /// Initializes a new frame from the provided frame input and previous frame.
@@ -364,11 +376,11 @@ pub trait Handler {
     #[inline]
     fn frame_init(
         &mut self,
-        frame: &mut Self::Frame,
+        new_frame: OutFrame<'_, Self::Frame>,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Frame::init(frame, evm, frame_input)
+    ) -> Result<ItemOrResult<FrameToken, <Self::Frame as Frame>::FrameResult>, Self::Error> {
+        Frame::init(new_frame, evm, frame_input)
     }
 
     /// Executes a frame and returns either input for a new frame or the frame's result.
@@ -406,18 +418,18 @@ pub trait Handler {
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        frame: Self::Frame,
+        frame_stack: &mut FrameStack<Self::Frame>,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
-            let frame = frame_stack.last_mut().unwrap();
+            let frame = frame_stack.get();
             let call_or_result = self.frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
-                    match self.frame_init(frame, evm, init)? {
-                        ItemOrResult::Item(new_frame) => {
-                            frame_stack.push(new_frame);
+                    let new_frame = frame_stack.get_next();
+                    match self.frame_init(new_frame, evm, init)? {
+                        ItemOrResult::Item(token) => {
+                            frame_stack.push(token);
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
@@ -426,15 +438,15 @@ pub trait Handler {
                 }
                 ItemOrResult::Result(result) => {
                     // Remove the frame that returned the result
+                    if frame_stack.index() == 0 {
+                        return Ok(result);
+                    }
                     frame_stack.pop();
                     result
                 }
             };
 
-            let Some(frame) = frame_stack.last_mut() else {
-                return Ok(result);
-            };
-            self.frame_return_result(frame, evm, result)?;
+            self.frame_return_result(frame_stack.get(), evm, result)?;
         }
     }
 

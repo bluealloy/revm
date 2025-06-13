@@ -1,18 +1,19 @@
 use super::frame_data::*;
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
-    FrameInitOrResult, FrameOrResult, ItemOrResult,
+    FrameInitOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
-use context::LocalContextTr;
 use context_interface::context::ContextError;
+use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
     Cfg, Database,
 };
 use core::cmp::min;
+use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
@@ -32,22 +33,17 @@ use std::borrow::ToOwned;
 use std::{boxed::Box, sync::Arc};
 
 /// Call frame trait
-pub trait Frame: Sized {
+pub trait Frame: Sized + Default {
     type Evm;
     type FrameInit;
     type FrameResult;
     type Error;
 
-    fn init_first(
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error>;
-
     fn init(
-        &mut self,
+        new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error>;
+    ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error>;
 
     fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
@@ -72,6 +68,31 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     pub interpreter: Interpreter<IW>,
 }
 
+impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
+    fn default() -> Self {
+        Self::do_default(Interpreter::default())
+    }
+}
+
+impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter> {
+    fn invalid() -> Self {
+        Self::do_default(Interpreter::invalid())
+    }
+
+    fn do_default(interpreter: Interpreter<EthInterpreter>) -> Self {
+        Self {
+            phantom: core::marker::PhantomData,
+            data: FrameData::Call(CallFrame {
+                return_memory_range: 0..0,
+            }),
+            input: FrameInput::Empty,
+            depth: 0,
+            checkpoint: JournalCheckpoint::default(),
+            interpreter,
+        }
+    }
+}
+
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
@@ -84,27 +105,16 @@ where
     ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
 {
     type Evm = EVM;
-    type FrameInit = FrameInput;
+    type FrameInit = FrameInit;
     type FrameResult = FrameResult;
     type Error = ERROR;
 
-    fn init_first(
-        evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error> {
-        let memory =
-            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        Self::init_with_context(evm, 0, frame_input, memory)
-    }
-
     fn init(
-        &mut self,
+        new_frame: OutFrame<'_, Self>,
         evm: &mut Self::Evm,
-        frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResult<Self>, Self::Error> {
-        // Create new context from shared memory.
-        let memory = self.interpreter.memory.new_child_context();
-        EthFrame::init_with_context(evm, self.depth + 1, frame_input, memory)
+        frame_init: Self::FrameInit,
+    ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error> {
+        Self::init_with_context(new_frame, evm, frame_init)
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
@@ -155,14 +165,54 @@ where
     ERROR: From<ContextTrDbError<EVM::Context>>,
     ERROR: FromStringError,
 {
+    /// Clear and initialize a frame.
+    #[allow(clippy::too_many_arguments)]
+    pub fn clear(
+        &mut self,
+        data: FrameData,
+        input: FrameInput,
+        depth: usize,
+        memory: SharedMemory,
+        bytecode: ExtBytecode,
+        inputs: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+        checkpoint: JournalCheckpoint,
+    ) {
+        let Self {
+            phantom: _,
+            data: data_ref,
+            input: input_ref,
+            depth: depth_ref,
+            interpreter,
+            checkpoint: checkpoint_ref,
+        } = self;
+        *data_ref = data;
+        *input_ref = input;
+        *depth_ref = depth;
+        interpreter.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            is_eof_init,
+            spec_id,
+            gas_limit,
+        );
+        *checkpoint_ref = checkpoint;
+    }
+
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
+        mut this: OutFrame<'_, Self>,
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
 
         let (context, precompiles) = evm.ctx_precompiles();
@@ -268,33 +318,33 @@ where
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        Ok(ItemOrResult::Item(Self::new(
+        this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
             FrameInput::Call(inputs),
             depth,
-            Interpreter::new(
-                memory,
-                ExtBytecode::new_with_hash(bytecode, code_hash),
-                interpreter_input,
-                is_static,
-                false,
-                context.cfg().spec().into(),
-                gas_limit,
-            ),
+            memory,
+            ExtBytecode::new_with_hash(bytecode, code_hash),
+            interpreter_input,
+            is_static,
+            false,
+            context.cfg().spec().into(),
+            gas_limit,
             checkpoint,
-        )))
+        );
+        Ok(ItemOrResult::Item(this.consume()))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_create_frame(
+        mut this: OutFrame<'_, Self>,
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -376,31 +426,31 @@ where
         };
         let gas_limit = inputs.gas_limit;
 
-        Ok(ItemOrResult::Item(Self::new(
+        this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
-            Interpreter::new(
-                memory,
-                bytecode,
-                interpreter_input,
-                false,
-                false,
-                spec,
-                gas_limit,
-            ),
+            memory,
+            bytecode,
+            interpreter_input,
+            false,
+            false,
+            spec,
+            gas_limit,
             checkpoint,
-        )))
+        );
+        Ok(ItemOrResult::Item(this.consume()))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_eofcreate_frame(
+        mut this: OutFrame<'_, Self>,
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<EOFCreateInputs>,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -494,33 +544,41 @@ where
         };
 
         let gas_limit = inputs.gas_limit;
-        Ok(ItemOrResult::Item(Self::new(
+        this.get(EthFrame::invalid).clear(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             FrameInput::EOFCreate(inputs),
             depth,
-            Interpreter::new(
-                memory,
-                ExtBytecode::new(Bytecode::Eof(initcode)),
-                interpreter_input,
-                false,
-                true,
-                spec,
-                gas_limit,
-            ),
+            memory,
+            ExtBytecode::new(Bytecode::Eof(initcode)),
+            interpreter_input,
+            false,
+            true,
+            spec,
+            gas_limit,
             checkpoint,
-        )))
+        );
+        Ok(ItemOrResult::Item(this.consume()))
     }
 
     pub fn init_with_context(
+        this: OutFrame<'_, Self>,
         evm: &mut EVM,
-        depth: usize,
-        frame_init: FrameInput,
-        memory: SharedMemory,
-    ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        match frame_init {
-            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, inputs),
-            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, inputs),
-            FrameInput::EOFCreate(inputs) => Self::make_eofcreate_frame(evm, depth, memory, inputs),
+        frame_init: FrameInit,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+        // TODO cleanup inner make functions
+        let FrameInit {
+            depth,
+            memory,
+            frame_input,
+        } = frame_init;
+
+        match frame_input {
+            FrameInput::Call(inputs) => Self::make_call_frame(this, evm, depth, memory, inputs),
+            FrameInput::Create(inputs) => Self::make_create_frame(this, evm, depth, memory, inputs),
+            FrameInput::EOFCreate(inputs) => {
+                Self::make_eofcreate_frame(this, evm, depth, memory, inputs)
+            }
+            FrameInput::Empty => unreachable!(),
         }
     }
 }
@@ -548,7 +606,15 @@ where
         // Run interpreter
 
         let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(new_frame) => return Ok(ItemOrResult::Item(new_frame)),
+            InterpreterAction::NewFrame(frame_input) => {
+                return {
+                    Ok(ItemOrResult::Item(FrameInit {
+                        frame_input,
+                        depth: self.depth + 1,
+                        memory: self.interpreter.memory.new_child_context(),
+                    }))
+                }
+            }
             InterpreterAction::Return(result) => result,
         };
 

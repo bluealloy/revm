@@ -38,6 +38,12 @@ impl SubRoutineImpl {
         }
     }
 
+    /// Clears the function stack.
+    pub fn clear(&mut self) {
+        self.return_stack.clear();
+        self.current_code_idx = 0;
+    }
+
     pub fn len(&self) -> usize {
         self.return_stack.len()
     }

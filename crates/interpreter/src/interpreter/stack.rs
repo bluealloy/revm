@@ -53,6 +53,11 @@ impl StackTr for Stack {
     }
 
     #[inline]
+    fn clear(&mut self) {
+        self.data.clear();
+    }
+
+    #[inline]
     fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
         if self.len() < N {
             return None;
@@ -91,6 +96,12 @@ impl Stack {
             // SAFETY: Expansion functions assume that capacity is `STACK_LIMIT`.
             data: Vec::with_capacity(STACK_LIMIT),
         }
+    }
+
+    /// Instantiate a new invalid Stack.
+    #[inline]
+    pub fn invalid() -> Self {
+        Self { data: Vec::new() }
     }
 
     /// Returns the length of the stack in words.

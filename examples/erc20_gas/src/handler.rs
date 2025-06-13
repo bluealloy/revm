@@ -8,7 +8,7 @@ use revm::{
         pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, FrameResult,
         Handler,
     },
-    interpreter::FrameInput,
+    interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
     state::EvmState,
 };
@@ -36,7 +36,7 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
 impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>,
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInit>,
     ERROR: EvmTrError<EVM>,
 {
     type Evm = EVM;

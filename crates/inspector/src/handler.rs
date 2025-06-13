@@ -1,14 +1,14 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
-use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
-use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
+use context::{
+    result::ExecutionResult, ContextTr, FrameStack, JournalEntry, LocalContextTr, Transaction,
+};
+use handler::{EvmTr, FrameInitOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionContext, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
-
-use std::{vec, vec::Vec};
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -23,7 +23,6 @@ use std::{vec, vec::Vec};
 /// * [`Handler::run`] replaced with [`InspectorHandler::inspect_run`]
 /// * [`Handler::run_without_catch_error`] replaced with [`InspectorHandler::inspect_run_without_catch_error`]
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
-/// * [`Handler::first_frame_init`] replaced with [`InspectorHandler::inspect_first_frame_init`]
 /// * [`Handler::frame_call`] replaced with [`InspectorHandler::inspect_frame_call`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
 pub trait InspectorHandler: Handler
@@ -72,12 +71,40 @@ where
         let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
 
         // Create first frame action
-        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.inspect_first_frame_init(evm, first_frame_input)?;
+        let mut first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
-        let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.inspect_run_exec_loop(evm, frame)?,
-            ItemOrResult::Result(result) => result,
+        let f = evm.ctx_mut().local_mut().frame_stack();
+        let frame_stack =
+            unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<Self::Frame>>(f) };
+
+        let (ctx, inspector) = evm.ctx_inspector();
+        if let Some(mut output) = frame_start(ctx, inspector, &mut first_frame_input.frame_input) {
+            frame_end(ctx, inspector, &first_frame_input.frame_input, &mut output);
+            return Ok(output);
+        }
+
+        let res =
+            self.first_frame_init(frame_stack.start_init(), evm, first_frame_input.clone())?;
+
+        let mut frame_result = match res {
+            ItemOrResult::Item(token) => {
+                frame_stack.end_init(token);
+                let (context, inspector) = evm.ctx_inspector();
+                let interp = frame_stack.get().interpreter();
+                inspector.initialize_interp(interp, context);
+
+                self.inspect_run_exec_loop(evm, frame_stack)?
+            }
+            ItemOrResult::Result(mut result) => {
+                let (context, inspector) = evm.ctx_inspector();
+                frame_end(
+                    context,
+                    inspector,
+                    &first_frame_input.frame_input,
+                    &mut result,
+                );
+                result
+            }
         };
 
         self.last_frame_result(evm, &mut frame_result)?;
@@ -85,37 +112,6 @@ where
     }
 
     /* FRAMES */
-
-    /// Initialize first frame.
-    ///
-    /// This method replaces the [`Handler::first_frame_init`] method from [`Handler`].
-    ///
-    /// * It calls [`Inspector::call`]/[`Inspector::create`]/[`Inspector::eofcreate`] methods to allow inspection of
-    ///   the frame and its modification.
-    /// * If new frame is created a [`Inspector::initialize_interp`] method will be called.
-    /// * If creation of new frame returns the result, the [`Inspector`] `_end` methods will be called.
-    fn inspect_first_frame_init(
-        &mut self,
-        evm: &mut Self::Evm,
-        mut frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        let (ctx, inspector) = evm.ctx_inspector();
-        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_input) {
-            frame_end(ctx, inspector, &frame_input, &mut output);
-            return Ok(ItemOrResult::Result(output));
-        }
-        let mut ret = self.first_frame_init(evm, frame_input.clone());
-
-        // only if new frame is created call initialize_interp hook.
-        if let Ok(ItemOrResult::Item(frame)) = &mut ret {
-            let (context, inspector) = evm.ctx_inspector();
-            inspector.initialize_interp(frame.interpreter(), context);
-        } else if let Ok(ItemOrResult::Result(result)) = &mut ret {
-            let (context, inspector) = evm.ctx_inspector();
-            frame_end(context, inspector, &frame_input, result);
-        }
-        ret
-    }
 
     /// Run inspection on frame.
     ///
@@ -144,32 +140,34 @@ where
     fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        frame: Self::Frame,
+        frame_stack: &mut FrameStack<Self::Frame>,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
-            let frame = frame_stack.last_mut().unwrap();
+            let frame = frame_stack.get();
             let call_or_result = self.inspect_frame_call(frame, evm)?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(mut init) => {
                     let (context, inspector) = evm.ctx_inspector();
-                    if let Some(mut output) = frame_start(context, inspector, &mut init) {
-                        frame_end(context, inspector, &init, &mut output);
+                    if let Some(mut output) = frame_start(context, inspector, &mut init.frame_input)
+                    {
+                        frame_end(context, inspector, &init.frame_input, &mut output);
                         output
                     } else {
-                        match self.frame_init(frame, evm, init.clone())? {
-                            ItemOrResult::Item(mut new_frame) => {
+                        let new_frame = frame_stack.get_next();
+                        match self.frame_init(new_frame, evm, init.clone())? {
+                            ItemOrResult::Item(token) => {
                                 // only if new frame is created call initialize_interp hook.
+                                frame_stack.push(token);
+                                let interp = frame_stack.get().interpreter();
                                 let (context, inspector) = evm.ctx_inspector();
-                                inspector.initialize_interp(new_frame.interpreter(), context);
-                                frame_stack.push(new_frame);
+                                inspector.initialize_interp(interp, context);
                                 continue;
                             }
                             // Dont pop the frame as new frame was not created.
                             ItemOrResult::Result(mut result) => {
                                 let (context, inspector) = evm.ctx_inspector();
-                                frame_end(context, inspector, &init, &mut result);
+                                frame_end(context, inspector, &init.frame_input, &mut result);
                                 result
                             }
                         }
@@ -179,17 +177,16 @@ where
                     let (context, inspector) = evm.ctx_inspector();
                     frame_end(context, inspector, frame.frame_input(), &mut result);
 
-                    // Pop frame that returned result
+                    // Remove the frame that returned the result
+                    if frame_stack.index() == 0 {
+                        return Ok(result);
+                    }
                     frame_stack.pop();
                     result
                 }
             };
 
-            let Some(frame) = frame_stack.last_mut() else {
-                return Ok(result);
-            };
-
-            self.frame_return_result(frame, evm, result)?;
+            self.frame_return_result(frame_stack.get(), evm, result)?;
         }
     }
 }
@@ -215,6 +212,7 @@ pub fn frame_start<CTX, INTR: InterpreterTypes>(
                 return Some(FrameResult::EOFCreate(output));
             }
         }
+        FrameInput::Empty => unreachable!(),
     }
     None
 }

@@ -1,7 +1,7 @@
 use super::{EvmTrError, Handler};
 use crate::{EvmTr, Frame, FrameResult};
 use context_interface::{result::HaltReason, ContextTr, JournalTr};
-use interpreter::FrameInput;
+use interpreter::interpreter_action::FrameInit;
 use state::EvmState;
 
 /// Mainnet handler that implements the default [`Handler`] trait for the Evm.
@@ -16,7 +16,7 @@ where
     ERROR: EvmTrError<EVM>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInit>,
 {
     type Evm = EVM;
     type Error = ERROR;

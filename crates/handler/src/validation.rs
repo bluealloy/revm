@@ -316,7 +316,7 @@ mod tests {
         Context, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
+    use primitives::{address, Bytes, TxKind, MAX_INITCODE_SIZE};
 
     fn deploy_contract(
         bytecode: Bytes,
@@ -437,10 +437,11 @@ mod tests {
 
         // get factory contract address
         let factory_address = match &factory_result {
-            ExecutionResult::Success { output, .. } => match output {
-                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
-            },
-            _ => panic!("factory contract deployment failed"),
+            ExecutionResult::Success {
+                output: Output::Create(_, Some(addr)),
+                ..
+            } => *addr,
+            _ => panic!("factory contract deployment failed: {factory_result:?}"),
         };
 
         // call factory contract to create sub contract
@@ -518,10 +519,11 @@ mod tests {
             deploy_contract(factory_bytecode).expect("factory contract deployment failed");
         // get factory contract address
         let factory_address = match &factory_result {
-            ExecutionResult::Success { output, .. } => match output {
-                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
-            },
-            _ => panic!("factory contract deployment failed"),
+            ExecutionResult::Success {
+                output: Output::Create(_, Some(addr)),
+                ..
+            } => *addr,
+            _ => panic!("factory contract deployment failed: {factory_result:?}"),
         };
 
         // call factory contract to create sub contract

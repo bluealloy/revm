@@ -10,8 +10,8 @@ use handler::{
     MainnetHandler, PrecompileProvider,
 };
 use interpreter::{
-    interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterResult,
-    InterpreterTypes,
+    interpreter::EthInterpreter, interpreter_action::FrameInit, Interpreter, InterpreterAction,
+    InterpreterResult, InterpreterTypes,
 };
 use state::EvmState;
 
@@ -23,7 +23,7 @@ where
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM>,
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>
+    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInit>
         + InspectorFrame<IT = EthInterpreter>,
 {
     type IT = EthInterpreter;
