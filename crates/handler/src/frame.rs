@@ -318,7 +318,7 @@ where
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(|| Box::new(EthFrame::invalid())).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -426,7 +426,7 @@ where
         };
         let gas_limit = inputs.gas_limit;
 
-        this.get(|| Box::new(EthFrame::invalid())).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -544,7 +544,7 @@ where
         };
 
         let gas_limit = inputs.gas_limit;
-        this.get(|| Box::new(EthFrame::invalid())).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::EOFCreate(EOFCreateFrame { created_address }),
             FrameInput::EOFCreate(inputs),
             depth,
