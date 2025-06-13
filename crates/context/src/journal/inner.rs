@@ -129,7 +129,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Do nothing with journal history so we can skip cloning present journal.
         journal.clear();
-        //
+
         // Clear coinbase address warming for next tx
         *warm_coinbase_address = None;
         // Load precompiles into warm_preloaded_addresses.
@@ -153,8 +153,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_preloaded_addresses,
-            precompiles,
             warm_coinbase_address,
+            precompiles,
         } = self;
 
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
@@ -188,8 +188,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_preloaded_addresses,
-            precompiles,
             warm_coinbase_address,
+            precompiles,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
