@@ -7,7 +7,6 @@ use fluentbase_sdk::{
     keccak256,
     Address,
     Bytes,
-    B256,
     PRECOMPILE_EVM_RUNTIME,
     PRECOMPILE_SVM_RUNTIME,
     U256,
@@ -69,7 +68,7 @@ use revm::{
     primitives::CALL_STACK_LIMIT,
     Database,
 };
-use std::sync::Arc;
+use std::{boxed::Box, sync::Arc};
 
 pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
     phantom: PhantomData<(EVM, ERROR)>,
