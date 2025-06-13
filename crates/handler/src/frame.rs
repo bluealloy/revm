@@ -187,7 +187,6 @@ where
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        // println!("[make_call_frame] with inputs {:?}", inputs);
         let gas = Gas::new(inputs.gas_limit);
 
         let (context, precompiles) = evm.ctx_precompiles();
@@ -319,7 +318,6 @@ where
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
-        println!("[make_create_frame]");
         let context = evm.ctx();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
