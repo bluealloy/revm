@@ -41,7 +41,9 @@ jobs:
 
       - name: Run tests
         run: |
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
+          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} \
+          ${{ matrix.target != 'i686-unknown-linux-gnu' && '--features gmp' || '' }} \
+          -p revme -- statetest \
           legacytests/Cancun/GeneralStateTests/ \
           legacytests/Constantinople/GeneralStateTests/
           ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}
