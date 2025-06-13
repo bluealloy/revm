@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v4.1.0...revm-bytecode-v5.0.0) - 2025-06-13
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- add clz opcode ([#2598](https://github.com/bluealloy/revm/pull/2598))
+
+### Other
+
+- *(tests)* extend test for is_valid jumptable ([#2622](https://github.com/bluealloy/revm/pull/2622))
+- faster JumpTable bits lookup ([#2618](https://github.com/bluealloy/revm/pull/2618))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v4.0.1...revm-bytecode-v4.1.0) - 2025-06-06
 
 ### Added
