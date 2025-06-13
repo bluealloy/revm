@@ -68,7 +68,7 @@ use revm::{
         MAX_INITCODE_SIZE,
     },
 };
-use std::boxed::Box;
+use std::{boxed::Box, vec::Vec};
 
 pub(crate) fn execute_rwasm_interruption<
     EVM: EvmTr,
