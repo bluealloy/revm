@@ -4,10 +4,7 @@ use revm::{
         result::{HaltReason, InvalidTransaction},
         Block, ContextTr, JournalTr, Transaction,
     },
-    handler::{
-        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, FrameResult,
-        Handler,
-    },
+    handler::{pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, Handler},
     interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
     state::EvmState,

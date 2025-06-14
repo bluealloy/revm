@@ -2,12 +2,25 @@
 use bytecode::{CodeType, Eof};
 use context_interface::{local::FrameStack, LocalContextTr};
 use core::cell::RefCell;
+use derive_where::derive_where;
+use interpreter::InterpreterTypes;
 use primitives::{keccak256, Bytes, HashMap, B256};
 use std::{rc::Rc, vec::Vec};
 
+use crate::EthFrameInner;
+
 /// Local context that is filled by execution.
-#[derive(Clone, Debug)]
-pub struct LocalContext {
+#[derive_where(Clone, Debug; IT,
+    <IT as InterpreterTypes>::Stack,
+    <IT as InterpreterTypes>::Memory,
+    <IT as InterpreterTypes>::Bytecode,
+    <IT as InterpreterTypes>::ReturnData,
+    <IT as InterpreterTypes>::Input,
+    <IT as InterpreterTypes>::SubRoutineStack,
+    <IT as InterpreterTypes>::RuntimeFlag,
+    <IT as InterpreterTypes>::Extend,
+)]
+pub struct LocalContext<IT: InterpreterTypes> {
     /// Mapping of initcode hash that contains raw bytes ready for validation or status of validation.
     ///
     /// Used in EIP-7873 EOF - TXCREATE to fetch initcode by hash and cache its validation.
@@ -15,10 +28,10 @@ pub struct LocalContext {
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
     /// Frame stack used for pooling frames during execution.
-    pub frame_stack: FrameStack<u128>,
+    pub frame_stack: FrameStack<EthFrameInner<IT>>,
 }
 
-impl Default for LocalContext {
+impl<IT: InterpreterTypes> Default for LocalContext<IT> {
     fn default() -> Self {
         Self {
             initcode_mapping: HashMap::default(),
@@ -28,7 +41,9 @@ impl Default for LocalContext {
     }
 }
 
-impl LocalContextTr for LocalContext {
+impl<IT: InterpreterTypes> LocalContextTr for LocalContext<IT> {
+    type Frame = EthFrameInner<IT>;
+
     fn insert_initcodes(&mut self, initcodes: &[Bytes]) {
         self.initcode_mapping = initcodes
             .iter()
@@ -52,12 +67,12 @@ impl LocalContextTr for LocalContext {
         &self.shared_memory_buffer
     }
 
-    fn frame_stack(&mut self) -> &mut FrameStack<u128> {
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
         &mut self.frame_stack
     }
 }
 
-impl LocalContext {
+impl<IT: InterpreterTypes> LocalContext<IT> {
     /// Creates a new local context, initcodes are hashes and added to the mapping.
     pub fn new(initcode: &[Bytes]) -> Self {
         let mut s = Self::default();

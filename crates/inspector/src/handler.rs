@@ -1,8 +1,9 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
 use context::{
-    result::ExecutionResult, ContextTr, FrameStack, JournalEntry, LocalContextTr, Transaction,
+    result::ExecutionResult, ContextTr, FrameResult, FrameStack, JournalEntry, LocalContextTr,
+    Transaction,
 };
-use handler::{EvmTr, FrameInitOrResult, FrameResult, Handler, ItemOrResult};
+use handler::{EvmTr, FrameInitOrResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},

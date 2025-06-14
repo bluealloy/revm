@@ -6,6 +6,7 @@ use context_interface::{
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
+use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
@@ -17,7 +18,7 @@ pub struct Context<
     DB: Database = EmptyDB,
     JOURNAL: JournalTr<Database = DB> = Journal<DB>,
     CHAIN = (),
-    LOCAL: LocalContextTr = LocalContext,
+    LOCAL: LocalContextTr = LocalContext<EthInterpreter>,
 > {
     /// Block information.
     pub block: BLOCK,

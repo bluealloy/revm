@@ -1,10 +1,10 @@
 use revm::{
-    context::result::{EVMError, HaltReason, InvalidTransaction},
-    context_interface::{ContextTr, JournalTr},
-    handler::{
-        instructions::InstructionProvider, EthFrame, EvmTr, FrameResult, Handler,
-        PrecompileProvider,
+    context::{
+        result::{EVMError, HaltReason, InvalidTransaction},
+        FrameResult,
     },
+    context_interface::{ContextTr, JournalTr},
+    handler::{instructions::InstructionProvider, EthFrame, EvmTr, Handler, PrecompileProvider},
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     state::EvmState,

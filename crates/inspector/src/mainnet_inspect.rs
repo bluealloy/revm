@@ -3,11 +3,11 @@ use crate::{
     inspect::{InspectCommitEvm, InspectEvm},
     Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler, JournalExt,
 };
-use context::{ContextSetters, ContextTr, Evm, JournalTr};
+use context::{ContextSetters, ContextTr, Evm, FrameResult, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Frame, FrameResult, Handler,
-    MainnetHandler, PrecompileProvider,
+    instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Frame, Handler, MainnetHandler,
+    PrecompileProvider,
 };
 use interpreter::{
     interpreter::EthInterpreter, interpreter_action::FrameInit, Interpreter, InterpreterAction,

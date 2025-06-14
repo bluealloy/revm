@@ -1,10 +1,11 @@
-use super::frame_data::*;
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
     FrameInitOrResult, ItemOrResult,
 };
 use bytecode::{Eof, EOF_MAGIC_BYTES};
+use context::frame_data::{CallFrame, CreateFrame, EOFCreateFrame};
 use context::result::FromStringError;
+use context::{EthFrameInner, FrameData, FrameResult};
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
@@ -13,6 +14,7 @@ use context_interface::{
     Cfg, Database,
 };
 use core::cmp::min;
+use core::ops::{Deref, DerefMut};
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
@@ -55,17 +57,55 @@ pub trait Frame: Sized + Default {
 }
 
 pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
-    phantom: core::marker::PhantomData<(EVM, ERROR)>,
-    /// Data of the frame.
-    data: FrameData,
-    /// Input data for the frame.
-    pub input: FrameInput,
-    /// Depth of the call frame.
-    depth: usize,
-    /// Journal checkpoint.
-    pub checkpoint: JournalCheckpoint,
-    /// Interpreter.
-    pub interpreter: Interpreter<IW>,
+    pub phantom: core::marker::PhantomData<(EVM, ERROR)>,
+    pub inner: EthFrameInner<IW>,
+}
+
+impl<EVM, ERROR, IW: InterpreterTypes> Frame for EthFrameInner<IW> {
+    type Evm = EVM;
+    type FrameInit = FrameInit;
+    type FrameResult = FrameResult;
+    type Error = ERROR;
+
+    fn init(
+        new_frame: OutFrame<'_, Self>,
+        evm: &mut Self::Evm,
+        frame_input: Self::FrameInit,
+    ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error> {
+        todo!()
+    }
+
+    fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
+        todo!()
+    }
+
+    fn return_result(
+        &mut self,
+        evm: &mut Self::Evm,
+        result: Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        todo!()
+    }
+}
+
+impl<EVM, ERROR, IW: InterpreterTypes> AsRef<EthFrameInner<IW>> for EthFrame<EVM, ERROR, IW> {
+    fn as_ref(&self) -> &EthFrameInner<IW> {
+        &self.inner
+    }
+}
+
+impl<EVM, ERROR, IW: InterpreterTypes> Deref for EthFrame<EVM, ERROR, IW> {
+    type Target = EthFrameInner<IW>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<EVM, ERROR, IW: InterpreterTypes> DerefMut for EthFrame<EVM, ERROR, IW> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
 }
 
 impl<EVM, ERROR> Default for EthFrame<EVM, ERROR, EthInterpreter> {
@@ -82,13 +122,15 @@ impl<EVM, ERROR> EthFrame<EVM, ERROR, EthInterpreter> {
     fn do_default(interpreter: Interpreter<EthInterpreter>) -> Self {
         Self {
             phantom: core::marker::PhantomData,
-            data: FrameData::Call(CallFrame {
-                return_memory_range: 0..0,
-            }),
-            input: FrameInput::Empty,
-            depth: 0,
-            checkpoint: JournalCheckpoint::default(),
-            interpreter,
+            inner: EthFrameInner {
+                data: FrameData::Call(CallFrame {
+                    return_memory_range: 0..0,
+                }),
+                input: FrameInput::Empty,
+                depth: 0,
+                checkpoint: JournalCheckpoint::default(),
+                interpreter,
+            },
         }
     }
 }
@@ -118,7 +160,7 @@ where
     }
 
     fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        let next_action = context.run_interpreter(&mut self.interpreter);
+        let next_action = context.run_interpreter(&mut self.inner.interpreter);
         self.process_next_action(context, next_action)
     }
 
@@ -146,11 +188,13 @@ where
     ) -> Self {
         Self {
             phantom: Default::default(),
-            input,
-            data,
-            depth,
-            interpreter,
-            checkpoint,
+            inner: EthFrameInner {
+                data,
+                input,
+                depth,
+                interpreter,
+                checkpoint,
+            },
         }
     }
 }
@@ -183,11 +227,14 @@ where
     ) {
         let Self {
             phantom: _,
-            data: data_ref,
-            input: input_ref,
-            depth: depth_ref,
-            interpreter,
-            checkpoint: checkpoint_ref,
+            inner:
+                EthFrameInner {
+                    data: data_ref,
+                    input: input_ref,
+                    depth: depth_ref,
+                    interpreter,
+                    checkpoint: checkpoint_ref,
+                },
         } = self;
         *data_ref = data;
         *input_ref = input;
@@ -607,13 +654,12 @@ where
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(frame_input) => {
-                return {
-                    Ok(ItemOrResult::Item(FrameInit {
-                        frame_input,
-                        depth: self.depth + 1,
-                        memory: self.interpreter.memory.new_child_context(),
-                    }))
-                }
+                let depth = self.depth + 1;
+                return Ok(ItemOrResult::Item(FrameInit {
+                    frame_input,
+                    depth,
+                    memory: self.interpreter.memory.new_child_context(),
+                }));
             }
             InterpreterAction::Return(result) => result,
         };

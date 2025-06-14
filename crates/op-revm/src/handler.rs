@@ -6,7 +6,7 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::{result::InvalidTransaction, LocalContextTr},
+    context::{result::InvalidTransaction, FrameResult, LocalContextTr},
     context_interface::{
         context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
@@ -16,7 +16,7 @@ use revm::{
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
         pre_execution::validate_account_nonce_and_code,
-        EvmTr, Frame, FrameResult, Handler, MainnetHandler,
+        EvmTr, Frame, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},

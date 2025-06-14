@@ -7,7 +7,7 @@ use primitives::{Bytes, B256};
 use std::{boxed::Box, rc::Rc, vec::Vec};
 
 /// Non-empty, item-pooling Vec.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct FrameStack<T> {
     stack: Vec<Box<T>>,
     index: usize,
@@ -178,6 +178,8 @@ impl FrameToken {
 
 /// Local context used for caching initcode from Initcode transactions.
 pub trait LocalContextTr {
+    type Frame;
+
     /// Get the local context
     fn insert_initcodes(&mut self, initcodes: &[Bytes]);
 
@@ -201,7 +203,7 @@ pub trait LocalContextTr {
     fn clear(&mut self);
 
     /// Frame stack.
-    fn frame_stack(&mut self) -> &mut FrameStack<u128>;
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame>;
 }
 
 #[cfg(test)]

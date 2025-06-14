@@ -75,10 +75,10 @@ where
     }
 
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
-        &mut self.interpreter
+        &mut self.inner.interpreter
     }
 
     fn frame_input(&self) -> &FrameInput {
-        &self.input
+        &self.inner.input
     }
 }

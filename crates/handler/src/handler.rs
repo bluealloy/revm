@@ -1,10 +1,9 @@
 use crate::EvmTr;
 use crate::{
-    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameResult,
-    ItemOrResult,
+    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
-use context::LocalContextTr;
+use context::{FrameResult, LocalContextTr};
 use context_interface::context::ContextError;
 use context_interface::local::{FrameStack, FrameToken, OutFrame};
 use context_interface::ContextTr;
@@ -63,7 +62,12 @@ impl<
 /// To finalize the execution and obtain changed state, call [`JournalTr::finalize`] function.
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
-    type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>;
+    type Evm: EvmTr<
+        Context: ContextTr<
+            Journal: JournalTr<State = EvmState>,
+            Local: LocalContextTr<Frame = Self::Frame>,
+        >,
+    >;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
     /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate frames.
@@ -199,18 +203,18 @@ pub trait Handler {
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
-        let f = evm.ctx_mut().local_mut().frame_stack();
-        let frame_stack =
-            unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<Self::Frame>>(f) };
+        let mut frame_stack = core::mem::take(evm.ctx_mut().local_mut().frame_stack());
 
         let res = self.first_frame_init(frame_stack.start_init(), evm, first_frame_input)?;
         let mut frame_result = match res {
             ItemOrResult::Item(token) => {
                 frame_stack.end_init(token);
-                self.run_exec_loop(evm, frame_stack)?
+                self.run_exec_loop(evm, &mut frame_stack)?
             }
             ItemOrResult::Result(result) => result,
         };
+        // TODO handle early return of `?`.
+        *evm.ctx_mut().local_mut().frame_stack() = frame_stack;
 
         self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)

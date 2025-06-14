@@ -1,4 +1,4 @@
-use super::frame_data::FrameResult;
+use context::FrameResult;
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::JournalTr,
