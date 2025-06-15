@@ -98,7 +98,7 @@ pub fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>() -> [Instruc
     table[SHL as usize] = wrap_sync!(bitwise::shl::<_, _>);
     table[SHR as usize] = wrap_sync!(bitwise::shr::<_, _>);
     table[SAR as usize] = wrap_sync!(bitwise::sar::<_, _>);
-    table[CLZ as usize] = bitwise::clz;
+    table[CLZ as usize] = wrap_sync!(bitwise::clz::<_, _>);
 
     table[KECCAK256 as usize] = wrap_sync!(system::keccak256::<_, _>);
 
