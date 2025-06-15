@@ -148,9 +148,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.warm_preloaded_addresses.insert(address);
     }
 
-    fn warm_precompiles(&mut self, address: HashSet<Address>) {
-        self.inner.precompiles = address;
-        self.inner.warm_preloaded_addresses = self.inner.precompiles.clone();
+    fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {
+        self.inner.precompiles = precompiles;
+        self.inner
+            .warm_preloaded_addresses
+            .clone_from(&self.inner.precompiles);
     }
 
     #[inline]

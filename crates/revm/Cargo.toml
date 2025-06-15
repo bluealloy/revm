@@ -107,3 +107,7 @@ secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.
 portable = ["precompile/portable"]
+
+# use gmp for modexp precompile.
+# It is faster library but licences as GPL code, if enabled please make sure to follow the license.
+gmp = ["precompile/gmp"]

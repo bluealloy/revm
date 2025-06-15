@@ -49,6 +49,10 @@ cfg_if::cfg_if! {
     }
 }
 
+// silence aurora-engine-modexp if gmp is enabled
+#[cfg(feature = "gmp")]
+use aurora_engine_modexp as _;
+
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
