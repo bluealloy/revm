@@ -9,6 +9,7 @@ use fluentbase_sdk::{
     Bytes,
     PRECOMPILE_EVM_RUNTIME,
     PRECOMPILE_SVM_RUNTIME,
+    SVM_ELF_MAGIC_BYTES,
     U256,
     WASM_MAGIC_BYTES,
 };
@@ -464,6 +465,27 @@ where
                 .journal()
                 .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
             (bytecode, compilation_result.constructor_params, None)
+        } else if inputs.init_code.len() > SVM_ELF_MAGIC_BYTES.len()
+            && inputs.init_code[..SVM_ELF_MAGIC_BYTES.len()] == SVM_ELF_MAGIC_BYTES
+        {
+            // create a new EIP-7702 account that points to the EVM runtime system precompile
+            let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_SVM_RUNTIME);
+            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+            context.journal().set_code(created_address, bytecode);
+            // an original init code we pass as an input inside the runtime
+            // to execute deployment logic
+            let input = inputs.init_code.clone();
+            // we should reload bytecode here since it's an EIP-7702 account
+            let bytecode = context.journal().code(PRECOMPILE_SVM_RUNTIME)?;
+            // if it's a CREATE or CREATE2 call, then we should
+            // to recalculate init code hash to make sure it matches runtime hash
+            let code_hash = context.journal().code_hash(PRECOMPILE_SVM_RUNTIME)?;
+            init_code_hash = code_hash.data;
+            (
+                Bytecode::new_raw(bytecode.data),
+                input,
+                Some(PRECOMPILE_SVM_RUNTIME),
+            )
         } else {
             // create a new EIP-7702 account that points to the EVM runtime system precompile
             let eip7702_bytecode = Eip7702Bytecode::new(PRECOMPILE_EVM_RUNTIME);
