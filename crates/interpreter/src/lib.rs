@@ -3,6 +3,7 @@
 //! Interpreter is part of the project that executes EVM instructions.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(async_fn_in_trait)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;

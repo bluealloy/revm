@@ -317,17 +317,23 @@ mod tests {
     };
     use database::{CacheDB, EmptyDB};
     use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
+    use tokio::runtime::Runtime;
 
     fn deploy_contract(
         bytecode: Bytes,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
-        let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
+        // Create a lightweight single-thread runtime for the duration of this helper.
+        let rt = Runtime::new().expect("failed to create tokio runtime");
+        rt.block_on(async {
+            let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
 
-        let mut evm = ctx.build_mainnet();
-        evm.transact_commit(TxEnv {
-            kind: TxKind::Create,
-            data: bytecode.clone(),
-            ..Default::default()
+            let mut evm = ctx.build_mainnet();
+            evm.transact_commit(TxEnv {
+                kind: TxKind::Create,
+                data: bytecode.clone(),
+                ..Default::default()
+            })
+            .await
         })
     }
 
@@ -445,14 +451,19 @@ mod tests {
 
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
-        let call_result = Context::mainnet()
-            .with_db(CacheDB::<EmptyDB>::default())
-            .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
+        let call_result = Runtime::new()
+            .unwrap()
+            .block_on(async {
+                Context::mainnet()
+                    .with_db(CacheDB::<EmptyDB>::default())
+                    .build_mainnet()
+                    .transact_commit(TxEnv {
+                        caller: tx_caller,
+                        kind: TxKind::Call(factory_address),
+                        data: Bytes::new(),
+                        ..Default::default()
+                    })
+                    .await
             })
             .expect("call factory contract failed");
 
@@ -526,14 +537,19 @@ mod tests {
 
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
-        let call_result = Context::mainnet()
-            .with_db(CacheDB::<EmptyDB>::default())
-            .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
+        let call_result = Runtime::new()
+            .unwrap()
+            .block_on(async {
+                Context::mainnet()
+                    .with_db(CacheDB::<EmptyDB>::default())
+                    .build_mainnet()
+                    .transact_commit(TxEnv {
+                        caller: tx_caller,
+                        kind: TxKind::Call(factory_address),
+                        data: Bytes::new(),
+                        ..Default::default()
+                    })
+                    .await
             })
             .expect("call factory contract failed");
 

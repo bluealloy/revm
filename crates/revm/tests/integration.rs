@@ -23,8 +23,8 @@ const SELFDESTRUCT_BYTECODE: &[u8] = &[
     opcode::STOP,
 ];
 
-#[test]
-fn test_selfdestruct_multi_tx() {
+#[tokio::test]
+async fn test_selfdestruct_multi_tx() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
@@ -35,6 +35,7 @@ fn test_selfdestruct_multi_tx() {
     // trigger selfdestruct
     let result1 = evm
         .transact_one(TxEnv::builder_for_bench().build_fill())
+        .await
         .unwrap();
 
     let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
@@ -50,6 +51,7 @@ fn test_selfdestruct_multi_tx() {
     // call on destroyed account. This accounts gets loaded and should contain empty code_hash afterwards.
     let result2 = evm
         .transact_one(TxEnv::builder_for_bench().nonce(1).build_fill())
+        .await
         .unwrap();
 
     let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
@@ -66,8 +68,8 @@ fn test_selfdestruct_multi_tx() {
     );
 }
 
-#[test]
-pub fn test_multi_tx_create() {
+#[tokio::test]
+pub async fn test_multi_tx_create() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.spec = SpecId::BERLIN;
@@ -83,6 +85,7 @@ pub fn test_multi_tx_create() {
                 .data(deployment_contract(SELFDESTRUCT_BYTECODE))
                 .build_fill(),
         )
+        .await
         .unwrap();
 
     let created_address = result1.created_address().unwrap();
@@ -109,6 +112,7 @@ pub fn test_multi_tx_create() {
                 .kind(TxKind::Call(created_address))
                 .build_fill(),
         )
+        .await
         .unwrap();
 
     let created_acc = evm
@@ -146,6 +150,7 @@ pub fn test_multi_tx_create() {
                 .data(deployment_contract(SELFDESTRUCT_BYTECODE))
                 .build_fill(),
         )
+        .await
         .unwrap();
 
     let created_address_new = result3.created_address().unwrap();

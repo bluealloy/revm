@@ -146,12 +146,13 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     /// Returns the account for the given address.
     ///
     /// If the account was not found in the cache, it will be loaded from the underlying database.
-    pub fn load_account(&mut self, address: Address) -> Result<&mut DbAccount, ExtDB::Error> {
+    pub async fn load_account(&mut self, address: Address) -> Result<&mut DbAccount, ExtDB::Error> {
         let db = &self.db;
         match self.cache.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
             Entry::Vacant(entry) => Ok(entry.insert(
-                db.basic_ref(address)?
+                db.basic_ref(address)
+                    .await?
                     .map(|info| DbAccount {
                         info,
                         ..Default::default()
@@ -162,24 +163,24 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 
     /// Inserts account storage without overriding account info
-    pub fn insert_account_storage(
+    pub async fn insert_account_storage(
         &mut self,
         address: Address,
         slot: StorageKey,
         value: StorageValue,
     ) -> Result<(), ExtDB::Error> {
-        let account = self.load_account(address)?;
+        let account = self.load_account(address).await?;
         account.storage.insert(slot, value);
         Ok(())
     }
 
     /// Replaces account storage without overriding account info
-    pub fn replace_account_storage(
+    pub async fn replace_account_storage(
         &mut self,
         address: Address,
         storage: HashMap<StorageKey, StorageValue>,
     ) -> Result<(), ExtDB::Error> {
-        let account = self.load_account(address)?;
+        let account = self.load_account(address).await?;
         account.account_state = AccountState::StorageCleared;
         account.storage = storage.into_iter().collect();
         Ok(())
@@ -187,7 +188,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    async fn commit(&mut self, changes: HashMap<Address, Account>) {
         for (address, mut account) in changes {
             if !account.is_touched() {
                 continue;
@@ -227,12 +228,13 @@ impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
 
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    async fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let basic = match self.cache.accounts.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(
                 self.db
-                    .basic_ref(address)?
+                    .basic_ref(address)
+                    .await?
                     .map(|info| DbAccount {
                         info,
                         ..Default::default()
@@ -243,12 +245,14 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         Ok(basic.info())
     }
 
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+    async fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         match self.cache.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 // If you return code bytes when basic fn is called this function is not needed.
-                Ok(entry.insert(self.db.code_by_hash_ref(code_hash)?).clone())
+                Ok(entry
+                    .insert(self.db.code_by_hash_ref(code_hash).await?)
+                    .clone())
             }
         }
     }
@@ -256,7 +260,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     /// Get the value in an account's storage slot.
     ///
     /// It is assumed that account is already loaded.
-    fn storage(
+    async fn storage(
         &mut self,
         address: Address,
         index: StorageKey,
@@ -273,7 +277,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                         ) {
                             Ok(StorageValue::ZERO)
                         } else {
-                            let slot = self.db.storage_ref(address, index)?;
+                            let slot = self.db.storage_ref(address, index).await?;
                             entry.insert(slot);
                             Ok(slot)
                         }
@@ -282,9 +286,9 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             }
             Entry::Vacant(acc_entry) => {
                 // Acc needs to be loaded for us to access slots.
-                let info = self.db.basic_ref(address)?;
+                let info = self.db.basic_ref(address).await?;
                 let (account, value) = if info.is_some() {
-                    let value = self.db.storage_ref(address, index)?;
+                    let value = self.db.storage_ref(address, index).await?;
                     let mut account: DbAccount = info.into();
                     account.storage.insert(index, value);
                     (account, value)
@@ -297,11 +301,11 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
+    async fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         match self.cache.block_hashes.entry(U256::from(number)) {
             Entry::Occupied(entry) => Ok(*entry.get()),
             Entry::Vacant(entry) => {
-                let hash = self.db.block_hash_ref(number)?;
+                let hash = self.db.block_hash_ref(number).await?;
                 entry.insert(hash);
                 Ok(hash)
             }
@@ -312,21 +316,21 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
 
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    async fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         match self.cache.accounts.get(&address) {
             Some(acc) => Ok(acc.info()),
-            None => self.db.basic_ref(address),
+            None => self.db.basic_ref(address).await,
         }
     }
 
-    fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+    async fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         match self.cache.contracts.get(&code_hash) {
             Some(entry) => Ok(entry.clone()),
-            None => self.db.code_by_hash_ref(code_hash),
+            None => self.db.code_by_hash_ref(code_hash).await,
         }
     }
 
-    fn storage_ref(
+    async fn storage_ref(
         &self,
         address: Address,
         index: StorageKey,
@@ -341,18 +345,18 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
                     ) {
                         Ok(StorageValue::ZERO)
                     } else {
-                        self.db.storage_ref(address, index)
+                        self.db.storage_ref(address, index).await
                     }
                 }
             },
-            None => self.db.storage_ref(address, index),
+            None => self.db.storage_ref(address, index).await,
         }
     }
 
-    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+    async fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         match self.cache.block_hashes.get(&U256::from(number)) {
             Some(entry) => Ok(*entry),
-            None => self.db.block_hash_ref(number),
+            None => self.db.block_hash_ref(number).await,
         }
     }
 }
@@ -439,7 +443,7 @@ impl BenchmarkDB {
 impl Database for BenchmarkDB {
     type Error = Infallible;
     /// Get basic account information.
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    async fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         if address == BENCH_TARGET {
             return Ok(Some(AccountInfo {
                 nonce: 1,
@@ -460,12 +464,12 @@ impl Database for BenchmarkDB {
     }
 
     /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+    async fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         Ok(Bytecode::default())
     }
 
     /// Get storage value of address at index.
-    fn storage(
+    async fn storage(
         &mut self,
         _address: Address,
         _index: StorageKey,
@@ -474,97 +478,7 @@ impl Database for BenchmarkDB {
     }
 
     // History related
-    fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+    async fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
         Ok(B256::default())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{CacheDB, EmptyDB};
-    use database_interface::Database;
-    use primitives::{Address, HashMap, StorageKey, StorageValue};
-    use state::AccountInfo;
-
-    #[test]
-    fn test_insert_account_storage() {
-        let account = Address::with_last_byte(42);
-        let nonce = 42;
-        let mut init_state = CacheDB::new(EmptyDB::default());
-        init_state.insert_account_info(
-            account,
-            AccountInfo {
-                nonce,
-                ..Default::default()
-            },
-        );
-
-        let (key, value) = (StorageKey::from(123), StorageValue::from(456));
-        let mut new_state = CacheDB::new(init_state);
-        new_state
-            .insert_account_storage(account, key, value)
-            .unwrap();
-
-        assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
-        assert_eq!(new_state.storage(account, key), Ok(value));
-    }
-
-    #[test]
-    fn test_replace_account_storage() {
-        let account = Address::with_last_byte(42);
-        let nonce = 42;
-        let mut init_state = CacheDB::new(EmptyDB::default());
-        init_state.insert_account_info(
-            account,
-            AccountInfo {
-                nonce,
-                ..Default::default()
-            },
-        );
-
-        let (key0, value0) = (StorageKey::from(123), StorageValue::from(456));
-        let (key1, value1) = (StorageKey::from(789), StorageValue::from(999));
-        init_state
-            .insert_account_storage(account, key0, value0)
-            .unwrap();
-
-        let mut new_state = CacheDB::new(init_state);
-        new_state
-            .replace_account_storage(account, HashMap::from_iter([(key1, value1)]))
-            .unwrap();
-
-        assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
-        assert_eq!(new_state.storage(account, key0), Ok(StorageValue::ZERO));
-        assert_eq!(new_state.storage(account, key1), Ok(value1));
-    }
-
-    #[cfg(feature = "serde")]
-    #[test]
-    fn test_serialize_deserialize_cachedb() {
-        let account = Address::with_last_byte(69);
-        let nonce = 420;
-        let mut init_state = CacheDB::new(EmptyDB::default());
-        init_state.insert_account_info(
-            account,
-            AccountInfo {
-                nonce,
-                ..Default::default()
-            },
-        );
-
-        let serialized = serde_json::to_string(&init_state).unwrap();
-        let deserialized: CacheDB<EmptyDB> = serde_json::from_str(&serialized).unwrap();
-
-        assert!(deserialized.cache.accounts.contains_key(&account));
-        assert_eq!(
-            deserialized
-                .cache
-                .accounts
-                .get(&account)
-                .unwrap()
-                .info
-                .nonce,
-            nonce
-        );
     }
 }

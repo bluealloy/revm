@@ -121,8 +121,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_gas_inspector() {
+    #[tokio::test]
+    async fn test_gas_inspector() {
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
             0x1,
@@ -151,6 +151,7 @@ mod tests {
             gas_limit: 21100,
             ..Default::default()
         })
+        .await
         .unwrap();
 
         let inspector = &evm.inspector;
@@ -204,8 +205,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_call_override_inspector() {
+    #[tokio::test]
+    async fn test_call_override_inspector() {
         use interpreter::{CallOutcome, CreateOutcome, InstructionResult};
 
         let mut inspector = CallOverrideInspector::default();
@@ -261,6 +262,7 @@ mod tests {
                 kind: TxKind::Call(BENCH_TARGET),
                 ..Default::default()
             })
+            .await
             .unwrap();
         assert_eq!(evm.inspector.return_buffer.len(), 3);
         assert_eq!(

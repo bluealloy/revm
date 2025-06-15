@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use context::{result::FromStringError, ContextTr};
 use handler::{
     instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Frame, FrameInitOrResult,
@@ -12,6 +13,7 @@ use interpreter::{
 /// It contains execution of interpreter with [`crate::Inspector`] calls [`crate::Inspector::step`] and [`crate::Inspector::step_end`] calls.
 ///
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
+#[async_trait(?Send)]
 pub trait InspectorEvmTr: EvmTr {
     type Inspector;
 
@@ -27,7 +29,7 @@ pub trait InspectorEvmTr: EvmTr {
     ///
     /// This function is called by the EVM when it needs to inspect the Interpreter loop.
     /// It is responsible for calling the inspector's methods and instructions from table.
-    fn run_inspect_interpreter(
+    async fn run_inspect_interpreter(
         &mut self,
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
@@ -38,13 +40,17 @@ pub trait InspectorEvmTr: EvmTr {
 /// Traits that extends the Frame with additional functionality that is needed for inspection
 ///
 /// It is implemented for [`EthFrame`] as default Ethereum frame implementation.
+#[async_trait(?Send)]
 pub trait InspectorFrame: Frame {
     type IT: InterpreterTypes;
 
     /// It runs the frame in inspection mode.
     ///
     /// This will internally call [`InspectorEvmTr::run_inspect_interpreter`]
-    fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
+    async fn run_inspect(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
     /// Returns a mutable reference to the interpreter.
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT>;
@@ -54,6 +60,7 @@ pub trait InspectorFrame: Frame {
 }
 
 /// Impl InspectorFrame for EthFrame.
+#[async_trait(?Send)]
 impl<EVM, ERROR> InspectorFrame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
@@ -68,9 +75,12 @@ where
 {
     type IT = EthInterpreter;
 
-    fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
+    async fn run_inspect(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<FrameInitOrResult<Self>, Self::Error> {
         let interpreter = self.interpreter();
-        let next_action = evm.run_inspect_interpreter(interpreter);
+        let next_action = evm.run_inspect_interpreter(interpreter).await;
         self.process_next_action(evm, next_action)
     }
 

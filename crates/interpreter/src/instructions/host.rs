@@ -9,10 +9,12 @@ use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HIST
 
 use crate::InstructionContext;
 
-pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(balance) = context.host.balance(address) else {
+    let Some(balance) = context.host.balance(address).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -36,8 +38,8 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
     gas!(context.interpreter, gas::LOW);
@@ -45,6 +47,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(balance) = context
         .host
         .balance(context.interpreter.input.target_address())
+        .await
     else {
         context
             .interpreter
@@ -54,12 +57,12 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     push!(context.interpreter, balance.data);
 }
 
-pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
+    let Some(code) = context.host.load_account_code(address).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -78,13 +81,13 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code_hash) = context.host.load_account_code_hash(address) else {
+    let Some(code_hash) = context.host.load_account_code_hash(address).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -101,15 +104,15 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *top = code_hash.into_u256();
 }
 
-pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!(
         [address, memory_offset, code_offset, len_u256],
         context.interpreter
     );
     let address = address.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
+    let Some(code) = context.host.load_account_code(address).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -139,8 +142,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .set_data(memory_offset, code_offset, len, &code);
 }
 
-pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
@@ -162,7 +165,11 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
-        let Some(hash) = context.host.block_hash(as_u64_saturated!(requested_number)) else {
+        let Some(hash) = context
+            .host
+            .block_hash(as_u64_saturated!(requested_number))
+            .await
+        else {
             context
                 .interpreter
                 .halt(InstructionResult::FatalExternalError);
@@ -174,12 +181,15 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
-pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     popn_top!([], index, context.interpreter);
 
     let Some(value) = context
         .host
         .sload(context.interpreter.input.target_address(), *index)
+        .await
     else {
         context
             .interpreter
@@ -194,15 +204,17 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     *index = value.data;
 }
 
-pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     require_non_staticcall!(context.interpreter);
 
     popn!([index, value], context.interpreter);
 
-    let Some(state_load) =
-        context
-            .host
-            .sstore(context.interpreter.input.target_address(), index, value)
+    let Some(state_load) = context
+        .host
+        .sstore(context.interpreter.input.target_address(), index, value)
+        .await
     else {
         context
             .interpreter
@@ -240,7 +252,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
     gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
@@ -254,15 +268,18 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     check!(context.interpreter, CANCUN);
     gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
 
     popn_top!([], index, context.interpreter);
 
-    *index = context
+    let value = context
         .host
         .tload(context.interpreter.input.target_address(), *index);
+    *index = value;
 }
 
 pub fn log<const N: usize, H: Host + ?Sized>(
@@ -298,8 +315,8 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     context.host.log(log);
 }
 
-pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub async fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);
@@ -308,6 +325,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(res) = context
         .host
         .selfdestruct(context.interpreter.input.target_address(), target)
+        .await
     else {
         context
             .interpreter

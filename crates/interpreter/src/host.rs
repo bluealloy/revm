@@ -53,12 +53,12 @@ pub trait Host {
     /* Database */
 
     /// Block hash, calls `ContextTr::journal_mut().db().block_hash(number)`
-    fn block_hash(&mut self, number: u64) -> Option<B256>;
+    async fn block_hash(&mut self, number: u64) -> Option<B256>;
 
     /* Journal */
 
     /// Selfdestruct account, calls `ContextTr::journal_mut().selfdestruct(address, target)`
-    fn selfdestruct(
+    async fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
@@ -67,7 +67,7 @@ pub trait Host {
     /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
     /// Sstore, calls `ContextTr::journal_mut().sstore(address, key, value)`
-    fn sstore(
+    async fn sstore(
         &mut self,
         address: Address,
         key: StorageKey,
@@ -75,19 +75,20 @@ pub trait Host {
     ) -> Option<StateLoad<SStoreResult>>;
 
     /// Sload, calls `ContextTr::journal_mut().sload(address, key)`
-    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
+    async fn sload(&mut self, address: Address, key: StorageKey)
+        -> Option<StateLoad<StorageValue>>;
     /// Tstore, calls `ContextTr::journal_mut().tstore(address, key, value)`
     fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
     /// Tload, calls `ContextTr::journal_mut().tload(address, key)`
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+    async fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
+    async fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
     /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
+    async fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
     /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
+    async fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 }
 
 impl<CTX: ContextTr> Host for CTX {
@@ -162,20 +163,16 @@ impl<CTX: ContextTr> Host for CTX {
 
     /* Database */
 
-    fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        self.db_mut()
-            .block_hash(requested_number)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
+    async fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
+        self.db_mut().block_hash(requested_number).await.ok()
     }
 
     /* Journal */
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
+    async fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         self.journal_mut()
             .load_account_delegated(address)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -183,9 +180,10 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
+    async fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
         self.journal_mut()
             .load_account(address)
+            .await
             .map(|acc| acc.map(|a| a.info.balance))
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -194,9 +192,10 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
+    async fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.journal_mut()
             .code(address)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -204,9 +203,10 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
+    async fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.journal_mut()
             .code_hash(address)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -214,9 +214,14 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
+    async fn sload(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Option<StateLoad<StorageValue>> {
         self.journal_mut()
             .sload(address, index)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -226,7 +231,7 @@ impl<CTX: ContextTr> Host for CTX {
     /// Sets storage value of account address at index.
     ///
     /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
-    fn sstore(
+    async fn sstore(
         &mut self,
         address: Address,
         index: StorageKey,
@@ -234,6 +239,7 @@ impl<CTX: ContextTr> Host for CTX {
     ) -> Option<StateLoad<SStoreResult>> {
         self.journal_mut()
             .sstore(address, index, value)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -256,13 +262,14 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
-    fn selfdestruct(
+    async fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
         self.journal_mut()
             .selfdestruct(address, target)
+            .await
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -330,11 +337,11 @@ impl Host for DummyHost {
         0
     }
 
-    fn block_hash(&mut self, _number: u64) -> Option<B256> {
+    async fn block_hash(&mut self, _number: u64) -> Option<B256> {
         None
     }
 
-    fn selfdestruct(
+    async fn selfdestruct(
         &mut self,
         _address: Address,
         _target: Address,
@@ -344,7 +351,7 @@ impl Host for DummyHost {
 
     fn log(&mut self, _log: Log) {}
 
-    fn sstore(
+    async fn sstore(
         &mut self,
         _address: Address,
         _key: StorageKey,
@@ -353,7 +360,11 @@ impl Host for DummyHost {
         None
     }
 
-    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
+    async fn sload(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+    ) -> Option<StateLoad<StorageValue>> {
         None
     }
 
@@ -363,19 +374,22 @@ impl Host for DummyHost {
         StorageValue::ZERO
     }
 
-    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+    async fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
         None
     }
 
-    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
+    async fn load_account_delegated(
+        &mut self,
+        _address: Address,
+    ) -> Option<StateLoad<AccountLoad>> {
         None
     }
 
-    fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
+    async fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
         None
     }
 
-    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+    async fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
         None
     }
 }

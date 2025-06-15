@@ -1,22 +1,22 @@
 [package]
-name = "revm"
-description = "Revm - Rust Ethereum Virtual Machine"
-version = "25.0.0"
 authors.workspace = true
+description = "Revm - Rust Ethereum Virtual Machine"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
-repository.workspace = true
+name = "revm"
 readme.workspace = true
+repository.workspace = true
+version = "25.0.0"
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
+rust_2018_idioms = "deny"
 unreachable_pub = "warn"
 unused_must_use = "deny"
-rust_2018_idioms = "deny"
 
 [lints.rustdoc]
 all = "warn"
@@ -36,48 +36,49 @@ primitives.workspace = true
 state.workspace = true
 
 [dev-dependencies]
-serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
+tokio = { workspace = true, features = ["full"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]
-std = [
-	"interpreter/std",
-	"precompile/std",
-	"handler/std",
-	"context/std",
-	"context-interface/std",
-	"bytecode/std",
-	"database/std",
-	"database-interface/std",
-	"inspector/std",
-	"primitives/std",
-	"state/std",
-	"serde/std",
-	"serde_json/std",
-]
-hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
-serde = [
-	"interpreter/serde",
-	"database-interface/serde",
-	"primitives/serde",
-	"handler/serde",
-	"context-interface/serde",
-	"bytecode/serde",
-	"context/serde",
-	"database/serde",
-	"inspector/serde",
-	"state/serde",
-]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 asyncdb = ["database-interface/asyncdb"]
+default = ["blst", "c-kzg", "portable", "secp256k1", "std", "tracer"]
+hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+serde = [
+	"bytecode/serde",
+	"context-interface/serde",
+	"context/serde",
+	"database-interface/serde",
+	"database/serde",
+	"handler/serde",
+	"inspector/serde",
+	"interpreter/serde",
+	"primitives/serde",
+	"state/serde",
+]
+std = [
+	"bytecode/std",
+	"context-interface/std",
+	"context/std",
+	"database-interface/std",
+	"database/std",
+	"handler/std",
+	"inspector/std",
+	"interpreter/std",
+	"precompile/std",
+	"primitives/std",
+	"serde/std",
+	"serde_json/std",
+	"state/std",
+]
 
 # Enables alloydb inside database crate
 alloydb = ["database/alloydb"]
 
 # Enables serde-json inside inspector crate
-serde-json = ["serde", "inspector/tracer"]
+serde-json = ["inspector/tracer", "serde"]
 tracer = ["inspector/tracer"]
 
 dev = [
@@ -95,13 +96,13 @@ optional_no_base_fee = ["context/optional_no_base_fee"]
 
 # Precompiles features
 
-secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
+blst = ["precompile/blst"]
+bn = ["precompile/bn"]
 c-kzg = [
 	"precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
-blst = ["precompile/blst"]
-bn = ["precompile/bn"]
+secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.

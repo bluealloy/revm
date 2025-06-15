@@ -1,22 +1,22 @@
 [package]
-name = "revm-interpreter"
-description = "Revm Interpreter that executes bytecode."
-version = "21.0.0"
 authors.workspace = true
+description = "Revm Interpreter that executes bytecode."
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
-repository.workspace = true
+name = "revm-interpreter"
 readme.workspace = true
+repository.workspace = true
+version = "21.0.0"
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
+rust_2018_idioms = "deny"
 unreachable_pub = "warn"
 unused_must_use = "deny"
-rust_2018_idioms = "deny"
 
 [lints.rustdoc]
 all = "warn"
@@ -24,8 +24,8 @@ all = "warn"
 [dependencies]
 # revm
 bytecode.workspace = true
-primitives.workspace = true
 context-interface.workspace = true
+primitives.workspace = true
 
 # optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -34,20 +34,15 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 bincode.workspace = true
 
 [features]
+arbitrary = ["primitives/arbitrary", "std"]
 default = ["std"]
-std = [
-	"serde?/std",
-	"primitives/std",
-	"context-interface/std",
-	"bytecode/std"
-]
 hashbrown = ["primitives/hashbrown"]
 serde = [
+	"bytecode/serde",
+	"context-interface/serde",
 	"dep:serde",
 	"primitives/serde",
-	"bytecode/serde",
-	"context-interface/serde"
 ]
-arbitrary = ["std", "primitives/arbitrary"]
+std = ["bytecode/std", "context-interface/std", "primitives/std", "serde?/std"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []

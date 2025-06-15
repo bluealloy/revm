@@ -3,6 +3,7 @@ use crate::{
     inspect::{InspectCommitEvm, InspectEvm},
     Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler, JournalExt,
 };
+use async_trait::async_trait;
 use context::{ContextSetters, ContextTr, Evm, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
@@ -30,6 +31,7 @@ where
 }
 
 // Implementing InspectEvm for Evm
+#[async_trait::async_trait(?Send)]
 impl<CTX, INSP, INST, PRECOMPILES> InspectEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt>,
@@ -43,16 +45,17 @@ where
         self.inspector = inspector;
     }
 
-    fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
+    async fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_tx(tx);
         let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>> {
             _phantom: core::marker::PhantomData,
         };
-        t.inspect_run(self)
+        t.inspect_run(self).await
     }
 }
 
 // Implementing InspectCommitEvm for Evm
+#[async_trait::async_trait(?Send)]
 impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextSetters
@@ -64,6 +67,7 @@ where
 }
 
 // Implementing InspectorEvmTr for Evm
+#[async_trait(?Send)]
 impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
@@ -84,7 +88,7 @@ where
         (&mut self.ctx, &mut self.inspector)
     }
 
-    fn run_inspect_interpreter(
+    async fn run_inspect_interpreter(
         &mut self,
         interpreter: &mut Interpreter<
             <Self::Instructions as InstructionProvider>::InterpreterTypes,
@@ -101,5 +105,6 @@ where
             inspector,
             instructions.instruction_table(),
         )
+        .await
     }
 }

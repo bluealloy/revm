@@ -18,7 +18,7 @@ use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
 
-pub fn load_accounts<
+pub async fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
     ERROR: From<<<EVM::Context as ContextTr>::Db as Database>::Error>,
 >(
@@ -59,10 +59,12 @@ pub fn load_accounts<
                 if storage.peek().is_none() {
                     journal.warm_account(*address);
                 } else {
-                    journal.warm_account_and_storage(
-                        *address,
-                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
-                    )?;
+                    journal
+                        .warm_account_and_storage(
+                            *address,
+                            storage.map(|i| StorageKey::from_be_bytes(i.0)),
+                        )
+                        .await?;
                 }
             }
         }
@@ -111,7 +113,7 @@ pub fn validate_account_nonce_and_code(
 }
 
 #[inline]
-pub fn validate_against_state_and_deduct_caller<
+pub async fn validate_against_state_and_deduct_caller<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
@@ -126,7 +128,7 @@ pub fn validate_against_state_and_deduct_caller<
     let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    let caller_account = journal.load_account_code(tx.caller()).await?.data;
 
     validate_account_nonce_and_code(
         &mut caller_account.info,
@@ -178,7 +180,7 @@ pub fn validate_against_state_and_deduct_caller<
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
-pub fn apply_eip7702_auth_list<
+pub async fn apply_eip7702_auth_list<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
@@ -214,7 +216,7 @@ pub fn apply_eip7702_auth_list<
 
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
-        let mut authority_acc = journal.load_account_code(authority)?;
+        let mut authority_acc = journal.load_account_code(authority).await?;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {

@@ -1,22 +1,22 @@
 [package]
-name = "revm-inspector"
-description = "Revm inspector interface"
-version = "6.0.0"
 authors.workspace = true
+description = "Revm inspector interface"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
-repository.workspace = true
+name = "revm-inspector"
 readme.workspace = true
+repository.workspace = true
+version = "6.0.0"
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
+rust_2018_idioms = "deny"
 unreachable_pub = "warn"
 unused_must_use = "deny"
-rust_2018_idioms = "deny"
 
 [lints.rustdoc]
 all = "warn"
@@ -26,10 +26,11 @@ all = "warn"
 context.workspace = true
 database-interface.workspace = true
 handler.workspace = true
+interpreter.workspace = true
 primitives.workspace = true
 state.workspace = true
-interpreter.workspace = true
 
+async-trait.workspace = true
 auto_impl.workspace = true
 either.workspace = true
 
@@ -42,32 +43,33 @@ serde_json = { workspace = true, features = [
 
 [dev-dependencies]
 database = { workspace = true, features = ["serde"] }
+tokio = { workspace = true, features = ["full"] }
 
 [features]
 default = ["std"]
 # Preserve order of json field
-std = [
-	"serde?/std",
-	"serde_json?/std",
-	"serde_json?/preserve_order",
-	"context/std",
-	"database/std",
-	"database-interface/std",
-	"handler/std",
-	"interpreter/std",
-	"primitives/std",
-	"state/std",
-	"either/std"
-]
 serde = [
-	"database/serde",
 	"context/serde",
 	"database-interface/serde",
+	"database/serde",
+	"either/serde",
 	"handler/serde",
 	"interpreter/serde",
 	"primitives/serde",
 	"state/serde",
-	"either/serde"
+]
+std = [
+	"context/std",
+	"database-interface/std",
+	"database/std",
+	"either/std",
+	"handler/std",
+	"interpreter/std",
+	"primitives/std",
+	"serde?/std",
+	"serde_json?/preserve_order",
+	"serde_json?/std",
+	"state/std",
 ]
 
 # deprecated please use [`tracer`] feature instead

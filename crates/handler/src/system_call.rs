@@ -2,6 +2,7 @@ use crate::{
     instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
 };
+use async_trait::async_trait;
 use context::{
     result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
 };
@@ -52,6 +53,7 @@ impl SystemCallTx for TxEnv {
 /// beneficiary. They are used before and after block execution to insert or obtain blockchain state.
 ///
 /// It act similar to `transact` function and sets default Tx with data and system contract as a target.
+#[async_trait(?Send)]
 pub trait SystemCallEvm: ExecuteEvm {
     /// System call is a special transaction call that is used to call a system contract.
     ///
@@ -59,7 +61,7 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// given values.
     ///
     /// Block values are taken into account and will determent how system call will be executed.
-    fn transact_system_call_with_caller(
+    async fn transact_system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
@@ -67,18 +69,19 @@ pub trait SystemCallEvm: ExecuteEvm {
     ) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Calls [`SystemCallEvm::transact_system_call_with_caller`] with [`SYSTEM_ADDRESS`] as a caller.
-    fn transact_system_call(
+    async fn transact_system_call(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.transact_system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
+            .await
     }
 
     /// Transact the system call and finalize.
     ///
     /// Internally calls combo of `transact_system_call` and `finalize` functions.
-    fn transact_system_call_finalize(
+    async fn transact_system_call_finalize(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
@@ -88,35 +91,39 @@ pub trait SystemCallEvm: ExecuteEvm {
             system_contract_address,
             data,
         )
+        .await
     }
 
     /// Calls [`SystemCallEvm::transact_system_call_with_caller`] and `finalize` functions.
-    fn transact_system_call_with_caller_finalize(
+    async fn transact_system_call_with_caller_finalize(
         &mut self,
         caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let result =
-            self.transact_system_call_with_caller(caller, system_contract_address, data)?;
+        let result = self
+            .transact_system_call_with_caller(caller, system_contract_address, data)
+            .await?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(result, state))
     }
 }
 
 /// Extension of the [`SystemCallEvm`] trait that adds a method that commits the state after execution.
+#[async_trait(?Send)]
 pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     /// Transact the system call and commit to the state.
-    fn transact_system_call_commit(
+    async fn transact_system_call_commit(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.transact_system_call_with_caller_commit(SYSTEM_ADDRESS, system_contract_address, data)
+            .await
     }
 
     /// Calls [`SystemCallCommitEvm::transact_system_call_commit`] with [`SYSTEM_ADDRESS`] as a caller.
-    fn transact_system_call_with_caller_commit(
+    async fn transact_system_call_with_caller_commit(
         &mut self,
         caller: Address,
         system_contract_address: Address,
@@ -124,13 +131,14 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     ) -> Result<Self::ExecutionResult, Self::Error>;
 }
 
+#[async_trait(?Send)]
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn transact_system_call_with_caller(
+    async fn transact_system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
@@ -144,10 +152,11 @@ where
         ));
         // create handler
         let mut handler = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
-        handler.run_system_call(self)
+        handler.run_system_call(self).await
     }
 }
 
+#[async_trait(?Send)]
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
@@ -155,17 +164,17 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn transact_system_call_with_caller_commit(
+    async fn transact_system_call_with_caller_commit(
         &mut self,
         caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.transact_system_call_with_caller_finalize(caller, system_contract_address, data)
-            .map(|output| {
-                self.db_mut().commit(output.state);
-                output.result
-            })
+        let output = self
+            .transact_system_call_with_caller_finalize(caller, system_contract_address, data)
+            .await?;
+        self.db_mut().commit(output.state).await;
+        Ok(output.result)
     }
 }
 
@@ -181,6 +190,8 @@ mod tests {
     use database::InMemoryDB;
     use primitives::{b256, bytes, StorageKey, U256};
     use state::{AccountInfo, Bytecode};
+    #[cfg(test)]
+    use tokio::runtime::Runtime;
 
     const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
     static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
@@ -201,8 +212,11 @@ mod tests {
             // block with number 1 will set storage at slot 0.
             .modify_block_chained(|b| b.number = U256::ONE)
             .build_mainnet();
-        let output = my_evm
-            .transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
+        let output = Runtime::new()
+            .unwrap()
+            .block_on(
+                my_evm.transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into()),
+            )
             .unwrap();
 
         assert_eq!(

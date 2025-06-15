@@ -1,4 +1,5 @@
 use crate::{Inspector, InspectorEvmTr, InspectorFrame, JournalExt};
+use async_trait::async_trait;
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
 use handler::{EvmTr, Frame, FrameInitOrResult, FrameOrResult, FrameResult, Handler, ItemOrResult};
 use interpreter::{
@@ -26,6 +27,7 @@ use std::{vec, vec::Vec};
 /// * [`Handler::first_frame_init`] replaced with [`InspectorHandler::inspect_first_frame_init`]
 /// * [`Handler::frame_call`] replaced with [`InspectorHandler::inspect_frame_call`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
+#[async_trait(?Send)]
 pub trait InspectorHandler: Handler
 where
     Self::Evm:
@@ -37,11 +39,11 @@ where
     /// Entry point for inspection.
     ///
     /// This method is acts as [`Handler::run`] method for inspection.
-    fn inspect_run(
+    async fn inspect_run(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        match self.inspect_run_without_catch_error(evm) {
+        match self.inspect_run_without_catch_error(evm).await {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
@@ -50,21 +52,22 @@ where
     /// Run inspection without catching error.
     ///
     /// This method is acts as [`Handler::run_without_catch_error`] method for inspection.
-    fn inspect_run_without_catch_error(
+    async fn inspect_run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
-        let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
+        let eip7702_refund = self.pre_execution(evm).await? as i64;
+        let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas).await?;
+        self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)
+            .await?;
         self.execution_result(evm, frame_result)
     }
 
     /// Run execution loop with inspection support
     ///
     /// This method acts as [`Handler::execution`] method for inspection.
-    fn inspect_execution(
+    async fn inspect_execution(
         &mut self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
@@ -73,10 +76,12 @@ where
 
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.inspect_first_frame_init(evm, first_frame_input)?;
+        let first_frame = self
+            .inspect_first_frame_init(evm, first_frame_input)
+            .await?;
 
         let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.inspect_run_exec_loop(evm, frame)?,
+            ItemOrResult::Item(frame) => self.inspect_run_exec_loop(evm, frame).await?,
             ItemOrResult::Result(result) => result,
         };
 
@@ -94,7 +99,7 @@ where
     ///   the frame and its modification.
     /// * If new frame is created a [`Inspector::initialize_interp`] method will be called.
     /// * If creation of new frame returns the result, the [`Inspector`] `_end` methods will be called.
-    fn inspect_first_frame_init(
+    async fn inspect_first_frame_init(
         &mut self,
         evm: &mut Self::Evm,
         mut frame_input: <Self::Frame as Frame>::FrameInit,
@@ -104,7 +109,7 @@ where
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }
-        let mut ret = self.first_frame_init(evm, frame_input.clone());
+        let mut ret = self.first_frame_init(evm, frame_input.clone()).await;
 
         // only if new frame is created call initialize_interp hook.
         if let Ok(ItemOrResult::Item(frame)) = &mut ret {
@@ -124,12 +129,12 @@ where
     /// Internally it will call [`Inspector::step`], [`Inspector::step_end`] for each instruction.
     /// And [`Inspector::log`],[`Inspector::selfdestruct`] for each log and selfdestruct instruction.
     #[inline]
-    fn inspect_frame_call(
+    async fn inspect_frame_call(
         &mut self,
         frame: &mut Self::Frame,
         evm: &mut Self::Evm,
     ) -> Result<FrameInitOrResult<Self::Frame>, Self::Error> {
-        frame.run_inspect(evm)
+        frame.run_inspect(evm).await
     }
 
     /// Run inspection on execution loop.
@@ -141,7 +146,7 @@ where
     /// * [`Inspector::call`],[`Inspector::create`],[`Inspector::eofcreate`] to inspect call, create and eofcreate.
     /// * [`Inspector::call_end`],[`Inspector::create_end`],[`Inspector::eofcreate_end`] to inspect call, create and eofcreate end.
     /// * [`Inspector::initialize_interp`] to inspect initialized interpreter.
-    fn inspect_run_exec_loop(
+    async fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
         frame: Self::Frame,
@@ -149,7 +154,7 @@ where
         let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = self.inspect_frame_call(frame, evm)?;
+            let call_or_result = self.inspect_frame_call(frame, evm).await?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(mut init) => {
@@ -158,7 +163,7 @@ where
                         frame_end(context, inspector, &init, &mut output);
                         output
                     } else {
-                        match self.frame_init(frame, evm, init.clone())? {
+                        match self.frame_init(frame, evm, init.clone()).await? {
                             ItemOrResult::Item(mut new_frame) => {
                                 // only if new frame is created call initialize_interp hook.
                                 let (context, inspector) = evm.ctx_inspector();
@@ -189,7 +194,7 @@ where
                 return Ok(result);
             };
 
-            self.frame_return_result(frame, evm, result)?;
+            self.frame_return_result(frame, evm, result).await?;
         }
     }
 }
@@ -252,7 +257,7 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
 /// This function is used to inspect the Interpreter loop.
 /// It will call [`Inspector::step`] and [`Inspector::step_end`] after each instruction.
 /// And [`Inspector::log`],[`Inspector::selfdestruct`] for each log and selfdestruct instruction.
-pub fn inspect_instructions<CTX, IT>(
+pub async fn inspect_instructions<CTX, IT>(
     context: &mut CTX,
     interpreter: &mut Interpreter<IT>,
     mut inspector: impl Inspector<CTX, IT>,
@@ -284,7 +289,7 @@ where
             interpreter,
             host: context,
         };
-        instructions[opcode as usize](instruction_context);
+        (instructions[opcode as usize])(instruction_context).await;
 
         // check if new log is added
         let new_log = context.journal_mut().logs().len();

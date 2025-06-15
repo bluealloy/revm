@@ -300,13 +300,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Mark account as touched.
     #[inline]
-    pub fn balance_incr<DB: Database>(
+    pub async fn balance_incr<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         balance: U256,
     ) -> Result<(), DB::Error> {
-        let account = self.load_account(db, address)?.data;
+        let account = self.load_account(db, address).await?.data;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
 
@@ -330,7 +330,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
-    pub fn transfer<DB: Database>(
+    pub async fn transfer<DB: Database>(
         &mut self,
         db: &mut DB,
         from: Address,
@@ -338,14 +338,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
         if balance.is_zero() {
-            self.load_account(db, to)?;
+            self.load_account(db, to).await?;
             let to_account = self.state.get_mut(&to).unwrap();
             Self::touch_account(&mut self.journal, to, to_account);
             return Ok(None);
         }
         // load accounts
-        self.load_account(db, from)?;
-        self.load_account(db, to)?;
+        self.load_account(db, from).await?;
+        self.load_account(db, to).await?;
 
         // sub balance from
         let from_account = self.state.get_mut(&from).unwrap();
@@ -499,14 +499,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449>
     ///  * <https://eips.ethereum.org/EIPS/eip-6780>
     #[inline]
-    pub fn selfdestruct<DB: Database>(
+    pub async fn selfdestruct<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
         let spec = self.spec;
-        let account_load = self.load_account(db, target)?;
+        let account_load = self.load_account(db, target).await?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
@@ -571,12 +571,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
-    pub fn load_account<DB: Database>(
+    pub async fn load_account<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false, [])
+        self.load_account_optional(db, address, false, []).await
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -587,14 +587,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
     #[inline]
-    pub fn load_account_delegated<DB: Database>(
+    pub async fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
+        let account = self
+            .load_account_optional(db, address, is_eip7702_enabled, [])
+            .await?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -608,7 +610,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(db, address)?;
+            let delegate_account = self.load_account(db, address).await?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
@@ -622,17 +624,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
     #[inline]
-    pub fn load_code<DB: Database>(
+    pub async fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true, [])
+        self.load_account_optional(db, address, true, []).await
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_optional<DB: Database>(
+    pub async fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -660,7 +662,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
             Entry::Vacant(vac) => {
-                let account = if let Some(account) = db.basic(address)? {
+                let account = if let Some(account) = db.basic(address).await? {
                     account.into()
                 } else {
                     Account::new_not_existing(self.transaction_id)
@@ -686,7 +688,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let code = if info.code_hash == KECCAK_EMPTY {
                     Bytecode::default()
                 } else {
-                    db.code_by_hash(info.code_hash)?
+                    db.code_by_hash(info.code_hash).await?
                 };
                 info.code = Some(code);
             }
@@ -700,7 +702,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 self.transaction_id,
                 address,
                 storage_key,
-            )?;
+            )
+            .await?;
         }
         Ok(load)
     }
@@ -711,7 +714,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Panics if the account is not present in the state.
     #[inline]
-    pub fn sload<DB: Database>(
+    pub async fn sload<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -728,6 +731,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             address,
             key,
         )
+        .await
     }
 
     /// Stores storage slot.
@@ -736,7 +740,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// **Note**: Account should already be present in our state.
     #[inline]
-    pub fn sstore<DB: Database>(
+    pub async fn sstore<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -744,7 +748,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
-        let present = self.sload(db, address, key)?;
+        let present = self.sload(db, address, key).await?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
@@ -832,7 +836,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
 /// Loads storage slot with account.
 #[inline]
-pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
+pub async fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
@@ -852,7 +856,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             let value = if is_newly_created {
                 StorageValue::ZERO
             } else {
-                db.storage(address, key)?
+                db.storage(address, key).await?
             };
 
             vac.insert(EvmStorageSlot::new(value, transaction_id));

@@ -32,14 +32,14 @@ pub trait JournalTr {
     /// Returns the storage value from Journal state.
     ///
     /// Loads the storage from database if not found in Journal state.
-    fn sload(
+    async fn sload(
         &mut self,
         address: Address,
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error>;
 
     /// Stores the storage value in Journal state.
-    fn sstore(
+    async fn sstore(
         &mut self,
         address: Address,
         key: StorageKey,
@@ -56,14 +56,14 @@ pub trait JournalTr {
     fn log(&mut self, log: Log);
 
     /// Marks the account for selfdestruction and transfers all the balance to the target.
-    fn selfdestruct(
+    async fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
     /// Warms the account and storage.
-    fn warm_account_and_storage(
+    async fn warm_account_and_storage(
         &mut self,
         address: Address,
         storage_keys: impl IntoIterator<Item = StorageKey>,
@@ -85,7 +85,7 @@ pub trait JournalTr {
     fn touch_account(&mut self, address: Address);
 
     /// Transfers the balance from one account to another.
-    fn transfer(
+    async fn transfer(
         &mut self,
         from: Address,
         to: Address,
@@ -101,7 +101,7 @@ pub trait JournalTr {
     );
 
     /// Increments the balance of the account.
-    fn balance_incr(
+    async fn balance_incr(
         &mut self,
         address: Address,
         balance: U256,
@@ -111,19 +111,19 @@ pub trait JournalTr {
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
-    fn load_account(
+    async fn load_account(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account code.
-    fn load_account_code(
+    async fn load_account_code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account delegated.
-    fn load_account_delegated(
+    async fn load_account_delegated(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, <Self::Database as Database>::Error>;
@@ -144,11 +144,11 @@ pub trait JournalTr {
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
-    fn code(
+    async fn code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
-        let a = self.load_account_code(address)?;
+        let a = self.load_account_code(address).await?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
 
@@ -165,11 +165,11 @@ pub trait JournalTr {
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
-    fn code_hash(
+    async fn code_hash(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
-        let acc = self.load_account_code(address)?;
+        let acc = self.load_account_code(address).await?;
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }

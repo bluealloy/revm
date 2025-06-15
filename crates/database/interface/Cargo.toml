@@ -1,13 +1,13 @@
 [package]
-name = "revm-database-interface"
-description = "Revm Database interface"
-version = "5.0.0"
 authors.workspace = true
+description = "Revm Database interface"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
-repository.workspace = true
+name = "revm-database-interface"
 readme.workspace = true
+repository.workspace = true
+version = "5.0.0"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -18,8 +18,9 @@ workspace = true
 
 [dependencies]
 # revm
-state.workspace = true
+async-trait.workspace = true
 primitives.workspace = true
+state.workspace = true
 
 # misc
 auto_impl.workspace = true
@@ -35,7 +36,7 @@ anyhow.workspace = true
 rstest.workspace = true
 
 [features]
-default = ["std"]
-std = ["serde?/std", "primitives/std", "state/std"]
-serde = ["dep:serde", "primitives/serde", "state/serde"]
 asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]
+default = ["std"]
+serde = ["dep:serde", "primitives/serde", "state/serde"]
+std = ["primitives/std", "serde?/std", "state/std"]

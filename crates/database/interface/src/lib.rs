@@ -1,6 +1,7 @@
 //! Optimism-specific constants, types, and helpers.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(async_fn_in_trait)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
@@ -12,6 +13,9 @@ use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
+
+// keep dependency recognition
+use async_trait as _;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -26,15 +30,9 @@ pub const BENCH_CALLER: Address = EEADDRESS;
 /// BENCH_CALLER_BALANCE balance
 pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 
-#[cfg(feature = "asyncdb")]
-pub mod async_db;
 pub mod empty_db;
-pub mod try_commit;
 
-#[cfg(feature = "asyncdb")]
-pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
-pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
 pub trait DBErrorMarker {}
@@ -51,24 +49,27 @@ pub trait Database {
     type Error: DBErrorMarker + Error;
 
     /// Gets basic account information.
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+    async fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
     /// Gets account code by its hash.
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+    async fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Gets storage value of address at index.
-    fn storage(&mut self, address: Address, index: StorageKey)
-        -> Result<StorageValue, Self::Error>;
+    async fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error>;
 
     /// Gets block hash by block number.
-    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
+    async fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// EVM database commit interface.
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: HashMap<Address, Account>);
+    async fn commit(&mut self, changes: HashMap<Address, Account>);
 }
 
 /// EVM database interface.
@@ -83,17 +84,20 @@ pub trait DatabaseRef {
     type Error: DBErrorMarker + Error;
 
     /// Gets basic account information.
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+    async fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
     /// Gets account code by its hash.
-    fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+    async fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Gets storage value of address at index.
-    fn storage_ref(&self, address: Address, index: StorageKey)
-        -> Result<StorageValue, Self::Error>;
+    async fn storage_ref(
+        &self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error>;
 
     /// Gets block hash by block number.
-    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
+    async fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
@@ -111,33 +115,33 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.0.basic_ref(address)
+    async fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        self.0.basic_ref(address).await
     }
 
     #[inline]
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        self.0.code_by_hash_ref(code_hash)
+    async fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        self.0.code_by_hash_ref(code_hash).await
     }
 
     #[inline]
-    fn storage(
+    async fn storage(
         &mut self,
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
-        self.0.storage_ref(address, index)
+        self.0.storage_ref(address, index).await
     }
 
     #[inline]
-    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        self.0.block_hash_ref(number)
+    async fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
+        self.0.block_hash_ref(number).await
     }
 }
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
-        self.0.commit(changes)
+    async fn commit(&mut self, changes: HashMap<Address, Account>) {
+        self.0.commit(changes).await
     }
 }

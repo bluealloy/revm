@@ -78,8 +78,8 @@ mod test {
     use primitives::{hardfork::SpecId, TxKind, U256};
     use primitives::{StorageKey, StorageValue};
 
-    #[test]
-    fn sanity_eip7702_tx() {
+    #[tokio::test]
+    async fn sanity_eip7702_tx() {
         let signer = PrivateKeySigner::random();
         let auth = Authorization {
             chain_id: U256::ZERO,
@@ -106,6 +106,7 @@ mod test {
                 kind: TxKind::Call(signer.address()),
                 ..Default::default()
             })
+            .await
             .unwrap()
             .state;
 

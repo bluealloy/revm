@@ -247,12 +247,12 @@ pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Op
 }
 
 #[inline]
-pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
     target: Address,
     transfers_value: bool,
 ) -> Option<u64> {
-    let Some(account_load) = context.host.load_account_delegated(target) else {
+    let Some(account_load) = context.host.load_account_delegated(target).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -313,7 +313,7 @@ pub fn pop_extcall_target_address(
     Some(Address::from_word(target_address))
 }
 
-pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
@@ -337,7 +337,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     }
 
-    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, has_transfer) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, has_transfer).await else {
         return;
     };
 
@@ -361,7 +361,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
-pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
@@ -376,7 +376,7 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false).await else {
         return;
     };
 
@@ -400,7 +400,7 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
-pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
     require_eof!(context.interpreter);
@@ -415,7 +415,7 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false) else {
+    let Some(gas_limit) = extcall_gas_calc(&mut context, target_address, false).await else {
         return;
     };
 
@@ -522,7 +522,9 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         ))));
 }
 
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub async fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
@@ -541,7 +543,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
-    let Some(account_load) = context.host.load_account_delegated(to) else {
+    let Some(account_load) = context.host.load_account_delegated(to).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -584,7 +586,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         ))));
 }
 
-pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
@@ -598,7 +600,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -640,7 +642,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
-pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, HOMESTEAD);
@@ -654,7 +656,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -689,7 +691,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
-pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+pub async fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
@@ -703,7 +705,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to).await else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);

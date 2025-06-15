@@ -8,6 +8,7 @@ extern crate alloc as std;
 // Mainnet related handlers.
 
 pub mod api;
+pub mod async_ctx;
 pub mod evm;
 pub mod execution;
 mod frame;
@@ -21,10 +22,12 @@ pub mod post_execution;
 pub mod pre_execution;
 mod precompile_provider;
 pub mod system_call;
+// pub mod util; // removed in async refactor
 pub mod validation;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
+pub use async_ctx::AsyncCtx;
 pub use evm::EvmTr;
 pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Frame};
 pub use frame_data::{FrameData, FrameResult};

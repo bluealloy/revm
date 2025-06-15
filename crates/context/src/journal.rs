@@ -103,21 +103,23 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self.database
     }
 
-    fn sload(
+    async fn sload(
         &mut self,
         address: Address,
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
-        self.inner.sload(&mut self.database, address, key)
+        self.inner.sload(&mut self.database, address, key).await
     }
 
-    fn sstore(
+    async fn sstore(
         &mut self,
         address: Address,
         key: StorageKey,
         value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
-        self.inner.sstore(&mut self.database, address, key, value)
+        self.inner
+            .sstore(&mut self.database, address, key, value)
+            .await
     }
 
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
@@ -132,12 +134,14 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.log(log)
     }
 
-    fn selfdestruct(
+    async fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        self.inner.selfdestruct(&mut self.database, address, target)
+        self.inner
+            .selfdestruct(&mut self.database, address, target)
+            .await
     }
 
     fn warm_account(&mut self, address: Address) {
@@ -161,13 +165,14 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn warm_account_and_storage(
+    async fn warm_account_and_storage(
         &mut self,
         address: Address,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.inner
-            .load_account_optional(&mut self.database, address, false, storage_keys)?;
+            .load_account_optional(&mut self.database, address, false, storage_keys)
+            .await?;
         Ok(())
     }
 
@@ -177,13 +182,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn transfer(
+    async fn transfer(
         &mut self,
         from: Address,
         to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        self.inner.transfer(&mut self.database, from, to, balance)
+        self.inner
+            .transfer(&mut self.database, from, to, balance)
+            .await
     }
 
     #[inline]
@@ -204,13 +211,14 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     /// Increments the balance of the account.
     #[inline]
-    fn balance_incr(
+    async fn balance_incr(
         &mut self,
         address: Address,
         balance: U256,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.inner
             .balance_incr(&mut self.database, address, balance)
+            .await
     }
 
     /// Increments the nonce of the account.
@@ -220,25 +228,29 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_account(&mut self.database, address)
-    }
-
-    #[inline]
-    fn load_account_code(
+    async fn load_account(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_code(&mut self.database, address)
+        self.inner.load_account(&mut self.database, address).await
     }
 
     #[inline]
-    fn load_account_delegated(
+    async fn load_account_code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        self.inner.load_code(&mut self.database, address).await
+    }
+
+    #[inline]
+    async fn load_account_delegated(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         self.inner
             .load_account_delegated(&mut self.database, address)
+            .await
     }
 
     #[inline]

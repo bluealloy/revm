@@ -1,8 +1,10 @@
 use super::frame_data::*;
+use crate::AsyncCtx;
 use crate::{
     instructions::InstructionProvider, precompile_provider::PrecompileProvider, EvmTr,
     FrameInitOrResult, FrameOrResult, ItemOrResult,
 };
+use async_trait::async_trait;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::result::FromStringError;
 use context::LocalContextTr;
@@ -32,26 +34,27 @@ use std::borrow::ToOwned;
 use std::{boxed::Box, sync::Arc};
 
 /// Call frame trait
+#[async_trait(?Send)]
 pub trait Frame: Sized {
     type Evm;
     type FrameInit;
     type FrameResult;
     type Error;
 
-    fn init_first(
+    async fn init_first(
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
-    fn init(
+    async fn init(
         &mut self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error>;
 
-    fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
+    async fn run(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error>;
 
-    fn return_result(
+    async fn return_result(
         &mut self,
         evm: &mut Self::Evm,
         result: Self::FrameResult,
@@ -72,6 +75,7 @@ pub struct EthFrame<EVM, ERROR, IW: InterpreterTypes> {
     pub interpreter: Interpreter<IW>,
 }
 
+#[async_trait(?Send)]
 impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
 where
     EVM: EvmTr<
@@ -88,36 +92,50 @@ where
     type FrameResult = FrameResult;
     type Error = ERROR;
 
-    fn init_first(
+    async fn init_first(
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         let memory =
             SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        Self::init_with_context(evm, 0, frame_input, memory)
+        Self::init_with_context(evm, 0, frame_input, memory).await
     }
 
-    fn init(
+    async fn init(
         &mut self,
         evm: &mut Self::Evm,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResult<Self>, Self::Error> {
         // Create new context from shared memory.
         let memory = self.interpreter.memory.new_child_context();
-        EthFrame::init_with_context(evm, self.depth + 1, frame_input, memory)
+        EthFrame::init_with_context(evm, self.depth + 1, frame_input, memory).await
     }
 
-    fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
+    async fn run(
+        &mut self,
+        context: &mut Self::Evm,
+    ) -> Result<FrameInitOrResult<Self>, Self::Error> {
         let next_action = context.run_interpreter(&mut self.interpreter);
         self.process_next_action(context, next_action)
     }
 
-    fn return_result(
+    async fn return_result(
         &mut self,
-        context: &mut Self::Evm,
+        evm: &mut Self::Evm,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.return_result(context, result)
+        // Free child memory context created for this frame.
+        self.interpreter.memory.free_child_context();
+
+        // Propagate any error set inside the interpreter back to the handler via the Context.
+        match core::mem::replace(evm.ctx().error(), Ok(())) {
+            Err(ContextError::Db(e)) => return Err(e.into()),
+            Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
+            Ok(_) => (),
+        }
+
+        // Insert the frame result into the parent interpreter (if any).
+        self.insert_result(evm, result)
     }
 }
 
@@ -156,8 +174,7 @@ where
     ERROR: FromStringError,
 {
     /// Make call frame
-    #[inline]
-    pub fn make_call_frame(
+    pub async fn make_call_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
@@ -185,8 +202,8 @@ where
 
         // Make account warm and loaded.
         let _ = context
-            .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
+            .load_account_delegated(inputs.bytecode_address)
+            .await?;
 
         // Create subroutine checkpoint
         let checkpoint = context.journal_mut().checkpoint();
@@ -195,10 +212,9 @@ where
         if let CallValue::Transfer(value) = inputs.value {
             // Transfer value from caller to called account
             // Target will get touched even if balance transferred is zero.
-            if let Some(i) =
-                context
-                    .journal_mut()
-                    .transfer(inputs.caller, inputs.target_address, value)?
+            if let Some(i) = context
+                .transfer(inputs.caller, inputs.target_address, value)
+                .await?
             {
                 context.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());
@@ -239,17 +255,15 @@ where
             }
         }
 
-        let account = context
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
+        let account = context.load_account(inputs.bytecode_address).await?;
 
         let mut code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
             let account = &context
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
+                .load_account(eip7702_bytecode.delegated_address)
+                .await?
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
@@ -288,8 +302,7 @@ where
     }
 
     /// Make create frame.
-    #[inline]
-    pub fn make_create_frame(
+    pub async fn make_create_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
@@ -320,7 +333,7 @@ where
         // }
 
         // Fetch balance of caller.
-        let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
+        let caller_info = &mut context.load_account(inputs.caller).await?.data.info;
 
         // Check if caller has enough balance to send to the created contract.
         if caller_info.balance < inputs.value {
@@ -349,7 +362,7 @@ where
         };
 
         // warm load account.
-        context.journal_mut().load_account(created_address)?;
+        context.load_account(created_address).await?;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
@@ -358,7 +371,7 @@ where
             inputs.value,
             spec,
         ) {
-            Ok(checkpoint) => checkpoint,
+            Ok(c) => c,
             Err(e) => return return_error(e.into()),
         };
 
@@ -394,8 +407,7 @@ where
     }
 
     /// Make create frame.
-    #[inline]
-    pub fn make_eofcreate_frame(
+    pub async fn make_eofcreate_frame(
         evm: &mut EVM,
         depth: usize,
         memory: SharedMemory,
@@ -450,7 +462,7 @@ where
         }
 
         // Fetch balance of caller.
-        let caller = context.journal_mut().load_account(inputs.caller)?.data;
+        let caller = context.load_account(inputs.caller).await?.data;
 
         // Check if caller has enough balance to send to the created contract.
         if caller.info.balance < inputs.value {
@@ -472,7 +484,7 @@ where
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
         // Load account so it needs to be marked as warm for access list.
-        context.journal_mut().load_account(created_address)?;
+        context.load_account(created_address).await?;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
@@ -481,7 +493,7 @@ where
             inputs.value,
             spec,
         ) {
-            Ok(checkpoint) => checkpoint,
+            Ok(c) => c,
             Err(e) => return return_error(e.into()),
         };
 
@@ -511,16 +523,18 @@ where
         )))
     }
 
-    pub fn init_with_context(
+    pub async fn init_with_context(
         evm: &mut EVM,
         depth: usize,
         frame_init: FrameInput,
         memory: SharedMemory,
     ) -> Result<ItemOrResult<Self, FrameResult>, ERROR> {
         match frame_init {
-            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, inputs),
-            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, inputs),
-            FrameInput::EOFCreate(inputs) => Self::make_eofcreate_frame(evm, depth, memory, inputs),
+            FrameInput::Call(inputs) => Self::make_call_frame(evm, depth, memory, inputs).await,
+            FrameInput::Create(inputs) => Self::make_create_frame(evm, depth, memory, inputs).await,
+            FrameInput::EOFCreate(inputs) => {
+                Self::make_eofcreate_frame(evm, depth, memory, inputs).await
+            }
         }
     }
 }
@@ -603,7 +617,7 @@ where
         Ok(result)
     }
 
-    fn return_result(&mut self, evm: &mut EVM, result: FrameResult) -> Result<(), ERROR> {
+    fn insert_result(&mut self, evm: &mut EVM, result: FrameResult) -> Result<(), ERROR> {
         self.interpreter.memory.free_child_context();
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),

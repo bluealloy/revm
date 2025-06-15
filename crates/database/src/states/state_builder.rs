@@ -1,5 +1,5 @@
-use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
-use database_interface::{DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
+use super::{cache::CacheState, BundleState, State, TransitionState};
+use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use primitives::B256;
 use std::collections::BTreeMap;
 
@@ -82,14 +82,6 @@ impl<DB: Database> StateBuilder<DB> {
         database: ODB,
     ) -> StateBuilder<WrapDatabaseRef<ODB>> {
         self.with_database(WrapDatabaseRef(database))
-    }
-
-    /// With boxed version of database.
-    pub fn with_database_boxed<Error: DBErrorMarker + core::error::Error>(
-        self,
-        database: DBBox<'_, Error>,
-    ) -> StateBuilder<DBBox<'_, Error>> {
-        self.with_database(database)
     }
 
     /// By default state clear flag is enabled but for initial sync on mainnet

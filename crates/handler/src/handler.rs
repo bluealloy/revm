@@ -3,6 +3,7 @@ use crate::{
     execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
     FrameResult, ItemOrResult,
 };
+use async_trait::async_trait;
 use context::result::{ExecutionResult, FromStringError};
 use context::LocalContextTr;
 use context_interface::context::ContextError;
@@ -14,7 +15,7 @@ use context_interface::{
 use interpreter::{FrameInput, Gas, InitialAndFloorGas};
 use primitives::U256;
 use state::EvmState;
-use std::{vec, vec::Vec};
+use std::vec::Vec;
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
@@ -60,6 +61,7 @@ impl<
 /// contained inside Context Journal. This setup allows multiple transactions to be chain executed.
 ///
 /// To finalize the execution and obtain changed state, call [`JournalTr::finalize`] function.
+#[async_trait(?Send)]
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>;
@@ -93,12 +95,11 @@ pub trait Handler {
     ///
     /// Returns execution result, error, gas spend and logs.
     #[inline]
-    fn run(
+    async fn run(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Run inner handler and catch all errors to handle cleanup.
-        match self.run_without_catch_error(evm) {
+        match self.run_without_catch_error(evm).await {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
@@ -119,18 +120,13 @@ pub trait Handler {
     /// In case of an error (If fetching account/storage on rpc fails), the journal can be in an inconsistent
     /// state and should be cleared by calling [`JournalTr::discard_tx`] method or dropped.
     #[inline]
-    fn run_system_call(
+    async fn run_system_call(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        // call execution and than output.
-        match self
-            .execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.execution_result(evm, exec_result))
-        {
-            out @ Ok(_) => out,
+        match self.execution(evm, &init_and_floor_gas).await {
+            Ok(exec_result) => self.execution_result(evm, exec_result),
             Err(e) => self.catch_error(evm, e),
         }
     }
@@ -142,14 +138,15 @@ pub trait Handler {
     ///
     /// Returns any errors without catching them or calling [`Handler::catch_error`].
     #[inline]
-    fn run_without_catch_error(
+    async fn run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
-        let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
+        let eip7702_refund = self.pre_execution(evm).await? as i64;
+        let mut exec_result = self.execution(evm, &init_and_floor_gas).await?;
+        self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)
+            .await?;
 
         // Prepare the output
         self.execution_result(evm, exec_result)
@@ -175,12 +172,12 @@ pub trait Handler {
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
-    fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        self.validate_against_state_and_deduct_caller(evm)?;
-        self.load_accounts(evm)?;
+    async fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+        self.validate_against_state_and_deduct_caller(evm).await?;
+        self.load_accounts(evm).await?;
         // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
         self.apply_eip7873_eof_initcodes(evm)?;
-        let gas = self.apply_eip7702_auth_list(evm)?;
+        let gas = self.apply_eip7702_auth_list(evm).await?;
         Ok(gas)
     }
 
@@ -188,7 +185,7 @@ pub trait Handler {
     ///
     /// Always calls [Handler::last_frame_result] to handle returned gas from the call.
     #[inline]
-    fn execution(
+    async fn execution(
         &mut self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
@@ -197,9 +194,9 @@ pub trait Handler {
 
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.first_frame_init(evm, first_frame_input)?;
+        let first_frame = self.first_frame_init(evm, first_frame_input).await?;
         let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame)?,
+            ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame).await?,
             ItemOrResult::Result(result) => result,
         };
 
@@ -218,7 +215,7 @@ pub trait Handler {
     /// Finally, finalizes output by returning the journal state and clearing internal state
     /// for the next execution.
     #[inline]
-    fn post_execution(
+    async fn post_execution(
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut FrameResult,
@@ -230,9 +227,9 @@ pub trait Handler {
         // Ensure gas floor is met and minimum floor gas is spent.
         self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
         // Return unused gas to caller
-        self.reimburse_caller(evm, exec_result)?;
+        self.reimburse_caller(evm, exec_result).await?;
         // Pay transaction fees to beneficiary
-        self.reward_beneficiary(evm, exec_result)?;
+        self.reward_beneficiary(evm, exec_result).await?;
         Ok(())
     }
 
@@ -262,8 +259,8 @@ pub trait Handler {
 
     /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
     #[inline]
-    fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        pre_execution::load_accounts(evm)
+    async fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        pre_execution::load_accounts::<_, Self::Error>(evm).await
     }
 
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
@@ -271,8 +268,8 @@ pub trait Handler {
     ///
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
-    fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        pre_execution::apply_eip7702_auth_list(evm.ctx())
+    async fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+        pre_execution::apply_eip7702_auth_list::<_, Self::Error>(evm.ctx()).await
     }
 
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
@@ -297,11 +294,11 @@ pub trait Handler {
     ///
     /// Unused fees are returned to caller after execution completes.
     #[inline]
-    fn validate_against_state_and_deduct_caller(
+    async fn validate_against_state_and_deduct_caller(
         &self,
         evm: &mut Self::Evm,
     ) -> Result<(), Self::Error> {
-        pre_execution::validate_against_state_and_deduct_caller(evm.ctx())
+        pre_execution::validate_against_state_and_deduct_caller::<_, Self::Error>(evm.ctx()).await
     }
 
     /* EXECUTION */
@@ -350,25 +347,25 @@ pub trait Handler {
 
     /// Initializes the first frame from the provided frame input.
     #[inline]
-    fn first_frame_init(
+    async fn first_frame_init(
         &mut self,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Self::Frame::init_first(evm, frame_input)
+        Self::Frame::init_first(evm, frame_input).await
     }
 
     /// Initializes a new frame from the provided frame input and previous frame.
     ///
     /// The previous frame contains shared memory that is passed to the new frame.
     #[inline]
-    fn frame_init(
+    async fn frame_init(
         &mut self,
         frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         frame_input: <Self::Frame as Frame>::FrameInit,
     ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Frame::init(frame, evm, frame_input)
+        Frame::init(frame, evm, frame_input).await
     }
 
     /// Executes a frame and returns either input for a new frame or the frame's result.
@@ -376,23 +373,23 @@ pub trait Handler {
     /// When a result is returned, the frame is removed from the call stack. When frame input
     /// is returned, a new frame is created and pushed onto the call stack.
     #[inline]
-    fn frame_call(
+    async fn frame_call(
         &mut self,
         frame: &mut Self::Frame,
         evm: &mut Self::Evm,
     ) -> Result<FrameInitOrResult<Self::Frame>, Self::Error> {
-        Frame::run(frame, evm)
+        Frame::run(frame, evm).await
     }
 
     /// Processes a frame's result by inserting it into the parent frame.
     #[inline]
-    fn frame_return_result(
+    async fn frame_return_result(
         &mut self,
         frame: &mut Self::Frame,
         evm: &mut Self::Evm,
         result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        Self::Frame::return_result(frame, evm, result)
+        Self::Frame::return_result(frame, evm, result).await
     }
 
     /// Executes the main frame processing loop.
@@ -403,7 +400,7 @@ pub trait Handler {
     /// 2. Handles the returned frame input or result
     /// 3. Creates new frames or propagates results as needed
     #[inline]
-    fn run_exec_loop(
+    async fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
         frame: Self::Frame,
@@ -411,11 +408,11 @@ pub trait Handler {
         let mut frame_stack: Vec<Self::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = self.frame_call(frame, evm)?;
+            let call_or_result = self.frame_call(frame, evm).await?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
-                    match self.frame_init(frame, evm, init)? {
+                    match self.frame_init(frame, evm, init).await? {
                         ItemOrResult::Item(new_frame) => {
                             frame_stack.push(new_frame);
                             continue;
@@ -434,7 +431,7 @@ pub trait Handler {
             let Some(frame) = frame_stack.last_mut() else {
                 return Ok(result);
             };
-            self.frame_return_result(frame, evm, result)?;
+            self.frame_return_result(frame, evm, result).await?;
         }
     }
 
@@ -467,23 +464,26 @@ pub trait Handler {
 
     /// Returns unused gas costs to the transaction sender's account.
     #[inline]
-    fn reimburse_caller(
+    async fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut(), U256::ZERO)
+            .await
             .map_err(From::from)
     }
 
     /// Transfers transaction fees to the block beneficiary's account.
     #[inline]
-    fn reward_beneficiary(
+    async fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <Self::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
-        post_execution::reward_beneficiary(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
+        post_execution::reward_beneficiary(evm.ctx(), exec_result.gas_mut())
+            .await
+            .map_err(From::from)
     }
 
     /// Processes the final execution output.

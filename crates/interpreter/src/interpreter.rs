@@ -175,19 +175,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         host: &mut H,
     ) -> InterpreterAction {
         while self.bytecode.is_not_end() {
-            // Get current opcode.
-            let opcode = self.bytecode.opcode();
-
-            // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-            // it will do noop and just stop execution of this contract
-            self.bytecode.relative_jump(1);
-            let context = InstructionContext {
-                interpreter: self,
-                host,
-            };
-            // Execute instruction.
-            instruction_table[opcode as usize](context);
+            // Execute one opcode via the unified stepping machinery.
+            self.step(instruction_table, host);
         }
         self.bytecode.revert_to_previous_pointer();
 
