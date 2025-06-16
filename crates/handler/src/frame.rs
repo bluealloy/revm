@@ -1,8 +1,6 @@
-use crate::evm::{EvmFrame, NewFrameTr};
+use crate::evm::NewFrameTr;
 use crate::item_or_result::NewFrameTrInitOrResult;
-use crate::{
-    instructions::InstructionProvider, precompile_provider::PrecompileProvider, ItemOrResult,
-};
+use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
 use bytecode::EOF_MAGIC_BYTES;
 use context::frame_data::{CallFrame, CreateFrame};
 use context::result::FromStringError;
@@ -61,67 +59,6 @@ impl<IT: InterpreterTypes> NewFrameTr for EthFrameInner<IT> {
     type FrameInit = FrameInit;
 }
 
-impl EvmFrame for EthFrameInner<EthInterpreter> {
-    type InterpreterTypes = EthInterpreter;
-
-    fn init_with_context<
-        CTX: ContextTr,
-        PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
-    >(
-        frame: context_interface::local::OutFrame<'_, Self>,
-        ctx: &mut CTX,
-        precompiles: &mut PRECOMPILES,
-        frame_init: <Self as NewFrameTr>::FrameInit,
-    ) -> Result<
-        ItemOrResult<context_interface::local::FrameToken, <Self as NewFrameTr>::FrameResult>,
-        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
-    > {
-        Self::init_with_context(frame, ctx, precompiles, frame_init)
-    }
-
-    fn run_interpreter<
-        CTX: ContextTr,
-        INST: InstructionProvider<Context = CTX, InterpreterTypes = Self::InterpreterTypes>,
-    >(
-        &mut self,
-        context: &mut CTX,
-        instructions: &mut INST,
-    ) -> interpreter::InterpreterAction {
-        self.interpreter
-            .run_plain(instructions.instruction_table(), context)
-    }
-
-    fn process_next_action<CTX: ContextTr, ERROR>(
-        &mut self,
-        context: &mut CTX,
-        action: interpreter::InterpreterAction,
-    ) -> Result<NewFrameTrInitOrResult<Self>, ERROR>
-    where
-        ERROR: From<<<CTX as ContextTr>::Db as Database>::Error> + FromStringError,
-    {
-        self.process_next_action(context, action)
-    }
-
-    fn return_result<CTX: ContextTr, ERROR>(
-        &mut self,
-        ctx: &mut CTX,
-        result: <Self as NewFrameTr>::FrameResult,
-    ) -> Result<(), ERROR>
-    where
-        ERROR: From<<<CTX as ContextTr>::Db as Database>::Error> + FromStringError,
-    {
-        self.return_result(ctx, result)
-    }
-
-    fn is_finished(&self) -> bool {
-        self.is_finished
-    }
-
-    fn set_finished(&mut self, finished: bool) {
-        self.is_finished = finished;
-    }
-}
-
 impl Default for EthFrameInner<EthInterpreter> {
     fn default() -> Self {
         Self::do_default(Interpreter::default())
@@ -145,47 +82,15 @@ impl EthFrameInner<EthInterpreter> {
             is_finished: false,
         }
     }
-}
 
-/*
-impl<EVM, ERROR> Frame for EthFrame<EVM, ERROR, EthInterpreter>
-where
-    EVM: EvmTr<
-        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionProvider<
-            Context = EVM::Context,
-            InterpreterTypes = EthInterpreter,
-        >,
-    >,
-    ERROR: From<ContextTrDbError<EVM::Context>> + FromStringError,
-{
-    type Evm = EVM;
-    type FrameInit = FrameInit;
-    type FrameResult = FrameResult;
-    type Error = ERROR;
-
-    fn init(
-        new_frame: OutFrame<'_, Self>,
-        evm: &mut Self::Evm,
-        frame_init: Self::FrameInit,
-    ) -> Result<ItemOrResult<FrameToken, Self::FrameResult>, Self::Error> {
-        Self::init_with_context(new_frame, evm, frame_init)
+    pub fn is_finished(&self) -> bool {
+        self.is_finished
     }
 
-    fn run(&mut self, context: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        let next_action = context.run_interpreter(&mut self.inner.interpreter);
-        self.process_next_action(context, next_action)
-    }
-
-    fn return_result(
-        &mut self,
-        context: &mut Self::Evm,
-        result: Self::FrameResult,
-    ) -> Result<(), Self::Error> {
-        self.return_result(context, result)
+    pub fn set_finished(&mut self, finished: bool) {
+        self.is_finished = finished;
     }
 }
-*/
 
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
