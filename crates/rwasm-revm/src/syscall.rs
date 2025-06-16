@@ -19,6 +19,7 @@ use fluentbase_sdk::{
     PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
     SVM_ELF_MAGIC_BYTES,
+    SVM_MAX_CODE_SIZE,
     SYSCALL_ID_BALANCE,
     SYSCALL_ID_CALL,
     SYSCALL_ID_CALL_CODE,
@@ -421,7 +422,7 @@ pub(crate) fn execute_rwasm_interruption<
             let max_initcode_size = if init_code.len() >= 4 && init_code[0..4] == WASM_MAGIC_BYTES {
                 WASM_MAX_CODE_SIZE
             } else if init_code.len() >= 4 && init_code[0..4] == SVM_ELF_MAGIC_BYTES {
-                WASM_MAX_CODE_SIZE
+                SVM_MAX_CODE_SIZE
             } else {
                 MAX_INITCODE_SIZE
             };
