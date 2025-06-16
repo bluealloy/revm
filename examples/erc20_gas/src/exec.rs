@@ -6,8 +6,8 @@ use revm::{
     },
     database_interface::DatabaseCommit,
     handler::{
-        instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Handler,
-        PrecompileProvider,
+        instructions::InstructionProvider, ContextTrDbError, EthFrameInner, EvmTr, Handler,
+        NewFrameTr, PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     state::EvmState,
@@ -26,9 +26,10 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrameInner<EthInterpreter>,
     >,
 {
-    let mut handler = Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new();
+    let mut handler = Erc20MainnetHandler::<EVM, _, EthFrameInner<EthInterpreter>>::new();
     handler.run(evm).map(|r| {
         let state = evm.ctx().journal_mut().finalize();
         (r, state)
@@ -46,6 +47,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrameInner<EthInterpreter>,
     >,
 {
     transact_erc20evm(evm).map(|(result, state)| {

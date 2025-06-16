@@ -9,7 +9,7 @@ use revm::{
         EthFrameInner, EvmTr, ItemOrResult, NewFrameTrInitOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
-    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterTypes},
+    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes},
     Database, Inspector,
 };
 
@@ -60,7 +60,7 @@ impl<CTX, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
-    P: PrecompileProvider<CTX>,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
     type Inspector = INSP;
@@ -100,29 +100,16 @@ where
     }
 }
 
-impl<CTX, INSP, I, P, F> EvmTr for OpEvm<CTX, INSP, I, P, F>
+impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
-    P: PrecompileProvider<CTX>,
-    F: NewFrameTr,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
-    type Frame = F;
-
-    fn run_interpreter(
-        &mut self,
-        interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionProvider>::InterpreterTypes,
-        >,
-    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
-    {
-        let context = &mut self.0.ctx;
-        let instructions = &mut self.0.instruction;
-        interpreter.run_plain(instructions.instruction_table(), context)
-    }
+    type Frame = EthFrameInner<EthInterpreter>;
 
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.0.ctx

@@ -24,7 +24,7 @@ pub mod validation;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
-pub use evm::EvmTr;
+pub use evm::{EvmTr, NewFrameTr};
 pub use frame::{return_create, ContextTrDbError, EthFrameInner};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{ItemOrResult, NewFrameTrInitOrResult};

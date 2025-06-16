@@ -5,10 +5,7 @@ use crate::{
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameResult};
 use context_interface::context::ContextError;
-use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, Interpreter, InterpreterResult,
-    InterpreterTypes,
-};
+use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
 #[auto_impl(&mut, Box)]
 pub trait NewFrameTr {
@@ -30,15 +27,6 @@ pub trait EvmTr {
     /// The type containing the frame
     type Frame: NewFrameTr;
 
-    /// Executes the interpreter loop for the given interpreter instance.
-    /// Returns either a completion status or the next interpreter action to take.
-    fn run_interpreter(
-        &mut self,
-        interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionProvider>::InterpreterTypes,
-        >,
-    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output;
-
     /// Returns a mutable reference to the execution context
     fn ctx(&mut self) -> &mut Self::Context;
 
@@ -46,6 +34,17 @@ pub trait EvmTr {
     fn ctx_mut(&mut self) -> &mut Self::Context {
         self.ctx()
     }
+
+    /// Returns an immutable reference to the execution context
+    fn ctx_ref(&self) -> &Self::Context;
+
+    /// Returns mutable references to both the context and instruction set.
+    /// This enables atomic access to both components when needed.
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
+
+    /// Returns mutable references to both the context and precompiles.
+    /// This enables atomic access to both components when needed.
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     fn frame_init(
@@ -73,17 +72,6 @@ pub trait EvmTr {
         Option<<Self::Frame as NewFrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     >;
-
-    /// Returns an immutable reference to the execution context
-    fn ctx_ref(&self) -> &Self::Context;
-
-    /// Returns mutable references to both the context and instruction set.
-    /// This enables atomic access to both components when needed.
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
-
-    /// Returns mutable references to both the context and precompiles.
-    /// This enables atomic access to both components when needed.
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
@@ -98,18 +86,6 @@ where
     // hardcoded to eth frame.
     type Frame = EthFrameInner<EthInterpreter>;
 
-    #[inline]
-    fn run_interpreter(
-        &mut self,
-        interpreter: &mut Interpreter<
-            <Self::Instructions as InstructionProvider>::InterpreterTypes,
-        >,
-    ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output
-    {
-        let context = &mut self.ctx;
-        let instructions = &mut self.instruction;
-        interpreter.run_plain(instructions.instruction_table(), context)
-    }
     #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.ctx

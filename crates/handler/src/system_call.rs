@@ -1,13 +1,12 @@
 use crate::{
-    evm::NewFrameTr, frame::EthFrameInner, instructions::InstructionProvider, ExecuteCommitEvm,
-    ExecuteEvm, Handler, MainnetHandler, PrecompileProvider,
+    frame::EthFrameInner, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
+    MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::ExecResultAndState, ContextSetters, ContextTr, Evm, FrameResult, JournalTr,
-    TransactionType, TxEnv,
+    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
 };
 use database_interface::DatabaseCommit;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip7825, Address, Bytes, TxKind};
 use state::EvmState;
 

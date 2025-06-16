@@ -13,7 +13,6 @@ use context_interface::{
     Cfg, Database,
 };
 use core::cmp::min;
-use core::ops::{Deref, DerefMut};
 use derive_where::derive_where;
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{
