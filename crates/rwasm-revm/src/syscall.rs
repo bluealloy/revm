@@ -8,6 +8,7 @@ use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
     bytes::Buf,
     calc_preimage_address,
+    is_precompiled_runtime,
     is_protected_storage_slot,
     keccak256,
     Address,
@@ -16,7 +17,6 @@ use fluentbase_sdk::{
     LogData,
     B256,
     FUEL_DENOM_RATE,
-    PRECOMPILE_EVM_RUNTIME,
     STATE_MAIN,
     SVM_ELF_MAGIC_BYTES,
     SVM_MAX_CODE_SIZE,
@@ -84,6 +84,7 @@ pub(crate) fn execute_rwasm_interruption<
     let spec_id: SpecId = evm.ctx().cfg().spec().into();
     let journal = evm.ctx().journal();
     let current_target_address = frame.interpreter.input.target_address();
+    let rwasm_proxy_address = frame.interpreter.input.rwasm_proxy_address();
 
     macro_rules! return_result {
         ($result:expr, $error:ident) => {{
@@ -166,10 +167,14 @@ pub(crate) fn execute_rwasm_interruption<
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
-            if frame.interpreter.input.rwasm_proxy_address != Some(PRECOMPILE_EVM_RUNTIME)
-                && is_protected_storage_slot(slot)
-            {
-                return_result!(MalformedBuiltinParams);
+            if is_protected_storage_slot(slot) {
+                if let Some(rwasm_proxy_address) = rwasm_proxy_address {
+                    if !is_precompiled_runtime(&rwasm_proxy_address) {
+                        return_result!(MalformedBuiltinParams);
+                    }
+                } else {
+                    return_result!(MalformedBuiltinParams);
+                }
             }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             #[cfg(feature = "debug-print")]
@@ -728,7 +733,7 @@ pub(crate) fn execute_rwasm_interruption<
             let address = Address::from_slice(&inputs.syscall_params.input[..20]);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
             // delegated storage is allowed only for delegated accounts
-            let Some(rwasm_proxy_address) = frame.interpreter.input.rwasm_proxy_address else {
+            let Some(rwasm_proxy_address) = rwasm_proxy_address else {
                 return_result!(MalformedBuiltinParams);
             };
             let Ok(account) = journal.load_account_code(address) else {
@@ -739,8 +744,6 @@ pub(crate) fn execute_rwasm_interruption<
             let mut output: [u8; U256::BYTES + 1 + 1] = [0u8; U256::BYTES + 1 + 1];
             output[32] = account.is_cold as u8;
             output[33] = account.data.is_empty() as u8;
-            #[cfg(feature = "debug-print")]
-            println!("SYSCALL_DELEGATED_STORAGE: address={address} slot={slot}");
             // don't charge gas for EVM_CODE_HASH_SLOT,
             // because if we don't have enough fuel for EVM opcode execution
             // that we shouldn't fail here, it affects state transition
@@ -762,6 +765,11 @@ pub(crate) fn execute_rwasm_interruption<
             }
             // load slot from the storage
             let value = journal.sload(address, slot)?;
+            #[cfg(feature = "debug-print")]
+            println!(
+                "SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} value={}",
+                value.data
+            );
             output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
             return_result!(output, Return)
         }

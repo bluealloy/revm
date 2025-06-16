@@ -29,15 +29,14 @@ walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
+default = [
+    "std",
+#    "debug-print",
+    "wasmtime",
+]
 std = [
     "fluentbase-genesis/std",
     "fluentbase-sdk/std",
-]
-
-default = [
-    "std",
-    #    "debug-print",
-    "wasmtime",
 ]
 debug-print = [
     "revm/debug-print",

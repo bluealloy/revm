@@ -310,7 +310,7 @@ where
             if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME
                 || eip7702_bytecode.delegated_address == PRECOMPILE_SVM_RUNTIME
             {
-                interpreter_input.rwasm_proxy_address = Some(PRECOMPILE_EVM_RUNTIME);
+                interpreter_input.rwasm_proxy_address = Some(eip7702_bytecode.delegated_address);
             }
         }
 
