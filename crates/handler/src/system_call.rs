@@ -1,12 +1,13 @@
 use crate::{
-    instructions::InstructionProvider, EthFrame, ExecuteCommitEvm, ExecuteEvm, Handler,
-    MainnetHandler, PrecompileProvider,
+    evm::NewFrameTr, frame::EthFrameInner, instructions::InstructionProvider, ExecuteCommitEvm,
+    ExecuteEvm, Handler, MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
+    result::ExecResultAndState, ContextSetters, ContextTr, Evm, FrameResult, JournalTr,
+    TransactionType, TxEnv,
 };
 use database_interface::DatabaseCommit;
-use interpreter::{interpreter::EthInterpreter, InterpreterResult};
+use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 use primitives::{address, eip7825, Address, Bytes, TxKind};
 use state::EvmState;
 
@@ -124,7 +125,8 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     ) -> Result<Self::ExecutionResult, Self::Error>;
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm for Evm<CTX, INSP, INST, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -143,12 +145,13 @@ where
             data,
         ));
         // create handler
-        let mut handler = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        let mut handler = MainnetHandler::<_, _, EthFrameInner<EthInterpreter>>::default();
         handler.run_system_call(self)
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
         + ContextSetters,

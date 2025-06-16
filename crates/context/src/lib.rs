@@ -21,7 +21,6 @@ pub use block::BlockEnv;
 pub use cfg::{Cfg, CfgEnv};
 pub use context::*;
 pub use evm::Evm;
-pub use frame::EthFrameInner;
 pub use frame_data::{FrameData, FrameResult};
 pub use journal::*;
 pub use local::LocalContext;

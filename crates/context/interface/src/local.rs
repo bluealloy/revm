@@ -10,7 +10,7 @@ use std::{boxed::Box, rc::Rc, vec::Vec};
 #[derive(Debug, Clone)]
 pub struct FrameStack<T> {
     stack: Vec<Box<T>>,
-    index: usize,
+    index: Option<usize>,
 }
 
 impl<T> Default for FrameStack<T> {
@@ -25,14 +25,14 @@ impl<T> FrameStack<T> {
     pub fn new() -> Self {
         Self {
             stack: Vec::with_capacity(1025),
-            index: 0,
+            index: None,
         }
     }
 
     /// Initializes the stack with a single item.
     #[inline]
     pub fn start_init(&mut self) -> OutFrame<'_, T> {
-        self.index = 0;
+        self.index = Some(0);
         if self.stack.is_empty() {
             self.stack.reserve(1);
         }
@@ -50,7 +50,7 @@ impl<T> FrameStack<T> {
 
     /// Returns the current index of the stack.
     #[inline]
-    pub fn index(&self) -> usize {
+    pub fn index(&self) -> Option<usize> {
         self.index
     }
 
@@ -58,37 +58,38 @@ impl<T> FrameStack<T> {
     #[inline]
     pub fn push(&mut self, token: FrameToken) {
         token.assert();
-        if self.index + 1 == self.stack.len() {
+        let index = self.index.as_mut().unwrap();
+        if *index + 1 == self.stack.len() {
             unsafe { self.stack.set_len(self.stack.len() + 1) };
             self.stack.reserve(1);
         }
-        self.index += 1;
+        *index += 1;
     }
 
     /// Clears the stack by setting the index to 0.
     /// It does not destroy the stack.
     #[inline]
     pub fn clear(&mut self) {
-        self.index = 0;
+        self.index = None;
     }
 
     /// Decrements the index.
     #[inline]
     pub fn pop(&mut self) {
-        self.index -= 1;
+        self.index = self.index.unwrap_or(0).checked_sub(1);
     }
 
     /// Returns the current item.
     #[inline]
     pub fn get(&mut self) -> &mut T {
-        debug_assert!(self.stack.capacity() > self.index + 1);
-        unsafe { &mut *self.stack.as_mut_ptr().add(self.index) }
+        debug_assert!(self.stack.capacity() > self.index.unwrap() + 1);
+        unsafe { &mut *self.stack.as_mut_ptr().add(self.index.unwrap()) }
     }
 
     /// Get next uninitialized item.
     #[inline]
     pub fn get_next(&mut self) -> OutFrame<'_, T> {
-        self.out_frame_at(self.index + 1)
+        self.out_frame_at(self.index.unwrap() + 1)
     }
 
     fn out_frame_at(&mut self, idx: usize) -> OutFrame<'_, T> {
@@ -178,8 +179,6 @@ impl FrameToken {
 
 /// Local context used for caching initcode from Initcode transactions.
 pub trait LocalContextTr {
-    type Frame;
-
     /// Get the local context
     fn insert_initcodes(&mut self, initcodes: &[Bytes]);
 
@@ -201,9 +200,6 @@ pub trait LocalContextTr {
 
     /// Clear the local context.
     fn clear(&mut self);
-
-    /// Frame stack.
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame>;
 }
 
 #[cfg(test)]
@@ -218,7 +214,7 @@ mod tests {
         let token = frame.consume();
         stack.end_init(token);
 
-        assert_eq!(stack.index(), 0);
+        assert_eq!(stack.index(), Some(0));
         assert_eq!(stack.stack.len(), 1);
 
         let a = stack.get();
@@ -229,7 +225,7 @@ mod tests {
         let token = b.consume(); // TODO: remove
         stack.push(token);
 
-        assert_eq!(stack.index(), 1);
+        assert_eq!(stack.index(), Some(1));
         assert_eq!(stack.stack.len(), 2);
         let a = stack.get();
         assert_eq!(a, &mut 2);
@@ -238,7 +234,7 @@ mod tests {
 
         stack.pop();
 
-        assert_eq!(stack.index(), 0);
+        assert_eq!(stack.index(), Some(0));
         assert_eq!(stack.stack.len(), 2);
         let a = stack.get();
         assert_eq!(a, &mut 1);

@@ -1,5 +1,6 @@
 use crate::{
-    instructions::InstructionProvider, EthFrame, Handler, MainnetHandler, PrecompileProvider,
+    frame::EthFrameInner, instructions::InstructionProvider, Handler, MainnetHandler,
+    PrecompileProvider,
 };
 use context::{
     result::{
@@ -158,7 +159,8 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm for Evm<CTX, INSP, INST, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -172,7 +174,7 @@ where
 
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
-        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        let mut t = MainnetHandler::<_, Self::Error, EthFrameInner<EthInterpreter>>::default();
         t.run(self)
     }
 
@@ -185,7 +187,7 @@ where
     }
 
     fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
-        let mut t = MainnetHandler::<_, _, EthFrame<_, _, _>>::default();
+        let mut t = MainnetHandler::<_, _, EthFrameInner<_>>::default();
         t.run(self).map(|result| {
             let state = self.finalize();
             ResultAndState::new(result, state)
@@ -193,7 +195,8 @@ where
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm for Evm<CTX, INSP, INST, PRECOMPILES>
+impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,

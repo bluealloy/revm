@@ -1,49 +1,31 @@
 //! Local context that is filled by execution.
 use bytecode::{CodeType, Eof};
-use context_interface::{local::FrameStack, LocalContextTr};
+use context_interface::LocalContextTr;
 use core::cell::RefCell;
-use derive_where::derive_where;
-use interpreter::InterpreterTypes;
 use primitives::{keccak256, Bytes, HashMap, B256};
 use std::{rc::Rc, vec::Vec};
 
-use crate::EthFrameInner;
-
 /// Local context that is filled by execution.
-#[derive_where(Clone, Debug; IT,
-    <IT as InterpreterTypes>::Stack,
-    <IT as InterpreterTypes>::Memory,
-    <IT as InterpreterTypes>::Bytecode,
-    <IT as InterpreterTypes>::ReturnData,
-    <IT as InterpreterTypes>::Input,
-    <IT as InterpreterTypes>::SubRoutineStack,
-    <IT as InterpreterTypes>::RuntimeFlag,
-    <IT as InterpreterTypes>::Extend,
-)]
-pub struct LocalContext<IT: InterpreterTypes> {
+#[derive(Clone, Debug)]
+pub struct LocalContext {
     /// Mapping of initcode hash that contains raw bytes ready for validation or status of validation.
     ///
     /// Used in EIP-7873 EOF - TXCREATE to fetch initcode by hash and cache its validation.
     pub initcode_mapping: HashMap<B256, Initcode>,
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
-    /// Frame stack used for pooling frames during execution.
-    pub frame_stack: FrameStack<EthFrameInner<IT>>,
 }
 
-impl<IT: InterpreterTypes> Default for LocalContext<IT> {
+impl Default for LocalContext {
     fn default() -> Self {
         Self {
             initcode_mapping: HashMap::default(),
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
-            frame_stack: FrameStack::new(),
         }
     }
 }
 
-impl<IT: InterpreterTypes> LocalContextTr for LocalContext<IT> {
-    type Frame = EthFrameInner<IT>;
-
+impl LocalContextTr for LocalContext {
     fn insert_initcodes(&mut self, initcodes: &[Bytes]) {
         self.initcode_mapping = initcodes
             .iter()
@@ -53,7 +35,8 @@ impl<IT: InterpreterTypes> LocalContextTr for LocalContext<IT> {
 
     fn clear(&mut self) {
         self.initcode_mapping.clear();
-        self.frame_stack.clear();
+        // TODO be sure to clear it in other place.
+        // self.frame_stack.clear();
         // Sets len to 0 but it will not shrink to drop the capacity.
         unsafe { self.shared_memory_buffer.borrow_mut().set_len(0) };
     }
@@ -66,13 +49,9 @@ impl<IT: InterpreterTypes> LocalContextTr for LocalContext<IT> {
     fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         &self.shared_memory_buffer
     }
-
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        &mut self.frame_stack
-    }
 }
 
-impl<IT: InterpreterTypes> LocalContext<IT> {
+impl LocalContext {
     /// Creates a new local context, initcodes are hashes and added to the mapping.
     pub fn new(initcode: &[Bytes]) -> Self {
         let mut s = Self::default();

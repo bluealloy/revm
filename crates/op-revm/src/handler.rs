@@ -74,7 +74,6 @@ where
 {
     type Evm = EVM;
     type Error = ERROR;
-    type Frame = FRAME;
     type HaltReason = OpHaltReason;
 
     fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
@@ -515,8 +514,8 @@ mod tests {
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
-        handler::EthFrame,
-        interpreter::{CallOutcome, InstructionResult, InterpreterResult},
+        handler::EthFrameInner,
+        interpreter::{CallOutcome, EthInterpreter, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
     };
@@ -664,7 +663,8 @@ mod tests {
 
         let mut evm = ctx.build_op();
 
-        let handler = OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<_, _, _>>::new();
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
         handler
             .validate_against_state_and_deduct_caller(&mut evm)
             .unwrap();

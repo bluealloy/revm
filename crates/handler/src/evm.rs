@@ -1,7 +1,20 @@
-use crate::{instructions::InstructionProvider, PrecompileProvider};
+use crate::{
+    frame::EthFrameInner, instructions::InstructionProvider,
+    item_or_result::NewFrameTrInitOrResult, ItemOrResult, PrecompileProvider,
+};
 use auto_impl::auto_impl;
-use context::{ContextTr, Evm};
-use interpreter::{Interpreter, InterpreterAction, InterpreterTypes};
+use context::{ContextTr, Database, Evm, FrameResult};
+use context_interface::context::ContextError;
+use interpreter::{
+    interpreter::EthInterpreter, interpreter_action::FrameInit, Interpreter, InterpreterResult,
+    InterpreterTypes,
+};
+
+#[auto_impl(&mut, Box)]
+pub trait NewFrameTr {
+    type FrameResult: Into<FrameResult>;
+    type FrameInit: Into<FrameInit>;
+}
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
 ///
@@ -14,6 +27,8 @@ pub trait EvmTr {
     type Instructions: InstructionProvider;
     /// The type containing the available precompiled contracts
     type Precompiles: PrecompileProvider<Self::Context>;
+    /// The type containing the frame
+    type Frame: NewFrameTr;
 
     /// Executes the interpreter loop for the given interpreter instance.
     /// Returns either a completion status or the next interpreter action to take.
@@ -32,6 +47,33 @@ pub trait EvmTr {
         self.ctx()
     }
 
+    /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
+    fn frame_init(
+        &mut self,
+        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+    ) -> Result<
+        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
+        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
+    >;
+
+    /// Rust the frame from the top of the stack. Returns the frame init or result.
+    fn frame_run(
+        &mut self,
+    ) -> Result<
+        NewFrameTrInitOrResult<Self::Frame>,
+        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
+    >;
+
+    /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
+    /// Consumes the frame result or returns it if there is more frames to run.
+    fn frame_return_result(
+        &mut self,
+        result: <Self::Frame as NewFrameTr>::FrameResult,
+    ) -> Result<
+        Option<<Self::Frame as NewFrameTr>::FrameResult>,
+        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
+    >;
+
     /// Returns an immutable reference to the execution context
     fn ctx_ref(&self) -> &Self::Context;
 
@@ -44,18 +86,17 @@ pub trait EvmTr {
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 }
 
-impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P>
+impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
 where
     CTX: ContextTr,
-    I: InstructionProvider<
-        Context = CTX,
-        InterpreterTypes: InterpreterTypes<Output = InterpreterAction>,
-    >,
-    P: PrecompileProvider<CTX>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
+    // hardcoded to eth frame.
+    type Frame = EthFrameInner<EthInterpreter>;
 
     #[inline]
     fn run_interpreter(
@@ -77,6 +118,73 @@ where
     #[inline]
     fn ctx_ref(&self) -> &Self::Context {
         &self.ctx
+    }
+
+    /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
+    fn frame_init(
+        &mut self,
+        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+    ) -> Result<
+        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
+        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
+    > {
+        let is_first_init = self.frame_stack.index().is_none();
+        let new_frame = if is_first_init {
+            self.frame_stack.start_init()
+        } else {
+            self.frame_stack.get_next()
+        };
+        // TODO
+        let ctx = &mut self.ctx;
+        let precompiles = &mut self.precompiles;
+        let res = EthFrameInner::<EthInterpreter>::init_with_context(
+            new_frame,
+            ctx,
+            precompiles,
+            frame_input,
+        )?;
+
+        Ok(res.map_frame(|token| {
+            if is_first_init {
+                self.frame_stack.end_init(token);
+            } else {
+                self.frame_stack.push(token);
+            }
+            self.frame_stack.get()
+        }))
+    }
+
+    /// Rust the frame from the top of the stack. Returns the frame init or result.
+    fn frame_run(
+        &mut self,
+    ) -> Result<
+        NewFrameTrInitOrResult<Self::Frame>,
+        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
+    > {
+        let frame = self.frame_stack.get();
+        let context = &mut self.ctx;
+        let instructions = &mut self.instruction;
+        let action = frame
+            .interpreter
+            .run_plain(instructions.instruction_table(), context);
+        frame.process_next_action(context, action)
+    }
+
+    /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
+    fn frame_return_result(
+        &mut self,
+        result: <Self::Frame as NewFrameTr>::FrameResult,
+    ) -> Result<
+        Option<<Self::Frame as NewFrameTr>::FrameResult>,
+        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
+    > {
+        self.frame_stack.pop();
+        if self.frame_stack.index().is_none() {
+            return Ok(Some(result));
+        }
+        let frame = self.frame_stack.get();
+        frame.return_result::<_, ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>>(&mut self.ctx, result)?;
+        Ok(None)
     }
 
     #[inline]
