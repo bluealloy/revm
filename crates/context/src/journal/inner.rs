@@ -60,6 +60,8 @@ pub struct JournalInner<ENTRY> {
     /// Note that this not include newly loaded accounts, account and storage
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
+    /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
+    pub warm_coinbase_address: Option<Address>,
     /// Precompile addresses
     pub precompiles: HashSet<Address>,
 }
@@ -86,6 +88,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
+            warm_coinbase_address: None,
         }
     }
 
@@ -115,6 +118,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             spec,
             warm_preloaded_addresses,
             precompiles,
+            warm_coinbase_address,
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
@@ -126,6 +130,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Do nothing with journal history so we can skip cloning present journal.
         journal.clear();
 
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
         // Load precompiles into warm_preloaded_addresses.
         // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
         // at least after state clear EIP.
@@ -147,6 +153,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_preloaded_addresses,
+            warm_coinbase_address,
             precompiles,
         } = self;
 
@@ -159,6 +166,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
         reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
     }
 
@@ -179,10 +188,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_preloaded_addresses,
+            warm_coinbase_address,
             precompiles,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
         // Load precompiles into warm_preloaded_addresses.
         reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
 
@@ -666,8 +678,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     Account::new_not_existing(self.transaction_id)
                 };
 
-                // Precompiles among some other account are warm loaded so we need to take that into account
-                let is_cold = !self.warm_preloaded_addresses.contains(&address);
+                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
+                let is_cold = !self.warm_preloaded_addresses.contains(&address)
+                    && self.warm_coinbase_address.as_ref() != Some(&address);
 
                 StateLoad {
                     data: vac.insert(account),
