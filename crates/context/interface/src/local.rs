@@ -134,7 +134,7 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     /// Returns a mutable reference to the type `T`, initializing it if it hasn't been initialized yet.
-    pub fn get(&mut self, f: impl FnOnce() -> Box<T>) -> &mut T {
+    pub fn get(&mut self, f: impl FnOnce() -> T) -> &mut T {
         if !self.init {
             self.do_init(f);
         }
@@ -142,10 +142,10 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     #[cold]
-    fn do_init(&mut self, f: impl FnOnce() -> Box<T>) {
+    fn do_init(&mut self, f: impl FnOnce() -> T) {
         unsafe {
             self.init = true;
-            self.ptr.write(f());
+            self.ptr.write(Box::new(f()));
         }
     }
 
@@ -210,7 +210,7 @@ mod tests {
     fn frame_stack() {
         let mut stack = FrameStack::new();
         let mut frame = stack.start_init();
-        frame.get(|| Box::new(1));
+        frame.get(|| 1);
         let token = frame.consume();
         stack.end_init(token);
 
@@ -221,7 +221,7 @@ mod tests {
         assert_eq!(a, &mut 1);
         let mut b = stack.get_next();
         assert!(!b.init);
-        assert_eq!(b.get(|| Box::new(2)), &mut 2);
+        assert_eq!(b.get(|| 2), &mut 2);
         let token = b.consume(); // TODO: remove
         stack.push(token);
 
