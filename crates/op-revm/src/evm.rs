@@ -9,7 +9,7 @@ use revm::{
         EthFrameInner, EvmTr, ItemOrResult, NewFrameTrInitOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
-    interpreter::{interpreter::EthInterpreter, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes},
+    interpreter::{interpreter::EthInterpreter, InterpreterResult},
     Database, Inspector,
 };
 

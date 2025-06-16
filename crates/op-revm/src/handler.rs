@@ -19,7 +19,7 @@ use revm::{
         pre_execution::validate_account_nonce_and_code,
         EthFrameInner, EvmTr, Handler, MainnetHandler,
     },
-    inspector::{Inspector, InspectorEvmTr, InspectorFrame, InspectorHandler},
+    inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
     primitives::{hardfork::SpecId, U256},
 };

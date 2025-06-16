@@ -11,7 +11,9 @@ pub mod block;
 pub mod cfg;
 pub mod context;
 pub mod evm;
+/// Frame-related types and functionality.
 pub mod frame;
+/// Frame data structures.
 pub mod frame_data;
 pub mod journal;
 pub mod local;

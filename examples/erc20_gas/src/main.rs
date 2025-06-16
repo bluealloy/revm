@@ -9,14 +9,12 @@ use alloy_sol_types::SolValue;
 use anyhow::Result;
 use exec::transact_erc20evm_commit;
 use revm::{
-    context::FrameResult,
     context_interface::{
         result::{InvalidHeader, InvalidTransaction},
         ContextTr, JournalTr,
     },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    interpreter::interpreter_action::FrameInit,
     primitives::{
         address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, KECCAK_EMPTY, U256,
     },

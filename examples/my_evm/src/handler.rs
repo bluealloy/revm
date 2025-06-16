@@ -4,7 +4,9 @@ use revm::{
         FrameResult,
     },
     context_interface::{ContextTr, JournalTr},
-    handler::{evm::NewFrameTr, instructions::InstructionProvider, EvmTr, Handler, PrecompileProvider},
+    handler::{
+        evm::NewFrameTr, instructions::InstructionProvider, EvmTr, Handler, PrecompileProvider,
+    },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult},
     state::EvmState,

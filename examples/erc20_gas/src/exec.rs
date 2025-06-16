@@ -7,7 +7,7 @@ use revm::{
     database_interface::DatabaseCommit,
     handler::{
         instructions::InstructionProvider, ContextTrDbError, EthFrameInner, EvmTr, Handler,
-        NewFrameTr, PrecompileProvider,
+        PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     state::EvmState,

@@ -1,7 +1,8 @@
-use context::{ContextError, ContextTr, Database};
+use context::ContextTr;
 use handler::{
-    evm::NewFrameTr, instructions::InstructionProvider, EthFrameInner, EvmTr, ItemOrResult,
-    NewFrameTrInitOrResult,
+    evm::{ContextDbError, FrameInitResult, NewFrameTr},
+    instructions::InstructionProvider,
+    EthFrameInner, EvmTr, ItemOrResult, NewFrameTrInitOrResult,
 };
 use interpreter::{interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterTypes};
 
@@ -65,10 +66,7 @@ pub trait InspectorEvmTr:
     fn inspect_frame_init(
         &mut self,
         mut frame_init: <Self::Frame as NewFrameTr>::FrameInit,
-    ) -> Result<
-        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    > {
+    ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector) = self.ctx_inspector();
         if let Some(mut output) = frame_start(ctx, inspector, &mut frame_init.frame_input) {
             frame_end(ctx, inspector, &frame_init.frame_input, &mut output);
@@ -82,17 +80,14 @@ pub trait InspectorEvmTr:
         let (ctx, inspector, frame) = self.ctx_inspector_frame();
         let interp = frame.interpreter();
         inspector.initialize_interp(interp, ctx);
-        return Ok(ItemOrResult::Item(frame));
+        Ok(ItemOrResult::Item(frame))
     }
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn inspect_frame_run(
         &mut self,
-    ) -> Result<
-        NewFrameTrInitOrResult<Self::Frame>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    > {
+    ) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector, frame, instructions) = self.ctx_inspector_frame_instructions();
 
         let next_action = inspect_instructions(
@@ -110,10 +105,8 @@ pub trait InspectorEvmTr:
     fn inspect_frame_return_result(
         &mut self,
         result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<
-        Option<<Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    > {
+    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
+    {
         self.frame_return_result(result)
     }
 }

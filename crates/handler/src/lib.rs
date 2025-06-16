@@ -5,6 +5,10 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// Use serde to avoid unused dependency warning when the serde feature is enabled
+#[cfg(feature = "serde")]
+use serde as _;
+
 // Mainnet related handlers.
 
 pub mod api;

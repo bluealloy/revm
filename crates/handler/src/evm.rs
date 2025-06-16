@@ -7,6 +7,12 @@ use context::{ContextTr, Database, Evm, FrameResult};
 use context_interface::context::ContextError;
 use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
+/// Type alias for database error within a context
+pub type ContextDbError<CTX> = ContextError<<<CTX as ContextTr>::Db as Database>::Error>;
+
+/// Type alias for frame init result
+pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as NewFrameTr>::FrameResult>;
+
 #[auto_impl(&mut, Box)]
 pub trait NewFrameTr {
     type FrameResult: Into<FrameResult>;
@@ -50,28 +56,19 @@ pub trait EvmTr {
     fn frame_init(
         &mut self,
         frame_input: <Self::Frame as NewFrameTr>::FrameInit,
-    ) -> Result<
-        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    >;
+    ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>>;
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
     fn frame_run(
         &mut self,
-    ) -> Result<
-        NewFrameTrInitOrResult<Self::Frame>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    >;
+    ) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<Self::Context>>;
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
     /// Consumes the frame result or returns it if there is more frames to run.
     fn frame_return_result(
         &mut self,
         result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<
-        Option<<Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    >;
+    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>;
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
@@ -100,10 +97,7 @@ where
     fn frame_init(
         &mut self,
         frame_input: <Self::Frame as NewFrameTr>::FrameInit,
-    ) -> Result<
-        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
-    > {
+    ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<CTX>> {
         let is_first_init = self.frame_stack.index().is_none();
         let new_frame = if is_first_init {
             self.frame_stack.start_init()
@@ -131,12 +125,7 @@ where
     }
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
-    fn frame_run(
-        &mut self,
-    ) -> Result<
-        NewFrameTrInitOrResult<Self::Frame>,
-        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
-    > {
+    fn frame_run(&mut self) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<CTX>> {
         let frame = self.frame_stack.get();
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
@@ -150,16 +139,14 @@ where
     fn frame_return_result(
         &mut self,
         result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<
-        Option<<Self::Frame as NewFrameTr>::FrameResult>,
-        ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
-    > {
+    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
+    {
         self.frame_stack.pop();
         if self.frame_stack.index().is_none() {
             return Ok(Some(result));
         }
         let frame = self.frame_stack.get();
-        frame.return_result::<_, ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>>(&mut self.ctx, result)?;
+        frame.return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
         Ok(None)
     }
 
