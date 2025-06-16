@@ -127,6 +127,10 @@ where
         (&mut self.0.ctx, &mut self.0.precompiles)
     }
 
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
+        &mut self.0.frame_stack
+    }
+
     fn frame_init(
         &mut self,
         frame_input: <Self::Frame as NewFrameTr>::FrameInit,

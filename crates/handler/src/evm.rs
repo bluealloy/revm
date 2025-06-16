@@ -3,7 +3,7 @@ use crate::{
     item_or_result::NewFrameTrInitOrResult, ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameResult};
+use context::{ContextTr, Database, Evm, FrameResult, FrameStack};
 use context_interface::context::ContextError;
 use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
@@ -52,6 +52,9 @@ pub trait EvmTr {
     /// This enables atomic access to both components when needed.
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
 
+    /// Returns a mutable reference to the frame stack.
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame>;
+
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     fn frame_init(
         &mut self,
@@ -93,7 +96,13 @@ where
         &self.ctx
     }
 
+    #[inline]
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
+        &mut self.frame_stack
+    }
+
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
+    #[inline]
     fn frame_init(
         &mut self,
         frame_input: <Self::Frame as NewFrameTr>::FrameInit,
@@ -125,6 +134,7 @@ where
     }
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
+    #[inline]
     fn frame_run(&mut self) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<CTX>> {
         let frame = self.frame_stack.get();
         let context = &mut self.ctx;
@@ -132,21 +142,29 @@ where
         let action = frame
             .interpreter
             .run_plain(instructions.instruction_table(), context);
-        frame.process_next_action(context, action)
+        frame.process_next_action(context, action).inspect(|i| {
+            if i.is_result() {
+                frame.is_finished = true;
+            }
+        })
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
+    #[inline]
     fn frame_return_result(
         &mut self,
         result: <Self::Frame as NewFrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
     {
-        self.frame_stack.pop();
+        if self.frame_stack.get().is_finished {
+            self.frame_stack.pop();
+        }
         if self.frame_stack.index().is_none() {
             return Ok(Some(result));
         }
-        let frame = self.frame_stack.get();
-        frame.return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
+        self.frame_stack
+            .get()
+            .return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
         Ok(None)
     }
 

@@ -56,6 +56,10 @@ where
         self.0.ctx_precompiles()
     }
 
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
+        self.0.frame_stack()
+    }
+
     fn frame_init(
         &mut self,
         frame_input: <Self::Frame as NewFrameTr>::FrameInit,

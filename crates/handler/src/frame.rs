@@ -49,6 +49,9 @@ pub struct EthFrameInner<IW: InterpreterTypes = EthInterpreter> {
     pub depth: usize,
     pub checkpoint: JournalCheckpoint,
     pub interpreter: Interpreter<IW>,
+    /// Whether the frame has been finished its execution.
+    /// Frame is considered finished if it has been called and returned a result.
+    pub is_finished: bool,
 }
 
 impl<IT: InterpreterTypes> NewFrameTr for EthFrameInner<IT> {
@@ -76,6 +79,7 @@ impl EthFrameInner<EthInterpreter> {
             depth: 0,
             checkpoint: JournalCheckpoint::default(),
             interpreter,
+            is_finished: false,
         }
     }
 }
@@ -145,10 +149,12 @@ impl EthFrameInner<EthInterpreter> {
             depth: depth_ref,
             interpreter,
             checkpoint: checkpoint_ref,
+            is_finished: is_finished_ref,
         } = self;
         *data_ref = data;
         *input_ref = input;
         *depth_ref = depth;
+        *is_finished_ref = false;
         interpreter.clear(
             memory,
             bytecode,
