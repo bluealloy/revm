@@ -1,14 +1,17 @@
 use crate::{
-    frame::EthFrameInner, instructions::InstructionProvider,
-    item_or_result::NewFrameTrInitOrResult, ItemOrResult, PrecompileProvider,
+    instructions::InstructionProvider, item_or_result::NewFrameTrInitOrResult, ItemOrResult,
+    PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameResult, FrameStack};
+use context::{result::FromStringError, ContextTr, Database, Evm, FrameResult, FrameStack};
 use context_interface::context::ContextError;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{interpreter_action::FrameInit, InterpreterResult};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<<<CTX as ContextTr>::Db as Database>::Error>;
+
+/// Type alias for frame error within a context
+pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
 /// Type alias for frame init result
 pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as NewFrameTr>::FrameResult>;
@@ -17,6 +20,61 @@ pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as NewFrameTr>::Fra
 pub trait NewFrameTr {
     type FrameResult: Into<FrameResult>;
     type FrameInit: Into<FrameInit>;
+}
+
+/// A trait for frames that can be used with the EvmTr implementation.
+/// This trait abstracts the specific operations needed for frame execution.
+pub trait EvmFrame: NewFrameTr + Sized {
+    /// The interpreter type associated with this frame
+    type InterpreterTypes: interpreter::InterpreterTypes;
+
+    /// Initialize the frame with a given context and precompiles
+    fn init_with_context<
+        CTX: ContextTr,
+        PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+    >(
+        frame: context_interface::local::OutFrame<'_, Self>,
+        ctx: &mut CTX,
+        precompiles: &mut PRECOMPILES,
+        frame_init: <Self as NewFrameTr>::FrameInit,
+    ) -> Result<
+        ItemOrResult<context_interface::local::FrameToken, <Self as NewFrameTr>::FrameResult>,
+        ContextDbError<CTX>,
+    >;
+
+    /// Run the interpreter and return the next action
+    fn run_interpreter<
+        CTX: ContextTr,
+        INST: InstructionProvider<Context = CTX, InterpreterTypes = Self::InterpreterTypes>,
+    >(
+        &mut self,
+        context: &mut CTX,
+        instructions: &mut INST,
+    ) -> interpreter::InterpreterAction;
+
+    /// Process the next action from the interpreter
+    fn process_next_action<CTX: ContextTr, ERROR>(
+        &mut self,
+        context: &mut CTX,
+        action: interpreter::InterpreterAction,
+    ) -> Result<NewFrameTrInitOrResult<Self>, ERROR>
+    where
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError;
+
+    /// Return a result to the caller frame
+    fn return_result<CTX: ContextTr, ERROR>(
+        &mut self,
+        ctx: &mut CTX,
+        result: <Self as NewFrameTr>::FrameResult,
+    ) -> Result<(), ERROR>
+    where
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError;
+
+    /// Check if the frame has finished execution
+    fn is_finished(&self) -> bool;
+
+    /// Set the finished status
+    fn set_finished(&mut self, finished: bool);
 }
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
@@ -74,17 +132,17 @@ pub trait EvmTr {
     ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>;
 }
 
-impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
+impl<CTX, INSP, I, P, F> EvmTr for Evm<CTX, INSP, I, P, F>
 where
     CTX: ContextTr,
-    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = F::InterpreterTypes>,
     P: PrecompileProvider<CTX, Output = InterpreterResult>,
+    F: EvmFrame,
 {
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
-    // hardcoded to eth frame.
-    type Frame = EthFrameInner<EthInterpreter>;
+    type Frame = F;
 
     #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
@@ -113,15 +171,10 @@ where
         } else {
             self.frame_stack.get_next()
         };
-        // TODO
+
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = EthFrameInner::<EthInterpreter>::init_with_context(
-            new_frame,
-            ctx,
-            precompiles,
-            frame_input,
-        )?;
+        let res = F::init_with_context(new_frame, ctx, precompiles, frame_input)?;
 
         Ok(res.map_frame(|token| {
             if is_first_init {
@@ -139,12 +192,12 @@ where
         let frame = self.frame_stack.get();
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
-        let action = frame
-            .interpreter
-            .run_plain(instructions.instruction_table(), context);
+
+        let action = frame.run_interpreter(context, instructions);
+
         frame.process_next_action(context, action).inspect(|i| {
             if i.is_result() {
-                frame.is_finished = true;
+                frame.set_finished(true);
             }
         })
     }
@@ -156,7 +209,7 @@ where
         result: <Self::Frame as NewFrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
     {
-        if self.frame_stack.get().is_finished {
+        if self.frame_stack.get().is_finished() {
             self.frame_stack.pop();
         }
         if self.frame_stack.index().is_none() {

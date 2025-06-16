@@ -357,8 +357,8 @@ pub trait Handler {
                 }
                 ItemOrResult::Result(result) => result,
             };
-            // TODO: remove clone, not efficient.
-            if let Some(result) = evm.frame_return_result(result.clone())? {
+
+            if let Some(result) = evm.frame_return_result(result)? {
                 return Ok(result);
             }
         }

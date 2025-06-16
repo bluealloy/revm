@@ -1,6 +1,8 @@
-use crate::evm::NewFrameTr;
+use crate::evm::{EvmFrame, NewFrameTr};
 use crate::item_or_result::NewFrameTrInitOrResult;
-use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
+use crate::{
+    instructions::InstructionProvider, precompile_provider::PrecompileProvider, ItemOrResult,
+};
 use bytecode::EOF_MAGIC_BYTES;
 use context::frame_data::{CallFrame, CreateFrame};
 use context::result::FromStringError;
@@ -57,6 +59,67 @@ pub struct EthFrameInner<IW: InterpreterTypes = EthInterpreter> {
 impl<IT: InterpreterTypes> NewFrameTr for EthFrameInner<IT> {
     type FrameResult = FrameResult;
     type FrameInit = FrameInit;
+}
+
+impl EvmFrame for EthFrameInner<EthInterpreter> {
+    type InterpreterTypes = EthInterpreter;
+
+    fn init_with_context<
+        CTX: ContextTr,
+        PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+    >(
+        frame: context_interface::local::OutFrame<'_, Self>,
+        ctx: &mut CTX,
+        precompiles: &mut PRECOMPILES,
+        frame_init: <Self as NewFrameTr>::FrameInit,
+    ) -> Result<
+        ItemOrResult<context_interface::local::FrameToken, <Self as NewFrameTr>::FrameResult>,
+        ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
+    > {
+        Self::init_with_context(frame, ctx, precompiles, frame_init)
+    }
+
+    fn run_interpreter<
+        CTX: ContextTr,
+        INST: InstructionProvider<Context = CTX, InterpreterTypes = Self::InterpreterTypes>,
+    >(
+        &mut self,
+        context: &mut CTX,
+        instructions: &mut INST,
+    ) -> interpreter::InterpreterAction {
+        self.interpreter
+            .run_plain(instructions.instruction_table(), context)
+    }
+
+    fn process_next_action<CTX: ContextTr, ERROR>(
+        &mut self,
+        context: &mut CTX,
+        action: interpreter::InterpreterAction,
+    ) -> Result<NewFrameTrInitOrResult<Self>, ERROR>
+    where
+        ERROR: From<<<CTX as ContextTr>::Db as Database>::Error> + FromStringError,
+    {
+        self.process_next_action(context, action)
+    }
+
+    fn return_result<CTX: ContextTr, ERROR>(
+        &mut self,
+        ctx: &mut CTX,
+        result: <Self as NewFrameTr>::FrameResult,
+    ) -> Result<(), ERROR>
+    where
+        ERROR: From<<<CTX as ContextTr>::Db as Database>::Error> + FromStringError,
+    {
+        self.return_result(ctx, result)
+    }
+
+    fn is_finished(&self) -> bool {
+        self.is_finished
+    }
+
+    fn set_finished(&mut self, finished: bool) {
+        self.is_finished = finished;
+    }
 }
 
 impl Default for EthFrameInner<EthInterpreter> {

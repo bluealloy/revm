@@ -75,48 +75,6 @@ where
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
-
-        // let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
-
-        // // Create first frame action
-        // let mut first_frame_input = self.first_frame_input(evm, gas_limit)?;
-
-        // let f = evm.ctx_mut().local_mut().frame_stack();
-        // let frame_stack =
-        //     unsafe { core::mem::transmute::<&mut FrameStack<_>, &mut FrameStack<Self::Frame>>(f) };
-
-        // let (ctx, inspector) = evm.ctx_inspector();
-        // if let Some(mut output) = frame_start(ctx, inspector, &mut first_frame_input.frame_input) {
-        //     frame_end(ctx, inspector, &first_frame_input.frame_input, &mut output);
-        //     return Ok(output);
-        // }
-
-        // let res =
-        //     self.first_frame_init(frame_stack.start_init(), evm, first_frame_input.clone())?;
-
-        // let mut frame_result = match res {
-        //     ItemOrResult::Item(token) => {
-        //         frame_stack.end_init(token);
-        //         let (context, inspector) = evm.ctx_inspector();
-        //         let interp = frame_stack.get().interpreter();
-        //         inspector.initialize_interp(interp, context);
-
-        //         self.inspect_run_exec_loop(evm, frame_stack)?
-        //     }
-        //     ItemOrResult::Result(mut result) => {
-        //         let (context, inspector) = evm.ctx_inspector();
-        //         frame_end(
-        //             context,
-        //             inspector,
-        //             &first_frame_input.frame_input,
-        //             &mut result,
-        //         );
-        //         result
-        //     }
-        // };
-
-        // self.last_frame_result(evm, &mut frame_result)?;
-        // Ok(frame_result)
     }
 
     /* FRAMES */
@@ -155,60 +113,11 @@ where
                 }
                 ItemOrResult::Result(result) => result,
             };
-            // TODO: remove clone, not efficient.
-            if let Some(result) = evm.frame_return_result(result.clone())? {
+
+            if let Some(result) = evm.inspect_frame_return_result(result)? {
                 return Ok(result);
             }
         }
-
-        /*
-        loop {
-            let frame = frame_stack.get();
-            let call_or_result = self.inspect_frame_call(frame, evm)?;
-
-            let result = match call_or_result {
-                ItemOrResult::Item(mut init) => {
-                    let (context, inspector) = evm.ctx_inspector();
-                    if let Some(mut output) = frame_start(context, inspector, &mut init.frame_input)
-                    {
-                        frame_end(context, inspector, &init.frame_input, &mut output);
-                        output
-                    } else {
-                        let new_frame = frame_stack.get_next();
-                        match self.frame_init(new_frame, evm, init.clone())? {
-                            ItemOrResult::Item(token) => {
-                                // only if new frame is created call initialize_interp hook.
-                                frame_stack.push(token);
-                                let interp = frame_stack.get().interpreter();
-                                let (context, inspector) = evm.ctx_inspector();
-                                inspector.initialize_interp(interp, context);
-                                continue;
-                            }
-                            // Dont pop the frame as new frame was not created.
-                            ItemOrResult::Result(mut result) => {
-                                let (context, inspector) = evm.ctx_inspector();
-                                frame_end(context, inspector, &init.frame_input, &mut result);
-                                result
-                            }
-                        }
-                    }
-                }
-                ItemOrResult::Result(mut result) => {
-                    let (context, inspector) = evm.ctx_inspector();
-                    frame_end(context, inspector, frame.frame_input(), &mut result);
-
-                    // Remove the frame that returned the result
-                    if frame_stack.index() == 0 {
-                        return Ok(result);
-                    }
-                    frame_stack.pop();
-                    result
-                }
-            };
-
-            self.frame_return_result(frame_stack.get(), evm, result)?;
-        }
-         */
     }
 }
 

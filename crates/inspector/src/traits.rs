@@ -50,17 +50,6 @@ pub trait InspectorEvmTr:
         &mut Self::Instructions,
     );
 
-    // /// Runs the inspector on the interpreter.
-    // ///
-    // /// This function is called by the EVM when it needs to inspect the Interpreter loop.
-    // /// It is responsible for calling the inspector's methods and instructions from table.
-    // fn run_inspect_interpreter(
-    //     &mut self,
-    //     interpreter: &mut Interpreter<
-    //         <Self::Instructions as InstructionProvider>::InterpreterTypes,
-    //     >,
-    // ) -> <<Self::Instructions as InstructionProvider>::InterpreterTypes as InterpreterTypes>::Output;
-
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     #[inline]
     fn inspect_frame_init(
@@ -136,12 +125,6 @@ pub trait InspectorFrame: NewFrameTr {
 /// Impl InspectorFrame for EthFrame.
 impl InspectorFrame for EthFrameInner<EthInterpreter> {
     type IT = EthInterpreter;
-
-    // fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-    //     let interpreter = self.interpreter();
-    //     let next_action = evm.run_inspect_interpreter(interpreter);
-    //     self.process_next_action(evm, next_action)
-    // }
 
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
         &mut self.interpreter
