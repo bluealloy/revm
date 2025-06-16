@@ -85,27 +85,14 @@ pub trait InspectorEvmTr:
             inspector,
             instructions.instruction_table(),
         );
-        frame.process_next_action(ctx, next_action).inspect(|i| {
-            if i.is_result() {
-                frame.is_finished = true;
-            }
-        })
-    }
+        let mut result = frame.process_next_action(ctx, next_action);
 
-    /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
-    /// Consumes the frame result or returns it if there is more frames to run.
-    #[inline]
-    fn inspect_frame_return_result(
-        &mut self,
-        mut result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
-    {
-        if self.frame_stack().index().is_none() {
-            return Ok(Some(result));
-        }
-        let (ctx, inspector, frame) = self.ctx_inspector_frame();
-        frame_end(ctx, inspector, frame.frame_input(), &mut result);
-        self.frame_return_result(result)
+        if let Ok(ItemOrResult::Result(frame_result)) = &mut result {
+            let (ctx, inspector, frame) = self.ctx_inspector_frame();
+            frame_end(ctx, inspector, frame.frame_input(), frame_result);
+            frame.set_finished(true);
+        };
+        result
     }
 }
 

@@ -114,7 +114,7 @@ where
                 ItemOrResult::Result(result) => result,
             };
 
-            if let Some(result) = evm.inspect_frame_return_result(result)? {
+            if let Some(result) = evm.frame_return_result(result)? {
                 return Ok(result);
             }
         }
@@ -156,19 +156,19 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
     match frame_output {
         FrameResult::Call(outcome) => {
             let FrameInput::Call(i) = frame_input else {
-                panic!("FrameInput::Call expected");
+                panic!("FrameInput::Call expected {:?}", frame_input);
             };
             inspector.call_end(context, i, outcome);
         }
         FrameResult::Create(outcome) => {
             let FrameInput::Create(i) = frame_input else {
-                panic!("FrameInput::Create expected");
+                panic!("FrameInput::Create expected {:?}", frame_input);
             };
             inspector.create_end(context, i, outcome);
         }
         FrameResult::EOFCreate(outcome) => {
             let FrameInput::EOFCreate(i) = frame_input else {
-                panic!("FrameInput::EofCreate expected");
+                panic!("FrameInput::EofCreate expected {:?}", frame_input);
             };
             inspector.eofcreate_end(context, i, outcome);
         }
