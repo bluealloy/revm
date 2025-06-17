@@ -6,7 +6,7 @@ use revm::{
     },
     database_interface::DatabaseCommit,
     handler::{
-        instructions::InstructionProvider, ContextTrDbError, EthFrameInner, EvmTr, Handler,
+        instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Handler,
         PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
@@ -26,7 +26,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
-        Frame = EthFrameInner<EthInterpreter>,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
     Erc20MainnetHandler::new().run(evm).map(|r| {
@@ -46,7 +46,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
-        Frame = EthFrameInner<EthInterpreter>,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
     transact_erc20evm(evm).map(|(result, state)| {

@@ -5,18 +5,18 @@ use crate::{
 use context::{ContextSetters, ContextTr, Evm, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::InstructionProvider, EthFrameInner, EvmTr, EvmTrError, Handler, MainnetHandler,
+    instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Handler, MainnetHandler,
     PrecompileProvider,
 };
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
 
 // Implementing InspectorHandler for MainnetHandler.
-impl<EVM, ERROR> InspectorHandler for MainnetHandler<EVM, ERROR, EthFrameInner<EthInterpreter>>
+impl<EVM, ERROR> InspectorHandler for MainnetHandler<EVM, ERROR, EthFrame<EthInterpreter>>
 where
     EVM: InspectorEvmTr<
         Context: ContextTr<Journal: JournalTr<State = EvmState>>,
-        Frame = EthFrameInner<EthInterpreter>,
+        Frame = EthFrame<EthInterpreter>,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM>,
@@ -26,7 +26,7 @@ where
 
 // Implementing InspectEvm for Evm
 impl<CTX, INSP, INST, PRECOMPILES> InspectEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextSetters + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
@@ -47,7 +47,7 @@ where
 
 // Implementing InspectCommitEvm for Evm
 impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Db: DatabaseCommit>,
@@ -58,7 +58,7 @@ where
 }
 
 // Implementing InspectorEvmTr for Evm
-impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
+impl<CTX, INSP, I, P> InspectorEvmTr for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,

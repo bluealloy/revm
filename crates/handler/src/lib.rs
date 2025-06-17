@@ -5,17 +5,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-// Use serde to avoid unused dependency warning when the serde feature is enabled
-#[cfg(feature = "serde")]
-use serde as _;
-
 // Mainnet related handlers.
 
 pub mod api;
 pub mod evm;
 pub mod execution;
 mod frame;
-pub mod frame_data;
+mod frame_data;
 pub mod handler;
 pub mod instructions;
 mod item_or_result;
@@ -30,7 +26,7 @@ pub mod validation;
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};
-pub use frame::{return_create, ContextTrDbError, EthFrameInner};
+pub use frame::{return_create, ContextTrDbError, EthFrame};
 pub use frame_data::{CallFrame, CreateFrame, EOFCreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};

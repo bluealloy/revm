@@ -6,7 +6,7 @@ use revm::{
     handler::{
         evm::FrameTr,
         instructions::{EthInstructions, InstructionProvider},
-        EthFrameInner, EvmTr, FrameInitOrResult, ItemOrResult, PrecompileProvider,
+        EthFrame, EvmTr, FrameInitOrResult, ItemOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
@@ -20,7 +20,7 @@ pub struct OpEvm<
     INSP,
     I = EthInstructions<EthInterpreter, CTX>,
     P = OpPrecompiles,
-    F = EthFrameInner<EthInterpreter>,
+    F = EthFrame<EthInterpreter>,
 >(
     /// Inner EVM type.
     pub Evm<CTX, INSP, I, P, F>,
@@ -100,7 +100,7 @@ where
     }
 }
 
-impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
+impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -109,7 +109,7 @@ where
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
-    type Frame = EthFrameInner<EthInterpreter>;
+    type Frame = EthFrame<EthInterpreter>;
 
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.0.ctx

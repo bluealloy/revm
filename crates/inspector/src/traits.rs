@@ -2,7 +2,7 @@ use context::ContextTr;
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrameInner, EvmTr, FrameInitOrResult, ItemOrResult,
+    EthFrame, EvmTr, FrameInitOrResult, ItemOrResult,
 };
 use interpreter::{interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterTypes};
 
@@ -18,7 +18,7 @@ use crate::{
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
 pub trait InspectorEvmTr:
     EvmTr<
-    Frame = EthFrameInner<EthInterpreter>,
+    Frame = EthFrame<EthInterpreter>,
     Instructions: InstructionProvider<InterpreterTypes = EthInterpreter, Context = Self::Context>,
     Context: ContextTr<Journal: JournalExt>,
 >
@@ -72,7 +72,9 @@ pub trait InspectorEvmTr:
         Ok(ItemOrResult::Item(frame))
     }
 
-    /// Rust the frame from the top of the stack. Returns the frame init or result.
+    /// Run the frame from the top of the stack. Returns the frame init or result.
+    ///
+    /// If frame has returned result it would mark it as finished.
     #[inline]
     fn inspect_frame_run(
         &mut self,
@@ -108,7 +110,7 @@ pub trait InspectorFrame: FrameTr {
 }
 
 /// Impl InspectorFrame for EthFrame.
-impl InspectorFrame for EthFrameInner<EthInterpreter> {
+impl InspectorFrame for EthFrame<EthInterpreter> {
     type IT = EthInterpreter;
 
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {

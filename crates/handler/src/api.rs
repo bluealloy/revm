@@ -1,6 +1,5 @@
 use crate::{
-    frame::EthFrameInner, instructions::InstructionProvider, Handler, MainnetHandler,
-    PrecompileProvider,
+    frame::EthFrame, instructions::InstructionProvider, Handler, MainnetHandler, PrecompileProvider,
 };
 use context::{
     result::{
@@ -160,7 +159,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -194,7 +193,7 @@ where
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,

@@ -31,7 +31,7 @@ use state::Bytecode;
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
-//#[derive(Debug, Clone)]
+/// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
     <IW as InterpreterTypes>::Stack,
     <IW as InterpreterTypes>::Memory,
@@ -42,7 +42,7 @@ use std::boxed::Box;
     <IW as InterpreterTypes>::RuntimeFlag,
     <IW as InterpreterTypes>::Extend,
 )]
-pub struct EthFrameInner<IW: InterpreterTypes = EthInterpreter> {
+pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
     pub data: FrameData,
     pub input: FrameInput,
     pub depth: usize,
@@ -53,18 +53,18 @@ pub struct EthFrameInner<IW: InterpreterTypes = EthInterpreter> {
     pub is_finished: bool,
 }
 
-impl<IT: InterpreterTypes> FrameTr for EthFrameInner<IT> {
+impl<IT: InterpreterTypes> FrameTr for EthFrame<IT> {
     type FrameResult = FrameResult;
     type FrameInit = FrameInit;
 }
 
-impl Default for EthFrameInner<EthInterpreter> {
+impl Default for EthFrame<EthInterpreter> {
     fn default() -> Self {
         Self::do_default(Interpreter::default())
     }
 }
 
-impl EthFrameInner<EthInterpreter> {
+impl EthFrame<EthInterpreter> {
     fn invalid() -> Self {
         Self::do_default(Interpreter::invalid())
     }
@@ -93,7 +93,7 @@ impl EthFrameInner<EthInterpreter> {
 
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
-impl EthFrameInner<EthInterpreter> {
+impl EthFrame<EthInterpreter> {
     /// Clear and initialize a frame.
     #[allow(clippy::too_many_arguments)]
     pub fn clear(
@@ -249,7 +249,7 @@ impl EthFrameInner<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrameInner::invalid).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -359,7 +359,7 @@ impl EthFrameInner<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit;
 
-        this.get(EthFrameInner::invalid).clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -528,7 +528,7 @@ impl EthFrameInner<EthInterpreter> {
     }
 }
 
-impl EthFrameInner<EthInterpreter> {
+impl EthFrame<EthInterpreter> {
     pub fn process_next_action<
         CTX: ContextTr,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,

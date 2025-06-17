@@ -1,6 +1,6 @@
 use crate::{
-    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrameInner,
-    FrameResult, ItemOrResult, PrecompileProvider,
+    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrame, FrameResult,
+    ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack};
@@ -8,7 +8,7 @@ use context_interface::context::ContextError;
 use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
 /// Type alias for database error within a context
-pub type ContextDbError<CTX> = ContextError<<<CTX as ContextTr>::Db as Database>::Error>;
+pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;
 
 /// Type alias for frame error within a context
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
@@ -64,7 +64,9 @@ pub trait EvmTr {
         frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>>;
 
-    /// Rust the frame from the top of the stack. Returns the frame init or result.
+    /// Run the frame from the top of the stack. Returns the frame init or result.
+    ///
+    /// If frame has returned result it would mark it as finished.
     fn frame_run(
         &mut self,
     ) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<Self::Context>>;
@@ -77,7 +79,7 @@ pub trait EvmTr {
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
 }
 
-impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
+impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -86,7 +88,7 @@ where
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
-    type Frame = EthFrameInner<EthInterpreter>;
+    type Frame = EthFrame<EthInterpreter>;
 
     #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
@@ -130,7 +132,7 @@ where
         }))
     }
 
-    /// Rust the frame from the top of the stack. Returns the frame init or result.
+    /// Run the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
         let frame = self.frame_stack.get();

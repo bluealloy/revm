@@ -181,12 +181,10 @@ mod tests {
 
     impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for CallOverrideInspector {
         fn call(&mut self, _context: &mut CTX, _inputs: &mut CallInputs) -> Option<CallOutcome> {
-            println!("call_override: {:?}", self.call_override);
             self.call_override.pop().unwrap_or_default()
         }
 
         fn step(&mut self, interpreter: &mut Interpreter<INTR>, _context: &mut CTX) {
-            println!("step: {:?}", interpreter.bytecode.opcode());
             let this_buffer = interpreter.return_data.buffer();
             let Some(buffer) = self.return_buffer.last() else {
                 self.return_buffer.push(this_buffer.clone());
@@ -202,7 +200,6 @@ mod tests {
             _context: &mut CTX,
             _inputs: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
-            println!("create_override: {:?}", self.create_override);
             self.create_override.pop().unwrap_or_default()
         }
     }

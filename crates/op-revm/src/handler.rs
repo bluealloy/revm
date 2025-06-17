@@ -17,7 +17,7 @@ use revm::{
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
         pre_execution::validate_account_nonce_and_code,
-        EthFrameInner, EvmTr, FrameResult, Handler, MainnetHandler,
+        EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
@@ -478,11 +478,11 @@ where
     }
 }
 
-impl<EVM, ERROR> InspectorHandler for OpHandler<EVM, ERROR, EthFrameInner<EthInterpreter>>
+impl<EVM, ERROR> InspectorHandler for OpHandler<EVM, ERROR, EthFrame<EthInterpreter>>
 where
     EVM: InspectorEvmTr<
         Context: OpContextTr,
-        Frame = EthFrameInner<EthInterpreter>,
+        Frame = EthFrame<EthInterpreter>,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
@@ -507,7 +507,7 @@ mod tests {
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
-        handler::EthFrameInner,
+        handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
@@ -533,7 +533,7 @@ mod tests {
         ));
 
         let mut handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         handler
             .last_frame_result(&mut evm, &mut exec_result)
@@ -658,7 +658,7 @@ mod tests {
         let mut evm = ctx.build_op();
 
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
         handler
             .validate_against_state_and_deduct_caller(&mut evm)
             .unwrap();
@@ -699,7 +699,7 @@ mod tests {
         let mut evm = ctx.build_op();
 
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
         handler
             .validate_against_state_and_deduct_caller(&mut evm)
             .unwrap();
@@ -766,7 +766,7 @@ mod tests {
         assert_ne!(evm.ctx().chain().l2_block, BLOCK_NUM);
 
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
         handler
             .validate_against_state_and_deduct_caller(&mut evm)
             .unwrap();
@@ -816,7 +816,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         // l1block cost is 1048 fee.
         handler
@@ -854,7 +854,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
         // 10_000_000 * 10 / 1_000_000 + 50 = 150
@@ -894,7 +894,7 @@ mod tests {
         // l1block cost is 1048 fee.
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         // l1block cost is 1048 fee.
         assert_eq!(
@@ -921,7 +921,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         assert_eq!(
             handler.validate_env(&mut evm),
@@ -948,7 +948,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         assert!(handler.validate_env(&mut evm).is_ok());
     }
@@ -965,7 +965,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(handler.validate_env(&mut evm).is_ok());
@@ -981,7 +981,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let mut handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         assert_eq!(
             handler.execution_result(
@@ -1024,7 +1024,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
         let handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrameInner<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         // Set the operator fee scalar & constant to non-zero values in the L1 block info.
         evm.ctx().chain.operator_fee_scalar = Some(U256::from(OP_FEE_MOCK_PARAM));

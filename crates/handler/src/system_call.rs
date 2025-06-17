@@ -1,5 +1,5 @@
 use crate::{
-    frame::EthFrameInner, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
+    frame::EthFrame, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
 };
 use context::{
@@ -125,7 +125,7 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
@@ -149,7 +149,7 @@ where
 }
 
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrameInner<EthInterpreter>>
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
         + ContextSetters,

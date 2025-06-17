@@ -1,7 +1,7 @@
 use revm::{
     context::{ContextError, ContextSetters, ContextTr, Evm, FrameStack},
     handler::{
-        evm::FrameTr, instructions::EthInstructions, EthFrameInner, EthPrecompiles, EvmTr,
+        evm::FrameTr, instructions::EthInstructions, EthFrame, EthPrecompiles, EvmTr,
         FrameInitOrResult, ItemOrResult,
     },
     inspector::{InspectorEvmTr, JournalExt},
@@ -16,7 +16,7 @@ pub struct MyEvm<CTX, INSP>(
         INSP,
         EthInstructions<EthInterpreter, CTX>,
         EthPrecompiles,
-        EthFrameInner<EthInterpreter>,
+        EthFrame<EthInterpreter>,
     >,
 );
 
@@ -39,7 +39,7 @@ where
     type Context = CTX;
     type Instructions = EthInstructions<EthInterpreter, CTX>;
     type Precompiles = EthPrecompiles;
-    type Frame = EthFrameInner<EthInterpreter>;
+    type Frame = EthFrame<EthInterpreter>;
     fn ctx(&mut self) -> &mut Self::Context {
         &mut self.0.ctx
     }
