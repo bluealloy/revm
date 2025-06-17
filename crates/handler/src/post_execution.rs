@@ -1,9 +1,8 @@
-use super::frame_data::FrameResult;
-use context_interface::ContextTr;
+use crate::FrameResult;
 use context_interface::{
     journaled_state::JournalTr,
     result::{ExecutionResult, HaltReasonTr},
-    Block, Cfg, Database, Transaction,
+    Block, Cfg, ContextTr, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};

@@ -7,7 +7,7 @@
 //! [`InvalidHeader`] is the error that is returned when the header is invalid.
 //!
 //! [`SuccessReason`] is the reason that the transaction successfully completed.
-use crate::transaction::TransactionError;
+use crate::{context::ContextError, transaction::TransactionError};
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
@@ -226,6 +226,17 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
+}
+
+impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
+    for EVMError<DBError, TransactionValidationErrorT>
+{
+    fn from(value: ContextError<DBError>) -> Self {
+        match value {
+            ContextError::Db(e) => Self::Database(e),
+            ContextError::Custom(e) => Self::Custom(e),
+        }
+    }
 }
 
 impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {

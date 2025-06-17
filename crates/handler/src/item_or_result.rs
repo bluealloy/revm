@@ -1,4 +1,4 @@
-use crate::Frame;
+use crate::evm::FrameTr;
 
 #[derive(Clone, Debug)]
 pub enum ItemOrResult<ITEM, RES> {
@@ -22,6 +22,15 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     }
 }
 
-pub type FrameOrResult<FRAME> = ItemOrResult<FRAME, <FRAME as Frame>::FrameResult>;
+impl<ITEM, RES> ItemOrResult<ITEM, RES> {
+    pub fn is_result(&self) -> bool {
+        matches!(self, ItemOrResult::Result(_))
+    }
+
+    pub fn is_item(&self) -> bool {
+        matches!(self, ItemOrResult::Item(_))
+    }
+}
+
 pub type FrameInitOrResult<FRAME> =
-    ItemOrResult<<FRAME as Frame>::FrameInit, <FRAME as Frame>::FrameResult>;
+    ItemOrResult<<FRAME as FrameTr>::FrameInit, <FRAME as FrameTr>::FrameResult>;

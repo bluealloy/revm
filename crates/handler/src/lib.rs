@@ -25,11 +25,11 @@ pub mod validation;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
-pub use evm::EvmTr;
-pub use frame::{return_create, return_eofcreate, ContextTrDbError, EthFrame, Frame};
-pub use frame_data::{FrameData, FrameResult};
+pub use evm::{EvmTr, FrameTr};
+pub use frame::{return_create, ContextTrDbError, EthFrame};
+pub use frame_data::{CallFrame, CreateFrame, EOFCreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
-pub use item_or_result::{FrameInitOrResult, FrameOrResult, ItemOrResult};
+pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};

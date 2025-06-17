@@ -23,6 +23,7 @@ pub struct CreateFrame {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
+    /// The address of the created contract.
     pub created_address: Address,
 }
 
@@ -32,8 +33,11 @@ pub struct EOFCreateFrame {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameData {
+    /// Call frame data.
     Call(CallFrame),
+    /// Create frame data.
     Create(CreateFrame),
+    /// EOF create frame data.
     EOFCreate(EOFCreateFrame),
 }
 
@@ -41,8 +45,11 @@ pub enum FrameData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum FrameResult {
+    /// Call frame result.
     Call(CallOutcome),
+    /// Create frame result.
     Create(CreateOutcome),
+    /// EOF create frame result.
     EOFCreate(CreateOutcome),
 }
 
@@ -119,10 +126,12 @@ impl FrameResult {
 }
 
 impl FrameData {
+    /// Creates a new create frame data.
     pub fn new_create(created_address: Address) -> Self {
         Self::Create(CreateFrame { created_address })
     }
 
+    /// Creates a new call frame data.
     pub fn new_call(return_memory_range: Range<usize>) -> Self {
         Self::Call(CallFrame {
             return_memory_range,

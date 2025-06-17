@@ -11,7 +11,7 @@ use std::io::Cursor;
 pub fn run(criterion: &mut Criterion) {
     //let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
 
-    let mut rdr = csv::Reader::from_reader(Cursor::new(BYTES));
+    let mut rdr = csv::Reader::from_reader(Cursor::new(SAMPLE_CSV));
     for result in rdr.records() {
         let result = result.expect("Failed to read record");
         let name = &result[0];
@@ -48,4 +48,4 @@ pub fn run(criterion: &mut Criterion) {
     }
 }
 
-const BYTES: &str = include_str!("gas_cost_estimator_sample.hex");
+const SAMPLE_CSV: &str = include_str!("gas_cost_estimator_sample.csv");

@@ -12,10 +12,7 @@ use revm::{
 pub(crate) const TESTS_TESTDATA: &str = "tests/testdata";
 
 #[cfg(not(feature = "serde"))]
-pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
-    _filename: &str,
-    _output: &ResultAndState<HaltReasonTy>,
-) {
+pub(crate) fn compare_or_save_testdata<I>(_filename: &str, _output: I) {
     // serde needs to be enabled to use this function
 }
 

@@ -26,10 +26,10 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
-    let mut handler = Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new();
-    handler.run(evm).map(|r| {
+    Erc20MainnetHandler::new().run(evm).map(|r| {
         let state = evm.ctx().journal_mut().finalize();
         (r, state)
     })
@@ -46,6 +46,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
     transact_erc20evm(evm).map(|(result, state)| {

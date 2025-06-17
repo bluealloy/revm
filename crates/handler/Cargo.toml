@@ -31,7 +31,10 @@ context.workspace = true
 primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
+
+
 auto_impl.workspace = true
+derive-where.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

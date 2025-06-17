@@ -45,7 +45,7 @@ pub fn load_accounts<
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         let coinbase = context.block().beneficiary();
-        context.journal_mut().warm_account(coinbase);
+        context.journal_mut().warm_coinbase_account(coinbase);
     }
 
     // Load access list
