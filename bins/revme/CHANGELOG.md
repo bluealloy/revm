@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0](https://github.com/bluealloy/revm/compare/revme-v6.0.0...revme-v6.1.0) - 2025-06-17
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- change blob_max_count to max_blobs_per_tx ([#2608](https://github.com/bluealloy/revm/pull/2608))
+
+### Other
+
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revme-v5.1.1...revme-v6.0.0) - 2025-06-06
 
 ### Added
