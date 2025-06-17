@@ -257,7 +257,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     fn max_code_size(&self) -> usize {
         self.limit_contract_code_size
-            .unwrap_or_else(|| eip170::MAX_CODE_SIZE)
+            .unwrap_or(eip170::MAX_CODE_SIZE)
     }
 
     fn max_initcode_size(&self) -> usize {
@@ -266,7 +266,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 self.limit_contract_code_size
                     .map(|size| size.saturating_mul(2))
             })
-            .unwrap_or_else(|| eip3860::MAX_INITCODE_SIZE)
+            .unwrap_or(eip3860::MAX_INITCODE_SIZE)
     }
 
     fn is_eip3607_disabled(&self) -> bool {
