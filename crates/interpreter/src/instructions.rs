@@ -188,16 +188,16 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[RJUMP as usize] = control::rjump;
     table[RJUMPI as usize] = control::rjumpi;
     table[RJUMPV as usize] = control::rjumpv;
-    table[CALLF as usize] = control::callf;
-    table[RETF as usize] = control::retf;
-    table[JUMPF as usize] = control::jumpf;
+    table[CALLF as usize] = control::invalid_eof_opcode;
+    table[RETF as usize] = control::invalid_eof_opcode;
+    table[JUMPF as usize] = control::invalid_eof_opcode;
     table[DUPN as usize] = stack::dupn;
     table[SWAPN as usize] = stack::swapn;
     table[EXCHANGE as usize] = stack::exchange;
 
-    table[EOFCREATE as usize] = contract::eofcreate;
-    table[TXCREATE as usize] = contract::txcreate;
-    table[RETURNCONTRACT as usize] = contract::return_contract;
+    table[EOFCREATE as usize] = control::invalid_eof_opcode;
+    table[TXCREATE as usize] = control::invalid_eof_opcode;
+    table[RETURNCONTRACT as usize] = control::invalid_eof_opcode;
 
     table[CREATE as usize] = contract::create::<_, false, _>;
     table[CALL as usize] = contract::call;
@@ -207,10 +207,10 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[CREATE2 as usize] = contract::create::<_, true, _>;
 
     table[RETURNDATALOAD as usize] = system::returndataload;
-    table[EXTCALL as usize] = contract::extcall;
-    table[EXTDELEGATECALL as usize] = contract::extdelegatecall;
+    table[EXTCALL as usize] = control::invalid_eof_opcode;
+    table[EXTDELEGATECALL as usize] = control::invalid_eof_opcode;
     table[STATICCALL as usize] = contract::static_call;
-    table[EXTSTATICCALL as usize] = contract::extstaticcall;
+    table[EXTSTATICCALL as usize] = control::invalid_eof_opcode;
     table[REVERT as usize] = control::revert;
     table[INVALID as usize] = control::invalid;
     table[SELFDESTRUCT as usize] = host::selfdestruct;

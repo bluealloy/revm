@@ -2,8 +2,8 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        EofCodeInfo, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag,
-        StackTr, SubRoutineStack,
+        Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag,
+        StackTr,
     },
     InstructionResult, InterpreterAction,
 };
@@ -84,78 +84,15 @@ pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, gas::LOW);
-
-    let idx = context.interpreter.bytecode.read_u16() as usize;
-    // Get target types
-    let Some(types) = context.interpreter.bytecode.code_info(idx) else {
-        panic!("Invalid EOF in execution, expecting correct intermediate in callf")
-    };
-
-    // Check max stack height for target code section.
-    // Safe to subtract as max_stack_height is always more than inputs.
-    if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        context.interpreter.halt(InstructionResult::StackOverflow);
-        return;
-    }
-
-    // Push current idx and PC to the callf stack.
-    // PC is incremented by 2 to point to the next instruction after callf.
-    if !(context
-        .interpreter
-        .sub_routine
-        .push(context.interpreter.bytecode.pc() + 2, idx))
-    {
-        context
-            .interpreter
-            .halt(InstructionResult::SubRoutineStackOverflow);
-        return;
-    };
-    let pc = context
-        .interpreter
-        .bytecode
-        .code_section_pc(idx)
-        .expect("Invalid code section index");
-    context.interpreter.bytecode.absolute_jump(pc);
+    context.interpreter.halt(InstructionResult::EOFOpcodeDisabledInLegacy);
 }
 
 pub fn retf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, gas::RETF_GAS);
-
-    let Some(jump) = context.interpreter.sub_routine.pop() else {
-        panic!("Expected function frame")
-    };
-
-    context.interpreter.bytecode.absolute_jump(jump);
+    context.interpreter.halt(InstructionResult::EOFOpcodeDisabledInLegacy);
 }
 
 pub fn jumpf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    require_eof!(context.interpreter);
-    gas!(context.interpreter, gas::LOW);
-
-    let idx = context.interpreter.bytecode.read_u16() as usize;
-
-    // Get target types
-    let types = context
-        .interpreter
-        .bytecode
-        .code_info(idx)
-        .expect("Invalid code section index");
-
-    // Check max stack height for target code section.
-    if context.interpreter.stack.len() + types.max_stack_increase as usize > 1024 {
-        context.interpreter.halt(InstructionResult::StackOverflow);
-        return;
-    }
-    context.interpreter.sub_routine.set_routine_idx(idx);
-    let pc = context
-        .interpreter
-        .bytecode
-        .code_section_pc(idx)
-        .expect("Invalid code section index");
-    context.interpreter.bytecode.absolute_jump(pc);
+    context.interpreter.halt(InstructionResult::EOFOpcodeDisabledInLegacy);
 }
 
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
@@ -217,142 +154,6 @@ pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
 pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     context.interpreter.halt(InstructionResult::OpcodeNotFound);
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::interpreter::SubRoutineReturnFrame;
-    use crate::{instruction_table, interpreter::EthInterpreter};
-    use bytecode::opcode::{CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP};
-    use bytecode::{
-        eof::{CodeInfo, Eof},
-        Bytecode,
-    };
-    use primitives::bytes;
-    use std::sync::Arc;
-
-    #[test]
-    fn rjump() {
-        let bytecode = Bytecode::new_raw(Bytes::from(&[RJUMP, 0x00, 0x02, STOP, STOP]));
-        let mut interpreter = Interpreter::<EthInterpreter>::default().with_bytecode(bytecode);
-
-        interpreter.runtime_flag.is_eof = true;
-        let table = instruction_table();
-
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 5)
-    }
-
-    #[test]
-    fn rjumpi() {
-        let bytecode = Bytecode::new_raw(Bytes::from(&[
-            RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
-        ]));
-        let mut interpreter = Interpreter::default().with_bytecode(bytecode);
-
-        interpreter.runtime_flag.is_eof = true;
-        let table = instruction_table();
-
-        let _ = interpreter.stack.push(U256::from(1));
-        let _ = interpreter.stack.push(U256::from(0));
-
-        // Dont jump
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 3);
-        // Jumps to last opcode
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 7);
-    }
-
-    #[test]
-    fn rjumpv() {
-        let bytecode = Bytecode::new_raw(Bytes::from(&[
-            RJUMPV,
-            0x01, // max index, 0 and 1
-            0x00, // first x0001
-            0x01,
-            0x00, // second 0x0002
-            0x02,
-            NOP,
-            NOP,
-            NOP,
-            RJUMP,
-            0xFF,
-            (-12i8) as u8,
-            STOP,
-        ]));
-        let mut interpreter = Interpreter::default().with_bytecode(bytecode);
-
-        interpreter.runtime_flag.is_eof = true;
-        let table = instruction_table();
-
-        // More then max_index
-        let _ = interpreter.stack.push(U256::from(10));
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 6);
-
-        // Cleanup
-        interpreter.step_dummy(&table);
-        interpreter.step_dummy(&table);
-        interpreter.step_dummy(&table);
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 0);
-
-        // Jump to first index of vtable
-        let _ = interpreter.stack.push(U256::from(0));
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 7);
-
-        // Cleanup
-        interpreter.step_dummy(&table);
-        interpreter.step_dummy(&table);
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 0);
-
-        // Jump to second index of vtable
-        let _ = interpreter.stack.push(U256::from(1));
-        interpreter.step_dummy(&table);
-        assert_eq!(interpreter.bytecode.pc(), 8);
-    }
-
-    fn dummy_eof() -> Eof {
-        let bytes = bytes!("ef00010100040200010001ff00000000800000fe");
-        Eof::decode(bytes).unwrap()
-    }
-
-    fn eof_setup(bytes1: Bytes, bytes2: Bytes) -> Interpreter {
-        eof_setup_with_types(bytes1, bytes2, CodeInfo::default())
-    }
-
-    /// Two code section and types section is for last code.
-    fn eof_setup_with_types(bytes1: Bytes, bytes2: Bytes, types: CodeInfo) -> Interpreter {
-        let mut eof = dummy_eof();
-
-        eof.body.code_section.clear();
-        eof.body.code_info.clear();
-        eof.header.code_sizes.clear();
-
-        eof.header.code_sizes.push(bytes1.len() as u16);
-        eof.body.code_section.push(bytes1.len());
-        eof.body.code_info.push(CodeInfo::new(0, 0, 11));
-
-        eof.header.code_sizes.push(bytes2.len() as u16);
-        eof.body.code_section.push(bytes2.len() + bytes1.len());
-        eof.body.code_info.push(types);
-
-        // added two code infos that are 4 bytes each.
-        eof.header.types_size = 2 * 4;
-
-        eof.body.code = Bytes::from([bytes1, bytes2].concat());
-
-        // encoding EOF is done se we can generate a raw bytecode.
-        // raw bytecode is used to calculate program counter.
-        let encoded = eof.encode_slow();
-
-        let bytecode = Bytecode::Eof(Arc::new(Eof::decode(encoded).unwrap()));
-
-        Interpreter::default().with_bytecode(bytecode)
-    }
 
     #[test]
     fn callf_retf_stop() {
@@ -488,4 +289,8 @@ mod test {
             InterpreterAction::new_halt(InstructionResult::StackOverflow, gas)
         );
     }
+
+/// Invalid EOF opcode - called for all EOF-specific opcodes since EOF support has been removed
+pub fn invalid_eof_opcode<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    context.interpreter.halt(InstructionResult::EOFOpcodeDisabledInLegacy);
 }

@@ -2,7 +2,6 @@ use crate::evm::FrameTr;
 use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
 use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
-use bytecode::EOF_MAGIC_BYTES;
 use context::result::FromStringError;
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
@@ -38,7 +37,6 @@ use std::boxed::Box;
     <IW as InterpreterTypes>::Bytecode,
     <IW as InterpreterTypes>::ReturnData,
     <IW as InterpreterTypes>::Input,
-    <IW as InterpreterTypes>::SubRoutineStack,
     <IW as InterpreterTypes>::RuntimeFlag,
     <IW as InterpreterTypes>::Extend,
 )]
@@ -236,8 +234,8 @@ impl EthFrame<EthInterpreter> {
             code_hash = account.code_hash();
         }
 
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+        // ExtDelegateCall is not allowed since EOF support has been removed.
+        if is_ext_delegate_call {
             ctx.journal_mut().checkpoint_revert(checkpoint);
             return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
@@ -519,10 +517,6 @@ impl EthFrame<EthInterpreter> {
                 Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
             }
             FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
-            FrameInput::EOFCreate(_inputs) => {
-                unreachable!()
-                //Self::make_eofcreate_frame(this, evm, depth, memory, inputs)
-            }
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -583,22 +577,6 @@ impl EthFrame<EthInterpreter> {
                     interpreter_result,
                     Some(frame.created_address),
                 )))
-            }
-            FrameData::EOFCreate(_frame) => {
-                unreachable!()
-                // let max_code_size = context.cfg().max_code_size();
-                // return_eofcreate(
-                //     context.journal_mut(),
-                //     self.checkpoint,
-                //     &mut interpreter_result,
-                //     frame.created_address,
-                //     max_code_size,
-                // );
-
-                // ItemOrResult::Result(FrameResult::EOFCreate(CreateOutcome::new(
-                //     interpreter_result,
-                //     Some(frame.created_address),
-                // )))
             }
         };
 
@@ -691,40 +669,6 @@ impl EthFrame<EthInterpreter> {
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
-                } else {
-                    U256::ZERO
-                };
-
-                // Safe to push without stack limit check
-                let _ = interpreter.stack.push(stack_item);
-            }
-            FrameResult::EOFCreate(outcome) => {
-                let instruction_result = *outcome.instruction_result();
-                let interpreter = &mut self.interpreter;
-                if instruction_result == InstructionResult::Revert {
-                    // Save data to return data buffer if the create reverted
-                    interpreter
-                        .return_data
-                        .set_buffer(outcome.output().to_owned());
-                } else {
-                    // Otherwise clear it. Note that RETURN opcode should abort.
-                    interpreter.return_data.clear()
-                };
-
-                assert_ne!(
-                    instruction_result,
-                    InstructionResult::FatalExternalError,
-                    "Fatal external error in insert_eofcreate_outcome"
-                );
-
-                let this_gas = &mut interpreter.gas;
-                if instruction_result.is_ok_or_revert() {
-                    this_gas.erase_cost(outcome.gas().remaining());
-                }
-
-                let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
-                    outcome.address.expect("EOF Address").into_word().into()
                 } else {
                     U256::ZERO
                 };

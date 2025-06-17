@@ -1,7 +1,7 @@
 use crate::inspector::Inspector;
 use either::Either;
 use interpreter::{
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
     InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
@@ -80,30 +80,6 @@ where
         }
     }
 
-    #[inline]
-    fn eofcreate(
-        &mut self,
-        context: &mut CTX,
-        inputs: &mut EOFCreateInputs,
-    ) -> Option<CreateOutcome> {
-        match self {
-            Either::Left(inspector) => inspector.eofcreate(context, inputs),
-            Either::Right(inspector) => inspector.eofcreate(context, inputs),
-        }
-    }
-
-    #[inline]
-    fn eofcreate_end(
-        &mut self,
-        context: &mut CTX,
-        inputs: &EOFCreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
-        match self {
-            Either::Left(inspector) => inspector.eofcreate_end(context, inputs, outcome),
-            Either::Right(inspector) => inspector.eofcreate_end(context, inputs, outcome),
-        }
-    }
 
     #[inline]
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {

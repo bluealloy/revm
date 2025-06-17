@@ -2,7 +2,7 @@ use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
 use interpreter::{
     interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-    EOFCreateInputs, Interpreter, InterpreterTypes,
+    Interpreter, InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
@@ -105,30 +105,6 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = outcome;
     }
 
-    /// Called when EOF creating is called.
-    ///
-    /// This can happen from create TX or from EOFCREATE opcode.
-    fn eofcreate(
-        &mut self,
-        context: &mut CTX,
-        inputs: &mut EOFCreateInputs,
-    ) -> Option<CreateOutcome> {
-        let _ = context;
-        let _ = inputs;
-        None
-    }
-
-    /// Called when eof creating has ended.
-    fn eofcreate_end(
-        &mut self,
-        context: &mut CTX,
-        inputs: &EOFCreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
-        let _ = context;
-        let _ = inputs;
-        let _ = outcome;
-    }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
     #[inline]

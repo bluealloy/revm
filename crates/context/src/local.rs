@@ -1,5 +1,4 @@
 //! Local context that is filled by execution.
-use bytecode::{CodeType, Eof};
 use context_interface::LocalContextTr;
 use core::cell::RefCell;
 use primitives::{keccak256, Bytes, HashMap, B256};
@@ -92,26 +91,17 @@ impl Initcode {
     /// Validates the initcode and sets the status to valid if it is valid.
     ///
     /// If initcode is not pending validation it will return None.
+    /// 
+    /// Note: Since EOF support has been removed, this always returns None (invalid).
     pub fn validate(&mut self) -> Option<&Bytes> {
         match self.status {
-            InitcodeStatus::Valid => return Some(&self.bytes),
-            InitcodeStatus::Invalid => return None,
-            InitcodeStatus::PendingValidation => (),
+            InitcodeStatus::Valid => Some(&self.bytes),
+            InitcodeStatus::Invalid => None,
+            InitcodeStatus::PendingValidation => {
+                // Without EOF support, all initcodes are considered invalid
+                self.status = InitcodeStatus::Invalid;
+                None
+            }
         }
-
-        // pending validation
-        let Ok(eof) = Eof::decode(self.bytes.clone()) else {
-            self.status = InitcodeStatus::Invalid;
-            return None;
-        };
-
-        // validate in Initcode mode, data section should be filled and it should not contain RETURN or STOP
-        if eof.validate_mode(CodeType::Initcode).is_err() {
-            self.status = InitcodeStatus::Invalid;
-            return None;
-        }
-        // mark initcode as valid so we can skip this validation next time.
-        self.status = InitcodeStatus::Valid;
-        Some(&self.bytes)
     }
 }

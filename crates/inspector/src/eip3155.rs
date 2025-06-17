@@ -2,8 +2,8 @@ use crate::inspectors::GasInspector;
 use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
-    interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+    interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
     InterpreterResult, InterpreterTypes, Stack,
 };
 use primitives::{hex, HashMap, B256, U256};
@@ -234,16 +234,9 @@ where
             None
         };
         self.pc = interp.bytecode.pc() as u64;
-        self.section = if interp.runtime_flag.is_eof() {
-            Some(interp.sub_routine.routine_idx() as u64)
-        } else {
-            None
-        };
-        self.function_depth = if interp.runtime_flag.is_eof() {
-            Some(interp.sub_routine.len() as u64 + 1)
-        } else {
-            None
-        };
+        // Since EOF support has been removed, these are always None
+        self.section = None;
+        self.function_depth = None;
         self.opcode = interp.bytecode.opcode();
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
@@ -306,21 +299,6 @@ where
         }
     }
 
-    fn eofcreate_end(
-        &mut self,
-        context: &mut CTX,
-        _: &EOFCreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
-        self.gas_inspector.create_end(outcome);
-
-        if context.journal_mut().depth() == 0 {
-            self.print_summary(&outcome.result, context);
-            let _ = self.output.flush();
-            // Clear the state if we are at the top level.
-            self.clear();
-        }
-    }
 }
 
 fn write_value(

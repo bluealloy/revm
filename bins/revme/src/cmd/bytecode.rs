@@ -1,25 +1,10 @@
-use bytecode::{validate_eof_inner, Eof};
 use clap::Parser;
-use revm::{
-    bytecode::eof::{self, validate_raw_eof_inner, CodeType, EofError},
-    primitives::{hex, Bytes},
-};
-use std::io;
+use revm::primitives::{hex, Bytes};
 
-/// `bytecode` subcommand.
+/// `bytecode` subcommand - simplified to handle legacy bytecode only.
 #[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Is EOF code in INITCODE mode.
-    #[arg(long)]
-    eof_initcode: bool,
-    /// Is EOF code in RUNTIME mode.
-    #[arg(long)]
-    eof_runtime: bool,
     /// Bytecode in hex format string.
-    ///
-    /// - If bytes start with 0xFE it will be interpreted as a EOF.
-    /// - Otherwise, it will be interpreted as a EOF bytecode.
-    /// - If not provided, it will operate in interactive EOF validation mode.
     #[arg()]
     bytes: Option<String>,
 }
@@ -27,84 +12,46 @@ pub struct Cmd {
 #[inline]
 fn trim_decode(input: &str) -> Option<Bytes> {
     let trimmed = input.trim().trim_start_matches("0x");
-    let decoded = hex::decode(trimmed).ok().map(Into::into);
-    if decoded.is_none() {
-        eprintln!("Invalid hex string");
-        return None;
-    }
-    decoded
+    hex::decode(trimmed).ok().map(Into::into)
 }
 
 impl Cmd {
-    /// Runs statetest command.
+    /// Runs bytecode command.
     pub fn run(&self) {
-        let container_kind = if self.eof_initcode {
-            Some(CodeType::Initcode)
-        } else if self.eof_runtime {
-            Some(CodeType::Runtime)
-        } else {
-            None
-        };
-
         if let Some(input_bytes) = &self.bytes {
             let Some(bytes) = trim_decode(input_bytes) else {
+                eprintln!("Invalid hex string");
                 return;
             };
 
-            if bytes[0] == 0xEF {
-                match Eof::decode(bytes) {
-                    Ok(eof) => {
-                        println!("Decoding: {:#?}", eof);
-                        match validate_eof_inner(&eof, container_kind) {
-                            Ok(_) => {
-                                println!("Validation: OK");
-                            }
-                            Err(eof_error) => {
-                                eprintln!("Validation error: {}", eof_error);
-                            }
-                        }
-                        println!("Validation: OK");
-                    }
-                    Err(eof_error) => {
-                        eprintln!("Decoding error: {}", eof_error);
-                    }
-                }
-            } else {
-                eof::printer::print(&bytes)
+            if bytes.starts_with(&[0xEF, 0x00]) {
+                eprintln!("EOF bytecode is not supported - EOF has been removed from REVM");
+                return;
             }
-            return;
-        }
 
-        // Else run command in loop.
-        loop {
-            let mut input = String::new();
-            io::stdin().read_line(&mut input).expect("Input Error");
-            if input.len() == 1 {
-                // Just a newline, so exit
-                return;
-            }
-            let Some(bytes) = trim_decode(&input) else {
-                return;
-            };
-            match validate_raw_eof_inner(bytes, container_kind) {
-                Ok(eof) => {
-                    println!(
-                        "OK {}/{}/{}",
-                        eof.body.code_section.len(),
-                        eof.body.container_section.len(),
-                        eof.body.data_section.len()
-                    );
+            println!("Legacy bytecode:");
+            println!("  Length: {} bytes", bytes.len());
+            println!("  Hex: 0x{}", hex::encode(&bytes));
+            
+            // Basic analysis
+            let mut opcodes = Vec::new();
+            let mut i = 0;
+            while i < bytes.len() {
+                let opcode = bytes[i];
+                opcodes.push(format!("{:02x}", opcode));
+                
+                // Skip immediate bytes for PUSH instructions
+                if opcode >= 0x60 && opcode <= 0x7f {
+                    let push_size = (opcode - 0x5f) as usize;
+                    i += push_size;
                 }
-                Err(eof_error) => {
-                    if matches!(
-                        eof_error,
-                        EofError::Decode(eof::EofDecodeError::InvalidEOFSize)
-                    ) {
-                        continue;
-                    }
-                    println!("err: {}", eof_error);
-                }
+                i += 1;
             }
+            
+            println!("  Opcodes: {}", opcodes.join(" "));
+        } else {
+            println!("No bytecode provided. EOF interactive mode has been removed.");
+            println!("Please provide bytecode as a hex string argument.");
         }
     }
 }
