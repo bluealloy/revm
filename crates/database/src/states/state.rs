@@ -141,14 +141,17 @@ impl<DB: Database> State<DB> {
         self.cache.set_state_clear_flag(has_state_clear);
     }
 
+    /// Inserts a non-existing account into the state.
     pub fn insert_not_existing(&mut self, address: Address) {
         self.cache.insert_not_existing(address)
     }
 
+    /// Inserts an account into the state.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         self.cache.insert_account(address, info)
     }
 
+    /// Inserts an account with storage into the state.
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,

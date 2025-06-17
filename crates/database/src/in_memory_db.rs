@@ -361,9 +361,11 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     }
 }
 
+/// Database account representation.
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DbAccount {
+    /// Basic account information.
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
@@ -372,6 +374,7 @@ pub struct DbAccount {
 }
 
 impl DbAccount {
+    /// Creates a new non-existing account.
     pub fn new_not_existing() -> Self {
         Self {
             account_state: AccountState::NotExisting,
@@ -379,6 +382,7 @@ impl DbAccount {
         }
     }
 
+    /// Returns account info if the account exists.
     pub fn info(&self) -> Option<AccountInfo> {
         if matches!(self.account_state, AccountState::NotExisting) {
             None
@@ -387,11 +391,13 @@ impl DbAccount {
         }
     }
 
+    /// Updates the account information.
     #[inline(always)]
     pub fn update_info(&mut self, info: AccountInfo) {
         self.info = info;
     }
 
+    /// Updates the account state.
     #[inline(always)]
     pub fn update_account_state(&mut self, account_state: AccountState) {
         self.account_state = account_state;
@@ -414,6 +420,7 @@ impl From<AccountInfo> for DbAccount {
     }
 }
 
+/// State of an account in the database.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountState {
@@ -444,6 +451,7 @@ impl AccountState {
 pub struct BenchmarkDB(pub Bytecode, B256);
 
 impl BenchmarkDB {
+    /// Creates a new benchmark database with the given bytecode.
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
         let hash = bytecode.hash_slow();
         Self(bytecode, hash)
