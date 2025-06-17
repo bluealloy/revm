@@ -1,4 +1,4 @@
-use crate::evm::NewFrameTr;
+use crate::evm::FrameTr;
 
 #[derive(Clone, Debug)]
 pub enum ItemOrResult<ITEM, RES> {
@@ -32,5 +32,5 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     }
 }
 
-pub type NewFrameTrInitOrResult<FRAME> =
-    ItemOrResult<<FRAME as NewFrameTr>::FrameInit, <FRAME as NewFrameTr>::FrameResult>;
+pub type FrameInitOrResult<FRAME> =
+    ItemOrResult<<FRAME as FrameTr>::FrameInit, <FRAME as FrameTr>::FrameResult>;

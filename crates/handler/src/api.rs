@@ -174,8 +174,7 @@ where
 
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
-        let mut t = MainnetHandler::<_, Self::Error, EthFrameInner<EthInterpreter>>::default();
-        t.run(self)
+        MainnetHandler::default().run(self)
     }
 
     fn finalize(&mut self) -> Self::State {
@@ -187,8 +186,7 @@ where
     }
 
     fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
-        let mut t = MainnetHandler::<_, _, EthFrameInner<_>>::default();
-        t.run(self).map(|result| {
+        MainnetHandler::default().run(self).map(|result| {
             let state = self.finalize();
             ResultAndState::new(result, state)
         })

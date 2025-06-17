@@ -11,10 +11,6 @@ pub mod block;
 pub mod cfg;
 pub mod context;
 pub mod evm;
-/// Frame-related types and functionality.
-pub mod frame;
-/// Frame data structures.
-pub mod frame_data;
 pub mod journal;
 pub mod local;
 pub mod tx;
@@ -23,7 +19,6 @@ pub use block::BlockEnv;
 pub use cfg::{Cfg, CfgEnv};
 pub use context::*;
 pub use evm::Evm;
-pub use frame_data::{FrameData, FrameResult};
 pub use journal::*;
 pub use local::LocalContext;
 pub use tx::TxEnv;

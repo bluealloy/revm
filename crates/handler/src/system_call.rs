@@ -144,8 +144,7 @@ where
             data,
         ));
         // create handler
-        let mut handler = MainnetHandler::<_, _, EthFrameInner<EthInterpreter>>::default();
-        handler.run_system_call(self)
+        MainnetHandler::default().run_system_call(self)
     }
 }
 

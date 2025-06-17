@@ -1,6 +1,6 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
-use context::{result::ExecutionResult, ContextTr, FrameResult, JournalEntry, Transaction};
-use handler::{evm::NewFrameTr, EvmTr, Handler, ItemOrResult};
+use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
+use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
@@ -21,8 +21,8 @@ use interpreter::{
 /// * [`Handler::run`] replaced with [`InspectorHandler::inspect_run`]
 /// * [`Handler::run_without_catch_error`] replaced with [`InspectorHandler::inspect_run_without_catch_error`]
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
-/// * [`Handler::frame_call`] replaced with [`InspectorHandler::inspect_frame_call`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
+///   * `run_exec_loop` calls `inspect_frame_init` and `inspect_frame_run` that call inspector inside.
 pub trait InspectorHandler: Handler
 where
     Self::Evm:
@@ -90,7 +90,7 @@ where
     fn inspect_run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        first_frame_input: <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameInit,
+        first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
         let res = evm.inspect_frame_init(first_frame_input)?;
 

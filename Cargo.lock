@@ -3761,7 +3761,6 @@ dependencies = [
  "revm-context-interface",
  "revm-database",
  "revm-database-interface",
- "revm-interpreter",
  "revm-primitives",
  "revm-state",
  "serde",

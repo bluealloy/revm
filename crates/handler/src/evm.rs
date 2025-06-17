@@ -1,9 +1,9 @@
 use crate::{
-    instructions::InstructionProvider, item_or_result::NewFrameTrInitOrResult, EthFrameInner,
-    ItemOrResult, PrecompileProvider,
+    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrameInner,
+    FrameResult, ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameResult, FrameStack};
+use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
 use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
@@ -14,10 +14,10 @@ pub type ContextDbError<CTX> = ContextError<<<CTX as ContextTr>::Db as Database>
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
 /// Type alias for frame init result
-pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as NewFrameTr>::FrameResult>;
+pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameResult>;
 
 #[auto_impl(&mut, Box)]
-pub trait NewFrameTr {
+pub trait FrameTr {
     type FrameResult: Into<FrameResult>;
     type FrameInit: Into<FrameInit>;
 }
@@ -34,7 +34,7 @@ pub trait EvmTr {
     /// The type containing the available precompiled contracts
     type Precompiles: PrecompileProvider<Self::Context>;
     /// The type containing the frame
-    type Frame: NewFrameTr;
+    type Frame: FrameTr;
 
     /// Returns a mutable reference to the execution context
     fn ctx(&mut self) -> &mut Self::Context;
@@ -61,20 +61,20 @@ pub trait EvmTr {
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     fn frame_init(
         &mut self,
-        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+        frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>>;
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
     fn frame_run(
         &mut self,
-    ) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<Self::Context>>;
+    ) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<Self::Context>>;
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
     /// Consumes the frame result or returns it if there is more frames to run.
     fn frame_return_result(
         &mut self,
-        result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>;
+        result: <Self::Frame as FrameTr>::FrameResult,
+    ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrameInner<EthInterpreter>>
@@ -107,7 +107,7 @@ where
     #[inline]
     fn frame_init(
         &mut self,
-        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+        frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<CTX>> {
         let is_first_init = self.frame_stack.index().is_none();
         let new_frame = if is_first_init {
@@ -132,7 +132,7 @@ where
 
     /// Rust the frame from the top of the stack. Returns the frame init or result.
     #[inline]
-    fn frame_run(&mut self) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<CTX>> {
+    fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
         let frame = self.frame_stack.get();
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
@@ -152,9 +152,8 @@ where
     #[inline]
     fn frame_return_result(
         &mut self,
-        result: <Self::Frame as NewFrameTr>::FrameResult,
-    ) -> Result<Option<<Self::Frame as NewFrameTr>::FrameResult>, ContextDbError<Self::Context>>
-    {
+        result: <Self::Frame as FrameTr>::FrameResult,
+    ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>> {
         if self.frame_stack.get().is_finished() {
             self.frame_stack.pop();
         }

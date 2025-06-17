@@ -1,6 +1,5 @@
 use super::{EvmTrError, Handler};
-use crate::{evm::NewFrameTr, EvmTr};
-use context::FrameResult;
+use crate::{evm::FrameTr, EvmTr, FrameResult};
 use context_interface::{result::HaltReason, ContextTr, JournalTr};
 use interpreter::interpreter_action::FrameInit;
 use state::EvmState;
@@ -17,7 +16,7 @@ where
     ERROR: EvmTrError<EVM>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: NewFrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
+    FRAME: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
 {
     type Evm = EVM;
     type Error = ERROR;

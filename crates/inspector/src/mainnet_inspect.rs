@@ -41,10 +41,7 @@ where
 
     fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_tx(tx);
-        let mut t = MainnetHandler::<_, _, EthFrameInner<EthInterpreter>> {
-            _phantom: core::marker::PhantomData,
-        };
-        t.inspect_run(self)
+        MainnetHandler::default().inspect_run(self)
     }
 }
 

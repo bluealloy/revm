@@ -1,8 +1,8 @@
 use revm::{
     context::{ContextError, ContextSetters, ContextTr, Evm, FrameStack},
     handler::{
-        evm::NewFrameTr, instructions::EthInstructions, EthFrameInner, EthPrecompiles, EvmTr,
-        ItemOrResult, NewFrameTrInitOrResult,
+        evm::FrameTr, instructions::EthInstructions, EthFrameInner, EthPrecompiles, EvmTr,
+        FrameInitOrResult, ItemOrResult,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
@@ -62,9 +62,9 @@ where
 
     fn frame_init(
         &mut self,
-        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+        frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<
-        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
+        ItemOrResult<&mut Self::Frame, <Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_init(frame_input)
@@ -73,7 +73,7 @@ where
     fn frame_run(
         &mut self,
     ) -> Result<
-        NewFrameTrInitOrResult<Self::Frame>,
+        FrameInitOrResult<Self::Frame>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_run()
@@ -81,9 +81,9 @@ where
 
     fn frame_return_result(
         &mut self,
-        frame_result: <Self::Frame as NewFrameTr>::FrameResult,
+        frame_result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<
-        Option<<Self::Frame as NewFrameTr>::FrameResult>,
+        Option<<Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_return_result(frame_result)

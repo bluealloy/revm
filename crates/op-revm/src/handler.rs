@@ -6,18 +6,18 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::{result::InvalidTransaction, FrameResult, LocalContextTr},
+    context::{result::InvalidTransaction, LocalContextTr},
     context_interface::{
         context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        evm::NewFrameTr,
+        evm::FrameTr,
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
         pre_execution::validate_account_nonce_and_code,
-        EthFrameInner, EvmTr, Handler, MainnetHandler,
+        EthFrameInner, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
@@ -71,7 +71,7 @@ where
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
-    FRAME: NewFrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
+    FRAME: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
 {
     type Evm = EVM;
     type Error = ERROR;
@@ -219,7 +219,7 @@ where
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
         let tx = ctx.tx();
@@ -285,7 +285,7 @@ where
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let mut additional_refund = U256::ZERO;
 
@@ -303,7 +303,7 @@ where
     fn refund(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
     ) {
         frame_result.gas_mut().record_refund(eip7702_refund);
@@ -327,7 +327,7 @@ where
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
@@ -381,7 +381,7 @@ where
     fn execution_result(
         &mut self,
         evm: &mut Self::Evm,
-        frame_result: <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),

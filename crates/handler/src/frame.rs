@@ -1,10 +1,9 @@
-use crate::evm::NewFrameTr;
-use crate::item_or_result::NewFrameTrInitOrResult;
+use crate::evm::FrameTr;
+use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
+use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
 use bytecode::EOF_MAGIC_BYTES;
-use context::frame_data::{CallFrame, CreateFrame};
 use context::result::FromStringError;
-use context::{FrameData, FrameResult};
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
@@ -54,7 +53,7 @@ pub struct EthFrameInner<IW: InterpreterTypes = EthInterpreter> {
     pub is_finished: bool,
 }
 
-impl<IT: InterpreterTypes> NewFrameTr for EthFrameInner<IT> {
+impl<IT: InterpreterTypes> FrameTr for EthFrameInner<IT> {
     type FrameResult = FrameResult;
     type FrameInit = FrameInit;
 }
@@ -537,7 +536,7 @@ impl EthFrameInner<EthInterpreter> {
         &mut self,
         context: &mut CTX,
         next_action: InterpreterAction,
-    ) -> Result<NewFrameTrInitOrResult<Self>, ERROR> {
+    ) -> Result<FrameInitOrResult<Self>, ERROR> {
         let spec = context.cfg().spec().into();
 
         // Run interpreter

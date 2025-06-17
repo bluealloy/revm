@@ -1,8 +1,8 @@
 use context::ContextTr;
 use handler::{
-    evm::{ContextDbError, FrameInitResult, NewFrameTr},
+    evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrameInner, EvmTr, ItemOrResult, NewFrameTrInitOrResult,
+    EthFrameInner, EvmTr, FrameInitOrResult, ItemOrResult,
 };
 use interpreter::{interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterTypes};
 
@@ -54,7 +54,7 @@ pub trait InspectorEvmTr:
     #[inline]
     fn inspect_frame_init(
         &mut self,
-        mut frame_init: <Self::Frame as NewFrameTr>::FrameInit,
+        mut frame_init: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector) = self.ctx_inspector();
         if let Some(mut output) = frame_start(ctx, inspector, &mut frame_init.frame_input) {
@@ -76,7 +76,7 @@ pub trait InspectorEvmTr:
     #[inline]
     fn inspect_frame_run(
         &mut self,
-    ) -> Result<NewFrameTrInitOrResult<Self::Frame>, ContextDbError<Self::Context>> {
+    ) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector, frame, instructions) = self.ctx_inspector_frame_instructions();
 
         let next_action = inspect_instructions(
@@ -96,10 +96,8 @@ pub trait InspectorEvmTr:
     }
 }
 
-/// Traits that extends the Frame with additional functionality that is needed for inspection
-///
-/// It is implemented for [`EthFrame`] as default Ethereum frame implementation.
-pub trait InspectorFrame: NewFrameTr {
+/// Trait that extends the [`FrameTr`] trait with additional functionality that is needed for inspection.
+pub trait InspectorFrame: FrameTr {
     type IT: InterpreterTypes;
 
     /// Returns a mutable reference to the interpreter.

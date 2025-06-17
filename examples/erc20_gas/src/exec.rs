@@ -29,8 +29,7 @@ where
         Frame = EthFrameInner<EthInterpreter>,
     >,
 {
-    let mut handler = Erc20MainnetHandler::<EVM, _, EthFrameInner<EthInterpreter>>::new();
-    handler.run(evm).map(|r| {
+    Erc20MainnetHandler::new().run(evm).map(|r| {
         let state = evm.ctx().journal_mut().finalize();
         (r, state)
     })

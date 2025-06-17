@@ -1,8 +1,9 @@
-use crate::evm::NewFrameTr;
-use crate::EvmTr;
-use crate::{execution, post_execution, pre_execution, validation, ItemOrResult};
+use crate::{
+    evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
+    ItemOrResult,
+};
 use context::result::{ExecutionResult, FromStringError};
-use context::{FrameResult, LocalContextTr};
+use context::LocalContextTr;
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -46,7 +47,7 @@ impl<
 ///   * Validation - Validates tx/block/config fields and loads caller account and validates initial gas requirements and
 ///     balance checks.
 ///   * Pre-execution - Loads and warms accounts, deducts initial gas
-///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
+///   * Execution - Executes the main frame loop, delegating to [`EvmTr`] for creating and running call frames.
 ///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,
 ///     and rewards beneficiary
 ///
@@ -64,7 +65,7 @@ pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<
         Context: ContextTr<Journal: JournalTr<State = EvmState>, Local: LocalContextTr>,
-        Frame: NewFrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
+        Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
     >;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
@@ -301,7 +302,7 @@ pub trait Handler {
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
@@ -334,7 +335,7 @@ pub trait Handler {
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        first_frame_input: <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameInit,
+        first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
         let res = evm.frame_init(first_frame_input)?;
 
@@ -373,7 +374,7 @@ pub trait Handler {
     fn eip7623_check_gas_floor(
         &self,
         _evm: &mut Self::Evm,
-        exec_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
     ) {
         post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
@@ -384,7 +385,7 @@ pub trait Handler {
     fn refund(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
     ) {
         let spec = evm.ctx().cfg().spec().into();
@@ -396,7 +397,7 @@ pub trait Handler {
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut(), U256::ZERO)
             .map_err(From::from)
@@ -407,7 +408,7 @@ pub trait Handler {
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         post_execution::reward_beneficiary(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
     }
@@ -420,7 +421,7 @@ pub trait Handler {
     fn execution_result(
         &mut self,
         evm: &mut Self::Evm,
-        result: <<Self::Evm as EvmTr>::Frame as NewFrameTr>::FrameResult,
+        result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),

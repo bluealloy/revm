@@ -1,11 +1,9 @@
 use revm::{
-    context::{
-        result::{EVMError, HaltReason, InvalidTransaction},
-        FrameResult,
-    },
+    context::result::{EVMError, HaltReason, InvalidTransaction},
     context_interface::{ContextTr, JournalTr},
     handler::{
-        evm::NewFrameTr, instructions::InstructionProvider, EvmTr, Handler, PrecompileProvider,
+        evm::FrameTr, instructions::InstructionProvider, EvmTr, FrameResult, Handler,
+        PrecompileProvider,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult},
@@ -34,7 +32,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
-        Frame: NewFrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
+        Frame: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
     >,
 {
     type Evm = EVM;

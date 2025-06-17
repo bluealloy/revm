@@ -4,9 +4,9 @@ use revm::{
     context::{ContextError, ContextSetters, Evm, FrameStack},
     context_interface::ContextTr,
     handler::{
-        evm::NewFrameTr,
+        evm::FrameTr,
         instructions::{EthInstructions, InstructionProvider},
-        EthFrameInner, EvmTr, ItemOrResult, NewFrameTrInitOrResult, PrecompileProvider,
+        EthFrameInner, EvmTr, FrameInitOrResult, ItemOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
@@ -133,9 +133,9 @@ where
 
     fn frame_init(
         &mut self,
-        frame_input: <Self::Frame as NewFrameTr>::FrameInit,
+        frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<
-        ItemOrResult<&mut Self::Frame, <Self::Frame as NewFrameTr>::FrameResult>,
+        ItemOrResult<&mut Self::Frame, <Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_init(frame_input)
@@ -144,7 +144,7 @@ where
     fn frame_run(
         &mut self,
     ) -> Result<
-        NewFrameTrInitOrResult<Self::Frame>,
+        FrameInitOrResult<Self::Frame>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_run()
@@ -154,9 +154,9 @@ where
     #[doc = " Consumes the frame result or returns it if there is more frames to run."]
     fn frame_return_result(
         &mut self,
-        result: <Self::Frame as NewFrameTr>::FrameResult,
+        result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<
-        Option<<Self::Frame as NewFrameTr>::FrameResult>,
+        Option<<Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
         self.0.frame_return_result(result)
