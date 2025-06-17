@@ -52,4 +52,5 @@ use primitives::Bytes;
 pub static RWASM_MAGIC_BYTES: Bytes = primitives::bytes!("ef52");
 /// Wasm magic number in array form.
 pub static WASM_MAGIC_BYTES: Bytes = primitives::bytes!("0061736d");
+/// SVM magic number in array form.
 pub static SVM_ELF_MAGIC_BYTES: Bytes = primitives::bytes!("7f454c46");
