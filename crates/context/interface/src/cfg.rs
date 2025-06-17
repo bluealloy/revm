@@ -35,6 +35,9 @@ pub trait Cfg {
     /// Returns the maximum code size for the given spec id.
     fn max_code_size(&self) -> usize;
 
+    /// Returns the max initcode size for the given spec id.
+    fn max_initcode_size(&self) -> usize;
+
     /// Returns whether the EIP-3607 (account clearing) is disabled.
     fn is_eip3607_disabled(&self) -> bool;
 
