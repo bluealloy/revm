@@ -5,10 +5,10 @@ use revm::{
         Block, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, FrameResult,
+        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, FrameResult, FrameTr,
         Handler,
     },
-    interpreter::FrameInput,
+    interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
     state::EvmState,
 };
@@ -35,13 +35,12 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>,
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>, Frame = FRAME>,
+    FRAME: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
     ERROR: EvmTrError<EVM>,
 {
     type Evm = EVM;
     type Error = ERROR;
-    type Frame = FRAME;
     type HaltReason = HaltReason;
 
     fn validate_against_state_and_deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), ERROR> {
@@ -122,7 +121,7 @@ where
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let basefee = context.block().basefee() as u128;
@@ -145,7 +144,7 @@ where
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let tx = context.tx();

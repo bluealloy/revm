@@ -1,7 +1,6 @@
-use crate::EvmTr;
 use crate::{
-    execution, post_execution, pre_execution, validation, Frame, FrameInitOrResult, FrameOrResult,
-    FrameResult, ItemOrResult,
+    evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
+    ItemOrResult,
 };
 use context::result::{ExecutionResult, FromStringError};
 use context::LocalContextTr;
@@ -11,15 +10,16 @@ use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
     Cfg, Database, JournalTr, Transaction,
 };
-use interpreter::{FrameInput, Gas, InitialAndFloorGas};
+use interpreter::interpreter_action::FrameInit;
+use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
 use state::EvmState;
-use std::{vec, vec::Vec};
 
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>
     + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
+    + From<ContextError<<<EVM::Context as ContextTr>::Db as Database>::Error>>
     + FromStringError
 {
 }
@@ -29,6 +29,7 @@ impl<
         T: From<InvalidTransaction>
             + From<InvalidHeader>
             + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
+            + From<ContextError<<<EVM::Context as ContextTr>::Db as Database>::Error>>
             + FromStringError,
     > EvmTrError<EVM> for T
 {
@@ -46,7 +47,7 @@ impl<
 ///   * Validation - Validates tx/block/config fields and loads caller account and validates initial gas requirements and
 ///     balance checks.
 ///   * Pre-execution - Loads and warms accounts, deducts initial gas
-///   * Execution - Executes the main frame loop, delegating to [`Frame`] for sub-calls
+///   * Execution - Executes the main frame loop, delegating to [`EvmTr`] for creating and running call frames.
 ///   * Post-execution - Calculates final refunds, validates gas floor, reimburses caller,
 ///     and rewards beneficiary
 ///
@@ -62,18 +63,12 @@ impl<
 /// To finalize the execution and obtain changed state, call [`JournalTr::finalize`] function.
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
-    type Evm: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>>;
+    type Evm: EvmTr<
+        Context: ContextTr<Journal: JournalTr<State = EvmState>, Local: LocalContextTr>,
+        Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
+    >;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
-    /// The Frame type containing data for frame execution. Supports Call, Create and EofCreate frames.
-    // TODO `FrameResult` should be a generic trait.
-    // TODO `FrameInit` should be a generic.
-    type Frame: Frame<
-        Evm = Self::Evm,
-        Error = Self::Error,
-        FrameResult = FrameResult,
-        FrameInit = FrameInput,
-    >;
     /// The halt reason type included in the output
     type HaltReason: HaltReasonTr;
 
@@ -178,8 +173,7 @@ pub trait Handler {
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
-        // Cache EIP-7873 EOF initcodes and calculate its hash. Does nothing if not Initcode Transaction.
-        self.apply_eip7873_eof_initcodes(evm)?;
+
         let gas = self.apply_eip7702_auth_list(evm)?;
         Ok(gas)
     }
@@ -194,15 +188,13 @@ pub trait Handler {
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
         let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
-
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
-        let first_frame = self.first_frame_init(evm, first_frame_input)?;
-        let mut frame_result = match first_frame {
-            ItemOrResult::Item(frame) => self.run_exec_loop(evm, frame)?,
-            ItemOrResult::Result(result) => result,
-        };
 
+        // Run execution loop
+        let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
+
+        // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
     }
@@ -275,24 +267,6 @@ pub trait Handler {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
     }
 
-    /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
-    /// Applies valid authorizations to accounts.
-    ///
-    /// Returns the gas refund amount specified by EIP-7702.
-    #[inline]
-    fn apply_eip7873_eof_initcodes(&self, _evm: &mut Self::Evm) -> Result<(), Self::Error> {
-        Ok(())
-        /* TODO(EOF)
-        if evm.ctx().tx().tx_type() != TransactionType::Eip7873 {
-            return Ok(());
-        }
-        let (tx, local) = evm.ctx().tx_local_mut();
-        local.insert_initcodes(&[]);
-        tx.initcodes());
-        Ok(())
-        */
-    }
-
     /// Deducts maximum possible fee and transfer value from caller's balance.
     ///
     /// Unused fees are returned to caller after execution completes.
@@ -312,13 +286,15 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
-    ) -> Result<FrameInput, Self::Error> {
-        let ctx: &<<Self as Handler>::Evm as EvmTr>::Context = evm.ctx_ref();
-        Ok(execution::create_init_frame(
-            ctx.tx(),
-            ctx.cfg().spec().into(),
-            gas_limit,
-        ))
+    ) -> Result<FrameInit, Self::Error> {
+        let memory =
+            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
+        let ctx = evm.ctx_ref();
+        Ok(FrameInit {
+            depth: 0,
+            memory,
+            frame_input: execution::create_init_frame(ctx.tx(), ctx.cfg().spec().into(), gas_limit),
+        })
     }
 
     /// Processes the result of the initial call and handles returned gas.
@@ -326,7 +302,7 @@ pub trait Handler {
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
-        frame_result: &mut <Self::Frame as Frame>::FrameResult,
+        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
@@ -348,53 +324,6 @@ pub trait Handler {
 
     /* FRAMES */
 
-    /// Initializes the first frame from the provided frame input.
-    #[inline]
-    fn first_frame_init(
-        &mut self,
-        evm: &mut Self::Evm,
-        frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Self::Frame::init_first(evm, frame_input)
-    }
-
-    /// Initializes a new frame from the provided frame input and previous frame.
-    ///
-    /// The previous frame contains shared memory that is passed to the new frame.
-    #[inline]
-    fn frame_init(
-        &mut self,
-        frame: &mut Self::Frame,
-        evm: &mut Self::Evm,
-        frame_input: <Self::Frame as Frame>::FrameInit,
-    ) -> Result<FrameOrResult<Self::Frame>, Self::Error> {
-        Frame::init(frame, evm, frame_input)
-    }
-
-    /// Executes a frame and returns either input for a new frame or the frame's result.
-    ///
-    /// When a result is returned, the frame is removed from the call stack. When frame input
-    /// is returned, a new frame is created and pushed onto the call stack.
-    #[inline]
-    fn frame_call(
-        &mut self,
-        frame: &mut Self::Frame,
-        evm: &mut Self::Evm,
-    ) -> Result<FrameInitOrResult<Self::Frame>, Self::Error> {
-        Frame::run(frame, evm)
-    }
-
-    /// Processes a frame's result by inserting it into the parent frame.
-    #[inline]
-    fn frame_return_result(
-        &mut self,
-        frame: &mut Self::Frame,
-        evm: &mut Self::Evm,
-        result: <Self::Frame as Frame>::FrameResult,
-    ) -> Result<(), Self::Error> {
-        Self::Frame::return_result(frame, evm, result)
-    }
-
     /// Executes the main frame processing loop.
     ///
     /// This loop manages the frame stack, processing each frame until execution completes.
@@ -406,35 +335,33 @@ pub trait Handler {
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
-        frame: Self::Frame,
+        first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
-        let mut frame_stack: Vec<Self::Frame> = vec![frame];
+        let res = evm.frame_init(first_frame_input)?;
+
+        if let ItemOrResult::Result(frame_result) = res {
+            return Ok(frame_result);
+        }
+
         loop {
-            let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = self.frame_call(frame, evm)?;
+            let call_or_result = evm.frame_run()?;
 
             let result = match call_or_result {
                 ItemOrResult::Item(init) => {
-                    match self.frame_init(frame, evm, init)? {
-                        ItemOrResult::Item(new_frame) => {
-                            frame_stack.push(new_frame);
+                    match evm.frame_init(init)? {
+                        ItemOrResult::Item(_) => {
                             continue;
                         }
                         // Do not pop the frame since no new frame was created
                         ItemOrResult::Result(result) => result,
                     }
                 }
-                ItemOrResult::Result(result) => {
-                    // Remove the frame that returned the result
-                    frame_stack.pop();
-                    result
-                }
+                ItemOrResult::Result(result) => result,
             };
 
-            let Some(frame) = frame_stack.last_mut() else {
+            if let Some(result) = evm.frame_return_result(result)? {
                 return Ok(result);
-            };
-            self.frame_return_result(frame, evm, result)?;
+            }
         }
     }
 
@@ -447,7 +374,7 @@ pub trait Handler {
     fn eip7623_check_gas_floor(
         &self,
         _evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
     ) {
         post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
@@ -458,7 +385,7 @@ pub trait Handler {
     fn refund(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
     ) {
         let spec = evm.ctx().cfg().spec().into();
@@ -470,7 +397,7 @@ pub trait Handler {
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         post_execution::reimburse_caller(evm.ctx(), exec_result.gas_mut(), U256::ZERO)
             .map_err(From::from)
@@ -481,7 +408,7 @@ pub trait Handler {
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         post_execution::reward_beneficiary(evm.ctx(), exec_result.gas_mut()).map_err(From::from)
     }
@@ -494,7 +421,7 @@ pub trait Handler {
     fn execution_result(
         &mut self,
         evm: &mut Self::Evm,
-        result: <Self::Frame as Frame>::FrameResult,
+        result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),

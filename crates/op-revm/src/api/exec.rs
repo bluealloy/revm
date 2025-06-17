@@ -62,7 +62,7 @@ where
 
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
-        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
         h.run(self)
     }
 
@@ -73,7 +73,7 @@ where
     fn replay(
         &mut self,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
         h.run(self).map(|result| {
             let state = self.finalize();
             ExecResultAndState::new(result, state)
@@ -107,7 +107,7 @@ where
 
     fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
-        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
         h.inspect_run(self)
     }
 }
@@ -138,7 +138,7 @@ where
             system_contract_address,
             data,
         ));
-        let mut h = OpHandler::<_, _, EthFrame<_, _, _>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
         h.run_system_call(self)
     }
 }

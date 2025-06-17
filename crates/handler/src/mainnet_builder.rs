@@ -1,12 +1,12 @@
-use crate::{instructions::EthInstructions, EthPrecompiles};
-use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, Journal, TxEnv};
+use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
 pub type MainnetEvm<CTX, INSP = ()> =
-    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>;
+    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles, EthFrame<EthInterpreter>>;
 
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
 
@@ -35,6 +35,7 @@ where
             inspector: (),
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
+            frame_stack: FrameStack::new(),
         }
     }
 
@@ -47,6 +48,7 @@ where
             inspector,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
+            frame_stack: FrameStack::new(),
         }
     }
 }

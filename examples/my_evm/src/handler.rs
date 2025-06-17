@@ -2,11 +2,11 @@ use revm::{
     context::result::{EVMError, HaltReason, InvalidTransaction},
     context_interface::{ContextTr, JournalTr},
     handler::{
-        instructions::InstructionProvider, EthFrame, EvmTr, FrameResult, Handler,
+        evm::FrameTr, instructions::InstructionProvider, EvmTr, FrameResult, Handler,
         PrecompileProvider,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
-    interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult},
     state::EvmState,
     Database,
 };
@@ -32,15 +32,11 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
     >,
 {
     type Evm = EVM;
     type Error = EVMError<<<EVM::Context as ContextTr>::Db as Database>::Error, InvalidTransaction>;
-    type Frame = EthFrame<
-        EVM,
-        EVMError<<<EVM::Context as ContextTr>::Db as Database>::Error, InvalidTransaction>,
-        <EVM::Instructions as InstructionProvider>::InterpreterTypes,
-    >;
     type HaltReason = HaltReason;
 
     fn reward_beneficiary(

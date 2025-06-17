@@ -243,7 +243,7 @@ pub enum TransferError {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
     /// Checkpoint to where on revert we will go back to.

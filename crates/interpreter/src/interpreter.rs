@@ -18,13 +18,13 @@ pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, CallInput, Gas,
-    Host, InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
-use primitives::{hardfork::SpecId, Address, Bytes, U256};
+use primitives::{hardfork::SpecId, Bytes};
 
-/// Main interpreter structure that contains all components defines in [`InterpreterTypes`].s
+/// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
@@ -44,30 +44,117 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     pub fn new(
         memory: SharedMemory,
         bytecode: ExtBytecode,
-        inputs: InputsImpl,
+        input: InputsImpl,
         is_static: bool,
         is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
-        let runtime_flag = RuntimeFlags {
-            spec_id,
+        Self::new_inner(
+            Stack::new(),
+            memory,
+            bytecode,
+            input,
             is_static,
-            is_eof: bytecode.is_eof(),
             is_eof_init,
-        };
+            spec_id,
+            gas_limit,
+        )
+    }
 
+    pub fn default_ext() -> Self {
+        Self::do_default(Stack::new(), SharedMemory::new())
+    }
+
+    /// Create a new invalid interpreter.
+    pub fn invalid() -> Self {
+        Self::do_default(Stack::invalid(), SharedMemory::invalid())
+    }
+
+    fn do_default(stack: Stack, memory: SharedMemory) -> Self {
+        Self::new_inner(
+            stack,
+            memory,
+            ExtBytecode::default(),
+            InputsImpl::default(),
+            false,
+            false,
+            SpecId::default(),
+            u64::MAX,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_inner(
+        stack: Stack,
+        memory: SharedMemory,
+        bytecode: ExtBytecode,
+        input: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+    ) -> Self {
+        let is_eof = bytecode.is_eof();
         Self {
             bytecode,
-            stack: Stack::new(),
-            return_data: ReturnDataImpl::default(),
-            memory,
-            input: inputs,
-            sub_routine: SubRoutineImpl::default(),
             gas: Gas::new(gas_limit),
-            runtime_flag,
-            extend: EXT::default(),
+            stack,
+            return_data: Default::default(),
+            memory,
+            input,
+            sub_routine: Default::default(),
+            runtime_flag: RuntimeFlags {
+                is_static,
+                is_eof_init,
+                is_eof,
+                spec_id,
+            },
+            extend: Default::default(),
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn clear(
+        &mut self,
+        memory: SharedMemory,
+        bytecode: ExtBytecode,
+        input: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+    ) {
+        let Self {
+            bytecode: bytecode_ref,
+            gas,
+            stack,
+            return_data,
+            memory: memory_ref,
+            input: input_ref,
+            sub_routine,
+            runtime_flag,
+            extend,
+        } = self;
+        let is_eof = bytecode.is_eof();
+        *bytecode_ref = bytecode;
+        *gas = Gas::new(gas_limit);
+        if stack.data().capacity() == 0 {
+            *stack = Stack::new();
+        } else {
+            stack.clear();
+        }
+        return_data.0.clear();
+        *memory_ref = memory;
+        *input_ref = input;
+        sub_routine.clear();
+        *runtime_flag = RuntimeFlags {
+            spec_id,
+            is_static,
+            is_eof,
+            is_eof_init,
+        };
+        *extend = EXT::default();
     }
 
     /// Sets the bytecode that is going to be executed
@@ -84,21 +171,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
 impl Default for Interpreter<EthInterpreter> {
     fn default() -> Self {
-        Interpreter::new(
-            SharedMemory::new(),
-            ExtBytecode::new(Bytecode::default()),
-            InputsImpl {
-                target_address: Address::ZERO,
-                bytecode_address: None,
-                caller_address: Address::ZERO,
-                input: CallInput::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::default(),
-            u64::MAX,
-        )
+        Self::default_ext()
     }
 }
 
@@ -270,19 +343,13 @@ mod tests {
     fn test_interpreter_serde() {
         use super::*;
         use bytecode::Bytecode;
-        use primitives::{Address, Bytes, U256};
+        use primitives::Bytes;
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                bytecode_address: None,
-                input: CallInput::Bytes(Bytes::default()),
-                call_value: U256::ZERO,
-            },
+            InputsImpl::default(),
             false,
             false,
             SpecId::default(),
