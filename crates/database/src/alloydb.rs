@@ -1,3 +1,5 @@
+//! Alloy provider database implementation.
+
 pub use alloy_eips::BlockId;
 use alloy_provider::{
     network::{primitives::HeaderResponse, BlockResponse},
@@ -10,6 +12,7 @@ use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
+/// Error type for transport-related database operations.
 #[derive(Debug)]
 pub struct DBTransportError(pub TransportError);
 

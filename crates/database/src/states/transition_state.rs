@@ -2,6 +2,7 @@ use super::TransitionAccount;
 use primitives::{hash_map::Entry, Address, HashMap};
 use std::vec::Vec;
 
+/// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct TransitionState {
     /// Block state account with account state

@@ -18,7 +18,9 @@ use state::AccountInfo;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleAccount {
+    /// Current account information.
     pub info: Option<AccountInfo>,
+    /// Original account information before modifications.
     pub original_info: Option<AccountInfo>,
     /// Contains both original and present state.
     /// When extracting changeset we compare if original value is different from present value.
