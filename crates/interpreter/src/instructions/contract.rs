@@ -159,6 +159,9 @@ pub fn txcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         )));
 }
 
+/// Implements the RETURNCONTRACT instruction.
+/// 
+/// Returns a contract from EOF init code with auxiliary data.
 pub fn return_contract<H: Host + ?Sized>(
     context: InstructionContext<'_, H, impl InterpreterTypes>,
 ) {
@@ -233,6 +236,7 @@ pub fn return_contract<H: Host + ?Sized>(
         }));
 }
 
+/// Gets input bytes from memory for external calls.
 pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Option<Bytes> {
     popn!([input_offset, input_size], interpreter, None);
     let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
@@ -247,6 +251,7 @@ pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Op
 }
 
 #[inline]
+/// Calculates gas limit for external calls and handles gas stipend logic.
 pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
     target: Address,
@@ -299,6 +304,9 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Valid address has first 12 bytes as zeroes.
 #[inline]
+/// Pop target address from stack and check if it is valid.
+/// 
+/// Valid address has first 12 bytes as zeroes.
 pub fn pop_extcall_target_address(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
 ) -> Option<Address> {
@@ -313,6 +321,9 @@ pub fn pop_extcall_target_address(
     Some(Address::from_word(target_address))
 }
 
+/// Implements the EXTCALL instruction.
+/// 
+/// External call with value transfer (EOF only).
 pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -361,6 +372,9 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the EXTDELEGATECALL instruction.
+/// 
+/// External delegate call (EOF only).
 pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -400,6 +414,9 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the EXTSTATICCALL instruction.
+/// 
+/// External static call (EOF only).
 pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -439,6 +456,9 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the CREATE/CREATE2 instruction.
+/// 
+/// Creates a new contract with provided bytecode.
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -522,6 +542,9 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the CALL instruction.
+/// 
+/// Message call with value transfer to another account.
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
@@ -584,6 +607,9 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         ))));
 }
 
+/// Implements the CALLCODE instruction.
+/// 
+/// Message call with alternative account's code.
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -640,6 +666,9 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the DELEGATECALL instruction.
+/// 
+/// Message call with alternative account's code but same sender and value.
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -689,6 +718,9 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the STATICCALL instruction.
+/// 
+/// Static message call (cannot modify state).
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {

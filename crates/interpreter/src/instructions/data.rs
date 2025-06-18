@@ -8,6 +8,9 @@ use primitives::{B256, U256};
 
 use crate::InstructionContext;
 
+/// Implements the DATALOAD instruction.
+/// 
+/// Loads a 32-byte word from the data section at a dynamic offset (EOF only).
 pub fn data_load<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, DATA_LOAD_GAS);
@@ -23,6 +26,9 @@ pub fn data_load<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
     *offset = U256::from_be_bytes(word);
 }
 
+/// Implements the DATALOADN instruction.
+/// 
+/// Loads a 32-byte word from the data section at an immediate offset (EOF only).
 pub fn data_loadn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, VERYLOW);
@@ -39,6 +45,9 @@ pub fn data_loadn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext
     context.interpreter.bytecode.relative_jump(2);
 }
 
+/// Implements the DATASIZE instruction.
+/// 
+/// Pushes the size of the data section onto the stack (EOF only).
 pub fn data_size<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, BASE);
@@ -49,6 +58,9 @@ pub fn data_size<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
     );
 }
 
+/// Implements the DATACOPY instruction.
+/// 
+/// Copies data from the data section to memory (EOF only).
 pub fn data_copy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, VERYLOW);

@@ -8,6 +8,9 @@ use primitives::U256;
 
 use crate::InstructionContext;
 
+/// Implements the POP instruction.
+/// 
+/// Removes the top item from the stack.
 pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
@@ -23,6 +26,9 @@ pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     push!(context.interpreter, U256::ZERO);
 }
 
+/// Implements the PUSH1-PUSH32 instructions.
+/// 
+/// Pushes N bytes from the bytecode onto the stack.
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -37,6 +43,9 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context.interpreter.bytecode.relative_jump(N as isize);
 }
 
+/// Implements the DUP1-DUP16 instructions.
+/// 
+/// Duplicates the Nth stack item to the top.
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -46,6 +55,9 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     }
 }
 
+/// Implements the SWAP1-SWAP16 instructions.
+/// 
+/// Exchanges the top stack item with the Nth stack item.
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -56,6 +68,9 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     }
 }
 
+/// Implements the DUPN instruction.
+/// 
+/// Duplicates the stack item at immediate offset to the top (EOF only).
 pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
@@ -66,6 +81,9 @@ pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
     context.interpreter.bytecode.relative_jump(1);
 }
 
+/// Implements the SWAPN instruction.
+/// 
+/// Exchanges the top stack item with the item at immediate offset (EOF only).
 pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);
@@ -76,6 +94,9 @@ pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     context.interpreter.bytecode.relative_jump(1);
 }
 
+/// Implements the EXCHANGE instruction.
+/// 
+/// Exchanges two stack items at specified positions (EOF only).
 pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::VERYLOW);

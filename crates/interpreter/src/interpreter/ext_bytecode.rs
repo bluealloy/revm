@@ -7,6 +7,7 @@ use primitives::{Bytes, B256};
 #[cfg(feature = "serde")]
 mod serde;
 
+/// Extended bytecode structure that wraps base bytecode with additional execution metadata.
 #[derive(Debug)]
 pub struct ExtBytecode {
     base: Bytecode,

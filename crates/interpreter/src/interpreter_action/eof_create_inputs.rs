@@ -18,12 +18,18 @@ use super::CallInput;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EOFCreateKind {
+    /// EOF creation from a transaction
     Tx {
+        /// The initialization data for EOF creation
         initdata: Bytes,
     },
+    /// EOF creation from an opcode
     Opcode {
+        /// The validated EOF initialization code
         initcode: Arc<Eof>,
+        /// Input data for the creation call
         input: CallInput,
+        /// The address where the contract will be created
         created_address: Address,
     },
 }

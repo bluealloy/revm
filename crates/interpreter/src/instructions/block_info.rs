@@ -14,6 +14,9 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
     push!(context.interpreter, context.host.chain_id());
 }
 
+/// Implements the COINBASE instruction.
+/// 
+/// Pushes the current block's beneficiary address onto the stack.
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -24,6 +27,9 @@ pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 }
 
+/// Implements the TIMESTAMP instruction.
+/// 
+/// Pushes the current block's timestamp onto the stack.
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -31,6 +37,9 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     push!(context.interpreter, context.host.timestamp());
 }
 
+/// Implements the NUMBER instruction.
+/// 
+/// Pushes the current block number onto the stack.
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -38,6 +47,9 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     push!(context.interpreter, U256::from(context.host.block_number()));
 }
 
+/// Implements the DIFFICULTY/PREVRANDAO instruction.
+/// 
+/// Pushes the block difficulty (pre-merge) or prevrandao (post-merge) onto the stack.
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -55,6 +67,9 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
+/// Implements the GASLIMIT instruction.
+/// 
+/// Pushes the current block's gas limit onto the stack.
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {

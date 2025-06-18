@@ -1,3 +1,4 @@
+/// Extended bytecode module for handling bytecode operations and metadata.
 pub mod ext_bytecode;
 mod input;
 mod loop_control;
@@ -28,14 +29,23 @@ use primitives::{hardfork::SpecId, Bytes};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
+    /// The bytecode being executed
     pub bytecode: WIRE::Bytecode,
+    /// Gas tracking and metering
     pub gas: Gas,
+    /// The execution stack
     pub stack: WIRE::Stack,
+    /// Return data from previous call or execution
     pub return_data: WIRE::ReturnData,
+    /// Memory used during execution
     pub memory: WIRE::Memory,
+    /// Input data for the current execution context
     pub input: WIRE::Input,
+    /// Stack for managing subroutine calls and returns
     pub sub_routine: WIRE::SubRoutineStack,
+    /// Runtime flags indicating execution state and constraints
     pub runtime_flag: WIRE::RuntimeFlag,
+    /// Extended interpreter data for custom implementations
     pub extend: WIRE::Extend,
 }
 
@@ -62,6 +72,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         )
     }
 
+    /// Creates a new interpreter with default extended configuration.
     pub fn default_ext() -> Self {
         Self::do_default(Stack::new(), SharedMemory::new())
     }
@@ -114,6 +125,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         }
     }
 
+    /// Clears and reinitializes the interpreter with new parameters.
     #[allow(clippy::too_many_arguments)]
     pub fn clear(
         &mut self,
@@ -176,6 +188,7 @@ impl Default for Interpreter<EthInterpreter> {
 }
 
 /// Default types for Ethereum interpreter.
+#[derive(Debug)]
 pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }

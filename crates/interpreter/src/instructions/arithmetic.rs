@@ -36,12 +36,18 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     }
 }
 
+/// Implements the SDIV instruction.
+/// 
+/// Performs signed division of two values from stack.
 pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_div(op1, *op2);
 }
 
+/// Implements the MOD instruction.
+/// 
+/// Pops two values from stack and pushes the remainder of their division.
 pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -50,18 +56,27 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     }
 }
 
+/// Implements the SMOD instruction.
+/// 
+/// Performs signed modulo of two values from stack.
 pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_mod(op1, *op2)
 }
 
+/// Implements the ADDMOD instruction.
+/// 
+/// Pops three values from stack and pushes (a + b) % n.
 pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
     *op3 = op1.add_mod(op2, *op3)
 }
 
+/// Implements the MULMOD instruction.
+/// 
+/// Pops three values from stack and pushes (a * b) % n.
 pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);

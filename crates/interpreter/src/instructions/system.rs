@@ -11,6 +11,9 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 
 use crate::InstructionContext;
 
+/// Implements the KECCAK256 instruction.
+/// 
+/// Computes the Keccak-256 hash.
 pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
@@ -25,6 +28,9 @@ pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
     *top = hash.into();
 }
 
+/// Implements the ADDRESS instruction.
+/// 
+/// Gets the address of the currently executing account.
 pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -38,6 +44,9 @@ pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
     );
 }
 
+/// Implements the CALLER instruction.
+/// 
+/// Gets the caller address.
 pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -51,6 +60,9 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     );
 }
 
+/// Implements the CODESIZE instruction.
+/// 
+/// Gets the size of code running in current environment.
 pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -59,6 +71,9 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     );
 }
 
+/// Implements the CODECOPY instruction.
+/// 
+/// Copies code running in current environment to memory.
 pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -76,6 +91,9 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     );
 }
 
+/// Implements the CALLDATALOAD instruction.
+/// 
+/// Gets input data of current environment.
 pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
@@ -112,6 +130,9 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     *offset_ptr = word.into();
 }
 
+/// Implements the CALLDATASIZE instruction.
+/// 
+/// Gets the size of input data in current environment.
 pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -120,11 +141,17 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     );
 }
 
+/// Implements the CALLVALUE instruction.
+/// 
+/// Gets the deposited value by the instruction/transaction responsible for this execution.
 pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.interpreter.input.call_value());
 }
 
+/// Implements the CALLDATACOPY instruction.
+/// 
+/// Copies input data in current environment to memory.
 pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -216,6 +243,9 @@ pub fn returndataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
     *offset = B256::from(output).into();
 }
 
+/// Implements the GAS instruction.
+/// 
+/// Gets the amount of available gas.
 pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -224,7 +254,9 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     );
 }
 
-// common logic for copying data from a source buffer to the EVM's memory
+/// Common logic for copying data from a source buffer to the EVM's memory.
+/// 
+/// Charges gas and resizes memory if needed.
 pub fn memory_resize(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     memory_offset: U256,

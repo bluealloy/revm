@@ -317,24 +317,36 @@ pub trait LoopControl {
     }
 }
 
+/// Trait for runtime execution flags that control interpreter behavior.
 pub trait RuntimeFlag {
+    /// Returns true if the execution context is static (read-only).
     fn is_static(&self) -> bool;
+    /// Returns true if the bytecode being executed is EOF format.
     fn is_eof(&self) -> bool;
+    /// Returns true if this is EOF initialization code execution.
     fn is_eof_init(&self) -> bool;
+    /// Returns the Ethereum specification version in effect.
     fn spec_id(&self) -> SpecId;
 }
 
+/// Trait for interpreter execution logic.
 pub trait Interp {
+    /// The instruction type used by this interpreter
     type Instruction;
+    /// The action type returned by the interpreter
     type Action;
 
+    /// Runs the interpreter with the given instruction table.
     fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
-/// Trait
+/// Trait defining the types used by an interpreter implementation.
 pub trait InterpreterTypes {
+    /// The stack implementation type
     type Stack: StackTr;
+    /// The memory implementation type
     type Memory: MemoryTr;
+    /// The bytecode implementation type with all required traits
     type Bytecode: Jumps
         + Immediates
         + LoopControl
@@ -342,10 +354,16 @@ pub trait InterpreterTypes {
         + EofData
         + EofContainer
         + EofCodeInfo;
+    /// The return data implementation type
     type ReturnData: ReturnData;
+    /// The input data implementation type
     type Input: InputsTr;
+    /// The subroutine stack implementation type
     type SubRoutineStack: SubRoutineStack;
+    /// The runtime flags implementation type
     type RuntimeFlag: RuntimeFlag;
+    /// Extended data type for custom interpreter implementations
     type Extend;
+    /// Output type for interpreter results
     type Output;
 }

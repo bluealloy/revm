@@ -11,6 +11,9 @@ use primitives::{Bytes, U256};
 
 use crate::InstructionContext;
 
+/// Implements the RJUMP instruction.
+/// 
+/// Relative jump with immediate offset (EOF only).
 pub fn rjump<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::BASE);
@@ -20,6 +23,9 @@ pub fn rjump<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     context.interpreter.bytecode.relative_jump(offset + 2);
 }
 
+/// Implements the RJUMPI instruction.
+/// 
+/// Conditional relative jump with immediate offset (EOF only).
 pub fn rjumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
@@ -34,6 +40,9 @@ pub fn rjumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     context.interpreter.bytecode.relative_jump(offset);
 }
 
+/// Implements the RJUMPV instruction.
+/// 
+/// Relative jump via table (EOF only).
 pub fn rjumpv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::CONDITION_JUMP_GAS);
@@ -51,12 +60,18 @@ pub fn rjumpv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     context.interpreter.bytecode.relative_jump(offset);
 }
 
+/// Implements the JUMP instruction.
+/// 
+/// Absolute jump to a position indicated by a value on the stack.
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
     gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
 
+/// Implements the JUMPI instruction.
+/// 
+/// Conditional jump to a position indicated by a value on the stack.
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
@@ -77,12 +92,18 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
     interpreter.bytecode.absolute_jump(target);
 }
 
+/// Implements the JUMPDEST/NOP instruction.
+/// 
+/// Mark a valid destination for jumps (JUMPDEST) or no operation (NOP in EOF).
 pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::JUMPDEST);
 }
 
+/// Implements the CALLF instruction.
+/// 
+/// Call a function in EOF with stack frame management.
 pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::LOW);
@@ -120,6 +141,9 @@ pub fn callf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     context.interpreter.bytecode.absolute_jump(pc);
 }
 
+/// Implements the RETF instruction.
+/// 
+/// Return from a function call in EOF.
 pub fn retf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::RETF_GAS);
@@ -131,6 +155,9 @@ pub fn retf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
     context.interpreter.bytecode.absolute_jump(jump);
 }
 
+/// Implements the JUMPF instruction.
+/// 
+/// Jump to a function in EOF without creating a new stack frame.
 pub fn jumpf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_eof!(context.interpreter);
     gas!(context.interpreter, gas::LOW);
@@ -158,6 +185,9 @@ pub fn jumpf<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     context.interpreter.bytecode.absolute_jump(pc);
 }
 
+/// Implements the PC instruction.
+/// 
+/// Pushes the current program counter onto the stack.
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
@@ -193,6 +223,9 @@ fn return_inner(
         ));
 }
 
+/// Implements the RETURN instruction.
+/// 
+/// Halt execution returning output data.
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     return_inner(context.interpreter, InstructionResult::Return);
 }
