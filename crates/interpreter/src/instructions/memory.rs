@@ -7,6 +7,9 @@ use primitives::U256;
 
 use crate::InstructionContext;
 
+/// Implements the MLOAD instruction.
+///
+/// Loads a 32-byte word from memory.
 pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], top, context.interpreter);
@@ -16,6 +19,9 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
 }
 
+/// Implements the MSTORE instruction.
+///
+/// Stores a 32-byte word to memory.
 pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -27,6 +33,9 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
         .set(offset, &value.to_be_bytes::<32>());
 }
 
+/// Implements the MSTORE8 instruction.
+///
+/// Stores a single byte to memory.
 pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -35,6 +44,9 @@ pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
     context.interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
+/// Implements the MSIZE instruction.
+///
+/// Gets the size of active memory in bytes.
 pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -43,7 +55,9 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     );
 }
 
-// EIP-5656: MCOPY - Memory copying instruction
+/// Implements the MCOPY instruction.
+///
+/// EIP-5656: Memory copying instruction that copies memory from one location to another.
 pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);

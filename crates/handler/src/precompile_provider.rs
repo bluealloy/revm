@@ -8,8 +8,10 @@ use primitives::{hardfork::SpecId, Address, Bytes};
 use std::boxed::Box;
 use std::string::String;
 
+/// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
 pub trait PrecompileProvider<CTX: ContextTr> {
+    /// The output type returned by precompile execution.
     type Output;
 
     /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will always return true.

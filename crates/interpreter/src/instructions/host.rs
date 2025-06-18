@@ -9,6 +9,9 @@ use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HIST
 
 use crate::InstructionContext;
 
+/// Implements the BALANCE instruction.
+///
+/// Gets the balance of the given account.
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
@@ -54,6 +57,9 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     push!(context.interpreter, balance.data);
 }
 
+/// Implements the EXTCODESIZE instruction.
+///
+/// Gets the size of an account's code.
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -101,6 +107,9 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     *top = code_hash.into_u256();
 }
 
+/// Implements the EXTCODECOPY instruction.
+///
+/// Copies a portion of an account's code to memory.
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -139,6 +148,9 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .set_data(memory_offset, code_offset, len, &code);
 }
 
+/// Implements the BLOCKHASH instruction.
+///
+/// Gets the hash of one of the 256 most recent complete blocks.
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -174,6 +186,9 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 }
 
+/// Implements the SLOAD instruction.
+///
+/// Loads a word from storage.
 pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], index, context.interpreter);
 
@@ -194,6 +209,9 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     *index = value.data;
 }
 
+/// Implements the SSTORE instruction.
+///
+/// Stores a word to storage.
 pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_non_staticcall!(context.interpreter);
 
@@ -265,6 +283,9 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
         .tload(context.interpreter.input.target_address(), *index);
 }
 
+/// Implements the LOG0-LOG4 instructions.
+///
+/// Appends log record with N topics.
 pub fn log<const N: usize, H: Host + ?Sized>(
     context: InstructionContext<'_, H, impl InterpreterTypes>,
 ) {
@@ -298,6 +319,9 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     context.host.log(log);
 }
 
+/// Implements the SELFDESTRUCT instruction.
+///
+/// Halt execution and register account for later deletion.
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {

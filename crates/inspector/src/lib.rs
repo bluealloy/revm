@@ -9,6 +9,7 @@
 mod eip3155;
 mod either;
 mod gas;
+/// Handler implementations for inspector integration.
 pub mod handler;
 mod inspect;
 mod inspector;

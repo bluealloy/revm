@@ -28,6 +28,24 @@ pub struct TracerEip3155 {
     memory: Option<String>,
 }
 
+impl std::fmt::Debug for TracerEip3155 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TracerEip3155")
+            .field("gas_inspector", &self.gas_inspector)
+            .field("print_summary", &self.print_summary)
+            .field("stack", &self.stack)
+            .field("pc", &self.pc)
+            .field("opcode", &self.opcode)
+            .field("gas", &self.gas)
+            .field("refunded", &self.refunded)
+            .field("mem_size", &self.mem_size)
+            .field("skip", &self.skip)
+            .field("include_memory", &self.include_memory)
+            .field("memory", &self.memory)
+            .finish()
+    }
+}
+
 // # Output
 // The CUT MUST output a `json` object for EACH operation.
 #[derive(Serialize)]

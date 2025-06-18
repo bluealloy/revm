@@ -6,6 +6,7 @@ use handler::{ExecuteCommitEvm, ExecuteEvm};
 /// It extends the `ExecuteEvm` trait and enabled setting inspector
 ///
 pub trait InspectEvm: ExecuteEvm {
+    /// The inspector type used for inspecting EVM execution.
     type Inspector;
 
     /// Set the inspector for the EVM.

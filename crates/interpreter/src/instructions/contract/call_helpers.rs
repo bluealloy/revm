@@ -7,6 +7,7 @@ use context_interface::{context::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
 use primitives::{hardfork::SpecId::*, U256};
 
+/// Gets memory input and output ranges for call instructions.
 #[inline]
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
@@ -43,6 +44,7 @@ pub fn resize_memory(
     Some(offset..offset + len)
 }
 
+/// Calculates gas cost and limit for call instructions.
 #[inline]
 pub fn calc_call_gas(
     interpreter: &mut Interpreter<impl InterpreterTypes>,

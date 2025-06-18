@@ -7,20 +7,28 @@ extern crate alloc as std;
 
 // Mainnet related handlers.
 
+/// EVM execution API traits and implementations.
 pub mod api;
+/// Core EVM traits for execution and frame management.
 pub mod evm;
+/// EVM execution logic and utilities.
 pub mod execution;
 mod frame;
 mod frame_data;
+/// Handler implementation for orchestrating EVM execution.
 pub mod handler;
+/// EVM instruction set implementations and tables.
 pub mod instructions;
 mod item_or_result;
 mod mainnet_builder;
 mod mainnet_handler;
+/// Post-execution operations including gas refunds and state finalization.
 pub mod post_execution;
 pub mod pre_execution;
 mod precompile_provider;
+/// System call implementations for special EVM operations.
 pub mod system_call;
+/// Transaction and environment validation utilities.
 pub mod validation;
 
 // Public exports

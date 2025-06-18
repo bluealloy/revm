@@ -65,7 +65,9 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
     }
 }
 
+/// Trait for converting types into U256 values.
 pub trait IntoU256 {
+    /// Converts the implementing type into a U256 value.
     fn into_u256(self) -> U256;
 }
 
@@ -81,7 +83,9 @@ impl IntoU256 for B256 {
     }
 }
 
+/// Trait for converting types into Address values.
 pub trait IntoAddress {
+    /// Converts the implementing type into an Address value.
     fn into_address(self) -> Address;
 }
 

@@ -7,12 +7,14 @@ use crate::{
 use core::cmp::Ordering;
 use primitives::U256;
 
+/// Implements the LT instruction - less than comparison.
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
+/// Implements the GT instruction - greater than comparison.
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -20,6 +22,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
     *op2 = U256::from(op1 > *op2);
 }
 
+/// Implements the CLZ instruction - count leading zeros.
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, OSAKA);
     gas!(context.interpreter, gas::VERYLOW);
@@ -29,6 +32,9 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     *op1 = U256::from(leading_zeros);
 }
 
+/// Implements the SLT instruction.
+///
+/// Signed less than comparison of two values from stack.
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -36,6 +42,9 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
+/// Implements the SGT instruction.
+///
+/// Signed greater than comparison of two values from stack.
 pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -43,6 +52,9 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
+/// Implements the EQ instruction.
+///
+/// Equality comparison of two values from stack.
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -50,18 +62,27 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
     *op2 = U256::from(op1 == *op2);
 }
 
+/// Implements the ISZERO instruction.
+///
+/// Checks if the top stack value is zero.
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
     *op1 = U256::from(op1.is_zero());
 }
 
+/// Implements the AND instruction.
+///
+/// Bitwise AND of two values from stack.
 pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1 & *op2;
 }
 
+/// Implements the OR instruction.
+///
+/// Bitwise OR of two values from stack.
 pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -69,6 +90,9 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     *op2 = op1 | *op2;
 }
 
+/// Implements the XOR instruction.
+///
+/// Bitwise XOR of two values from stack.
 pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -76,6 +100,9 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     *op2 = op1 ^ *op2;
 }
 
+/// Implements the NOT instruction.
+///
+/// Bitwise NOT (negation) of the top stack value.
 pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
@@ -83,6 +110,9 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     *op1 = !*op1;
 }
 
+/// Implements the BYTE instruction.
+///
+/// Extracts a single byte from a word at a given index.
 pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);

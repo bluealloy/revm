@@ -8,12 +8,18 @@ use primitives::{Bytes, U256};
 
 use crate::InstructionContext;
 
+/// Implements the JUMP instruction.
+///
+/// Unconditional jump to a valid destination.
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
     gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
 
+/// Implements the JUMPI instruction.
+///
+/// Conditional jump to a valid destination if condition is true.
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
@@ -24,6 +30,9 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 }
 
 #[inline(always)]
+/// Internal helper function for jump operations.
+///
+/// Validates jump target and performs the actual jump.
 fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
@@ -34,10 +43,16 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
     interpreter.bytecode.absolute_jump(target);
 }
 
+/// Implements the JUMPDEST instruction.
+///
+/// Marks a valid destination for jump operations.
 pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::JUMPDEST);
 }
 
+/// Implements the PC instruction.
+///
+/// Pushes the current program counter onto the stack.
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
@@ -48,6 +63,9 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 }
 
 #[inline]
+/// Internal helper function for return operations.
+///
+/// Handles memory data retrieval and sets the return action.
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
@@ -73,6 +91,9 @@ fn return_inner(
         ));
 }
 
+/// Implements the RETURN instruction.
+///
+/// Halts execution and returns data from memory.
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     return_inner(context.interpreter, InstructionResult::Return);
 }

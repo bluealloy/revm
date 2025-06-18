@@ -15,6 +15,10 @@ use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
 use state::EvmState;
 
+/// Trait for errors that can occur during EVM execution.
+///
+/// This trait represents the minimal error requirements for EVM execution,
+/// ensuring that all necessary error types can be converted into the handler's error type.
 pub trait EvmTrError<EVM: EvmTr>:
     From<InvalidTransaction>
     + From<InvalidHeader>

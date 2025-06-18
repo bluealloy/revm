@@ -16,6 +16,9 @@ use std::boxed::Box;
 
 use crate::InstructionContext;
 
+/// Implements the CREATE/CREATE2 instruction.
+///
+/// Creates a new contract with provided bytecode.
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -99,6 +102,9 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the CALL instruction.
+///
+/// Message call with value transfer to another account.
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
@@ -160,6 +166,9 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         ))));
 }
 
+/// Implements the CALLCODE instruction.
+///
+/// Message call with alternative account's code.
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -215,6 +224,9 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the DELEGATECALL instruction.
+///
+/// Message call with alternative account's code but same sender and value.
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
@@ -263,6 +275,9 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         ))));
 }
 
+/// Implements the STATICCALL instruction.
+///
+/// Static message call (cannot modify state).
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {

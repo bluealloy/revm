@@ -12,9 +12,11 @@ use primitives::Bytes;
 use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
 use std::boxed::Box;
 
+/// Input data for creating a new execution frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameInput {
+    /// No input data (empty frame)
     Empty,
     /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL` instruction called.
     Call(Box<CallInputs>),
@@ -22,6 +24,7 @@ pub enum FrameInput {
     Create(Box<CreateInputs>),
 }
 
+/// Initialization data for creating a new execution frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FrameInit {
@@ -39,6 +42,7 @@ impl AsMut<Self> for FrameInput {
     }
 }
 
+/// Actions that the interpreter can request from the host environment.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {

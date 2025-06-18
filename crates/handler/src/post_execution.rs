@@ -8,6 +8,7 @@ use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 use state::EvmState;
 
+/// Ensures minimum gas floor is spent according to EIP-7623.
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
     // spend at least a gas_floor amount of gas.
@@ -18,6 +19,7 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
     }
 }
 
+/// Calculates and applies gas refunds based on the specification.
 pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.record_refund(eip7702_refund);
     // Calculate gas refund for transaction.
@@ -26,6 +28,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
     gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
 }
 
+/// Reimburses the caller for unused gas.
 #[inline]
 pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
@@ -47,6 +50,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
     Ok(())
 }
 
+/// Rewards the beneficiary with transaction fees.
 #[inline]
 pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,

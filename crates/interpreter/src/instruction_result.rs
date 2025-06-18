@@ -7,6 +7,9 @@ use core::fmt::Debug;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Result of executing an EVM instruction.
+/// This enum represents all possible outcomes when executing an instruction,
+/// including successful execution, reverts, and various error conditions.
 pub enum InstructionResult {
     /// Encountered a `STOP` opcode
     #[default]
@@ -132,6 +135,8 @@ impl From<HaltReason> for InstructionResult {
     }
 }
 
+/// Macro that matches all successful instruction results.
+/// Used in pattern matching to handle all successful execution outcomes.
 #[macro_export]
 macro_rules! return_ok {
     () => {
@@ -141,6 +146,8 @@ macro_rules! return_ok {
     };
 }
 
+/// Macro that matches all revert instruction results.
+/// Used in pattern matching to handle all revert outcomes.
 #[macro_export]
 macro_rules! return_revert {
     () => {
@@ -153,6 +160,8 @@ macro_rules! return_revert {
     };
 }
 
+/// Macro that matches all error instruction results.
+/// Used in pattern matching to handle all error outcomes.
 #[macro_export]
 macro_rules! return_error {
     () => {
@@ -190,6 +199,7 @@ impl InstructionResult {
     }
 
     #[inline]
+    /// Returns whether the result is a success or revert (not an error).
     pub const fn is_ok_or_revert(self) -> bool {
         matches!(self, crate::return_ok!() | crate::return_revert!())
     }
@@ -217,11 +227,18 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+/// Represents the outcome of instruction execution, distinguishing between
+/// success, revert, halt (error), fatal external errors, and internal results.
 pub enum SuccessOrHalt<HaltReasonTr> {
+    /// Successful execution with the specific success reason.
     Success(SuccessReason),
+    /// Execution reverted.
     Revert,
+    /// Execution halted due to an error.
     Halt(HaltReasonTr),
+    /// Fatal external error occurred.
     FatalExternalError,
+    /// Internal execution result not exposed externally.
     Internal(InternalResult),
 }
 
