@@ -96,6 +96,7 @@ std = [
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
+	"ark-std/std",
 	"p256/std",
 	"rug?/std",
 ]

@@ -74,6 +74,7 @@ serde = [
 	"context/serde",
 	"database/serde",
 	"database-interface/serde",
-	"interpreter/serde"
+	"interpreter/serde",
+	"derive-where/serde"
 ]
 serde-json = ["serde"]

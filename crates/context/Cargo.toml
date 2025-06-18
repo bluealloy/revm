@@ -53,6 +53,7 @@ serde = [
 	"bytecode/serde",
 	"database/serde",
 	"database-interface/serde",
+	"derive-where/serde",
 ]
 dev = [
 	"memory_limit",
