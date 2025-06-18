@@ -28,6 +28,7 @@ where
     Self::Evm:
         InspectorEvmTr<Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, Self::IT>>,
 {
+    /// The interpreter types used by this handler.
     type IT: InterpreterTypes;
 
     /// Entry point for inspection.
@@ -121,6 +122,7 @@ where
     }
 }
 
+/// Handles the start of a frame by calling the appropriate inspector method.
 pub fn frame_start<CTX, INTR: InterpreterTypes>(
     context: &mut CTX,
     inspector: &mut impl Inspector<CTX, INTR>,
@@ -147,6 +149,7 @@ pub fn frame_start<CTX, INTR: InterpreterTypes>(
     None
 }
 
+/// Handles the end of a frame by calling the appropriate inspector method.
 pub fn frame_end<CTX, INTR: InterpreterTypes>(
     context: &mut CTX,
     inspector: &mut impl Inspector<CTX, INTR>,

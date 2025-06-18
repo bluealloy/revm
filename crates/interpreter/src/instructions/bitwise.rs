@@ -7,12 +7,14 @@ use crate::{
 use core::cmp::Ordering;
 use primitives::U256;
 
+/// Implements the LT instruction - less than comparison.
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
+/// Implements the GT instruction - greater than comparison.
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -20,6 +22,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
     *op2 = U256::from(op1 > *op2);
 }
 
+/// Implements the CLZ instruction - count leading zeros.
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, OSAKA);
     gas!(context.interpreter, gas::VERYLOW);

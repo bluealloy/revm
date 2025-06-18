@@ -23,6 +23,7 @@ pub trait InspectorEvmTr:
     Context: ContextTr<Journal: JournalExt>,
 >
 {
+    /// The inspector type used for EVM execution inspection.
     type Inspector: Inspector<Self::Context, EthInterpreter>;
 
     /// Returns a mutable reference to the inspector.
@@ -100,6 +101,7 @@ pub trait InspectorEvmTr:
 
 /// Trait that extends the [`FrameTr`] trait with additional functionality that is needed for inspection.
 pub trait InspectorFrame: FrameTr {
+    /// The interpreter types used by this frame.
     type IT: InterpreterTypes;
 
     /// Returns a mutable reference to the interpreter.

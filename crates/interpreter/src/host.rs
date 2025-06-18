@@ -271,6 +271,7 @@ impl<CTX: ContextTr> Host for CTX {
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
+#[derive(Debug)]
 pub struct DummyHost;
 
 impl Host for DummyHost {

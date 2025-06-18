@@ -125,6 +125,7 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool) -> Opt
 }
 
 #[inline]
+/// Calculates the gas cost for copy operations based on data length.
 pub const fn copy_cost(base_cost: u64, len: usize) -> Option<u64> {
     base_cost.checked_add(tri!(cost_per_word(len, COPY)))
 }

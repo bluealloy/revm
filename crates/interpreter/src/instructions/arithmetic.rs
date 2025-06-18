@@ -6,24 +6,28 @@ use crate::{
 };
 use primitives::U256;
 
+/// Implements the ADD instruction - adds two values from stack.
 pub fn add<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_add(*op2);
 }
 
+/// Implements the MUL instruction - multiplies two values from stack.
 pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_mul(*op2);
 }
 
+/// Implements the SUB instruction - subtracts two values from stack.
 pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_sub(*op2);
 }
 
+/// Implements the DIV instruction - divides two values from stack.
 pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -64,6 +68,7 @@ pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     *op3 = op1.mul_mod(op2, *op3)
 }
 
+/// Implements the EXP instruction - exponentiates two values from stack.
 pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     let spec_id = context.interpreter.runtime_flag.spec_id();
     popn_top!([op1], op2, context.interpreter);

@@ -2,18 +2,31 @@
 
 #[macro_use]
 pub mod macros;
+/// Arithmetic operations (ADD, SUB, MUL, DIV, etc.).
 pub mod arithmetic;
+/// Bitwise operations and comparisons (AND, OR, XOR, LT, GT, etc.).
 pub mod bitwise;
+/// Block information access (COINBASE, TIMESTAMP, NUMBER, etc.).
 pub mod block_info;
+/// Contract operations (CALL, CREATE, DELEGATECALL, etc.).
 pub mod contract;
+/// Control flow operations (JUMP, JUMPI, PC, RETURN, etc.).
 pub mod control;
+/// Data operations for EOF (DATALOAD, DATASIZE, etc.).
 pub mod data;
+/// Host-dependent operations (storage, logs, balance, etc.).
 pub mod host;
+/// 256-bit integer operations for signed arithmetic.
 pub mod i256;
+/// Memory operations (MLOAD, MSTORE, MSIZE, etc.).
 pub mod memory;
+/// Stack operations (PUSH, POP, DUP, SWAP, etc.).
 pub mod stack;
+/// System operations (ADDRESS, CALLER, CALLVALUE, etc.).
 pub mod system;
+/// Transaction information access (ORIGIN, GASPRICE, etc.).
 pub mod tx_info;
+/// Utility functions and helpers for instruction implementations.
 pub mod utility;
 
 use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};

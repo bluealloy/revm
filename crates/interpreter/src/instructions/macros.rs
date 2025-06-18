@@ -22,6 +22,8 @@ macro_rules! require_non_staticcall {
     };
 }
 
+/// Macro for optional try - returns early if the expression evaluates to None.
+/// Similar to the `?` operator but for use in instruction implementations.
 #[macro_export]
 macro_rules! otry {
     ($expression: expr) => {{

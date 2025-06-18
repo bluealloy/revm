@@ -163,6 +163,8 @@ impl Gas {
     }
 }
 
+/// Result of attempting to extend memory during execution.
+#[derive(Debug)]
 pub enum MemoryExtensionResult {
     /// Memory was extended.
     Extended,
@@ -186,6 +188,7 @@ pub struct MemoryGas {
 }
 
 impl MemoryGas {
+    /// Creates a new `MemoryGas` instance with zero memory allocation.
     pub const fn new() -> Self {
         Self {
             words_num: 0,
@@ -194,6 +197,8 @@ impl MemoryGas {
     }
 
     #[inline]
+    /// Records a new memory length and calculates additional cost if memory is expanded.
+    /// Returns the additional gas cost required, or None if no expansion is needed.
     pub fn record_new_len(&mut self, new_num: usize) -> Option<u64> {
         if new_num <= self.words_num {
             return None;
