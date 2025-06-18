@@ -20,10 +20,17 @@ pub mod k256;
 pub mod parity_libsecp256k1;
 
 use crate::{
-    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
+    utilities::right_pad,
+    PrecompileError,
+    PrecompileOutput,
+    PrecompileResult,
     PrecompileWithAddress,
 };
-use primitives::{alloy_primitives::B512, Bytes, B256};
+#[cfg(feature = "std")]
+use primitives::alloy_primitives::B512;
+use primitives::Bytes;
+#[cfg(feature = "std")]
+use primitives::B256;
 
 /// `ecrecover` precompile, containing address and function to run.
 pub const ECRECOVER: PrecompileWithAddress =
@@ -55,7 +62,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
 
-
+#[allow(missing_docs)]
 #[cfg(not(feature = "std"))]
 #[link(wasm_import_module = "fluentbase_v1preview")]
 extern "C" {
@@ -68,6 +75,7 @@ extern "C" {
     ) -> i32;
 }
 
+#[allow(missing_docs)]
 #[cfg(not(feature = "std"))]
 pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
