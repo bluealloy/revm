@@ -8,7 +8,7 @@ use primitives::U256;
 use crate::InstructionContext;
 
 /// Implements the MLOAD instruction.
-/// 
+///
 /// Loads a 32-byte word from memory.
 pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -20,7 +20,7 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 }
 
 /// Implements the MSTORE instruction.
-/// 
+///
 /// Stores a 32-byte word to memory.
 pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -34,7 +34,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 }
 
 /// Implements the MSTORE8 instruction.
-/// 
+///
 /// Stores a single byte to memory.
 pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
@@ -45,7 +45,7 @@ pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
 }
 
 /// Implements the MSIZE instruction.
-/// 
+///
 /// Gets the size of active memory in bytes.
 pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
@@ -56,7 +56,7 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 }
 
 /// Implements the MCOPY instruction.
-/// 
+///
 /// EIP-5656: Memory copying instruction that copies memory from one location to another.
 pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
