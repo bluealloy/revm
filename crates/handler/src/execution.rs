@@ -2,11 +2,11 @@ use context_interface::Transaction;
 use interpreter::{
     CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
 };
-use primitives::{hardfork::SpecId, TxKind};
+use primitives::TxKind;
 use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
-pub fn create_init_frame(tx: &impl Transaction, _spec: SpecId, gas_limit: u64) -> FrameInput {
+pub fn create_init_frame(tx: &impl Transaction, gas_limit: u64) -> FrameInput {
     let input = tx.input().clone();
 
     match tx.kind() {
