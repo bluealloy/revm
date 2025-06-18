@@ -459,12 +459,12 @@ where
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
-            let bytecode = Bytecode::new_raw(compilation_result.rwasm_bytecode);
+            let bytecode = Bytecode::new_raw(compilation_result.rwasm_module.serialize().into());
             // create an account, transfer funds and make the journal checkpoint.
             context
                 .journal()
                 .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
-            (bytecode, compilation_result.constructor_params, None)
+            (bytecode, compilation_result.constructor_params.into(), None)
         } else {
             let precompile_runtime = if inputs.init_code.len() > SVM_ELF_MAGIC_BYTES.len()
                 && inputs.init_code[..SVM_ELF_MAGIC_BYTES.len()] == SVM_ELF_MAGIC_BYTES

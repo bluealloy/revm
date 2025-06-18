@@ -116,8 +116,7 @@ pub enum InstructionResult {
     BadConversionToInteger,
     BadSignature,
     OutOfFuel,
-    GrowthOperationLimited,
-    UnresolvedFunction,
+    UnknownExternalFunction,
 }
 
 impl From<TransferError> for InstructionResult {
@@ -191,8 +190,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::BadConversionToInteger => Self::BadConversionToInteger,
             HaltReason::BadSignature => Self::BadSignature,
             HaltReason::OutOfFuel => Self::OutOfFuel,
-            HaltReason::GrowthOperationLimited => Self::GrowthOperationLimited,
-            HaltReason::UnresolvedFunction => Self::UnresolvedFunction,
+            HaltReason::UnknownExternalFunction => Self::UnknownExternalFunction,
         }
     }
 }
@@ -267,8 +265,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::BadConversionToInteger
             | $crate::InstructionResult::BadSignature
             | $crate::InstructionResult::OutOfFuel
-            | $crate::InstructionResult::GrowthOperationLimited
-            | $crate::InstructionResult::UnresolvedFunction
+            | $crate::InstructionResult::UnknownExternalFunction
     };
 }
 
@@ -371,15 +368,15 @@ impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
 impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonTr> {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
+            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), /* used only in interpreter loop */
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
-            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), // not gonna happen for first call
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), // Check for first call is done separately.
+            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), /* used only in interpreter loop */
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), /* not gonna happen for first call */
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), /* Check for first call is done separately. */
             InstructionResult::OutOfGas => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic).into())
             }
@@ -414,7 +411,7 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow.into()),
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset.into()),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision.into()),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), // Check for first call is done separately.
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), /* Check for first call is done separately. */
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError.into()),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow.into()),
             InstructionResult::CreateContractSizeLimit
@@ -451,8 +448,12 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::MalformedBuiltinParams => {
                 Self::Halt(HaltReason::MalformedBuiltinParams.into())
             }
-            InstructionResult::CallDepthOverflow => Self::Halt(HaltReason::CallDepthOverflow.into()),
-            InstructionResult::NonNegativeExitCode => Self::Halt(HaltReason::NonNegativeExitCode.into()),
+            InstructionResult::CallDepthOverflow => {
+                Self::Halt(HaltReason::CallDepthOverflow.into())
+            }
+            InstructionResult::NonNegativeExitCode => {
+                Self::Halt(HaltReason::NonNegativeExitCode.into())
+            }
             InstructionResult::UnknownError => Self::Halt(HaltReason::UnknownError.into()),
             InstructionResult::InputOutputOutOfBounds => {
                 Self::Halt(HaltReason::InputOutputOutOfBounds.into())
@@ -460,9 +461,13 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::UnreachableCodeReached => {
                 Self::Halt(HaltReason::UnreachableCodeReached.into())
             }
-            InstructionResult::MemoryOutOfBounds => Self::Halt(HaltReason::MemoryOutOfBounds.into()),
+            InstructionResult::MemoryOutOfBounds => {
+                Self::Halt(HaltReason::MemoryOutOfBounds.into())
+            }
             InstructionResult::TableOutOfBounds => Self::Halt(HaltReason::TableOutOfBounds.into()),
-            InstructionResult::IndirectCallToNull => Self::Halt(HaltReason::IndirectCallToNull.into()),
+            InstructionResult::IndirectCallToNull => {
+                Self::Halt(HaltReason::IndirectCallToNull.into())
+            }
             InstructionResult::IntegerDivisionByZero => {
                 Self::Halt(HaltReason::IntegerDivisionByZero.into())
             }
@@ -472,10 +477,9 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             }
             InstructionResult::BadSignature => Self::Halt(HaltReason::BadSignature.into()),
             InstructionResult::OutOfFuel => Self::Halt(HaltReason::OutOfFuel.into()),
-            InstructionResult::GrowthOperationLimited => {
-                Self::Halt(HaltReason::GrowthOperationLimited.into())
+            InstructionResult::UnknownExternalFunction => {
+                Self::Halt(HaltReason::UnknownExternalFunction.into())
             }
-            InstructionResult::UnresolvedFunction => Self::Halt(HaltReason::UnresolvedFunction.into()),
         }
     }
 }

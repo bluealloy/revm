@@ -26,7 +26,7 @@ use fluentbase_sdk::{
 };
 use revm::{
     bytecode::Bytecode,
-    context::{result::FromStringError, Block, Cfg, ContextTr, Transaction},
+    context::{result::FromStringError, Block, Cfg, ContextTr, LocalContextTr, Transaction},
     handler::EvmTr,
     interpreter::{
         interpreter::EthInterpreter,
@@ -96,12 +96,14 @@ pub(crate) fn execute_rwasm_frame<
         .expect("revm: unable to encode shared context input")
         .to_vec();
     let input = interpreter.input.input().clone();
-    let bytes = match input {
-        CallInput::Bytes(vec) => vec,
-        _ => unreachable!("not bytes found in call input "), /* TODO(khasan): this shared memory
-                                                              * thing can be returned here? */
+    match input {
+        CallInput::SharedBuffer(range) => {
+            if let Some(inputs_bytes) = context.local().shared_memory_buffer_slice(range.clone()) {
+                context_input.extend_from_slice(&inputs_bytes);
+            }
+        }
+        CallInput::Bytes(input_bytes) => context_input.extend_from_slice(input_bytes.as_ref()),
     };
-    context_input.extend_from_slice(&bytes);
 
     let rwasm_code_hash = interpreter.bytecode.hash().unwrap();
 
@@ -365,6 +367,7 @@ fn process_halt(
         ExitCode::NonNegativeExitCode => InstructionResult::NonNegativeExitCode,
         ExitCode::UnknownError => InstructionResult::UnknownError,
         ExitCode::InputOutputOutOfBounds => InstructionResult::InputOutputOutOfBounds,
+        ExitCode::PrecompileError => InstructionResult::PrecompileError,
         ExitCode::UnreachableCodeReached => InstructionResult::UnreachableCodeReached,
         ExitCode::MemoryOutOfBounds => InstructionResult::MemoryOutOfBounds,
         ExitCode::TableOutOfBounds => InstructionResult::TableOutOfBounds,
@@ -375,9 +378,7 @@ fn process_halt(
         ExitCode::StackOverflow => InstructionResult::StackOverflow,
         ExitCode::BadSignature => InstructionResult::BadSignature,
         ExitCode::OutOfFuel => InstructionResult::OutOfFuel,
-        ExitCode::GrowthOperationLimited => InstructionResult::GrowthOperationLimited,
-        ExitCode::UnresolvedFunction => InstructionResult::UnresolvedFunction,
-        ExitCode::PrecompileError => InstructionResult::PrecompileError,
+        ExitCode::UnknownExternalFunction => InstructionResult::UnknownExternalFunction,
     };
     InterpreterAction::Return {
         result: InterpreterResult {
