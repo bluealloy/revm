@@ -297,7 +297,7 @@ pub trait Handler {
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(ctx.tx(), gas_limit),
+            frame_input: execution::create_init_frame(ctx.tx(), ctx.cfg().spec().into(), gas_limit),
         })
     }
 

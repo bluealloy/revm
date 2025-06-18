@@ -158,6 +158,11 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
     fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
         self.base.authorization_list()
     }
+
+    // TODO(EOF)
+    // fn initcodes(&self) -> &[Bytes] {
+    //     self.base.initcodes()
+    // }
 }
 
 impl<T: Transaction> OpTxTr for OpTransaction<T> {

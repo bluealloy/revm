@@ -416,6 +416,8 @@ pub enum InvalidTransaction {
     },
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
+    /// EOF create should have `to` address
+    EofCreateShouldHaveToAddress,
     /// EIP-7702 is not enabled.
     AuthorizationListNotSupported,
     /// EIP-7702 transaction has invalid fields set.
@@ -432,6 +434,22 @@ pub enum InvalidTransaction {
     Eip7702NotSupported,
     /// EIP-7873 is not supported.
     Eip7873NotSupported,
+    // TODO (EOF)
+    // /// EIP-7873 needs to have at least one initcode.
+    // Eip7873EmptyInitcodeList,
+    // /// EIP-7873 initcode can't be zero length.
+    // Eip7873EmptyInitcode {
+    //     i: usize,
+    // },
+    // /// EIP-7873 initcodes can't be more than [`MAX_INITCODE_COUNT`].
+    // Eip7873TooManyInitcodes {
+    //     size: usize,
+    // },
+    // /// EIP-7873 initcodes can't be more than [`MAX_INITCODE_SIZE`].
+    // Eip7873InitcodeTooLarge {
+    //     i: usize,
+    //     size: usize,
+    // },
     /// EIP-7873 initcode transaction should have `to` address.
     Eip7873MissingTarget,
 }
@@ -515,6 +533,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "too many blobs, have {have}, max {max}")
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
+            Self::EofCreateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
             Self::AuthorizationListNotSupported => write!(f, "authorization list not supported"),
             Self::AuthorizationListInvalidFields => {
                 write!(f, "authorization list tx has invalid fields")
@@ -525,6 +544,25 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
             Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
             Self::Eip7873NotSupported => write!(f, "Eip7873 is not supported"),
+            // TODO(EOF)
+            // Self::Eip7873EmptyInitcodeList => {
+            //     write!(f, "Eip7873 initcode list should have at least one initcode")
+            // }
+            // Self::Eip7873EmptyInitcode { i } => {
+            //     write!(f, "Eip7873 initcode {i} can't be zero length")
+            // }
+            // Self::Eip7873TooManyInitcodes { size } => {
+            //     write!(
+            //         f,
+            //         "Eip7873 initcodes can't be more than {MAX_INITCODE_COUNT}, have {size}"
+            //     )
+            // }
+            // Self::Eip7873InitcodeTooLarge { i, size } => {
+            //     write!(
+            //         f,
+            //         "Eip7873 initcode {i} can't be more than {MAX_INITCODE_SIZE}, have {size}"
+            //     )
+            // }
             Self::Eip7873MissingTarget => {
                 write!(f, "Eip7873 initcode transaction should have `to` address")
             }
@@ -563,6 +601,8 @@ pub enum SuccessReason {
     Return,
     /// Self destruct opcode.
     SelfDestruct,
+    /// EOF [`state::bytecode::opcode::RETURNCONTRACT`] opcode.
+    EofReturnContract,
 }
 
 /// Indicates that the EVM has experienced an exceptional halt.
@@ -611,6 +651,15 @@ pub enum HaltReason {
     OutOfFunds,
     /// Call is too deep.
     CallTooDeep,
+
+    /// Aux data overflow, new aux data is larger than [u16] max size.
+    EofAuxDataOverflow,
+    /// Aux data is smaller than already present data size.
+    EofAuxDataTooSmall,
+    /// EOF Subroutine stack overflow
+    SubRoutineStackOverflow,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
 }
 
 /// Out of gas errors.

@@ -18,6 +18,8 @@ pub enum InstructionResult {
     Return,
     /// Self-destruct the current contract.
     SelfDestruct,
+    /// Return a contract (used in contract creation).
+    ReturnContract,
 
     // Revert Codes
     /// Revert the transaction.
@@ -80,6 +82,18 @@ pub enum InstructionResult {
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
+    /// `RETURNCONTRACT` called outside init EOF code.
+    ReturnContractInNotInitEOF,
+    /// Legacy contract is calling opcode that is enabled only in EOF.
+    EOFOpcodeDisabledInLegacy,
+    /// Stack overflow in EOF subroutine function calls.
+    SubRoutineStackOverflow,
+    /// Aux data overflow, new aux data is larger than `u16` max size.
+    EofAuxDataOverflow,
+    /// Aux data is smaller than already present data size.
+    EofAuxDataTooSmall,
+    /// `EXT*CALL` target address needs to be padded with 0s.
+    InvalidEXTCALLTarget,
 }
 
 impl From<TransferError> for InstructionResult {
@@ -98,6 +112,7 @@ impl From<SuccessReason> for InstructionResult {
             SuccessReason::Return => InstructionResult::Return,
             SuccessReason::Stop => InstructionResult::Stop,
             SuccessReason::SelfDestruct => InstructionResult::SelfDestruct,
+            SuccessReason::EofReturnContract => InstructionResult::ReturnContract,
         }
     }
 }
@@ -131,6 +146,10 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
             HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
+            HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
+            HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
+            HaltReason::SubRoutineStackOverflow => Self::SubRoutineStackOverflow,
+            HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
         }
     }
 }
@@ -143,6 +162,7 @@ macro_rules! return_ok {
         $crate::InstructionResult::Stop
             | $crate::InstructionResult::Return
             | $crate::InstructionResult::SelfDestruct
+            | $crate::InstructionResult::ReturnContract
     };
 }
 
@@ -188,6 +208,12 @@ macro_rules! return_error {
             | $crate::InstructionResult::CreateContractStartingWithEF
             | $crate::InstructionResult::CreateInitCodeSizeLimit
             | $crate::InstructionResult::FatalExternalError
+            | $crate::InstructionResult::ReturnContractInNotInitEOF
+            | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
+            | $crate::InstructionResult::SubRoutineStackOverflow
+            | $crate::InstructionResult::EofAuxDataTooSmall
+            | $crate::InstructionResult::EofAuxDataOverflow
+            | $crate::InstructionResult::InvalidEXTCALLTarget
     };
 }
 
@@ -314,7 +340,9 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::ReentrancySentryOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::ReentrancySentry).into())
             }
-            InstructionResult::OpcodeNotFound => Self::Halt(HaltReason::OpcodeNotFound.into()),
+            InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
+                Self::Halt(HaltReason::OpcodeNotFound.into())
+            }
             InstructionResult::CallNotAllowedInsideStatic => {
                 Self::Halt(HaltReason::CallNotAllowedInsideStatic.into())
             } // first call is not static call
@@ -341,6 +369,22 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             // TODO : (EOF) Add proper Revert subtype.
             InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
+            InstructionResult::EOFOpcodeDisabledInLegacy => {
+                Self::Halt(HaltReason::OpcodeNotFound.into())
+            }
+            InstructionResult::SubRoutineStackOverflow => {
+                Self::Halt(HaltReason::SubRoutineStackOverflow.into())
+            }
+            InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
+            InstructionResult::EofAuxDataOverflow => {
+                Self::Halt(HaltReason::EofAuxDataOverflow.into())
+            }
+            InstructionResult::EofAuxDataTooSmall => {
+                Self::Halt(HaltReason::EofAuxDataTooSmall.into())
+            }
+            InstructionResult::InvalidEXTCALLTarget => {
+                Self::Halt(HaltReason::InvalidEXTCALLTarget.into())
+            }
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
             }

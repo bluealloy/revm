@@ -8,6 +8,7 @@ Usage: revme <COMMAND>
 
 Commands:
   statetest       Execute Ethereum state tests
+  eof-validation  Execute EOF validation tests
   evm             Run arbitrary EVM bytecode
   bytecode        Print the structure of an EVM bytecode
   bench           Run bench from specified list

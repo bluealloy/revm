@@ -383,6 +383,9 @@ pub fn execute_test_suite(
                     .flatten()
                     .unwrap_or_default();
 
+                // TODO(EOF)
+                //tx.initcodes = unit.transaction.initcodes.clone().unwrap_or_default();
+
                 tx.authorization_list = unit
                     .transaction
                     .authorization_list

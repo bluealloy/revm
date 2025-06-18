@@ -10,13 +10,22 @@ use serde::{Deserialize, Serialize};
 pub struct RuntimeFlags {
     /// Whether the current execution context is static (read-only).
     pub is_static: bool,
-    /// The current EVM specification ID.
+    pub is_eof_init: bool,
+    pub is_eof: bool,
     pub spec_id: SpecId,
 }
 
 impl RuntimeFlag for RuntimeFlags {
     fn is_static(&self) -> bool {
         self.is_static
+    }
+
+    fn is_eof(&self) -> bool {
+        self.is_eof
+    }
+
+    fn is_eof_init(&self) -> bool {
+        self.is_eof_init
     }
 
     fn spec_id(&self) -> SpecId {

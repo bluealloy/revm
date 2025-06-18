@@ -1,5 +1,6 @@
 pub mod bench;
 pub mod bytecode;
+pub mod eofvalidation;
 pub mod evmrunner;
 pub mod statetest;
 
@@ -11,6 +12,8 @@ use clap::Parser;
 pub enum MainCmd {
     /// Execute Ethereum state tests.
     Statetest(statetest::Cmd),
+    /// Execute EOF validation tests.
+    EofValidation(eofvalidation::Cmd),
     /// Run arbitrary EVM bytecode.
     Evm(evmrunner::Cmd),
     /// Print the structure of an EVM bytecode.
@@ -25,6 +28,11 @@ pub enum Error {
     Statetest(#[from] statetest::Error),
     #[error(transparent)]
     EvmRunnerErrors(#[from] evmrunner::Errors),
+    #[error("Eof validation failed: {:?}/{total_tests}", total_tests-failed_test)]
+    EofValidation {
+        failed_test: usize,
+        total_tests: usize,
+    },
     #[error("Custom error: {0}")]
     Custom(&'static str),
 }
@@ -33,6 +41,7 @@ impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
             Self::Statetest(cmd) => cmd.run()?,
+            Self::EofValidation(cmd) => cmd.run()?,
             Self::Evm(cmd) => cmd.run()?,
             Self::Bytecode(cmd) => {
                 cmd.run();

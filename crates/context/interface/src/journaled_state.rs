@@ -5,7 +5,10 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
-use state::{Account, Bytecode};
+use state::{
+    bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+    Account, Bytecode,
+};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
@@ -141,6 +144,8 @@ pub trait JournalTr {
     }
 
     /// Returns account code bytes and if address is cold loaded.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
     fn code(
         &mut self,
@@ -149,12 +154,20 @@ pub trait JournalTr {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
-        let code = code.original_bytes();
+
+        let code = if code.is_eof() {
+            EOF_MAGIC_BYTES.clone()
+        } else {
+            code.original_bytes()
+        };
 
         Ok(StateLoad::new(code, a.is_cold))
     }
 
     /// Gets code hash of account.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC_HASH`
+    /// (the hash of `0xEF00`).
     fn code_hash(
         &mut self,
         address: Address,
@@ -164,9 +177,13 @@ pub trait JournalTr {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let _code = acc.info.code.as_ref().unwrap();
+        let code = acc.info.code.as_ref().unwrap();
 
-        let hash = acc.info.code_hash;
+        let hash = if code.is_eof() {
+            EOF_MAGIC_HASH
+        } else {
+            acc.info.code_hash
+        };
 
         Ok(StateLoad::new(hash, acc.is_cold))
     }

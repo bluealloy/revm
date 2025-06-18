@@ -2,23 +2,28 @@
 //!
 //! Those are:
 //! - Legacy bytecode with jump table analysis. Found in [`LegacyAnalyzedBytecode`]
+//! - EOF ( EMV Object Format) bytecode introduced in Osaka that.
 //! - EIP-7702 bytecode, introduces in Prague and contains address to delegated account.
 
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
-    BytecodeDecodeError, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
+    BytecodeDecodeError, Eof, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
+    EOF_MAGIC_BYTES,
 };
 use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
+use std::sync::Arc;
 
 /// Main bytecode structure with all variants.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Bytecode {
-    /// EIP-7702 delegated bytecode
-    Eip7702(Eip7702Bytecode),
     /// The bytecode has been analyzed for valid jump destinations.
     LegacyAnalyzed(LegacyAnalyzedBytecode),
+    /// Ethereum Object Format
+    Eof(Arc<Eof>),
+    /// EIP-7702 delegated bytecode
+    Eip7702(Eip7702Bytecode),
 }
 
 impl Default for Bytecode {
@@ -53,6 +58,21 @@ impl Bytecode {
         }
     }
 
+    /// Returns reference to the EOF if bytecode is EOF.
+    #[inline]
+    pub const fn eof(&self) -> Option<&Arc<Eof>> {
+        match self {
+            Self::Eof(eof) => Some(eof),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if bytecode is EOF.
+    #[inline]
+    pub const fn is_eof(&self) -> bool {
+        matches!(self, Self::Eof(_))
+    }
+
     /// Returns `true` if bytecode is EIP-7702.
     pub const fn is_eip7702(&self) -> bool {
         matches!(self, Self::Eip7702(_))
@@ -71,7 +91,7 @@ impl Bytecode {
     /// Panics if bytecode is in incorrect format. If you want to handle errors use [`Self::new_raw_checked`].
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
-        Self::new_raw_checked(bytecode).expect("Expect correct bytecode")
+        Self::new_raw_checked(bytecode).expect("Expect correct EOF bytecode")
     }
 
     /// Creates a new EIP-7702 [`Bytecode`] from [`Address`].
@@ -87,6 +107,10 @@ impl Bytecode {
     pub fn new_raw_checked(bytes: Bytes) -> Result<Self, BytecodeDecodeError> {
         let prefix = bytes.get(..2);
         match prefix {
+            Some(prefix) if prefix == &EOF_MAGIC_BYTES => {
+                let eof = Eof::decode(bytes)?;
+                Ok(Self::Eof(Arc::new(eof)))
+            }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
                 let eip7702 = Eip7702Bytecode::new_raw(bytes)?;
                 Ok(Self::Eip7702(eip7702))
@@ -109,15 +133,21 @@ impl Bytecode {
     }
 
     /// Returns a reference to the bytecode.
+    ///
+    /// In case of EOF this will be the all code sections.
     #[inline]
     pub fn bytecode(&self) -> &Bytes {
         match self {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
+            Self::Eof(eof) => &eof.body.code,
             Self::Eip7702(code) => code.raw(),
         }
     }
 
     /// Pointer to the executable bytecode.
+    ///
+    /// Note: EOF will return the pointer to the start of the code section.
+    /// while legacy bytecode will point to the start of the bytes.
     pub fn bytecode_ptr(&self) -> *const u8 {
         self.bytecode().as_ptr()
     }
@@ -133,6 +163,7 @@ impl Bytecode {
     pub fn bytes_ref(&self) -> &Bytes {
         match self {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
+            Self::Eof(eof) => &eof.raw,
             Self::Eip7702(code) => code.raw(),
         }
     }
@@ -148,6 +179,7 @@ impl Bytecode {
     pub fn original_bytes(&self) -> Bytes {
         match self {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
+            Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
         }
     }
@@ -157,6 +189,7 @@ impl Bytecode {
     pub fn original_byte_slice(&self) -> &[u8] {
         match self {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
+            Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
         }
     }
@@ -178,5 +211,29 @@ impl Bytecode {
     #[inline]
     pub fn iter_opcodes(&self) -> crate::BytecodeIterator<'_> {
         crate::BytecodeIterator::new(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Bytecode, Eof};
+    use std::sync::Arc;
+
+    #[test]
+    fn eof_arc_clone() {
+        let eof = Arc::new(Eof::default());
+        let bytecode = Bytecode::Eof(Arc::clone(&eof));
+
+        // Cloning the Bytecode should not clone the underlying Eof
+        let cloned_bytecode = bytecode.clone();
+        if let Bytecode::Eof(original_arc) = bytecode {
+            if let Bytecode::Eof(cloned_arc) = cloned_bytecode {
+                assert!(Arc::ptr_eq(&original_arc, &cloned_arc));
+            } else {
+                panic!("Cloned bytecode is not Eof");
+            }
+        } else {
+            panic!("Original bytecode is not Eof");
+        }
     }
 }

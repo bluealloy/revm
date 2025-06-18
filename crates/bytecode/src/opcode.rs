@@ -193,6 +193,12 @@ impl OpCode {
                 | OpCode::CALLCODE
                 | OpCode::DELEGATECALL
                 | OpCode::STATICCALL
+                | OpCode::DATACOPY
+                | OpCode::EOFCREATE
+                | OpCode::RETURNCONTRACT
+                | OpCode::EXTCALL
+                | OpCode::EXTDELEGATECALL
+                | OpCode::EXTSTATICCALL
         )
     }
 }
@@ -215,6 +221,10 @@ pub struct OpCodeInfo {
     /// RJUMPV is a special case where the bytes len depends on bytecode value,
     /// for RJUMV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
+    /// Used by EOF verification
+    ///
+    /// All not EOF opcodes are marked false.
+    not_eof: bool,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
 }
@@ -229,6 +239,7 @@ impl fmt::Debug for OpCodeInfo {
             .field("name", &self.name())
             .field("inputs", &self.inputs())
             .field("outputs", &self.outputs())
+            .field("not_eof", &self.is_disabled_in_eof())
             .field("terminating", &self.is_terminating())
             .field("immediate_size", &self.immediate_size())
             .finish()
@@ -244,6 +255,7 @@ impl OpCodeInfo {
             name_len: name.len() as u8,
             inputs: 0,
             outputs: 0,
+            not_eof: false,
             terminating: false,
             immediate_size: 0,
         }
@@ -277,6 +289,12 @@ impl OpCodeInfo {
         self.outputs
     }
 
+    /// Returns whether this opcode is disabled in EOF bytecode.
+    #[inline]
+    pub const fn is_disabled_in_eof(&self) -> bool {
+        self.not_eof
+    }
+
     /// Returns whether this opcode terminates execution, e.g. `STOP`, `RETURN`, etc.
     #[inline]
     pub const fn is_terminating(&self) -> bool {
@@ -288,6 +306,13 @@ impl OpCodeInfo {
     pub const fn immediate_size(&self) -> u8 {
         self.immediate_size
     }
+}
+
+/// Sets the EOF flag to false.
+#[inline]
+pub const fn not_eof(mut op: OpCodeInfo) -> OpCodeInfo {
+    op.not_eof = true;
+    op
 }
 
 /// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
@@ -439,15 +464,15 @@ opcodes! {
     0x35 => CALLDATALOAD => stack_io(1, 1);
     0x36 => CALLDATASIZE => stack_io(0, 1);
     0x37 => CALLDATACOPY => stack_io(3, 0);
-    0x38 => CODESIZE   => stack_io(0, 1);
-    0x39 => CODECOPY   => stack_io(3, 0);
+    0x38 => CODESIZE   => stack_io(0, 1), not_eof;
+    0x39 => CODECOPY   => stack_io(3, 0), not_eof;
 
     0x3A => GASPRICE     => stack_io(0, 1);
-    0x3B => EXTCODESIZE  => stack_io(1, 1);
-    0x3C => EXTCODECOPY  => stack_io(4, 0);
+    0x3B => EXTCODESIZE  => stack_io(1, 1), not_eof;
+    0x3C => EXTCODECOPY  => stack_io(4, 0), not_eof;
     0x3D => RETURNDATASIZE => stack_io(0, 1);
     0x3E => RETURNDATACOPY => stack_io(3, 0);
-    0x3F => EXTCODEHASH  => stack_io(1, 1);
+    0x3F => EXTCODEHASH  => stack_io(1, 1), not_eof;
     0x40 => BLOCKHASH    => stack_io(1, 1);
     0x41 => COINBASE     => stack_io(0, 1);
     0x42 => TIMESTAMP    => stack_io(0, 1);
@@ -470,11 +495,11 @@ opcodes! {
     0x53 => MSTORE8  => stack_io(2, 0);
     0x54 => SLOAD    => stack_io(1, 1);
     0x55 => SSTORE   => stack_io(2, 0);
-    0x56 => JUMP     => stack_io(1, 0);
-    0x57 => JUMPI    => stack_io(2, 0);
-    0x58 => PC       => stack_io(0, 1);
+    0x56 => JUMP     => stack_io(1, 0), not_eof;
+    0x57 => JUMPI    => stack_io(2, 0), not_eof;
+    0x58 => PC       => stack_io(0, 1), not_eof;
     0x59 => MSIZE    => stack_io(0, 1);
-    0x5A => GAS      => stack_io(0, 1);
+    0x5A => GAS      => stack_io(0, 1), not_eof;
     0x5B => JUMPDEST => stack_io(0, 0);
     0x5C => TLOAD    => stack_io(1, 1);
     0x5D => TSTORE   => stack_io(2, 0);
@@ -596,10 +621,10 @@ opcodes! {
     // 0xCD
     // 0xCE
     // 0xCF
-    // 0xD0
-    // 0xD1
-    // 0xD2
-    // 0xD3
+    0xD0 => DATALOAD=> stack_io(1, 1);
+    0xD1 => DATALOADN => stack_io(0, 1), immediate_size(2);
+    0xD2 => DATASIZE=> stack_io(0, 1);
+    0xD3 => DATACOPY=> stack_io(3, 0);
     // 0xD4
     // 0xD5
     // 0xD6
@@ -612,38 +637,38 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    // 0xE0
-    // 0xE1
-    // 0xE2
-    // 0xE3
-    // 0xE4
-    // 0xE5
-    // 0xE6
-    // 0xE7
-    // 0xE8
+    0xE0 => RJUMP    => stack_io(0, 0), immediate_size(2), terminating;
+    0xE1 => RJUMPI   => stack_io(1, 0), immediate_size(2);
+    0xE2 => RJUMPV   => stack_io(1, 0), immediate_size(1);
+    0xE3 => CALLF    => stack_io(0, 0), immediate_size(2);
+    0xE4 => RETF     => stack_io(0, 0), terminating;
+    0xE5 => JUMPF    => stack_io(0, 0), immediate_size(2), terminating;
+    0xE6 => DUPN     => stack_io(0, 1), immediate_size(1);
+    0xE7 => SWAPN    => stack_io(0, 0), immediate_size(1);
+    0xE8 => EXCHANGE => stack_io(0, 0), immediate_size(1);
     // 0xE9
     // 0xEA
     // 0xEB
-    // 0xEC
-    // 0xED
-    // 0xEE
+    0xEC => EOFCREATE      => stack_io(4, 1), immediate_size(1);
+    0xED => TXCREATE       => stack_io(5, 1);
+    0xEE => RETURNCONTRACT => stack_io(2, 0), immediate_size(1), terminating;
     // 0xEF
-    0xF0 => CREATE       => stack_io(3, 1);
-    0xF1 => CALL         => stack_io(7, 1);
-    0xF2 => CALLCODE     => stack_io(7, 1);
+    0xF0 => CREATE       => stack_io(3, 1), not_eof;
+    0xF1 => CALL         => stack_io(7, 1), not_eof;
+    0xF2 => CALLCODE     => stack_io(7, 1), not_eof;
     0xF3 => RETURN       => stack_io(2, 0), terminating;
-    0xF4 => DELEGATECALL => stack_io(6, 1);
-    0xF5 => CREATE2      => stack_io(4, 1);
+    0xF4 => DELEGATECALL => stack_io(6, 1), not_eof;
+    0xF5 => CREATE2      => stack_io(4, 1), not_eof;
     // 0xF6
-    // 0xF7
-    // 0xF8
-    // 0xF9
-    0xFA => STATICCALL      => stack_io(6, 1);
-    // 0xFB
+    0xF7 => RETURNDATALOAD  => stack_io(1, 1);
+    0xF8 => EXTCALL         => stack_io(4, 1);
+    0xF9 => EXTDELEGATECALL => stack_io(3, 1);
+    0xFA => STATICCALL      => stack_io(6, 1), not_eof;
+    0xFB => EXTSTATICCALL   => stack_io(3, 1);
     // 0xFC
     0xFD => REVERT       => stack_io(2, 0), terminating;
     0xFE => INVALID      => stack_io(0, 0), terminating;
-    0xFF => SELFDESTRUCT => stack_io(1, 0), terminating;
+    0xFF => SELFDESTRUCT => stack_io(1, 0), not_eof, terminating;
 }
 
 #[cfg(test)]
@@ -661,12 +686,38 @@ mod tests {
     }
 
     #[test]
+    fn test_eof_disable() {
+        const REJECTED_IN_EOF: &[u8] = &[
+            0x38, 0x39, 0x3b, 0x3c, 0x3f, 0x5a, 0xf1, 0xf2, 0xf4, 0xfa, 0xff,
+        ];
+
+        for opcode in REJECTED_IN_EOF {
+            let opcode = OpCode::new(*opcode).unwrap();
+            assert!(
+                opcode.info().is_disabled_in_eof(),
+                "not disabled in EOF: {opcode:#?}",
+            );
+        }
+    }
+
+    #[test]
     fn test_immediate_size() {
         let mut expected = [0u8; 256];
         // PUSH opcodes
         for push in PUSH1..=PUSH32 {
             expected[push as usize] = push - PUSH1 + 1;
         }
+        expected[DATALOADN as usize] = 2;
+        expected[RJUMP as usize] = 2;
+        expected[RJUMPI as usize] = 2;
+        expected[RJUMPV as usize] = 1;
+        expected[CALLF as usize] = 2;
+        expected[JUMPF as usize] = 2;
+        expected[DUPN as usize] = 1;
+        expected[SWAPN as usize] = 1;
+        expected[EXCHANGE as usize] = 1;
+        expected[EOFCREATE as usize] = 1;
+        expected[RETURNCONTRACT as usize] = 1;
 
         for (i, opcode) in OPCODE_INFO.iter().enumerate() {
             if let Some(opcode) = opcode {
@@ -710,15 +761,30 @@ mod tests {
     #[test]
     fn count_opcodes() {
         let mut opcode_num = 0;
-        for _ in OPCODE_INFO.into_iter().flatten() {
+        let mut eof_opcode_num = 0;
+        for opcode in OPCODE_INFO.into_iter().flatten() {
             opcode_num += 1;
+            if !opcode.is_disabled_in_eof() {
+                eof_opcode_num += 1;
+            }
         }
-        assert_eq!(opcode_num, 150);
+        assert_eq!(opcode_num, 170);
+        assert_eq!(eof_opcode_num, 154);
     }
 
     #[test]
     fn test_terminating_opcodes() {
-        let terminating = [REVERT, RETURN, INVALID, SELFDESTRUCT, STOP];
+        let terminating = [
+            RETF,
+            REVERT,
+            RETURN,
+            INVALID,
+            SELFDESTRUCT,
+            RETURNCONTRACT,
+            STOP,
+            RJUMP,
+            JUMPF,
+        ];
         let mut opcodes = [false; 256];
         for terminating in terminating.iter() {
             opcodes[*terminating as usize] = true;

@@ -2,11 +2,13 @@ mod call_inputs;
 mod call_outcome;
 mod create_inputs;
 mod create_outcome;
+mod eof_create_inputs;
 
 pub use call_inputs::{CallInput, CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
+pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
 use primitives::Bytes;
 
 use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
@@ -18,10 +20,13 @@ use std::boxed::Box;
 pub enum FrameInput {
     /// No input data (empty frame)
     Empty,
-    /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL` instruction called.
+    /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
+    /// or EOF `EXTCALL`, `EXTDELEGATECALL`, `EXTSTATICCALL` instruction called.
     Call(Box<CallInputs>),
     /// `CREATE` or `CREATE2` instruction called.
     Create(Box<CreateInputs>),
+    /// EOF `CREATE` instruction called.
+    EOFCreate(Box<EOFCreateInputs>),
 }
 
 /// Initialization data for creating a new execution frame.

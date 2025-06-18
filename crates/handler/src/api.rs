@@ -60,7 +60,6 @@ pub trait ExecuteEvm {
     /// # Outcome of Error
     ///
     /// If the transaction fails, the journal is considered broken.
-    #[inline]
     fn transact(
         &mut self,
         tx: Self::Tx,
@@ -82,7 +81,6 @@ pub trait ExecuteEvm {
     /// If any transaction fails, the journal is finalized and the last error is returned.
     ///
     /// TODO add tx index to the error.
-    #[inline]
     fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -99,7 +97,7 @@ pub trait ExecuteEvm {
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
     /// Internally calls [`ExecuteEvm::transact_many`] followed by [`ExecuteEvm::finalize`].
-    #[inline]
+    //#[allow(clippy::type_complexity)]
     fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -126,14 +124,12 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Finalize the state and commit it to the database.
     ///
     /// Internally calls `finalize` and `commit` functions.
-    #[inline]
     fn commit_inner(&mut self) {
         let state = self.finalize();
         self.commit(state);
     }
 
     /// Transact the transaction and commit to the state.
-    #[inline]
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         let output = self.transact_one(tx)?;
         self.commit_inner();
@@ -143,7 +139,6 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Transact multiple transactions and commit to the state.
     ///
     /// Internally calls `transact_multi` and `commit` functions.
-    #[inline]
     fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -156,7 +151,6 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Replay the transaction and commit to the state.
     ///
     /// Internally calls `replay` and `commit` functions.
-    #[inline]
     fn replay_commit(&mut self) -> Result<Self::ExecutionResult, Self::Error> {
         let result = self.replay()?;
         self.commit(result.state);
@@ -177,23 +171,19 @@ where
     type Tx = <CTX as ContextTr>::Tx;
     type Block = <CTX as ContextTr>::Block;
 
-    #[inline]
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.ctx.set_tx(tx);
         MainnetHandler::default().run(self)
     }
 
-    #[inline]
     fn finalize(&mut self) -> Self::State {
         self.journal_mut().finalize()
     }
 
-    #[inline]
     fn set_block(&mut self, block: Self::Block) {
         self.ctx.set_block(block);
     }
 
-    #[inline]
     fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
         MainnetHandler::default().run(self).map(|result| {
             let state = self.finalize();
@@ -209,7 +199,6 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    #[inline]
     fn commit(&mut self, state: Self::State) {
         self.db_mut().commit(state);
     }

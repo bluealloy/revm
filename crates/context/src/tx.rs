@@ -86,6 +86,11 @@ pub struct TxEnv {
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
     pub authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
+    // TODO(EOF)
+    // /// List of initcodes that is part of Initcode transaction.
+    // ///
+    // /// [EIP-7873](https://eips.ethereum.org/EIPS/eip-7873)
+    // pub initcodes: Vec<Bytes>,
 }
 
 impl Default for TxEnv {
@@ -145,6 +150,17 @@ impl TxEnv {
                 return Err(DeriveTxTypeError::MissingTargetForEip7702);
             }
         }
+
+        // TODO(EOF)
+        // if !self.initcodes.is_empty() {
+        //     if let TxKind::Call(_) = self.kind {
+        //         self.tx_type = TransactionType::Eip7873 as u8;
+        //         return Ok(());
+        //     } else {
+        //         return Err(DeriveTxTypeError::MissingTargetForEip7873);
+        //     }
+        // }
+
         Ok(())
     }
 
@@ -226,6 +242,11 @@ impl Transaction for TxEnv {
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
         self.gas_priority_fee
     }
+
+    // TODO(EOF)
+    // fn initcodes(&self) -> &[Bytes] {
+    //     &self.initcodes
+    // }
 }
 
 /// Builder for constructing [`TxEnv`] instances

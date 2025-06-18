@@ -17,7 +17,7 @@ impl<'a> BytecodeIterator<'a> {
     #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
         let bytes = match bytecode {
-            Bytecode::LegacyAnalyzed(_) => &bytecode.bytecode()[..],
+            Bytecode::LegacyAnalyzed(_) | Bytecode::Eof(_) => &bytecode.bytecode()[..],
             Bytecode::Eip7702(_) => &[],
         };
         Self {
@@ -54,9 +54,16 @@ impl<'a> BytecodeIterator<'a> {
     #[inline]
     fn skip_immediate(&mut self, opcode: u8) {
         // Get base immediate size from opcode info
-        let immediate_size = opcode::OPCODE_INFO[opcode as usize]
+        let mut immediate_size = opcode::OPCODE_INFO[opcode as usize]
             .map(|info| info.immediate_size() as usize)
             .unwrap_or_default();
+
+        // Special handling for RJUMPV which has variable immediates
+        if opcode == opcode::RJUMPV {
+            if let Some(max_index) = self.peek() {
+                immediate_size += (max_index as usize + 1) * 2;
+            }
+        }
 
         // Advance the iterator by the immediate size
         if immediate_size > 0 {

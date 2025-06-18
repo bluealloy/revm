@@ -8,6 +8,7 @@ mod return_data;
 mod runtime_flags;
 mod shared_memory;
 mod stack;
+mod subroutine_stack;
 
 // re-exports
 pub use ext_bytecode::ExtBytecode;
@@ -16,6 +17,7 @@ pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
+pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
@@ -41,7 +43,7 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub memory: WIRE::Memory,
     /// Input data for current execution context.
     pub input: WIRE::Input,
-    /// Runtime flags controlling execution behavior.
+    pub sub_routine: WIRE::SubRoutineStack,
     pub runtime_flag: WIRE::RuntimeFlag,
     /// Extended functionality and customizations.
     pub extend: WIRE::Extend,
@@ -54,6 +56,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
+        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
@@ -63,6 +66,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             bytecode,
             input,
             is_static,
+            is_eof_init,
             spec_id,
             gas_limit,
         )
@@ -85,6 +89,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             ExtBytecode::default(),
             InputsImpl::default(),
             false,
+            false,
             SpecId::default(),
             u64::MAX,
         )
@@ -97,9 +102,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
+        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
+        let is_eof = bytecode.is_eof();
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
@@ -107,7 +114,13 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             return_data: Default::default(),
             memory,
             input,
-            runtime_flag: RuntimeFlags { is_static, spec_id },
+            sub_routine: Default::default(),
+            runtime_flag: RuntimeFlags {
+                is_static,
+                is_eof_init,
+                is_eof,
+                spec_id,
+            },
             extend: Default::default(),
         }
     }
@@ -120,6 +133,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
+        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) {
@@ -130,9 +144,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             return_data,
             memory: memory_ref,
             input: input_ref,
+            sub_routine,
             runtime_flag,
             extend,
         } = self;
+        let is_eof = bytecode.is_eof();
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
         if stack.data().capacity() == 0 {
@@ -143,7 +159,13 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         return_data.0.clear();
         *memory_ref = memory;
         *input_ref = input;
-        *runtime_flag = RuntimeFlags { spec_id, is_static };
+        sub_routine.clear();
+        *runtime_flag = RuntimeFlags {
+            spec_id,
+            is_static,
+            is_eof,
+            is_eof_init,
+        };
         *extend = EXT::default();
     }
 
@@ -177,6 +199,7 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Bytecode = ExtBytecode;
     type ReturnData = ReturnDataImpl;
     type Input = InputsImpl;
+    type SubRoutineStack = SubRoutineImpl;
     type RuntimeFlag = RuntimeFlags;
     type Extend = EXT;
     type Output = InterpreterAction;
@@ -340,6 +363,7 @@ mod tests {
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
+            false,
             false,
             SpecId::default(),
             u64::MAX,
