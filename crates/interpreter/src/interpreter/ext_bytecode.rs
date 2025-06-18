@@ -162,17 +162,12 @@ impl Immediates for ExtBytecode {
     }
 }
 
-
-
-
 impl LegacyBytecode for ExtBytecode {
     fn bytecode_len(&self) -> usize {
-        // Since EOF support has been removed, all bytecode is now legacy bytecode.
         self.base.len()
     }
 
     fn bytecode_slice(&self) -> &[u8] {
-        // Since EOF support has been removed, all bytecode is now legacy bytecode.
         self.base.original_byte_slice()
     }
 }

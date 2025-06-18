@@ -148,8 +148,6 @@ pub trait MemoryTr {
     fn resize(&mut self, new_size: usize) -> bool;
 }
 
-
-
 /// Functions needed for Interpreter Stack operations.
 pub trait StackTr {
     /// Returns stack length.
@@ -225,8 +223,6 @@ pub trait StackTr {
     fn dup(&mut self, n: usize) -> bool;
 }
 
-
-
 /// Returns return data.
 pub trait ReturnData {
     /// Returns return data.
@@ -271,8 +267,6 @@ pub trait LoopControl {
 
 pub trait RuntimeFlag {
     fn is_static(&self) -> bool;
-    fn is_eof(&self) -> bool;
-    fn is_eof_init(&self) -> bool;
     fn spec_id(&self) -> SpecId;
 }
 
@@ -287,10 +281,7 @@ pub trait Interp {
 pub trait InterpreterTypes {
     type Stack: StackTr;
     type Memory: MemoryTr;
-    type Bytecode: Jumps
-        + Immediates
-        + LoopControl
-        + LegacyBytecode;
+    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
     type ReturnData: ReturnData;
     type Input: InputsTr;
     type RuntimeFlag: RuntimeFlag;

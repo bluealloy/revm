@@ -141,8 +141,6 @@ pub trait JournalTr {
     }
 
     /// Returns account code bytes and if address is cold loaded.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
     fn code(
         &mut self,
@@ -151,7 +149,6 @@ pub trait JournalTr {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
-
         let code = code.original_bytes();
 
         Ok(StateLoad::new(code, a.is_cold))

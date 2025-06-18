@@ -1,8 +1,7 @@
 use crate::inspector::Inspector;
 use either::Either;
 use interpreter::{
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
-    InterpreterTypes,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
 
@@ -79,7 +78,6 @@ where
             Either::Right(inspector) => inspector.create_end(context, inputs, outcome),
         }
     }
-
 
     #[inline]
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {

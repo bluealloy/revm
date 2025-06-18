@@ -16,10 +16,10 @@ use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
-    CreateOutcome, CreateScheme, FrameInput, Gas, InputsImpl, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
+    interpreter_types::ReturnData,
+    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
+    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -103,7 +103,6 @@ impl EthFrame<EthInterpreter> {
         bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
-        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
@@ -120,15 +119,7 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(
-            memory,
-            bytecode,
-            inputs,
-            is_static,
-            is_eof_init,
-            spec_id,
-            gas_limit,
-        );
+        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
         *checkpoint_ref = checkpoint;
     }
 
@@ -194,28 +185,25 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
-        if !is_ext_delegate_call {
-            if let Some(result) = precompiles
-                .run(
-                    ctx,
-                    &inputs.bytecode_address,
-                    &interpreter_input,
-                    is_static,
-                    gas_limit,
-                )
-                .map_err(ERROR::from_string)?
-            {
-                if result.result.is_ok() {
-                    ctx.journal_mut().checkpoint_commit();
-                } else {
-                    ctx.journal_mut().checkpoint_revert(checkpoint);
-                }
-                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                    result,
-                    memory_offset: inputs.return_memory_offset.clone(),
-                })));
+        if let Some(result) = precompiles
+            .run(
+                ctx,
+                &inputs.bytecode_address,
+                &interpreter_input,
+                is_static,
+                gas_limit,
+            )
+            .map_err(ERROR::from_string)?
+        {
+            if result.result.is_ok() {
+                ctx.journal_mut().checkpoint_commit();
+            } else {
+                ctx.journal_mut().checkpoint_revert(checkpoint);
             }
+            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                result,
+                memory_offset: inputs.return_memory_offset.clone(),
+            })));
         }
 
         let account = ctx
@@ -232,12 +220,6 @@ impl EthFrame<EthInterpreter> {
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
-        }
-
-        // ExtDelegateCall is not allowed since EOF support has been removed.
-        if is_ext_delegate_call {
-            ctx.journal_mut().checkpoint_revert(checkpoint);
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
 
         // Returns success if bytecode is empty.
@@ -257,7 +239,6 @@ impl EthFrame<EthInterpreter> {
             ExtBytecode::new_with_hash(bytecode, code_hash),
             interpreter_input,
             is_static,
-            false,
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
@@ -364,7 +345,6 @@ impl EthFrame<EthInterpreter> {
             memory,
             bytecode,
             interpreter_input,
-            false,
             false,
             spec,
             gas_limit,
@@ -613,18 +593,10 @@ impl EthFrame<EthInterpreter> {
                     panic!("Fatal external error in insert_call_outcome");
                 }
 
-                let item = {
-                    if interpreter.runtime_flag.is_eof() {
-                        match ins_result {
-                            return_ok!() => U256::ZERO,
-                            return_revert!() => U256::from(1),
-                            _ => U256::from(2),
-                        }
-                    } else if ins_result.is_ok() {
-                        U256::from(1)
-                    } else {
-                        U256::ZERO
-                    }
+                let item = if ins_result.is_ok() {
+                    U256::from(1)
+                } else {
+                    U256::ZERO
                 };
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);

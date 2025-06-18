@@ -19,7 +19,6 @@ pub struct CreateFrame {
     pub created_address: Address,
 }
 
-
 /// Frame Data
 ///
 /// [`FrameData`] bundles different types of frames.

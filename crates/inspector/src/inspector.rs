@@ -1,8 +1,8 @@
 use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
 use interpreter::{
-    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-    Interpreter, InterpreterTypes,
+    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
+    InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
@@ -104,7 +104,6 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = inputs;
         let _ = outcome;
     }
-
 
     /// Called when a contract has been self-destructed with funds transferred to target.
     #[inline]

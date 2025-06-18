@@ -19,18 +19,14 @@ pub fn create_init_frame(tx: &impl Transaction, _spec: SpecId, gas_limit: u64) -
             value: CallValue::Transfer(tx.value()),
             scheme: CallScheme::Call,
             is_static: false,
-            is_eof: false,
             return_memory_offset: 0..0,
         })),
-        TxKind::Create => {
-            // Since EOF support has been removed, all creates are legacy creates
-            FrameInput::Create(Box::new(CreateInputs {
-                caller: tx.caller(),
-                scheme: CreateScheme::Create,
-                value: tx.value(),
-                init_code: input,
-                gas_limit,
-            }))
-        }
+        TxKind::Create => FrameInput::Create(Box::new(CreateInputs {
+            caller: tx.caller(),
+            scheme: CreateScheme::Create,
+            value: tx.value(),
+            init_code: input,
+            gas_limit,
+        })),
     }
 }

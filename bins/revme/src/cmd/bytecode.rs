@@ -25,29 +25,31 @@ impl Cmd {
             };
 
             if bytes.starts_with(&[0xEF, 0x00]) {
-                eprintln!("EOF bytecode is not supported - EOF has been removed from REVM");
+                eprintln!(
+                    "EOF bytecode is not supported - EOF has been removed from ethereum plan."
+                );
                 return;
             }
 
             println!("Legacy bytecode:");
             println!("  Length: {} bytes", bytes.len());
             println!("  Hex: 0x{}", hex::encode(&bytes));
-            
+
             // Basic analysis
             let mut opcodes = Vec::new();
             let mut i = 0;
             while i < bytes.len() {
                 let opcode = bytes[i];
                 opcodes.push(format!("{:02x}", opcode));
-                
+
                 // Skip immediate bytes for PUSH instructions
-                if opcode >= 0x60 && opcode <= 0x7f {
+                if (0x60..=0x7f).contains(&opcode) {
                     let push_size = (opcode - 0x5f) as usize;
                     i += push_size;
                 }
                 i += 1;
             }
-            
+
             println!("  Opcodes: {}", opcodes.join(" "));
         } else {
             println!("No bytecode provided. EOF interactive mode has been removed.");

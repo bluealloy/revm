@@ -53,7 +53,6 @@ impl Bytecode {
         }
     }
 
-
     /// Returns `true` if bytecode is EIP-7702.
     pub const fn is_eip7702(&self) -> bool {
         matches!(self, Self::Eip7702(_))
@@ -181,4 +180,3 @@ impl Bytecode {
         crate::BytecodeIterator::new(self)
     }
 }
-

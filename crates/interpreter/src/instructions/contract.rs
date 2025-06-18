@@ -6,12 +6,9 @@ use crate::{
     gas,
     instructions::utility::IntoAddress,
     interpreter_action::FrameInput,
-    interpreter_types::{
-        InputsTr, InterpreterTypes, LoopControl, MemoryTr,
-        RuntimeFlag, StackTr,
-    },
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host,
-    InstructionResult, InterpreterAction,
+    interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host, InstructionResult,
+    InterpreterAction,
 };
 use context_interface::CreateScheme;
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
@@ -158,7 +155,6 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
                 is_static: context.interpreter.runtime_flag.is_static(),
-                is_eof: false,
                 return_memory_offset,
             },
         ))));
@@ -214,7 +210,6 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
                 is_static: context.interpreter.runtime_flag.is_static(),
-                is_eof: false,
                 return_memory_offset,
             },
         ))));
@@ -263,7 +258,6 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 value: CallValue::Apparent(context.interpreter.input.call_value()),
                 scheme: CallScheme::DelegateCall,
                 is_static: context.interpreter.runtime_flag.is_static(),
-                is_eof: false,
                 return_memory_offset,
             },
         ))));
@@ -310,7 +304,6 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
                 is_static: true,
-                is_eof: false,
                 return_memory_offset,
             },
         ))));
