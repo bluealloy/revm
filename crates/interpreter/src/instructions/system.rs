@@ -11,6 +11,9 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 
 use crate::InstructionContext;
 
+/// Implements the KECCAK256 instruction.
+///
+/// Computes Keccak-256 hash of memory data.
 pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
@@ -25,6 +28,9 @@ pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
     *top = hash.into();
 }
 
+/// Implements the ADDRESS instruction.
+///
+/// Pushes the current contract's address onto the stack.
 pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -38,6 +44,9 @@ pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
     );
 }
 
+/// Implements the CALLER instruction.
+///
+/// Pushes the caller's address onto the stack.
 pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -51,6 +60,9 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
     );
 }
 
+/// Implements the CODESIZE instruction.
+///
+/// Pushes the size of running contract's bytecode onto the stack.
 pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -59,6 +71,9 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     );
 }
 
+/// Implements the CODECOPY instruction.
+///
+/// Copies running contract's bytecode to memory.
 pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -76,6 +91,9 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     );
 }
 
+/// Implements the CALLDATALOAD instruction.
+///
+/// Loads 32 bytes of input data from the specified offset.
 pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
@@ -112,6 +130,9 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     *offset_ptr = word.into();
 }
 
+/// Implements the CALLDATASIZE instruction.
+///
+/// Pushes the size of input data onto the stack.
 pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -120,11 +141,17 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     );
 }
 
+/// Implements the CALLVALUE instruction.
+///
+/// Pushes the value sent with the current call onto the stack.
 pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.interpreter.input.call_value());
 }
 
+/// Implements the CALLDATACOPY instruction.
+///
+/// Copies input data to memory.
 pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
@@ -189,6 +216,9 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
     );
 }
 
+/// Implements the GAS instruction.
+///
+/// Pushes the amount of remaining gas onto the stack.
 pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -197,7 +227,9 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     );
 }
 
-// common logic for copying data from a source buffer to the EVM's memory
+/// Common logic for copying data from a source buffer to the EVM's memory.
+///
+/// Handles memory expansion and gas calculation for data copy operations.
 pub fn memory_resize(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     memory_offset: U256,

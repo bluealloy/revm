@@ -265,26 +265,41 @@ pub trait LoopControl {
     }
 }
 
+/// Runtime flags that control interpreter execution behavior.
 pub trait RuntimeFlag {
+    /// Returns true if the current execution context is static (read-only).
     fn is_static(&self) -> bool;
+    /// Returns the current EVM specification ID.
     fn spec_id(&self) -> SpecId;
 }
 
+/// Trait for interpreter execution.
 pub trait Interp {
+    /// The instruction type.
     type Instruction;
+    /// The action type returned after execution.
     type Action;
 
+    /// Runs the interpreter with the given instruction table.
     fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
-/// Trait
+/// Trait defining the component types used by an interpreter implementation.
 pub trait InterpreterTypes {
+    /// Stack implementation type.
     type Stack: StackTr;
+    /// Memory implementation type.
     type Memory: MemoryTr;
+    /// Bytecode implementation type.
     type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
+    /// Return data implementation type.
     type ReturnData: ReturnData;
+    /// Input data implementation type.
     type Input: InputsTr;
+    /// Runtime flags implementation type.
     type RuntimeFlag: RuntimeFlag;
+    /// Extended functionality type.
     type Extend;
+    /// Output type for execution results.
     type Output;
 }
