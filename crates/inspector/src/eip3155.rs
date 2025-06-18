@@ -35,8 +35,6 @@ impl std::fmt::Debug for TracerEip3155 {
             .field("print_summary", &self.print_summary)
             .field("stack", &self.stack)
             .field("pc", &self.pc)
-            .field("section", &self.section)
-            .field("function_depth", &self.function_depth)
             .field("opcode", &self.opcode)
             .field("gas", &self.gas)
             .field("refunded", &self.refunded)
