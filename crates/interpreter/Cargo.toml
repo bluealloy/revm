@@ -46,7 +46,8 @@ serde = [
 	"dep:serde",
 	"primitives/serde",
 	"bytecode/serde",
-	"context-interface/serde"
+	"context-interface/serde",
+	"bincode/serde",
 ]
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.

@@ -331,9 +331,13 @@ mod tests {
             u64::MAX,
         );
 
-        let serialized = bincode::serialize(&interpreter).unwrap();
+        let serialized =
+            bincode::serde::encode_to_vec(&interpreter, bincode::config::legacy()).unwrap();
 
-        let deserialized: Interpreter<EthInterpreter> = bincode::deserialize(&serialized).unwrap();
+        let deserialized: Interpreter<EthInterpreter> =
+            bincode::serde::decode_from_slice(&serialized, bincode::config::legacy())
+                .unwrap()
+                .0;
 
         assert_eq!(
             interpreter.bytecode.pc(),

@@ -16,7 +16,7 @@ pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::E
     let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
 
     let msg = Message::from_digest(msg.0);
-    let public = SECP256K1.recover_ecdsa(&msg, &sig)?;
+    let public = SECP256K1.recover_ecdsa(msg, &sig)?;
 
     let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
     hash[..12].fill(0);
