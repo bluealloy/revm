@@ -5,16 +5,22 @@ use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
+/// Type alias for a mainnet EVM instance with standard Ethereum components.
 pub type MainnetEvm<CTX, INSP = ()> =
     Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles, EthFrame<EthInterpreter>>;
 
+/// Type alias for a mainnet context with standard Ethereum environment types.
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
 
+/// Trait for building mainnet EVM instances from contexts.
 pub trait MainBuilder: Sized {
+    /// The context type that will be used in the EVM.
     type Context;
 
+    /// Builds a mainnet EVM instance without an inspector.
     fn build_mainnet(self) -> MainnetEvm<Self::Context>;
 
+    /// Builds a mainnet EVM instance with the provided inspector.
     fn build_mainnet_with_inspector<INSP>(self, inspector: INSP)
         -> MainnetEvm<Self::Context, INSP>;
 }
@@ -55,6 +61,7 @@ where
 
 /// Trait used to initialize Context with default mainnet types.
 pub trait MainContext {
+    /// Creates a new mainnet context with default configuration.
     fn mainnet() -> Self;
 }
 

@@ -18,6 +18,7 @@ use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
 
+/// Loads and warms accounts for execution, including precompiles and access list.
 pub fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
     ERROR: From<<<EVM::Context as ContextTr>::Db as Database>::Error>,
@@ -71,6 +72,7 @@ pub fn load_accounts<
     Ok(())
 }
 
+/// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
@@ -110,6 +112,7 @@ pub fn validate_account_nonce_and_code(
     Ok(())
 }
 
+/// Validates caller state and deducts transaction costs from the caller's balance.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
     CTX: ContextTr,

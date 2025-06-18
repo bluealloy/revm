@@ -43,10 +43,15 @@ use std::boxed::Box;
     <IW as InterpreterTypes>::Extend,
 )]
 pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
+    /// Frame-specific data (Call, Create, or EOFCreate).
     pub data: FrameData,
+    /// Input data for the frame.
     pub input: FrameInput,
+    /// Current call depth in the execution stack.
     pub depth: usize,
+    /// Journal checkpoint for state reversion.
     pub checkpoint: JournalCheckpoint,
+    /// Interpreter instance for executing bytecode.
     pub interpreter: Interpreter<IW>,
     /// Whether the frame has been finished its execution.
     /// Frame is considered finished if it has been called and returned a result.
@@ -82,15 +87,18 @@ impl EthFrame<EthInterpreter> {
         }
     }
 
+    /// Returns true if the frame has finished execution.
     pub fn is_finished(&self) -> bool {
         self.is_finished
     }
 
+    /// Sets the finished state of the frame.
     pub fn set_finished(&mut self, finished: bool) {
         self.is_finished = finished;
     }
 }
 
+/// Type alias for database errors from a context.
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
 impl EthFrame<EthInterpreter> {
@@ -495,6 +503,7 @@ impl EthFrame<EthInterpreter> {
     }
      */
 
+    /// Initializes a frame with the given context and precompiles.
     pub fn init_with_context<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -529,6 +538,7 @@ impl EthFrame<EthInterpreter> {
 }
 
 impl EthFrame<EthInterpreter> {
+    /// Processes the next interpreter action, either creating a new frame or returning a result.
     pub fn process_next_action<
         CTX: ContextTr,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
@@ -605,6 +615,7 @@ impl EthFrame<EthInterpreter> {
         Ok(result)
     }
 
+    /// Processes a frame result and updates the interpreter state accordingly.
     pub fn return_result<CTX: ContextTr, ERROR: From<ContextTrDbError<CTX>> + FromStringError>(
         &mut self,
         ctx: &mut CTX,
@@ -738,6 +749,7 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
+/// Handles the result of a CREATE operation, including validation and state updates.
 pub fn return_create<JOURNAL: JournalTr>(
     journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,

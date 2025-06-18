@@ -16,9 +16,12 @@ pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 /// Type alias for frame init result
 pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameResult>;
 
+/// Trait for defining a frame type used in EVM execution.
 #[auto_impl(&mut, Box)]
 pub trait FrameTr {
+    /// The result type returned when a frame completes execution.
     type FrameResult: Into<FrameResult>;
+    /// The initialization type used to create a new frame.
     type FrameInit: Into<FrameInit>;
 }
 

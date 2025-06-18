@@ -7,6 +7,7 @@ use core::cmp;
 use interpreter::gas::{self, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
+/// Validates the execution environment including block and transaction parameters.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {

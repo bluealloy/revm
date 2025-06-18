@@ -10,6 +10,7 @@ use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip7825, Address, Bytes, TxKind};
 use state::EvmState;
 
+/// The system address used for system calls.
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
 
 /// Creates the system transaction with default values and set data and tx call target to system contract address
@@ -24,6 +25,7 @@ pub trait SystemCallTx: Sized {
         Self::new_system_tx_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
     }
 
+    /// Creates a new system transaction with a custom caller address.
     fn new_system_tx_with_caller(
         caller: Address,
         system_contract_address: Address,

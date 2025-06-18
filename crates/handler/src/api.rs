@@ -17,7 +17,7 @@ use std::vec::Vec;
 pub trait ExecuteEvm {
     /// Output of transaction execution.
     type ExecutionResult;
-    // Output state
+    /// Output state type representing changes after execution.
     type State;
     /// Error type
     type Error;
