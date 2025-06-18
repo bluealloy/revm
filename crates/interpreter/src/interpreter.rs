@@ -1,4 +1,3 @@
-/// Extended bytecode module for handling bytecode operations and metadata.
 pub mod ext_bytecode;
 mod input;
 mod loop_control;
@@ -6,7 +5,6 @@ mod return_data;
 mod runtime_flags;
 mod shared_memory;
 mod stack;
-mod subroutine_stack;
 
 // re-exports
 pub use ext_bytecode::ExtBytecode;
@@ -15,7 +13,6 @@ pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
-pub use subroutine_stack::{SubRoutineImpl, SubRoutineReturnFrame};
 
 // imports
 use crate::{
@@ -29,23 +26,13 @@ use primitives::{hardfork::SpecId, Bytes};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
-    /// The bytecode being executed
     pub bytecode: WIRE::Bytecode,
-    /// Gas tracking and metering
     pub gas: Gas,
-    /// The execution stack
     pub stack: WIRE::Stack,
-    /// Return data from previous call or execution
     pub return_data: WIRE::ReturnData,
-    /// Memory used during execution
     pub memory: WIRE::Memory,
-    /// Input data for the current execution context
     pub input: WIRE::Input,
-    /// Stack for managing subroutine calls and returns
-    pub sub_routine: WIRE::SubRoutineStack,
-    /// Runtime flags indicating execution state and constraints
     pub runtime_flag: WIRE::RuntimeFlag,
-    /// Extended interpreter data for custom implementations
     pub extend: WIRE::Extend,
 }
 
@@ -56,7 +43,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
-        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
@@ -66,13 +52,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             bytecode,
             input,
             is_static,
-            is_eof_init,
             spec_id,
             gas_limit,
         )
     }
 
-    /// Creates a new interpreter with default extended configuration.
     pub fn default_ext() -> Self {
         Self::do_default(Stack::new(), SharedMemory::new())
     }
@@ -89,7 +73,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             ExtBytecode::default(),
             InputsImpl::default(),
             false,
-            false,
             SpecId::default(),
             u64::MAX,
         )
@@ -102,11 +85,9 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
-        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) -> Self {
-        let is_eof = bytecode.is_eof();
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
@@ -114,18 +95,11 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             return_data: Default::default(),
             memory,
             input,
-            sub_routine: Default::default(),
-            runtime_flag: RuntimeFlags {
-                is_static,
-                is_eof_init,
-                is_eof,
-                spec_id,
-            },
+            runtime_flag: RuntimeFlags { is_static, spec_id },
             extend: Default::default(),
         }
     }
 
-    /// Clears and reinitializes the interpreter with new parameters.
     #[allow(clippy::too_many_arguments)]
     pub fn clear(
         &mut self,
@@ -133,7 +107,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
-        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
     ) {
@@ -144,11 +117,9 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             return_data,
             memory: memory_ref,
             input: input_ref,
-            sub_routine,
             runtime_flag,
             extend,
         } = self;
-        let is_eof = bytecode.is_eof();
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
         if stack.data().capacity() == 0 {
@@ -159,13 +130,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         return_data.0.clear();
         *memory_ref = memory;
         *input_ref = input;
-        sub_routine.clear();
-        *runtime_flag = RuntimeFlags {
-            spec_id,
-            is_static,
-            is_eof,
-            is_eof_init,
-        };
+        *runtime_flag = RuntimeFlags { spec_id, is_static };
         *extend = EXT::default();
     }
 
@@ -188,7 +153,6 @@ impl Default for Interpreter<EthInterpreter> {
 }
 
 /// Default types for Ethereum interpreter.
-#[derive(Debug)]
 pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }
@@ -199,7 +163,6 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Bytecode = ExtBytecode;
     type ReturnData = ReturnDataImpl;
     type Input = InputsImpl;
-    type SubRoutineStack = SubRoutineImpl;
     type RuntimeFlag = RuntimeFlags;
     type Extend = EXT;
     type Output = InterpreterAction;
@@ -363,7 +326,6 @@ mod tests {
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
-            false,
             false,
             SpecId::default(),
             u64::MAX,

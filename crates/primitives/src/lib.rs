@@ -16,7 +16,6 @@ pub mod eip7823;
 pub mod eip7825;
 pub mod eip7907;
 pub mod eip7918;
-pub mod eof;
 pub mod hardfork;
 
 pub use constants::*;

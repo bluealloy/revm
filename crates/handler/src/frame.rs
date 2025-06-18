@@ -2,7 +2,6 @@ use crate::evm::FrameTr;
 use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
 use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
-use bytecode::EOF_MAGIC_BYTES;
 use context::result::FromStringError;
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
@@ -17,10 +16,10 @@ use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
-    interpreter_types::{ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
-    CreateOutcome, CreateScheme, FrameInput, Gas, InputsImpl, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterResult, InterpreterTypes, SharedMemory,
+    interpreter_types::ReturnData,
+    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
+    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -38,7 +37,6 @@ use std::boxed::Box;
     <IW as InterpreterTypes>::Bytecode,
     <IW as InterpreterTypes>::ReturnData,
     <IW as InterpreterTypes>::Input,
-    <IW as InterpreterTypes>::SubRoutineStack,
     <IW as InterpreterTypes>::RuntimeFlag,
     <IW as InterpreterTypes>::Extend,
 )]
@@ -113,7 +111,6 @@ impl EthFrame<EthInterpreter> {
         bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
-        is_eof_init: bool,
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
@@ -130,15 +127,7 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(
-            memory,
-            bytecode,
-            inputs,
-            is_static,
-            is_eof_init,
-            spec_id,
-            gas_limit,
-        );
+        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
         *checkpoint_ref = checkpoint;
     }
 
@@ -204,28 +193,25 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
-        if !is_ext_delegate_call {
-            if let Some(result) = precompiles
-                .run(
-                    ctx,
-                    &inputs.bytecode_address,
-                    &interpreter_input,
-                    is_static,
-                    gas_limit,
-                )
-                .map_err(ERROR::from_string)?
-            {
-                if result.result.is_ok() {
-                    ctx.journal_mut().checkpoint_commit();
-                } else {
-                    ctx.journal_mut().checkpoint_revert(checkpoint);
-                }
-                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                    result,
-                    memory_offset: inputs.return_memory_offset.clone(),
-                })));
+        if let Some(result) = precompiles
+            .run(
+                ctx,
+                &inputs.bytecode_address,
+                &interpreter_input,
+                is_static,
+                gas_limit,
+            )
+            .map_err(ERROR::from_string)?
+        {
+            if result.result.is_ok() {
+                ctx.journal_mut().checkpoint_commit();
+            } else {
+                ctx.journal_mut().checkpoint_revert(checkpoint);
             }
+            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                result,
+                memory_offset: inputs.return_memory_offset.clone(),
+            })));
         }
 
         let account = ctx
@@ -242,12 +228,6 @@ impl EthFrame<EthInterpreter> {
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
-        }
-
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
-            ctx.journal_mut().checkpoint_revert(checkpoint);
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
 
         // Returns success if bytecode is empty.
@@ -267,7 +247,6 @@ impl EthFrame<EthInterpreter> {
             ExtBytecode::new_with_hash(bytecode, code_hash),
             interpreter_input,
             is_static,
-            false,
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
@@ -374,7 +353,6 @@ impl EthFrame<EthInterpreter> {
             memory,
             bytecode,
             interpreter_input,
-            false,
             false,
             spec,
             gas_limit,
@@ -528,10 +506,6 @@ impl EthFrame<EthInterpreter> {
                 Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
             }
             FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
-            FrameInput::EOFCreate(_inputs) => {
-                unreachable!()
-                //Self::make_eofcreate_frame(this, evm, depth, memory, inputs)
-            }
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -594,22 +568,6 @@ impl EthFrame<EthInterpreter> {
                     Some(frame.created_address),
                 )))
             }
-            FrameData::EOFCreate(_frame) => {
-                unreachable!()
-                // let max_code_size = context.cfg().max_code_size();
-                // return_eofcreate(
-                //     context.journal_mut(),
-                //     self.checkpoint,
-                //     &mut interpreter_result,
-                //     frame.created_address,
-                //     max_code_size,
-                // );
-
-                // ItemOrResult::Result(FrameResult::EOFCreate(CreateOutcome::new(
-                //     interpreter_result,
-                //     Some(frame.created_address),
-                // )))
-            }
         };
 
         Ok(result)
@@ -646,18 +604,10 @@ impl EthFrame<EthInterpreter> {
                     panic!("Fatal external error in insert_call_outcome");
                 }
 
-                let item = {
-                    if interpreter.runtime_flag.is_eof() {
-                        match ins_result {
-                            return_ok!() => U256::ZERO,
-                            return_revert!() => U256::from(1),
-                            _ => U256::from(2),
-                        }
-                    } else if ins_result.is_ok() {
-                        U256::from(1)
-                    } else {
-                        U256::ZERO
-                    }
+                let item = if ins_result.is_ok() {
+                    U256::from(1)
+                } else {
+                    U256::ZERO
                 };
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);
@@ -702,40 +652,6 @@ impl EthFrame<EthInterpreter> {
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
-                } else {
-                    U256::ZERO
-                };
-
-                // Safe to push without stack limit check
-                let _ = interpreter.stack.push(stack_item);
-            }
-            FrameResult::EOFCreate(outcome) => {
-                let instruction_result = *outcome.instruction_result();
-                let interpreter = &mut self.interpreter;
-                if instruction_result == InstructionResult::Revert {
-                    // Save data to return data buffer if the create reverted
-                    interpreter
-                        .return_data
-                        .set_buffer(outcome.output().to_owned());
-                } else {
-                    // Otherwise clear it. Note that RETURN opcode should abort.
-                    interpreter.return_data.clear()
-                };
-
-                assert_ne!(
-                    instruction_result,
-                    InstructionResult::FatalExternalError,
-                    "Fatal external error in insert_eofcreate_outcome"
-                );
-
-                let this_gas = &mut interpreter.gas;
-                if instruction_result.is_ok_or_revert() {
-                    this_gas.erase_cost(outcome.gas().remaining());
-                }
-
-                let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
-                    outcome.address.expect("EOF Address").into_word().into()
                 } else {
                     U256::ZERO
                 };

@@ -2,9 +2,9 @@ use crate::inspectors::GasInspector;
 use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
-    interpreter_types::{Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr, SubRoutineStack},
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-    InterpreterResult, InterpreterTypes, Stack,
+    interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+    InterpreterTypes, Stack,
 };
 use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;
@@ -19,8 +19,6 @@ pub struct TracerEip3155 {
     print_summary: bool,
     stack: Vec<U256>,
     pc: u64,
-    section: Option<u64>,
-    function_depth: Option<u64>,
     opcode: u8,
     gas: u64,
     refunded: i64,
@@ -58,9 +56,6 @@ struct Output<'a> {
     // Required fields:
     /// Program counter
     pc: u64,
-    /// EOF code section
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    section: Option<u64>,
     /// OpCode
     op: u8,
     /// Gas left before executing this operation
@@ -73,9 +68,6 @@ struct Output<'a> {
     stack: &'a [U256],
     /// Depth of the call stack
     depth: u64,
-    /// Depth of the EOF function call stack
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    function_depth: Option<u64>,
     /// Data returned by the function call
     return_data: &'static str,
     /// Amount of **global** gas refunded
@@ -149,8 +141,6 @@ impl TracerEip3155 {
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
-            section: None,
-            function_depth: None,
             opcode: 0,
             gas: 0,
             refunded: 0,
@@ -254,16 +244,6 @@ where
             None
         };
         self.pc = interp.bytecode.pc() as u64;
-        self.section = if interp.runtime_flag.is_eof() {
-            Some(interp.sub_routine.routine_idx() as u64)
-        } else {
-            None
-        };
-        self.function_depth = if interp.runtime_flag.is_eof() {
-            Some(interp.sub_routine.len() as u64 + 1)
-        } else {
-            None
-        };
         self.opcode = interp.bytecode.opcode();
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
@@ -279,13 +259,11 @@ where
 
         let value = Output {
             pc: self.pc,
-            section: self.section,
             op: self.opcode,
             gas: self.gas,
             gas_cost: self.gas_inspector.last_gas_cost(),
             stack: &self.stack,
             depth: context.journal_mut().depth() as u64,
-            function_depth: self.function_depth,
             return_data: "0x",
             refund: self.refunded as u64,
             mem_size: self.mem_size as u64,
@@ -316,22 +294,6 @@ where
     }
 
     fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
-        self.gas_inspector.create_end(outcome);
-
-        if context.journal_mut().depth() == 0 {
-            self.print_summary(&outcome.result, context);
-            let _ = self.output.flush();
-            // Clear the state if we are at the top level.
-            self.clear();
-        }
-    }
-
-    fn eofcreate_end(
-        &mut self,
-        context: &mut CTX,
-        _: &EOFCreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
         self.gas_inspector.create_end(outcome);
 
         if context.journal_mut().depth() == 0 {

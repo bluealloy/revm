@@ -1,5 +1,4 @@
 use crate::{CallInput, InstructionResult, InterpreterAction};
-use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
@@ -149,38 +148,6 @@ pub trait MemoryTr {
     fn resize(&mut self, new_size: usize) -> bool;
 }
 
-/// Returns EOF containers. Used by [`bytecode::opcode::RETURNCONTRACT`] and [`bytecode::opcode::EOFCREATE`] opcodes.
-pub trait EofContainer {
-    /// Returns EOF container at given index.
-    fn eof_container(&self, index: usize) -> Option<&Bytes>;
-}
-
-/// Handles EOF introduced sub routine calls.
-pub trait SubRoutineStack {
-    /// Returns sub routine stack length.
-    fn len(&self) -> usize;
-
-    /// Returns `true` if sub routine stack is empty.
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Returns current sub routine index.
-    fn routine_idx(&self) -> usize;
-
-    /// Sets new code section without touching subroutine stack.
-    ///
-    /// This is used for [`bytecode::opcode::JUMPF`] opcode. Where
-    /// tail call is performed.
-    fn set_routine_idx(&mut self, idx: usize);
-
-    /// Pushes a new frame to the stack and new code index.
-    fn push(&mut self, old_program_counter: usize, new_idx: usize) -> bool;
-
-    /// Pops previous subroutine, sets previous code index and returns program counter.
-    fn pop(&mut self) -> Option<usize>;
-}
-
 /// Functions needed for Interpreter Stack operations.
 pub trait StackTr {
     /// Returns stack length.
@@ -256,25 +223,6 @@ pub trait StackTr {
     fn dup(&mut self, n: usize) -> bool;
 }
 
-/// EOF data fetching.
-pub trait EofData {
-    /// Returns EOF data.
-    fn data(&self) -> &[u8];
-    /// Returns EOF data slice.
-    fn data_slice(&self, offset: usize, len: usize) -> &[u8];
-    /// Returns EOF data size.
-    fn data_size(&self) -> usize;
-}
-
-/// EOF code info.
-pub trait EofCodeInfo {
-    /// Returns code information containing stack information.
-    fn code_info(&self, idx: usize) -> Option<&CodeInfo>;
-
-    /// Returns program counter at the start of code section.
-    fn code_section_pc(&self, idx: usize) -> Option<usize>;
-}
-
 /// Returns return data.
 pub trait ReturnData {
     /// Returns return data.
@@ -317,53 +265,26 @@ pub trait LoopControl {
     }
 }
 
-/// Trait for runtime execution flags that control interpreter behavior.
 pub trait RuntimeFlag {
-    /// Returns true if the execution context is static (read-only).
     fn is_static(&self) -> bool;
-    /// Returns true if the bytecode being executed is EOF format.
-    fn is_eof(&self) -> bool;
-    /// Returns true if this is EOF initialization code execution.
-    fn is_eof_init(&self) -> bool;
-    /// Returns the Ethereum specification version in effect.
     fn spec_id(&self) -> SpecId;
 }
 
-/// Trait for interpreter execution logic.
 pub trait Interp {
-    /// The instruction type used by this interpreter
     type Instruction;
-    /// The action type returned by the interpreter
     type Action;
 
-    /// Runs the interpreter with the given instruction table.
     fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
-/// Trait defining the types used by an interpreter implementation.
+/// Trait
 pub trait InterpreterTypes {
-    /// The stack implementation type
     type Stack: StackTr;
-    /// The memory implementation type
     type Memory: MemoryTr;
-    /// The bytecode implementation type with all required traits
-    type Bytecode: Jumps
-        + Immediates
-        + LoopControl
-        + LegacyBytecode
-        + EofData
-        + EofContainer
-        + EofCodeInfo;
-    /// The return data implementation type
+    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
     type ReturnData: ReturnData;
-    /// The input data implementation type
     type Input: InputsTr;
-    /// The subroutine stack implementation type
-    type SubRoutineStack: SubRoutineStack;
-    /// The runtime flags implementation type
     type RuntimeFlag: RuntimeFlag;
-    /// Extended data type for custom interpreter implementations
     type Extend;
-    /// Output type for interpreter results
     type Output;
 }
