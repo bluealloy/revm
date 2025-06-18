@@ -7,7 +7,6 @@ pub mod bitwise;
 pub mod block_info;
 pub mod contract;
 pub mod control;
-pub mod data;
 pub mod host;
 pub mod i256;
 pub mod memory;
@@ -101,7 +100,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[PC as usize] = control::pc;
     table[MSIZE as usize] = memory::msize;
     table[GAS as usize] = system::gas;
-    table[JUMPDEST as usize] = control::jumpdest_or_nop;
+    table[JUMPDEST as usize] = control::jumpdest;
     table[TLOAD as usize] = host::tload;
     table[TSTORE as usize] = host::tstore;
     table[MCOPY as usize] = memory::mcopy;
@@ -180,25 +179,6 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[LOG3 as usize] = host::log::<3, _>;
     table[LOG4 as usize] = host::log::<4, _>;
 
-    table[DATALOAD as usize] = data::data_load;
-    table[DATALOADN as usize] = data::data_loadn;
-    table[DATASIZE as usize] = data::data_size;
-    table[DATACOPY as usize] = data::data_copy;
-
-    table[RJUMP as usize] = control::rjump;
-    table[RJUMPI as usize] = control::rjumpi;
-    table[RJUMPV as usize] = control::rjumpv;
-    table[CALLF as usize] = control::callf;
-    table[RETF as usize] = control::retf;
-    table[JUMPF as usize] = control::jumpf;
-    table[DUPN as usize] = stack::dupn;
-    table[SWAPN as usize] = stack::swapn;
-    table[EXCHANGE as usize] = stack::exchange;
-
-    table[EOFCREATE as usize] = contract::eofcreate;
-    table[TXCREATE as usize] = contract::txcreate;
-    table[RETURNCONTRACT as usize] = contract::return_contract;
-
     table[CREATE as usize] = contract::create::<_, false, _>;
     table[CALL as usize] = contract::call;
     table[CALLCODE as usize] = contract::call_code;
@@ -206,11 +186,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[DELEGATECALL as usize] = contract::delegate_call;
     table[CREATE2 as usize] = contract::create::<_, true, _>;
 
-    table[RETURNDATALOAD as usize] = system::returndataload;
-    table[EXTCALL as usize] = contract::extcall;
-    table[EXTDELEGATECALL as usize] = contract::extdelegatecall;
     table[STATICCALL as usize] = contract::static_call;
-    table[EXTSTATICCALL as usize] = contract::extstaticcall;
     table[REVERT as usize] = control::revert;
     table[INVALID as usize] = control::invalid;
     table[SELFDESTRUCT as usize] = host::selfdestruct;

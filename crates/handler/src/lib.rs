@@ -27,7 +27,7 @@ pub mod validation;
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};
 pub use frame::{return_create, ContextTrDbError, EthFrame};
-pub use frame_data::{CallFrame, CreateFrame, EOFCreateFrame, FrameData, FrameResult};
+pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};

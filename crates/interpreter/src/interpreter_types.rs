@@ -1,5 +1,4 @@
 use crate::{CallInput, InstructionResult, InterpreterAction};
-use bytecode::eof::CodeInfo;
 use core::cell::Ref;
 use core::ops::{Deref, Range};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
@@ -149,38 +148,6 @@ pub trait MemoryTr {
     fn resize(&mut self, new_size: usize) -> bool;
 }
 
-/// Returns EOF containers. Used by [`bytecode::opcode::RETURNCONTRACT`] and [`bytecode::opcode::EOFCREATE`] opcodes.
-pub trait EofContainer {
-    /// Returns EOF container at given index.
-    fn eof_container(&self, index: usize) -> Option<&Bytes>;
-}
-
-/// Handles EOF introduced sub routine calls.
-pub trait SubRoutineStack {
-    /// Returns sub routine stack length.
-    fn len(&self) -> usize;
-
-    /// Returns `true` if sub routine stack is empty.
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Returns current sub routine index.
-    fn routine_idx(&self) -> usize;
-
-    /// Sets new code section without touching subroutine stack.
-    ///
-    /// This is used for [`bytecode::opcode::JUMPF`] opcode. Where
-    /// tail call is performed.
-    fn set_routine_idx(&mut self, idx: usize);
-
-    /// Pushes a new frame to the stack and new code index.
-    fn push(&mut self, old_program_counter: usize, new_idx: usize) -> bool;
-
-    /// Pops previous subroutine, sets previous code index and returns program counter.
-    fn pop(&mut self) -> Option<usize>;
-}
-
 /// Functions needed for Interpreter Stack operations.
 pub trait StackTr {
     /// Returns stack length.
@@ -256,25 +223,6 @@ pub trait StackTr {
     fn dup(&mut self, n: usize) -> bool;
 }
 
-/// EOF data fetching.
-pub trait EofData {
-    /// Returns EOF data.
-    fn data(&self) -> &[u8];
-    /// Returns EOF data slice.
-    fn data_slice(&self, offset: usize, len: usize) -> &[u8];
-    /// Returns EOF data size.
-    fn data_size(&self) -> usize;
-}
-
-/// EOF code info.
-pub trait EofCodeInfo {
-    /// Returns code information containing stack information.
-    fn code_info(&self, idx: usize) -> Option<&CodeInfo>;
-
-    /// Returns program counter at the start of code section.
-    fn code_section_pc(&self, idx: usize) -> Option<usize>;
-}
-
 /// Returns return data.
 pub trait ReturnData {
     /// Returns return data.
@@ -319,8 +267,6 @@ pub trait LoopControl {
 
 pub trait RuntimeFlag {
     fn is_static(&self) -> bool;
-    fn is_eof(&self) -> bool;
-    fn is_eof_init(&self) -> bool;
     fn spec_id(&self) -> SpecId;
 }
 
@@ -335,16 +281,9 @@ pub trait Interp {
 pub trait InterpreterTypes {
     type Stack: StackTr;
     type Memory: MemoryTr;
-    type Bytecode: Jumps
-        + Immediates
-        + LoopControl
-        + LegacyBytecode
-        + EofData
-        + EofContainer
-        + EofCodeInfo;
+    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
     type ReturnData: ReturnData;
     type Input: InputsTr;
-    type SubRoutineStack: SubRoutineStack;
     type RuntimeFlag: RuntimeFlag;
     type Extend;
     type Output;

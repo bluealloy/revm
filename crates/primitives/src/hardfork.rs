@@ -131,7 +131,7 @@ pub mod name {
     pub const CANCUN: &str = "Cancun";
     /// String identifier for the Prague hardfork
     pub const PRAGUE: &str = "Prague";
-    /// String identifier for the Osaka hardfork (Prague with EOF)
+    /// String identifier for the Osaka hardfork
     pub const OSAKA: &str = "Osaka";
     /// String identifier for the latest hardfork
     pub const LATEST: &str = "Latest";

@@ -84,8 +84,8 @@ where
     /// This method acts as [`Handler::run_exec_loop`] method for inspection.
     ///
     /// It will call:
-    /// * [`Inspector::call`],[`Inspector::create`],[`Inspector::eofcreate`] to inspect call, create and eofcreate.
-    /// * [`Inspector::call_end`],[`Inspector::create_end`],[`Inspector::eofcreate_end`] to inspect call, create and eofcreate end.
+    /// * [`Inspector::call`],[`Inspector::create`] to inspect call, create and eofcreate.
+    /// * [`Inspector::call_end`],[`Inspector::create_end`] to inspect call, create and eofcreate end.
     /// * [`Inspector::initialize_interp`] to inspect initialized interpreter.
     fn inspect_run_exec_loop(
         &mut self,
@@ -137,11 +137,6 @@ pub fn frame_start<CTX, INTR: InterpreterTypes>(
                 return Some(FrameResult::Create(output));
             }
         }
-        FrameInput::EOFCreate(i) => {
-            if let Some(output) = inspector.eofcreate(context, i) {
-                return Some(FrameResult::EOFCreate(output));
-            }
-        }
         FrameInput::Empty => unreachable!(),
     }
     None
@@ -165,12 +160,6 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
                 panic!("FrameInput::Create expected {:?}", frame_input);
             };
             inspector.create_end(context, i, outcome);
-        }
-        FrameResult::EOFCreate(outcome) => {
-            let FrameInput::EOFCreate(i) = frame_input else {
-                panic!("FrameInput::EofCreate expected {:?}", frame_input);
-            };
-            inspector.eofcreate_end(context, i, outcome);
         }
     }
 }

@@ -5,20 +5,15 @@ set -e
 
 # Version for the execution spec tests
 VERSION="v4.4.0"
-# Version for the EOF spec tests, it is currently upgrading to eof devnet-1 so we will use devnet-0 suite.
-EOF_VERSION="v4.4.0"
-
 # Directories
 FIXTURES_DIR="test-fixtures"
 STABLE_DIR="$FIXTURES_DIR/stable"
-DEVELOP_DIR="$FIXTURES_DIR/develop"
-EOF_DIR="$FIXTURES_DIR/eof"
+DEVELOP_DIR="$FIXTURES_DIR/develop" 
 
 # URL and filenames
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 STABLE_TAR="fixtures_stable.tar.gz"
 DEVELOP_TAR="fixtures_develop.tar.gz"
-EOF_TAR="fixtures_eip7692.tar.gz"
 
 # Print usage information and exit
 usage() {
@@ -63,7 +58,7 @@ clean() {
 
 # Check if all required fixture directories exist
 check_fixtures() {
-    if [ -d "$STABLE_DIR" ] && [ -d "$DEVELOP_DIR" ] && [ -d "$EOF_DIR" ]; then
+    if [ -d "$STABLE_DIR" ] && [ -d "$DEVELOP_DIR" ]; then
         return 0
     else
         return 1
@@ -90,14 +85,13 @@ download_and_extract() {
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
-    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR" "$EOF_DIR"
+    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR"
 
     download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
     download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$VERSION"
-    download_and_extract "$EOF_DIR" "$EOF_TAR" "EOF" "$EOF_VERSION"
 
     echo "Cleaning up tar files..."
-    rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}" "${FIXTURES_DIR}/${EOF_TAR}"
+    rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}"
     echo "Fixtures download and extraction complete."
 }
 
@@ -129,12 +123,6 @@ run_tests() {
 
     echo "Running develop statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$DEVELOP_DIR/state_tests"
-
-    echo "Skipping EOF statetests..."
-    # $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$EOF_DIR/state_tests"
-
-    echo "Skipping EOF validation tests..."
-    # $RUST_RUNNER run $CARGO_OPTS -p revme -- eof-validation "$EOF_DIR/eof_tests"
 }
 
 ##############################
