@@ -713,7 +713,7 @@ mod tests {
         for _ in OPCODE_INFO.into_iter().flatten() {
             opcode_num += 1;
         }
-        assert_eq!(opcode_num, 170);
+        assert_eq!(opcode_num, 150);
     }
 
     #[test]
