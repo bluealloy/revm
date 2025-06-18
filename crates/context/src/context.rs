@@ -229,7 +229,8 @@ where
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL> {
+    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL>
+    {
         let spec = self.cfg.spec().into();
         let mut journaled_state = Journal::new(WrapDatabaseRef(db));
         journaled_state.set_spec_id(spec);
@@ -245,7 +246,10 @@ where
     }
 
     /// Creates a new context with a new block type.
-    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> {
+    pub fn with_block<OB: Block>(
+        self,
+        block: OB,
+    ) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> {
         Context {
             tx: self.tx,
             block,
