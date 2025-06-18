@@ -76,6 +76,7 @@ cfg-if.workspace = true
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
+ark-std = { workspace = true}
 rstest.workspace = true
 
 [features]
@@ -96,7 +97,7 @@ std = [
 	"ark-ff/std",
 	"ark-serialize/std",
 	"p256/std",
-    "rug?/std"
+	"rug?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
