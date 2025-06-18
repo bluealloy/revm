@@ -9,12 +9,15 @@ mod serde;
 
 #[derive(Debug)]
 pub struct ExtBytecode {
-    base: Bytecode,
     bytecode_hash: Option<B256>,
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
     pub action: Option<InterpreterAction>,
+    /// The base bytecode.
+    base: Bytecode,
+    /// The previous instruction pointer.
     previous_pointer: Option<*const u8>,
+    /// The current instruction pointer.
     instruction_pointer: *const u8,
 }
 

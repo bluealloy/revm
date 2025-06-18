@@ -133,7 +133,6 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     }
 
     /// Transact the transaction and commit to the state.
-
     #[inline]
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         let output = self.transact_one(tx)?;
