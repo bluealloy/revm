@@ -151,7 +151,7 @@ impl<CTX: ContextTr> Host for CTX {
     /* Config */
 
     fn max_initcode_size(&self) -> usize {
-        self.cfg().max_code_size().saturating_mul(2)
+        self.cfg().max_initcode_size()
     }
 
     /* Database */
