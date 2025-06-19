@@ -503,7 +503,7 @@ mod tests {
     };
     use alloy_primitives::uint;
     use revm::{
-        context::{BlockEnv, Context, TransactionType},
+        context::{BlockEnv, Context},
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
@@ -546,7 +546,7 @@ mod tests {
     fn test_revert_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 100;
+                tx.base.set_gas_limit(100);
                 tx.enveloped_tx = None;
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
@@ -561,9 +561,8 @@ mod tests {
     fn test_consume_gas() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 100;
-                tx.deposit.source_hash = B256::ZERO;
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.base.set_gas_limit(100);
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
@@ -577,9 +576,8 @@ mod tests {
     fn test_consume_gas_with_refund() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 100;
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.deposit.source_hash = B256::ZERO;
+                tx.base.set_gas_limit(100);
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
@@ -601,9 +599,8 @@ mod tests {
     fn test_consume_gas_deposit_tx() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.base.gas_limit = 100;
-                tx.deposit.source_hash = B256::ZERO;
+                tx.base.set_gas_limit(100);
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
@@ -616,9 +613,8 @@ mod tests {
     fn test_consume_gas_sys_deposit_tx() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.base.gas_limit = 100;
-                tx.deposit.source_hash = B256::ZERO;
+                tx.base.set_gas_limit(100);
+                tx.deposit.source_hash = B256::from([1u8; 32]);
                 tx.deposit.is_system_transaction = true;
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
@@ -650,8 +646,7 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
         ctx.modify_tx(|tx| {
-            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-            tx.deposit.source_hash = B256::ZERO;
+            tx.deposit.source_hash = B256::from([1u8; 32]);
             tx.deposit.mint = Some(10);
         });
 
@@ -675,7 +670,7 @@ mod tests {
         db.insert_account_info(
             caller,
             AccountInfo {
-                balance: U256::from(1000),
+                balance: U256::from(1058), // Increased to cover L1 fees (1048) + base fees
                 ..Default::default()
             },
         );
@@ -689,9 +684,7 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 100;
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.deposit.mint = Some(10);
+                tx.base.set_gas_limit(100);
                 tx.enveloped_tx = Some(bytes!("FACADE"));
                 tx.deposit.source_hash = B256::ZERO;
             });
@@ -706,7 +699,7 @@ mod tests {
 
         // Check the account balance is updated.
         let account = evm.ctx().journal_mut().load_account(caller).unwrap();
-        assert_eq!(account.info.balance, U256::from(1010));
+        assert_eq!(account.info.balance, U256::from(10)); // 1058 - 1048 = 10
     }
 
     #[test]
@@ -809,7 +802,7 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 100;
+                tx.base.set_gas_limit(100);
                 tx.deposit.source_hash = B256::ZERO;
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
@@ -848,7 +841,7 @@ mod tests {
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
             .modify_tx_chained(|tx| {
-                tx.base.gas_limit = 10;
+                tx.base.set_gas_limit(10);
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
 
@@ -914,7 +907,7 @@ mod tests {
         // mark the tx as a system transaction.
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                tx.deposit.source_hash = B256::from([1u8; 32]);
                 tx.deposit.is_system_transaction = true;
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
@@ -941,8 +934,7 @@ mod tests {
         // Set source hash.
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.deposit.source_hash = B256::ZERO;
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
@@ -958,8 +950,7 @@ mod tests {
         // Set source hash.
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-                tx.deposit.source_hash = B256::ZERO;
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
@@ -975,7 +966,8 @@ mod tests {
     fn test_halted_deposit_tx_post_regolith() {
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+                // Set up as deposit transaction by having a deposit with source_hash
+                tx.deposit.source_hash = B256::from([1u8; 32]);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
@@ -1011,14 +1003,15 @@ mod tests {
 
         let ctx = Context::op()
             .modify_tx_chained(|tx| {
-                tx.base.tx_type = if is_deposit {
-                    DEPOSIT_TRANSACTION_TYPE
+                if is_deposit {
+                    tx.deposit.source_hash = B256::from([1u8; 32]);
                 } else {
-                    TransactionType::Eip1559 as u8
-                };
-                tx.base.gas_price = GAS_PRICE;
-                tx.base.gas_priority_fee = None;
-                tx.base.caller = SENDER;
+                    // For non-deposit transactions, we set up as Eip1559 via enveloped_tx
+                    tx.enveloped_tx = Some(bytes!("FACADE"));
+                }
+                tx.base.set_gas_price(GAS_PRICE);
+                tx.base.set_gas_priority_fee(None);
+                tx.base.set_caller(SENDER);
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 

@@ -33,21 +33,21 @@ pub fn run(criterion: &mut Criterion) {
         .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
         .build_mainnet();
 
-    let tx = TxEnv {
-        caller: BENCH_CALLER,
-        kind: TxKind::Call(BENCH_TARGET),
-        value: U256::from(1),
-        gas_price: 0,
-        gas_priority_fee: None,
-        gas_limit: 30_000,
-        ..Default::default()
-    };
+    let tx = TxEnv::builder()
+        .caller(BENCH_CALLER)
+        .kind(TxKind::Call(BENCH_TARGET))
+        .value(U256::from(1))
+        .gas_price(0)
+        .gas_priority_fee(None)
+        .gas_limit(30_000)
+        .build()
+        .unwrap();
 
     let target = U256::from(10000);
     let mut txs = vec![tx.clone(); 1000];
 
     for (i, tx_mut) in txs.iter_mut().enumerate() {
-        tx_mut.kind = TxKind::Call((target + U256::from(i)).into_address());
+        tx_mut.set_kind(TxKind::Call((target + U256::from(i)).into_address()));
     }
 
     criterion.bench_function("transact_commit_1000txs", |b| {

@@ -176,10 +176,10 @@ mod tests {
 
         let mut tx = OpTransaction::default();
 
-        tx.base.caller = EEADDRESS;
-        tx.base.kind = TxKind::Call(FFADDRESS);
-        tx.base.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
-        tx.base.gas_limit = 3_000_000;
+        tx.base.set_caller(EEADDRESS);
+        tx.base.set_kind(TxKind::Call(FFADDRESS));
+        tx.base.set_data(FastLz::fastLzCall::new((input,)).abi_encode().into());
+        tx.base.set_gas_limit(3_000_000);
         tx.enveloped_tx = Some(Bytes::default());
 
         let result = evm.transact_one(tx).unwrap();

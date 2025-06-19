@@ -135,10 +135,10 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
             cfg.spec = SpecId::CANCUN;
         })
         .modify_tx_chained(|tx| {
-            tx.caller = from;
-            tx.kind = TxKind::Call(to);
-            tx.value = amount;
-            tx.gas_price = 2;
+            tx.set_caller(from);
+            tx.set_kind(TxKind::Call(to));
+            tx.set_value(amount);
+            tx.set_gas_price(2);
         })
         .modify_block_chained(|b| {
             b.basefee = 1;

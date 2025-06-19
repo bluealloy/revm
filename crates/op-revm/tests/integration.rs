@@ -3,8 +3,7 @@ mod common;
 
 use common::compare_or_save_testdata;
 use op_revm::{
-    precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE,
-    transaction::deposit::DEPOSIT_TRANSACTION_TYPE, DefaultOp, L1BlockInfo, OpBuilder,
+    precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
 };
 use revm::{
@@ -13,7 +12,7 @@ use revm::{
         result::{ExecutionResult, OutOfGasError},
         BlockEnv, CfgEnv, TxEnv,
     },
-    context_interface::result::HaltReason,
+    context_interface::{result::HaltReason, Transaction},
     database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
     interpreter::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
@@ -32,7 +31,7 @@ fn test_deposit_tx() {
         .modify_tx_chained(|tx| {
             tx.enveloped_tx = None;
             tx.deposit.mint = Some(100);
-            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
+            tx.deposit.source_hash = revm::primitives::B256::from([1u8; 32]);
         })
         .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
 
@@ -57,9 +56,9 @@ fn test_halted_deposit_tx() {
         .modify_tx_chained(|tx| {
             tx.enveloped_tx = None;
             tx.deposit.mint = Some(100);
-            tx.base.tx_type = DEPOSIT_TRANSACTION_TYPE;
-            tx.base.caller = BENCH_CALLER;
-            tx.base.kind = TxKind::Call(BENCH_TARGET);
+            tx.deposit.source_hash = revm::primitives::B256::from([1u8; 32]);
+            tx.base.set_caller(BENCH_CALLER);
+            tx.base.set_kind(TxKind::Call(BENCH_TARGET));
         })
         .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
@@ -97,8 +96,8 @@ fn p256verify_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS));
-            tx.base.gas_limit = initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE;
+            tx.base.set_kind(TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS)));
+            tx.base.set_gas_limit(initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE);
         })
         .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
 }
@@ -118,7 +117,10 @@ fn test_tx_call_p256verify() {
 
 #[test]
 fn test_halted_tx_call_p256verify() {
-    let ctx = p256verify_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = p256verify_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -145,9 +147,9 @@ fn bn128_pair_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bn128::pair::ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas;
+            tx.base.set_kind(TxKind::Call(bn128::pair::ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas);
         })
         .modify_cfg_chained(|cfg| cfg.spec = spec)
 }
@@ -194,8 +196,8 @@ fn test_halted_tx_call_bn128_pair_granite() {
 fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G1_ADD_ADDRESS);
-            tx.base.gas_limit = 21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE - 1;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS));
+            tx.base.set_gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE - 1);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -226,8 +228,8 @@ fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
 fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G1_ADD_ADDRESS);
-            tx.base.gas_limit = 21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS));
+            tx.base.set_gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -269,9 +271,9 @@ fn g1_msm_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G1_MSM_ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas + gs1_msm_gas;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G1_MSM_ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas + gs1_msm_gas);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -282,7 +284,10 @@ fn g1_msm_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
-    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
+    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| {
+        let current_data = tx.base.input().clone();
+        tx.base.set_data(current_data.slice(1..))
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -304,7 +309,10 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
-    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -350,8 +358,8 @@ fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
 fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G2_ADD_ADDRESS);
-            tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS));
+            tx.base.set_gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -382,8 +390,8 @@ fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
 fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
     let ctx = Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G2_ADD_ADDRESS);
-            tx.base.gas_limit = 21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS));
+            tx.base.set_gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -426,9 +434,9 @@ fn g2_msm_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::G2_MSM_ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas + gs2_msm_gas;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::G2_MSM_ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas + gs2_msm_gas);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -439,7 +447,10 @@ fn g2_msm_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
-    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
+    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| {
+        let current_data = tx.base.input().clone();
+        tx.base.set_data(current_data.slice(1..))
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -461,7 +472,10 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
-    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -517,9 +531,9 @@ fn bl12_381_pairing_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::PAIRING_ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas + pairing_gas;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::PAIRING_ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas + pairing_gas);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -531,7 +545,10 @@ fn bl12_381_pairing_test_tx(
 #[test]
 fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
     let ctx =
-        bl12_381_pairing_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
+        bl12_381_pairing_test_tx().modify_tx_chained(|tx| {
+            let current_data = tx.base.input().clone();
+            tx.base.set_data(current_data.slice(1..))
+        });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -553,7 +570,10 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
-    let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -606,9 +626,9 @@ fn fp_to_g1_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -619,7 +639,10 @@ fn fp_to_g1_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
-    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -641,7 +664,10 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
-    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
+    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| {
+        let current_data = tx.base.input().clone();
+        tx.base.set_data(current_data.slice(1..))
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -672,9 +698,9 @@ fn fp2_to_g2_test_tx(
 
     Context::op()
         .modify_tx_chained(|tx| {
-            tx.base.kind = TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS);
-            tx.base.data = input;
-            tx.base.gas_limit = initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE;
+            tx.base.set_kind(TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
+            tx.base.set_data(input);
+            tx.base.set_gas_limit(initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE);
         })
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
@@ -685,7 +711,10 @@ fn fp2_to_g2_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
-    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.gas_limit -= 1);
+    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| {
+        let current_gas_limit = tx.base.gas_limit();
+        tx.base.set_gas_limit(current_gas_limit - 1)
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -707,7 +736,10 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
-    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| tx.base.data = tx.base.data.slice(1..));
+    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| {
+        let current_data = tx.base.input().clone();
+        tx.base.set_data(current_data.slice(1..))
+    });
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -762,11 +794,11 @@ fn test_log_inspector() {
     let mut evm = ctx.build_op_with_inspector(LogInspector::default());
 
     let tx = OpTransaction {
-        base: TxEnv {
-            caller: BENCH_CALLER,
-            kind: TxKind::Call(BENCH_TARGET),
-            ..Default::default()
-        },
+        base: TxEnv::builder()
+            .caller(BENCH_CALLER)
+            .kind(TxKind::Call(BENCH_TARGET))
+            .build()
+            .unwrap(),
         ..Default::default()
     };
 

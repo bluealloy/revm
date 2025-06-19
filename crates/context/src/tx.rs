@@ -21,45 +21,45 @@ use std::{vec, vec::Vec};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Transaction type
-    pub tx_type: u8,
+    tx_type: u8,
     /// Caller aka Author aka transaction signer
-    pub caller: Address,
+    caller: Address,
     /// The gas limit of the transaction.
-    pub gas_limit: u64,
+    gas_limit: u64,
     /// The gas price of the transaction.
     ///
     /// For EIP-1559 transaction this represent max_gas_fee.
-    pub gas_price: u128,
+    gas_price: u128,
     /// The destination of the transaction
-    pub kind: TxKind,
+    kind: TxKind,
     /// The value sent to `transact_to`
-    pub value: U256,
+    value: U256,
     /// The data of the transaction
-    pub data: Bytes,
+    data: Bytes,
 
     /// The nonce of the transaction
-    pub nonce: u64,
+    nonce: u64,
 
     /// The chain ID of the transaction
     ///
     /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
     ///
     /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
-    pub chain_id: Option<u64>,
+    chain_id: Option<u64>,
 
     /// A list of addresses and storage keys that the transaction plans to access
     ///
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: AccessList,
+    access_list: AccessList,
 
     /// The priority fee per gas
     ///
     /// Incorporated as part of the London upgrade via [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub gas_priority_fee: Option<u128>,
+    gas_priority_fee: Option<u128>,
 
     /// The list of blob versioned hashes
     ///
@@ -68,14 +68,14 @@ pub struct TxEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_hashes: Vec<B256>,
+    blob_hashes: Vec<B256>,
 
     /// The max fee per blob gas
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub max_fee_per_blob_gas: u128,
+    max_fee_per_blob_gas: u128,
 
     /// List of authorizations
     ///
@@ -85,7 +85,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction via [EIP-7702].
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
-    pub authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
+    authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
 }
 
 impl Default for TxEnv {
@@ -156,6 +156,71 @@ impl TxEnv {
     /// Insert a list of recovered authorizations into the authorization list.
     pub fn set_recovered_authorization(&mut self, auth: Vec<RecoveredAuthorization>) {
         self.authorization_list = auth.into_iter().map(Either::Right).collect();
+    }
+
+    /// Set the caller address
+    pub fn set_caller(&mut self, caller: Address) {
+        self.caller = caller;
+    }
+
+    /// Set the transaction kind
+    pub fn set_kind(&mut self, kind: TxKind) {
+        self.kind = kind;
+    }
+
+    /// Set the transaction value
+    pub fn set_value(&mut self, value: U256) {
+        self.value = value;
+    }
+
+    /// Set the gas price
+    pub fn set_gas_price(&mut self, gas_price: u128) {
+        self.gas_price = gas_price;
+    }
+
+    /// Set the gas limit
+    pub fn set_gas_limit(&mut self, gas_limit: u64) {
+        self.gas_limit = gas_limit;
+    }
+
+    /// Set the nonce
+    pub fn set_nonce(&mut self, nonce: u64) {
+        self.nonce = nonce;
+    }
+
+    /// Set the transaction data
+    pub fn set_data(&mut self, data: Bytes) {
+        self.data = data;
+    }
+
+    /// Set the chain ID
+    pub fn set_chain_id(&mut self, chain_id: Option<u64>) {
+        self.chain_id = chain_id;
+    }
+
+    /// Set the access list
+    pub fn set_access_list(&mut self, access_list: AccessList) {
+        self.access_list = access_list;
+    }
+
+    /// Set the gas priority fee
+    pub fn set_gas_priority_fee(&mut self, gas_priority_fee: Option<u128>) {
+        self.gas_priority_fee = gas_priority_fee;
+    }
+
+    /// Set the blob hashes
+    pub fn set_blob_hashes(&mut self, blob_hashes: Vec<B256>) {
+        self.blob_hashes = blob_hashes;
+    }
+
+    /// Set the max fee per blob gas
+    pub fn set_max_fee_per_blob_gas(&mut self, max_fee_per_blob_gas: u128) {
+        self.max_fee_per_blob_gas = max_fee_per_blob_gas;
+    }
+
+    /// Set the authorization list
+    pub fn set_authorization_list(&mut self, authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>) {
+        self.authorization_list = authorization_list;
     }
 }
 

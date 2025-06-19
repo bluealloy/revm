@@ -3,7 +3,7 @@ use crate::{
     MainnetHandler, PrecompileProvider,
 };
 use context::{
-    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TransactionType, TxEnv,
+    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv,
 };
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
@@ -39,14 +39,13 @@ impl SystemCallTx for TxEnv {
         system_contract_address: Address,
         data: Bytes,
     ) -> Self {
-        TxEnv {
-            tx_type: TransactionType::Legacy as u8,
-            caller,
-            data,
-            kind: TxKind::Call(system_contract_address),
-            gas_limit: eip7825::TX_GAS_LIMIT_CAP,
-            ..Default::default()
-        }
+        TxEnv::builder()
+            .caller(caller)
+            .data(data)
+            .kind(TxKind::Call(system_contract_address))
+            .gas_limit(eip7825::TX_GAS_LIMIT_CAP)
+            .build()
+            .unwrap()
     }
 }
 
