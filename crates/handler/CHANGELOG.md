@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v6.0.0...revm-handler-v7.0.0) - 2025-06-19
+
+### Added
+
+- remove EOF ([#2644](https://github.com/bluealloy/revm/pull/2644))
+- configurable contract size limit ([#2611](https://github.com/bluealloy/revm/pull/2611)) ([#2642](https://github.com/bluealloy/revm/pull/2642))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- change blob_max_count to max_blobs_per_tx ([#2608](https://github.com/bluealloy/revm/pull/2608))
+- add optional priority fee check configuration ([#2588](https://github.com/bluealloy/revm/pull/2588))
+
+### Other
+
+- lints handler inspector interpreter ([#2646](https://github.com/bluealloy/revm/pull/2646))
+- bump all deps ([#2647](https://github.com/bluealloy/revm/pull/2647))
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- store coinbase address separately to avoid cloning warm addresses in the common case ([#2634](https://github.com/bluealloy/revm/pull/2634))
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v5.0.1...revm-handler-v6.0.0) - 2025-06-06
 
 ### Added

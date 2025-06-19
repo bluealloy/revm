@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v7.0.0...revm-statetest-types-v8.0.0) - 2025-06-19
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+
+### Other
+
+- lints for examples ([#2650](https://github.com/bluealloy/revm/pull/2650))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v6.0.0...revm-statetest-types-v7.0.0) - 2025-06-06
 
 ### Added
