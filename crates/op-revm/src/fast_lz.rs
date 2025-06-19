@@ -159,6 +159,8 @@ mod tests {
         // This bytecode and ABI is for a contract, which wraps the LibZip library for easier fuzz testing.
         // The source of this contract is here: https://github.com/danyalprout/fastlz/blob/main/src/FastLz.sol#L6-L10
 
+        use revm::context::TxEnv;
+
         use crate::OpTransaction;
         sol! {
             interface FastLz {
@@ -174,12 +176,16 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
             .build_op();
 
-        let mut tx = OpTransaction::default();
+        let mut tx = OpTransaction::new(
+            TxEnv::builder()
+                .caller(EEADDRESS)
+                .kind(TxKind::Call(FFADDRESS))
+                .data(FastLz::fastLzCall::new((input,)).abi_encode().into())
+                .gas_limit(3_000_000)
+                .build()
+                .unwrap(),
+        );
 
-        tx.base.set_caller(EEADDRESS);
-        tx.base.set_kind(TxKind::Call(FFADDRESS));
-        tx.base.set_data(FastLz::fastLzCall::new((input,)).abi_encode().into());
-        tx.base.set_gas_limit(3_000_000);
         tx.enveloped_tx = Some(Bytes::default());
 
         let result = evm.transact_one(tx).unwrap();

@@ -2,7 +2,7 @@
 use super::deposit::{DepositTransactionParts, DEPOSIT_TRANSACTION_TYPE};
 use auto_impl::auto_impl;
 use revm::{
-    context::TxEnv,
+    context::{tx::TxEnvBuilder, TxEnv},
     context_interface::transaction::Transaction,
     handler::SystemCallTx,
     primitives::{Address, Bytes, TxKind, B256, U256},
@@ -186,18 +186,90 @@ impl<T: Transaction> OpTxTr for OpTransaction<T> {
     }
 }
 
+/// Builder for constructing [`OpTransaction`] instances
+#[derive(Default, Debug)]
+pub struct OpTransactionBuilder {
+    base: TxEnvBuilder,
+    enveloped_tx: Option<Bytes>,
+    deposit: DepositTransactionParts,
+}
+
+impl OpTransactionBuilder {
+    /// Create a new builder with default values
+    pub fn new() -> Self {
+        Self {
+            base: TxEnvBuilder::new(),
+            enveloped_tx: None,
+            deposit: DepositTransactionParts::default(),
+        }
+    }
+
+    /// Set the base transaction builder based for TxEnvBuilder.
+    pub fn base(mut self, base: TxEnvBuilder) -> Self {
+        self.base = base;
+        self
+    }
+
+    /// Set the enveloped transaction bytes.
+    pub fn enveloped_tx(mut self, enveloped_tx: Option<Bytes>) -> Self {
+        self.enveloped_tx = enveloped_tx;
+        self
+    }
+
+    /// Set the source hash of the deposit transaction.
+    pub fn source_hash(mut self, source_hash: B256) -> Self {
+        self.deposit.source_hash = source_hash;
+        self
+    }
+
+    /// Set the mint of the deposit transaction.
+    pub fn mint(mut self, mint: u128) -> Self {
+        self.deposit.mint = Some(mint);
+        self
+    }
+
+    /// Set the deposit transaction to be a system transaction.
+    pub fn is_system_transaction(mut self) -> Self {
+        self.deposit.is_system_transaction = true;
+        self
+    }
+
+    /// Set the deposit transaction to not be a system transaction.
+    pub fn not_system_transaction(mut self) -> Self {
+        self.deposit.is_system_transaction = false;
+        self
+    }
+
+    /// Set the deposit transaction to be a deposit transaction.
+    pub fn is_deposit_tx(mut self) -> Self {
+        self.base = self.base.tx_type(Some(DEPOSIT_TRANSACTION_TYPE));
+        self
+    }
+
+    /// Build the [`OpTransaction`] instance.
+    pub fn build(self) -> OpTransaction<TxEnv> {
+        
+        OpTransaction::new(self.base.build().unwrap())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm::{context_interface::Transaction, primitives::{Address, B256}};
+    use revm::{
+        context_interface::Transaction,
+        primitives::{Address, B256},
+    };
 
     #[test]
     fn test_deposit_transaction_fields() {
-        let mut base_tx = TxEnv::default();
-        base_tx.set_gas_limit(10);
-        base_tx.set_gas_price(100);
-        base_tx.set_gas_priority_fee(Some(5));
-        
+        let base_tx = TxEnv::builder()
+            .gas_limit(10)
+            .gas_price(100)
+            .gas_priority_fee(Some(5))
+            .build()
+            .unwrap();
+
         let op_tx = OpTransaction {
             base: base_tx,
             enveloped_tx: None,
@@ -207,7 +279,7 @@ mod tests {
                 source_hash: B256::from([1u8; 32]),
             },
         };
-        // Verify transaction type (deposit transactions should have tx_type based on OpSpecId) 
+        // Verify transaction type (deposit transactions should have tx_type based on OpSpecId)
         // The tx_type is derived from the transaction structure, not set manually
         // Verify common fields access
         assert_eq!(op_tx.gas_limit(), 10);

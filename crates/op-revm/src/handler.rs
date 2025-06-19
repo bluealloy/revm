@@ -499,11 +499,11 @@ mod tests {
             BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT, ECOTONE_L1_FEE_SCALARS_SLOT,
             L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT,
         },
-        DefaultOp, OpBuilder,
+        DefaultOp, OpBuilder, OpTransaction,
     };
     use alloy_primitives::uint;
     use revm::{
-        context::{BlockEnv, Context},
+        context::{BlockEnv, Context, TxEnv},
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
@@ -545,10 +545,9 @@ mod tests {
     #[test]
     fn test_revert_gas() {
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.enveloped_tx = None;
-            })
+            .with_tx(OpTransaction::new(
+                TxEnv::builder().gas_limit(100).build().unwrap(),
+            ))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
@@ -560,10 +559,13 @@ mod tests {
     #[test]
     fn test_consume_gas() {
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.deposit.source_hash = B256::from([1u8; 32]);
-            })
+            .with_tx(OpTransaction::new(
+                TxEnv::builder()
+                    .gas_limit(100)
+                    .deposit_source_hash(B256::from([1u8; 32]))
+                    .build()
+                    .unwrap(),
+            ))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));

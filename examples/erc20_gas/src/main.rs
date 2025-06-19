@@ -9,6 +9,7 @@ use alloy_sol_types::SolValue;
 use anyhow::Result;
 use exec::transact_erc20evm_commit;
 use revm::{
+    context::TxEnv,
     context_interface::{
         result::{InvalidHeader, InvalidTransaction},
         ContextTr, JournalTr,
@@ -134,12 +135,15 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
         .modify_cfg_chained(|cfg| {
             cfg.spec = SpecId::CANCUN;
         })
-        .modify_tx_chained(|tx| {
-            tx.set_caller(from);
-            tx.set_kind(TxKind::Call(to));
-            tx.set_value(amount);
-            tx.set_gas_price(2);
-        })
+        .with_tx(
+            TxEnv::builder()
+                .caller(from)
+                .kind(TxKind::Call(to))
+                .value(amount)
+                .gas_price(2)
+                .build()
+                .unwrap(),
+        )
         .modify_block_chained(|b| {
             b.basefee = 1;
         })

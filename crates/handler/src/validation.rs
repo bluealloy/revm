@@ -324,10 +324,6 @@ mod tests {
         spec_id: Option<SpecId>,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.set_kind(TxKind::Create);
-                tx.set_data(bytecode.clone());
-            })
             .modify_cfg_chained(|c| {
                 if let Some(spec_id) = spec_id {
                     c.spec = spec_id;
@@ -341,7 +337,7 @@ mod tests {
                 .kind(TxKind::Create)
                 .data(bytecode.clone())
                 .build()
-                .unwrap()
+                .unwrap(),
         )
     }
 
@@ -505,7 +501,7 @@ mod tests {
                     .kind(TxKind::Call(factory_address))
                     .data(Bytes::new())
                     .build()
-                    .unwrap()
+                    .unwrap(),
             )
             .expect("call factory contract failed");
 
@@ -589,7 +585,7 @@ mod tests {
                     .kind(TxKind::Call(factory_address))
                     .data(Bytes::new())
                     .build()
-                    .unwrap()
+                    .unwrap(),
             )
             .expect("call factory contract failed");
 

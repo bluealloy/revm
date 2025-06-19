@@ -151,7 +151,7 @@ mod tests {
                 .kind(TxKind::Call(BENCH_TARGET))
                 .gas_limit(21100)
                 .build()
-                .unwrap()
+                .unwrap(),
         )
         .unwrap();
 
@@ -248,23 +248,12 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let ctx = Context::mainnet()
+        let mut evm = Context::mainnet()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .modify_tx_chained(|tx| {
-                tx.set_caller(BENCH_CALLER);
-                tx.set_kind(TxKind::Call(BENCH_TARGET));
-            });
-
-        let mut evm = ctx.build_mainnet_with_inspector(inspector);
+            .build_mainnet_with_inspector(inspector);
 
         let _ = evm
-            .inspect_one_tx(
-                TxEnv::builder()
-                    .caller(BENCH_CALLER)
-                    .kind(TxKind::Call(BENCH_TARGET))
-                    .build()
-                    .unwrap()
-            )
+            .inspect_one_tx(TxEnv::builder_for_bench().build().unwrap())
             .unwrap();
         assert_eq!(evm.inspector.return_buffer.len(), 3);
         assert_eq!(
