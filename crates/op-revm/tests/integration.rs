@@ -12,7 +12,7 @@ use revm::{
         result::{ExecutionResult, OutOfGasError},
         BlockEnv, CfgEnv, TxEnv,
     },
-    context_interface::{result::HaltReason, Transaction},
+    context_interface::result::HaltReason,
     database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
     interpreter::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
@@ -28,11 +28,13 @@ use std::vec::Vec;
 #[test]
 fn test_deposit_tx() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.enveloped_tx = None;
-            tx.deposit.mint = Some(100);
-            tx.deposit.source_hash = revm::primitives::B256::from([1u8; 32]);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .enveloped_tx(None)
+                .mint(100)
+                .source_hash(revm::primitives::B256::from([1u8; 32]))
+                .build_fill(),
+        )
         .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
 
     let mut evm = ctx.build_op();
@@ -53,13 +55,18 @@ fn test_deposit_tx() {
 #[test]
 fn test_halted_deposit_tx() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.enveloped_tx = None;
-            tx.deposit.mint = Some(100);
-            tx.deposit.source_hash = revm::primitives::B256::from([1u8; 32]);
-            tx.base.set_caller(BENCH_CALLER);
-            tx.base.set_kind(TxKind::Call(BENCH_TARGET));
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .caller(BENCH_CALLER)
+                        .kind(TxKind::Call(BENCH_TARGET)),
+                )
+                .enveloped_tx(None)
+                .mint(100)
+                .source_hash(revm::primitives::B256::from([1u8; 32]))
+                .build_fill(),
+        )
         .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
             [opcode::POP].into(),
@@ -95,12 +102,15 @@ fn p256verify_test_tx(
         calculate_initial_tx_gas(SPEC_ID.into(), &[], false, 0, 0, 0);
 
     Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS)));
-            tx.base
-                .set_gas_limit(initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS)))
+                        .gas_limit(initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE),
+                )
+                .build_fill(),
+        )
         .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
 }
 
@@ -119,10 +129,22 @@ fn test_tx_call_p256verify() {
 
 #[test]
 fn test_halted_tx_call_p256verify() {
-    let ctx = p256verify_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::FJORD;
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &[], false, 0, 0, 0);
+    let original_gas_limit = initial_gas + secp256r1::P256VERIFY_BASE_GAS_FEE;
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(u64_to_address(secp256r1::P256VERIFY_ADDRESS)))
+                        .gas_limit(original_gas_limit - 1),
+                )
+                .build_fill(),
+        )
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -148,11 +170,16 @@ fn bn128_pair_test_tx(
         calculate_initial_tx_gas(spec.into(), &input[..], false, 0, 0, 0);
 
     Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base.set_kind(TxKind::Call(bn128::pair::ADDRESS));
-            tx.base.set_data(input);
-            tx.base.set_gas_limit(initial_gas);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bn128::pair::ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas),
+                )
+                .build_fill(),
+        )
         .modify_cfg_chained(|cfg| cfg.spec = spec)
 }
 
@@ -197,12 +224,15 @@ fn test_halted_tx_call_bn128_pair_granite() {
 #[test]
 fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS));
-            tx.base
-                .set_gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE - 1);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS))
+                        .gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE - 1),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -231,12 +261,15 @@ fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
 #[test]
 fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS));
-            tx.base
-                .set_gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G1_ADD_ADDRESS))
+                        .gas_limit(21_000 + bls12_381_const::G1_ADD_BASE_GAS_FEE),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -276,12 +309,16 @@ fn g1_msm_test_tx(
     );
 
     Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G1_MSM_ADDRESS));
-            tx.base.set_data(input);
-            tx.base.set_gas_limit(initial_gas + gs1_msm_gas);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G1_MSM_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + gs1_msm_gas),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -291,10 +328,32 @@ fn g1_msm_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
-    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| {
-        let current_data = tx.base.input().clone();
-        tx.base.set_data(current_data.slice(1..))
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::G1_MSM_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let gs1_msm_gas = bls12_381_utils::msm_required_gas(
+        1,
+        &bls12_381_const::DISCOUNT_TABLE_G1_MSM,
+        bls12_381_const::G1_MSM_BASE_GAS_FEE,
+    );
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G1_MSM_ADDRESS))
+                        .data(input.slice(1..))
+                        .gas_limit(initial_gas + gs1_msm_gas),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -316,10 +375,32 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
-    let ctx = g1_msm_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::G1_MSM_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let gs1_msm_gas = bls12_381_utils::msm_required_gas(
+        1,
+        &bls12_381_const::DISCOUNT_TABLE_G1_MSM,
+        bls12_381_const::G1_MSM_BASE_GAS_FEE,
+    );
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G1_MSM_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + gs1_msm_gas - 1),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -364,12 +445,15 @@ fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
 #[test]
 fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS));
-            tx.base
-                .set_gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS))
+                        .gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE - 1),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -398,12 +482,15 @@ fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
 #[test]
 fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
     let ctx = Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS));
-            tx.base
-                .set_gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G2_ADD_ADDRESS))
+                        .gas_limit(21_000 + bls12_381_const::G2_ADD_BASE_GAS_FEE),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -444,12 +531,16 @@ fn g2_msm_test_tx(
     );
 
     Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::G2_MSM_ADDRESS));
-            tx.base.set_data(input);
-            tx.base.set_gas_limit(initial_gas + gs2_msm_gas);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G2_MSM_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + gs2_msm_gas),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -459,10 +550,32 @@ fn g2_msm_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
-    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| {
-        let current_data = tx.base.input().clone();
-        tx.base.set_data(current_data.slice(1..))
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::G2_MSM_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let gs2_msm_gas = bls12_381_utils::msm_required_gas(
+        1,
+        &bls12_381_const::DISCOUNT_TABLE_G2_MSM,
+        bls12_381_const::G2_MSM_BASE_GAS_FEE,
+    );
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G2_MSM_ADDRESS))
+                        .data(input.slice(1..))
+                        .gas_limit(initial_gas + gs2_msm_gas),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -484,10 +597,32 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
-    let ctx = g2_msm_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::G2_MSM_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let gs2_msm_gas = bls12_381_utils::msm_required_gas(
+        1,
+        &bls12_381_const::DISCOUNT_TABLE_G2_MSM,
+        bls12_381_const::G2_MSM_BASE_GAS_FEE,
+    );
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::G2_MSM_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + gs2_msm_gas - 1),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -542,12 +677,16 @@ fn bl12_381_pairing_test_tx(
         bls12_381_const::PAIRING_MULTIPLIER_BASE + bls12_381_const::PAIRING_OFFSET_BASE;
 
     Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::PAIRING_ADDRESS));
-            tx.base.set_data(input);
-            tx.base.set_gas_limit(initial_gas + pairing_gas);
-        })
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::PAIRING_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + pairing_gas),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
@@ -557,10 +696,29 @@ fn bl12_381_pairing_test_tx(
 
 #[test]
 fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
-    let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| {
-        let current_data = tx.base.input().clone();
-        tx.base.set_data(current_data.slice(1..))
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::PAIRING_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let pairing_gas: u64 =
+        bls12_381_const::PAIRING_MULTIPLIER_BASE + bls12_381_const::PAIRING_OFFSET_BASE;
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::PAIRING_ADDRESS))
+                        .data(input.slice(1..))
+                        .gas_limit(initial_gas + pairing_gas),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -582,10 +740,29 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
-    let ctx = bl12_381_pairing_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::PAIRING_INPUT_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+    let pairing_gas: u64 =
+        bls12_381_const::PAIRING_MULTIPLIER_BASE + bls12_381_const::PAIRING_OFFSET_BASE;
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::PAIRING_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + pairing_gas - 1),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -627,36 +804,29 @@ fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
     );
 }
 
-fn fp_to_g1_test_tx(
-) -> Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, EmptyDB, Journal<EmptyDB>, L1BlockInfo>
-{
+#[test]
+fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
     const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
-
     let input = Bytes::from([1; bls12_381_const::PADDED_FP_LENGTH]);
     let InitialAndFloorGas { initial_gas, .. } =
         calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
 
-    Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS));
-            tx.base.set_data(input);
-            tx.base
-                .set_gas_limit(initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE);
-        })
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE - 1),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
-}
-
-#[test]
-fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
-    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -678,10 +848,27 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
-    let ctx = fp_to_g1_test_tx().modify_tx_chained(|tx| {
-        let current_data = tx.base.input().clone();
-        tx.base.set_data(current_data.slice(1..))
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::PADDED_FP_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::MAP_FP_TO_G1_ADDRESS))
+                        .data(input.slice(1..))
+                        .gas_limit(initial_gas + bls12_381_const::MAP_FP_TO_G1_BASE_GAS_FEE),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -701,36 +888,29 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
     );
 }
 
-fn fp2_to_g2_test_tx(
-) -> Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, EmptyDB, Journal<EmptyDB>, L1BlockInfo>
-{
+#[test]
+fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
     const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
-
     let input = Bytes::from([1; bls12_381_const::PADDED_FP2_LENGTH]);
     let InitialAndFloorGas { initial_gas, .. } =
         calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
 
-    Context::op()
-        .modify_tx_chained(|tx| {
-            tx.base
-                .set_kind(TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS));
-            tx.base.set_data(input);
-            tx.base
-                .set_gas_limit(initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE);
-        })
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS))
+                        .data(input)
+                        .gas_limit(initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE - 1),
+                )
+                .build_fill(),
+        )
         .modify_chain_chained(|l1_block| {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
-}
-
-#[test]
-fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
-    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| {
-        let current_gas_limit = tx.base.gas_limit();
-        tx.base.set_gas_limit(current_gas_limit - 1)
-    });
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -752,10 +932,27 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
 
 #[test]
 fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
-    let ctx = fp2_to_g2_test_tx().modify_tx_chained(|tx| {
-        let current_data = tx.base.input().clone();
-        tx.base.set_data(current_data.slice(1..))
-    });
+    const SPEC_ID: OpSpecId = OpSpecId::ISTHMUS;
+    let input = Bytes::from([1; bls12_381_const::PADDED_FP2_LENGTH]);
+    let InitialAndFloorGas { initial_gas, .. } =
+        calculate_initial_tx_gas(SPEC_ID.into(), &input[..], false, 0, 0, 0);
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .kind(TxKind::Call(bls12_381_const::MAP_FP2_TO_G2_ADDRESS))
+                        .data(input.slice(1..))
+                        .gas_limit(initial_gas + bls12_381_const::MAP_FP2_TO_G2_BASE_GAS_FEE),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.operator_fee_constant = Some(U256::ZERO);
+            l1_block.operator_fee_scalar = Some(U256::ZERO)
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();

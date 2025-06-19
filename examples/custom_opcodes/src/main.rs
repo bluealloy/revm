@@ -56,7 +56,7 @@ pub fn main() {
         TxEnv::builder()
             .kind(TxKind::Call(BENCH_TARGET))
             .build()
-            .unwrap()
+            .unwrap(),
     );
 
     // Expected output where we can see that JUMPDEST is called.

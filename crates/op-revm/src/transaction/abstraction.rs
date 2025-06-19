@@ -169,6 +169,10 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
     }
 
     fn effective_gas_price(&self, base_fee: u128) -> u128 {
+        // Deposit transactions use gas_price directly
+        if self.tx_type() == DEPOSIT_TRANSACTION_TYPE {
+            return self.gas_price();
+        }
         self.base.effective_gas_price(base_fee)
     }
 
@@ -283,10 +287,10 @@ impl OpTransactionBuilder {
     ///
     pub fn build(self) -> Result<OpTransaction<TxEnv>, OpBuildError> {
         let base = self.base.build()?;
-        if base.tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            if self.enveloped_tx.is_none() {
-                return Err(OpBuildError::MissingEnvelopedTxBytes);
-            }
+        // Check if this will be a deposit transaction based on source_hash
+        let is_deposit = self.deposit.source_hash != B256::ZERO;
+        if !is_deposit && self.enveloped_tx.is_none() {
+            return Err(OpBuildError::MissingEnvelopedTxBytes);
         }
 
         Ok(OpTransaction {
@@ -330,15 +334,14 @@ mod tests {
             .build()
             .unwrap();
 
-        let op_tx = OpTransaction {
-            base: base_tx,
-            enveloped_tx: None,
-            deposit: DepositTransactionParts {
-                is_system_transaction: false,
-                mint: Some(0u128),
-                source_hash: B256::from([1u8; 32]),
-            },
-        };
+        let op_tx = OpTransaction::builder()
+            .base(base_tx.modify())
+            .enveloped_tx(None)
+            .not_system_transaction()
+            .mint(0u128)
+            .source_hash(B256::from([1u8; 32]))
+            .build()
+            .unwrap();
         // Verify transaction type (deposit transactions should have tx_type based on OpSpecId)
         // The tx_type is derived from the transaction structure, not set manually
         // Verify common fields access

@@ -2,9 +2,7 @@ use crate::{
     frame::EthFrame, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
 };
-use context::{
-    result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv,
-};
+use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip7825, Address, Bytes, TxKind};

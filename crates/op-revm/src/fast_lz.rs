@@ -176,17 +176,16 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
             .build_op();
 
-        let mut tx = OpTransaction::new(
-            TxEnv::builder()
-                .caller(EEADDRESS)
-                .kind(TxKind::Call(FFADDRESS))
-                .data(FastLz::fastLzCall::new((input,)).abi_encode().into())
-                .gas_limit(3_000_000)
-                .build()
-                .unwrap(),
-        );
-
-        tx.enveloped_tx = Some(Bytes::default());
+        let tx = OpTransaction::builder()
+            .base(
+                TxEnv::builder()
+                    .caller(EEADDRESS)
+                    .kind(TxKind::Call(FFADDRESS))
+                    .data(FastLz::fastLzCall::new((input,)).abi_encode().into())
+                    .gas_limit(3_000_000),
+            )
+            .enveloped_tx(Some(Bytes::default()))
+            .build_fill();
 
         let result = evm.transact_one(tx).unwrap();
 

@@ -114,7 +114,7 @@ mod test {
                     .caller(EEADDRESS)
                     .kind(TxKind::Call(signer.address()))
                     .build()
-                    .unwrap()
+                    .unwrap(),
             )
             .unwrap()
             .state;

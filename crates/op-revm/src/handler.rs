@@ -545,9 +545,11 @@ mod tests {
     #[test]
     fn test_revert_gas() {
         let ctx = Context::op()
-            .with_tx(OpTransaction::new(
-                TxEnv::builder().gas_limit(100).build().unwrap(),
-            ))
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
@@ -694,7 +696,8 @@ mod tests {
                     .base(TxEnv::builder().gas_limit(100))
                     .enveloped_tx(Some(bytes!("FACADE")))
                     .source_hash(B256::ZERO)
-                    .build_fill(),
+                    .build()
+                    .unwrap(),
             );
 
         let mut evm = ctx.build_op();
@@ -814,7 +817,8 @@ mod tests {
                     .base(TxEnv::builder().gas_limit(100))
                     .source_hash(B256::ZERO)
                     .enveloped_tx(Some(bytes!("FACADE")))
-                    .build_fill(),
+                    .build()
+                    .unwrap(),
             );
 
         let mut evm = ctx.build_op();
