@@ -1,5 +1,27 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v77
+date: 19.05.2025
+
+Perf upgrade and support for osaka devnet-2 EIPs.
+
+* `revm-primitives`: 19.2.0 -> 20.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 4.1.0 -> 5.0.0 (⚠ API breaking changes)
+* `revm-state`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-context`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-database`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 21.0.0 -> 22.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 22.0.0 -> 23.0.0 (⚠ API breaking changes)
+* `revm-handler`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm`: 25.0.0 -> 26.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 7.0.0 -> 8.0.0 (✓ API compatible changes)
+* `revme`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `op-revm`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+
+
 # v76
 date: 06.05.2025
 
