@@ -13,6 +13,19 @@ The main [`revm`](https://crates.io/crates/revm) library combines all crates int
 
 REVM works in `no_std` environments which means it can be used in zero-knowledge virtual machines (zkVMs) and it is the standard library in that use case. It also has very few external dependencies.
 
+## Key Components
+
+The main components of REVM are:
+
+- **revm**: Main crate that combines all other crates
+- **revm-primitives**: Basic types like addresses, numbers, and constants
+- **revm-interpreter**: Opcode implementations and execution engine
+- **revm-context**: Execution context, environment, and state management
+- **revm-handler**: Execution flow control and frame management
+- **revm-database**: Interface for accessing blockchain state
+- **revm-precompile**: Built-in Ethereum contracts
+- **revm-inspector**: Tracing and debugging tools
+
 # Execution API
 
 [`Evm`](https://docs.rs/revm-context/1.0.0/revm_context/evm/struct.Evm.html) the main structure for executing mainnet ethereum transaction is built with a [`Context`](https://docs.rs/revm-context/latest/revm_context/context/struct.Context.html) and a builder, code for it looks like this:
@@ -31,7 +44,7 @@ let out = evm.transact(tx);
 And [`Context`](https://docs.rs/revm-context/latest/revm_context/context/struct.Context.html) contains data used in execution:
 * Environment data, the data that is known before execution starts are [`Transaction`](https://docs.rs/revm-context-interface/latest/revm_context_interface/transaction/trait.Transaction.html), [`Block`](https://docs.rs/revm-context-interface/latest/revm_context_interface/block/trait.Block.html), [`Cfg`](https://docs.rs/revm-context-interface/latest/revm_context_interface/cfg/trait.Cfg.html).
 * [`Journal`](https://docs.rs/revm-context-interface/latest/revm_context_interface/journaled_state/trait.JournalTr.html) is the place where internal state is stored. Internal state is returned after execution ends.
-   * And `Database` is an interface that allows fetching external data that is needed at runtime. That data are account, storage and bytecode. When loaded they are stored in [`Journal`](https://docs.rs/revm-context-interface/latest/revm_context_interface/journaled_state/trait.JournalTr.html) 
+* `Database` is an interface that allows fetching external data that is needed at runtime. That data are account, storage and bytecode. When loaded they are stored in [`Journal`](https://docs.rs/revm-context-interface/latest/revm_context_interface/journaled_state/trait.JournalTr.html) 
 
 REVM provides four ways to execute transactions through traits (API):
 
@@ -47,11 +60,71 @@ let mut evm = Context::mainnet().with_block(block).build_mainnet().with_inspecto
 let _ = evm.inspect_tx(tx);
 ```
 
+## Database Interface
+
+The Database trait is how REVM gets blockchain data during execution. You can implement your own database or use existing ones. REVM provides several database implementations:
+
+* **InMemoryDB**: Stores everything in memory, good for testing
+* **CacheDB**: Wraps another database and caches data for better performance
+* **AlloyDB**: Connects to Ethereum nodes using Alloy
+* **DatabaseComponents**: Lets you split state and block hash access into separate parts
+
+The DatabaseComponents pattern is useful when you want to handle state and block hashes differently. For example, you might want to:
+- Store state in one database and block hashes in another
+- Use different caching strategies for each type of data
+- Have read-only access to block hashes but read-write access to state
+
+Here's a simple example:
+
+```rust,ignore
+use revm::database_components::{DatabaseComponents, State, BlockHash};
+
+let db = DatabaseComponents {
+    state: MyStateDB,
+    block_hash: MyBlockHashDB,
+};
+
+let mut evm = Context::mainnet().with_db(db).build();
+```
+
 # EVM Framework
 
+REVM is designed to be customizable. You can create your own EVM variant by:
+1. Creating custom handlers to change execution behavior
+2. Adding new opcodes or modifying existing ones
+3. Implementing custom precompiles
+4. Changing gas calculations
+
+## Creating a Custom EVM
+
+Here's a basic example of creating your own EVM:
+
+```rust,ignore
+use revm::{Context, Evm, Handler, ExecuteEvm};
+
+// Define your custom EVM type
+pub struct MyEvm<CTX, INSP>(
+    pub Evm<CTX, INSP, EthInstructions, EthPrecompiles, EthFrame>
+);
+
+// Create your custom handler
+pub struct MyHandler<EVM> {
+    _phantom: PhantomData<EVM>,
+}
+
+// Implement the Handler trait to customize behavior
+impl<EVM> Handler for MyHandler<EVM> {
+    // Override methods to customize execution
+}
+```
+
+## Real-World Examples
+
 To learn how to build your own custom EVM:
-- Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/main/examples/my_evm) guide
-- Look at [op-revm](https://github.com/bluealloy/revm/tree/main/crates/op-revm) to see how Optimism uses REVM
+- **[example-my-evm](https://github.com/bluealloy/revm/tree/main/examples/my_evm)**: Basic custom EVM implementation
+- **[op-revm](https://github.com/bluealloy/revm/tree/main/crates/op-revm)**: Optimism's Layer 2 EVM variant
+- **[custom-opcodes](https://github.com/bluealloy/revm/tree/main/examples/custom_opcodes)**: How to add new opcodes
+- **[erc20-gas](https://github.com/bluealloy/revm/tree/main/examples/erc20_gas)**: Pay gas with ERC20 tokens
 
 Each trait needed to build custom EVM has detailed documentation explaining how it works and is worth reading.
 

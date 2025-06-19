@@ -3,6 +3,7 @@
 - [Introduction](./../../README.md)
 - [Awesome Revm](./awesome.md)
 - [Architecture](./architecture.md)
+- [Examples](./examples.md)
 - [Dev section](./dev.md)
 - [Revme](./revme.md)
 - [Release procedure](./release_procedure.md)
