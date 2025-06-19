@@ -5,16 +5,24 @@ use core::{error::Error as StdError, ops::Deref};
 use revm::primitives::B256;
 use std::sync::Arc;
 
+/// Trait for mutable access to block hash data.
+/// This is typically used for database implementations that may cache or
+/// lazily load block hashes.
 #[auto_impl(&mut, Box)]
 pub trait BlockHash {
+    /// Error type for block hash operations
     type Error: StdError;
 
     /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
+/// Trait for immutable access to block hash data.
+/// This is typically used for read-only database implementations or
+/// when block hash data is pre-loaded.
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait BlockHashRef {
+    /// Error type for block hash operations
     type Error: StdError;
 
     /// Gets block hash by block number.

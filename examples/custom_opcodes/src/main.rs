@@ -20,6 +20,9 @@ use revm::{
 /// Opcode hex value
 const MY_STATIC_JUMP: u8 = 0x0C;
 
+/// Demonstrates how to implement and use custom opcodes in REVM.
+/// This example shows how to create a custom static jump opcode that reads
+/// a 16-bit offset from the bytecode and performs a relative jump.
 pub fn main() {
     let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(
         [

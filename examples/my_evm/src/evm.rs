@@ -10,6 +10,14 @@ use revm::{
 };
 
 /// MyEvm variant of the EVM.
+///
+/// This struct demonstrates how to create a custom EVM implementation by wrapping
+/// the standard REVM components. It combines a context (CTX), an inspector (INSP),
+/// and the standard Ethereum instructions, precompiles, and frame execution logic.
+///
+/// The generic parameters allow for flexibility in the underlying database and
+/// inspection capabilities while maintaining the standard Ethereum execution semantics.
+#[derive(Debug)]
 pub struct MyEvm<CTX, INSP>(
     pub  Evm<
         CTX,
@@ -21,6 +29,20 @@ pub struct MyEvm<CTX, INSP>(
 );
 
 impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
+    /// Creates a new instance of MyEvm with the provided context and inspector.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - The execution context that manages state, environment, and journaling
+    /// * `inspector` - The inspector for debugging and tracing execution
+    ///
+    /// # Returns
+    ///
+    /// A new MyEvm instance configured with:
+    /// - The provided context and inspector
+    /// - Mainnet instruction set
+    /// - Default Ethereum precompiles
+    /// - A fresh frame stack for execution
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             ctx,
