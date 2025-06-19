@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [22.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v21.0.0...revm-interpreter-v22.0.0) - 2025-06-19
+
+### Added
+
+- remove EOF ([#2644](https://github.com/bluealloy/revm/pull/2644))
+- configurable contract size limit ([#2611](https://github.com/bluealloy/revm/pull/2611)) ([#2642](https://github.com/bluealloy/revm/pull/2642))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- add clz opcode ([#2598](https://github.com/bluealloy/revm/pull/2598))
+- added instruction_result fn in LoopControl trait  ([#2595](https://github.com/bluealloy/revm/pull/2595))
+
+### Other
+
+- lints handler inspector interpreter ([#2646](https://github.com/bluealloy/revm/pull/2646))
+- bump all deps ([#2647](https://github.com/bluealloy/revm/pull/2647))
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- make CallInput default 0..0 ([#2621](https://github.com/bluealloy/revm/pull/2621))
+
 ## [21.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v20.0.0...revm-interpreter-v21.0.0) - 2025-06-06
 
 ### Added
