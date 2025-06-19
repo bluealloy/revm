@@ -2,7 +2,10 @@
 use super::deposit::{DepositTransactionParts, DEPOSIT_TRANSACTION_TYPE};
 use auto_impl::auto_impl;
 use revm::{
-    context::{tx::TxEnvBuilder, TxEnv},
+    context::{
+        tx::{TxEnvBuildError, TxEnvBuilder},
+        TxEnv,
+    },
     context_interface::transaction::Transaction,
     handler::SystemCallTx,
     primitives::{Address, Bytes, TxKind, B256, U256},
@@ -35,15 +38,21 @@ pub trait OpTxTr: Transaction {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OpTransaction<T: Transaction> {
     /// Base transaction fields.
-    pub base: T,
+    pub(crate) base: T,
     /// An enveloped EIP-2718 typed transaction
     ///
     /// This is used to compute the L1 tx cost using the L1 block info, as
     /// opposed to requiring downstream apps to compute the cost
     /// externally.
-    pub enveloped_tx: Option<Bytes>,
+    pub(crate) enveloped_tx: Option<Bytes>,
     /// Deposit transaction parts.
-    pub deposit: DepositTransactionParts,
+    pub(crate) deposit: DepositTransactionParts,
+}
+
+impl<T: Transaction> AsRef<T> for OpTransaction<T> {
+    fn as_ref(&self) -> &T {
+        &self.base
+    }
 }
 
 impl<T: Transaction> OpTransaction<T> {
@@ -54,6 +63,13 @@ impl<T: Transaction> OpTransaction<T> {
             enveloped_tx: None,
             deposit: DepositTransactionParts::default(),
         }
+    }
+}
+
+impl OpTransaction<TxEnv> {
+    /// Create a new Optimism transaction.
+    pub fn builder() -> OpTransactionBuilder {
+        OpTransactionBuilder::new()
     }
 }
 
@@ -246,10 +262,54 @@ impl OpTransactionBuilder {
         self
     }
 
-    /// Build the [`OpTransaction`] instance.
-    pub fn build(self) -> OpTransaction<TxEnv> {
-        
-        OpTransaction::new(self.base.build().unwrap())
+    /// Build the [`OpTransaction`] with default values for missing fields.
+    ///
+    /// This is useful for testing and debugging where it is not necessary to
+    /// have full [`OpTransaction`] instance.
+    pub fn build_fill(mut self) -> OpTransaction<TxEnv> {
+        let base = self.base.build_fill();
+        if base.tx_type() != DEPOSIT_TRANSACTION_TYPE {
+            self.enveloped_tx = Some(vec![0x00].into());
+        }
+
+        OpTransaction {
+            base,
+            enveloped_tx: self.enveloped_tx,
+            deposit: self.deposit,
+        }
+    }
+
+    /// Build the [`OpTransaction`] instance, return error if the transaction is not valid.
+    ///
+    pub fn build(self) -> Result<OpTransaction<TxEnv>, OpBuildError> {
+        let base = self.base.build()?;
+        if base.tx_type() != DEPOSIT_TRANSACTION_TYPE {
+            if self.enveloped_tx.is_none() {
+                return Err(OpBuildError::MissingEnvelopedTxBytes);
+            }
+        }
+
+        Ok(OpTransaction {
+            base,
+            enveloped_tx: self.enveloped_tx,
+            deposit: self.deposit,
+        })
+    }
+}
+
+/// Error type for building [`TxEnv`]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum OpBuildError {
+    /// Base transaction build error
+    Base(TxEnvBuildError),
+    /// Missing enveloped transaction bytes
+    MissingEnvelopedTxBytes,
+}
+
+impl From<TxEnvBuildError> for OpBuildError {
+    fn from(error: TxEnvBuildError) -> Self {
+        OpBuildError::Base(error)
     }
 }
 

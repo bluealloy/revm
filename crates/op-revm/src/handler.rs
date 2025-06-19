@@ -559,13 +559,11 @@ mod tests {
     #[test]
     fn test_consume_gas() {
         let ctx = Context::op()
-            .with_tx(OpTransaction::new(
-                TxEnv::builder()
-                    .gas_limit(100)
-                    .deposit_source_hash(B256::from([1u8; 32]))
-                    .build()
-                    .unwrap(),
-            ))
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
@@ -577,10 +575,12 @@ mod tests {
     #[test]
     fn test_consume_gas_with_refund() {
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.deposit.source_hash = B256::from([1u8; 32]);
-            })
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .source_hash(B256::from([1u8; 32]))
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let mut ret_gas = Gas::new(90);
@@ -600,10 +600,12 @@ mod tests {
     #[test]
     fn test_consume_gas_deposit_tx() {
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.deposit.source_hash = B256::from([1u8; 32]);
-            })
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .source_hash(B256::from([1u8; 32]))
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
@@ -614,11 +616,13 @@ mod tests {
     #[test]
     fn test_consume_gas_sys_deposit_tx() {
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.deposit.source_hash = B256::from([1u8; 32]);
-                tx.deposit.is_system_transaction = true;
-            })
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .source_hash(B256::from([1u8; 32]))
+                    .is_system_transaction()
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::BEDROCK);
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 100);
@@ -685,11 +689,13 @@ mod tests {
                 ..Default::default()
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.enveloped_tx = Some(bytes!("FACADE"));
-                tx.deposit.source_hash = B256::ZERO;
-            });
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .enveloped_tx(Some(bytes!("FACADE")))
+                    .source_hash(B256::ZERO)
+                    .build_fill(),
+            );
 
         let mut evm = ctx.build_op();
 
@@ -803,11 +809,13 @@ mod tests {
                 ..Default::default()
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(100);
-                tx.deposit.source_hash = B256::ZERO;
-                tx.enveloped_tx = Some(bytes!("FACADE"));
-            });
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(100))
+                    .source_hash(B256::ZERO)
+                    .enveloped_tx(Some(bytes!("FACADE")))
+                    .build_fill(),
+            );
 
         let mut evm = ctx.build_op();
         let handler =
@@ -842,10 +850,12 @@ mod tests {
                 ..Default::default()
             })
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
-            .modify_tx_chained(|tx| {
-                tx.base.set_gas_limit(10);
-                tx.enveloped_tx = Some(bytes!("FACADE"));
-            });
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(10))
+                    .enveloped_tx(Some(bytes!("FACADE")))
+                    .build_fill(),
+            );
 
         let mut evm = ctx.build_op();
         let handler =
@@ -1004,17 +1014,26 @@ mod tests {
         const OP_FEE_MOCK_PARAM: u128 = 0xFFFF;
 
         let ctx = Context::op()
-            .modify_tx_chained(|tx| {
-                if is_deposit {
-                    tx.deposit.source_hash = B256::from([1u8; 32]);
-                } else {
-                    // For non-deposit transactions, we set up as Eip1559 via enveloped_tx
-                    tx.enveloped_tx = Some(bytes!("FACADE"));
-                }
-                tx.base.set_gas_price(GAS_PRICE);
-                tx.base.set_gas_priority_fee(None);
-                tx.base.set_caller(SENDER);
-            })
+            .with_tx(
+                OpTransaction::builder()
+                    .base(
+                        TxEnv::builder()
+                            .gas_price(GAS_PRICE)
+                            .gas_priority_fee(None)
+                            .caller(SENDER),
+                    )
+                    .enveloped_tx(if is_deposit {
+                        None
+                    } else {
+                        Some(bytes!("FACADE"))
+                    })
+                    .source_hash(if is_deposit {
+                        B256::from([1u8; 32])
+                    } else {
+                        B256::ZERO
+                    })
+                    .build_fill(),
+            )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
 
         let mut evm = ctx.build_op();
