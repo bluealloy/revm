@@ -15,11 +15,16 @@ use revm::{
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
+/// Custom handler that implements ERC20 token gas payment.
+/// Instead of paying gas in ETH, transactions pay gas using ERC20 tokens.
+/// The tokens are transferred from the transaction sender to a treasury address.
+#[derive(Debug)]
 pub struct Erc20MainnetHandler<EVM, ERROR, FRAME> {
     _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
 impl<CTX, ERROR, FRAME> Erc20MainnetHandler<CTX, ERROR, FRAME> {
+    /// Creates a new ERC20 gas payment handler
     pub fn new() -> Self {
         Self {
             _phantom: core::marker::PhantomData,

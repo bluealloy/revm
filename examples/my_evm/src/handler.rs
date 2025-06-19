@@ -11,7 +11,17 @@ use revm::{
     Database,
 };
 
+/// Custom handler for MyEvm that defines transaction execution behavior.
+///
+/// This handler demonstrates how to customize EVM execution by implementing
+/// the Handler trait. It can be extended to add custom validation, modify
+/// gas calculations, or implement protocol-specific behavior while maintaining
+/// compatibility with the standard EVM execution flow.
+#[derive(Debug)]
 pub struct MyHandler<EVM> {
+    /// Phantom data to maintain the EVM type parameter.
+    /// This field exists solely to satisfy Rust's type system requirements
+    /// for generic parameters that aren't directly used in the struct fields.
     pub _phantom: core::marker::PhantomData<EVM>,
 }
 

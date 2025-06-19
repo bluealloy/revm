@@ -7,6 +7,11 @@ use crate::{transaction::TxPartIndices, AccountInfo};
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Test {
+    /// Expected exception for this test case, if any.
+    ///
+    /// This field contains an optional string describing an expected error or exception
+    /// that should occur during the execution of this state test. If present, the test
+    /// is expected to fail with this specific error message or exception type.
     pub expect_exception: Option<String>,
 
     /// Indexes
