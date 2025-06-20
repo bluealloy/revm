@@ -114,13 +114,13 @@ impl JumpTable {
         pc < self.len && unsafe { *self.table_ptr.add(pc >> 3) & (1 << (pc & 7)) != 0 }
     }
 
-    /// Immutable getter for `table` field in [`JumpTable``]
+    /// Immutable getter for `table` field in [`JumpTable`]
     #[inline]
     pub fn table(&self) -> &Arc<BitVec<u8>> {
         &self.table
     }
 
-    /// Immutable getter for `len` field in [`JumpTable``]
+    /// Immutable getter for `len` field in [`JumpTable`]
     #[inline]
     pub fn len(&self) -> usize {
         self.len
