@@ -60,10 +60,11 @@ impl LegacyAnalyzedBytecode {
         if original_len > bytecode.len() {
             panic!("original_len is greater than bytecode length");
         }
-        if original_len > jump_table.len {
+        if original_len > jump_table.len() {
             panic!(
                 "jump table length {} is less than original length {}",
-                jump_table.len, original_len
+                jump_table.len(),
+                original_len
             );
         }
 
