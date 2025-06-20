@@ -304,6 +304,23 @@ impl TxEnvBuilder {
         self
     }
 
+    /// Set the transaction kind to call
+    pub fn call(mut self, target: Address) -> Self {
+        self.kind = TxKind::Call(target);
+        self
+    }
+
+    /// Set the transaction kind to create
+    pub fn create(mut self) -> Self {
+        self.kind = TxKind::Create;
+        self
+    }
+
+    /// Set the transaction kind to create
+    pub fn to(self, target: Address) -> Self {
+        self.call(target)
+    }
+
     /// Set the transaction value
     pub fn value(mut self, value: U256) -> Self {
         self.value = value;

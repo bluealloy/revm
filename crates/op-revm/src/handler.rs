@@ -404,6 +404,7 @@ where
         evm.ctx().journal_mut().commit_tx();
         evm.ctx().chain_mut().clear_tx_l1_cost();
         evm.ctx().local_mut().clear();
+        evm.frame_stack().clear();
 
         Ok(exec_result)
     }
@@ -473,6 +474,7 @@ where
         // do the cleanup
         evm.ctx().chain_mut().clear_tx_l1_cost();
         evm.ctx().local_mut().clear();
+        evm.frame_stack().clear();
 
         output
     }
