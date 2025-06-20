@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.1](https://github.com/bluealloy/revm/compare/revm-v26.0.0...revm-v26.0.1) - 2025-06-20
+
+### Fixed
+
+- call stack_frame.clear() at end ([#2656](https://github.com/bluealloy/revm/pull/2656))
+
 ## [26.0.0](https://github.com/bluealloy/revm/compare/revm-v25.0.0...revm-v26.0.0) - 2025-06-19
 
 ### Added
