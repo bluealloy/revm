@@ -1,10 +1,11 @@
 use bitvec::vec::BitVec;
 use once_cell::race::OnceBox;
 use primitives::hex;
+use core::hash::{Hash, Hasher};
 use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
-#[derive(Clone, Eq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Eq, Ord, PartialOrd)]
 pub struct JumpTable {
     /// Actual bit vec
     table: Arc<BitVec<u8>>,
@@ -17,6 +18,13 @@ pub struct JumpTable {
 impl PartialEq for JumpTable {
     fn eq(&self, other: &Self) -> bool {
         self.table.eq(&other.table) && self.len.eq(&other.len)
+    }
+}
+
+impl Hash for JumpTable {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.table.hash(state);
+        self.len.hash(state);
     }
 }
 
@@ -81,6 +89,18 @@ impl JumpTable {
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         self.table.as_raw_slice()
+    }
+
+    /// Gets the length of the jump map.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Returns true if the jump map is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     /// Constructs a jump map from raw bytes and length.
