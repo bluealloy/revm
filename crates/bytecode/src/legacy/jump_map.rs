@@ -4,14 +4,20 @@ use primitives::hex;
 use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
-#[derive(Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Eq, Hash, Ord, PartialOrd)]
 pub struct JumpTable {
     /// Actual bit vec
-    pub table: Arc<BitVec<u8>>,
+    table: Arc<BitVec<u8>>,
     /// Fast pointer that skips Arc overhead
     table_ptr: *const u8,
     /// Number of bits in the table
-    pub len: usize,
+    len: usize,
+}
+
+impl PartialEq for JumpTable {
+    fn eq(&self, other: &Self) -> bool {
+        self.table.eq(&other.table) && self.len.eq(&other.len)
+    }
 }
 
 #[cfg(feature = "serde")]
