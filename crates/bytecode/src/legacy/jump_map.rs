@@ -7,11 +7,11 @@ use std::{fmt::Debug, sync::Arc};
 #[derive(Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct JumpTable {
     /// Actual bit vec
-    pub table: Arc<BitVec<u8>>,
+    table: Arc<BitVec<u8>>,
     /// Fast pointer that skips Arc overhead
     table_ptr: *const u8,
     /// Number of bits in the table
-    pub len: usize,
+    len: usize,
 }
 
 #[cfg(feature = "serde")]
@@ -112,6 +112,18 @@ impl JumpTable {
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
         pc < self.len && unsafe { *self.table_ptr.add(pc >> 3) & (1 << (pc & 7)) != 0 }
+    }
+
+    /// Immutable getter for `table` field in [`JumpTable``]
+    #[inline]
+    pub fn table(&self) -> &Arc<BitVec<u8>> {
+        &self.table
+    }
+
+    /// Immutable getter for `len` field in [`JumpTable``]
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
     }
 }
 
