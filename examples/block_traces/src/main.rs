@@ -119,22 +119,22 @@ async fn main() -> anyhow::Result<()> {
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap_or_default();
 
-        let tx = TxEnv {
-            caller: tx.inner.signer(),
-            gas_limit: tx.gas_limit(),
-            gas_price: tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()),
-            value: tx.value(),
-            data: tx.input().to_owned(),
-            gas_priority_fee: tx.max_priority_fee_per_gas(),
-            chain_id: Some(chain_id),
-            nonce: tx.nonce(),
-            access_list: tx.access_list().cloned().unwrap_or_default(),
-            kind: match tx.to() {
+        let tx = TxEnv::builder()
+            .caller(tx.inner.signer())
+            .gas_limit(tx.gas_limit())
+            .gas_price(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()))
+            .value(tx.value())
+            .data(tx.input().to_owned())
+            .gas_priority_fee(tx.max_priority_fee_per_gas())
+            .chain_id(Some(chain_id))
+            .nonce(tx.nonce())
+            .access_list(tx.access_list().cloned().unwrap_or_default())
+            .kind(match tx.to() {
                 Some(to_address) => TxKind::Call(to_address),
                 None => TxKind::Create,
-            },
-            ..Default::default()
-        };
+            })
+            .build()
+            .unwrap();
 
         let file_name = format!("traces/{}.json", tx_number);
         let write = OpenOptions::new()

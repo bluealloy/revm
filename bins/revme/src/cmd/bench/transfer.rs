@@ -14,14 +14,14 @@ pub fn run(criterion: &mut Criterion) {
         .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
         .build_mainnet();
 
-    let tx = TxEnv {
-        caller: BENCH_CALLER,
-        kind: TxKind::Call(BENCH_TARGET),
-        value: U256::from(1),
-        gas_price: 1,
-        gas_priority_fee: None,
-        ..Default::default()
-    };
+    let tx = TxEnv::builder()
+        .caller(BENCH_CALLER)
+        .kind(TxKind::Call(BENCH_TARGET))
+        .value(U256::from(1))
+        .gas_price(1)
+        .gas_priority_fee(None)
+        .build()
+        .unwrap();
 
     evm.ctx.tx = tx.clone();
 
