@@ -305,7 +305,7 @@ pub fn execute_test_suite(
             .transaction
             .max_fee_per_blob_gas
             .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-            .unwrap_or(u128::MAX);
+            .unwrap_or(0);
         let nonce = u64::try_from(unit.transaction.nonce).unwrap();
 
         // Post and execution
@@ -368,6 +368,7 @@ pub fn execute_test_suite(
                     None => TxKind::Create,
                 };
 
+                println!("tx: {:#?}", max_fee_per_blob_gas);
                 let tx = TxEnv::builder()
                     .caller(caller)
                     .gas_price(gas_price)

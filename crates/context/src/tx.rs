@@ -525,6 +525,7 @@ impl TxEnvBuilder {
         };
 
         // Derive tx type from fields, if some fields are wrongly set it will return an error.
+        println!("tx: {:#?}", tx);
         tx.derive_tx_type()?;
 
         Ok(tx)

@@ -154,6 +154,8 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
     Ok(())
 }
 
+OpTransaction::builder().
+
 /// Calculates the storage slot for an ERC20 balance mapping.
 /// This implements the standard Solidity mapping storage layout where
 /// slot = keccak256(abi.encode(address, slot_number))
