@@ -438,6 +438,7 @@ pub trait Handler {
         // commit transaction
         evm.ctx().journal_mut().commit_tx();
         evm.ctx().local_mut().clear();
+        evm.frame_stack().clear();
 
         Ok(exec_result)
     }
@@ -455,6 +456,7 @@ pub trait Handler {
         // clean up local context. Initcode cache needs to be discarded.
         evm.ctx().local_mut().clear();
         evm.ctx().journal_mut().discard_tx();
+        evm.frame_stack().clear();
         Err(error)
     }
 }
