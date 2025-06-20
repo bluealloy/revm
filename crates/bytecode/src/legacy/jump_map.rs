@@ -125,6 +125,12 @@ impl JumpTable {
     pub fn len(&self) -> usize {
         self.len
     }
+
+    /// Checks is the table is empty or not
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 }
 
 #[cfg(test)]
