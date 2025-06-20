@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v78
+date 20.05.2025
+
+Quick fix for not calling `frame_stack.clear()` https://github.com/bluealloy/revm/pull/2656
+
+* `revm-context`: 7.0.0 -> 7.0.1 (✓ API compatible changes)
+* `revm-interpreter`: 22.0.0 -> 22.0.1 (✓ API compatible changes)
+* `revm-precompile`: 23.0.0 -> 23.0.1 (✓ API compatible changes)
+* `revm-handler`: 7.0.0 -> 7.0.1 (✓ API compatible changes)
+* `revm-inspector`: 7.0.0 -> 7.0.1
+* `revm`: 26.0.0 -> 26.0.1
+* `revm-statetest-types`: 8.0.0 -> 8.0.1
+* `revme`: 7.0.0 -> 7.0.1
+* `op-revm`: 7.0.0 -> 7.0.1
+
 # v77
 date: 19.05.2025
 
