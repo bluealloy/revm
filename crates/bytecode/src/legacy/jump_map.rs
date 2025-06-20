@@ -1,7 +1,7 @@
 use bitvec::vec::BitVec;
+use core::hash::{Hash, Hasher};
 use once_cell::race::OnceBox;
 use primitives::hex;
-use core::hash::{Hash, Hasher};
 use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
