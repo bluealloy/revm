@@ -5,7 +5,7 @@ Crates version and their description:
 * ![revm-precompile](https://img.shields.io/crates/v/revm-precompile?label=revm-precompile) Precompiles defined by ethereum
 * ![revm-database-interface](https://img.shields.io/crates/v/revm-database-interface?label=revm-database-interface) Interfaces for database implementation, database is used to fetch runtime state data (accounts, storages and block hash) 
 * ![revm-database](https://img.shields.io/crates/v/revm-database?label=revm-database) A few structures that implement database interface
-* ![revm-bytecode](https://img.shields.io/crates/v/revm-bytecode?label=revm-bytecode) Bytecode legacy analysis and EOF validation. Create contains opcode tables. 
+* ![revm-bytecode](https://img.shields.io/crates/v/revm-bytecode?label=revm-bytecode) Bytecode legacy analysis and EOF validation. Crate contains opcode tables. 
 * ![revm-state](https://img.shields.io/crates/v/revm-state?label=revm-state) Small crate with accounts and storage types.
 * ![revm-context-interface](https://img.shields.io/crates/v/revm-context-interface?label=revm-context-interface) traits for Block/Transaction/Cfg/Journal.
 * ![revm-context](https://img.shields.io/crates/v/revm-context?label=revm-context) default implementation for traits from context interface. 
