@@ -79,9 +79,9 @@ pub struct CfgEnv<SPEC = SpecId> {
     #[cfg(feature = "optional_block_gas_limit")]
     pub disable_block_gas_limit: bool,
     /// EIP-3541 rejects the creation of contracts that starts with 0xEF
-    /// 
+    ///
     /// This is useful for chains that do not implement EIP-3541.
-    /// 
+    ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3541")]
     pub disable_eip3541: bool,
@@ -199,7 +199,7 @@ impl<SPEC> CfgEnv<SPEC> {
             #[cfg(feature = "optional_block_gas_limit")]
             disable_block_gas_limit: self.disable_block_gas_limit,
             #[cfg(feature = "optional_eip3541")]
-            disable_eip3541: self.disable_eip3541,            
+            disable_eip3541: self.disable_eip3541,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: self.disable_eip3607,
             #[cfg(feature = "optional_no_base_fee")]

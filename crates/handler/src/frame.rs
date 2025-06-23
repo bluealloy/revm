@@ -686,7 +686,10 @@ pub fn return_create<JOURNAL: JournalTr>(
     // If ok, check contract creation limit and calculate gas deduction on output len.
     //
     // EIP-3541: Reject new contract code starting with the 0xEF byte
-    if !is_eip3541_disabled && spec_id.is_enabled_in(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
+    if !is_eip3541_disabled
+        && spec_id.is_enabled_in(LONDON)
+        && interpreter_result.output.first() == Some(&0xEF)
+    {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
         return;
