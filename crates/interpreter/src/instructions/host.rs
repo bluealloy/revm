@@ -65,22 +65,28 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
+    let Some(code_size) = context.host.load_account_code_size(address) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code.is_cold));
+    let gas = if spec_id.is_enabled_in(BERLIN) {
+        warm_cold_cost(code_size.is_cold)
     } else if spec_id.is_enabled_in(TANGERINE) {
-        gas!(context.interpreter, 700);
+        700
     } else {
-        gas!(context.interpreter, 20);
-    }
+        20
+    };
 
-    *top = U256::from(code.len());
+    // if spec_id.is_enabled_in(SpecId::OSAKA) && code_size.is_code_cold {
+    //     gas += large_contract_code_size_cost(code_size.data);
+    // }
+
+    gas!(context.interpreter, gas);
+
+    *top = U256::from(code_size.data);
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -128,11 +134,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas_or_fail!(
         context.interpreter,
-        gas::extcodecopy_cost(
-            context.interpreter.runtime_flag.spec_id(),
-            len,
-            code.is_cold
-        )
+        gas::extcodecopy_cost(context.interpreter.runtime_flag.spec_id(), &code, len)
     );
     if len == 0 {
         return;

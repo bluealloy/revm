@@ -61,7 +61,7 @@ where
         let (tx, journal) = context.tx_journal_mut();
 
         // Load caller's account.
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let caller_account = journal.load_account(tx.caller())?.data;
 
         validate_account_nonce_and_code(
             &mut caller_account.info,

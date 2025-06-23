@@ -22,6 +22,7 @@ use revm::{
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
+use state::CodeSize;
 use statetest_types::{SpecName, Test, TestSuite};
 
 use std::{
@@ -247,6 +248,7 @@ pub fn execute_test_suite(
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
+                code_size: Some(CodeSize::Known(bytecode.len())),
                 code: Some(bytecode),
                 nonce: info.nonce,
             };
