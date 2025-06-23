@@ -41,6 +41,9 @@ pub trait Cfg {
     /// Returns whether the EIP-3607 (account clearing) is disabled.
     fn is_eip3607_disabled(&self) -> bool;
 
+    /// Returns whether the EIP-3541 (disallowing new contracts with 0xEF prefix) is disabled.
+    fn is_eip3541_disabled(&self) -> bool;
+
     /// Returns whether the balance check is disabled.
     fn is_balance_check_disabled(&self) -> bool;
 
