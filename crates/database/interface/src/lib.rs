@@ -54,7 +54,8 @@ pub trait Database {
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Gets account code by its hash.
+    /// Gets account code by its hash. If bytecode is already returned as part of [`Database::basic`]
+    /// this function will not be called.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Gets storage value of address at index.
@@ -86,7 +87,7 @@ pub trait DatabaseRef {
     /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Gets account code by its hash.
+    /// Gets account code by its hash. Ref version of [`Database::code_by_hash`].
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Gets storage value of address at index.

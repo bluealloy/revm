@@ -55,7 +55,7 @@ pub trait DatabaseAsyncRef {
         address: Address,
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
-    /// Gets account code by its hash.
+    /// Gets account code by its hash. Async ref version of [`Database::code_by_hash`].
     fn code_by_hash_async_ref(
         &self,
         code_hash: B256,

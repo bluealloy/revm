@@ -1,5 +1,5 @@
 //! Context trait and related types.
-pub use crate::journaled_state::StateLoad;
+pub use crate::journaled_state::{StateCodeLoad, StateLoad};
 use crate::{
     result::FromStringError, Block, Cfg, Database, JournalTr, LocalContextTr, Transaction,
 };

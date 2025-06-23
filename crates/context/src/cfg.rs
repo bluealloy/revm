@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, eip7907, hardfork::SpecId};
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -268,7 +268,11 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     fn max_code_size(&self) -> usize {
         self.limit_contract_code_size
-            .unwrap_or(eip170::MAX_CODE_SIZE)
+            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7907::MAX_CODE_SIZE
+            } else {
+                eip170::MAX_CODE_SIZE
+            })
     }
 
     fn max_initcode_size(&self) -> usize {
@@ -277,7 +281,11 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 self.limit_contract_code_size
                     .map(|size| size.saturating_mul(2))
             })
-            .unwrap_or(eip3860::MAX_INITCODE_SIZE)
+            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+                eip7907::MAX_INITCODE_SIZE
+            } else {
+                eip3860::MAX_INITCODE_SIZE
+            })
     }
 
     fn is_eip3541_disabled(&self) -> bool {

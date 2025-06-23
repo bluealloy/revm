@@ -695,8 +695,8 @@ pub fn return_create<JOURNAL: JournalTr>(
         return;
     }
 
-    // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7907 increased this limit to 0xc000 (~49kb).
+    // EIP-170: Contract code size limit to 0x6000 (~24KiB)
+    // EIP-7907 increased this limit to 0x40000 (~256KiB).
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
@@ -722,7 +722,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
+    // Set code. Marks account code warm after successful create.
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;

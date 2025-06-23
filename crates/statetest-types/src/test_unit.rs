@@ -10,7 +10,7 @@ use revm::{
         eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Address, Bytes,
         B256,
     },
-    state::Bytecode,
+    state::{Bytecode, CodeSize},
 };
 
 /// Single test unit struct
@@ -79,6 +79,7 @@ impl TestUnit {
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
+                code_size: Some(CodeSize::Known(bytecode.len())),
                 code: Some(bytecode),
                 nonce: info.nonce,
             };
