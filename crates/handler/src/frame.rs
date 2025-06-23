@@ -163,9 +163,33 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Make account warm and loaded.
-        let _ = ctx
+        let account = ctx
             .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
+            .load_account_code(inputs.bytecode_address)?;
+
+        let mut code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
+
+        if depth == 0 {
+            account.data.mark_code_cold();
+        }
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            let account = ctx
+                .journal_mut()
+                .load_account_code(eip7702_bytecode.delegated_address)?;
+            bytecode = account.info.code.clone().unwrap_or_default();
+            code_hash = account.info.code_hash();
+
+            if depth == 0 {
+                account.data.mark_code_cold();
+            }
+        }
+
+        // // EIP-7907: Code loaded warm
+        // if spec_id.is_enabled_in(SpecId::OSAKA) && load.is_code_cold {
+        //     base_gas += large_contract_code_size_cost(load.data.code_size.unwrap_or_default());
+        // }
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
@@ -212,22 +236,6 @@ impl EthFrame<EthInterpreter> {
                 result,
                 memory_offset: inputs.return_memory_offset.clone(),
             })));
-        }
-
-        let account = ctx
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
-
-        let mut code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            let account = &ctx
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
-                .info;
-            bytecode = account.code.clone().unwrap_or_default();
-            code_hash = account.code_hash();
         }
 
         // Returns success if bytecode is empty.
