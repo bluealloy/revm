@@ -1,24 +1,18 @@
-use super::{
-    merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    utils::recover_address,
-};
-use context::either::Either;
+use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
+
+use super::merkle_trie::{log_rlp_hash, state_merkle_trie_root};
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
 use primitives::U256;
 use revm::{
-    bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::{
-        block::calc_excess_blob_gas,
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg,
     },
     database_interface::EmptyDB,
-    primitives::{
-        eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Bytes, TxKind, B256,
-    },
+    primitives::{hardfork::SpecId, Bytes, B256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
@@ -126,11 +120,6 @@ fn skip_test(path: &Path) -> bool {
     )
 }
 
-struct TestValidationResult {
-    logs_root: B256,
-    state_root: B256,
-}
-
 struct TestExecutionContext<'a> {
     name: &'a str,
     unit: &'a TestUnit,
@@ -154,16 +143,6 @@ struct DebugContext<'a> {
     tx: &'a TxEnv,
     cache_state: &'a database::CacheState,
     error: &'a TestErrorKind,
-}
-
-fn compute_test_roots(
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
-    db: &State<EmptyDB>,
-) -> TestValidationResult {
-    TestValidationResult {
-        logs_root: log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default()),
-        state_root: state_merkle_trie_root(db.cache.trie_account()),
-    }
 }
 
 fn build_json_output(
@@ -300,152 +279,6 @@ fn check_evm_execution(
     Ok(())
 }
 
-fn prepare_state_from_test(unit: &TestUnit) -> database::CacheState {
-    let mut cache_state = database::CacheState::new(false);
-    for (address, info) in &unit.pre {
-        let code_hash = keccak256(&info.code);
-        let bytecode = Bytecode::new_raw_checked(info.code.clone())
-            .unwrap_or(Bytecode::new_legacy(info.code.clone()));
-        let acc_info = revm::state::AccountInfo {
-            balance: info.balance,
-            code_hash,
-            code: Some(bytecode),
-            nonce: info.nonce,
-        };
-        cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
-    }
-    cache_state
-}
-
-fn setup_block_env(unit: &TestUnit, cfg: &CfgEnv) -> BlockEnv {
-    let mut block = BlockEnv {
-        number: unit.env.current_number,
-        beneficiary: unit.env.current_coinbase,
-        timestamp: unit.env.current_timestamp,
-        gas_limit: unit.env.current_gas_limit.try_into().unwrap_or(u64::MAX),
-        basefee: unit
-            .env
-            .current_base_fee
-            .unwrap_or_default()
-            .try_into()
-            .unwrap_or(u64::MAX),
-        difficulty: unit.env.current_difficulty,
-        prevrandao: unit.env.current_random,
-        ..BlockEnv::default()
-    };
-
-    // Handle EIP-4844 blob gas
-    if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-        block.set_blob_excess_gas_and_price(
-            current_excess_blob_gas.to(),
-            primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
-        );
-    } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
-        unit.env.parent_blob_gas_used,
-        unit.env.parent_excess_blob_gas,
-    ) {
-        block.set_blob_excess_gas_and_price(
-            calc_excess_blob_gas(
-                parent_blob_gas_used.to(),
-                parent_excess_blob_gas.to(),
-                unit.env
-                    .parent_target_blobs_per_block
-                    .map(|i| i.to())
-                    .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
-            ),
-            primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
-        );
-    }
-
-    // Set default prevrandao for merge
-    if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
-        block.prevrandao = Some(B256::default());
-    }
-
-    block
-}
-
-fn setup_tx_env(unit: &TestUnit, test: &Test, path: &str, name: &str) -> Result<TxEnv, TestError> {
-    // Setup sender
-    let caller = if let Some(address) = unit.transaction.sender {
-        address
-    } else {
-        recover_address(unit.transaction.secret_key.as_slice()).ok_or_else(|| TestError {
-            name: name.to_string(),
-            path: path.to_string(),
-            kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
-        })?
-    };
-
-    // Transaction specific fields
-    let tx_type = unit.transaction.tx_type(test.indexes.data).ok_or_else(|| {
-        if test.expect_exception.is_some() {
-            // Return a dummy error that will be caught
-            TestError {
-                name: name.to_string(),
-                path: path.to_string(),
-                kind: TestErrorKind::UnexpectedException {
-                    expected_exception: test.expect_exception.clone(),
-                    got_exception: Some("Invalid transaction type".to_string()),
-                },
-            }
-        } else {
-            panic!("Invalid transaction type without expected exception");
-        }
-    })?;
-
-    let tx = TxEnv {
-        caller,
-        gas_price: unit
-            .transaction
-            .gas_price
-            .or(unit.transaction.max_fee_per_gas)
-            .unwrap_or_default()
-            .try_into()
-            .unwrap_or(u128::MAX),
-        gas_priority_fee: unit
-            .transaction
-            .max_priority_fee_per_gas
-            .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX")),
-        blob_hashes: unit.transaction.blob_versioned_hashes.clone(),
-        max_fee_per_blob_gas: unit
-            .transaction
-            .max_fee_per_blob_gas
-            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-            .unwrap_or(u128::MAX),
-        tx_type: tx_type as u8,
-        gas_limit: unit.transaction.gas_limit[test.indexes.gas].saturating_to(),
-        data: unit.transaction.data[test.indexes.data].clone(),
-        nonce: u64::try_from(unit.transaction.nonce).unwrap(),
-        value: unit.transaction.value[test.indexes.value],
-        access_list: unit
-            .transaction
-            .access_lists
-            .get(test.indexes.data)
-            .cloned()
-            .flatten()
-            .unwrap_or_default(),
-        authorization_list: unit
-            .transaction
-            .authorization_list
-            .clone()
-            .map(|auth_list| {
-                auth_list
-                    .into_iter()
-                    .map(|i| Either::Left(i.into()))
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default(),
-        kind: match unit.transaction.to {
-            Some(add) => TxKind::Call(add),
-            None => TxKind::Create,
-        },
-        ..TxEnv::default()
-    };
-
-    Ok(tx)
-}
-
 /// Execute a single test suite file containing multiple tests
 ///
 /// # Arguments
@@ -473,7 +306,7 @@ pub fn execute_test_suite(
 
     for (name, unit) in suite.0 {
         // Prepare initial state
-        let cache_state = prepare_state_from_test(&unit);
+        let cache_state = unit.state();
 
         // Setup base configuration
         let mut cfg = CfgEnv::default();
@@ -501,14 +334,20 @@ pub fn execute_test_suite(
             }
 
             // Setup block environment for this spec
-            let block = setup_block_env(&unit, &cfg);
+            let block = unit.block_env(&cfg);
 
             for (index, test) in tests.iter().enumerate() {
                 // Setup transaction environment
-                let tx = match setup_tx_env(&unit, test, &path, &name) {
+                let tx = match test.tx_env(&unit) {
                     Ok(tx) => tx,
                     Err(_) if test.expect_exception.is_some() => continue,
-                    Err(e) => return Err(e),
+                    Err(_) => {
+                        return Err(TestError {
+                            name: name.clone(),
+                            path: path.clone(),
+                            kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
+                        });
+                    }
                 };
 
                 // Execute the test
