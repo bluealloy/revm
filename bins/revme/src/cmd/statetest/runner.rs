@@ -1,6 +1,4 @@
 use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
-
-use super::merkle_trie::{log_rlp_hash, state_merkle_trie_root};
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
@@ -17,7 +15,6 @@ use revm::{
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite, TestUnit};
-
 use std::{
     convert::Infallible,
     fmt::Debug,
