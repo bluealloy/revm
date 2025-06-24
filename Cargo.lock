@@ -3957,9 +3957,11 @@ dependencies = [
 name = "revm-statetest-types"
 version = "8.0.1"
 dependencies = [
+ "k256",
  "revm",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
