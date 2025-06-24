@@ -21,45 +21,45 @@ use std::{vec, vec::Vec};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Transaction type
-    tx_type: u8,
+    pub tx_type: u8,
     /// Caller aka Author aka transaction signer
-    caller: Address,
+    pub caller: Address,
     /// The gas limit of the transaction.
-    gas_limit: u64,
+    pub gas_limit: u64,
     /// The gas price of the transaction.
     ///
     /// For EIP-1559 transaction this represent max_gas_fee.
-    gas_price: u128,
+    pub gas_price: u128,
     /// The destination of the transaction
-    kind: TxKind,
+    pub kind: TxKind,
     /// The value sent to `transact_to`
-    value: U256,
+    pub value: U256,
     /// The data of the transaction
-    data: Bytes,
+    pub data: Bytes,
 
     /// The nonce of the transaction
-    nonce: u64,
+    pub nonce: u64,
 
     /// The chain ID of the transaction
     ///
     /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
     ///
     /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
-    chain_id: Option<u64>,
+    pub chain_id: Option<u64>,
 
     /// A list of addresses and storage keys that the transaction plans to access
     ///
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    access_list: AccessList,
+    pub access_list: AccessList,
 
     /// The priority fee per gas
     ///
     /// Incorporated as part of the London upgrade via [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    gas_priority_fee: Option<u128>,
+    pub gas_priority_fee: Option<u128>,
 
     /// The list of blob versioned hashes
     ///
@@ -68,14 +68,14 @@ pub struct TxEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    blob_hashes: Vec<B256>,
+    pub blob_hashes: Vec<B256>,
 
     /// The max fee per blob gas
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    max_fee_per_blob_gas: u128,
+    pub max_fee_per_blob_gas: u128,
 
     /// List of authorizations
     ///
@@ -85,7 +85,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction via [EIP-7702].
     ///
     /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
-    authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
+    pub authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
 }
 
 impl Default for TxEnv {
@@ -542,7 +542,6 @@ impl TxEnvBuilder {
         };
 
         // Derive tx type from fields, if some fields are wrongly set it will return an error.
-        println!("tx: {:#?}", tx);
         tx.derive_tx_type()?;
 
         Ok(tx)

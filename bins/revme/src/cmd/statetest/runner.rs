@@ -255,7 +255,7 @@ pub fn execute_test_suite(
 
         let mut cfg = CfgEnv::default();
         let mut block = BlockEnv::default();
-
+        let mut tx = TxEnv::default();
         // For mainnet
         cfg.chain_id = unit
             .env
@@ -279,8 +279,8 @@ pub fn execute_test_suite(
         // After the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         block.prevrandao = unit.env.current_random;
 
-        // Prepare base transaction values for building later
-        let caller = if let Some(address) = unit.transaction.sender {
+        // Tx env
+        tx.caller = if let Some(address) = unit.transaction.sender {
             address
         } else {
             recover_address(unit.transaction.secret_key.as_slice()).ok_or_else(|| TestError {
@@ -289,24 +289,24 @@ pub fn execute_test_suite(
                 kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
             })?
         };
-        let gas_price = unit
+        tx.gas_price = unit
             .transaction
             .gas_price
             .or(unit.transaction.max_fee_per_gas)
             .unwrap_or_default()
             .try_into()
             .unwrap_or(u128::MAX);
-        let gas_priority_fee = unit
+        tx.gas_priority_fee = unit
             .transaction
             .max_priority_fee_per_gas
             .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX"));
-        let blob_hashes = unit.transaction.blob_versioned_hashes.clone();
-        let max_fee_per_blob_gas = unit
+        // EIP-4844
+        tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
+        tx.max_fee_per_blob_gas = unit
             .transaction
             .max_fee_per_blob_gas
             .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-            .unwrap_or(0);
-        let nonce = u64::try_from(unit.transaction.nonce).unwrap();
+            .unwrap_or(u128::MAX);
 
         // Post and execution
         for (spec_name, tests) in unit.post {
@@ -355,59 +355,51 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                let Some(_tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
                     if test.expect_exception.is_some() {
                         continue;
                     } else {
                         panic!("Invalid transaction type without expected exception");
                     }
                 };
-                // Transaction type will be derived automatically from the set fields
+                tx.tx_type = tx_type as u8;
+
+                tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                tx.data = unit
+                    .transaction
+                    .data
+                    .get(test.indexes.data)
+                    .unwrap()
+                    .clone();
+
+                tx.nonce = u64::try_from(unit.transaction.nonce).unwrap();
+                tx.value = unit.transaction.value[test.indexes.value];
+
+                tx.access_list = unit
+                    .transaction
+                    .access_lists
+                    .get(test.indexes.data)
+                    .cloned()
+                    .flatten()
+                    .unwrap_or_default();
+
+                tx.authorization_list = unit
+                    .transaction
+                    .authorization_list
+                    .clone()
+                    .map(|auth_list| {
+                        auth_list
+                            .into_iter()
+                            .map(|i| Either::Left(i.into()))
+                            .collect::<Vec<_>>()
+                    })
+                    .unwrap_or_default();
+
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
                     None => TxKind::Create,
                 };
-
-                println!("tx: {:#?}", max_fee_per_blob_gas);
-                let tx = TxEnv::builder()
-                    .caller(caller)
-                    .gas_price(gas_price)
-                    .gas_priority_fee(gas_priority_fee)
-                    .blob_hashes(blob_hashes.clone())
-                    .max_fee_per_blob_gas(max_fee_per_blob_gas)
-                    .gas_limit(unit.transaction.gas_limit[test.indexes.gas].saturating_to())
-                    .data(
-                        unit.transaction
-                            .data
-                            .get(test.indexes.data)
-                            .unwrap()
-                            .clone(),
-                    )
-                    .nonce(nonce)
-                    .value(unit.transaction.value[test.indexes.value])
-                    .access_list(
-                        unit.transaction
-                            .access_lists
-                            .get(test.indexes.data)
-                            .cloned()
-                            .flatten()
-                            .unwrap_or_default(),
-                    )
-                    .authorization_list(
-                        unit.transaction
-                            .authorization_list
-                            .clone()
-                            .map(|auth_list| {
-                                auth_list
-                                    .into_iter()
-                                    .map(|i| Either::Left(i.into()))
-                                    .collect::<Vec<_>>()
-                            })
-                            .unwrap_or_default(),
-                    )
-                    .kind(to)
-                    .build()
-                    .unwrap();
+                tx.kind = to;
 
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
