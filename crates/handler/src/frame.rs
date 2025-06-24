@@ -12,6 +12,7 @@ use context_interface::{
 };
 use core::cmp::min;
 use derive_where::derive_where;
+use interpreter::gas::large_contract_code_size_cost;
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
@@ -26,7 +27,7 @@ use primitives::{
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
 use primitives::{keccak256, Address, Bytes, B256, U256};
-use state::Bytecode;
+use state::{Bytecode, CodeSize};
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
@@ -145,8 +146,8 @@ impl EthFrame<EthInterpreter> {
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let gas = Gas::new(inputs.gas_limit);
-        let return_result = |instruction_result: InstructionResult| {
+        let mut gas = Gas::new(inputs.gas_limit);
+        let return_result = |instruction_result: InstructionResult, gas: Gas| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
                     result: instruction_result,
@@ -159,7 +160,7 @@ impl EthFrame<EthInterpreter> {
 
         // Check depth
         if depth > CALL_STACK_LIMIT as usize {
-            return return_result(InstructionResult::CallTooDeep);
+            return return_result(InstructionResult::CallTooDeep, gas);
         }
 
         // Make account warm and loaded.
@@ -171,7 +172,13 @@ impl EthFrame<EthInterpreter> {
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
         if depth == 0 {
-            account.data.mark_code_cold();
+            // EIP-7907 account for large code loading cost for `to` account.
+            // TODO this is still not fully agreed upon! https://github.com/ethereum/EIPs/pull/9910
+            if let Some(CodeSize::Known(code_size)) = account.info.code_size {
+                if !gas.record_cost(large_contract_code_size_cost(code_size)) {
+                    return return_result(InstructionResult::OutOfGas, gas);
+                }
+            }
         }
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
@@ -186,11 +193,6 @@ impl EthFrame<EthInterpreter> {
             }
         }
 
-        // // EIP-7907: Code loaded warm
-        // if spec_id.is_enabled_in(SpecId::OSAKA) && load.is_code_cold {
-        //     base_gas += large_contract_code_size_cost(load.data.code_size.unwrap_or_default());
-        // }
-
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
 
@@ -203,7 +205,7 @@ impl EthFrame<EthInterpreter> {
                     .transfer(inputs.caller, inputs.target_address, value)?
             {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
-                return return_result(i.into());
+                return return_result(i.into(), gas);
             }
         }
 
@@ -241,7 +243,7 @@ impl EthFrame<EthInterpreter> {
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
             ctx.journal_mut().checkpoint_commit();
-            return return_result(InstructionResult::Stop);
+            return return_result(InstructionResult::Stop, gas);
         }
 
         // Create interpreter and executes call and push new CallStackFrame.

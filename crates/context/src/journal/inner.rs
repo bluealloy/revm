@@ -715,9 +715,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         if load_code {
-            if address == primitives::address!("0x0000000000000000000000000000000000001100") {
-                //panic!();
-            }
             let info = &mut load.data.info;
             if info.code.is_none() {
                 let code = if info.code_hash == KECCAK_EMPTY {
