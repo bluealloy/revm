@@ -1,9 +1,10 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::{
-    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction, TransactionType,
+    context::StateCodeLoad, journaled_state::AccountLoad, transaction::AccessListItemTr as _,
+    Transaction, TransactionType,
 };
-use primitives::{eip7702, hardfork::SpecId, U256};
+use primitives::{eip170, eip7702, hardfork::SpecId, Bytes, U256};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -113,15 +114,23 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool) -> Option<u64> {
-    let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(is_cold)
+pub const fn extcodecopy_cost(
+    spec_id: SpecId,
+    state_load: &StateCodeLoad<Bytes>,
+    copy_len: usize,
+) -> Option<u64> {
+    let mut base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
+        warm_cold_cost(state_load.is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
         20
     };
-    copy_cost(base_gas, len)
+
+    if spec_id.is_enabled_in(SpecId::OSAKA) && state_load.is_code_cold {
+        base_gas += large_contract_code_size_cost(state_load.data.0.len());
+    }
+    copy_cost(base_gas, copy_len)
 }
 
 #[inline]
@@ -274,12 +283,14 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// [`bytecode::opcode::CALLCODE`] need to have this field hardcoded to false
 /// as they were present before SPURIOUS_DRAGON hardfork.
 #[inline]
-pub const fn call_cost(
+pub fn call_cost(
     spec_id: SpecId,
     transfers_value: bool,
     account_load: StateLoad<AccountLoad>,
 ) -> u64 {
     let is_empty = account_load.data.is_empty;
+    let is_code_cold = account_load.data.is_code_cold;
+    let code_size = account_load.data.code_size;
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         warm_cold_cost_with_delegation(account_load)
@@ -289,6 +300,13 @@ pub const fn call_cost(
     } else {
         40
     };
+
+    // EIP-7907: Meter Contract Code Size And Increase Limit
+    // If code is cold for a large contract, add cost to the gas.
+    if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold && code_size.is_some() {
+        let cost = large_contract_code_size_cost(code_size.unwrap());
+        gas += cost;
+    }
 
     // Transfer value cost
     if transfers_value {
@@ -331,6 +349,15 @@ pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64
         gas += warm_cold_cost(is_cold);
     }
     gas
+}
+
+/// EIP-7907: Cold access cost for large contract code size
+///
+/// calculate large_contract_cost = ceil32(excess_contract_size) * GAS_INIT_CODE_WORD_COST
+/// where excess_contract_size = max(0, contract_size - 0x6000)
+#[inline]
+pub const fn large_contract_code_size_cost(code_size: usize) -> u64 {
+    (code_size.saturating_sub(eip170::MAX_CODE_SIZE) as u64).div_ceil(32) * INITCODE_WORD_COST
 }
 
 /// Memory expansion cost calculation for a given number of words.
@@ -486,4 +513,32 @@ pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
 #[inline]
 pub fn calc_tx_floor_cost(tokens_in_calldata: u64) -> u64 {
     tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + 21_000
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_large_contract_code_size_cost() {
+        let code_size = 0x0;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
+
+        let code_size = 0x1;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
+
+        let code_size = 0x6000;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 0);
+
+        let code_size = 0x6001;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 2);
+
+        let code_size = 0x40000;
+        let cost = large_contract_code_size_cost(code_size);
+        assert_eq!(cost, 14_848);
+    }
 }

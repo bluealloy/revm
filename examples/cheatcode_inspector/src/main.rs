@@ -23,7 +23,7 @@ use revm::{
     inspector::{inspectors::TracerEip3155, JournalExt},
     interpreter::{
         interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
-        SelfDestructResult, StateLoad,
+        SelfDestructResult, StateCodeLoad, StateLoad,
     },
     primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
     state::{Account, Bytecode, EvmState},
@@ -159,7 +159,7 @@ impl JournalTr for Backend {
     fn load_account_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, Infallible> {
+    ) -> Result<StateCodeLoad<&mut Account>, Infallible> {
         self.journaled_state.load_account_code(address)
     }
 
@@ -177,7 +177,7 @@ impl JournalTr for Backend {
     fn code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
+    ) -> Result<StateCodeLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
         self.journaled_state.code(address)
     }
 

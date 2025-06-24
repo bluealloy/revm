@@ -130,7 +130,6 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
             .halt(InstructionResult::FatalExternalError);
         return;
     };
-
     let Some(mut gas_limit) = calc_call_gas(
         context.interpreter,
         account_load,

@@ -881,8 +881,7 @@ mod tests {
         let acc1 = AccountInfo {
             balance: U256::from(10),
             nonce: 1,
-            code_hash: KECCAK_EMPTY,
-            code: None,
+            ..Default::default()
         };
 
         let mut bundle_state = BundleState::default();
@@ -932,8 +931,7 @@ mod tests {
                     Some(AccountInfo {
                         nonce: 1,
                         balance: U256::from(10),
-                        code_hash: KECCAK_EMPTY,
-                        code: None,
+                        ..Default::default()
                     }),
                     HashMap::from_iter([
                         (slot1(), (StorageValue::from(0), StorageValue::from(10))),
@@ -946,8 +944,7 @@ mod tests {
                     Some(AccountInfo {
                         nonce: 1,
                         balance: U256::from(10),
-                        code_hash: KECCAK_EMPTY,
-                        code: None,
+                        ..Default::default()
                     }),
                     HashMap::default(),
                 ),
@@ -977,8 +974,7 @@ mod tests {
                 Some(AccountInfo {
                     nonce: 3,
                     balance: U256::from(20),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 }),
                 HashMap::from_iter([(slot1(), (StorageValue::from(0), StorageValue::from(15)))]),
             )],
@@ -987,8 +983,7 @@ mod tests {
                 Some(Some(AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 })),
                 vec![(slot1(), StorageValue::from(10))],
             )]],
@@ -1004,8 +999,7 @@ mod tests {
                 AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 },
             )
             .state_storage(
@@ -1018,8 +1012,7 @@ mod tests {
                 AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 },
             )
             .revert_address(0, account1())
@@ -1037,8 +1030,7 @@ mod tests {
                 AccountInfo {
                     nonce: 3,
                     balance: U256::from(20),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 },
             )
             .state_storage(
@@ -1052,8 +1044,7 @@ mod tests {
                 Some(Some(AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
-                    code_hash: KECCAK_EMPTY,
-                    code: None,
+                    ..Default::default()
                 })),
             )
             .revert_storage(0, account1(), vec![(slot1(), StorageValue::from(10))])
