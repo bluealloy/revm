@@ -94,14 +94,15 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
     let mut evm = Context::mainnet().with_db(alloy_db).build_mainnet();
 
     let result = evm
-        .transact_one(TxEnv {
-            // 0x1 because calling USDC proxy from zero address fails
-            caller: address!("0000000000000000000000000000000000000001"),
-            kind: TxKind::Call(token),
-            data: encoded.into(),
-            value: U256::from(0),
-            ..Default::default()
-        })
+        .transact_one(
+            TxEnv::builder()
+                .caller(address!("0000000000000000000000000000000000000001"))
+                .kind(TxKind::Call(token))
+                .data(encoded.into())
+                .value(U256::from(0))
+                .build()
+                .unwrap(),
+        )
         .unwrap();
 
     let value = match result {
@@ -138,13 +139,15 @@ async fn get_amount_out(
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
     let result = evm
-        .transact_one(TxEnv {
-            caller: address!("0000000000000000000000000000000000000000"),
-            kind: TxKind::Call(uniswap_v2_router),
-            data: encoded.into(),
-            value: U256::from(0),
-            ..Default::default()
-        })
+        .transact_one(
+            TxEnv::builder()
+                .caller(address!("0000000000000000000000000000000000000000"))
+                .kind(TxKind::Call(uniswap_v2_router))
+                .data(encoded.into())
+                .value(U256::from(0))
+                .build()
+                .unwrap(),
+        )
         .unwrap();
 
     let value = match result {
@@ -170,13 +173,15 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
     let result = evm
-        .transact_one(TxEnv {
-            caller: address!("0000000000000000000000000000000000000000"),
-            kind: TxKind::Call(pair_address),
-            data: encoded.into(),
-            value: U256::from(0),
-            ..Default::default()
-        })
+        .transact_one(
+            TxEnv::builder()
+                .caller(address!("0000000000000000000000000000000000000000"))
+                .kind(TxKind::Call(pair_address))
+                .data(encoded.into())
+                .value(U256::from(0))
+                .build()
+                .unwrap(),
+        )
         .unwrap();
 
     let value = match result {
@@ -217,14 +222,14 @@ fn swap(
 
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
-    let tx = TxEnv {
-        caller: from,
-        kind: TxKind::Call(pool_address),
-        data: encoded.into(),
-        value: U256::from(0),
-        nonce: 1,
-        ..Default::default()
-    };
+    let tx = TxEnv::builder()
+        .caller(from)
+        .kind(TxKind::Call(pool_address))
+        .data(encoded.into())
+        .value(U256::from(0))
+        .nonce(1)
+        .build()
+        .unwrap();
 
     let ref_tx = evm.transact_commit(tx).unwrap();
 
@@ -251,13 +256,13 @@ fn transfer(
 
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
-    let tx = TxEnv {
-        caller: from,
-        kind: TxKind::Call(token),
-        data: encoded.into(),
-        value: U256::from(0),
-        ..Default::default()
-    };
+    let tx = TxEnv::builder()
+        .caller(from)
+        .kind(TxKind::Call(token))
+        .data(encoded.into())
+        .value(U256::from(0))
+        .build()
+        .unwrap();
 
     let ref_tx = evm.transact_commit(tx).unwrap();
     let success: bool = match ref_tx {

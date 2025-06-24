@@ -355,12 +355,14 @@ mod tests {
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        evm.transact_commit(TxEnv {
-            kind: TxKind::Create,
-            data: bytecode.clone(),
-            gas_limit,
-            ..Default::default()
-        })
+        evm.transact_commit(
+            TxEnv::builder()
+                .kind(TxKind::Create)
+                .data(bytecode.clone())
+                .gas_limit(gas_limit)
+                .build()
+                .unwrap(),
+        )
     }
 
     #[test]
@@ -600,12 +602,14 @@ mod tests {
         let call_result = Context::mainnet()
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
-            })
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {
@@ -846,12 +850,14 @@ mod tests {
         let call_result = Context::mainnet()
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
-            })
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {

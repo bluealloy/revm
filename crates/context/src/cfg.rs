@@ -78,6 +78,13 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_block_gas_limit")]
     pub disable_block_gas_limit: bool,
+    /// EIP-3541 rejects the creation of contracts that starts with 0xEF
+    ///
+    /// This is useful for chains that do not implement EIP-3541.
+    ///
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_eip3541")]
+    pub disable_eip3541: bool,
     /// EIP-3607 rejects transactions from senders with deployed code
     ///
     /// In development, it can be desirable to simulate calls from contracts, which this setting allows.
@@ -144,6 +151,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_balance_check: false,
             #[cfg(feature = "optional_block_gas_limit")]
             disable_block_gas_limit: false,
+            #[cfg(feature = "optional_eip3541")]
+            disable_eip3541: false,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: false,
             #[cfg(feature = "optional_no_base_fee")]
@@ -189,6 +198,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_balance_check: self.disable_balance_check,
             #[cfg(feature = "optional_block_gas_limit")]
             disable_block_gas_limit: self.disable_block_gas_limit,
+            #[cfg(feature = "optional_eip3541")]
+            disable_eip3541: self.disable_eip3541,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: self.disable_eip3607,
             #[cfg(feature = "optional_no_base_fee")]
@@ -275,6 +286,16 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
             } else {
                 eip3860::MAX_INITCODE_SIZE
             })
+    }
+
+    fn is_eip3541_disabled(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_eip3541")] {
+                self.disable_eip3541
+            } else {
+                false
+            }
+        }
     }
 
     fn is_eip3607_disabled(&self) -> bool {

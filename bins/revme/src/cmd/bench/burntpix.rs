@@ -41,13 +41,13 @@ pub fn run(criterion: &mut Criterion) {
         .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet();
 
-    let tx = TxEnv {
-        caller: BENCH_CALLER,
-        kind: TxKind::Call(BURNTPIX_MAIN_ADDRESS),
-        data: run_call_data.clone().into(),
-        gas_limit: u64::MAX,
-        ..Default::default()
-    };
+    let tx = TxEnv::builder()
+        .caller(BENCH_CALLER)
+        .kind(TxKind::Call(BURNTPIX_MAIN_ADDRESS))
+        .data(run_call_data.clone().into())
+        .gas_limit(u64::MAX)
+        .build()
+        .unwrap();
 
     criterion.bench_function("burntpix", |b| {
         b.iter_batched(

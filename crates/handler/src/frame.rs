@@ -562,12 +562,14 @@ impl EthFrame<EthInterpreter> {
             }
             FrameData::Create(frame) => {
                 let max_code_size = context.cfg().max_code_size();
+                let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
                 return_create(
                     context.journal_mut(),
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
+                    is_eip3541_disabled,
                     spec,
                 );
 
@@ -680,6 +682,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
     max_code_size: usize,
+    is_eip3541_disabled: bool,
     spec_id: SpecId,
 ) {
     // If return is not ok revert and return.
@@ -691,7 +694,10 @@ pub fn return_create<JOURNAL: JournalTr>(
     // If ok, check contract creation limit and calculate gas deduction on output len.
     //
     // EIP-3541: Reject new contract code starting with the 0xEF byte
-    if spec_id.is_enabled_in(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
+    if !is_eip3541_disabled
+        && spec_id.is_enabled_in(LONDON)
+        && interpreter_result.output.first() == Some(&0xEF)
+    {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
         return;
