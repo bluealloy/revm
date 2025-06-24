@@ -4,7 +4,7 @@ use context_interface::{
     context::StateCodeLoad, journaled_state::AccountLoad, transaction::AccessListItemTr as _,
     Transaction, TransactionType,
 };
-use primitives::{eip170, eip7702, hardfork::SpecId, Bytes, U256};
+use primitives::{eip170, eip7702, eip7907, hardfork::SpecId, Bytes, U256};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -357,7 +357,8 @@ pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64
 /// where excess_contract_size = max(0, contract_size - 0x6000)
 #[inline]
 pub const fn large_contract_code_size_cost(code_size: usize) -> u64 {
-    (code_size.saturating_sub(eip170::MAX_CODE_SIZE) as u64).div_ceil(32) * INITCODE_WORD_COST
+    (code_size.saturating_sub(eip170::MAX_CODE_SIZE) as u64).div_ceil(32)
+        * eip7907::GAS_CODE_LOAD_WORD_COST
 }
 
 /// Memory expansion cost calculation for a given number of words.

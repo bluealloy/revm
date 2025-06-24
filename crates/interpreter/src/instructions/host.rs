@@ -80,7 +80,10 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
         20
     };
 
-    // if spec_id.is_enabled_in(SpecId::OSAKA) && code_size.is_code_cold {
+    // EIP-7907: Meter Contract Code Size And Increase Limit
+    // TODO this is still not fully agreed upon! And it is different from what is stated in this PR https://github.com/ethereum/EIPs/pull/9910
+    // This assumes that code_size is part of account.
+    // if spec_id.is_enabled_in(OSAKA) && code_size.is_code_cold {
     //     gas += large_contract_code_size_cost(code_size.data);
     // }
 
