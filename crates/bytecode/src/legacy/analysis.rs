@@ -110,14 +110,14 @@ mod tests {
     fn test_bytecode_with_jumpdest_at_start() {
         let bytecode = vec![opcode::JUMPDEST, opcode::PUSH1, 0x01, opcode::STOP];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
-        assert!(jump_table.table[0]); // First byte should be a valid jumpdest
+        assert!(jump_table.is_valid(0)); // First byte should be a valid jumpdest
     }
 
     #[test]
     fn test_bytecode_with_jumpdest_after_push() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::JUMPDEST, opcode::STOP];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
-        assert!(jump_table.table[2]); // JUMPDEST should be at position 2
+        assert!(jump_table.is_valid(2)); // JUMPDEST should be at position 2
     }
 
     #[test]
@@ -130,8 +130,8 @@ mod tests {
             opcode::STOP,
         ];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
-        assert!(jump_table.table[0]); // First JUMPDEST
-        assert!(jump_table.table[3]); // Second JUMPDEST
+        assert!(jump_table.is_valid(0)); // First JUMPDEST
+        assert!(jump_table.is_valid(3)); // Second JUMPDEST
     }
 
     #[test]
@@ -145,7 +145,7 @@ mod tests {
     fn test_bytecode_with_invalid_opcode() {
         let bytecode = vec![0xFF, opcode::STOP]; // 0xFF is an invalid opcode
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
-        assert!(!jump_table.table[0]); // Invalid opcode should not be a jumpdest
+        assert!(!jump_table.is_valid(0)); // Invalid opcode should not be a jumpdest
     }
 
     #[test]
@@ -165,9 +165,9 @@ mod tests {
         ];
         let (jump_table, padded_bytecode) = analyze_legacy(bytecode.clone().into());
         assert_eq!(padded_bytecode.len(), bytecode.len());
-        assert!(!jump_table.table[0]); // PUSH1
-        assert!(!jump_table.table[2]); // PUSH2
-        assert!(!jump_table.table[5]); // PUSH4
+        assert!(!jump_table.is_valid(0)); // PUSH1
+        assert!(!jump_table.is_valid(2)); // PUSH2
+        assert!(!jump_table.is_valid(5)); // PUSH4
     }
 
     #[test]
@@ -179,6 +179,6 @@ mod tests {
             opcode::STOP,
         ];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
-        assert!(!jump_table.table[1]); // JUMPDEST in push data should not be valid
+        assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
     }
 }

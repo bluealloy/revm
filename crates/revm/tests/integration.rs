@@ -4,7 +4,7 @@ mod common;
 use common::compare_or_save_testdata;
 use context::ContextTr;
 use database::BENCH_CALLER;
-use primitives::{b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY};
+use primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY};
 use revm::{
     bytecode::opcode,
     context::TxEnv,
@@ -200,4 +200,26 @@ pub fn deployment_contract(bytes: &[u8]) -> Bytes {
     ];
 
     [ret, bytes].concat().into()
+}
+
+#[test]
+fn test_frame_stack_index() {
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            SELFDESTRUCT_BYTECODE.into(),
+        )))
+        .build_mainnet();
+
+    // transfer to other account
+    let result1 = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .to(address!("0xc000000000000000000000000000000000000000"))
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert_eq!(evm.frame_stack.index(), None);
+    compare_or_save_testdata("test_frame_stack_index.json", result1);
 }

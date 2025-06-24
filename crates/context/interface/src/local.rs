@@ -31,7 +31,7 @@ impl<T> FrameStack<T> {
     /// Initializes the stack with a single item.
     #[inline]
     pub fn start_init(&mut self) -> OutFrame<'_, T> {
-        self.index = Some(0);
+        self.index = None;
         if self.stack.is_empty() {
             self.stack.reserve(1);
         }
@@ -45,6 +45,7 @@ impl<T> FrameStack<T> {
         if self.stack.is_empty() {
             unsafe { self.stack.set_len(1) };
         }
+        self.index = Some(0);
     }
 
     /// Returns the current index of the stack.
