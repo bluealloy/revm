@@ -52,11 +52,13 @@ fn main() -> anyhow::Result<()> {
     let mut evm = ctx.build_mainnet();
 
     println!("bytecode: {}", hex::encode(&bytecode));
-    let ref_tx = evm.transact_commit(TxEnv {
-        kind: TxKind::Create,
-        data: bytecode.clone(),
-        ..Default::default()
-    })?;
+    let ref_tx = evm.transact_commit(
+        TxEnv::builder()
+            .kind(TxKind::Create)
+            .data(bytecode.clone())
+            .build()
+            .unwrap(),
+    )?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..
@@ -66,12 +68,14 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    let output = evm.transact(TxEnv {
-        kind: TxKind::Call(address),
-        data: Default::default(),
-        nonce: 1,
-        ..Default::default()
-    })?;
+    let output = evm.transact(
+        TxEnv::builder()
+            .kind(TxKind::Call(address))
+            .data(Default::default())
+            .nonce(1)
+            .build()
+            .unwrap(),
+    )?;
     let Some(storage0) = output
         .state
         .get(&address)

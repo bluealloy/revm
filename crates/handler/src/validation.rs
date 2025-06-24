@@ -324,10 +324,6 @@ mod tests {
         spec_id: Option<SpecId>,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.kind = TxKind::Create;
-                tx.data = bytecode.clone();
-            })
             .modify_cfg_chained(|c| {
                 if let Some(spec_id) = spec_id {
                     c.spec = spec_id;
@@ -336,11 +332,13 @@ mod tests {
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        evm.transact_commit(TxEnv {
-            kind: TxKind::Create,
-            data: bytecode.clone(),
-            ..Default::default()
-        })
+        evm.transact_commit(
+            TxEnv::builder()
+                .kind(TxKind::Create)
+                .data(bytecode.clone())
+                .build()
+                .unwrap(),
+        )
     }
 
     #[test]
@@ -497,12 +495,14 @@ mod tests {
         let call_result = Context::mainnet()
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
-            })
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {
@@ -579,12 +579,14 @@ mod tests {
         let call_result = Context::mainnet()
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .transact_commit(TxEnv {
-                caller: tx_caller,
-                kind: TxKind::Call(factory_address),
-                data: Bytes::new(),
-                ..Default::default()
-            })
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {

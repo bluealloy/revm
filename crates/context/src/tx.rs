@@ -378,6 +378,18 @@ impl TxEnvBuilder {
         self
     }
 
+    /// Insert a list of signed authorizations into the authorization list.
+    pub fn authorization_list_signed(mut self, auth: Vec<SignedAuthorization>) -> Self {
+        self.authorization_list = auth.into_iter().map(Either::Left).collect();
+        self
+    }
+
+    /// Insert a list of recovered authorizations into the authorization list.
+    pub fn authorization_list_recovered(mut self, auth: Vec<RecoveredAuthorization>) -> Self {
+        self.authorization_list = auth.into_iter().map(Either::Right).collect();
+        self
+    }
+
     /// Build the final [`TxEnv`] with default values for missing fields.
     pub fn build_fill(mut self) -> TxEnv {
         let tx_type_not_set = self.tx_type.is_some();
