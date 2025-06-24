@@ -4,14 +4,19 @@ use primitives::{Address, Bytes, TxKind, B256, U256};
 
 impl<L, R> Transaction for Either<L, R>
 where
-    L: Transaction,
-    R: for<'a> Transaction< AccessListItem<'a> = L::AccessListItem<'a>, Authorization<'a> = L::Authorization<'a>>,
+    L: Transaction + 'static,
+    R: for<'a> Transaction<
+            AccessListItem<'a> = L::AccessListItem<'a>,
+            Authorization<'a> = L::Authorization<'a>,
+        > + 'static,
 {
-    type AccessListItem<'a> = L::AccessListItem<'a>
+    type AccessListItem<'a>
+        = L::AccessListItem<'a>
     where
         Self: 'a;
 
-    type Authorization<'a>  = L::Authorization<'a>
+    type Authorization<'a>
+        = L::Authorization<'a>
     where
         Self: 'a;
 
@@ -79,7 +84,10 @@ where
     }
 
     fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
-       
+        match self {
+            Either::Left(l) => l.access_list().map(Either::Left),
+            Either::Right(r) => r.access_list().map(Either::Right),
+        }
     }
 
     fn blob_versioned_hashes(&self) -> &[B256] {
@@ -104,7 +112,10 @@ where
     }
 
     fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
-       
+        match self {
+            Either::Left(l) => Either::Left(l.authorization_list()),
+            Either::Right(r) => Either::Right(r.authorization_list()),
+        }
     }
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
