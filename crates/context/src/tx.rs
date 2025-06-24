@@ -147,6 +147,16 @@ impl TxEnv {
         }
         Ok(())
     }
+
+    /// Insert a list of signed authorizations into the authorization list.
+    pub fn set_signed_authorization(&mut self, auth: Vec<SignedAuthorization>) {
+        self.authorization_list = auth.into_iter().map(Either::Left).collect();
+    }
+
+    /// Insert a list of recovered authorizations into the authorization list.
+    pub fn set_recovered_authorization(&mut self, auth: Vec<RecoveredAuthorization>) {
+        self.authorization_list = auth.into_iter().map(Either::Right).collect();
+    }
 }
 
 impl Transaction for TxEnv {
@@ -365,6 +375,18 @@ impl TxEnvBuilder {
         authorization_list: Vec<Either<SignedAuthorization, RecoveredAuthorization>>,
     ) -> Self {
         self.authorization_list = authorization_list;
+        self
+    }
+
+    /// Insert a list of signed authorizations into the authorization list.
+    pub fn authorization_list_signed(mut self, auth: Vec<SignedAuthorization>) -> Self {
+        self.authorization_list = auth.into_iter().map(Either::Left).collect();
+        self
+    }
+
+    /// Insert a list of recovered authorizations into the authorization list.
+    pub fn authorization_list_recovered(mut self, auth: Vec<RecoveredAuthorization>) -> Self {
+        self.authorization_list = auth.into_iter().map(Either::Right).collect();
         self
     }
 
