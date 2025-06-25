@@ -176,6 +176,7 @@ impl Precompiles {
 
             precompiles.extend([
                 precompile,
+                modexp::OSAKA,
             ]);
 
             Box::new(precompiles)
