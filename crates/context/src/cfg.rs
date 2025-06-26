@@ -212,6 +212,10 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
             }
         }
     }
+
+    fn is_builtins_consume_fuel_disabled(&self) -> bool {
+        self.disable_builtins_consume_fuel
+    }
 }
 
 impl<SPEC: Default> Default for CfgEnv<SPEC> {

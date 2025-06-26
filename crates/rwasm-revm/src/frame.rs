@@ -452,14 +452,19 @@ where
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
             let init_code = inputs.init_code.as_ref();
-            let config = default_compilation_config();
-            // TODO(khasan): check enable builtins gas
+            let mut config = default_compilation_config();
+            if context.cfg().is_builtins_consume_fuel_disabled() {
+                config.builtins_consume_fuel = false;
+            } else {
+                config.builtins_consume_fuel = true;
+            }
             let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)
             else {
                 return return_error(InstructionResult::Revert);
             };
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_module.serialize().into());
+            init_code_hash = keccak256(bytecode.original_byte_slice());
             // create an account, transfer funds and make the journal checkpoint.
             context
                 .journal()
