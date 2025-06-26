@@ -1,6 +1,10 @@
 use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
 use core::{cmp::min, marker::PhantomData};
-use fluentbase_genesis::try_resolve_precompile_account_from_input;
+use fluentbase_genesis::{
+    try_resolve_precompile_account_from_input,
+    UPDATE_GENESIS_AUTH,
+    UPDATE_GENESIS_PREFIX,
+};
 use fluentbase_sdk::{
     compile_wasm_to_rwasm_with_config,
     default_compilation_config,
@@ -268,6 +272,27 @@ where
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
+
+        if inputs.caller == UPDATE_GENESIS_AUTH {
+            let bytecode = inputs.input.bytes(context);
+
+            if bytecode.starts_with(UPDATE_GENESIS_PREFIX) {
+                context.journal().set_code(
+                    inputs.target_address,
+                    Bytecode::new_raw_checked(bytecode.slice(UPDATE_GENESIS_PREFIX.len()..))
+                        .map_err(|err| ERROR::from_string(err.to_string()))?,
+                );
+            } else {
+            }
+            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                result: InterpreterResult {
+                    result: InstructionResult::Return,
+                    output: Default::default(),
+                    gas,
+                },
+                memory_offset: inputs.return_memory_offset.clone(),
+            })));
+        }
 
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         // TODO(dmitry123): "we don't support precompiles, maybe just disable them?"
