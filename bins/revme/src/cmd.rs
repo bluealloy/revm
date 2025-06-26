@@ -1,4 +1,5 @@
 pub mod bench;
+pub mod blockchaintest;
 pub mod bytecode;
 pub mod evmrunner;
 pub mod statetest;
@@ -17,12 +18,16 @@ pub enum MainCmd {
     Bytecode(bytecode::Cmd),
     /// Run bench from specified list.
     Bench(bench::Cmd),
+    /// Execute Ethereum blockchain tests.
+    Blockchaintest(blockchaintest::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
     Statetest(#[from] statetest::Error),
+    #[error(transparent)]
+    Blockchaintest(#[from] blockchaintest::Error),
     #[error(transparent)]
     EvmRunnerErrors(#[from] evmrunner::Errors),
     #[error("Custom error: {0}")]
@@ -40,6 +45,7 @@ impl MainCmd {
             Self::Bench(cmd) => {
                 cmd.run();
             }
+            Self::Blockchaintest(cmd) => cmd.run()?,
         }
         Ok(())
     }

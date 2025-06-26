@@ -7,7 +7,7 @@ use revm::{
     context::{BlockEnv, TxEnv},
     primitives::{Address, Bytes, TxKind, B256, U256},
 };
-use serde::{Deserialize, Deserializer};
+use serde::{de::IntoDeserializer, Deserialize, Deserializer};
 use std::collections::HashMap;
 
 use crate::AccountInfo;
@@ -20,6 +20,83 @@ where
     let s = String::deserialize(deserializer)?;
     let s = s.trim_start_matches("0x");
     u8::from_str_radix(s, 16).map_err(serde::de::Error::custom)
+}
+
+/// Deserialize an empty string as None for Option<Address>
+fn deserialize_option_address<'de, D>(deserializer: D) -> Result<Option<Address>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        Address::deserialize(s.into_deserializer()).map(Some)
+    }
+}
+
+/// Deserialize B256 with proper padding for shorter values
+fn deserialize_b256_pad<'de, D>(deserializer: D) -> Result<B256, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let s = s.trim_start_matches("0x");
+    
+    // Pad with zeros if the string is shorter than 64 hex chars
+    let padded = if s.len() < 64 {
+        format!("{:0>64}", s)
+    } else {
+        s.to_string()
+    };
+    
+    B256::deserialize(format!("0x{}", padded).into_deserializer())
+}
+
+/// Deserialize Vec<B256> with proper padding for shorter values
+fn deserialize_vec_b256_pad<'de, D>(deserializer: D) -> Result<Vec<B256>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let strings: Vec<String> = Vec::deserialize(deserializer)?;
+    strings
+        .into_iter()
+        .map(|s| {
+            let s = s.trim_start_matches("0x");
+            let padded = if s.len() < 64 {
+                format!("{:0>64}", s)
+            } else {
+                s.to_string()
+            };
+            B256::deserialize(format!("0x{}", padded).into_deserializer())
+        })
+        .collect::<Result<Vec<_>, _>>()
+}
+
+/// Deserialize Option<Vec<B256>> with proper padding for shorter values
+fn deserialize_option_vec_b256_pad<'de, D>(deserializer: D) -> Result<Option<Vec<B256>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt: Option<Vec<String>> = Option::deserialize(deserializer)?;
+    match opt {
+        None => Ok(None),
+        Some(strings) => {
+            let vec = strings
+                .into_iter()
+                .map(|s| {
+                    let s = s.trim_start_matches("0x");
+                    let padded = if s.len() < 64 {
+                        format!("{:0>64}", s)
+                    } else {
+                        s.to_string()
+                    };
+                    B256::deserialize(format!("0x{}", padded).into_deserializer())
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(Some(vec))
+        }
+    }
 }
 
 mod test;
@@ -161,6 +238,7 @@ pub struct Transaction {
     /// Gas limit
     pub gas_limit: U256,
     /// Recipient address (None for contract creation)
+    #[serde(deserialize_with = "deserialize_option_address")]
     pub to: Option<Address>,
     /// Ether value to transfer
     pub value: U256,
@@ -169,8 +247,10 @@ pub struct Transaction {
     /// ECDSA signature v value
     pub v: U256,
     /// ECDSA signature r value
+    #[serde(deserialize_with = "deserialize_b256_pad")]
     pub r: B256,
     /// ECDSA signature s value
+    #[serde(deserialize_with = "deserialize_b256_pad")]
     pub s: B256,
     /// Transaction sender address
     pub sender: Address,
@@ -181,6 +261,7 @@ pub struct Transaction {
     pub max_priority_fee_per_gas: Option<U256>,
     /// Blob versioned hashes (EIP-4844)
     // EIP-4844 fields
+    #[serde(default, deserialize_with = "deserialize_option_vec_b256_pad")]
     pub blob_versioned_hashes: Option<Vec<B256>>,
     /// Maximum fee per blob gas (EIP-4844)
     pub max_fee_per_blob_gas: Option<U256>,
@@ -245,11 +326,14 @@ pub struct TestInfo {
     /// Fixture format version
     pub fixture_format: String,
     /// Reference specification URL
-    pub reference_spec: String,
+    #[serde(rename = "reference-spec")]
+    pub reference_spec: Option<String>,
     /// Reference specification version
-    pub reference_spec_version: String,
+    #[serde(rename = "reference-spec-version")]
+    pub reference_spec_version: Option<String>,
     /// EELS resolution information
-    pub eels_resolution: EelsResolution,
+    #[serde(rename = "eels-resolution")]
+    pub eels_resolution: Option<EelsResolution>,
 }
 
 /// EELS resolution information
