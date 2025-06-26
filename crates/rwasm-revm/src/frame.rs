@@ -7,6 +7,8 @@ use fluentbase_sdk::{
     keccak256,
     Address,
     Bytes,
+    ERC20_MAGIC_BYTES,
+    PRECOMPILE_ERC20,
     PRECOMPILE_EVM_RUNTIME,
     PRECOMPILE_SVM_RUNTIME,
     SVM_ELF_MAGIC_BYTES,
@@ -475,6 +477,10 @@ where
                 && inputs.init_code[..SVM_ELF_MAGIC_BYTES.len()] == SVM_ELF_MAGIC_BYTES
             {
                 PRECOMPILE_SVM_RUNTIME
+            } else if inputs.init_code.len() > ERC20_MAGIC_BYTES.len()
+                && inputs.init_code[..ERC20_MAGIC_BYTES.len()] == ERC20_MAGIC_BYTES
+            {
+                PRECOMPILE_ERC20
             } else {
                 PRECOMPILE_EVM_RUNTIME
             };
