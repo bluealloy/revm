@@ -3,6 +3,7 @@ use crate::{
     syscall::execute_rwasm_interruption,
     types::{SystemInterruptionInputs, SystemInterruptionOutcome},
 };
+use core::cell::RefCell;
 use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
@@ -133,9 +134,10 @@ pub(crate) fn execute_rwasm_frame<
     if is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
+    let runtime_context = RefCell::new(runtime_context);
 
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallExec::fn_impl(
-        &mut runtime_context,
+        &mut runtime_context.borrow_mut(),
         bytecode_hash,
         &context_input,
         fuel_limit,
@@ -163,7 +165,7 @@ pub(crate) fn execute_rwasm_frame<
 
     // extract return data from the execution context
     let return_data: Bytes;
-    return_data = runtime_context.into_return_data();
+    return_data = runtime_context.borrow_mut().take_return_data().into();
 
     let gas = interpreter.control.gas;
     process_exec_result(
@@ -227,18 +229,17 @@ pub(crate) fn execute_rwasm_resume<
     if inputs.is_gas_free {
         runtime_context = runtime_context.without_fuel();
     }
+    let runtime_context = RefCell::new(runtime_context);
     let (fuel_consumed, fuel_refunded, exit_code) = SyscallResume::fn_impl(
-        &mut runtime_context,
+        &mut runtime_context.borrow_mut(),
         inputs.call_id,
-        result.output.into(),
+        result.output.as_ref(),
         exit_code.into_i32(),
         fuel_consumed,
         fuel_refunded,
         inputs.syscall_params.fuel16_ptr,
     );
-
-    let return_data: Bytes;
-    return_data = runtime_context.into_return_data();
+    let return_data: Bytes = runtime_context.borrow_mut().take_return_data().into();
 
     // if we're free from paying gas,
     // then just take the previous gas value and don't charge anything

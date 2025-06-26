@@ -1,20 +1,35 @@
 mod call_helpers;
 
-pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
-
 use crate::{
     gas::{self, EOF_CREATE_GAS, MIN_CALLEE_GAS},
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_action::FrameInput,
     interpreter_types::{
-        EofContainer, Immediates, InputsTr, InterpreterTypes, Jumps, LoopControl, MemoryTr,
-        ReturnData, RuntimeFlag, StackTr,
+        EofContainer,
+        Immediates,
+        InputsTr,
+        InterpreterTypes,
+        Jumps,
+        LoopControl,
+        MemoryTr,
+        ReturnData,
+        RuntimeFlag,
+        StackTr,
     },
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult,
+    CallInput,
+    CallInputs,
+    CallScheme,
+    CallValue,
+    CreateInputs,
+    EOFCreateInputs,
+    Host,
+    InstructionResult,
+    InterpreterAction,
+    InterpreterResult,
 };
 use bytecode::eof::{Eof, EofHeader};
+pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use context_interface::CreateScheme;
 use core::cmp::max;
 use primitives::{eof::new_eof_address, hardfork::SpecId, Address, Bytes, B256, U256};
@@ -179,7 +194,7 @@ pub fn return_contract<H: Host + ?Sized>(
 
         let aux_slice = interpreter.memory.slice_len(aux_data_offset, aux_data_size);
 
-        [&container, aux_slice.as_ref()].concat()
+        [container.as_ref(), aux_slice.as_ref()].concat()
     } else {
         container.to_vec()
     };

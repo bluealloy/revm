@@ -3,7 +3,7 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use fluentbase_genesis::devnet_genesis_from_file;
+use fluentbase_genesis::{devnet_genesis_from_file, GENESIS_CONTRACTS_BY_ADDRESS};
 use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME, PROTECTED_STORAGE_SLOT_0};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
@@ -521,16 +521,26 @@ pub fn execute_test_suite(
         let mut cache_state = CacheState::new(false);
         let mut cache_state2 = CacheState::new(false);
 
-        println!("\nGenesis accounts:");
+        println!("\nloading genesis accounts:");
+        let start = Instant::now();
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
+            let start = Instant::now();
+            print!("- loading genesis account ({address})... ");
+            let genesis_account = GENESIS_CONTRACTS_BY_ADDRESS.get(address);
+            if let Some(genesis_account) = genesis_account {
+                assert_eq!(
+                    genesis_account.rwasm_bytecode,
+                    info.code.clone().unwrap_or_default(),
+                    "genesis account code mismatch"
+                );
+            }
             let bytecode = info.code.clone().map(Bytecode::new_raw);
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash: bytecode
-                    .as_ref()
-                    .map(|v| v.hash_slow())
+                code_hash: genesis_account
+                    .map(|v| v.rwasm_bytecode_hash)
                     .unwrap_or(KECCAK_EMPTY),
                 code: bytecode,
             };
@@ -541,14 +551,20 @@ pub fn execute_test_suite(
                 }
             }
             println!(
-                "- genesis account: address={}, nonce={}, balance={} code_hash={}",
-                address, acc_info.nonce, acc_info.balance, acc_info.code_hash
+                "loaded in ({:?}): address={}, nonce={}, balance={} code_hash={}",
+                start.elapsed(),
+                address,
+                acc_info.nonce,
+                acc_info.balance,
+                acc_info.code_hash
             );
             cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
             genesis_addresses.insert(*address);
         }
+        println!("loaded genesis accounts in: {:?}", start.elapsed());
 
-        println!("\nEVM accounts:");
+        println!("\nloading EVM accounts:");
+        let start = Instant::now();
         for (address, info) in &unit.pre {
             let acc_info = AccountInfo {
                 balance: info.balance,
@@ -559,7 +575,6 @@ pub fn execute_test_suite(
             };
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }
-
         for (address, mut info) in unit.pre {
             let mut acc_info = cache_state2
                 .accounts
@@ -612,6 +627,7 @@ pub fn execute_test_suite(
                 );
             }
         }
+        println!("loaded evm accounts in: {:?}", start.elapsed());
 
         let mut cfg_env = CfgEnv::default();
         let mut block_env = BlockEnv::default();
@@ -756,13 +772,19 @@ pub fn execute_test_suite(
                 // evm2.with_inspector(TracerEip3155::new(Box::new(stderr())).without_summary());
                 // }
                 let timer = Instant::now();
-                println!("RUNNING EVM!!!");
+                print!("\n\nrunning original EVM tests... ");
+                let start = Instant::now();
                 let result_native = evm.transact_commit(tx_env.clone());
-                println!("\n\nRUNNING FLUENT!!!");
+                println!("{:?}", start.elapsed());
+                let start = Instant::now();
+                print!("\n\nrunning RWASM tests... ");
                 let result_fluent = evm2.transact_commit(tx_env.clone());
+                println!("{:?}", start.elapsed());
                 *elapsed.lock().unwrap() += timer.elapsed();
 
-                // dump state and traces if test failed
+                // dump state and traces if the test failed
+                let start = Instant::now();
+                print!("\n\ncomparing EVM<>RWASM state... ");
                 let output = check_evm_execution(
                     &test,
                     &spec_name,
@@ -775,6 +797,7 @@ pub fn execute_test_suite(
                     print_json_outcome,
                     &genesis_addresses,
                 );
+                println!("{:?}", start.elapsed());
                 let Err(e) = output else {
                     continue;
                 };

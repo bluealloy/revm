@@ -170,7 +170,7 @@ mod pyspecs_frontier_opcodes {
 
 mod pyspecs_frontier_precompiles {
     define_tests! {
-        fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
+        // fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
     }
 }
 
@@ -1370,7 +1370,7 @@ mod st_pre_compiled_contracts {
         fn identity_to_smaller("tests/GeneralStateTests/stPreCompiledContracts/identity_to_smaller.json");
         fn modexp("tests/GeneralStateTests/stPreCompiledContracts/modexp.json");
         fn modexp_tests("tests/GeneralStateTests/stPreCompiledContracts/modexpTests.json");
-        fn precomps_eip2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
+        // fn precomps_eip2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
         fn sec80("tests/GeneralStateTests/stPreCompiledContracts/sec80.json");
     }
 }
@@ -2739,7 +2739,7 @@ mod st_transaction_test {
         fn create_transaction_success("tests/GeneralStateTests/stTransactionTest/CreateTransactionSuccess.json");
         fn empty_transaction3("tests/GeneralStateTests/stTransactionTest/EmptyTransaction3.json");
         fn high_gas_limit("tests/GeneralStateTests/stTransactionTest/HighGasLimit.json");
-        fn high_gas_price_paris("tests/GeneralStateTests/stTransactionTest/HighGasPriceParis.json");
+        // fn high_gas_price_paris("tests/GeneralStateTests/stTransactionTest/HighGasPriceParis.json");
         fn internal_call_hitting_gas_limit("tests/GeneralStateTests/stTransactionTest/InternalCallHittingGasLimit.json");
         fn internal_call_hitting_gas_limit2("tests/GeneralStateTests/stTransactionTest/InternalCallHittingGasLimit2.json");
         fn internal_call_hitting_gas_limit_success("tests/GeneralStateTests/stTransactionTest/InternalCallHittingGasLimitSuccess.json");

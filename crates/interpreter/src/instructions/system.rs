@@ -2,10 +2,18 @@ use crate::{
     gas,
     interpreter::Interpreter,
     interpreter_types::{
-        InputsTr, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTr, ReturnData, RuntimeFlag,
+        InputsTr,
+        InterpreterTypes,
+        LegacyBytecode,
+        LoopControl,
+        MemoryTr,
+        ReturnData,
+        RuntimeFlag,
         StackTr,
     },
-    CallInput, Host, InstructionResult,
+    CallInput,
+    Host,
+    InstructionResult,
 };
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
@@ -22,7 +30,8 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
-        primitives::keccak256(interpreter.memory.slice_len(from, len).as_ref())
+        let reference = interpreter.memory.slice_len(from, len);
+        primitives::keccak256::<&[u8]>(reference.as_ref())
     };
     *top = hash.into();
 }
@@ -262,7 +271,10 @@ pub fn memory_resize(
 mod test {
     use super::*;
     use crate::{host::DummyHost, instruction_table, InstructionResult};
-    use bytecode::{opcode::RETURNDATACOPY, opcode::RETURNDATALOAD, Bytecode};
+    use bytecode::{
+        opcode::{RETURNDATACOPY, RETURNDATALOAD},
+        Bytecode,
+    };
     use primitives::{bytes, Bytes};
 
     #[test]
