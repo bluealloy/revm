@@ -1011,6 +1011,36 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_tx_zero_value_touch_caller() {
+        let ctx = Context::op();
+
+        let mut evm = ctx.build_op();
+
+        assert!(!evm
+            .0
+            .ctx
+            .journal_mut()
+            .load_account(Address::ZERO)
+            .unwrap()
+            .is_touched());
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+
+        handler
+            .validate_against_state_and_deduct_caller(&mut evm)
+            .unwrap();
+
+        assert!(evm
+            .0
+            .ctx
+            .journal_mut()
+            .load_account(Address::ZERO)
+            .unwrap()
+            .is_touched());
+    }
+
     #[rstest]
     #[case::deposit(true)]
     #[case::dyn_fee(false)]
