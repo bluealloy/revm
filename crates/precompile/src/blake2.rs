@@ -40,8 +40,8 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         let ptr = input.as_ptr();
 
         // Read h values
-        for i in 0..8 {
-            h[i] = u64::from_le_bytes(core::ptr::read_unaligned(
+        for (i, item) in h.iter_mut().enumerate() {
+            *item = u64::from_le_bytes(core::ptr::read_unaligned(
                 ptr.add(4 + i * 8) as *const [u8; 8]
             ));
         }
@@ -144,8 +144,8 @@ pub mod algo {
         // Read m values
         assert!(m_slice.len() == 16 * size_of::<u64>());
         let mut m = [0u64; 16];
-        for i in 0..16 {
-            m[i] = u64::from_le_bytes(unsafe {
+        for (i, item) in m.iter_mut().enumerate() {
+            *item = u64::from_le_bytes(unsafe {
                 core::ptr::read_unaligned(m_slice.as_ptr().add(i * 8) as *const [u8; 8])
             });
         }

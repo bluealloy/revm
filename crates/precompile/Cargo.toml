@@ -72,9 +72,6 @@ p256 = { workspace = true, features = ["ecdsa"] }
 
 # utils
 cfg-if.workspace = true
-
-blake2 = { version = "0.10.6" }
-blake2b_simd = { version = "1.0.3" }
 arrayref = "0.3.6"
 
 [dev-dependencies]
@@ -103,8 +100,6 @@ std = [
 	"ark-std/std",
 	"p256/std",
 	"rug?/std",
-	"blake2/std",
-	"blake2b_simd/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
