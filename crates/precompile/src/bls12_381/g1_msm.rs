@@ -25,8 +25,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
-            "G1MSM input length should be multiple of {}, was {}",
-            G1_MSM_INPUT_LENGTH, input_len
+            "G1MSM input length should be multiple of {G1_MSM_INPUT_LENGTH}, was {input_len}"
         )));
     }
 

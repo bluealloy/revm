@@ -136,7 +136,7 @@ async fn main() -> anyhow::Result<()> {
             .build()
             .unwrap();
 
-        let file_name = format!("traces/{}.json", tx_number);
+        let file_name = format!("traces/{tx_number}.json");
         let write = OpenOptions::new()
             .write(true)
             .create(true)
@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
         let res: Result<_, _> = evm.inspect_one(tx, TracerEip3155::new(Box::new(writer)));
 
         if let Err(error) = res {
-            println!("Got error: {:?}", error);
+            println!("Got error: {error:?}");
         }
 
         // Flush the file writer
