@@ -53,7 +53,7 @@ mod tests {
         }"#;
 
         let auth: TestAuthorization = serde_json::from_str(auth).unwrap();
-        println!("{:?}", auth);
+        println!("{auth:?}");
     }
 
     #[test]

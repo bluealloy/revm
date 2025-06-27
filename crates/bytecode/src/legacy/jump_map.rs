@@ -230,10 +230,10 @@ mod bench_is_valid {
         let ns_per_op = duration.as_nanos() as f64 / ITERATIONS as f64;
         let ops_per_sec = ITERATIONS as f64 / duration.as_secs_f64();
 
-        println!("{} Performance:", name);
-        println!("  Time per op: {:.2} ns", ns_per_op);
-        println!("  Ops per sec: {:.0}", ops_per_sec);
-        println!("  True count: {}", count);
+        println!("{name} Performance:");
+        println!("  Time per op: {ns_per_op:.2} ns");
+        println!("  Ops per sec: {ops_per_sec:.0}");
+        println!("  True count: {count}");
         println!();
 
         std::hint::black_box(count);
