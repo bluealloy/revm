@@ -124,10 +124,10 @@ impl Cmd {
         let time = time.elapsed();
 
         if self.state {
-            println!("State: {:#?}", state);
+            println!("State: {state:#?}");
         }
 
-        println!("Elapsed: {:?}", time);
+        println!("Elapsed: {time:?}");
         Ok(())
     }
 }

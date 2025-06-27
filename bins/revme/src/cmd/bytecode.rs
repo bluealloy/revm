@@ -40,7 +40,7 @@ impl Cmd {
             let mut i = 0;
             while i < bytes.len() {
                 let opcode = bytes[i];
-                opcodes.push(format!("{:02x}", opcode));
+                opcodes.push(format!("{opcode:02x}"));
 
                 // Skip immediate bytes for PUSH instructions
                 if (0x60..=0x7f).contains(&opcode) {

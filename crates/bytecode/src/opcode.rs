@@ -728,8 +728,7 @@ mod tests {
             assert_eq!(
                 opcode.map(|opcode| opcode.terminating).unwrap_or_default(),
                 opcodes[i],
-                "Opcode {:?} terminating check failed.",
-                opcode
+                "Opcode {opcode:?} terminating check failed."
             );
         }
     }

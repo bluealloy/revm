@@ -184,7 +184,7 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = g1_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g1_msm (size {})", size), |b| {
+        group.bench_function(format!("g1_msm (size {size})"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -229,7 +229,7 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = g2_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g2_msm (size {})", size), |b| {
+        group.bench_function(format!("g2_msm (size {size})"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -262,7 +262,7 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = pairing_test_vectors(pairs, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("pairing ({} pairs)", pairs), |b| {
+        group.bench_function(format!("pairing ({pairs} pairs)"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }

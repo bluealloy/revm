@@ -528,7 +528,7 @@ mod tests {
             let input = test.input();
             let res = osaka_run(&input, 100_000_000).err();
             if res != test.expected {
-                panic!("test failed: {:?} result: {:?}", test, res);
+                panic!("test failed: {test:?} result: {res:?}");
             }
         }
     }

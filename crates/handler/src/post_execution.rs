@@ -114,8 +114,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr<State = EvmState>>, HALTREASON: 
         // Only two internal return flags.
         flag @ (SuccessOrHalt::FatalExternalError | SuccessOrHalt::Internal(_)) => {
             panic!(
-                "Encountered unexpected internal return flag: {:?} with instruction result: {:?}",
-                flag, instruction_result
+                "Encountered unexpected internal return flag: {flag:?} with instruction result: {instruction_result:?}"
             )
         }
     }
