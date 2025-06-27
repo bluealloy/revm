@@ -643,59 +643,10 @@ mod tests {
         ,hex!("0000020048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001")
         ,hex!("0000004048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001")];
 
-        /*
-        "bc112be5618b20d24be64c9e1c6efd63fea38cc79d53692fad6568b16e953eb6128c1ec8ffaf9a2d69e3cb043d6e11e1c7afd48573311052b6e7ec0960371186":
-        "a2c1eb780a6e1249156fe0751e5d4687ea9357b0651c78df660ab004cb4773636298bbbc683e4a0261574b6d857a6a99e06b2eea50b16f86343d2625ff222b98":
-        "74097ae7b16ffd18c742aee5c55dc89d54b6f1a8a19e6139ccfb38afba56b6b02cc35c441c19c21194fefb6841e72202f7c9d05eb9c3cfd8f94c67aa77d473c1"
-
-        "bc112be5618b20d24be64c9e1c6efd63fea38cc79d53692fad6568b16e953eb6128c1ec8ffaf9a2d69e3cb043d6e11e1c7afd48573311052b6e7ec0960371186":
-        "a2c1eb780a6e1249156fe0751e5d4687ea9357b0651c78df660ab004cb4773636298bbbc683e4a0261574b6d857a6a99e06b2eea50b16f86343d2625ff222b98":
-        "74097ae7b16ffd18c742aee5c55dc89d54b6f1a8a19e6139ccfb38afba56b6b02cc35c441c19c21194fefb6841e72202f7c9d05eb9c3cfd8f94c67aa77d473c1":
-        */
-
-        println!(
-            "{:?}:",
-            hex::encode(&run(&input[0], u64::MAX).unwrap().bytes)
-        );
-        println!(
-            "{:?}:",
-            hex::encode(&run(&input[1], u64::MAX).unwrap().bytes)
-        );
-        println!(
-            "{:?}:",
-            hex::encode(&run(&input[2], u64::MAX).unwrap().bytes)
-        );
-
         let time = Instant::now();
         for i in 0..3000 {
             let _ = run(&input[i % 3], u64::MAX).unwrap();
         }
-        let duration = time.elapsed();
-        println!("{:?}", duration);
-
-        /*
-        cargo test --package revm-precompile --lib -- blake2::tests::perfblake2 --exact --show-output
-         */
-
-        // let time = Instant::now();
-        // for i in 0..50000 {
-        //     let mut hasher = blake2b_simd::Params::new()
-        //         .hash_length(32)
-        //         .personal(b"test")
-        //         .to_state();
-        //     hasher.update(&input[i % 3]);
-        //     let _ = hasher.finalize();
-        // }
-
-        // for i in 0..3 {
-        //     let mut hasher = blake2::Blake2b::new();
-        //     hasher.update(&input[i]);
-        //     let out1: [u8; 32] = hasher.finalize().into();
-        //     let out2 = run(&input[i], u64::MAX).unwrap();
-        //     assert_eq!(out1, &out2.bytes[..32]);
-        // }
-
-        // let duration = time.elapsed();
-        // println!("time: {:?}", duration);
+        println!("duration: {:?}", time.elapsed());
     }
 }
