@@ -24,6 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 revm = { workspace = true }
+rwasm = { workspace = true }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

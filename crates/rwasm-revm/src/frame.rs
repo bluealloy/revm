@@ -1,20 +1,12 @@
 use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
 use core::{cmp::min, marker::PhantomData};
-use fluentbase_genesis::try_resolve_precompile_account_from_input;
-use fluentbase_sdk::{
-    compile_wasm_to_rwasm_with_config,
-    default_compilation_config,
-    keccak256,
-    Address,
-    Bytes,
-    ERC20_MAGIC_BYTES,
-    PRECOMPILE_ERC20,
-    PRECOMPILE_EVM_RUNTIME,
-    PRECOMPILE_SVM_RUNTIME,
-    SVM_ELF_MAGIC_BYTES,
-    U256,
-    WASM_MAGIC_BYTES,
+use fluentbase_genesis::{
+    try_resolve_precompile_account_from_input,
+    UPDATE_GENESIS_AUTH,
+    UPDATE_GENESIS_PREFIX,
 };
+use fluentbase_sdk::{compile_wasm_to_rwasm_with_config, default_compilation_config, keccak256, Address, Bytes, RwasmCompilationResult, ERC20_MAGIC_BYTES, PRECOMPILE_ERC20, PRECOMPILE_EVM_RUNTIME, PRECOMPILE_RWASM, PRECOMPILE_SVM_RUNTIME, SVM_ELF_MAGIC_BYTES, SYSTEM_ADDRESS, U256, WASM_MAGIC_BYTES};
+use rwasm::RwasmModule;
 use revm::{
     bytecode::{eip7702::Eip7702Bytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
     context::{
@@ -72,6 +64,8 @@ use revm::{
     Database,
 };
 use std::{boxed::Box, sync::Arc};
+use revm::interpreter::CallScheme;
+use crate::executor::execute_rwasm_frame;
 
 pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
     phantom: PhantomData<(EVM, ERROR)>,
@@ -205,7 +199,7 @@ where
     EVM: EvmTr<
         Context: ContextTr,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionProvider,
+        Instructions: InstructionProvider<InterpreterTypes = EthInterpreter>,
     >,
     ERROR: From<revm::handler::ContextTrDbError<EVM::Context>>,
     ERROR: FromStringError,
@@ -270,6 +264,26 @@ where
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
+
+        if inputs.caller == UPDATE_GENESIS_AUTH {
+            let bytecode = inputs.input.bytes(context);
+
+            if bytecode.starts_with(&UPDATE_GENESIS_PREFIX) {
+                context.journal().set_code(
+                    inputs.target_address,
+                    Bytecode::new_raw_checked(bytecode.slice(UPDATE_GENESIS_PREFIX.len()..))
+                        .map_err(|err| ERROR::from_string(err.to_string()))?,
+                );
+                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                    result: InterpreterResult {
+                        result: InstructionResult::Return,
+                        output: Default::default(),
+                        gas,
+                    },
+                    memory_offset: inputs.return_memory_offset.clone(),
+                })));
+            }
+        }
 
         let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
         // TODO(dmitry123): "we don't support precompiles, maybe just disable them?"
@@ -460,13 +474,49 @@ where
             } else {
                 config.builtins_consume_fuel = true;
             }
-            let Ok(compilation_result) = compile_wasm_to_rwasm_with_config(init_code, config)
-            else {
-                return return_error(InstructionResult::Revert);
+            let gas_limit = inputs.gas_limit;
+
+            let mut rwasm_frame = Self::make_create_frame(evm, depth, memory.clone(), Box::new(CreateInputs {
+                gas_limit,
+                caller: SYSTEM_ADDRESS,
+                value: U256::ZERO,
+                scheme: CreateScheme::Create,
+                init_code: Bytes::from_iter(init_code.iter()),
+            })).and_then(|result| match result  {
+                ItemOrResult::Item(item) => {Ok(item)}
+                ItemOrResult::Result(_) => {Err(ERROR::from_string("wrong result while frame making".to_string()))}
+            })?;
+
+            let result = execute_rwasm_frame(&mut rwasm_frame, evm)?;
+
+            let compilation_result: RwasmCompilationResult  = match result {
+                InterpreterAction::NewFrame(_) => {panic!("")}
+                InterpreterAction::Return { result } => {
+                    if !result.is_ok() {
+                        return Err(ERROR::from_string("error while translate code to rwasm".to_string()));
+                    }
+                    if result.output.len() < 4 {
+                        return Err(ERROR::from_string("wrong output. Not code size".to_string()));
+                    }
+                    let code_size = usize::from_le_bytes(result.output[0..4].try_into().unwrap());
+                    if result.output.len() < 4 + code_size {
+                        return Err(ERROR::from_string("wrong output. Not enough code".to_string()));
+                    }
+                    let rwasm_module = RwasmModule::new(&result.output[4..4 + code_size]);
+
+                    RwasmCompilationResult {
+                        rwasm_module,
+                        constructor_params: result.output[4+code_size..result.output.len()].to_vec(),
+                    }
+                }
+                InterpreterAction::None => {panic!("")}
             };
+
             // for rwasm, we set bytecode before execution
             let bytecode = Bytecode::new_raw(compilation_result.rwasm_module.serialize().into());
             init_code_hash = keccak256(bytecode.original_byte_slice());
+            let context = evm.ctx();
+
             // create an account, transfer funds and make the journal checkpoint.
             context
                 .journal()
