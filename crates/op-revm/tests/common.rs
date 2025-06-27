@@ -80,8 +80,7 @@ pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
         let expected_pretty = serde_json::to_string_pretty(&expected).unwrap();
 
         panic!(
-            "Value does not match testdata.\nExpected:\n{}\n\nActual:\n{}",
-            expected_pretty, output_json
+            "Value does not match testdata.\nExpected:\n{expected_pretty}\n\nActual:\n{output_json}",
         );
     }
 }
