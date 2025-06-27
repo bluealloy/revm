@@ -67,10 +67,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
-    // Fluent specific options
-    /// Disables fuel injection for builtins during RWASM translation.
-    /// Defaults to `false`, meaning fuel consumption procedures are injected by default.
-    pub disable_builtins_consume_fuel: bool,
 }
 
 impl CfgEnv {
@@ -99,7 +95,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
-            disable_builtins_consume_fuel: false,
         }
     }
 
@@ -127,7 +122,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3607: self.disable_eip3607,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: self.disable_base_fee,
-            disable_builtins_consume_fuel: false,
         }
     }
 
@@ -211,10 +205,6 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 false
             }
         }
-    }
-
-    fn is_builtins_consume_fuel_disabled(&self) -> bool {
-        self.disable_builtins_consume_fuel
     }
 }
 

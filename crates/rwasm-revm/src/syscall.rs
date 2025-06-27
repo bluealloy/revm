@@ -8,7 +8,7 @@ use fluentbase_sdk::{
     byteorder::{LittleEndian, ReadBytesExt},
     bytes::Buf,
     calc_preimage_address,
-    is_precompiled_runtime,
+    is_delegated_runtime_address,
     is_protected_storage_slot,
     keccak256,
     Address,
@@ -169,7 +169,7 @@ pub(crate) fn execute_rwasm_interruption<
             // if is not allowed in a normal smart contract mode
             if is_protected_storage_slot(slot) {
                 if let Some(rwasm_proxy_address) = rwasm_proxy_address {
-                    if !is_precompiled_runtime(&rwasm_proxy_address) {
+                    if !is_delegated_runtime_address(&rwasm_proxy_address) {
                         return_result!(MalformedBuiltinParams);
                     }
                 } else {

@@ -5,8 +5,20 @@ use fluentbase_genesis::{
     UPDATE_GENESIS_AUTH,
     UPDATE_GENESIS_PREFIX,
 };
-use fluentbase_sdk::{compile_wasm_to_rwasm_with_config, default_compilation_config, keccak256, Address, Bytes, RwasmCompilationResult, ERC20_MAGIC_BYTES, PRECOMPILE_ERC20, PRECOMPILE_EVM_RUNTIME, PRECOMPILE_RWASM, PRECOMPILE_SVM_RUNTIME, SVM_ELF_MAGIC_BYTES, SYSTEM_ADDRESS, U256, WASM_MAGIC_BYTES};
-use rwasm::RwasmModule;
+use fluentbase_sdk::{
+    is_delegated_runtime_address,
+    keccak256,
+    Address,
+    Bytes,
+    ERC20_MAGIC_BYTES,
+    PRECOMPILE_ERC20_RUNTIME,
+    PRECOMPILE_EVM_RUNTIME,
+    PRECOMPILE_SVM_RUNTIME,
+    PRECOMPILE_WASM_RUNTIME,
+    SVM_ELF_MAGIC_BYTES,
+    U256,
+    WASM_MAGIC_BYTES,
+};
 use revm::{
     bytecode::{eip7702::Eip7702Bytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
     context::{
@@ -63,9 +75,8 @@ use revm::{
     primitives::CALL_STACK_LIMIT,
     Database,
 };
+use rwasm::RwasmModule;
 use std::{boxed::Box, sync::Arc};
-use revm::interpreter::CallScheme;
-use crate::executor::execute_rwasm_frame;
 
 pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
     phantom: PhantomData<(EVM, ERROR)>,
@@ -323,9 +334,7 @@ where
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
             // for EVM runtime write rwasm proxy address (required for protected slot validation)
-            if eip7702_bytecode.delegated_address == PRECOMPILE_EVM_RUNTIME
-                || eip7702_bytecode.delegated_address == PRECOMPILE_SVM_RUNTIME
-            {
+            if is_delegated_runtime_address(&eip7702_bytecode.delegated_address) {
                 interpreter_input.rwasm_proxy_address = Some(eip7702_bytecode.delegated_address);
             }
         }
@@ -463,96 +472,39 @@ where
             Err(e) => return return_error(e.into()),
         };
 
-        let (bytecode, constructor_params, rwasm_proxy_address) = if inputs.init_code.len()
-            > WASM_MAGIC_BYTES.len()
+        let precompile_runtime = if inputs.init_code.len() > WASM_MAGIC_BYTES.len()
             && inputs.init_code[..WASM_MAGIC_BYTES.len()] == WASM_MAGIC_BYTES
         {
-            let init_code = inputs.init_code.as_ref();
-            let mut config = default_compilation_config();
-            if context.cfg().is_builtins_consume_fuel_disabled() {
-                config.builtins_consume_fuel = false;
-            } else {
-                config.builtins_consume_fuel = true;
-            }
-            let gas_limit = inputs.gas_limit;
-
-            let mut rwasm_frame = Self::make_create_frame(evm, depth, memory.clone(), Box::new(CreateInputs {
-                gas_limit,
-                caller: SYSTEM_ADDRESS,
-                value: U256::ZERO,
-                scheme: CreateScheme::Create,
-                init_code: Bytes::from_iter(init_code.iter()),
-            })).and_then(|result| match result  {
-                ItemOrResult::Item(item) => {Ok(item)}
-                ItemOrResult::Result(_) => {Err(ERROR::from_string("wrong result while frame making".to_string()))}
-            })?;
-
-            let result = execute_rwasm_frame(&mut rwasm_frame, evm)?;
-
-            let compilation_result: RwasmCompilationResult  = match result {
-                InterpreterAction::NewFrame(_) => {panic!("")}
-                InterpreterAction::Return { result } => {
-                    if !result.is_ok() {
-                        return Err(ERROR::from_string("error while translate code to rwasm".to_string()));
-                    }
-                    if result.output.len() < 4 {
-                        return Err(ERROR::from_string("wrong output. Not code size".to_string()));
-                    }
-                    let code_size = usize::from_le_bytes(result.output[0..4].try_into().unwrap());
-                    if result.output.len() < 4 + code_size {
-                        return Err(ERROR::from_string("wrong output. Not enough code".to_string()));
-                    }
-                    let rwasm_module = RwasmModule::new(&result.output[4..4 + code_size]);
-
-                    RwasmCompilationResult {
-                        rwasm_module,
-                        constructor_params: result.output[4+code_size..result.output.len()].to_vec(),
-                    }
-                }
-                InterpreterAction::None => {panic!("")}
-            };
-
-            // for rwasm, we set bytecode before execution
-            let bytecode = Bytecode::new_raw(compilation_result.rwasm_module.serialize().into());
-            init_code_hash = keccak256(bytecode.original_byte_slice());
-            let context = evm.ctx();
-
-            // create an account, transfer funds and make the journal checkpoint.
-            context
-                .journal()
-                .set_code_with_hash(created_address, bytecode.clone(), init_code_hash);
-            (bytecode, compilation_result.constructor_params.into(), None)
+            PRECOMPILE_WASM_RUNTIME
+        } else if inputs.init_code.len() > SVM_ELF_MAGIC_BYTES.len()
+            && inputs.init_code[..SVM_ELF_MAGIC_BYTES.len()] == SVM_ELF_MAGIC_BYTES
+        {
+            PRECOMPILE_SVM_RUNTIME
+        } else if inputs.init_code.len() > ERC20_MAGIC_BYTES.len()
+            && inputs.init_code[..ERC20_MAGIC_BYTES.len()] == ERC20_MAGIC_BYTES
+        {
+            PRECOMPILE_ERC20_RUNTIME
         } else {
-            let precompile_runtime = if inputs.init_code.len() > SVM_ELF_MAGIC_BYTES.len()
-                && inputs.init_code[..SVM_ELF_MAGIC_BYTES.len()] == SVM_ELF_MAGIC_BYTES
-            {
-                PRECOMPILE_SVM_RUNTIME
-            } else if inputs.init_code.len() > ERC20_MAGIC_BYTES.len()
-                && inputs.init_code[..ERC20_MAGIC_BYTES.len()] == ERC20_MAGIC_BYTES
-            {
-                PRECOMPILE_ERC20
-            } else {
-                PRECOMPILE_EVM_RUNTIME
-            };
-            // create a new EIP-7702 account that points to the EVM runtime system precompile
-            let eip7702_bytecode = Eip7702Bytecode::new(precompile_runtime);
-            let bytecode = Bytecode::Eip7702(eip7702_bytecode);
-            context.journal().set_code(created_address, bytecode);
-            // an original init code we pass as an input inside the runtime
-            // to execute deployment logic
-            let input = inputs.init_code.clone();
-            // we should reload bytecode here since it's an EIP-7702 account
-            let bytecode = context.journal().code(precompile_runtime)?;
-            // if it's a CREATE or CREATE2 call, then we should
-            // to recalculate init code hash to make sure it matches runtime hash
-            let code_hash = context.journal().code_hash(precompile_runtime)?;
-            init_code_hash = code_hash.data;
-            (
-                Bytecode::new_raw(bytecode.data),
-                input,
-                Some(precompile_runtime),
-            )
+            PRECOMPILE_EVM_RUNTIME
         };
+        // create a new EIP-7702 account that points to the EVM runtime system precompile
+        let eip7702_bytecode = Eip7702Bytecode::new(precompile_runtime);
+        let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+        context.journal().set_code(created_address, bytecode);
+        // an original init code we pass as an input inside the runtime
+        // to execute deployment logic
+        let input = inputs.init_code.clone();
+        // we should reload bytecode here since it's an EIP-7702 account
+        let bytecode = context.journal().code(precompile_runtime)?;
+        // if it's a CREATE or CREATE2 call, then we should
+        // to recalculate init code hash to make sure it matches runtime hash
+        let code_hash = context.journal().code_hash(precompile_runtime)?;
+        init_code_hash = code_hash.data;
+        let (bytecode, constructor_params, rwasm_proxy_address) = (
+            Bytecode::new_raw(bytecode.data),
+            input,
+            Some(precompile_runtime),
+        );
 
         let bytecode = ExtBytecode::new_with_hash(bytecode, init_code_hash);
 
@@ -759,6 +711,50 @@ where
             }
             FrameData::Create(frame) => {
                 let max_code_size = context.cfg().max_code_size();
+
+                // Make sure the error is checked before processing, it's very important or EVM since it can return a bytecode starting from 0xEF
+                if !interpreter_result.result.is_ok() {
+                    context.journal().checkpoint_revert(self.checkpoint);
+                    return Ok(ItemOrResult::Result(FrameResult::Create(
+                        CreateOutcome::new(interpreter_result, Some(frame.created_address)),
+                    )));
+                }
+
+                // Check the resulting bytecode does it match to rWasm signature (bytecode override)
+                let overwrite_delegated_bytecode_with_rwasm =
+                    if interpreter_result.output.first() == Some(&0xEF) {
+                        let account = context.journal().load_account_code(frame.created_address)?;
+                        match account.data.info.code.as_ref() {
+                            Some(Bytecode::Eip7702(eip7702_bytecode)) => {
+                                is_delegated_runtime_address(&eip7702_bytecode.delegated_address)
+                            }
+                            Some(_) | None => false,
+                        }
+                    } else {
+                        false
+                    };
+                if overwrite_delegated_bytecode_with_rwasm {
+                    // TODO(dmitry123): "optimize me, store RwasmModule inside Bytecode"
+                    let (_, bytes_read) = RwasmModule::new(interpreter_result.output.as_ref());
+                    let (rwasm_module_raw, constructor_params_raw) = (
+                        interpreter_result.output.slice(..bytes_read),
+                        interpreter_result.output.slice(bytes_read..),
+                    );
+                    let bytecode_hash = keccak256(rwasm_module_raw.as_ref());
+                    // Rewrite overridden rWasm bytecode
+                    let bytecode = Bytecode::Rwasm(rwasm_module_raw);
+                    context
+                        .journal()
+                        .set_code(frame.created_address, bytecode.clone());
+                    // Change input params
+                    self.interpreter.input.input = CallInput::Bytes(constructor_params_raw);
+                    self.interpreter.bytecode = ExtBytecode::new_with_hash(bytecode, bytecode_hash);
+                    self.interpreter.control.gas = interpreter_result.gas;
+                    // Re-run deploy function using rWasm
+                    let next_action = run_rwasm_loop(self, evm)?;
+                    return self.process_next_action(evm, next_action);
+                }
+
                 return_create(
                     context.journal(),
                     self.checkpoint,

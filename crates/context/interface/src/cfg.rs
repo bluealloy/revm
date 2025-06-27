@@ -28,8 +28,6 @@ pub trait Cfg {
     fn is_nonce_check_disabled(&self) -> bool;
 
     fn is_base_fee_check_disabled(&self) -> bool;
-
-    fn is_builtins_consume_fuel_disabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform

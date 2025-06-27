@@ -815,18 +815,15 @@ pub fn return_create<JOURNAL: JournalTr>(
     // If we have enough gas we can commit changes.
     journal.checkpoint_commit();
 
-    // Do analysis of bytecode straight away.
-    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
-
     // since rwasm is EOF, we use `ReturnContract`
     // return result to indicate that EOF is created,
     // but there is no need
     // to update bytecode since it's immutable during the deployment process
     // We called set_code for rwasm bytecode in `make_create_frame`
-    // TODO(khasan): can we remove this hack and get rid of set_code in `make_create_frame`?
-    let is_rwasm_contract_creation = interpreter_result.result == InstructionResult::ReturnContract;
-    if !is_rwasm_contract_creation {
-        // Set code
+    let is_delegated_runtime_account =
+        interpreter_result.result == InstructionResult::ReturnContract;
+    if !is_delegated_runtime_account {
+        let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
         journal.set_code(address, bytecode);
     }
 
