@@ -29,5 +29,5 @@ Revm can run statetest type of tests with `revme` using the following command:
 
 For running EEST tests, we can use  the `./scripts/run-tests.sh.`
 
-For legacy tests, we need to first to download the repo `git clone https://github.com/ethereum/legacytests` and run then run it with `cargo run --release -p revme -- statetest legacytests/Cancun/GeneralStateTests `
+For legacy tests, we need to first to download the repo `git clone https://github.com/ethereum/legacytests` and then run it with `cargo run --release -p revme -- statetest legacytests/Cancun/GeneralStateTests `
 All statetest that can be run by revme can be found in the `GeneralStateTests` folder.
