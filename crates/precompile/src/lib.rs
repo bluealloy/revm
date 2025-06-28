@@ -35,6 +35,9 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(not(target_feature = "avx2"))]
+use arrayref as _;
+
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
