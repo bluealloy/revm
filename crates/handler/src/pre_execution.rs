@@ -13,7 +13,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use primitives::StorageKey;
+use primitives::{address::AddressTr, StorageKey};
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
@@ -126,7 +126,7 @@ pub fn validate_against_state_and_deduct_caller<
     let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    let caller_account = journal.load_account_code(tx.caller().to_caller())?.data;
 
     validate_account_nonce_and_code(
         &mut caller_account.info,
@@ -172,7 +172,11 @@ pub fn validate_against_state_and_deduct_caller<
     caller_account.mark_touch();
     caller_account.info.balance = new_balance;
 
-    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+    journal.caller_accounting_journal_entry(
+        tx.caller().to_caller(),
+        old_balance,
+        tx.kind().is_call(),
+    );
     Ok(())
 }
 

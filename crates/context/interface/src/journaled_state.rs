@@ -3,7 +3,8 @@ use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    address::AddressTr, hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue,
+    B256, U256,
 };
 use state::{
     bytecode::{EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
@@ -32,40 +33,40 @@ pub trait JournalTr {
     /// Returns the storage value from Journal state.
     ///
     /// Loads the storage from database if not found in Journal state.
-    fn sload(
+    fn sload<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error>;
 
     /// Stores the storage value in Journal state.
-    fn sstore(
+    fn sstore<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
         key: StorageKey,
         value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
 
     /// Loads transient storage value.
-    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
+    fn tload<A: AddressTr>(&mut self, address: A, key: StorageKey) -> StorageValue;
 
     /// Stores transient storage value.
-    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
+    fn tstore<A: AddressTr>(&mut self, address: A, key: StorageKey, value: StorageValue);
 
     /// Logs the log in Journal state.
     fn log(&mut self, log: Log);
 
     /// Marks the account for selfdestruction and transfers all the balance to the target.
-    fn selfdestruct(
+    fn selfdestruct<A: AddressTr, B: AddressTr>(
         &mut self,
-        address: Address,
-        target: Address,
+        address: A,
+        target: B,
     ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
     /// Warms the account and storage.
-    fn warm_account_and_storage(
+    fn warm_account_and_storage<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
@@ -82,60 +83,60 @@ pub trait JournalTr {
     fn set_spec_id(&mut self, spec_id: SpecId);
 
     /// Touches the account.
-    fn touch_account(&mut self, address: Address);
+    fn touch_account<A: AddressTr>(&mut self, address: A);
 
     /// Transfers the balance from one account to another.
-    fn transfer(
+    fn transfer<A: AddressTr, B: AddressTr>(
         &mut self,
-        from: Address,
-        to: Address,
+        from: A,
+        to: B,
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
     /// Increments the balance of the account.
-    fn caller_accounting_journal_entry(
+    fn caller_accounting_journal_entry<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
         old_balance: U256,
         bump_nonce: bool,
     );
 
     /// Increments the balance of the account.
-    fn balance_incr(
+    fn balance_incr<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
         balance: U256,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     /// Increments the nonce of the account.
-    fn nonce_bump_journal_entry(&mut self, address: Address);
+    fn nonce_bump_journal_entry<A: AddressTr>(&mut self, address: A);
 
     /// Loads the account.
-    fn load_account(
+    fn load_account<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account code.
-    fn load_account_code(
+    fn load_account_code<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account delegated.
-    fn load_account_delegated(
+    fn load_account_delegated<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
     ) -> Result<StateLoad<AccountLoad>, <Self::Database as Database>::Error>;
 
     /// Sets bytecode with hash. Assume that account is warm.
-    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
+    fn set_code_with_hash<A: AddressTr>(&mut self, address: A, code: Bytecode, hash: B256);
 
     /// Sets bytecode and calculates hash.
     ///
     /// Assume account is warm.
     #[inline]
-    fn set_code(&mut self, address: Address, code: Bytecode) {
+    fn set_code<A: AddressTr>(&mut self, address: A, code: Bytecode) {
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash);
     }
@@ -144,9 +145,9 @@ pub trait JournalTr {
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
-    fn code(
+    fn code<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
     ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
@@ -165,9 +166,9 @@ pub trait JournalTr {
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
-    fn code_hash(
+    fn code_hash<A: AddressTr>(
         &mut self,
-        address: Address,
+        address: A,
     ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
         let acc = self.load_account_code(address)?;
         if acc.is_empty() {
@@ -201,10 +202,10 @@ pub trait JournalTr {
     fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint);
 
     /// Creates a checkpoint of the account creation.
-    fn create_account_checkpoint(
+    fn create_account_checkpoint<A: AddressTr, B: AddressTr>(
         &mut self,
-        caller: Address,
-        address: Address,
+        caller: A,
+        address: B,
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError>;

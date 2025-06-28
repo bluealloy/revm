@@ -7,6 +7,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub mod address;
 pub mod constants;
 pub mod eip170;
 pub mod eip4844;
@@ -22,7 +23,7 @@ pub use constants::*;
 // Reexport alloy primitives.
 
 pub use alloy_primitives::map::{
-    self, hash_map, hash_set, DefaultHashBuilder, HashMap, HashSet, IndexEntry, IndexMap,
+    self, hash_map, hash_set, indexmap, DefaultHashBuilder, HashMap, HashSet, IndexEntry, IndexMap,
 };
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,

@@ -145,7 +145,7 @@ where
 
         let (tx, journal) = ctx.tx_journal_mut();
 
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let caller_account = journal.load_account_code(tx.caller().to_caller())?.data;
 
         if !is_deposit {
             // validates account nonce and code
@@ -211,7 +211,11 @@ where
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.
-        journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+        journal.caller_accounting_journal_entry(
+            tx.caller().to_caller(),
+            old_balance,
+            tx.kind().is_call(),
+        );
 
         Ok(())
     }
@@ -435,7 +439,11 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let acc: &mut revm::state::Account = evm.ctx().journal_mut().load_account(caller)?.data;
+            let acc: &mut revm::state::Account = evm
+                .ctx()
+                .journal_mut()
+                .load_account(caller.to_caller())?
+                .data;
 
             let old_balance = acc.info.balance;
 
@@ -447,9 +455,11 @@ where
             acc.mark_touch();
 
             // add journal entry for accounts
-            evm.ctx()
-                .journal_mut()
-                .caller_accounting_journal_entry(caller, old_balance, true);
+            evm.ctx().journal_mut().caller_accounting_journal_entry(
+                caller.to_caller(),
+                old_balance,
+                true,
+            );
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit

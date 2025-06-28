@@ -6,7 +6,7 @@ use context_interface::{
     Block, Cfg, Database, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{hardfork::SpecId, U256};
+use primitives::{address::AddressTr, hardfork::SpecId, U256};
 use state::EvmState;
 
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
@@ -39,7 +39,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
 
     // Return balance of not spend gas.
     context.journal_mut().balance_incr(
-        caller,
+        caller.to_caller(),
         U256::from(
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
         ) + additional_refund,
@@ -67,7 +67,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
 
     // reward beneficiary
     context.journal_mut().balance_incr(
-        beneficiary,
+        beneficiary.to_beneficiary(),
         U256::from(coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128),
     )?;
 

@@ -1,7 +1,7 @@
 //! Try database commit interface.
 use crate::DatabaseCommit;
 use core::{convert::Infallible, error::Error, fmt};
-use primitives::{Address, HashMap, IndexMap};
+use primitives::{Address, IndexMap};
 use state::Account;
 use std::sync::Arc;
 

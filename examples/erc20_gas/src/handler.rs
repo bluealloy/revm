@@ -9,7 +9,7 @@ use revm::{
         Handler,
     },
     interpreter::FrameInput,
-    primitives::{hardfork::SpecId, U256},
+    primitives::{address::AddressTr, hardfork::SpecId, U256},
     state::EvmState,
 };
 
@@ -57,7 +57,7 @@ where
         let (tx, journal) = context.tx_journal_mut();
 
         // Load caller's account.
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let caller_account = journal.load_account_code(tx.caller().to_caller())?.data;
 
         validate_account_nonce_and_code(
             &mut caller_account.info,

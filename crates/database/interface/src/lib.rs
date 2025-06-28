@@ -5,11 +5,11 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-use core::{convert::Infallible, ops::Index};
+use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use core::error::Error;
-use primitives::{address, Address, HashMap, IndexMap, StorageKey, StorageValue, B256, U256};
+use primitives::{address, Address, IndexMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
 
@@ -37,7 +37,7 @@ pub use empty_db::{EmptyDB, EmptyDBTyped};
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
-pub trait DBErrorMarker {}
+pub trait DBErrorMarker: 'static {}
 
 /// Implement marker for `()`.
 impl DBErrorMarker for () {}
