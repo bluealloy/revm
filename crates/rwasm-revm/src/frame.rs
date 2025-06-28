@@ -20,7 +20,7 @@ use fluentbase_sdk::{
     WASM_MAGIC_BYTES,
 };
 use revm::{
-    bytecode::{eip7702::Eip7702Bytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
+    bytecode::{ownable_account::OwnableAccountBytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
     context::{
         journaled_state::JournalCheckpoint,
         result::FromStringError,
@@ -89,6 +89,7 @@ pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
+    /// TODO(dmitry123): "remove interpreter, we don't need it here, replace it with input from types"
     pub interpreter: Interpreter<IW>,
     /// Info about interrupted call (for rwasm execution)
     pub interrupted_outcome: Option<SystemInterruptionOutcome>,
@@ -271,7 +272,7 @@ where
             bytecode_address: Some(inputs.bytecode_address),
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
-            rwasm_proxy_address: None,
+            account_owner: None,
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
@@ -333,9 +334,16 @@ where
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
+        } else if let Bytecode::OwnableAccount(ownable_account_bytecode) = bytecode {
+            let account = &context
+                .journal()
+                .load_account_code(ownable_account_bytecode.owner_address)?
+                .info;
+            bytecode = account.code.clone().unwrap_or_default();
+            code_hash = account.code_hash();
             // for EVM runtime write rwasm proxy address (required for protected slot validation)
-            if is_delegated_runtime_address(&eip7702_bytecode.delegated_address) {
-                interpreter_input.rwasm_proxy_address = Some(eip7702_bytecode.delegated_address);
+            if is_delegated_runtime_address(&ownable_account_bytecode.owner_address) {
+                interpreter_input.account_owner = Some(ownable_account_bytecode.owner_address);
             }
         }
 
@@ -461,7 +469,7 @@ where
         // warm load account.
         context.journal().load_account(created_address)?;
 
-        // Create account, transfer funds and make the journal checkpoint.
+        // Create an account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
@@ -488,8 +496,9 @@ where
             PRECOMPILE_EVM_RUNTIME
         };
         // create a new EIP-7702 account that points to the EVM runtime system precompile
-        let eip7702_bytecode = Eip7702Bytecode::new(precompile_runtime);
-        let bytecode = Bytecode::Eip7702(eip7702_bytecode);
+        let ownable_account_bytecode =
+            OwnableAccountBytecode::new(precompile_runtime, Bytes::new());
+        let bytecode = Bytecode::OwnableAccount(ownable_account_bytecode);
         context.journal().set_code(created_address, bytecode);
         // an original init code we pass as an input inside the runtime
         // to execute deployment logic
@@ -514,7 +523,7 @@ where
             bytecode_address: None,
             input: CallInput::Bytes(constructor_params),
             call_value: inputs.value,
-            rwasm_proxy_address,
+            account_owner: rwasm_proxy_address,
         };
         let gas_limit = inputs.gas_limit;
 
@@ -631,7 +640,7 @@ where
             bytecode_address: None,
             input,
             call_value: inputs.value,
-            rwasm_proxy_address: None,
+            account_owner: None,
         };
 
         let gas_limit = inputs.gas_limit;
@@ -721,18 +730,19 @@ where
                 }
 
                 // Check the resulting bytecode does it match to rWasm signature (bytecode override)
-                let overwrite_delegated_bytecode_with_rwasm =
-                    if interpreter_result.output.first() == Some(&0xEF) {
-                        let account = context.journal().load_account_code(frame.created_address)?;
-                        match account.data.info.code.as_ref() {
-                            Some(Bytecode::Eip7702(eip7702_bytecode)) => {
-                                is_delegated_runtime_address(&eip7702_bytecode.delegated_address)
-                            }
-                            Some(_) | None => false,
+                let overwrite_delegated_bytecode_with_rwasm = if interpreter_result.output.first()
+                    == Some(&0xEF)
+                {
+                    let account = context.journal().load_account_code(frame.created_address)?;
+                    match account.data.info.code.as_ref() {
+                        Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
+                            is_delegated_runtime_address(&ownable_account_bytecode.owner_address)
                         }
-                    } else {
-                        false
-                    };
+                        Some(_) | None => false,
+                    }
+                } else {
+                    false
+                };
                 if overwrite_delegated_bytecode_with_rwasm {
                     // TODO(dmitry123): "optimize me, store RwasmModule inside Bytecode"
                     let (_, bytes_read) = RwasmModule::new(interpreter_result.output.as_ref());

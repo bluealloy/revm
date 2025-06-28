@@ -18,10 +18,9 @@ pub struct InputsImpl {
     pub input: CallInput,
     /// Value of the call.
     pub call_value: U256,
-
-    /// Address of the RWASM proxy, if enabled.
+    /// An owner of the account. It's used for EVM/WASM/SVM runtimes where accounts are accounts owned by  Address of the RWASM proxy, if enabled.
     /// For example, when the EVM proxy is used, this will match the EVM system contract address.
-    pub rwasm_proxy_address: Option<Address>,
+    pub account_owner: Option<Address>,
 }
 
 impl InputsTr for InputsImpl {
@@ -45,7 +44,7 @@ impl InputsTr for InputsImpl {
         self.call_value
     }
 
-    fn rwasm_proxy_address(&self) -> Option<Address> {
-        self.rwasm_proxy_address
+    fn account_owner_address(&self) -> Option<Address> {
+        self.account_owner
     }
 }

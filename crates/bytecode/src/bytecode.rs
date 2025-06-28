@@ -7,7 +7,12 @@
 
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
-    BytecodeDecodeError, Eof, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
+    ownable_account::{OwnableAccountBytecode, OWNABLE_ACCOUNT_MAGIC_BYTES},
+    BytecodeDecodeError,
+    Eof,
+    JumpTable,
+    LegacyAnalyzedBytecode,
+    LegacyRawBytecode,
     EOF_MAGIC_BYTES,
 };
 use core::fmt::Debug;
@@ -24,6 +29,8 @@ pub enum Bytecode {
     Eof(Arc<Eof>),
     /// EIP-7702 delegated bytecode
     Eip7702(Eip7702Bytecode),
+    /// delegated bytecode metadata
+    OwnableAccount(OwnableAccountBytecode),
     /// An Rwasm bytecode
     Rwasm(Bytes),
 }
@@ -80,6 +87,11 @@ impl Bytecode {
         matches!(self, Self::Eip7702(_))
     }
 
+    /// Returns `true` if bytecode is Metadata.
+    pub const fn is_metadata(&self) -> bool {
+        matches!(self, Self::OwnableAccount(_))
+    }
+
     /// Creates a new legacy [`Bytecode`].
     #[inline]
     pub fn new_legacy(raw: Bytes) -> Self {
@@ -102,6 +114,12 @@ impl Bytecode {
         Self::Eip7702(Eip7702Bytecode::new(address))
     }
 
+    /// Creates a new metadata [`OwnableAccountBytecode`] from [`Address`].
+    #[inline]
+    pub fn new_metadata(address: Address, metadata: Bytes) -> Self {
+        Self::OwnableAccount(OwnableAccountBytecode::new(address, metadata))
+    }
+
     /// Creates a new raw [`Bytecode`].
     ///
     /// Returns an error on incorrect bytecode format.
@@ -116,6 +134,10 @@ impl Bytecode {
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
                 let eip7702 = Eip7702Bytecode::new_raw(bytes)?;
                 Ok(Self::Eip7702(eip7702))
+            }
+            Some(prefix) if prefix == &OWNABLE_ACCOUNT_MAGIC_BYTES => {
+                let instance = OwnableAccountBytecode::new_raw(bytes)?;
+                Ok(Self::OwnableAccount(instance))
             }
             Some(prefix) if prefix == &crate::RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytes)),
             _ => Ok(Self::new_legacy(bytes)),
@@ -144,6 +166,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.body.code,
             Self::Eip7702(code) => code.raw(),
+            Self::OwnableAccount(code) => code.metadata(),
             Self::Rwasm(bytes) => bytes,
         }
     }
@@ -169,6 +192,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.raw,
             Self::Eip7702(code) => code.raw(),
+            Self::OwnableAccount(code) => code.metadata(),
             Self::Rwasm(bytes) => bytes,
         }
     }
@@ -186,6 +210,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
+            Self::OwnableAccount(metadata) => metadata.metadata().clone(),
             Self::Rwasm(bytes) => bytes.clone(),
         }
     }
@@ -197,6 +222,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
+            Self::OwnableAccount(data) => data.metadata(),
             Self::Rwasm(bytes) => bytes,
         }
     }
@@ -213,8 +239,8 @@ impl Bytecode {
         self.len() == 0
     }
 
-    /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
-    /// This is useful if you want to ignore immediates and just see what opcodes are inside.
+    /// Returns an iterator over the opcodes in this bytecode, skipping immediate values.
+    /// This is useful if you want to ignore immediate values and just see what opcodes are inside.
     #[inline]
     pub fn iter_opcodes(&self) -> crate::BytecodeIterator<'_> {
         crate::BytecodeIterator::new(self)

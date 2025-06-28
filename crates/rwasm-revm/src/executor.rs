@@ -124,7 +124,7 @@ pub(crate) fn execute_rwasm_frame<
 
     let is_gas_free = interpreter
         .input
-        .rwasm_proxy_address
+        .account_owner
         .or_else(|| Some(bytecode_address))
         .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
         .is_some();

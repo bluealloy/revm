@@ -17,8 +17,10 @@ impl<'a> BytecodeIterator<'a> {
     #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
         let bytes = match bytecode {
-            Bytecode::LegacyAnalyzed(_) | Bytecode::Eof(_) | Bytecode::Rwasm(_) => &bytecode.bytecode()[..],
-            Bytecode::Eip7702(_) => &[],
+            Bytecode::LegacyAnalyzed(_) | Bytecode::Eof(_) | Bytecode::Rwasm(_) => {
+                &bytecode.bytecode()[..]
+            }
+            Bytecode::Eip7702(_) | Bytecode::OwnableAccount(_) => &[],
         };
         Self {
             start: bytes.as_ptr(),

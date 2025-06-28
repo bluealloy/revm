@@ -235,7 +235,7 @@ where
             bytecode_address: Some(inputs.bytecode_address),
             input: inputs.input.clone(),
             call_value: inputs.value.get(),
-            rwasm_proxy_address: None,
+            account_owner: None,
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
@@ -402,7 +402,7 @@ where
             bytecode_address: None,
             input: CallInput::Bytes(constructor_params),
             call_value: inputs.value,
-            rwasm_proxy_address,
+            account_owner: rwasm_proxy_address,
         };
         let gas_limit = inputs.gas_limit;
 
@@ -519,7 +519,7 @@ where
             bytecode_address: None,
             input,
             call_value: inputs.value,
-            rwasm_proxy_address: None,
+            account_owner: None,
         };
 
         let gas_limit = inputs.gas_limit;

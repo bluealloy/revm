@@ -5,7 +5,7 @@ use crate::{
 use core::cmp::min;
 use fluentbase_genesis::is_system_precompile;
 use fluentbase_sdk::{
-    byteorder::{LittleEndian, ReadBytesExt},
+    byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     bytes::Buf,
     calc_preimage_address,
     is_delegated_runtime_address,
@@ -32,6 +32,9 @@ use fluentbase_sdk::{
     SYSCALL_ID_DELEGATE_CALL,
     SYSCALL_ID_DESTROY_ACCOUNT,
     SYSCALL_ID_EMIT_LOG,
+    SYSCALL_ID_METADATA_COPY,
+    SYSCALL_ID_METADATA_SIZE,
+    SYSCALL_ID_METADATA_WRITE,
     SYSCALL_ID_PREIMAGE_COPY,
     SYSCALL_ID_PREIMAGE_SIZE,
     SYSCALL_ID_SELF_BALANCE,
@@ -84,7 +87,7 @@ pub(crate) fn execute_rwasm_interruption<
     let spec_id: SpecId = evm.ctx().cfg().spec().into();
     let journal = evm.ctx().journal();
     let current_target_address = frame.interpreter.input.target_address();
-    let rwasm_proxy_address = frame.interpreter.input.rwasm_proxy_address();
+    let account_owner_address = frame.interpreter.input.account_owner_address();
 
     macro_rules! return_result {
         ($result:expr, $error:ident) => {{
@@ -168,7 +171,7 @@ pub(crate) fn execute_rwasm_interruption<
             // modification of the code hash slot
             // if is not allowed in a normal smart contract mode
             if is_protected_storage_slot(slot) {
-                if let Some(rwasm_proxy_address) = rwasm_proxy_address {
+                if let Some(rwasm_proxy_address) = account_owner_address {
                     if !is_delegated_runtime_address(&rwasm_proxy_address) {
                         return_result!(MalformedBuiltinParams);
                     }
@@ -723,6 +726,131 @@ pub(crate) fn execute_rwasm_interruption<
             }
             return_result!(account_load.data, Return);
         }
+        SYSCALL_ID_METADATA_SIZE | SYSCALL_ID_METADATA_WRITE | SYSCALL_ID_METADATA_COPY => {
+            assert_return!(
+                inputs.syscall_params.input.len() >= 20
+                    && inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
+            // syscall is allowed only for accounts that are owned by somebody
+            let Some(account_owner_address) = account_owner_address else {
+                return_result!(MalformedBuiltinParams);
+            };
+            // read an account from its address
+            let address = Address::from_slice(&inputs.syscall_params.input[..20]);
+            let Ok(mut account) = journal.load_account_code(address) else {
+                return_result!(FatalExternalError);
+            };
+            // to make sure this account is ownable and owner by the same runtime, that allows
+            // a runtime to modify any account it owns
+            let ownable_account_bytecode = match account.info.code.as_mut() {
+                Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
+                    // if an account is not the same - it's not a malformed building param, runtime might not know it's account
+                    if ownable_account_bytecode.owner_address != account_owner_address {
+                        if inputs.syscall_params.code_hash == SYSCALL_ID_METADATA_SIZE {
+                            let output = Bytes::from([
+                                // metadata length is 0 in this case
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                // pass info about an account (is_cold, is_empty)
+                                account.is_cold as u8,
+                                account.is_empty() as u8,
+                            ]);
+                            return_result!(output, Return);
+                        } else {
+                            return_result!(Bytes::new(), Revert)
+                        };
+                    }
+                    ownable_account_bytecode
+                }
+                _ => {
+                    if inputs.syscall_params.code_hash == SYSCALL_ID_METADATA_SIZE {
+                        let output = Bytes::from([
+                            // metadata length is 0 in this case
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,
+                            // pass info about an account (is_cold, is_empty)
+                            account.is_cold as u8,
+                            account.is_empty() as u8,
+                        ]);
+                        return_result!(output, Return);
+                    } else {
+                        return_result!(Bytes::new(), MalformedBuiltinParams)
+                    };
+                }
+            };
+            // execute a syscall
+            match inputs.syscall_params.code_hash {
+                SYSCALL_ID_METADATA_SIZE => {
+                    assert_return!(
+                        inputs.syscall_params.input.len() == 20,
+                        MalformedBuiltinParams
+                    );
+                    let mut output = [0u8; 4 + 1 + 1];
+                    LittleEndian::write_u32(
+                        &mut output,
+                        ownable_account_bytecode.metadata.len() as u32,
+                    );
+                    #[cfg(feature = "debug-print")]
+                    println!(
+                        "SYSCALL_METADATA_SIZE: address={address} metadata_size={}",
+                        ownable_account_bytecode.metadata.len() as u32
+                    );
+                    output[4] = account.is_cold as u8;
+                    output[5] = account.is_empty() as u8;
+                    return_result!(output, Return)
+                }
+                SYSCALL_ID_METADATA_WRITE => {
+                    assert_return!(
+                        inputs.syscall_params.input.len() >= 20 + 4,
+                        MalformedBuiltinParams
+                    );
+                    let offset =
+                        LittleEndian::read_u32(&inputs.syscall_params.input[20..24]) as usize;
+                    let length = inputs.syscall_params.input[24..].len();
+                    #[cfg(feature = "debug-print")]
+                    println!(
+                        "SYSCALL_METADATA_WRITE: address={address} offset={}, length={}",
+                        offset, length,
+                    );
+                    let mut metadata = ownable_account_bytecode.metadata.to_vec();
+                    if offset + length > ownable_account_bytecode.metadata.len() {
+                        metadata.resize(offset + length, 0);
+                    }
+                    metadata[offset..(offset + length)]
+                        .copy_from_slice(&inputs.syscall_params.input[24..]);
+                    ownable_account_bytecode.metadata = metadata.into();
+                    let metadata = ownable_account_bytecode
+                        .metadata
+                        .slice(offset..(offset + length));
+                    return_result!(metadata, Return)
+                }
+                SYSCALL_ID_METADATA_COPY => {
+                    assert_return!(
+                        inputs.syscall_params.input.len() == 28,
+                        MalformedBuiltinParams
+                    );
+                    let offset = LittleEndian::read_u32(&inputs.syscall_params.input[20..24]);
+                    let length = LittleEndian::read_u32(&inputs.syscall_params.input[24..28]);
+                    #[cfg(feature = "debug-print")]
+                    println!(
+                        "SYSCALL_METADATA_COPY: address={address} offset={}, length={}, metadata_length={}",
+                        offset, length, ownable_account_bytecode.metadata.len(),
+                    );
+                    // take min
+                    let length = length.min(ownable_account_bytecode.metadata.len() as u32);
+                    let metadata = ownable_account_bytecode
+                        .metadata
+                        .slice(offset as usize..(offset + length) as usize);
+                    return_result!(metadata, Return)
+                }
+                _ => unreachable!(),
+            }
+        }
 
         SYSCALL_ID_DELEGATED_STORAGE => {
             assert_return!(
@@ -733,7 +861,7 @@ pub(crate) fn execute_rwasm_interruption<
             let address = Address::from_slice(&inputs.syscall_params.input[..20]);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
             // delegated storage is allowed only for delegated accounts
-            let Some(rwasm_proxy_address) = rwasm_proxy_address else {
+            let Some(rwasm_proxy_address) = account_owner_address else {
                 return_result!(MalformedBuiltinParams);
             };
             let Ok(account) = journal.load_account_code(address) else {
@@ -754,8 +882,8 @@ pub(crate) fn execute_rwasm_interruption<
             }
             // make sure both accounts are delegated to the same execution runtime
             match &account.info.code {
-                Some(Bytecode::Eip7702(eip7702_bytecode)) => {
-                    if eip7702_bytecode.delegated_address != rwasm_proxy_address {
+                Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
+                    if ownable_account_bytecode.owner_address != rwasm_proxy_address {
                         return_result!(output, Revert)
                     }
                 }
