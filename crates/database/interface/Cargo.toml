@@ -37,6 +37,16 @@ rstest.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "state/std"]
-serde = ["dep:serde", "primitives/serde", "state/serde"]
+std = [
+	"serde?/std",
+	"primitives/std",
+	"state/std",
+	"either/std"
+]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"either/serde"
+]
 asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]
