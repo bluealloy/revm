@@ -52,9 +52,9 @@ async fn main() -> Result<()> {
     cache_db.insert_account_info(account, acc_info);
 
     let acc_weth_balance_before = balance_of(weth, account, &mut cache_db)?;
-    println!("WETH balance before swap: {}", acc_weth_balance_before);
+    println!("WETH balance before swap: {acc_weth_balance_before}");
     let acc_usdc_balance_before = balance_of(usdc, account, &mut cache_db)?;
-    println!("USDC balance before swap: {}", acc_usdc_balance_before);
+    println!("USDC balance before swap: {acc_usdc_balance_before}");
 
     let (reserve0, reserve1) = get_reserves(usdc_weth_pair, &mut cache_db)?;
 
@@ -77,9 +77,9 @@ async fn main() -> Result<()> {
     )?;
 
     let acc_weth_balance_after = balance_of(weth, account, &mut cache_db)?;
-    println!("WETH balance after swap: {}", acc_weth_balance_after);
+    println!("WETH balance after swap: {acc_weth_balance_after}");
     let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db)?;
-    println!("USDC balance after swap: {}", acc_usdc_balance_after);
+    println!("USDC balance after swap: {acc_usdc_balance_after}");
 
     println!("OK");
     Ok(())

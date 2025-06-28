@@ -154,13 +154,13 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
     match frame_output {
         FrameResult::Call(outcome) => {
             let FrameInput::Call(i) = frame_input else {
-                panic!("FrameInput::Call expected {:?}", frame_input);
+                panic!("FrameInput::Call expected {frame_input:?}");
             };
             inspector.call_end(context, i, outcome);
         }
         FrameResult::Create(outcome) => {
             let FrameInput::Create(i) = frame_input else {
-                panic!("FrameInput::Create expected {:?}", frame_input);
+                panic!("FrameInput::Create expected {frame_input:?}");
             };
             inspector.create_end(context, i, outcome);
         }
