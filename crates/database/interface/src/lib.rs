@@ -28,6 +28,7 @@ pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000,
 
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
+pub mod either;
 pub mod empty_db;
 pub mod try_commit;
 
