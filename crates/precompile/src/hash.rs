@@ -4,6 +4,9 @@ use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use sha2::Digest;
 
+#[cfg(target_os = "zkvm")]
+mod zkvm;
+
 /// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(2), sha256_run);
@@ -23,9 +26,21 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(PrecompileError::OutOfGas)
     } else {
-        let output = sha2::Sha256::digest(input);
+        let output = sha256_hash(input);
         Ok(PrecompileOutput::new(cost, output.to_vec().into()))
     }
+}
+
+/// Core SHA-256 hash function that can be overridden by zkVM implementations
+#[cfg(target_os = "zkvm")]
+pub fn sha256_hash(input: &[u8]) -> [u8; 32] {
+    zkvm::sha256_hash(input)
+}
+
+/// Core SHA-256 hash function using standard implementation
+#[cfg(not(target_os = "zkvm"))]
+pub fn sha256_hash(input: &[u8]) -> [u8; 32] {
+    sha2::Sha256::digest(input).into()
 }
 
 /// Computes the RIPEMD-160 hash of the input data
