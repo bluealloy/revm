@@ -7,6 +7,7 @@ use fluentbase_genesis::is_system_precompile;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     bytes::Buf,
+    calc_create4_address,
     calc_preimage_address,
     is_delegated_runtime_address,
     is_protected_storage_slot,
@@ -33,6 +34,7 @@ use fluentbase_sdk::{
     SYSCALL_ID_DESTROY_ACCOUNT,
     SYSCALL_ID_EMIT_LOG,
     SYSCALL_ID_METADATA_COPY,
+    SYSCALL_ID_METADATA_CREATE,
     SYSCALL_ID_METADATA_SIZE,
     SYSCALL_ID_METADATA_WRITE,
     SYSCALL_ID_PREIMAGE_COPY,
@@ -49,7 +51,7 @@ use fluentbase_sdk::{
     WASM_MAX_CODE_SIZE,
 };
 use revm::{
-    bytecode::Bytecode,
+    bytecode::{ownable_account::OwnableAccountBytecode, Bytecode},
     context::{result::FromStringError, Cfg, ContextTr, CreateScheme, JournalTr},
     handler::EvmTr,
     interpreter::{
@@ -630,7 +632,7 @@ pub(crate) fn execute_rwasm_interruption<
             let _code_offset = reader.read_u64::<LittleEndian>().unwrap();
             let code_length = reader.read_u64::<LittleEndian>().unwrap();
             #[cfg(feature = "debug-print")]
-            println!("SYSCALL_CODE_COPY: address={address} code_offset={_code_offset} code_length={code_length}" );
+            println!("SYSCALL_CODE_COPY: address={address} code_offset={_code_offset} code_length={code_length}");
             let code = journal.code(address)?;
             let Some(gas_cost) = gas::extcodecopy_cost(spec_id, code_length as usize, code.is_cold)
             else {
@@ -726,7 +728,101 @@ pub(crate) fn execute_rwasm_interruption<
             }
             return_result!(account_load.data, Return);
         }
-        SYSCALL_ID_METADATA_SIZE | SYSCALL_ID_METADATA_WRITE | SYSCALL_ID_METADATA_COPY => {
+        SYSCALL_ID_METADATA_SIZE => {
+            assert_return!(
+                inputs.syscall_params.input.len() >= 20
+                    && inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
+            // syscall is allowed only for accounts that are owned by somebody
+            let Some(account_owner_address) = account_owner_address else {
+                return_result!(MalformedBuiltinParams);
+            };
+            // read an account from its address
+            let address = Address::from_slice(&inputs.syscall_params.input[..20]);
+            let Ok(mut account) = journal.load_account_code(address) else {
+                return_result!(FatalExternalError);
+            };
+            // to make sure this account is ownable and owner by the same runtime, that allows
+            // a runtime to modify any account it owns
+            let Some(ownable_account_bytecode) = (match account.info.code.as_mut() {
+                Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
+                    // if an account is not the same - it's not a malformed building param, runtime might not know it's account
+                    if ownable_account_bytecode.owner_address == account_owner_address {
+                        Some(ownable_account_bytecode)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }) else {
+                let output = Bytes::from([
+                    // metadata length is 0 in this case
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    // pass info about an account (is_cold, is_empty)
+                    account.is_cold as u8,
+                    account.is_empty() as u8,
+                ]);
+                return_result!(output, Return);
+            };
+            // execute a syscall
+            assert_return!(
+                inputs.syscall_params.input.len() == 20,
+                MalformedBuiltinParams
+            );
+            let mut output = [0u8; 4 + 1 + 1];
+            LittleEndian::write_u32(&mut output, ownable_account_bytecode.metadata.len() as u32);
+            #[cfg(feature = "debug-print")]
+            println!(
+                "SYSCALL_METADATA_SIZE: address={address} metadata_size={}",
+                ownable_account_bytecode.metadata.len() as u32
+            );
+            output[4] = account.is_cold as u8;
+            output[5] = account.is_empty() as u8;
+            return_result!(output, Return)
+        }
+        SYSCALL_ID_METADATA_CREATE => {
+            assert_return!(
+                inputs.syscall_params.input.len() >= 32
+                    && inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
+            // syscall is allowed only for accounts that are owned by somebody
+            let Some(account_owner_address) = account_owner_address else {
+                return_result!(MalformedBuiltinParams);
+            };
+            // read an account from its address
+            let salt = U256::from_be_slice(&inputs.syscall_params.input[..32]);
+            let metadata = inputs.syscall_params.input.slice(32..);
+            let derived_metadata_address =
+                calc_create4_address(&account_owner_address, &salt, |v| keccak256(v));
+            let Ok(account) = journal.load_account_code(derived_metadata_address) else {
+                return_result!(FatalExternalError);
+            };
+            #[cfg(feature = "debug-print")]
+            println!(
+                "SYSCALL_METADATA_CREATE: address={derived_metadata_address} salt={salt} length={}",
+                metadata.len(),
+            );
+            // make sure there is no account create collision
+            if !account.is_empty() {
+                return_result!(CreateCollision);
+            }
+            // create new derived ownable account
+            journal.set_code(
+                derived_metadata_address,
+                Bytecode::OwnableAccount(OwnableAccountBytecode::new(
+                    account_owner_address,
+                    metadata.clone(),
+                )),
+            );
+            return_result!(Bytes::new(), Return)
+        }
+
+        SYSCALL_ID_METADATA_WRITE | SYSCALL_ID_METADATA_COPY => {
             assert_return!(
                 inputs.syscall_params.input.len() >= 20
                     && inputs.syscall_params.state == STATE_MAIN,
@@ -744,66 +840,17 @@ pub(crate) fn execute_rwasm_interruption<
             // to make sure this account is ownable and owner by the same runtime, that allows
             // a runtime to modify any account it owns
             let ownable_account_bytecode = match account.info.code.as_mut() {
-                Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
-                    // if an account is not the same - it's not a malformed building param, runtime might not know it's account
-                    if ownable_account_bytecode.owner_address != account_owner_address {
-                        if inputs.syscall_params.code_hash == SYSCALL_ID_METADATA_SIZE {
-                            let output = Bytes::from([
-                                // metadata length is 0 in this case
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                // pass info about an account (is_cold, is_empty)
-                                account.is_cold as u8,
-                                account.is_empty() as u8,
-                            ]);
-                            return_result!(output, Return);
-                        } else {
-                            return_result!(Bytes::new(), Revert)
-                        };
-                    }
+                Some(Bytecode::OwnableAccount(ownable_account_bytecode))
+                    if ownable_account_bytecode.owner_address == account_owner_address =>
+                {
                     ownable_account_bytecode
                 }
                 _ => {
-                    if inputs.syscall_params.code_hash == SYSCALL_ID_METADATA_SIZE {
-                        let output = Bytes::from([
-                            // metadata length is 0 in this case
-                            0x00,
-                            0x00,
-                            0x00,
-                            0x00,
-                            // pass info about an account (is_cold, is_empty)
-                            account.is_cold as u8,
-                            account.is_empty() as u8,
-                        ]);
-                        return_result!(output, Return);
-                    } else {
-                        return_result!(Bytes::new(), MalformedBuiltinParams)
-                    };
+                    return_result!(Bytes::new(), MalformedBuiltinParams)
                 }
             };
             // execute a syscall
             match inputs.syscall_params.code_hash {
-                SYSCALL_ID_METADATA_SIZE => {
-                    assert_return!(
-                        inputs.syscall_params.input.len() == 20,
-                        MalformedBuiltinParams
-                    );
-                    let mut output = [0u8; 4 + 1 + 1];
-                    LittleEndian::write_u32(
-                        &mut output,
-                        ownable_account_bytecode.metadata.len() as u32,
-                    );
-                    #[cfg(feature = "debug-print")]
-                    println!(
-                        "SYSCALL_METADATA_SIZE: address={address} metadata_size={}",
-                        ownable_account_bytecode.metadata.len() as u32
-                    );
-                    output[4] = account.is_cold as u8;
-                    output[5] = account.is_empty() as u8;
-                    return_result!(output, Return)
-                }
                 SYSCALL_ID_METADATA_WRITE => {
                     assert_return!(
                         inputs.syscall_params.input.len() >= 20 + 4,
@@ -818,9 +865,7 @@ pub(crate) fn execute_rwasm_interruption<
                         offset, length,
                     );
                     let mut metadata = ownable_account_bytecode.metadata.to_vec();
-                    if offset + length > ownable_account_bytecode.metadata.len() {
-                        metadata.resize(offset + length, 0);
-                    }
+                    metadata.resize(offset + length, 0);
                     metadata[offset..(offset + length)]
                         .copy_from_slice(&inputs.syscall_params.input[24..]);
                     ownable_account_bytecode.metadata = metadata.into();

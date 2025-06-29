@@ -110,7 +110,7 @@ pub(crate) fn execute_rwasm_frame<
 
     let rwasm_bytecode = match &interpreter.bytecode.clone() {
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
-        _ => unreachable!("revm: unexpected bytecode type"),
+        _ => unreachable!("revm: unexpected bytecode type: {:?}", interpreter.bytecode),
     };
     let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
 

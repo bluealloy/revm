@@ -505,6 +505,10 @@ where
         let input = inputs.init_code.clone();
         // we should reload bytecode here since it's an EIP-7702 account
         let bytecode = context.journal().code(precompile_runtime)?;
+        assert!(
+            !bytecode.data.is_empty(),
+            "precompile bytecode is empty, missing account"
+        );
         // if it's a CREATE or CREATE2 call, then we should
         // to recalculate init code hash to make sure it matches runtime hash
         let code_hash = context.journal().code_hash(precompile_runtime)?;
