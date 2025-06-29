@@ -40,6 +40,8 @@ pub trait Host {
     fn effective_gas_price(&self) -> U256;
     /// Transaction caller, calls `ContextTr::tx().caller()`
     fn caller(&self) -> Address;
+    /// Transaction caller as U256, with caching optimization
+    fn caller_u256(&self) -> U256;
     /// Transaction blob hash, calls `ContextTr::tx().blob_hash(number)`
     fn blob_hash(&self, number: usize) -> Option<U256>;
 
@@ -136,6 +138,10 @@ impl<CTX: ContextTr> Host for CTX {
 
     fn caller(&self) -> Address {
         self.tx().caller()
+    }
+
+    fn caller_u256(&self) -> U256 {
+        self.tx().caller_u256()
     }
 
     fn blob_hash(&self, number: usize) -> Option<U256> {
@@ -311,6 +317,10 @@ impl Host for DummyHost {
 
     fn caller(&self) -> Address {
         Address::ZERO
+    }
+
+    fn caller_u256(&self) -> U256 {
+        U256::ZERO
     }
 
     fn blob_hash(&self, _number: usize) -> Option<U256> {

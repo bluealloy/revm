@@ -50,6 +50,11 @@ pub trait Transaction {
     /// Note : Common field for all transactions.
     fn caller(&self) -> Address;
 
+    /// Caller as U256, with caching optimization.
+    ///
+    /// Note : Common field for all transactions.
+    fn caller_u256(&self) -> U256;
+
     /// The maximum amount of gas the transaction can use.
     ///
     /// Note : Common field for all transactions.
