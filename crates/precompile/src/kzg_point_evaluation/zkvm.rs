@@ -35,13 +35,8 @@ extern "C" {
 /// and return 1 for valid proofs, 0 for invalid proofs.
 pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
     let result = unsafe {
-        zkvm_verify_kzg_proof_impl(
-            commitment.as_ptr(),
-            z.as_ptr(),
-            y.as_ptr(),
-            proof.as_ptr(),
-        )
+        zkvm_verify_kzg_proof_impl(commitment.as_ptr(), z.as_ptr(), y.as_ptr(), proof.as_ptr())
     };
-    
+
     result == 1
 }
