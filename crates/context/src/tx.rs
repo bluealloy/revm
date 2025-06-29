@@ -10,7 +10,7 @@ use context_interface::{
 use core::fmt::Debug;
 use database_interface::{BENCH_CALLER, BENCH_TARGET};
 use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
-use std::{vec, vec::Vec};
+use std::{vec, vec::Vec, cell::Cell};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
 /// including EIP-4844, EIP-7702, EIP-7873, etc.  It implements the [`Transaction`] trait, which is used inside the EVM to execute a transaction.
@@ -24,6 +24,8 @@ pub struct TxEnv {
     pub tx_type: u8,
     /// Caller aka Author aka transaction signer
     pub caller: Address,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    caller_u256: Cell<Option<U256>>,
     /// The gas limit of the transaction.
     pub gas_limit: u64,
     /// The gas price of the transaction.
@@ -94,6 +96,22 @@ impl Default for TxEnv {
     }
 }
 
+impl TxEnv {
+    /// Returns the caller address as U256, with caching for performance.
+    /// 
+    /// This method converts the caller address to U256 format and caches the result
+    /// to avoid repeated conversions during transaction execution.
+    pub fn caller_u256(&self) -> U256 {
+        if let Some(cached) = self.caller_u256.get() {
+            cached
+        } else {
+            let u256_value = self.caller.into_word().into();
+            self.caller_u256.set(Some(u256_value));
+            u256_value
+        }
+    }
+}
+
 /// Error type for deriving transaction type used as error in [`TxEnv::derive_tx_type`] function.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -111,6 +129,7 @@ impl TxEnv {
     pub fn new_bench() -> Self {
         Self {
             caller: BENCH_CALLER,
+            caller_u256: Cell::new(None),
             kind: TxKind::Call(BENCH_TARGET),
             gas_limit: 1_000_000_000,
             ..Default::default()
@@ -173,6 +192,10 @@ impl Transaction for TxEnv {
 
     fn caller(&self) -> Address {
         self.caller
+    }
+
+    fn caller_u256(&self) -> U256 {
+        self.caller_u256()
     }
 
     fn gas_limit(&self) -> u64 {
@@ -457,6 +480,7 @@ impl TxEnvBuilder {
         let mut tx = TxEnv {
             tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
+            caller_u256: Cell::new(None),
             gas_limit: self.gas_limit,
             gas_price: self.gas_price,
             kind: self.kind,
@@ -549,6 +573,7 @@ impl TxEnvBuilder {
         let mut tx = TxEnv {
             tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
+            caller_u256: Cell::new(None),
             gas_limit: self.gas_limit,
             gas_price: self.gas_price,
             kind: self.kind,
@@ -608,6 +633,7 @@ impl TxEnv {
         let TxEnv {
             tx_type,
             caller,
+            caller_u256: _,
             gas_limit,
             gas_price,
             kind,
@@ -653,6 +679,7 @@ mod tests {
             tx_type: tx_type as u8,
             gas_price,
             gas_priority_fee,
+            caller_u256: Cell::new(None),
             ..Default::default()
         };
         let base_fee = 100;

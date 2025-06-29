@@ -120,6 +120,10 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.caller()
     }
 
+    fn caller_u256(&self) -> U256 {
+        self.base.caller_u256()
+    }
+
     fn gas_limit(&self) -> u64 {
         self.base.gas_limit()
     }

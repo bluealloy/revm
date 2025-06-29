@@ -34,6 +34,13 @@ where
         }
     }
 
+    fn caller_u256(&self) -> U256 {
+        match self {
+            Either::Left(l) => l.caller_u256(),
+            Either::Right(r) => r.caller_u256(),
+        }
+    }
+
     fn gas_limit(&self) -> u64 {
         match self {
             Either::Left(l) => l.gas_limit(),

@@ -27,7 +27,7 @@ pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
-        context.host.caller().into_word().into()
+        context.host.caller_u256()
     );
 }
 

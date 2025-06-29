@@ -81,38 +81,38 @@ impl Test {
             }
         })?;
 
-        let tx = TxEnv {
-            caller,
-            gas_price: unit
+        let tx = TxEnv::builder()
+            .caller(caller)
+            .gas_price(unit
                 .transaction
                 .gas_price
                 .or(unit.transaction.max_fee_per_gas)
                 .unwrap_or_default()
                 .try_into()
-                .unwrap_or(u128::MAX),
-            gas_priority_fee: unit
+                .unwrap_or(u128::MAX))
+            .gas_priority_fee(unit
                 .transaction
                 .max_priority_fee_per_gas
-                .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX")),
-            blob_hashes: unit.transaction.blob_versioned_hashes.clone(),
-            max_fee_per_blob_gas: unit
+                .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX")))
+            .blob_hashes(unit.transaction.blob_versioned_hashes.clone())
+            .max_fee_per_blob_gas(unit
                 .transaction
                 .max_fee_per_blob_gas
                 .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-                .unwrap_or(u128::MAX),
-            tx_type: tx_type as u8,
-            gas_limit: unit.transaction.gas_limit[self.indexes.gas].saturating_to(),
-            data: unit.transaction.data[self.indexes.data].clone(),
-            nonce: u64::try_from(unit.transaction.nonce).unwrap(),
-            value: unit.transaction.value[self.indexes.value],
-            access_list: unit
+                .unwrap_or(u128::MAX))
+            .tx_type(Some(tx_type as u8))
+            .gas_limit(unit.transaction.gas_limit[self.indexes.gas].saturating_to())
+            .data(unit.transaction.data[self.indexes.data].clone())
+            .nonce(u64::try_from(unit.transaction.nonce).unwrap())
+            .value(unit.transaction.value[self.indexes.value])
+            .access_list(unit
                 .transaction
                 .access_lists
                 .get(self.indexes.data)
                 .cloned()
                 .flatten()
-                .unwrap_or_default(),
-            authorization_list: unit
+                .unwrap_or_default())
+            .authorization_list(unit
                 .transaction
                 .authorization_list
                 .clone()
@@ -122,13 +122,13 @@ impl Test {
                         .map(|i| revm::context::either::Either::Left(i.into()))
                         .collect::<Vec<_>>()
                 })
-                .unwrap_or_default(),
-            kind: match unit.transaction.to {
+                .unwrap_or_default())
+            .kind(match unit.transaction.to {
                 Some(add) => TxKind::Call(add),
                 None => TxKind::Create,
-            },
-            ..TxEnv::default()
-        };
+            })
+            .build()
+            .unwrap();
 
         Ok(tx)
     }
