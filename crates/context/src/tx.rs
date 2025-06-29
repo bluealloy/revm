@@ -7,8 +7,8 @@ use context_interface::{
         SignedAuthorization, Transaction,
     },
 };
-use core::fmt::Debug;
 use core::cell::Cell;
+use core::fmt::Debug;
 use database_interface::{BENCH_CALLER, BENCH_TARGET};
 use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
 use std::{vec, vec::Vec};
@@ -99,7 +99,7 @@ impl Default for TxEnv {
 
 impl TxEnv {
     /// Returns the caller address as U256, with caching for performance.
-    /// 
+    ///
     /// This method converts the caller address to U256 format and caches the result
     /// to avoid repeated conversions during transaction execution.
     pub fn caller_u256(&self) -> U256 {

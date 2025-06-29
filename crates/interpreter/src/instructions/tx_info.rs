@@ -25,10 +25,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Gets the execution origination address.
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context.host.caller_u256()
-    );
+    push!(context.interpreter, context.host.caller_u256());
 }
 
 /// Implements the BLOBHASH instruction.
