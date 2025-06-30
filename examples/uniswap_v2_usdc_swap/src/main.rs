@@ -139,17 +139,15 @@ async fn get_amount_out(
 
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
-    let result = evm
-        .transact_one(
-            TxEnv::builder()
-                .caller(address!("0000000000000000000000000000000000000000"))
-                .kind(TxKind::Call(uniswap_v2_router))
-                .data(encoded.into())
-                .value(U256::from(0))
-                .build()
-                .unwrap(),
-        )
+    let tx = TxEnv::builder()
+        .caller(address!("0000000000000000000000000000000000000000"))
+        .kind(TxKind::Call(uniswap_v2_router))
+        .data(encoded.into())
+        .value(U256::from(0))
+        .build()
         .unwrap();
+
+    let result = evm.transact_one(tx.clone()).unwrap();
 
     let value = match result {
         ExecutionResult::Success {
@@ -231,6 +229,17 @@ fn swap(
         .nonce(1)
         .build()
         .unwrap();
+
+    // fetch slots from rpc
+    let _ = evm.transact(tx.clone()).unwrap();
+
+    let time = std::time::Instant::now();
+    for _ in 0..1000 {
+        let _ = evm.transact(tx.clone()).unwrap();
+    }
+    let elapsed = time.elapsed();
+    println!("Time taken: {:?}", elapsed / 1000);
+    // run it with `cargo run --package example-uniswap-v2-usdc-swap --profile profiling --bin example-uniswap-v2-usdc-swap`
 
     let ref_tx = evm.transact_commit(tx).unwrap();
 
