@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.1.0](https://github.com/bluealloy/revm/compare/revm-v26.0.1...revm-v26.1.0) - 2025-06-30
+
+### Added
+
+- optional_eip3541 ([#2661](https://github.com/bluealloy/revm/pull/2661))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- inline documentation of revm top modules ([#2666](https://github.com/bluealloy/revm/pull/2666))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+
 ## [26.0.1](https://github.com/bluealloy/revm/compare/revm-v26.0.0...revm-v26.0.1) - 2025-06-20
 
 ### Fixed
