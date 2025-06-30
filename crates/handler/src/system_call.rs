@@ -4,7 +4,7 @@
 //!
 //! # Example: Using `transact_system_call` for pre/post block hooks
 //!
-//! The client should use [`transact_system_call`] to perform required state updates before or after block execution, as specified by the EIP:
+//! The client should use [`SystemCallEvm::transact_system_call`] method to perform required state updates before or after block execution, as specified by the EIP:
 //!
 //! ```rust,ignore
 //! // Example: update beacon root (EIP-4788) at the start of a block
