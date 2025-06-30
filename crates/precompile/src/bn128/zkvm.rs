@@ -39,8 +39,9 @@ extern "C" {
     /// * `num_pairs` - Number of point pairs
     ///
     /// # Returns
-    /// * 1 if pairing check passed (result equals identity)
-    /// * 0 if pairing check failed or invalid input
+    /// * 1 if pairing check passed (valid input, result equals identity)
+    /// * 0 if pairing check failed (valid input, result does not equal identity)
+    /// * -1 if invalid input (points not on curve, wrong format, etc.)
     fn zkvm_bn128_pairing_impl(pairs_ptr: *const u8, num_pairs: u32) -> i32;
 }
 
@@ -113,7 +114,12 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
         buffer.extend_from_slice(g2_bytes);
     }
 
-    let success = unsafe { zkvm_bn128_pairing_impl(buffer.as_ptr(), pairs.len() as u32) };
+    let result = unsafe { zkvm_bn128_pairing_impl(buffer.as_ptr(), pairs.len() as u32) };
 
-    Ok(success == 1)
+    match result {
+        1 => Ok(true),   // Pairing passed
+        0 => Ok(false),  // Pairing failed (valid input)
+        -1 => Err(PrecompileError::Bn128AffineGFailedToCreate), // Invalid input
+        _ => Err(PrecompileError::Other(format!("Unexpected pairing result: {}", result))),
+    }
 }
