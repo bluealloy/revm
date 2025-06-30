@@ -25,7 +25,12 @@ extern "C" {
 /// This function provides a hook for zkVM-optimized KZG proof verification.
 /// The external implementation should handle polynomial commitment verification
 /// and return 1 for valid proofs, 0 for invalid proofs.
-pub fn verify_kzg_proof(commitment: &[u8; 48], z: &[u8; 32], y: &[u8; 32], proof: &[u8; 48]) -> bool {
+pub fn verify_kzg_proof(
+    commitment: &[u8; 48],
+    z: &[u8; 32],
+    y: &[u8; 32],
+    proof: &[u8; 48],
+) -> bool {
     let result = unsafe {
         zkvm_verify_kzg_proof_impl(commitment.as_ptr(), z.as_ptr(), y.as_ptr(), proof.as_ptr())
     };
