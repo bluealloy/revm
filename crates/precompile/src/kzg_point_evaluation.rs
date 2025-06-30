@@ -11,8 +11,6 @@ cfg_if::cfg_if! {
 use primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
-#[cfg(target_os = "zkvm")]
-mod zkvm;
 
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
@@ -97,7 +95,7 @@ pub fn verify_kzg_proof(
     cfg_if::cfg_if! {
         if #[cfg(target_os = "zkvm")] {
             unsafe {
-                zkvm::verify_kzg_proof(
+                crate::zkvm::kzg_point_evaluation::verify_kzg_proof(
                     &commitment,
                     &z,
                     &y,

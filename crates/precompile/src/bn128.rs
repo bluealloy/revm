@@ -7,8 +7,7 @@ use std::vec::Vec;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "zkvm")] {
-        mod zkvm;
-        use zkvm::{g1_point_add, g1_point_mul, pairing_check};
+        use crate::zkvm::bn128::{g1_point_add, g1_point_mul, pairing_check};
     } else if #[cfg(feature = "bn")]{
         mod substrate;
         use substrate::{g1_point_add, g1_point_mul, pairing_check};

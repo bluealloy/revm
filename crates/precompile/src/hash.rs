@@ -4,8 +4,6 @@ use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use sha2::Digest;
 
-#[cfg(target_os = "zkvm")]
-mod zkvm;
 
 /// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
@@ -34,7 +32,7 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// Core SHA-256 hash function that can be overridden by zkVM implementations
 #[cfg(target_os = "zkvm")]
 pub fn sha256_hash(input: &[u8]) -> [u8; 32] {
-    zkvm::sha256_hash(input)
+    crate::zkvm::hash::sha256_hash(input)
 }
 
 /// Core SHA-256 hash function using standard implementation
