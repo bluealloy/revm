@@ -231,14 +231,15 @@ fn swap(
         .unwrap();
 
     // fetch slots from rpc
+    let time = std::time::Instant::now();
     let _ = evm.transact(tx.clone()).unwrap();
+    println!("Fetch slots: {:?}", time.elapsed());
 
     let time = std::time::Instant::now();
     for _ in 0..1000 {
         let _ = evm.transact(tx.clone()).unwrap();
     }
-    let elapsed = time.elapsed();
-    println!("Time taken: {:?}", elapsed / 1000);
+    println!("Swap time taken: {:?}", time.elapsed()/1000);
     // run it with `cargo run --package example-uniswap-v2-usdc-swap --profile profiling --bin example-uniswap-v2-usdc-swap`
 
     let ref_tx = evm.transact_commit(tx).unwrap();
