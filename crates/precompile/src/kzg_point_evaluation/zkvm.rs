@@ -1,13 +1,5 @@
 //! zkVM implementation of KZG point evaluation.
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "c-kzg")] {
-        use c_kzg::{Bytes32, Bytes48};
-    } else if #[cfg(feature = "kzg-rs")] {
-        use kzg_rs::{Bytes32, Bytes48};
-    }
-}
-
 extern "C" {
     /// zkVM implementation of KZG proof verification.
     ///
@@ -33,7 +25,7 @@ extern "C" {
 /// This function provides a hook for zkVM-optimized KZG proof verification.
 /// The external implementation should handle polynomial commitment verification
 /// and return 1 for valid proofs, 0 for invalid proofs.
-pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
+pub fn verify_kzg_proof(commitment: &[u8; 48], z: &[u8; 32], y: &[u8; 32], proof: &[u8; 48]) -> bool {
     let result = unsafe {
         zkvm_verify_kzg_proof_impl(commitment.as_ptr(), z.as_ptr(), y.as_ptr(), proof.as_ptr())
     };
