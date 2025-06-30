@@ -178,9 +178,7 @@ pub(super) fn g1_point_mul(
 pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
     let parsed_pairs: Vec<_> = pairs
         .iter()
-        .map(|(g1_bytes, g2_bytes)| {
-            Ok((read_g1_point(g1_bytes)?, read_g2_point(g2_bytes)?))
-        })
+        .map(|(g1_bytes, g2_bytes)| Ok((read_g1_point(g1_bytes)?, read_g2_point(g2_bytes)?)))
         .collect::<Result<Vec<_>, _>>()?;
 
     if parsed_pairs.is_empty() {

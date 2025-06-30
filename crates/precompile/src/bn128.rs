@@ -234,7 +234,10 @@ pub fn run_pair(
     }
 
     let pairing_result = pairing_check(&points)?;
-    Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(pairing_result)))
+    Ok(PrecompileOutput::new(
+        gas_used,
+        bool_to_bytes32(pairing_result),
+    ))
 }
 
 #[cfg(test)]

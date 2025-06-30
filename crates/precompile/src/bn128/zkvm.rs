@@ -117,9 +117,12 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
     let result = unsafe { zkvm_bn128_pairing_impl(buffer.as_ptr(), pairs.len() as u32) };
 
     match result {
-        1 => Ok(true),   // Pairing passed
-        0 => Ok(false),  // Pairing failed (valid input)
+        1 => Ok(true),                                          // Pairing passed
+        0 => Ok(false),                                         // Pairing failed (valid input)
         -1 => Err(PrecompileError::Bn128AffineGFailedToCreate), // Invalid input
-        _ => Err(PrecompileError::Other(format!("Unexpected pairing result: {}", result))),
+        _ => Err(PrecompileError::Other(format!(
+            "Unexpected pairing result: {}",
+            result
+        ))),
     }
 }
