@@ -1,3 +1,6 @@
+//! System call logic for external state transitions required by certain EIPs (notably [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) and [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788)).
+//!
+//! These EIPs require the client to perform special system calls to update state (such as block hashes or beacon roots) at block boundaries, outside of normal EVM transaction execution. REVM provides the system call mechanism, but the actual state transitions must be performed by the client or test harness, not by the EVM itself.
 use crate::{
     frame::EthFrame, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
     MainnetHandler, PrecompileProvider,
