@@ -35,7 +35,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let t;
     // Optimized parsing using ptr::read_unaligned for potentially better performance
 
-    let m: [u8; 16 * size_of::<u64>()];
+    let m;
     unsafe {
         let ptr = input.as_ptr();
 
@@ -53,7 +53,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
             u64::from_le_bytes(core::ptr::read_unaligned(ptr.add(204) as *const [u8; 8])),
         ];
     }
-    algo::compress(rounds, &mut h, &m, t, f);
+    algo::compress(rounds, &mut h, m, t, f);
 
     let mut out = [0u8; 64];
     for (i, h) in (0..64).step_by(8).zip(h.iter()) {
@@ -127,20 +127,31 @@ pub mod algo {
         f: bool,
     ) {
         assert!(m_slice.len() == 16 * size_of::<u64>());
-        #[cfg(target_feature = "avx2")]
-        {
-            // avx2 gives 40% performance boost over portable implementation
-            let block = m_slice;
-            let words = h;
-            let count = ((t[1] as u128) << 64) | (t[0] as u128);
-            let last_block = if f { !0 } else { 0 };
-            let last_node = 0;
 
-            unsafe {
-                super::avx2::compress_block(rounds, block, words, count, last_block, last_node);
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            #[cfg(feature = "std")]
+            let enabled = std::is_x86_feature_detected!("avx2");
+            #[cfg(not(feature = "std"))]
+            let enabled = cfg!(target_feature = "avx2");
+
+            if enabled {
+                println!("avx2 is run");
+                // avx2 gives 40% performance boost over portable implementation
+                unsafe {
+                    super::avx2::compress_block(
+                        rounds,
+                        m_slice,
+                        h,
+                        ((t[1] as u128) << 64) | (t[0] as u128),
+                        if f { !0 } else { 0 },
+                        0,
+                    );
+                }
+                return;
             }
-            return;
         }
+
         // if avx2 is not available, use the fallback portable implementation
 
         // Read m values
@@ -196,7 +207,7 @@ macro_rules! _MM_SHUFFLE {
 }
 
 /// Code adapted from https://github.com/oconnor663/blake2_simd/blob/82b3e2aee4d2384aabbeb146058301ff0dbd453f/blake2b/src/avx2.rs
-#[cfg(target_feature = "avx2")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2 {
     #[cfg(target_arch = "x86")]
     use core::arch::x86::*;

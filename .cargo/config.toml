@@ -1,3 +1,0 @@
-[build]
-#rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+avx2"]
-# to run avx2 without build use `RUSTFLAGS='-C target-feature=+avx2' cargo check --all`
