@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v23.0.0...revm-precompile-v23.1.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+
 ## [23.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v22.0.0...revm-precompile-v23.0.0) - 2025-06-19
 
 ### Added

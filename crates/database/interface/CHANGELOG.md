@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v6.0.0...revm-database-interface-v6.1.0) - 2025-06-30
+
+### Added
+
+- implement Database traits for either::Either ([#2673](https://github.com/bluealloy/revm/pull/2673))
+
+### Other
+
+- fix copy-pasted inner doc comments ([#2663](https://github.com/bluealloy/revm/pull/2663))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v5.0.0...revm-database-interface-v6.0.0) - 2025-06-19
 
 ### Added
