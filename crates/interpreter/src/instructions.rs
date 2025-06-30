@@ -224,7 +224,7 @@ mod tests {
             let is_instr_unknown = std::ptr::fn_addr_eq(*instr, unknown_istr);
             assert_eq!(
                 is_instr_unknown, is_opcode_unknown,
-                "Opcode 0x{i:X?} is not handled"
+                "Opcode 0x{i:X?} is not handled",
             );
         }
     }
