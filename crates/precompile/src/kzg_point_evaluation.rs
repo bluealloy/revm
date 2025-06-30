@@ -58,10 +58,18 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     // Verify KZG proof with z and y in big endian format
-    let commitment = as_bytes48(commitment);
-    let z = as_bytes32(&input[32..64]);
-    let y = as_bytes32(&input[64..96]);
-    let proof = as_bytes48(&input[144..192]);
+    let commitment: &[u8; 48] = commitment
+        .try_into()
+        .expect("expected `commitment` to be 48 bytes");
+    let z = input[32..64]
+        .try_into()
+        .expect("expected `z` to be 32 bytes");
+    let y = input[64..96]
+        .try_into()
+        .expect("expected `z` to be 32 bytes");
+    let proof = input[144..192]
+        .try_into()
+        .expect("expected `proof` to be 48 bytes");
     if !verify_kzg_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
@@ -80,25 +88,30 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
 
 /// Verify KZG proof.
 #[inline]
-pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
+pub fn verify_kzg_proof(
+    commitment: &[u8; 48],
+    z: &[u8; 32],
+    y: &[u8; 32],
+    proof: &[u8; 48],
+) -> bool {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "zkvm")] {
             unsafe {
                 zkvm::verify_kzg_proof(
-                    &commitment.into_inner(),
-                    &z.into_inner(),
-                    &y.into_inner(),
-                    &proof.into_inner()
+                    &commitment,
+                    &z,
+                    &y,
+                    &proof
                 )
             }
         } else if #[cfg(feature = "c-kzg")] {
             let kzg_settings = c_kzg::ethereum_kzg_settings(0);
-            kzg_settings.verify_kzg_proof(commitment, z, y, proof).unwrap_or(false)
+            kzg_settings.verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof)).unwrap_or(false)
         } else if #[cfg(feature = "kzg-rs")] {
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
 
-            KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+            KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
         }
     }
 }
@@ -106,14 +119,14 @@ pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &
 /// Convert a slice to an array of a specific size.
 #[inline]
 #[track_caller]
-pub fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
+fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
     bytes.try_into().expect("slice with incorrect length")
 }
 
 /// Convert a slice to a 32 byte big endian array.
 #[inline]
 #[track_caller]
-pub fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
+fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
