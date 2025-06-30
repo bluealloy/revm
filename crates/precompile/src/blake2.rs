@@ -132,8 +132,7 @@ pub mod algo {
         {
             // only if it is compiled with avx2 flag and it is std, we can use avx2.
             if std::is_x86_feature_detected!("avx2") {
-                println!("avx2 is run");
-                // avx2 gives 40% performance boost over portable implementation
+                // avx2 is 1.8x more performant than portable implementation.
                 unsafe {
                     super::avx2::compress_block(
                         rounds,
@@ -147,7 +146,7 @@ pub mod algo {
                 return;
             }
         }
-        println!("avx2 is not available");
+
         // if avx2 is not available, use the fallback portable implementation
 
         // Read m values
@@ -203,7 +202,7 @@ macro_rules! _MM_SHUFFLE {
 }
 
 /// Code adapted from https://github.com/oconnor663/blake2_simd/blob/82b3e2aee4d2384aabbeb146058301ff0dbd453f/blake2b/src/avx2.rs
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(all(target_feature = "avx2", feature = "std"))]
 mod avx2 {
     #[cfg(target_arch = "x86")]
     use core::arch::x86::*;
