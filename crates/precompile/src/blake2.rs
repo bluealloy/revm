@@ -128,17 +128,15 @@ pub mod algo {
     ) {
         assert!(m_slice.len() == 16 * size_of::<u64>());
 
-        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        #[cfg(target_feature = "avx2")]
         {
-            let time = std::time::Instant::now();
+            // only if it is compiled with avx2 flag, we can use avx2.
+            let enabled = false;
             #[cfg(feature = "std")]
             let enabled = std::is_x86_feature_detected!("avx2");
-            #[cfg(not(feature = "std"))]
-            let enabled = cfg!(target_feature = "avx2");
-            let elapsed = time.elapsed();
 
             if enabled {
-                //println!("avx2 is run, time: {:?}", elapsed);
+                println!("avx2 is run");
                 // avx2 gives 40% performance boost over portable implementation
                 unsafe {
                     super::avx2::compress_block(
