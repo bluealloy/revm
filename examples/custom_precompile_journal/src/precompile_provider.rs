@@ -154,7 +154,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
     let value = context
         .journal_mut()
         .sload(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY)
-        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {:?}", e)))?
+        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}")))?
         .data;
 
     // Return the value as output
@@ -185,7 +185,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .sstore(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY, value)
-        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {:?}", e)))?;
+        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}")))?;
 
     // Get the caller address
     let caller = context.tx().caller();
@@ -195,18 +195,17 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .balance_incr(CUSTOM_PRECOMPILE_ADDRESS, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {:?}", e)))?;
+        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}")))?;
 
     // Then transfer to caller
     let transfer_result = context
         .journal_mut()
         .transfer(CUSTOM_PRECOMPILE_ADDRESS, caller, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {:?}", e)))?;
+        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}")))?;
 
     if let Some(error) = transfer_result {
         return Err(PrecompileError::Other(format!(
-            "Transfer error: {:?}",
-            error
+            "Transfer error: {error:?}"
         )));
     }
 

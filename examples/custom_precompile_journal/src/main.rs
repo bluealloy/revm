@@ -53,8 +53,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("✅ Custom EVM with journal-accessing precompiles created successfully!");
     println!(
-        "🔧 Precompile available at address: {}",
-        CUSTOM_PRECOMPILE_ADDRESS
+        "🔧 Precompile available at address: {CUSTOM_PRECOMPILE_ADDRESS}"
     );
     println!("📝 Precompile supports:");
     println!("   - Read storage (empty input): Returns value from storage slot 0");
@@ -82,22 +81,21 @@ fn main() -> anyhow::Result<()> {
         Ok(revm::context::result::ExecutionResult::Success {
             output, gas_used, ..
         }) => {
-            println!("   ✓ Success! Gas used: {}", gas_used);
+            println!("   ✓ Success! Gas used: {gas_used}");
             let data = output.data();
             let value = U256::from_be_slice(data);
-            println!("   📖 Initial storage value: {}", value);
+            println!("   📖 Initial storage value: {value}");
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
             println!(
-                "   ❌ Reverted! Gas used: {}, Output: {:?}",
-                gas_used, output
+                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {:?}, Gas used: {}", reason, gas_used);
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
         }
         Err(e) => {
-            println!("   ❌ Error: {:?}", e);
+            println!("   ❌ Error: {e:?}");
         }
     }
 
@@ -118,21 +116,20 @@ fn main() -> anyhow::Result<()> {
 
     match write_result {
         Ok(revm::context::result::ExecutionResult::Success { gas_used, .. }) => {
-            println!("   ✓ Success! Gas used: {}", gas_used);
+            println!("   ✓ Success! Gas used: {gas_used}");
             println!("   📝 Value 42 written to storage");
             println!("   💰 1 wei transferred from precompile to caller as reward");
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
             println!(
-                "   ❌ Reverted! Gas used: {}, Output: {:?}",
-                gas_used, output
+                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {:?}, Gas used: {}", reason, gas_used);
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
         }
         Err(e) => {
-            println!("   ❌ Error: {:?}", e);
+            println!("   ❌ Error: {e:?}");
         }
     }
 
@@ -154,10 +151,10 @@ fn main() -> anyhow::Result<()> {
         Ok(revm::context::result::ExecutionResult::Success {
             output, gas_used, ..
         }) => {
-            println!("   ✓ Success! Gas used: {}", gas_used);
+            println!("   ✓ Success! Gas used: {gas_used}");
             let data = output.data();
             let value = U256::from_be_slice(data);
-            println!("   📖 Final storage value: {}", value);
+            println!("   📖 Final storage value: {value}");
             if value == U256::from(42) {
                 println!("   🎉 Storage write was successful!");
             } else {
@@ -166,15 +163,14 @@ fn main() -> anyhow::Result<()> {
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
             println!(
-                "   ❌ Reverted! Gas used: {}, Output: {:?}",
-                gas_used, output
+                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {:?}, Gas used: {}", reason, gas_used);
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
         }
         Err(e) => {
-            println!("   ❌ Error: {:?}", e);
+            println!("   ❌ Error: {e:?}");
         }
     }
 
