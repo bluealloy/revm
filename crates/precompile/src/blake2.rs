@@ -138,7 +138,7 @@ pub mod algo {
             let elapsed = time.elapsed();
 
             if enabled {
-                println!("avx2 is run, time: {:?}", elapsed);
+                //println!("avx2 is run, time: {:?}", elapsed);
                 // avx2 gives 40% performance boost over portable implementation
                 unsafe {
                     super::avx2::compress_block(
@@ -153,7 +153,7 @@ pub mod algo {
                 return;
             }
         }
-
+        println!("avx2 is not available");
         // if avx2 is not available, use the fallback portable implementation
 
         // Read m values
