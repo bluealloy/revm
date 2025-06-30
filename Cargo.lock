@@ -3847,6 +3847,7 @@ version = "6.0.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "either",
  "revm-primitives",
  "revm-state",
  "rstest",
