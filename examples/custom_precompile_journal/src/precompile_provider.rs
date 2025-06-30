@@ -204,9 +204,7 @@ fn handle_write_storage<CTX: ContextTr>(
         .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}")))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(format!(
-            "Transfer error: {error:?}"
-        )));
+        return Err(PrecompileError::Other(format!("Transfer error: {error:?}")));
     }
 
     // Return success with empty output

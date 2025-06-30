@@ -52,9 +52,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     println!("✅ Custom EVM with journal-accessing precompiles created successfully!");
-    println!(
-        "🔧 Precompile available at address: {CUSTOM_PRECOMPILE_ADDRESS}"
-    );
+    println!("🔧 Precompile available at address: {CUSTOM_PRECOMPILE_ADDRESS}");
     println!("📝 Precompile supports:");
     println!("   - Read storage (empty input): Returns value from storage slot 0");
     println!("   - Write storage (32-byte input): Stores value and transfers 1 wei to caller");
@@ -87,9 +85,7 @@ fn main() -> anyhow::Result<()> {
             println!("   📖 Initial storage value: {value}");
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!(
-                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
-            );
+            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
             println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
@@ -121,9 +117,7 @@ fn main() -> anyhow::Result<()> {
             println!("   💰 1 wei transferred from precompile to caller as reward");
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!(
-                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
-            );
+            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
             println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
@@ -162,9 +156,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!(
-                "   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}"
-            );
+            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
             println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
