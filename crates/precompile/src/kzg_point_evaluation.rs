@@ -11,7 +11,6 @@ cfg_if::cfg_if! {
 use primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
-
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
 

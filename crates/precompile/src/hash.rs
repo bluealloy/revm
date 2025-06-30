@@ -4,7 +4,6 @@ use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use sha2::Digest;
 
-
 /// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(2), sha256_run);
