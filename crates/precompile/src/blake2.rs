@@ -130,13 +130,15 @@ pub mod algo {
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
+            let time = std::time::Instant::now();
             #[cfg(feature = "std")]
             let enabled = std::is_x86_feature_detected!("avx2");
             #[cfg(not(feature = "std"))]
             let enabled = cfg!(target_feature = "avx2");
+            let elapsed = time.elapsed();
 
             if enabled {
-                println!("avx2 is run");
+                println!("avx2 is run, time: {:?}", elapsed);
                 // avx2 gives 40% performance boost over portable implementation
                 unsafe {
                     super::avx2::compress_block(
