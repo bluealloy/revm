@@ -180,21 +180,31 @@ pub(super) fn read_scalar(input: &[u8]) -> Fr {
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(super) fn g1_point_add(p1: G1Affine, p2: G1Affine) -> G1Affine {
+pub(super) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    let p1 = read_g1_point(p1_bytes)?;
+    let p2 = read_g1_point(p2_bytes)?;
+
     let p1_jacobian: G1Projective = p1.into();
 
     let p3 = p1_jacobian + p2;
+    let output = encode_g1_point(p3.into_affine());
 
-    p3.into_affine()
+    Ok(output)
 }
 
 /// Performs a G1 scalar multiplication.
 #[inline]
-pub(super) fn g1_point_mul(p: G1Affine, fr: Fr) -> G1Affine {
+pub(super) fn g1_point_mul(point_bytes: &[u8], fr_bytes: &[u8]) -> Result<[u8;64], PrecompileError> {
+
+    let p = read_g1_point(point_bytes)?;
+    let fr = read_scalar(fr_bytes);
+    
     let big_int = fr.into_bigint();
     let result = p.mul_bigint(big_int);
 
-    result.into_affine()
+    let output = encode_g1_point(result.into_affine());
+
+    Ok(output)
 }
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
@@ -203,13 +213,21 @@ pub(super) fn g1_point_mul(p: G1Affine, fr: Fr) -> G1Affine {
 /// Note: If the input is empty, this function returns true.
 /// This is different to EIP2537 which disallows the empty input.
 #[inline]
-pub(super) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
+pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+
+    let pairs: Vec<_> = pairs
+        .iter()
+        .map(|(g1_bytes, g2_bytes)| {
+            Ok((read_g1_point(g1_bytes)?, read_g2_point(g2_bytes)?))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
     if pairs.is_empty() {
-        return true;
+        return Ok(true);
     }
 
     let (g1_points, g2_points): (Vec<G1Affine>, Vec<G2Affine>) = pairs.iter().copied().unzip();
 
     let pairing_result = Bn254::multi_pairing(&g1_points, &g2_points);
-    pairing_result.0.is_one()
+    Ok(pairing_result.0.is_one())
 }
