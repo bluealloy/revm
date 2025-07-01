@@ -358,6 +358,17 @@ pub(super) fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
     p2_to_affine(&p)
 }
 
+/// Maps a field element to a G2 point taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn map_fp2_to_g2_bytes(
+    fp2_x: &[u8; FP_LENGTH],
+    fp2_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let fp2 = read_fp2(fp2_x, fp2_y)?;
+    let result = map_fp2_to_g2(&fp2);
+    Ok(encode_g2_point(&result))
+}
+
 /// Computes a single miller loop for a given G1, G2 pair
 #[inline]
 fn compute_miller_loop(g1: &blst_p1_affine, g2: &blst_p2_affine) -> blst_fp12 {

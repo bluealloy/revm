@@ -1,8 +1,5 @@
 //! BLS12-381 map fp2 to g2 precompile. More details in [`map_fp2_to_g2`]
-use super::{
-    crypto_backend::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
-    utils::remove_fp_padding,
-};
+use super::utils::remove_fp_padding;
 use crate::bls12_381_const::{
     MAP_FP2_TO_G2_ADDRESS, MAP_FP2_TO_G2_BASE_GAS_FEE, PADDED_FP2_LENGTH, PADDED_FP_LENGTH,
 };
@@ -31,12 +28,16 @@ pub fn map_fp2_to_g2(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
     let input_p0_x = remove_fp_padding(&input[..PADDED_FP_LENGTH])?;
     let input_p0_y = remove_fp_padding(&input[PADDED_FP_LENGTH..PADDED_FP2_LENGTH])?;
-    let fp2 = read_fp2(input_p0_x, input_p0_y)?;
-    let p_aff = blst_map_fp2_to_g2(&fp2);
-
-    let out = encode_g2_point(&p_aff);
-    Ok(PrecompileOutput::new(
-        MAP_FP2_TO_G2_BASE_GAS_FEE,
-        out.into(),
-    ))
+    
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "zkvm")] {
+            // Use zkVM implementation
+            let out = crate::zkvm::bls12_381::map_fp2_to_g2_bytes(input_p0_x, input_p0_y)?;
+            Ok(PrecompileOutput::new(MAP_FP2_TO_G2_BASE_GAS_FEE, out.into()))
+        } else {
+            // Use standard backend implementation
+            let out = super::crypto_backend::map_fp2_to_g2_bytes(input_p0_x, input_p0_y)?;
+            Ok(PrecompileOutput::new(MAP_FP2_TO_G2_BASE_GAS_FEE, out.into()))
+        }
+    }
 }

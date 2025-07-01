@@ -391,3 +391,29 @@ pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; 48]) -> Result<[u8; 128], Preco
         ))
     }
 }
+
+/// Maps a field element to a G2 point using zkVM implementation.
+#[inline]
+pub(super) fn map_fp2_to_g2_bytes(
+    fp2_x: &[u8; 48],
+    fp2_y: &[u8; 48],
+) -> Result<[u8; 256], PrecompileError> {
+    // Create 128-byte padded field element (2 x 64-byte padded FP elements)
+    let mut padded_fp2 = [0u8; 128];
+    padded_fp2[16..64].copy_from_slice(fp2_x); // x with 16-byte padding
+    padded_fp2[80..128].copy_from_slice(fp2_y); // y with 16-byte padding
+    
+    let mut result = [0u8; 256];
+
+    let success = unsafe {
+        zkvm_bls12_381_map_fp2_to_g2_impl(padded_fp2.as_ptr(), result.as_mut_ptr())
+    };
+
+    if success == 1 {
+        Ok(result)
+    } else {
+        Err(PrecompileError::Other(
+            "BLS12-381 map_fp2_to_g2 failed".to_string(),
+        ))
+    }
+}

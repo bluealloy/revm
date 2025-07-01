@@ -453,6 +453,17 @@ pub(super) fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
         .clear_cofactor()
 }
 
+/// Maps a field element to a G2 point taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn map_fp2_to_g2_bytes(
+    fp2_x: &[u8; FP_LENGTH],
+    fp2_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let fp2 = read_fp2(fp2_x, fp2_y)?;
+    let result = map_fp2_to_g2(&fp2);
+    Ok(encode_g2_point(&result))
+}
+
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 #[inline]
