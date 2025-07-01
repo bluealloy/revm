@@ -33,6 +33,7 @@ members = [
     "examples/erc20_gas",
     "examples/my_evm",
     "examples/custom_opcodes",
+    "examples/custom_precompile_journal",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
