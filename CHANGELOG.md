@@ -1,5 +1,16 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# 80
+date 01.07.2025
+
+Fix `build` and `build_fill` for OpTransactionBuilder
+
+* `revm-context`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-inspector`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm`: 27.0.0 -> 27.0.1 (✓ API compatible changes)
+* `op-revm`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+
 # v79
 date:  01.07.2025
 
