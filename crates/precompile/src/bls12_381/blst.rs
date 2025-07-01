@@ -283,6 +283,37 @@ pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) 
     p2_to_affine(&multiexp)
 }
 
+/// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p2_msm_bytes(
+    point_scalar_pairs: &[(
+        (
+            &[u8; FP_LENGTH],
+            &[u8; FP_LENGTH],
+            &[u8; FP_LENGTH],
+            &[u8; FP_LENGTH],
+        ),
+        &[u8; SCALAR_LENGTH],
+    )],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x0, x1, y0, y1), scalar_bytes) in point_scalar_pairs {
+        let point = read_g2_no_subgroup_check(x0, x1, y0, y1)?;
+        let scalar = read_scalar(scalar_bytes.as_slice())?;
+        g2_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Perform MSM
+    let result = p2_msm(g2_points, scalars);
+
+    // Encode result
+    Ok(encode_g2_point(&result))
+}
+
 /// Maps a field element to a G1 point
 ///
 /// Takes a field element (blst_fp) and returns the corresponding G1 point in affine form

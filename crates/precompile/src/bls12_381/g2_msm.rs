@@ -1,5 +1,4 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
-use super::crypto_backend::{encode_g2_point, p2_msm, read_g2, read_scalar};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
@@ -7,6 +6,7 @@ use crate::bls12_381_const::{
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use primitives::Bytes;
 use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -34,8 +34,9 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g2_points: Vec<_> = Vec::with_capacity(k);
-    let mut scalars = Vec::with_capacity(k);
+    let mut point_scalar_pairs: Vec<(([u8; 48], [u8; 48], [u8; 48], [u8; 48]), [u8; 32])> =
+        Vec::with_capacity(k);
+
     for i in 0..k {
         let encoded_g2_element =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
@@ -49,38 +50,46 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
             continue;
         }
 
-        let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
-
-        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        //
-        // So we set the subgroup_check flag to `true`
-        let p0_aff = read_g2(a_x_0, a_x_1, a_y_0, a_y_1)?;
-
         // If the scalar is zero, then this is a no-op.
-        //
-        // Note: This check is made after checking that g2 is valid.
-        // this is because we want the precompile to error when
-        // G2 is invalid, even if the scalar is zero.
         if encoded_scalar.iter().all(|i| *i == 0) {
             continue;
         }
 
-        // Convert affine point to Jacobian coordinates using our helper function
-        g2_points.push(p0_aff);
-        scalars.push(read_scalar(encoded_scalar)?);
+        let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
+
+        // Convert to fixed-size arrays for the new interface
+        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar
+            .try_into()
+            .map_err(|_| PrecompileError::Other("Invalid scalar length".into()))?;
+
+        point_scalar_pairs.push(((*a_x_0, *a_x_1, *a_y_0, *a_y_1), scalar_array));
     }
 
-    // Return infinity point if all points are infinity
-    if g2_points.is_empty() {
+    // Return the encoding for the point at the infinity according to EIP-2537
+    // if there are no points in the MSM.
+    const ENCODED_POINT_AT_INFINITY: [u8; PADDED_G2_LENGTH] = [0; PADDED_G2_LENGTH];
+    if point_scalar_pairs.is_empty() {
         return Ok(PrecompileOutput::new(
             required_gas,
-            [0; PADDED_G2_LENGTH].into(),
+            Bytes::from_static(&ENCODED_POINT_AT_INFINITY),
         ));
     }
 
-    // Perform multi-scalar multiplication using the safe wrapper
-    let multiexp_aff = p2_msm(g2_points, scalars);
+    // Convert to references for the backend interface
+    let pair_refs: Vec<_> = point_scalar_pairs
+        .iter()
+        .map(|((x0, x1, y0, y1), s)| ((x0, x1, y0, y1), s))
+        .collect();
 
-    let out = encode_g2_point(&multiexp_aff);
-    Ok(PrecompileOutput::new(required_gas, out.into()))
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "zkvm")] {
+            // Use zkVM implementation
+            let out = crate::zkvm::bls12_381::p2_msm_bytes(&pair_refs)?;
+            Ok(PrecompileOutput::new(required_gas, out.into()))
+        } else {
+            // Use standard backend implementation
+            let out = super::crypto_backend::p2_msm_bytes(&pair_refs)?;
+            Ok(PrecompileOutput::new(required_gas, out.into()))
+        }
+    }
 }

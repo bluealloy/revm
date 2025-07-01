@@ -269,6 +269,51 @@ pub(super) fn p1_msm_bytes(
     }
 }
 
+/// Performs G2 MSM using zkVM implementation, matching the backend interface.
+#[inline]
+pub(super) fn p2_msm_bytes(
+    point_scalar_pairs: &[((&[u8; 48], &[u8; 48], &[u8; 48], &[u8; 48]), &[u8; 32])],
+) -> Result<[u8; 256], PrecompileError> {
+    if point_scalar_pairs.is_empty() {
+        return Ok([0u8; 256]); // Return point at infinity
+    }
+
+    // Create contiguous buffers for points and scalars
+    let mut points_buffer = Vec::with_capacity(point_scalar_pairs.len() * 256);
+    let mut scalars_buffer = Vec::with_capacity(point_scalar_pairs.len() * 32);
+
+    for ((x0, x1, y0, y1), scalar) in point_scalar_pairs {
+        // Create 256-byte padded G2 point
+        let mut point_bytes = [0u8; 256];
+        point_bytes[16..64].copy_from_slice(x0); // x0 with 16-byte padding
+        point_bytes[80..128].copy_from_slice(x1); // x1 with 16-byte padding
+        point_bytes[144..192].copy_from_slice(y0); // y0 with 16-byte padding
+        point_bytes[208..256].copy_from_slice(y1); // y1 with 16-byte padding
+
+        points_buffer.extend_from_slice(&point_bytes);
+        scalars_buffer.extend_from_slice(scalar);
+    }
+
+    let mut result = [0u8; 256];
+
+    let success = unsafe {
+        zkvm_bls12_381_g2_msm_impl(
+            points_buffer.as_ptr(),
+            scalars_buffer.as_ptr(),
+            point_scalar_pairs.len() as u32,
+            result.as_mut_ptr(),
+        )
+    };
+
+    if success == 1 {
+        Ok(result)
+    } else {
+        Err(PrecompileError::Other(
+            "BLS12-381 G2 MSM failed".to_string(),
+        ))
+    }
+}
+
 /// Performs pairing check using zkVM implementation.
 #[inline]
 pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
