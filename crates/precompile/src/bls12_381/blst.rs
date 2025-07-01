@@ -7,6 +7,29 @@ use crate::{
     },
     PrecompileError,
 };
+
+// Type aliases to reduce complexity warnings
+type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
+type G2Point = (
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+);
+type G1PointScalarPairRef<'a> = (
+    (&'a [u8; FP_LENGTH], &'a [u8; FP_LENGTH]),
+    &'a [u8; SCALAR_LENGTH],
+);
+type G2PointScalarPairRef<'a> = (
+    (
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+    ),
+    &'a [u8; SCALAR_LENGTH],
+);
+type PairingPair = (G1Point, G2Point);
 use blst::{
     blst_bendian_from_fp, blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul,
     blst_fp2, blst_fp_from_bendian, blst_map_to_g1, blst_map_to_g2, blst_miller_loop, blst_p1,
@@ -100,18 +123,15 @@ pub(super) fn p1_add_affine(
     Ok(encode_g1_point(&result))
 }
 
-/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
+/// Helper function to perform G2 point addition with structured input
 #[inline]
-pub(super) fn p2_add_affine(
-    a_x_0: &[u8; FP_LENGTH],
-    a_x_1: &[u8; FP_LENGTH],
-    a_y_0: &[u8; FP_LENGTH],
-    a_y_1: &[u8; FP_LENGTH],
-    b_x_0: &[u8; FP_LENGTH],
-    b_x_1: &[u8; FP_LENGTH],
-    b_y_0: &[u8; FP_LENGTH],
-    b_y_1: &[u8; FP_LENGTH],
+fn p2_add_affine_impl(
+    point_a: &G2Point,
+    point_b: &G2Point,
 ) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let (a_x_0, a_x_1, a_y_0, a_y_1) = point_a;
+    let (b_x_0, b_x_1, b_y_0, b_y_1) = point_b;
+
     // Parse first point
     let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
 
@@ -129,6 +149,24 @@ pub(super) fn p2_add_affine(
 
     // Encode result
     Ok(encode_g2_point(&result))
+}
+
+/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
+#[inline]
+#[allow(clippy::too_many_arguments)]
+pub(super) fn p2_add_affine(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+    b_x_0: &[u8; FP_LENGTH],
+    b_x_1: &[u8; FP_LENGTH],
+    b_y_0: &[u8; FP_LENGTH],
+    b_y_1: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let point_a = (*a_x_0, *a_x_1, *a_y_0, *a_y_1);
+    let point_b = (*b_x_0, *b_x_1, *b_y_0, *b_y_1);
+    p2_add_affine_impl(&point_a, &point_b)
 }
 
 /// Performs a G1 scalar multiplication
@@ -224,7 +262,7 @@ pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) 
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p1_msm_bytes(
-    point_scalar_pairs: &[((&[u8; FP_LENGTH], &[u8; FP_LENGTH]), &[u8; SCALAR_LENGTH])],
+    point_scalar_pairs: &[G1PointScalarPairRef<'_>],
 ) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
     let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
     let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
@@ -286,15 +324,7 @@ pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) 
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p2_msm_bytes(
-    point_scalar_pairs: &[(
-        (
-            &[u8; FP_LENGTH],
-            &[u8; FP_LENGTH],
-            &[u8; FP_LENGTH],
-            &[u8; FP_LENGTH],
-        ),
-        &[u8; SCALAR_LENGTH],
-    )],
+    point_scalar_pairs: &[G2PointScalarPairRef<'_>],
 ) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
     let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
     let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
@@ -443,14 +473,7 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
 
 /// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
 #[inline]
-pub(super) fn pairing_check_bytes(
-    pairs: &[
-        (
-            ([u8; FP_LENGTH], [u8; FP_LENGTH]),
-            ([u8; FP_LENGTH], [u8; FP_LENGTH], [u8; FP_LENGTH], [u8; FP_LENGTH]),
-        )
-    ],
-) -> Result<bool, crate::PrecompileError> {
+pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, crate::PrecompileError> {
     if pairs.is_empty() {
         return Ok(true);
     }

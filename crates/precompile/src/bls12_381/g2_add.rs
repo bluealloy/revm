@@ -30,15 +30,14 @@ pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(&input[..PADDED_G2_LENGTH])?;
     let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(&input[PADDED_G2_LENGTH..])?;
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "zkvm")] {
-            // Use zkVM implementation
-            let out = crate::zkvm::bls12_381::p2_add_affine(a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1)?;
-            Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out.into()))
-        } else {
-            // Use standard backend implementation
-            let out = super::crypto_backend::p2_add_affine(a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1)?;
-            Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out.into()))
-        }
-    }
+    #[cfg(target_os = "zkvm")]
+    let out = crate::zkvm::bls12_381::p2_add_affine(
+        a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1,
+    )?;
+    #[cfg(not(target_os = "zkvm"))]
+    let out = super::crypto_backend::p2_add_affine(
+        a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1,
+    )?;
+
+    Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out.into()))
 }

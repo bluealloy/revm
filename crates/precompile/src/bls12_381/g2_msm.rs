@@ -9,6 +9,9 @@ use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithA
 use primitives::Bytes;
 use std::vec::Vec;
 
+// Type alias to reduce complexity warnings
+type G2PointScalarPair = (([u8; 48], [u8; 48], [u8; 48], [u8; 48]), [u8; 32]);
+
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
 
@@ -34,8 +37,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut point_scalar_pairs: Vec<(([u8; 48], [u8; 48], [u8; 48], [u8; 48]), [u8; 32])> =
-        Vec::with_capacity(k);
+    let mut point_scalar_pairs: Vec<G2PointScalarPair> = Vec::with_capacity(k);
 
     for i in 0..k {
         let encoded_g2_element =
@@ -81,15 +83,10 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         .map(|((x0, x1, y0, y1), s)| ((x0, x1, y0, y1), s))
         .collect();
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "zkvm")] {
-            // Use zkVM implementation
-            let out = crate::zkvm::bls12_381::p2_msm_bytes(&pair_refs)?;
-            Ok(PrecompileOutput::new(required_gas, out.into()))
-        } else {
-            // Use standard backend implementation
-            let out = super::crypto_backend::p2_msm_bytes(&pair_refs)?;
-            Ok(PrecompileOutput::new(required_gas, out.into()))
-        }
-    }
+    #[cfg(target_os = "zkvm")]
+    let out = crate::zkvm::bls12_381::p2_msm_bytes(&pair_refs)?;
+    #[cfg(not(target_os = "zkvm"))]
+    let out = super::crypto_backend::p2_msm_bytes(&pair_refs)?;
+
+    Ok(PrecompileOutput::new(required_gas, out.into()))
 }

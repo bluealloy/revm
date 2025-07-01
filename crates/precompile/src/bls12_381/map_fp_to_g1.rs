@@ -24,17 +24,12 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
     let input_p0 = remove_fp_padding(input)?;
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "zkvm")] {
-            // Use zkVM implementation
-            let out = crate::zkvm::bls12_381::map_fp_to_g1_bytes(input_p0)?;
-            Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out.into()))
-        } else {
-            // Use standard backend implementation
-            let out = super::crypto_backend::map_fp_to_g1_bytes(input_p0)?;
-            Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out.into()))
-        }
-    }
+    #[cfg(target_os = "zkvm")]
+    let out = crate::zkvm::bls12_381::map_fp_to_g1_bytes(input_p0)?;
+    #[cfg(not(target_os = "zkvm"))]
+    let out = super::crypto_backend::map_fp_to_g1_bytes(input_p0)?;
+
+    Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out.into()))
 }
 
 #[cfg(test)]

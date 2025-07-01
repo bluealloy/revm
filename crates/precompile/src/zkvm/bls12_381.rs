@@ -374,12 +374,10 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
 /// Performs pairing check using zkVM implementation with byte-based interface.
 #[inline]
 pub(super) fn pairing_check_bytes(
-    pairs: &[
-        (
-            ([u8; 48], [u8; 48]),
-            ([u8; 48], [u8; 48], [u8; 48], [u8; 48]),
-        )
-    ],
+    pairs: &[(
+        ([u8; 48], [u8; 48]),
+        ([u8; 48], [u8; 48], [u8; 48], [u8; 48]),
+    )],
 ) -> Result<bool, PrecompileError> {
     if pairs.is_empty() {
         return Ok(true);
@@ -394,14 +392,14 @@ pub(super) fn pairing_check_bytes(
         let mut g1_padded = [0u8; 128];
         g1_padded[16..64].copy_from_slice(g1_x);
         g1_padded[80..128].copy_from_slice(g1_y);
-        
+
         // Create padded G2 point (256 bytes)
         let mut g2_padded = [0u8; 256];
         g2_padded[16..64].copy_from_slice(g2_x_0);
         g2_padded[80..128].copy_from_slice(g2_x_1);
         g2_padded[144..192].copy_from_slice(g2_y_0);
         g2_padded[208..256].copy_from_slice(g2_y_1);
-        
+
         buffer.extend_from_slice(&g1_padded);
         buffer.extend_from_slice(&g2_padded);
     }
@@ -452,12 +450,11 @@ pub(super) fn map_fp2_to_g2_bytes(
     let mut padded_fp2 = [0u8; 128];
     padded_fp2[16..64].copy_from_slice(fp2_x); // x with 16-byte padding
     padded_fp2[80..128].copy_from_slice(fp2_y); // y with 16-byte padding
-    
+
     let mut result = [0u8; 256];
 
-    let success = unsafe {
-        zkvm_bls12_381_map_fp2_to_g2_impl(padded_fp2.as_ptr(), result.as_mut_ptr())
-    };
+    let success =
+        unsafe { zkvm_bls12_381_map_fp2_to_g2_impl(padded_fp2.as_ptr(), result.as_mut_ptr()) };
 
     if success == 1 {
         Ok(result)

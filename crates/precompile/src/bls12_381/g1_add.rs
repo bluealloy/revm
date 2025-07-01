@@ -29,15 +29,10 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let [a_x, a_y] = remove_g1_padding(&input[..PADDED_G1_LENGTH])?;
     let [b_x, b_y] = remove_g1_padding(&input[PADDED_G1_LENGTH..])?;
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "zkvm")] {
-            // Use zkVM implementation
-            let out = crate::zkvm::bls12_381::p1_add_affine(a_x, a_y, b_x, b_y)?;
-            Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
-        } else {
-            // Use standard backend implementation
-            let out = super::crypto_backend::p1_add_affine(a_x, a_y, b_x, b_y)?;
-            Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
-        }
-    }
+    #[cfg(target_os = "zkvm")]
+    let out = crate::zkvm::bls12_381::p1_add_affine(a_x, a_y, b_x, b_y)?;
+    #[cfg(not(target_os = "zkvm"))]
+    let out = super::crypto_backend::p1_add_affine(a_x, a_y, b_x, b_y)?;
+
+    Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
 }

@@ -54,39 +54,28 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if !g1_is_zero || !g2_is_zero {
             let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
             let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(encoded_g2_element)?;
-            
+
             // Skip pairs where both are zero
             if !g1_is_zero && !g2_is_zero {
                 pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
             }
         }
     }
-    
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "zkvm")] {
-            // Use zkVM implementation
-            let result = if pairs.is_empty() {
-                true
-            } else {
-                crate::zkvm::bls12_381::pairing_check_bytes(&pairs)?
-            };
-            let result_byte = if result { 1 } else { 0 };
-            Ok(PrecompileOutput::new(
-                required_gas,
-                B256::with_last_byte(result_byte).into(),
-            ))
-        } else {
-            // Use standard backend implementation
-            let result = if pairs.is_empty() {
-                true
-            } else {
-                super::crypto_backend::pairing_check_bytes(&pairs)?
-            };
-            let result_byte = if result { 1 } else { 0 };
-            Ok(PrecompileOutput::new(
-                required_gas,
-                B256::with_last_byte(result_byte).into(),
-            ))
-        }
-    }
+
+    let result = if pairs.is_empty() {
+        true
+    } else {
+        #[cfg(target_os = "zkvm")]
+        let check_result = crate::zkvm::bls12_381::pairing_check_bytes(&pairs)?;
+        #[cfg(not(target_os = "zkvm"))]
+        let check_result = super::crypto_backend::pairing_check_bytes(&pairs)?;
+
+        check_result
+    };
+
+    let result_byte = if result { 1 } else { 0 };
+    Ok(PrecompileOutput::new(
+        required_gas,
+        B256::with_last_byte(result_byte).into(),
+    ))
 }
