@@ -45,19 +45,6 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         let encoded_scalar = &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
             ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH];
 
-        // Filter out points infinity as an optimization, since it is a no-op.
-        // Note: Previously, points were being batch converted from Jacobian to Affine.
-        // In `blst`, this would essentially, zero out all of the points.
-        // Since all points are now in affine, this bug is avoided.
-        if encoded_g1_element.iter().all(|i| *i == 0) {
-            continue;
-        }
-
-        // If the scalar is zero, then this is a no-op.
-        if encoded_scalar.iter().all(|i| *i == 0) {
-            continue;
-        }
-
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
 
         // Convert to fixed-size arrays for the new interface
@@ -78,6 +65,10 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         ));
     }
 
+    // TODO: Add filtering optimizations to p1_msm_bytes backend method:
+    // - Filter out points at infinity (all zeros)
+    // - Filter out zero scalars
+
     // Convert to references for the backend interface
     let pair_refs: Vec<_> = point_scalar_pairs
         .iter()
@@ -95,7 +86,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
 #[cfg(test)]
 mod test {
     use super::*;
-    use primitives::hex;
+    use primitives::{hex, Bytes};
 
     #[test]
     fn bls_g1multiexp_g1_not_on_curve_but_in_subgroup() {
