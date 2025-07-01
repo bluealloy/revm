@@ -371,6 +371,56 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
     }
 }
 
+/// Performs pairing check using zkVM implementation with byte-based interface.
+#[inline]
+pub(super) fn pairing_check_bytes(
+    pairs: &[
+        (
+            ([u8; 48], [u8; 48]),
+            ([u8; 48], [u8; 48], [u8; 48], [u8; 48]),
+        )
+    ],
+) -> Result<bool, PrecompileError> {
+    if pairs.is_empty() {
+        return Ok(true);
+    }
+
+    // Create a contiguous buffer for all pairs
+    // Each pair: 128 bytes (G1) + 256 bytes (G2) = 384 bytes
+    let mut buffer = Vec::with_capacity(pairs.len() * 384);
+
+    for ((g1_x, g1_y), (g2_x_0, g2_x_1, g2_y_0, g2_y_1)) in pairs {
+        // Create padded G1 point (128 bytes)
+        let mut g1_padded = [0u8; 128];
+        g1_padded[16..64].copy_from_slice(g1_x);
+        g1_padded[80..128].copy_from_slice(g1_y);
+        
+        // Create padded G2 point (256 bytes)
+        let mut g2_padded = [0u8; 256];
+        g2_padded[16..64].copy_from_slice(g2_x_0);
+        g2_padded[80..128].copy_from_slice(g2_x_1);
+        g2_padded[144..192].copy_from_slice(g2_y_0);
+        g2_padded[208..256].copy_from_slice(g2_y_1);
+        
+        buffer.extend_from_slice(&g1_padded);
+        buffer.extend_from_slice(&g2_padded);
+    }
+
+    let result = unsafe { zkvm_bls12_381_pairing_impl(buffer.as_ptr(), pairs.len() as u32) };
+
+    match result {
+        1 => Ok(true),  // Pairing passed
+        0 => Ok(false), // Pairing failed (valid input)
+        -1 => Err(PrecompileError::Other(
+            "Invalid BLS12-381 pairing input".to_string(),
+        )),
+        _ => Err(PrecompileError::Other(format!(
+            "Unexpected BLS12-381 pairing result: {}",
+            result
+        ))),
+    }
+}
+
 /// Maps a field element to a G1 point using zkVM implementation.
 #[inline]
 pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; 48]) -> Result<[u8; 128], PrecompileError> {

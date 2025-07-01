@@ -477,3 +477,27 @@ pub(super) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
     let pairing_result = Bls12_381::multi_pairing(&g1_points, &g2_points);
     pairing_result.0.is_one()
 }
+
+/// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
+#[inline]
+pub(super) fn pairing_check_bytes(
+    pairs: &[
+        (
+            ([u8; FP_LENGTH], [u8; FP_LENGTH]),
+            ([u8; FP_LENGTH], [u8; FP_LENGTH], [u8; FP_LENGTH], [u8; FP_LENGTH]),
+        )
+    ],
+) -> Result<bool, crate::PrecompileError> {
+    if pairs.is_empty() {
+        return Ok(true);
+    }
+
+    let mut parsed_pairs = Vec::with_capacity(pairs.len());
+    for ((g1_x, g1_y), (g2_x_0, g2_x_1, g2_y_0, g2_y_1)) in pairs {
+        let g1_point = read_g1(g1_x, g1_y)?;
+        let g2_point = read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
+        parsed_pairs.push((g1_point, g2_point));
+    }
+
+    Ok(pairing_check(&parsed_pairs))
+}
