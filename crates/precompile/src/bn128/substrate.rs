@@ -179,6 +179,7 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
     let parsed_pairs: Vec<_> = pairs
         .iter()
         .map(|(g1_bytes, g2_bytes)| Ok((read_g1_point(g1_bytes)?, read_g2_point(g2_bytes)?)))
+        // TODO: Add a filter to remove points at infinity
         .collect::<Result<Vec<_>, _>>()?;
 
     if parsed_pairs.is_empty() {
