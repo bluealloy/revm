@@ -3,6 +3,7 @@
 //! This module contains zkVM-optimized implementations of various precompiles
 //! that can be used when running in zero-knowledge virtual machine environments.
 
+pub mod blake2;
 pub mod bn128;
 pub mod hash;
 pub mod kzg_point_evaluation;
