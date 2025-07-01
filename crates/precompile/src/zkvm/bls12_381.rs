@@ -94,6 +94,17 @@ extern "C" {
     /// * 0 if pairing check failed (valid input, result does not equal identity)
     /// * -1 if invalid input (points not on curve, wrong format, etc.)
     fn zkvm_bls12_381_pairing_impl(pairs_ptr: *const u8, num_pairs: u32) -> i32;
+
+    /// zkVM implementation of BLS12-381 mapping field element to G1 point.
+    ///
+    /// # Arguments
+    /// * `fp_ptr` - Pointer to 64-byte field element (padded)
+    /// * `result_ptr` - Pointer to output buffer for 128-byte result G1 point
+    ///
+    /// # Returns
+    /// * 1 if operation succeeded
+    /// * 0 if operation failed (invalid field element, etc.)
+    fn zkvm_bls12_381_map_fp_to_g1_impl(fp_ptr: *const u8, result_ptr: *mut u8) -> i32;
 }
 
 /// Performs G1 point addition using zkVM implementation, matching the backend interface.
@@ -357,5 +368,26 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
             "Unexpected BLS12-381 pairing result: {}",
             result
         ))),
+    }
+}
+
+/// Maps a field element to a G1 point using zkVM implementation.
+#[inline]
+pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; 48]) -> Result<[u8; 128], PrecompileError> {
+    // Create 64-byte padded field element
+    let mut padded_fp = [0u8; 64];
+    padded_fp[16..64].copy_from_slice(fp_bytes); // pad 16 bytes at start
+
+    let mut result = [0u8; 128];
+
+    let success =
+        unsafe { zkvm_bls12_381_map_fp_to_g1_impl(padded_fp.as_ptr(), result.as_mut_ptr()) };
+
+    if success == 1 {
+        Ok(result)
+    } else {
+        Err(PrecompileError::Other(
+            "BLS12-381 map_fp_to_g1 failed".to_string(),
+        ))
     }
 }

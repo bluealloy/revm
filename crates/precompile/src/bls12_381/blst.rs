@@ -331,6 +331,16 @@ pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
     p1_to_affine(&p)
 }
 
+/// Maps a field element to a G1 point taking byte input and returning encoded result.
+#[inline]
+pub(super) fn map_fp_to_g1_bytes(
+    fp_bytes: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    let fp = read_fp(fp_bytes)?;
+    let result = map_fp_to_g1(&fp);
+    Ok(encode_g1_point(&result))
+}
+
 /// Maps a field element to a G2 point
 ///
 /// Takes a field element (blst_fp2) and returns the corresponding G2 point in affine form
