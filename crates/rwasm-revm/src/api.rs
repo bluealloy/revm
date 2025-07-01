@@ -98,6 +98,7 @@ where
     >;
 
     fn replay_commit(&mut self) -> Self::CommitOutput {
+        fluentbase_runtime::reset_call_id_counter();
         self.replay().map(|r| {
             self.ctx().db().commit(r.state);
             r.result
