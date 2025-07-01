@@ -35,7 +35,7 @@ serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer", "gmp"]
 std = [
 	"interpreter/std",
 	"precompile/std",
