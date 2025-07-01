@@ -114,6 +114,13 @@ mod failing_tests {
     }
 }
 
+mod stack_underflow_tests {
+    define_tests! {
+        // fn trans_storage_ok("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/transStorageOK.json");
+        fn invalid_diff_places("tests/GeneralStateTests/stBadOpcode/invalidDiffPlaces.json");
+    }
+}
+
 mod cancun_st_eip4844_blobtransactions {
     define_tests! {
         // fn blobhash_list_bounds10("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds10.json");
