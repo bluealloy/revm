@@ -341,6 +341,29 @@ pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
         .into_affine()
 }
 
+/// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p1_msm_bytes(
+    point_scalar_pairs: &[((&[u8; FP_LENGTH], &[u8; FP_LENGTH]), &[u8; SCALAR_LENGTH])],
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x, y), scalar_bytes) in point_scalar_pairs {
+        let point = read_g1_no_subgroup_check(x, y)?;
+        let scalar = read_scalar(scalar_bytes.as_slice())?;
+        g1_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Perform MSM
+    let result = p1_msm(g1_points, scalars);
+
+    // Encode result
+    Ok(encode_g1_point(&result))
+}
+
 /// Performs multi-scalar multiplication (MSM) for G2 points
 ///
 /// Takes a vector of G2 points and corresponding scalars, and returns their weighted sum

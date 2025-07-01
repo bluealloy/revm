@@ -61,6 +61,24 @@ extern "C" {
         result_ptr: *mut u8,
     ) -> i32;
 
+    /// zkVM implementation of BLS12-381 G1 Multi-Scalar Multiplication (MSM).
+    ///
+    /// # Arguments
+    /// * `points_ptr` - Pointer to array of 128-byte G1 points (padded x, y coordinates, 64 bytes each)
+    /// * `scalars_ptr` - Pointer to array of 32-byte scalar values
+    /// * `num_pairs` - Number of point-scalar pairs
+    /// * `result_ptr` - Pointer to output buffer for 128-byte result G1 point
+    ///
+    /// # Returns
+    /// * 1 if operation succeeded
+    /// * 0 if operation failed (invalid points, etc.)
+    fn zkvm_bls12_381_g1_msm_impl(
+        points_ptr: *const u8,
+        scalars_ptr: *const u8,
+        num_pairs: u32,
+        result_ptr: *mut u8,
+    ) -> i32;
+
     /// zkVM implementation of BLS12-381 pairing check.
     ///
     /// # Arguments
@@ -204,6 +222,49 @@ pub(super) fn g2_point_mul(
     } else {
         Err(PrecompileError::Other(
             "BLS12-381 G2 multiplication failed".to_string(),
+        ))
+    }
+}
+
+/// Performs G1 MSM using zkVM implementation, matching the backend interface.
+#[inline]
+pub(super) fn p1_msm_bytes(
+    point_scalar_pairs: &[((&[u8; 48], &[u8; 48]), &[u8; 32])],
+) -> Result<[u8; 128], PrecompileError> {
+    if point_scalar_pairs.is_empty() {
+        return Ok([0u8; 128]); // Return point at infinity
+    }
+
+    // Create contiguous buffers for points and scalars
+    let mut points_buffer = Vec::with_capacity(point_scalar_pairs.len() * 128);
+    let mut scalars_buffer = Vec::with_capacity(point_scalar_pairs.len() * 32);
+
+    for ((x, y), scalar) in point_scalar_pairs {
+        // Create 128-byte padded point
+        let mut point_bytes = [0u8; 128];
+        point_bytes[16..64].copy_from_slice(x); // x with 16-byte padding
+        point_bytes[80..128].copy_from_slice(y); // y with 16-byte padding
+
+        points_buffer.extend_from_slice(&point_bytes);
+        scalars_buffer.extend_from_slice(scalar);
+    }
+
+    let mut result = [0u8; 128];
+
+    let success = unsafe {
+        zkvm_bls12_381_g1_msm_impl(
+            points_buffer.as_ptr(),
+            scalars_buffer.as_ptr(),
+            point_scalar_pairs.len() as u32,
+            result.as_mut_ptr(),
+        )
+    };
+
+    if success == 1 {
+        Ok(result)
+    } else {
+        Err(PrecompileError::Other(
+            "BLS12-381 G1 MSM failed".to_string(),
         ))
     }
 }
