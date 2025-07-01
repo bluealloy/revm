@@ -51,11 +51,24 @@ pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         Err(PrecompileError::OutOfGas)
     } else {
-        let mut hasher = ripemd::Ripemd160::new();
-        hasher.update(input);
+        let hash = ripemd160_hash(input);
 
+        // RIPEMD-160 produces 20 bytes, but Ethereum expects 32 bytes with 12 leading zeros
         let mut output = [0u8; 32];
-        hasher.finalize_into((&mut output[12..]).into());
+        output[12..].copy_from_slice(&hash);
         Ok(PrecompileOutput::new(gas_used, output.to_vec().into()))
     }
+}
+
+/// Core RIPEMD-160 hash function that can be overridden by zkVM implementations
+#[cfg(target_os = "zkvm")]
+pub fn ripemd160_hash(input: &[u8]) -> [u8; 20] {
+    crate::zkvm::hash::ripemd160_hash(input)
+}
+
+/// Core RIPEMD-160 hash function using standard implementation
+#[cfg(not(target_os = "zkvm"))]
+pub fn ripemd160_hash(input: &[u8]) -> [u8; 20] {
+    use ripemd::Digest;
+    ripemd::Ripemd160::digest(input).into()
 }
