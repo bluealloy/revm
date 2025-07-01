@@ -274,6 +274,11 @@ impl TxEnvBuilder {
         self
     }
 
+    /// Get the transaction type
+    pub fn get_tx_type(&self) -> Option<u8> {
+        self.tx_type
+    }
+
     /// Set the caller address
     pub fn caller(mut self, caller: Address) -> Self {
         self.caller = caller;
@@ -392,7 +397,6 @@ impl TxEnvBuilder {
 
     /// Build the final [`TxEnv`] with default values for missing fields.
     pub fn build_fill(mut self) -> TxEnv {
-        let tx_type_not_set = self.tx_type.is_some();
         if let Some(tx_type) = self.tx_type {
             match TransactionType::from(tx_type) {
                 TransactionType::Legacy => {
@@ -472,7 +476,7 @@ impl TxEnvBuilder {
         };
 
         // if tx_type is not set, derive it from fields and fix errors.
-        if tx_type_not_set {
+        if self.tx_type.is_none() {
             match tx.derive_tx_type() {
                 Ok(_) => {}
                 Err(DeriveTxTypeError::MissingTargetForEip4844) => {
@@ -540,8 +544,8 @@ impl TxEnvBuilder {
                         return Err(DeriveTxTypeError::MissingTargetForEip4844.into());
                     }
                 }
-                _ => {
-                    panic!()
+                TransactionType::Custom => {
+                    // do nothing, custom transaction type is handled by the caller.
                 }
             }
         }
@@ -564,7 +568,9 @@ impl TxEnvBuilder {
         };
 
         // Derive tx type from fields, if some fields are wrongly set it will return an error.
-        tx.derive_tx_type()?;
+        if self.tx_type.is_none() {
+            tx.derive_tx_type()?;
+        }
 
         Ok(tx)
     }
