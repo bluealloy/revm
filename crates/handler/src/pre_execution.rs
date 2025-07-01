@@ -138,7 +138,7 @@ pub fn validate_against_state_and_deduct_caller<
         is_nonce_check_disabled,
     )?;
 
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
     if tx.kind().is_call() {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
