@@ -77,16 +77,16 @@ fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
 #[inline]
 pub(super) fn p1_add_affine(
     a_x: &[u8; FP_LENGTH],
-    a_y: &[u8; FP_LENGTH], 
+    a_y: &[u8; FP_LENGTH],
     b_x: &[u8; FP_LENGTH],
-    b_y: &[u8; FP_LENGTH]
+    b_y: &[u8; FP_LENGTH],
 ) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
     // Parse first point
     let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
-    
-    // Parse second point  
+
+    // Parse second point
     let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
-    
+
     // Convert first point to Jacobian coordinates
     let a_jacobian = p1_from_affine(&p1);
 
@@ -95,22 +95,40 @@ pub(super) fn p1_add_affine(
 
     // Convert result back to affine coordinates
     let result = p1_to_affine(&sum_jacobian);
-    
+
     // Encode result
     Ok(encode_g1_point(&result))
 }
 
-/// Add two G2 points in affine form, returning the result in affine form
+/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
 #[inline]
-pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
+pub(super) fn p2_add_affine(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+    b_x_0: &[u8; FP_LENGTH],
+    b_x_1: &[u8; FP_LENGTH],
+    b_y_0: &[u8; FP_LENGTH],
+    b_y_1: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    // Parse first point
+    let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+
+    // Parse second point
+    let p2 = read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+
     // Convert first point to Jacobian coordinates
-    let a_jacobian = p2_from_affine(a);
+    let a_jacobian = p2_from_affine(&p1);
 
     // Add second point (in affine) to first point (in Jacobian)
-    let sum_jacobian = p2_add_or_double(&a_jacobian, b);
+    let sum_jacobian = p2_add_or_double(&a_jacobian, &p2);
 
     // Convert result back to affine coordinates
-    p2_to_affine(&sum_jacobian)
+    let result = p2_to_affine(&sum_jacobian);
+
+    // Encode result
+    Ok(encode_g2_point(&result))
 }
 
 /// Performs a G1 scalar multiplication

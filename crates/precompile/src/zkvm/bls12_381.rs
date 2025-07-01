@@ -13,7 +13,8 @@ extern "C" {
     /// # Returns
     /// * 1 if operation succeeded
     /// * 0 if operation failed (invalid points, etc.)
-    fn zkvm_bls12_381_g1_add_impl(p1_ptr: *const u8, p2_ptr: *const u8, result_ptr: *mut u8) -> i32;
+    fn zkvm_bls12_381_g1_add_impl(p1_ptr: *const u8, p2_ptr: *const u8, result_ptr: *mut u8)
+        -> i32;
 
     /// zkVM implementation of BLS12-381 G1 scalar multiplication.
     ///
@@ -41,7 +42,8 @@ extern "C" {
     /// # Returns
     /// * 1 if operation succeeded
     /// * 0 if operation failed (invalid points, etc.)
-    fn zkvm_bls12_381_g2_add_impl(p1_ptr: *const u8, p2_ptr: *const u8, result_ptr: *mut u8) -> i32;
+    fn zkvm_bls12_381_g2_add_impl(p1_ptr: *const u8, p2_ptr: *const u8, result_ptr: *mut u8)
+        -> i32;
 
     /// zkVM implementation of BLS12-381 G2 scalar multiplication.
     ///
@@ -79,23 +81,24 @@ extern "C" {
 /// Performs G1 point addition using zkVM implementation, matching the backend interface.
 #[inline]
 pub(super) fn p1_add_affine(
-    a_x: &[u8; 48], // FP_LENGTH 
+    a_x: &[u8; 48], // FP_LENGTH
     a_y: &[u8; 48],
     b_x: &[u8; 48],
-    b_y: &[u8; 48]
-) -> Result<[u8; 128], PrecompileError> { // PADDED_G1_LENGTH
+    b_y: &[u8; 48],
+) -> Result<[u8; 128], PrecompileError> {
+    // PADDED_G1_LENGTH
     // Create 128-byte point representations by padding the coordinates
     let mut p1_bytes = [0u8; 128];
     let mut p2_bytes = [0u8; 128];
-    
+
     // For BLS12-381, coordinates are padded from 48 bytes to 64 bytes
     // Copy x coordinate with padding
     p1_bytes[16..64].copy_from_slice(a_x); // pad 16 bytes at start
     p1_bytes[80..128].copy_from_slice(a_y); // pad 16 bytes at start
-    
+
     p2_bytes[16..64].copy_from_slice(b_x);
     p2_bytes[80..128].copy_from_slice(b_y);
-    
+
     let mut result = [0u8; 128];
 
     let success = unsafe {
@@ -105,7 +108,9 @@ pub(super) fn p1_add_affine(
     if success == 1 {
         Ok(result)
     } else {
-        Err(PrecompileError::Other("BLS12-381 G1 addition failed".to_string()))
+        Err(PrecompileError::Other(
+            "BLS12-381 G1 addition failed".to_string(),
+        ))
     }
 }
 
@@ -128,13 +133,41 @@ pub(super) fn g1_point_mul(
     if success == 1 {
         Ok(result)
     } else {
-        Err(PrecompileError::Other("BLS12-381 G1 multiplication failed".to_string()))
+        Err(PrecompileError::Other(
+            "BLS12-381 G1 multiplication failed".to_string(),
+        ))
     }
 }
 
-/// Performs G2 point addition using zkVM implementation.
+/// Performs G2 point addition using zkVM implementation, matching the backend interface.
 #[inline]
-pub(super) fn g2_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 256], PrecompileError> {
+pub(super) fn p2_add_affine(
+    a_x_0: &[u8; 48], // FP_LENGTH
+    a_x_1: &[u8; 48],
+    a_y_0: &[u8; 48],
+    a_y_1: &[u8; 48],
+    b_x_0: &[u8; 48],
+    b_x_1: &[u8; 48],
+    b_y_0: &[u8; 48],
+    b_y_1: &[u8; 48],
+) -> Result<[u8; 256], PrecompileError> {
+    // PADDED_G2_LENGTH
+    // Create 256-byte point representations by padding the coordinates
+    let mut p1_bytes = [0u8; 256];
+    let mut p2_bytes = [0u8; 256];
+
+    // For BLS12-381 G2, coordinates are padded from 48 bytes to 64 bytes
+    // G2 point format: [x0 (64), x1 (64), y0 (64), y1 (64)]
+    p1_bytes[16..64].copy_from_slice(a_x_0); // x0 with 16-byte padding
+    p1_bytes[80..128].copy_from_slice(a_x_1); // x1 with 16-byte padding
+    p1_bytes[144..192].copy_from_slice(a_y_0); // y0 with 16-byte padding
+    p1_bytes[208..256].copy_from_slice(a_y_1); // y1 with 16-byte padding
+
+    p2_bytes[16..64].copy_from_slice(b_x_0); // x0 with 16-byte padding
+    p2_bytes[80..128].copy_from_slice(b_x_1); // x1 with 16-byte padding
+    p2_bytes[144..192].copy_from_slice(b_y_0); // y0 with 16-byte padding
+    p2_bytes[208..256].copy_from_slice(b_y_1); // y1 with 16-byte padding
+
     let mut result = [0u8; 256];
 
     let success = unsafe {
@@ -144,7 +177,9 @@ pub(super) fn g2_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 256]
     if success == 1 {
         Ok(result)
     } else {
-        Err(PrecompileError::Other("BLS12-381 G2 addition failed".to_string()))
+        Err(PrecompileError::Other(
+            "BLS12-381 G2 addition failed".to_string(),
+        ))
     }
 }
 
@@ -167,7 +202,9 @@ pub(super) fn g2_point_mul(
     if success == 1 {
         Ok(result)
     } else {
-        Err(PrecompileError::Other("BLS12-381 G2 multiplication failed".to_string()))
+        Err(PrecompileError::Other(
+            "BLS12-381 G2 multiplication failed".to_string(),
+        ))
     }
 }
 
@@ -207,7 +244,9 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
     match result {
         1 => Ok(true),  // Pairing passed
         0 => Ok(false), // Pairing failed (valid input)
-        -1 => Err(PrecompileError::Other("Invalid BLS12-381 pairing input".to_string())),
+        -1 => Err(PrecompileError::Other(
+            "Invalid BLS12-381 pairing input".to_string(),
+        )),
         _ => Err(PrecompileError::Other(format!(
             "Unexpected BLS12-381 pairing result: {}",
             result

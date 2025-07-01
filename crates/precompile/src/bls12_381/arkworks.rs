@@ -267,31 +267,50 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
 #[inline]
 pub(super) fn p1_add_affine(
     a_x: &[u8; FP_LENGTH],
-    a_y: &[u8; FP_LENGTH], 
+    a_y: &[u8; FP_LENGTH],
     b_x: &[u8; FP_LENGTH],
-    b_y: &[u8; FP_LENGTH]
+    b_y: &[u8; FP_LENGTH],
 ) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
     // Parse first point
     let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
-    
-    // Parse second point  
+
+    // Parse second point
     let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
-    
+
     // Perform addition
     let p1_proj: G1Projective = p1.into();
     let p3 = p1_proj + p2;
     let result = p3.into_affine();
-    
+
     // Encode result
     Ok(encode_g1_point(&result))
 }
 
-/// Performs point addition on two G2 points.
+/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
 #[inline]
-pub(super) fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
-    let p1_proj: G2Projective = (*p1).into();
+pub(super) fn p2_add_affine(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+    b_x_0: &[u8; FP_LENGTH],
+    b_x_1: &[u8; FP_LENGTH],
+    b_y_0: &[u8; FP_LENGTH],
+    b_y_1: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    // Parse first point
+    let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+
+    // Parse second point
+    let p2 = read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+
+    // Perform addition
+    let p1_proj: G2Projective = p1.into();
     let p3 = p1_proj + p2;
-    p3.into_affine()
+    let result = p3.into_affine();
+
+    // Encode result
+    Ok(encode_g2_point(&result))
 }
 
 /// Performs multi-scalar multiplication (MSM) for G1 points
