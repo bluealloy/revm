@@ -4,6 +4,7 @@
 //! that can be used when running in zero-knowledge virtual machine environments.
 
 pub mod blake2;
+pub mod bls12_381;
 pub mod bn128;
 pub mod hash;
 pub mod kzg_point_evaluation;

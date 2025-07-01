@@ -73,20 +73,31 @@ fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
     result
 }
 
-/// p1_add_affine adds two G1 points in affine form, returning the result in affine form
-///
-/// Note: `a` and `b` can be the same, ie this method is safe to call if one wants
-/// to essentially double a point
+/// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
 #[inline]
-pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
+pub(super) fn p1_add_affine(
+    a_x: &[u8; FP_LENGTH],
+    a_y: &[u8; FP_LENGTH], 
+    b_x: &[u8; FP_LENGTH],
+    b_y: &[u8; FP_LENGTH]
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    // Parse first point
+    let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
+    
+    // Parse second point  
+    let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
+    
     // Convert first point to Jacobian coordinates
-    let a_jacobian = p1_from_affine(a);
+    let a_jacobian = p1_from_affine(&p1);
 
     // Add second point (in affine) to first point (in Jacobian)
-    let sum_jacobian = p1_add_or_double(&a_jacobian, b);
+    let sum_jacobian = p1_add_or_double(&a_jacobian, &p2);
 
     // Convert result back to affine coordinates
-    p1_to_affine(&sum_jacobian)
+    let result = p1_to_affine(&sum_jacobian);
+    
+    // Encode result
+    Ok(encode_g1_point(&result))
 }
 
 /// Add two G2 points in affine form, returning the result in affine form

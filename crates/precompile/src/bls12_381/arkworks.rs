@@ -263,12 +263,27 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
     Ok(Fr::from_be_bytes_mod_order(input))
 }
 
-/// Performs point addition on two G1 points.
+/// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
 #[inline]
-pub(super) fn p1_add_affine(p1: &G1Affine, p2: &G1Affine) -> G1Affine {
-    let p1_proj: G1Projective = (*p1).into();
+pub(super) fn p1_add_affine(
+    a_x: &[u8; FP_LENGTH],
+    a_y: &[u8; FP_LENGTH], 
+    b_x: &[u8; FP_LENGTH],
+    b_y: &[u8; FP_LENGTH]
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    // Parse first point
+    let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
+    
+    // Parse second point  
+    let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
+    
+    // Perform addition
+    let p1_proj: G1Projective = p1.into();
     let p3 = p1_proj + p2;
-    p3.into_affine()
+    let result = p3.into_affine();
+    
+    // Encode result
+    Ok(encode_g1_point(&result))
 }
 
 /// Performs point addition on two G2 points.
