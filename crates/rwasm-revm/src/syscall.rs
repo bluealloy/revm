@@ -8,9 +8,6 @@ use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     bytes::Buf,
     calc_create4_address,
-    calc_preimage_address,
-    is_delegated_runtime_address,
-    is_protected_storage_slot,
     keccak256,
     Address,
     Bytes,
@@ -29,7 +26,6 @@ use fluentbase_sdk::{
     SYSCALL_ID_CODE_SIZE,
     SYSCALL_ID_CREATE,
     SYSCALL_ID_CREATE2,
-    SYSCALL_ID_DELEGATED_STORAGE,
     SYSCALL_ID_DELEGATE_CALL,
     SYSCALL_ID_DESTROY_ACCOUNT,
     SYSCALL_ID_EMIT_LOG,
@@ -37,15 +33,12 @@ use fluentbase_sdk::{
     SYSCALL_ID_METADATA_CREATE,
     SYSCALL_ID_METADATA_SIZE,
     SYSCALL_ID_METADATA_WRITE,
-    SYSCALL_ID_PREIMAGE_COPY,
-    SYSCALL_ID_PREIMAGE_SIZE,
     SYSCALL_ID_SELF_BALANCE,
     SYSCALL_ID_STATIC_CALL,
     SYSCALL_ID_STORAGE_READ,
     SYSCALL_ID_STORAGE_WRITE,
     SYSCALL_ID_TRANSIENT_READ,
     SYSCALL_ID_TRANSIENT_WRITE,
-    SYSCALL_ID_WRITE_PREIMAGE,
     U256,
     WASM_MAGIC_BYTES,
     WASM_MAX_CODE_SIZE,
@@ -170,32 +163,17 @@ pub(crate) fn execute_rwasm_interruption<
             // don't allow for static context
             assert_return!(!inputs.is_static, StateChangeDuringStaticCall);
             let slot = U256::from_le_slice(&inputs.syscall_params.input[0..32]);
-            // modification of the code hash slot
-            // if is not allowed in a normal smart contract mode
-            if is_protected_storage_slot(slot) {
-                if let Some(rwasm_proxy_address) = account_owner_address {
-                    if !is_delegated_runtime_address(&rwasm_proxy_address) {
-                        return_result!(MalformedBuiltinParams);
-                    }
-                } else {
-                    return_result!(MalformedBuiltinParams);
-                }
-            }
             let new_value = U256::from_le_slice(&inputs.syscall_params.input[32..64]);
             #[cfg(feature = "debug-print")]
             println!("SYSCALL_STORAGE_WRITE: slot={slot}, new_value={new_value}");
             // execute sstore
             let value = journal.sstore(current_target_address, slot, new_value)?;
-            // TODO(dmitry123): "is there better way how to solve the problem?"
-            let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
-            if !is_gas_free {
-                if local_gas.remaining() <= CALL_STIPEND {
-                    return_result!(ReentrancySentryOOG);
-                }
-                let gas_cost = sstore_cost(spec_id.clone(), &value.data, value.is_cold);
-                charge_gas!(gas_cost);
-                local_gas.record_refund(sstore_refund(spec_id, &value.data));
+            if local_gas.remaining() <= CALL_STIPEND {
+                return_result!(ReentrancySentryOOG);
             }
+            let gas_cost = sstore_cost(spec_id.clone(), &value.data, value.is_cold);
+            charge_gas!(gas_cost);
+            local_gas.record_refund(sstore_refund(spec_id, &value.data));
             return_result!(Bytes::default(), Return)
         }
 
@@ -652,82 +630,6 @@ pub(crate) fn execute_rwasm_interruption<
             return_result!(bytecode, Return);
         }
 
-        // TODO(dmitry123): "rethink these system calls"
-        SYSCALL_ID_WRITE_PREIMAGE => {
-            assert_return!(
-                inputs.syscall_params.state == STATE_MAIN,
-                MalformedBuiltinParams
-            );
-            // TODO(dmitry123): "better to have prefix"
-            let preimage_hash = keccak256(inputs.syscall_params.input.as_ref());
-            let address = Address::from_slice(&preimage_hash[12..]);
-            #[cfg(feature = "debug-print")]
-            println!(
-                "SYSCALL_WRITE_PREIMAGE: preimage_hash={preimage_hash} preimage_address={address}"
-            );
-            let Ok(account_load) = journal.load_account_delegated(address) else {
-                return_result!(FatalExternalError);
-            };
-            if account_load.is_empty {
-                journal.set_code_with_hash(
-                    address,
-                    Bytecode::new_legacy(inputs.syscall_params.input.clone()),
-                    preimage_hash,
-                );
-            }
-            return_result!(preimage_hash, Return);
-        }
-        SYSCALL_ID_PREIMAGE_SIZE => {
-            assert_return!(
-                inputs.syscall_params.input.len() == 32
-                    && inputs.syscall_params.state == STATE_MAIN,
-                MalformedBuiltinParams
-            );
-            let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
-            let address = Address::from_slice(&preimage_hash[12..]);
-            let Ok(account_load) = journal.load_account_delegated(address) else {
-                return_result!(FatalExternalError);
-            };
-            charge_gas!(if spec_id.is_enabled_in(BERLIN) {
-                warm_cold_cost(account_load.is_cold)
-            } else if spec_id.is_enabled_in(TANGERINE) {
-                700
-            } else {
-                20
-            });
-            let preimage_size = if !account_load.is_empty {
-                let code = journal.code(address)?;
-                code.data.len() as u32
-            } else {
-                0
-            };
-            #[cfg(feature = "debug-print")]
-            println!("SYSCALL_PREIMAGE_SIZE: preimage_hash={preimage_hash} address={address} preimage_size={preimage_size}");
-            return_result!(preimage_size.to_le_bytes(), Return);
-        }
-        SYSCALL_ID_PREIMAGE_COPY => {
-            assert_return!(
-                inputs.syscall_params.input.len() == 32
-                    && inputs.syscall_params.state == STATE_MAIN,
-                MalformedBuiltinParams
-            );
-            let preimage_hash = B256::from_slice(&inputs.syscall_params.input[0..32]);
-            let address = calc_preimage_address(&preimage_hash);
-            #[cfg(feature = "debug-print")]
-            println!("SYSCALL_PREIMAGE_COPY: preimage_hash={preimage_hash} address={address}");
-            let Ok(account_load) = journal.code(address) else {
-                return_result!(FatalExternalError);
-            };
-            if !inputs.is_gas_free {
-                let Some(gas_cost) =
-                    gas::extcodecopy_cost(spec_id, account_load.data.len(), account_load.is_cold)
-                else {
-                    return_result!(OutOfGas);
-                };
-                charge_gas!(gas_cost);
-            }
-            return_result!(account_load.data, Return);
-        }
         SYSCALL_ID_METADATA_SIZE => {
             assert_return!(
                 inputs.syscall_params.input.len() >= 20
@@ -895,56 +797,6 @@ pub(crate) fn execute_rwasm_interruption<
                 }
                 _ => unreachable!(),
             }
-        }
-
-        SYSCALL_ID_DELEGATED_STORAGE => {
-            assert_return!(
-                inputs.syscall_params.input.len() == 20 + 32
-                    && inputs.syscall_params.state == STATE_MAIN,
-                MalformedBuiltinParams
-            );
-            let address = Address::from_slice(&inputs.syscall_params.input[..20]);
-            let slot = U256::from_le_slice(&inputs.syscall_params.input[20..]);
-            // delegated storage is allowed only for delegated accounts
-            let Some(rwasm_proxy_address) = account_owner_address else {
-                return_result!(MalformedBuiltinParams);
-            };
-            let Ok(account) = journal.load_account_code(address) else {
-                return_result!(FatalExternalError);
-            };
-            // inside output, we store information about slot,
-            // and also we forward info about cold/warm access
-            let mut output: [u8; U256::BYTES + 1 + 1] = [0u8; U256::BYTES + 1 + 1];
-            output[32] = account.is_cold as u8;
-            output[33] = account.data.is_empty() as u8;
-            // don't charge gas for EVM_CODE_HASH_SLOT,
-            // because if we don't have enough fuel for EVM opcode execution
-            // that we shouldn't fail here, it affects state transition
-            // TODO(dmitry123): "rethink free storage slots for runtimes and how to manage them"
-            let is_gas_free = inputs.is_gas_free && is_protected_storage_slot(slot);
-            if !is_gas_free {
-                charge_gas!(sload_cost(spec_id, account.is_cold));
-            }
-            // make sure both accounts are delegated to the same execution runtime
-            match &account.info.code {
-                Some(Bytecode::OwnableAccount(ownable_account_bytecode)) => {
-                    if ownable_account_bytecode.owner_address != rwasm_proxy_address {
-                        return_result!(output, Revert)
-                    }
-                }
-                _ => {
-                    return_result!(output, Revert)
-                }
-            }
-            // load slot from the storage
-            let value = journal.sload(address, slot)?;
-            #[cfg(feature = "debug-print")]
-            println!(
-                "SYSCALL_DELEGATED_STORAGE: address={address} slot={slot} value={}",
-                value.data
-            );
-            output[..32].copy_from_slice(&value.data.to_le_bytes::<{ U256::BYTES }>());
-            return_result!(output, Return)
         }
 
         SYSCALL_ID_TRANSIENT_READ => {
