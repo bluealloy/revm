@@ -762,6 +762,7 @@ where
                         .set_code(frame.created_address, bytecode.clone());
                     // Change input params
                     self.interpreter.input.input = CallInput::Bytes(constructor_params_raw);
+                    self.interpreter.input.account_owner = None;
                     self.interpreter.bytecode = ExtBytecode::new_with_hash(bytecode, bytecode_hash);
                     self.interpreter.control.gas = interpreter_result.gas;
                     // Re-run deploy function using rWasm

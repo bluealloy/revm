@@ -58,6 +58,11 @@ pub(crate) fn execute_rwasm_frame<
         .bytecode_address()
         .cloned()
         .unwrap_or_else(|| interpreter.input.target_address());
+    let effective_bytecode_address = interpreter
+        .input
+        .account_owner
+        .unwrap_or_else(|| bytecode_address);
+
     let context = evm.ctx();
 
     // encode input with all related context info
@@ -112,7 +117,11 @@ pub(crate) fn execute_rwasm_frame<
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
         _ => unreachable!("revm: unexpected bytecode type: {:?}", interpreter.bytecode),
     };
-    let bytecode_hash = BytecodeOrHash::Bytecode(rwasm_bytecode, Some(rwasm_code_hash));
+    let bytecode_hash = BytecodeOrHash::Bytecode {
+        address: effective_bytecode_address,
+        rwasm_module: rwasm_bytecode,
+        code_hash: rwasm_code_hash,
+    };
 
     // fuel limit we denominate later to gas
     let fuel_limit = interpreter
@@ -122,12 +131,7 @@ pub(crate) fn execute_rwasm_frame<
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let is_gas_free = interpreter
-        .input
-        .account_owner
-        .or_else(|| Some(bytecode_address))
-        .filter(|eip7702_address| is_self_gas_management_contract(eip7702_address))
-        .is_some();
+    let is_gas_free = is_self_gas_management_contract(&effective_bytecode_address);
 
     // execute function
     let mut runtime_context = RuntimeContext::root(fuel_limit);
