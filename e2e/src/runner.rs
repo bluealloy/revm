@@ -3,7 +3,7 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use fluentbase_genesis::{devnet_genesis_from_file, GENESIS_CONTRACTS_BY_ADDRESS};
+use fluentbase_genesis::GENESIS_CONTRACTS_BY_ADDRESS;
 use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
@@ -19,9 +19,9 @@ use revm::{
         TxEnv,
     },
     context_interface::block::calc_excess_blob_gas,
-    database::{states::plain_account::PlainStorage, CacheState, InMemoryDB, State, StateBuilder},
+    database::{CacheState, InMemoryDB, State, StateBuilder},
     handler::MainnetContext,
-    primitives::{hardfork::SpecId, keccak256, Bytes, B256, KECCAK_EMPTY, U256},
+    primitives::{hardfork::SpecId, keccak256, Bytes, B256, U256},
     state::AccountInfo,
     ExecuteCommitEvm,
     MainBuilder,
@@ -509,8 +509,6 @@ pub fn execute_test_suite(
         kind: e.into(),
     })?;
 
-    let devnet_genesis = devnet_genesis_from_file();
-
     let selected_test_cases = vec![];
     for (name, unit) in suite.0 {
         if selected_test_cases.len() > 0 && !selected_test_cases.contains(&name.as_str()) {
@@ -524,32 +522,16 @@ pub fn execute_test_suite(
         println!("\nloading genesis accounts:");
         let start = Instant::now();
         let mut genesis_addresses: HashSet<Address> = Default::default();
-        for (address, info) in &devnet_genesis.alloc {
+        for (address, genesis_account) in GENESIS_CONTRACTS_BY_ADDRESS.iter() {
             let start = Instant::now();
             print!("- loading genesis account ({address})... ");
-            let genesis_account = GENESIS_CONTRACTS_BY_ADDRESS.get(address);
-            if let Some(genesis_account) = genesis_account {
-                assert_eq!(
-                    genesis_account.rwasm_bytecode,
-                    info.code.clone().unwrap_or_default(),
-                    "genesis account code mismatch"
-                );
-            }
-            let bytecode = info.code.clone().map(Bytecode::new_raw);
+            let bytecode = Bytecode::new_raw(genesis_account.rwasm_bytecode.clone());
             let acc_info = AccountInfo {
-                balance: info.balance,
-                nonce: info.nonce.unwrap_or_default(),
-                code_hash: genesis_account
-                    .map(|v| v.rwasm_bytecode_hash)
-                    .unwrap_or(KECCAK_EMPTY),
-                code: bytecode,
+                balance: U256::ZERO,
+                nonce: 0,
+                code_hash: genesis_account.rwasm_bytecode_hash,
+                code: Some(bytecode),
             };
-            let mut account_storage = PlainStorage::default();
-            if let Some(storage) = info.storage.as_ref() {
-                for (k, v) in storage.iter() {
-                    account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
-                }
-            }
             println!(
                 "loaded in ({:?}): address={}, nonce={}, balance={} code_hash={}",
                 start.elapsed(),
@@ -558,7 +540,7 @@ pub fn execute_test_suite(
                 acc_info.balance,
                 acc_info.code_hash
             );
-            cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
+            cache_state2.insert_account(*address, acc_info);
             genesis_addresses.insert(*address);
         }
         println!("loaded genesis accounts in: {:?}", start.elapsed());
