@@ -121,6 +121,14 @@ mod stack_underflow_tests {
     }
 }
 
+mod fails_with_stack_expansion {
+    define_tests! {
+        fn _15_tstore_cannot_be_dosd("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/15_tstoreCannotBeDosd.json");
+        fn _21_tstore_cannot_be_dosd_ooo("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/21_tstoreCannotBeDosdOOO.json");
+        fn contract_creation_spam("tests/GeneralStateTests/stAttackTest/ContractCreationSpam.json");
+    }
+}
+
 mod cancun_st_eip4844_blobtransactions {
     define_tests! {
         // fn blobhash_list_bounds10("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds10.json");
