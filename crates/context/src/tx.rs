@@ -666,6 +666,424 @@ mod tests {
     }
 
     #[test]
+    fn test_tx_env_builder_build_valid_legacy() {
+        // Legacy transaction
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(0))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(21000)
+            .gas_price(20)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .value(U256::from(100))
+            .data(Bytes::from(vec![0x01, 0x02]))
+            .nonce(5)
+            .chain_id(Some(1))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.kind, TxKind::Call(Address::from([2u8; 20])));
+        assert_eq!(tx.caller, Address::from([1u8; 20]));
+        assert_eq!(tx.gas_limit, 21000);
+        assert_eq!(tx.gas_price, 20);
+        assert_eq!(tx.value, U256::from(100));
+        assert_eq!(tx.data, Bytes::from(vec![0x01, 0x02]));
+        assert_eq!(tx.nonce, 5);
+        assert_eq!(tx.chain_id, Some(1));
+        assert_eq!(tx.tx_type, TransactionType::Legacy);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_valid_eip2930() {
+        // EIP-2930 transaction with access list
+        let access_list = AccessList(vec![AccessListItem {
+            address: Address::from([3u8; 20]),
+            storage_keys: vec![B256::from([4u8; 32])],
+        }]);
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(1))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(25)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .access_list(access_list.clone())
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip2930);
+        assert_eq!(tx.access_list, access_list);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_valid_eip1559() {
+        // EIP-1559 transaction
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(2))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(30)
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip1559);
+        assert_eq!(tx.gas_priority_fee, Some(10));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_valid_eip4844() {
+        // EIP-4844 blob transaction
+        let blob_hashes = vec![B256::from([5u8; 32]), B256::from([6u8; 32])];
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(3))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(30)
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .blob_hashes(blob_hashes.clone())
+            .max_fee_per_blob_gas(100)
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip4844);
+        assert_eq!(tx.blob_hashes, blob_hashes);
+        assert_eq!(tx.max_fee_per_blob_gas, 100);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_valid_eip7702() {
+        // EIP-7702 EOA code transaction
+        let auth = RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::from(1),
+                nonce: 0,
+                address: Address::default(),
+            },
+            RecoveredAuthority::Valid(Address::default()),
+        );
+        let auth_list = vec![Either::Right(auth)];
+        
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(4))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(30)
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .authorization_list(auth_list.clone())
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip7702);
+        assert_eq!(tx.authorization_list.len(), 1);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_create_transaction() {
+        // Contract creation transaction
+        let bytecode = Bytes::from(vec![0x60, 0x80, 0x60, 0x40]);
+        let tx = TxEnvBuilder::new()
+            .kind(TxKind::Create)
+            .data(bytecode.clone())
+            .gas_limit(100000)
+            .gas_price(20)
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.kind, TxKind::Create);
+        assert_eq!(tx.data, bytecode);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_errors_eip1559_missing_priority_fee() {
+        // EIP-1559 without gas_priority_fee should fail
+        let result = TxEnvBuilder::new()
+            .tx_type(Some(2))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(30)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build();
+
+        assert!(matches!(result, Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559)));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_errors_eip4844_missing_blob_hashes() {
+        // EIP-4844 without blob hashes should fail
+        let result = TxEnvBuilder::new()
+            .tx_type(Some(3))
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build();
+
+        assert!(matches!(result, Err(TxEnvBuildError::MissingBlobHashesForEip4844)));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_errors_eip4844_not_call() {
+        // EIP-4844 with Create should fail
+        let result = TxEnvBuilder::new()
+            .tx_type(Some(3))
+            .gas_priority_fee(Some(10))
+            .blob_hashes(vec![B256::from([5u8; 32])])
+            .kind(TxKind::Create)
+            .build();
+
+        assert!(matches!(result, Err(TxEnvBuildError::MissingTargetForEip4844)));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_errors_eip7702_missing_auth_list() {
+        // EIP-7702 without authorization list should fail
+        let result = TxEnvBuilder::new()
+            .tx_type(Some(4))
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build();
+
+        assert!(matches!(result, Err(TxEnvBuildError::MissingAuthorizationListForEip7702)));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_errors_eip7702_not_call() {
+        // EIP-7702 with Create should fail
+        let auth = RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::from(1),
+                nonce: 0,
+                address: Address::default(),
+            },
+            RecoveredAuthority::Valid(Address::default()),
+        );
+        let result = TxEnvBuilder::new()
+            .tx_type(Some(4))
+            .gas_priority_fee(Some(10))
+            .authorization_list(vec![Either::Right(auth)])
+            .kind(TxKind::Create)
+            .build();
+
+        assert!(matches!(result, Err(TxEnvBuildError::DeriveErr(_))));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_legacy() {
+        // Legacy transaction with build_fill
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(21000)
+            .gas_price(20)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Legacy);
+        assert_eq!(tx.gas_priority_fee, None);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_eip1559_missing_priority_fee() {
+        // EIP-1559 without gas_priority_fee should be filled with 0
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(2))
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(30)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip1559);
+        assert_eq!(tx.gas_priority_fee, Some(0));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_eip4844_missing_blob_hashes() {
+        // EIP-4844 without blob hashes should add default blob hash
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(3))
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip4844);
+        assert_eq!(tx.blob_hashes.len(), 1);
+        assert_eq!(tx.blob_hashes[0], B256::default());
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_eip4844_create_to_call() {
+        // EIP-4844 with Create should be converted to Call
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(3))
+            .gas_priority_fee(Some(10))
+            .blob_hashes(vec![B256::from([5u8; 32])])
+            .kind(TxKind::Create)
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip4844);
+        assert_eq!(tx.kind, TxKind::Call(Address::default()));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_eip7702_missing_auth_list() {
+        // EIP-7702 without authorization list should add dummy auth
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(4))
+            .gas_priority_fee(Some(10))
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip7702);
+        assert_eq!(tx.authorization_list.len(), 1);
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_eip7702_create_to_call() {
+        // EIP-7702 with Create should be converted to Call
+        let auth = RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::from(1),
+                nonce: 0,
+                address: Address::default(),
+            },
+            RecoveredAuthority::Valid(Address::default()),
+        );
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(4))
+            .gas_priority_fee(Some(10))
+            .authorization_list(vec![Either::Right(auth)])
+            .kind(TxKind::Create)
+            .build_fill();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip7702);
+        assert_eq!(tx.kind, TxKind::Call(Address::default()));
+    }
+
+    #[test]
+    fn test_tx_env_builder_derive_tx_type_legacy() {
+        // No special fields, should derive Legacy
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(21000)
+            .gas_price(20)
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Legacy);
+    }
+
+    #[test]
+    fn test_tx_env_builder_derive_tx_type_eip2930() {
+        // Access list present, should derive EIP-2930
+        let access_list = AccessList(vec![AccessListItem {
+            address: Address::from([3u8; 20]),
+            storage_keys: vec![B256::from([4u8; 32])],
+        }]);
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .access_list(access_list)
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip2930);
+    }
+
+    #[test]
+    fn test_tx_env_builder_derive_tx_type_eip1559() {
+        // Gas priority fee present, should derive EIP-1559
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_priority_fee(Some(10))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip1559);
+    }
+
+    #[test]
+    fn test_tx_env_builder_derive_tx_type_eip4844() {
+        // Blob hashes present, should derive EIP-4844
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_priority_fee(Some(10))
+            .blob_hashes(vec![B256::from([5u8; 32])])
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip4844);
+    }
+
+    #[test]
+    fn test_tx_env_builder_derive_tx_type_eip7702() {
+        // Authorization list present, should derive EIP-7702
+        let auth = RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::from(1),
+                nonce: 0,
+                address: Address::default(),
+            },
+            RecoveredAuthority::Valid(Address::default()),
+        );
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_priority_fee(Some(10))
+            .authorization_list(vec![Either::Right(auth)])
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Eip7702);
+    }
+
+    #[test]
+    fn test_tx_env_builder_custom_tx_type() {
+        // Custom transaction type (0xFF)
+        let tx = TxEnvBuilder::new()
+            .tx_type(Some(0xFF))
+            .caller(Address::from([1u8; 20]))
+            .build()
+            .unwrap();
+
+        assert_eq!(tx.tx_type, TransactionType::Custom);
+    }
+
+    #[test]
+    fn test_tx_env_builder_chain_methods() {
+        // Test method chaining
+        let tx = TxEnvBuilder::new()
+            .caller(Address::from([1u8; 20]))
+            .gas_limit(50000)
+            .gas_price(25)
+            .kind(TxKind::Call(Address::from([2u8; 20])))
+            .value(U256::from(1000))
+            .data(Bytes::from(vec![0x12, 0x34]))
+            .nonce(10)
+            .chain_id(Some(5))
+            .access_list(AccessList(vec![AccessListItem {
+                address: Address::from([3u8; 20]),
+                storage_keys: vec![],
+            }]))
+            .gas_priority_fee(Some(5))
+            .blob_hashes(vec![B256::from([7u8; 32])])
+            .max_fee_per_blob_gas(200)
+            .build_fill();
+
+        assert_eq!(tx.caller, Address::from([1u8; 20]));
+        assert_eq!(tx.gas_limit, 50000);
+        assert_eq!(tx.gas_price, 25);
+        assert_eq!(tx.kind, TxKind::Call(Address::from([2u8; 20])));
+        assert_eq!(tx.value, U256::from(1000));
+        assert_eq!(tx.data, Bytes::from(vec![0x12, 0x34]));
+        assert_eq!(tx.nonce, 10);
+        assert_eq!(tx.chain_id, Some(5));
+        assert_eq!(tx.access_list.len(), 1);
+        assert_eq!(tx.gas_priority_fee, Some(5));
+        assert_eq!(tx.blob_hashes.len(), 1);
+        assert_eq!(tx.max_fee_per_blob_gas, 200);
+    }
+
+    #[test]
     fn test_effective_gas_price() {
         assert_eq!(90, effective_gas_setup(TransactionType::Legacy, 90, None));
         assert_eq!(
