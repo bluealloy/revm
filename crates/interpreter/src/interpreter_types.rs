@@ -75,6 +75,26 @@ pub trait Jumps {
     fn pc(&self) -> usize;
     /// Returns instruction opcode.
     fn opcode(&self) -> u8;
+
+    /// Returns program counter.
+    ///
+    /// # Safety
+    ///
+    /// Similar to [`Jumps::opcode_unchecked`] but for program counter, it is not checked for overflow.
+    unsafe fn pc_unchecked(&self) -> usize;
+
+    /// Returns instruction opcode.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check if the instruction pointer is valid.
+    ///
+    /// There are two cases where this can happen:
+    /// 1. At the end of execution loop where the instruction pointer will point to the next opcode after the last byte of bytecode.
+    /// 2. When action happens and instruction pointer is set to null.
+    ///
+    /// In both cases, the instruction pointer will point to the opcode outside of that range.
+    unsafe fn opcode_unchecked(&self) -> u8;
 }
 
 /// Trait for Interpreter memory operations.

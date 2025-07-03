@@ -241,8 +241,8 @@ where
         } else {
             None
         };
-        self.pc = interp.bytecode.pc() as u64;
-        self.opcode = interp.bytecode.opcode();
+        self.pc = unsafe { interp.bytecode.pc_unchecked() } as u64;
+        self.opcode = unsafe { interp.bytecode.opcode_unchecked() };
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
         self.refunded = interp.gas.refunded();

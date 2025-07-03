@@ -13,7 +13,7 @@ pub struct ExtBytecode {
     bytecode_hash: Option<B256>,
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
-    pub action: Option<InterpreterAction>,
+    action: Option<InterpreterAction>,
     /// The base bytecode.
     base: Bytecode,
     /// The previous instruction pointer.
@@ -123,18 +123,44 @@ impl Jumps for ExtBytecode {
 
     #[inline]
     fn opcode(&self) -> u8 {
-        // SAFETY: `instruction_pointer` always point to bytecode.
-        unsafe { *self.instruction_pointer }
+        if self.instruction_pointer.is_null() {
+            return self
+                .previous_pointer
+                .map(|p| unsafe { *p })
+                .unwrap_or_default();
+        }
+        // SAFETY: check for null pointer done above.
+        unsafe { self.opcode_unchecked() }
     }
 
     #[inline]
     fn pc(&self) -> usize {
+        if self.instruction_pointer.is_null() {
+            return self
+                .previous_pointer
+                .map(|p| {
+                    // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
+                    // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
+                    unsafe { p.offset_from(self.base.bytes_ref().as_ptr()) as usize }
+                })
+                .unwrap_or_default();
+        }
+        unsafe { self.pc_unchecked() }
+    }
+
+    #[inline]
+    unsafe fn pc_unchecked(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
         unsafe {
             self.instruction_pointer
                 .offset_from(self.base.bytes_ref().as_ptr()) as usize
         }
+    }
+
+    #[inline]
+    unsafe fn opcode_unchecked(&self) -> u8 {
+        unsafe { *self.instruction_pointer }
     }
 }
 
@@ -178,14 +204,41 @@ impl LegacyBytecode for ExtBytecode {
 
 #[cfg(test)]
 mod tests {
+    use crate::{Gas, InstructionResult};
+
     use super::*;
     use primitives::Bytes;
 
     #[test]
     fn test_with_hash_constructor() {
-        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00]));
         let hash = bytecode.hash_slow();
         let ext_bytecode = ExtBytecode::new_with_hash(bytecode.clone(), hash);
         assert_eq!(ext_bytecode.bytecode_hash, Some(hash));
+    }
+
+    #[test]
+    fn test_pc_opcode() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x01, 0x00]));
+        let hash = bytecode.hash_slow();
+        let mut bytecode = ExtBytecode::new_with_hash(bytecode.clone(), hash);
+
+        assert_eq!(bytecode.opcode(), 0x60);
+        assert_eq!(bytecode.pc(), 0);
+        assert_eq!(unsafe { bytecode.opcode_unchecked() }, 0x60);
+        assert_eq!(unsafe { bytecode.pc_unchecked() }, 0);
+
+        bytecode.relative_jump(1);
+        assert_eq!(bytecode.opcode(), 0x01);
+        assert_eq!(bytecode.pc(), 1);
+        assert_eq!(unsafe { bytecode.opcode_unchecked() }, 0x01);
+        assert_eq!(unsafe { bytecode.pc_unchecked() }, 1);
+
+        bytecode.set_action(InterpreterAction::new_halt(
+            InstructionResult::CallTooDeep,
+            Gas::default(),
+        ));
+        assert_eq!(bytecode.opcode(), 0x01);
+        assert_eq!(bytecode.pc(), 1);
     }
 }

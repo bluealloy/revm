@@ -244,7 +244,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         while self.bytecode.is_not_end() {
             // Get current opcode.
-            let opcode = self.bytecode.opcode();
+            let opcode = unsafe { self.bytecode.opcode_unchecked() };
 
             // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
             // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction

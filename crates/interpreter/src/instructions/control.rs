@@ -58,7 +58,7 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
-        U256::from(context.interpreter.bytecode.pc() - 1)
+        U256::from(unsafe { context.interpreter.bytecode.pc_unchecked() } - 1)
     );
 }
 

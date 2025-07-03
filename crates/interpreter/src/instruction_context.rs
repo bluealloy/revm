@@ -28,7 +28,7 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     #[inline]
     pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
         // Get current opcode.
-        let opcode = self.interpreter.bytecode.opcode();
+        let opcode = unsafe { self.interpreter.bytecode.opcode_unchecked() };
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
