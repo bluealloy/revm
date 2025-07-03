@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.0.0...revm-bytecode-v6.0.1) - 2025-07-03
+
+### Other
+
+- add PartialEq u8 ([#2688](https://github.com/bluealloy/revm/pull/2688))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v5.0.0...revm-bytecode-v6.0.0) - 2025-06-30
 
 ### Fixed
