@@ -1,6 +1,6 @@
 //! Journaled state trait [`JournalTr`] and related types.
 use crate::context::{SStoreResult, SelfDestructResult};
-use core::ops::{Deref, DerefMut};
+use core::{fmt::Debug, ops::{Deref, DerefMut}};
 use database_interface::Database;
 use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
@@ -9,7 +9,7 @@ use state::{Account, Bytecode};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
-pub trait JournalTr {
+pub trait JournalTr: Debug {
     /// Database type that is used in the journal.
     type Database: Database;
     /// State type that is returned by the journal after finalization.

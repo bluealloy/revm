@@ -5,12 +5,14 @@
 //! They are created when there is change to the state from loading (making it warm), changes to the balance,
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
+use core::fmt::Debug;
+
 use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
 use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
-pub trait JournalEntryTr {
+pub trait JournalEntryTr: Debug {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
     fn account_warmed(address: Address) -> Self;
 

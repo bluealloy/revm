@@ -203,6 +203,8 @@ impl EthFrame<EthInterpreter> {
             )
             .map_err(ERROR::from_string)?
         {
+            println!("result: {:?}", result);
+            println!("journal: {:?}", ctx.journal_mut());
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
             } else {

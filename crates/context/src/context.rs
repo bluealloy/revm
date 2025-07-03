@@ -1,4 +1,6 @@
 //! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
+use core::fmt::Debug;
+
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
     context::{ContextError, ContextSetters},
@@ -207,7 +209,7 @@ where
     /// Creates a new context with a new database type.
     ///
     /// This will create a new [`Journal`] object.
-    pub fn with_db<ODB: Database>(
+    pub fn with_db<ODB: Database + Debug>(
         self,
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN, LOCAL> {
@@ -226,7 +228,7 @@ where
     }
 
     /// Creates a new context with a new `DatabaseRef` type.
-    pub fn with_ref_db<ODB: DatabaseRef>(
+    pub fn with_ref_db<ODB: DatabaseRef + Debug>(
         self,
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL>

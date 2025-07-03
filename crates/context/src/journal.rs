@@ -13,7 +13,7 @@ use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
 };
-use core::ops::{Deref, DerefMut};
+use core::{fmt::Debug, ops::{Deref, DerefMut}};
 use database_interface::Database;
 use primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256};
 use state::{Account, EvmState};
@@ -84,7 +84,7 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
     }
 }
 
-impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
+impl<DB: Database + Debug, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
     type State = EvmState;
 
