@@ -763,7 +763,7 @@ mod tests {
             RecoveredAuthority::Valid(Address::default()),
         );
         let auth_list = vec![Either::Right(auth)];
-        
+
         let tx = TxEnvBuilder::new()
             .tx_type(Some(4))
             .caller(Address::from([1u8; 20]))
@@ -806,7 +806,10 @@ mod tests {
             .kind(TxKind::Call(Address::from([2u8; 20])))
             .build();
 
-        assert!(matches!(result, Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559)));
+        assert!(matches!(
+            result,
+            Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559)
+        ));
     }
 
     #[test]
@@ -818,7 +821,10 @@ mod tests {
             .kind(TxKind::Call(Address::from([2u8; 20])))
             .build();
 
-        assert!(matches!(result, Err(TxEnvBuildError::MissingBlobHashesForEip4844)));
+        assert!(matches!(
+            result,
+            Err(TxEnvBuildError::MissingBlobHashesForEip4844)
+        ));
     }
 
     #[test]
@@ -831,7 +837,10 @@ mod tests {
             .kind(TxKind::Create)
             .build();
 
-        assert!(matches!(result, Err(TxEnvBuildError::MissingTargetForEip4844)));
+        assert!(matches!(
+            result,
+            Err(TxEnvBuildError::MissingTargetForEip4844)
+        ));
     }
 
     #[test]
@@ -843,7 +852,10 @@ mod tests {
             .kind(TxKind::Call(Address::from([2u8; 20])))
             .build();
 
-        assert!(matches!(result, Err(TxEnvBuildError::MissingAuthorizationListForEip7702)));
+        assert!(matches!(
+            result,
+            Err(TxEnvBuildError::MissingAuthorizationListForEip7702)
+        ));
     }
 
     #[test]
