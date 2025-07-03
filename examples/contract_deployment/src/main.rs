@@ -1,4 +1,4 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example that deploys a contract by forging and executing a contract creation transaction.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};

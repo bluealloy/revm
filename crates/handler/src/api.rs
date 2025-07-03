@@ -55,7 +55,7 @@ pub trait ExecuteEvm {
 
     /// Transact the given transaction and finalize in a single operation.
     ///
-    /// Internally calls [`ExecuteEvm::transact`] followed by [`ExecuteEvm::finalize`].
+    /// Internally calls [`ExecuteEvm::transact_one`] followed by [`ExecuteEvm::finalize`].
     ///
     /// # Outcome of Error
     ///
@@ -111,8 +111,6 @@ pub trait ExecuteEvm {
     }
 
     /// Execute previous transaction and finalize it.
-    ///
-    /// Doint it without finalization
     fn replay(
         &mut self,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
@@ -142,7 +140,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
 
     /// Transact multiple transactions and commit to the state.
     ///
-    /// Internally calls `transact_multi` and `commit` functions.
+    /// Internally calls `transact_many` and `commit_inner` functions.
     #[inline]
     fn transact_many_commit(
         &mut self,

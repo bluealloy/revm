@@ -1,4 +1,6 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example that show how to replay a block and trace the execution of each transaction.
+//!
+//! The EIP3155 trace of each transaction is saved into file `traces/{tx_number}.json`.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_consensus::Transaction;
