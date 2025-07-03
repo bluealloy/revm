@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [8.0.2](https://github.com/bluealloy/revm/compare/revm-handler-v8.0.1...revm-handler-v8.0.2) - 2025-07-03
+
+### Other
+
+- document external state transitions for EIP-4788 and EIP-2935 ([#2678](https://github.com/bluealloy/revm/pull/2678))
+- minor fixes ([#2686](https://github.com/bluealloy/revm/pull/2686))
+- fix in pre_execution.rs about nonce bump for CREATE ([#2684](https://github.com/bluealloy/revm/pull/2684))
+
 ## [8.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v7.0.1...revm-handler-v8.0.1) - 2025-06-30
 
 ### Added
