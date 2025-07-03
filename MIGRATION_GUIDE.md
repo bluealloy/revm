@@ -1,4 +1,10 @@
 
+# v80 tag (revm v27.0.0) -> v81 tag ( revm v27.0.1)
+
+* Inspector fn `step_end` is now called even if Inspector `step` sets the action. Previously this was not the  case
+    * https://github.com/bluealloy/revm/pull/2687
+    * this additionally fixes panic bug where `bytecode.opcode()` would panic in `step_end`
+
 # v70 tag (revm v22.0.2) -> v71 tag ( revm v23.0.0)
 
 * Removal of `EvmData`.
