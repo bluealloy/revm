@@ -1,6 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
-# 80
+# v81
+date: 03.07.2025
+
+Fix inspector step_end panic for opcode fn.
+
+* `revm-bytecode`: 6.0.0 -> 6.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revm-inspector`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revme`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+* `custom_precompile_journal`: 0.1.0
+* `revm-state`: 7.0.0 -> 7.0.1
+* `revm-database-interface`: 7.0.0 -> 7.0.1
+* `revm-context-interface`: 8.0.0 -> 8.0.1
+* `revm-context`: 8.0.1 -> 8.0.2
+* `revm-database`: 7.0.0 -> 7.0.1
+* `revm-interpreter`: 23.0.0 -> 23.0.1
+* `revm`: 27.0.1 -> 27.0.2
+* `revm-statetest-types`: 8.0.2 -> 8.0.3
+* `op-revm`: 8.0.1 -> 8.0.2
+
+# v80
 date 01.07.2025
 
 Fix `build` and `build_fill` for OpTransactionBuilder
