@@ -126,6 +126,24 @@ pub mod algo {
         t: [u64; 2],
         f: bool,
     ) {
+        cfg_if::cfg_if! {
+            if #[cfg(target_os = "zkvm")] {
+                crate::zkvm::blake2::compress(rounds, h, m_slice, t, f);
+            } else {
+                compress_fallback(rounds, h, m_slice, t, f);
+            }
+        }
+    }
+
+    /// Fallback compression implementation using either AVX2 or portable code
+    #[allow(clippy::many_single_char_names)]
+    pub fn compress_fallback(
+        rounds: usize,
+        h: &mut [u64; 8],
+        m_slice: &[u8; 16 * size_of::<u64>()],
+        t: [u64; 2],
+        f: bool,
+    ) {
         assert!(m_slice.len() == 16 * size_of::<u64>());
 
         #[cfg(all(target_feature = "avx2", feature = "std"))]
@@ -148,7 +166,18 @@ pub mod algo {
         }
 
         // if avx2 is not available, use the fallback portable implementation
+        compress_portable(rounds, h, m_slice, t, f);
+    }
 
+    /// Portable compression implementation
+    #[allow(clippy::many_single_char_names)]
+    pub fn compress_portable(
+        rounds: usize,
+        h: &mut [u64; 8],
+        m_slice: &[u8; 16 * size_of::<u64>()],
+        t: [u64; 2],
+        f: bool,
+    ) {
         // Read m values
         let mut m = [0u64; 16];
         for (i, item) in m.iter_mut().enumerate() {

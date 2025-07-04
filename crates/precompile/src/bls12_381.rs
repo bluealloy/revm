@@ -3,7 +3,9 @@
 use crate::PrecompileWithAddress;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "blst")]{
+    if #[cfg(target_os = "zkvm")] {
+        // zkVM implementations are handled directly in each precompile module
+    } else if #[cfg(feature = "blst")]{
         mod blst;
         use blst as crypto_backend;
     } else {

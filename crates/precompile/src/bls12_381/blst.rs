@@ -7,6 +7,29 @@ use crate::{
     },
     PrecompileError,
 };
+
+// Type aliases to reduce complexity warnings
+type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
+type G2Point = (
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+);
+type G1PointScalarPairRef<'a> = (
+    (&'a [u8; FP_LENGTH], &'a [u8; FP_LENGTH]),
+    &'a [u8; SCALAR_LENGTH],
+);
+type G2PointScalarPairRef<'a> = (
+    (
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+    ),
+    &'a [u8; SCALAR_LENGTH],
+);
+type PairingPair = (G1Point, G2Point);
 use blst::{
     blst_bendian_from_fp, blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul,
     blst_fp2, blst_fp_from_bendian, blst_map_to_g1, blst_map_to_g2, blst_miller_loop, blst_p1,
@@ -73,33 +96,77 @@ fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
     result
 }
 
-/// p1_add_affine adds two G1 points in affine form, returning the result in affine form
-///
-/// Note: `a` and `b` can be the same, ie this method is safe to call if one wants
-/// to essentially double a point
+/// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
 #[inline]
-pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
+pub(super) fn p1_add_affine(
+    a_x: &[u8; FP_LENGTH],
+    a_y: &[u8; FP_LENGTH],
+    b_x: &[u8; FP_LENGTH],
+    b_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    // Parse first point
+    let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
+
+    // Parse second point
+    let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
+
     // Convert first point to Jacobian coordinates
-    let a_jacobian = p1_from_affine(a);
+    let a_jacobian = p1_from_affine(&p1);
 
     // Add second point (in affine) to first point (in Jacobian)
-    let sum_jacobian = p1_add_or_double(&a_jacobian, b);
+    let sum_jacobian = p1_add_or_double(&a_jacobian, &p2);
 
     // Convert result back to affine coordinates
-    p1_to_affine(&sum_jacobian)
+    let result = p1_to_affine(&sum_jacobian);
+
+    // Encode result
+    Ok(encode_g1_point(&result))
 }
 
-/// Add two G2 points in affine form, returning the result in affine form
+/// Helper function to perform G2 point addition with structured input
 #[inline]
-pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
+fn p2_add_affine_impl(
+    point_a: &G2Point,
+    point_b: &G2Point,
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let (a_x_0, a_x_1, a_y_0, a_y_1) = point_a;
+    let (b_x_0, b_x_1, b_y_0, b_y_1) = point_b;
+
+    // Parse first point
+    let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+
+    // Parse second point
+    let p2 = read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+
     // Convert first point to Jacobian coordinates
-    let a_jacobian = p2_from_affine(a);
+    let a_jacobian = p2_from_affine(&p1);
 
     // Add second point (in affine) to first point (in Jacobian)
-    let sum_jacobian = p2_add_or_double(&a_jacobian, b);
+    let sum_jacobian = p2_add_or_double(&a_jacobian, &p2);
 
     // Convert result back to affine coordinates
-    p2_to_affine(&sum_jacobian)
+    let result = p2_to_affine(&sum_jacobian);
+
+    // Encode result
+    Ok(encode_g2_point(&result))
+}
+
+/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
+#[inline]
+#[allow(clippy::too_many_arguments)]
+pub(super) fn p2_add_affine(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+    b_x_0: &[u8; FP_LENGTH],
+    b_x_1: &[u8; FP_LENGTH],
+    b_y_0: &[u8; FP_LENGTH],
+    b_y_1: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let point_a = (*a_x_0, *a_x_1, *a_y_0, *a_y_1);
+    let point_b = (*b_x_0, *b_x_1, *b_y_0, *b_y_1);
+    p2_add_affine_impl(&point_a, &point_b)
 }
 
 /// Performs a G1 scalar multiplication
@@ -192,6 +259,29 @@ pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) 
     p1_to_affine(&multiexp)
 }
 
+/// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p1_msm_bytes(
+    point_scalar_pairs: &[G1PointScalarPairRef<'_>],
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x, y), scalar_bytes) in point_scalar_pairs {
+        let point = read_g1_no_subgroup_check(x, y)?;
+        let scalar = read_scalar(scalar_bytes.as_slice())?;
+        g1_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Perform MSM
+    let result = p1_msm(g1_points, scalars);
+
+    // Encode result
+    Ok(encode_g1_point(&result))
+}
+
 /// Performs multi-scalar multiplication (MSM) for G2 points
 ///
 /// Takes a vector of G2 points and corresponding scalars, and returns their weighted sum
@@ -231,6 +321,29 @@ pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) 
     p2_to_affine(&multiexp)
 }
 
+/// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p2_msm_bytes(
+    point_scalar_pairs: &[G2PointScalarPairRef<'_>],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x0, x1, y0, y1), scalar_bytes) in point_scalar_pairs {
+        let point = read_g2_no_subgroup_check(x0, x1, y0, y1)?;
+        let scalar = read_scalar(scalar_bytes.as_slice())?;
+        g2_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Perform MSM
+    let result = p2_msm(g2_points, scalars);
+
+    // Encode result
+    Ok(encode_g2_point(&result))
+}
+
 /// Maps a field element to a G1 point
 ///
 /// Takes a field element (blst_fp) and returns the corresponding G1 point in affine form
@@ -248,6 +361,16 @@ pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
     p1_to_affine(&p)
 }
 
+/// Maps a field element to a G1 point taking byte input and returning encoded result.
+#[inline]
+pub(super) fn map_fp_to_g1_bytes(
+    fp_bytes: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+    let fp = read_fp(fp_bytes)?;
+    let result = map_fp_to_g1(&fp);
+    Ok(encode_g1_point(&result))
+}
+
 /// Maps a field element to a G2 point
 ///
 /// Takes a field element (blst_fp2) and returns the corresponding G2 point in affine form
@@ -263,6 +386,17 @@ pub(super) fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
 
     // Convert to affine coordinates
     p2_to_affine(&p)
+}
+
+/// Maps a field element to a G2 point taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn map_fp2_to_g2_bytes(
+    fp2_x: &[u8; FP_LENGTH],
+    fp2_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+    let fp2 = read_fp2(fp2_x, fp2_y)?;
+    let result = map_fp2_to_g2(&fp2);
+    Ok(encode_g2_point(&result))
 }
 
 /// Computes a single miller loop for a given G1, G2 pair
@@ -335,6 +469,23 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
 
     // Check if the result is one (identity element)
     is_fp12_one(&final_result)
+}
+
+/// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
+#[inline]
+pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, crate::PrecompileError> {
+    if pairs.is_empty() {
+        return Ok(true);
+    }
+
+    let mut parsed_pairs = Vec::with_capacity(pairs.len());
+    for ((g1_x, g1_y), (g2_x_0, g2_x_1, g2_y_0, g2_y_1)) in pairs {
+        let g1_point = read_g1(g1_x, g1_y)?;
+        let g2_point = read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
+        parsed_pairs.push((g1_point, g2_point));
+    }
+
+    Ok(pairing_check(&parsed_pairs))
 }
 
 /// Encodes a G1 point in affine format into byte slice with padded elements.

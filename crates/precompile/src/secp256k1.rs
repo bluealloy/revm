@@ -56,7 +56,9 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 // Select the correct implementation based on the enabled features.
 cfg_if::cfg_if! {
-    if #[cfg(feature = "secp256k1")] {
+    if #[cfg(target_os = "zkvm")] {
+        pub use crate::zkvm::secp256k1::ecrecover;
+    } else if #[cfg(feature = "secp256k1")] {
         pub use bitcoin_secp256k1::ecrecover;
     } else if #[cfg(feature = "libsecp256k1")] {
         pub use parity_libsecp256k1::ecrecover;
