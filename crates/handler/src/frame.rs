@@ -147,6 +147,7 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let mut gas = Gas::new(inputs.gas_limit);
+        let spec_id = ctx.cfg().spec().into();
         let return_result = |instruction_result: InstructionResult, gas: Gas| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -173,10 +174,12 @@ impl EthFrame<EthInterpreter> {
 
         if depth == 0 {
             // EIP-7907 account for large code loading cost for `to` account.
-            // TODO this is still not fully agreed upon! https://github.com/ethereum/EIPs/pull/9910
-            if let Some(CodeSize::Known(code_size)) = account.info.code_size {
-                if !gas.record_cost(large_contract_code_size_cost(code_size)) {
-                    return return_result(InstructionResult::OutOfGas, gas);
+            // TODO(eip7907) add additional gas for large code load.
+            if spec_id.is_enabled_in(SpecId::OSAKA) {
+                if let Some(CodeSize::Known(code_size)) = account.info.code_size {
+                    if !gas.record_cost(large_contract_code_size_cost(code_size)) {
+                        return return_result(InstructionResult::OutOfGas, gas);
+                    }
                 }
             }
         }
@@ -188,6 +191,7 @@ impl EthFrame<EthInterpreter> {
             bytecode = account.info.code.clone().unwrap_or_default();
             code_hash = account.info.code_hash();
 
+            // TODO(eip7907) add additional gas for large code load.
             if depth == 0 {
                 account.data.mark_code_cold();
             }

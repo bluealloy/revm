@@ -197,6 +197,12 @@ impl OpCode {
     }
 }
 
+impl PartialEq<u8> for OpCode {
+    fn eq(&self, other: &u8) -> bool {
+        self.get().eq(other)
+    }
+}
+
 /// Information about opcode, such as name, and stack inputs and outputs
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
@@ -728,8 +734,7 @@ mod tests {
             assert_eq!(
                 opcode.map(|opcode| opcode.terminating).unwrap_or_default(),
                 opcodes[i],
-                "Opcode {:?} terminating check failed.",
-                opcode
+                "Opcode {opcode:?} terminating check failed."
             );
         }
     }

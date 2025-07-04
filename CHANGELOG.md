@@ -1,7 +1,58 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v81
+date: 03.07.2025
+
+Fix inspector step_end panic for opcode fn.
+
+* `revm-bytecode`: 6.0.0 -> 6.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revm-inspector`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revme`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+* `custom_precompile_journal`: 0.1.0
+* `revm-state`: 7.0.0 -> 7.0.1
+* `revm-database-interface`: 7.0.0 -> 7.0.1
+* `revm-context-interface`: 8.0.0 -> 8.0.1
+* `revm-context`: 8.0.1 -> 8.0.2
+* `revm-database`: 7.0.0 -> 7.0.1
+* `revm-interpreter`: 23.0.0 -> 23.0.1
+* `revm`: 27.0.1 -> 27.0.2
+* `revm-statetest-types`: 8.0.2 -> 8.0.3
+* `op-revm`: 8.0.1 -> 8.0.2
+
+# v80
+date 01.07.2025
+
+Fix `build` and `build_fill` for OpTransactionBuilder
+
+* `revm-context`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-inspector`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm`: 27.0.0 -> 27.0.1 (✓ API compatible changes)
+* `op-revm`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+
+# v79
+date:  01.07.2025
+
+Fix for bytecode eq operation.
+
+* `revm-bytecode`: 5.0.0 -> 6.0.0 (⚠ API breaking changes)
+* `revm-state`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-context`: 7.0.1 -> 8.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 22.0.1 -> 23.0.0 (✓ API compatible changes)
+* `revm-precompile`: 23.0.0 -> 24.0.0 (✓ API compatible changes)
+* `revm-handler`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 7.0.1 -> 8.0.0 (✓ API compatible changes)
+* `revm`: 26.0.1 -> 27.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revme`: 7.0.1 -> 7.0.2 (✓ API compatible changes)
+* `op-revm`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-database`: 6.0.0 -> 7.0.0
+
 # v78
-date 20.05.2025
+date: 20.05.2025
 
 Quick fix for not calling `frame_stack.clear()` https://github.com/bluealloy/revm/pull/2656
 

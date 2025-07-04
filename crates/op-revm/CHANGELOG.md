@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.2](https://github.com/bluealloy/revm/compare/op-revm-v8.0.1...op-revm-v8.0.2) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm
+
+## [8.0.1](https://github.com/bluealloy/revm/compare/op-revm-v7.0.1...op-revm-v8.0.1) - 2025-06-30
+
+### Added
+
+- optional_eip3541 ([#2661](https://github.com/bluealloy/revm/pull/2661))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- *(op/handler)* verify caller account is touched by zero value transfer ([#2669](https://github.com/bluealloy/revm/pull/2669))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+
 ## [7.0.1](https://github.com/bluealloy/revm/compare/op-revm-v7.0.0...op-revm-v7.0.1) - 2025-06-20
 
 ### Fixed

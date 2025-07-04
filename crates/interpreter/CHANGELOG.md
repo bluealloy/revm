@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.0...revm-interpreter-v23.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-context-interface
+
+## [22.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.1...revm-interpreter-v22.1.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+
 ## [22.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.0...revm-interpreter-v22.0.1) - 2025-06-20
 
 ### Other
@@ -166,7 +182,7 @@ Stable version
 - fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
 - move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
 
-## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
+## [16.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
 
 ### Added
 

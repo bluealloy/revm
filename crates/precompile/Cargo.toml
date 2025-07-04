@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "23.0.0"
+version = "24.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -72,11 +72,12 @@ p256 = { workspace = true, features = ["ecdsa"] }
 
 # utils
 cfg-if.workspace = true
+arrayref = "0.3.6"
 
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
-ark-std = { workspace = true}
+ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]

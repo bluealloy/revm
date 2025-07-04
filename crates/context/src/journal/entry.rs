@@ -39,7 +39,7 @@ pub trait JournalEntryTr {
     fn nonce_changed(address: Address) -> Self;
 
     /// Creates a journal entry for when a new account is created
-    fn account_created(address: Address, is_created_globaly: bool) -> Self;
+    fn account_created(address: Address, is_created_globally: bool) -> Self;
 
     /// Creates a journal entry for when a storage slot is modified
     /// Records the previous value for reverting

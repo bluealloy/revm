@@ -56,7 +56,7 @@ pub trait InspectEvm: ExecuteEvm {
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
-    /// Inspect the EVM with the current inspector and previous transaction by replaying,similar to [`InspectEvm::inspect_tx`]
+    /// Inspect the EVM with the current inspector and previous transaction by replaying, similar to [`InspectEvm::inspect_tx`]
     /// and commit the state diff to the database.
     fn inspect_tx_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         let output = self.inspect_one_tx(tx)?;

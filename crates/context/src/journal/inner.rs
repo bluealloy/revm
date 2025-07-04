@@ -436,10 +436,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // set account status to create.
-        let is_created_globaly = target_acc.mark_created_locally();
+        let is_created_globally = target_acc.mark_created_locally();
 
         // this entry will revert set nonce.
-        last_journal.push(ENTRY::account_created(target_address, is_created_globaly));
+        last_journal.push(ENTRY::account_created(target_address, is_created_globally));
         target_acc.info.code = None;
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
@@ -715,6 +715,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         if load_code {
+            if address == primitives::address!("0x0000000000000000000000000000000000001100") {
+                //panic!();
+            }
             let info = &mut load.data.info;
             if info.code.is_none() {
                 let code = if info.code_hash == KECCAK_EMPTY {

@@ -71,6 +71,8 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+
+    // TODO(eip7907) add additional gas for large code load if code is cold.
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let gas = if spec_id.is_enabled_in(BERLIN) {
         warm_cold_cost(code_size.is_cold)
@@ -79,13 +81,6 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         20
     };
-
-    // EIP-7907: Meter Contract Code Size And Increase Limit
-    // TODO this is still not fully agreed upon! And it is different from what is stated in this PR https://github.com/ethereum/EIPs/pull/9910
-    // This assumes that code_size is part of account.
-    // if spec_id.is_enabled_in(OSAKA) && code_size.is_code_cold {
-    //     gas += large_contract_code_size_cost(code_size.data);
-    // }
 
     gas!(context.interpreter, gas);
 

@@ -154,13 +154,13 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
     match frame_output {
         FrameResult::Call(outcome) => {
             let FrameInput::Call(i) = frame_input else {
-                panic!("FrameInput::Call expected {:?}", frame_input);
+                panic!("FrameInput::Call expected {frame_input:?}");
             };
             inspector.call_end(context, i, outcome);
         }
         FrameResult::Create(outcome) => {
             let FrameInput::Create(i) = frame_input else {
-                panic!("FrameInput::Create expected {:?}", frame_input);
+                panic!("FrameInput::Create expected {frame_input:?}");
             };
             inspector.create_end(context, i, outcome);
         }
@@ -215,11 +215,18 @@ where
             log_num = new_log;
         }
 
+        // if loops is ending, break the loop so we can revert to the previous pointer and then call step_end.
+        if interpreter.bytecode.is_end() {
+            break;
+        }
+
         // Call step_end.
         inspector.step_end(interpreter, context);
     }
 
     interpreter.bytecode.revert_to_previous_pointer();
+    // call step_end again to handle the last instruction
+    inspector.step_end(interpreter, context);
 
     let next_action = interpreter.take_next_action();
 
