@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v8.0.1...revm-inspector-v8.0.2) - 2025-07-03
+
+### Fixed
+
+- *(inspector)* revert pointer before calling step_end ([#2687](https://github.com/bluealloy/revm/pull/2687))
+
+### Other
+
+- minor fixes ([#2686](https://github.com/bluealloy/revm/pull/2686))
+
 ## [8.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v7.0.1...revm-inspector-v8.0.1) - 2025-06-30
 
 ### Other

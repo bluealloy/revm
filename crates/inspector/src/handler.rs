@@ -215,11 +215,18 @@ where
             log_num = new_log;
         }
 
+        // if loops is ending, break the loop so we can revert to the previous pointer and then call step_end.
+        if interpreter.bytecode.is_end() {
+            break;
+        }
+
         // Call step_end.
         inspector.step_end(interpreter, context);
     }
 
     interpreter.bytecode.revert_to_previous_pointer();
+    // call step_end again to handle the last instruction
+    inspector.step_end(interpreter, context);
 
     let next_action = interpreter.take_next_action();
 
