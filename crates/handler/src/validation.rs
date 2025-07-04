@@ -495,8 +495,7 @@ mod tests {
         let result = deploy_contract_with_gas_limit(bytecode, Some(SpecId::OSAKA), 60_000_000);
         assert!(
             matches!(result, Ok(ExecutionResult::Success { .. },)),
-            "{:?}",
-            result
+            "{result:?}"
         );
         let execution_result = result.unwrap();
         let gas_used = execution_result.gas_used();

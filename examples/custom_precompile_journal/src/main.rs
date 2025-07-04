@@ -35,6 +35,7 @@ fn main() -> anyhow::Result<()> {
         AccountInfo {
             balance: user_balance,
             nonce: 0,
+            code_size: None,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
         },
@@ -46,6 +47,7 @@ fn main() -> anyhow::Result<()> {
         AccountInfo {
             balance: U256::from(1000), // 1000 wei
             nonce: 0,
+            code_size: None,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
         },
