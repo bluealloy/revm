@@ -774,6 +774,7 @@ pub(crate) fn execute_rwasm_interruption<
                     let metadata = ownable_account_bytecode
                         .metadata
                         .slice(offset..(offset + length));
+                    journal.touch_account(address);
                     return_result!(metadata, Return)
                 }
                 SYSCALL_ID_METADATA_COPY => {
