@@ -1,3 +1,13 @@
+# Test for EIP-7907
+
+* Does access list warms the code?
+* extcodecopy check if len == 0 check is done before loading extra code size.
+
+# v82 (revm v28.0.0) from v81 tag (revm v27.0.1)
+
+* Changes releted to EIP-7907
+    * This affects journal and how code is loaded, some functions now do not load the code.
+    
 
 # v80 tag (revm v27.0.0) -> v81 tag ( revm v27.0.1)
 

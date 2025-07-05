@@ -13,6 +13,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use core::hash::Hash;
+use core::ops::{Deref, DerefMut};
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue};
 
@@ -28,6 +29,19 @@ pub struct Account {
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
+}
+
+impl Deref for Account {
+    type Target = AccountInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.info
+    }
+}
+
+impl DerefMut for Account {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.info
+    }
 }
 
 impl Account {

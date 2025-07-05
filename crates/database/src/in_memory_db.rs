@@ -468,7 +468,7 @@ impl Database for BenchmarkDB {
                 balance: BENCH_TARGET_BALANCE,
                 code: Some(self.0.clone()),
                 code_hash: self.1,
-                code_size: Some(CodeSize::Known(self.0.len())),
+                code_size: CodeSize::Known(self.0.len()),
             }));
         }
         if address == BENCH_CALLER {

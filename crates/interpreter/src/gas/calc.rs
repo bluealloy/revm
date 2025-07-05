@@ -4,7 +4,7 @@ use context_interface::{
     context::StateCodeLoad, journaled_state::AccountLoad, transaction::AccessListItemTr as _,
     Transaction, TransactionType,
 };
-use primitives::{eip170, eip7702, eip7907, hardfork::SpecId, Bytes, U256};
+use primitives::{eip170, eip7702, eip7907, hardfork::SpecId, U256};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -116,7 +116,7 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
 #[inline]
 pub const fn extcodecopy_cost(
     spec_id: SpecId,
-    state_load: &StateCodeLoad<Bytes>,
+    state_load: &StateCodeLoad<usize>,
     copy_len: usize,
 ) -> Option<u64> {
     let mut base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
@@ -128,7 +128,8 @@ pub const fn extcodecopy_cost(
     };
 
     if spec_id.is_enabled_in(SpecId::OSAKA) && state_load.is_code_cold {
-        base_gas += large_contract_code_size_cost(state_load.data.0.len());
+        // extra cost for large code size.
+        base_gas += large_contract_code_size_cost(state_load.data);
     }
     copy_cost(base_gas, copy_len)
 }
@@ -289,24 +290,16 @@ pub fn call_cost(
     account_load: StateLoad<AccountLoad>,
 ) -> u64 {
     let is_empty = account_load.data.is_empty;
-    let is_code_cold = account_load.data.is_code_cold;
-    let code_size = account_load.data.code_size;
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost_with_delegation(account_load)
+        // berlin, prague and osaka are using same warming logic.
+        osaka_warm_cold_cost(&account_load)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
     } else {
         40
     };
-
-    // EIP-7907: Meter Contract Code Size And Increase Limit
-    // If code is cold for a large contract, add cost to the gas.
-    if spec_id.is_enabled_in(SpecId::OSAKA) && is_code_cold && code_size.is_some() {
-        let cost = large_contract_code_size_cost(code_size.unwrap());
-        gas += cost;
-    }
 
     // Transfer value cost
     if transfers_value {
@@ -340,13 +333,32 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
 }
 
 /// Berlin warm and cold storage access cost for account access.
+/// And Prague delegation account load.
 ///
 /// If delegation is Some, add additional cost for delegation account load.
 #[inline]
-pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64 {
+pub const fn prague_warm_cold_cost(load: &StateLoad<AccountLoad>) -> u64 {
     let mut gas = warm_cold_cost(load.is_cold);
     if let Some(is_cold) = load.data.is_delegate_account_cold {
         gas += warm_cold_cost(is_cold);
+    }
+    gas
+}
+
+/// Berlin warm and cold storage access cost for account access.
+/// And Prague delegation account load.
+/// And Osaka code cold load cost.
+///
+/// If delegation is Some, add additional cost for delegation account load.
+#[inline]
+pub const fn osaka_warm_cold_cost(load: &StateLoad<AccountLoad>) -> u64 {
+    let mut gas = prague_warm_cold_cost(load);
+
+    if load.data.is_code_cold {
+        gas += COLD_ACCOUNT_ACCESS_COST;
+        if let Some(excess_code_size) = load.data.code_size.exceeds_24_kib() {
+            gas += excess_contract_code_size_cost(excess_code_size as u64);
+        }
     }
     gas
 }
@@ -357,8 +369,15 @@ pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64
 /// where excess_contract_size = max(0, contract_size - 0x6000)
 #[inline]
 pub const fn large_contract_code_size_cost(code_size: usize) -> u64 {
-    (code_size.saturating_sub(eip170::MAX_CODE_SIZE) as u64).div_ceil(32)
-        * eip7907::GAS_CODE_LOAD_WORD_COST
+    excess_contract_code_size_cost(code_size.saturating_sub(eip170::MAX_CODE_SIZE) as u64)
+}
+
+/// EIP-7907: Cold access cost for large contract code size
+///
+/// Calculate gas cost on excess size.
+#[inline]
+pub const fn excess_contract_code_size_cost(excess_code_size: u64) -> u64 {
+    excess_code_size.div_ceil(32) * eip7907::GAS_CODE_LOAD_WORD_COST + WARM_STORAGE_READ_COST
 }
 
 /// Memory expansion cost calculation for a given number of words.

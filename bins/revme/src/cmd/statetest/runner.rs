@@ -14,7 +14,6 @@ use revm::{
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
-use state::CodeSize;
 use statetest_types::{SpecName, Test, TestSuite, TestUnit};
 
 use std::{

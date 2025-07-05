@@ -12,6 +12,7 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateCodeLoad, StateLoad},
     journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
+    LoadCodeSizeType,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -167,17 +168,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn warm_account_and_storage(
-        &mut self,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error> {
-        self.inner
-            .load_account_optional(&mut self.database, address, false, storage_keys)?;
-        Ok(())
-    }
-
-    #[inline]
     fn set_spec_id(&mut self, spec_id: SpecId) {
         self.inner.spec = spec_id;
     }
@@ -225,17 +215,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.nonce_bump_journal_entry(address)
     }
 
-    #[inline]
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_account(&mut self.database, address)
-    }
-
-    #[inline]
-    fn load_account_code(
+    /// Loads the account code.
+    fn load_account_code_optional(
         &mut self,
         address: Address,
-    ) -> Result<StateCodeLoad<&mut Account>, DB::Error> {
-        self.inner.load_code(&mut self.database, address)
+        load_code_size: LoadCodeSizeType,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
+    ) -> Result<StateCodeLoad<&mut Account>, <Self::Database as Database>::Error> {
+        self.inner
+            .load_account_optional(&mut self.database, address, load_code_size, storage_keys)
     }
 
     #[inline]

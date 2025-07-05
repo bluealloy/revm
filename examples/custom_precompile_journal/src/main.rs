@@ -14,7 +14,7 @@ use revm::{
     handler::{Handler, MainnetHandler},
     inspector::NoOpInspector,
     primitives::{address, TxKind, U256},
-    state::AccountInfo,
+    state::{AccountInfo, CodeSize},
     Database, MainContext,
 };
 
@@ -35,7 +35,7 @@ fn main() -> anyhow::Result<()> {
         AccountInfo {
             balance: user_balance,
             nonce: 0,
-            code_size: None,
+            code_size: CodeSize::LessThan24KiB,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
         },
@@ -47,7 +47,7 @@ fn main() -> anyhow::Result<()> {
         AccountInfo {
             balance: U256::from(1000), // 1000 wei
             nonce: 0,
-            code_size: None,
+            code_size: CodeSize::LessThan24KiB,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
         },

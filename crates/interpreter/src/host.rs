@@ -81,12 +81,28 @@ pub trait Host {
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
+    ///
+    /// Target account will be marked warm.
+    /// If target account code is small, it will loaded and marked warm.
+    /// Check for EIP-7702 bytecode is going to be done and delegated account is going to be loaded and warmed.
+    ///
+    /// Delegate code will stay cold as codesize fee needs to be checked.
+    /// [`Host::load_account_code`] will need to be called to load the code.
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
     /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
+    ///
+    /// This function will load account and its code and mark it warm.
     fn load_account_code(&mut self, address: Address) -> Option<StateCodeLoad<Bytes>>;
-    /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
+    /// Load account, mark it warm and returns the code size.
+    ///
+    /// Big code is not loaded, and it will stay cold.
+    ///
+    /// This function is used in `EXTCODESIZE` opcode.
     fn load_account_code_size(&mut self, address: Address) -> Option<StateCodeLoad<usize>>;
-    /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
+    /// Load account code hash, marking account as warm. Calls `ContextTr::journal_mut().code_hash(address)`
+    /// Code will stay cold.
+    ///
+    /// This function is used in `EXTCODEHASH` opcode.
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 }
 
@@ -200,39 +216,18 @@ impl<CTX: ContextTr> Host for CTX {
     }
 
     fn load_account_code_size(&mut self, address: Address) -> Option<StateCodeLoad<usize>> {
-        // TODO: VERY hacky way to not trigger is_code_cold for code size
-        let acc = match self.journal_mut().load_account(address) {
-            Err(e) => {
-                *self.error() = Err(e.into());
-                return None;
-            }
-            Ok(acc) => acc,
-        };
-
-        // mark it warm so we can load bytecode
-        let is_cold = acc.is_cold;
-        let is_code_cold = acc.data.is_code_cold();
-        acc.data.mark_code_warm();
-
-        let mut code_size = self
-            .journal_mut()
-            .code(address)
+        self.journal_mut()
+            .load_account_code_optional(
+                address,
+                context_interface::LoadCodeSizeType::LoadSmallCode,
+                [],
+            )
+            // safe to unwrap as small code size is going to be loaded, and big code is already known.
+            .map(|acc| acc.map(|a| a.exact_code_size().unwrap()))
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
-            .ok()?
-            .map(|data| data.len());
-
-        if is_code_cold {
-            // return original is_cold state
-            self.journal_mut()
-                .load_account(address)
-                .unwrap()
-                .mark_code_cold();
-        }
-
-        code_size.is_cold = is_cold;
-        Some(code_size)
+            .ok()
     }
 
     /// Gets code hash of `address` and if the account is cold.

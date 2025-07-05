@@ -15,7 +15,7 @@ pub struct AccountInfo {
     /// Hash of the raw bytes in `code`, or [`KECCAK_EMPTY`].
     pub code_hash: B256,
     /// Size of the bytecode. Introduced in EIP-7907.
-    pub code_size: Option<CodeSize>,
+    pub code_size: CodeSize,
     /// [`Bytecode`] data associated with this account.
     ///
     /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be
@@ -26,13 +26,29 @@ pub struct AccountInfo {
 }
 
 /// Size of the bytecode.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CodeSize {
-    /// Code is  created before EIP-7907 and it isassumed to be lower than ~24KiB [`primitives::eip170::MAX_CODE_SIZE`].
+    /// Code is  created before EIP-7907 (Added in Osaka) and it is assumed to be lower than ~24KiB [`primitives::eip170::MAX_CODE_SIZE`].
+    #[default]
     LessThan24KiB,
     /// Code size is known.
     Known(usize),
+}
+
+impl CodeSize {
+    /// Returns the size of the code.
+    pub const fn is_less_than_24_kib(&self) -> bool {
+        matches!(self, CodeSize::LessThan24KiB)
+    }
+
+    /// Returns excess code size if code size exceeds 24KiB.
+    pub const fn exceeds_24_kib(&self) -> Option<usize> {
+        match self {
+            CodeSize::LessThan24KiB => None,
+            CodeSize::Known(size) => size.checked_sub(primitives::eip170::MAX_CODE_SIZE),
+        }
+    }
 }
 
 impl Default for AccountInfo {
@@ -41,7 +57,7 @@ impl Default for AccountInfo {
             balance: U256::ZERO,
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
-            code_size: None,
+            code_size: CodeSize::default(),
             nonce: 0,
         }
     }
@@ -70,7 +86,7 @@ impl AccountInfo {
         Self {
             balance,
             nonce,
-            code_size: Some(CodeSize::Known(code.len())),
+            code_size: CodeSize::Known(code.len()),
             code: Some(code),
             code_hash,
         }
@@ -85,7 +101,7 @@ impl AccountInfo {
         Self {
             balance: self.balance,
             nonce: self.nonce,
-            code_size: Some(CodeSize::Known(code.len())),
+            code_size: CodeSize::Known(code.len()),
             code_hash: code.hash_slow(),
             code: Some(code),
         }
@@ -97,12 +113,12 @@ impl AccountInfo {
     ///
     /// Resets code to `None`. Not guaranteed to maintain invariant `code` and `code_hash`. See
     /// also [Self::with_code_and_hash].
-    pub fn with_code_hash(self, code_hash: B256) -> Self {
+    pub fn with_code_hash(self, code_hash: B256, code_size: CodeSize) -> Self {
         Self {
             balance: self.balance,
             nonce: self.nonce,
             code_hash,
-            code_size: None,
+            code_size,
             code: None,
         }
     }
@@ -119,7 +135,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash,
-            code_size: Some(CodeSize::Known(code.len())),
+            code_size: CodeSize::Known(code.len()),
             code: Some(code),
         }
     }
@@ -287,9 +303,24 @@ impl AccountInfo {
         AccountInfo {
             balance: U256::ZERO,
             nonce: 1,
-            code_size: Some(CodeSize::Known(bytecode.len())),
+            code_size: CodeSize::Known(bytecode.len()),
             code: Some(bytecode),
             code_hash: hash,
+        }
+    }
+
+    /// Returns the code size.
+    #[inline]
+    pub fn code_size(&self) -> CodeSize {
+        self.code_size
+    }
+
+    /// Returns the exact code size.
+    #[inline]
+    pub fn exact_code_size(&self) -> Option<usize> {
+        match self.code_size {
+            CodeSize::LessThan24KiB => self.code.as_ref().map(|c| c.len()),
+            CodeSize::Known(size) => Some(size),
         }
     }
 }

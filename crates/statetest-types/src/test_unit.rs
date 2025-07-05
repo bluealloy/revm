@@ -79,7 +79,7 @@ impl TestUnit {
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
-                code_size: Some(CodeSize::Known(bytecode.len())),
+                code_size: CodeSize::Known(bytecode.len()),
                 code: Some(bytecode),
                 nonce: info.nonce,
             };

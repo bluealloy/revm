@@ -105,7 +105,9 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Implements the CALL instruction.
 ///
 /// Message call with value transfer to another account.
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
@@ -113,10 +115,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
 
     let has_transfer = !value.is_zero();
     if context.interpreter.runtime_flag.is_static() && has_transfer {
-        context
-            .interpreter
-            .halt(InstructionResult::CallNotAllowedInsideStatic);
-        return;
+        return context.fatal_halt();
     }
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
@@ -124,11 +123,9 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
+    //
     let Some(account_load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+        return context.fatal_halt();
     };
     let Some(mut gas_limit) = calc_call_gas(
         context.interpreter,
@@ -169,7 +166,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
 ///
 /// Message call with alternative account's code.
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = Address::from_word(B256::from(to));
@@ -183,10 +180,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+        return context.fatal_halt();
     };
 
     // Set `is_empty` to false as we are not creating this account.
@@ -227,7 +221,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Message call with alternative account's code but same sender and value.
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
@@ -241,10 +235,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+        return context.fatal_halt();
     };
 
     // Set is_empty to false as we are not creating this account.
@@ -278,7 +269,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Static message call (cannot modify state).
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
@@ -292,10 +283,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+        return context.fatal_halt();
     };
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
