@@ -137,9 +137,9 @@ impl Account {
     #[inline]
     pub fn mark_created_locally(&mut self) -> bool {
         self.status |= AccountStatus::CreatedLocal;
-        let is_created_globaly = !self.status.contains(AccountStatus::Created);
+        let is_created_globally = !self.status.contains(AccountStatus::Created);
         self.status |= AccountStatus::Created;
-        is_created_globaly
+        is_created_globally
     }
 
     /// Unmark account as locally created
