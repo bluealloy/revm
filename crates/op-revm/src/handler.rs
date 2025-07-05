@@ -145,7 +145,7 @@ where
 
         let (tx, journal) = ctx.tx_journal_mut();
 
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let caller_account = journal.load_account(tx.caller())?.data;
 
         if !is_deposit {
             // validates account nonce and code

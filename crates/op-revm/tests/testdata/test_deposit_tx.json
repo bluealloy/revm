@@ -16,6 +16,7 @@
         "balance": "0x64",
         "nonce": 1,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",

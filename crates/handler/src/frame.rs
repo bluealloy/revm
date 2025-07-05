@@ -12,6 +12,7 @@ use context_interface::{
 };
 use core::cmp::min;
 use derive_where::derive_where;
+use interpreter::gas::excess_contract_code_size_cost;
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
@@ -145,8 +146,9 @@ impl EthFrame<EthInterpreter> {
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let gas = Gas::new(inputs.gas_limit);
-        let return_result = |instruction_result: InstructionResult| {
+        let mut gas = Gas::new(inputs.gas_limit);
+        let spec_id = ctx.cfg().spec().into();
+        let return_result = |instruction_result: InstructionResult, gas: Gas| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
                     result: instruction_result,
@@ -159,13 +161,38 @@ impl EthFrame<EthInterpreter> {
 
         // Check depth
         if depth > CALL_STACK_LIMIT as usize {
-            return return_result(InstructionResult::CallTooDeep);
+            return return_result(InstructionResult::CallTooDeep, gas);
         }
 
-        // Make account warm and loaded.
-        let _ = ctx
+        // EIP-7907: Cold access cost for large contract code size
+        if depth == 0 && spec_id.is_enabled_in(SpecId::OSAKA) {
+            let account = ctx
+                .journal_mut()
+                .load_account_delegated(inputs.target_address)?;
+
+            // add excess code size cost.
+            if let Some(excess_code_size) = account.data.code_size.exceeds_24_kib() {
+                if !gas.record_cost(excess_contract_code_size_cost(excess_code_size as u64)) {
+                    return return_result(InstructionResult::OutOfGas, gas);
+                }
+            }
+        }
+
+        // Load code and make it warm.
+        let account = ctx
             .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
+            .load_account_code(inputs.bytecode_address)?;
+
+        let mut code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            let account = ctx
+                .journal_mut()
+                .load_account_code(eip7702_bytecode.delegated_address)?;
+            bytecode = account.info.code.clone().unwrap_or_default();
+            code_hash = account.info.code_hash();
+        }
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
@@ -179,7 +206,7 @@ impl EthFrame<EthInterpreter> {
                     .transfer(inputs.caller, inputs.target_address, value)?
             {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
-                return return_result(i.into());
+                return return_result(i.into(), gas);
             }
         }
 
@@ -214,26 +241,10 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        let account = ctx
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
-
-        let mut code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            let account = &ctx
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
-                .info;
-            bytecode = account.code.clone().unwrap_or_default();
-            code_hash = account.code_hash();
-        }
-
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
             ctx.journal_mut().checkpoint_commit();
-            return return_result(InstructionResult::Stop);
+            return return_result(InstructionResult::Stop, gas);
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
@@ -282,12 +293,6 @@ impl EthFrame<EthInterpreter> {
         if depth > CALL_STACK_LIMIT as usize {
             return return_error(InstructionResult::CallTooDeep);
         }
-
-        // Prague EOF
-        // TODO(EOF)
-        // if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
-        //     return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        // }
 
         // Fetch balance of caller.
         let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
@@ -360,126 +365,6 @@ impl EthFrame<EthInterpreter> {
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
-
-    /*
-    /// Make create frame.
-    #[inline]
-    pub fn make_eofcreate_frame(
-        mut this: OutFrame<'_, Self>,
-        evm: &mut EVM,
-        depth: usize,
-        memory: SharedMemory,
-        inputs: Box<EOFCreateInputs>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let context = evm.ctx();
-        let spec = context.cfg().spec().into();
-        let return_error = |e| {
-            Ok(ItemOrResult::Result(FrameResult::EOFCreate(
-                CreateOutcome {
-                    result: InterpreterResult {
-                        result: e,
-                        gas: Gas::new(inputs.gas_limit),
-                        output: Bytes::new(),
-                    },
-                    address: None,
-                },
-            )))
-        };
-
-        let (input, initcode, created_address) = match &inputs.kind {
-            EOFCreateKind::Opcode {
-                initcode,
-                input,
-                created_address,
-            } => (input.clone(), initcode.clone(), Some(*created_address)),
-            EOFCreateKind::Tx { .. } => {
-                // Decode eof and init code.
-                // TODO : Handle inc_nonce handling more gracefully.
-                // let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
-                //     context.journal_mut().inc_account_nonce(inputs.caller)?;
-                //     return return_error(InstructionResult::InvalidEOFInitCode);
-                // };
-
-                // if eof.validate().is_err() {
-                //     // TODO : (EOF) New error type.
-                //     context.journal_mut().inc_account_nonce(inputs.caller)?;
-                //     return return_error(InstructionResult::InvalidEOFInitCode);
-                // }
-
-                // // Use nonce from tx to calculate address.
-                // let tx = context.tx();
-                // let create_address = tx.caller().create(tx.nonce());
-                unreachable!("EOF is disabled");
-                //(CallInput::Bytes(input), eof, Some(create_address))
-            }
-        };
-
-        // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_error(InstructionResult::CallTooDeep);
-        }
-
-        // Fetch balance of caller.
-        let caller = context.journal_mut().load_account(inputs.caller)?.data;
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller.info.balance < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let Some(new_nonce) = caller.info.nonce.checked_add(1) else {
-            // Can't happen on mainnet.
-            return return_error(InstructionResult::Return);
-        };
-        caller.info.nonce = new_nonce;
-        context
-            .journal_mut()
-            .nonce_bump_journal_entry(inputs.caller);
-
-        let old_nonce = new_nonce - 1;
-
-        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
-
-        // Load account so it needs to be marked as warm for access list.
-        context.journal_mut().load_account(created_address)?;
-
-        // Create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller,
-            created_address,
-            inputs.value,
-            spec,
-        ) {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => return return_error(e.into()),
-        };
-
-        let interpreter_input = InputsImpl {
-            target_address: created_address,
-            caller_address: inputs.caller,
-            bytecode_address: None,
-            input,
-            call_value: inputs.value,
-        };
-
-        let gas_limit = inputs.gas_limit;
-        this.get(EthFrame::invalid).clear(
-            FrameData::EOFCreate(EOFCreateFrame { created_address }),
-            FrameInput::EOFCreate(inputs),
-            depth,
-            memory,
-            ExtBytecode::new(Bytecode::Eof(initcode)),
-            interpreter_input,
-            false,
-            true,
-            spec,
-            gas_limit,
-            checkpoint,
-        );
-        Ok(ItemOrResult::Item(this.consume()))
-    }
-     */
 
     /// Initializes a frame with the given context and precompiles.
     pub fn init_with_context<
@@ -695,8 +580,8 @@ pub fn return_create<JOURNAL: JournalTr>(
         return;
     }
 
-    // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7907 increased this limit to 0xc000 (~49kb).
+    // EIP-170: Contract code size limit to 0x6000 (~24KiB)
+    // EIP-7907 increased this limit to 0x40000 (~256KiB).
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
@@ -722,52 +607,8 @@ pub fn return_create<JOURNAL: JournalTr>(
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
+    // Set code. Marks account code warm after successful create.
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;
 }
-
-/*
-pub fn return_eofcreate<JOURNAL: JournalTr>(
-    journal: &mut JOURNAL,
-    checkpoint: JournalCheckpoint,
-    interpreter_result: &mut InterpreterResult,
-    address: Address,
-    max_code_size: usize,
-) {
-    // Note we still execute RETURN opcode and return the bytes.
-    // In EOF those opcodes should abort execution.
-    //
-    // In RETURN gas is still protecting us from ddos and in oog,
-    // behaviour will be same as if it failed on return.
-    //
-    // Bytes of RETURN will drained in `insert_eofcreate_outcome`.
-    if interpreter_result.result != InstructionResult::ReturnContract {
-        journal.checkpoint_revert(checkpoint);
-        return;
-    }
-
-    if interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
-    }
-
-    // Deduct gas for code deployment.
-    let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
-    if !interpreter_result.gas.record_cost(gas_for_code) {
-        journal.checkpoint_revert(checkpoint);
-        interpreter_result.result = InstructionResult::OutOfGas;
-        return;
-    }
-
-    journal.checkpoint_commit();
-
-    // Decode bytecode has a performance hit, but it has reasonable restrains.
-    let bytecode = Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
-
-    // Eof bytecode is going to be hashed.
-    journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
-}
- */

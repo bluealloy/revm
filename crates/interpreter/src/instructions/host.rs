@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, warm_cold_cost, CALL_STIPEND},
+    gas::{self, warm_cold_cost, CALL_STIPEND, COLD_SLOAD_COST},
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
@@ -65,22 +65,30 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
+    let Some(code_size) = context.host.load_account_code_size(address) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code.is_cold));
+    let mut gas = if spec_id.is_enabled_in(BERLIN) {
+        warm_cold_cost(code_size.is_cold)
     } else if spec_id.is_enabled_in(TANGERINE) {
-        gas!(context.interpreter, 700);
+        700
     } else {
-        gas!(context.interpreter, 20);
+        20
+    };
+
+    // EIP-7907: Cold access cost for large contract code size
+    if spec_id.is_enabled_in(OSAKA) && code_size.is_code_cold {
+        gas += COLD_SLOAD_COST;
     }
 
-    *top = U256::from(code.len());
+    gas!(context.interpreter, gas);
+
+    *top = U256::from(code_size.data);
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -104,6 +112,8 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         gas!(context.interpreter, 400);
     }
+
+    // EIP-7907: Cold access cost for large contract code size
     *top = code_hash.into_u256();
 }
 
@@ -111,32 +121,35 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Copies a portion of an account's code to memory.
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!(
         [address, memory_offset, code_offset, len_u256],
         context.interpreter
     );
     let address = address.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+
+    // load code size and check if it is cold.
+    let Some(code_size) = context.host.load_account_code_size(address) else {
+        return context.fatal_halt();
     };
 
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas_or_fail!(
         context.interpreter,
-        gas::extcodecopy_cost(
-            context.interpreter.runtime_flag.spec_id(),
-            len,
-            code.is_cold
-        )
+        gas::extcodecopy_cost(context.interpreter.runtime_flag.spec_id(), &code_size, len)
     );
+
+    // load code and make it warm.
+    let Some(code) = context.host.load_account_code(address) else {
+        return context.fatal_halt();
+    };
+
+    // for len == 0 memory expansion is not done.
     if len == 0 {
         return;
     }
+
     let memory_offset = as_usize_or_fail!(context.interpreter, memory_offset);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     resize_memory!(context.interpreter, memory_offset, len);
@@ -222,10 +235,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             .host
             .sstore(context.interpreter.input.target_address(), index, value)
     else {
-        context
+        return context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
-        return;
     };
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
@@ -236,10 +248,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         .is_enabled_in(ISTANBUL)
         && context.interpreter.gas.remaining() <= CALL_STIPEND
     {
-        context
+        return context
             .interpreter
             .halt(InstructionResult::ReentrancySentryOOG);
-        return;
     }
     gas!(
         context.interpreter,
