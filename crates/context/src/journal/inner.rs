@@ -15,7 +15,7 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{Account, CodeSize, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -268,6 +268,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.journal.push(ENTRY::code_changed(address));
 
         account.info.code_hash = hash;
+        account.info.code_size = CodeSize::Known(code.len());
         account.info.code = Some(code);
 
         // EIP-7907 account code is loaded and considered warm.

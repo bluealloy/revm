@@ -6,7 +6,7 @@
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
 use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
-use state::{EvmState, TransientStorage};
+use state::{CodeSize, EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
@@ -420,6 +420,7 @@ impl JournalEntryTr for JournalEntry {
             JournalEntry::CodeChange { address } => {
                 let acc = state.get_mut(&address).unwrap();
                 acc.info.code_hash = KECCAK_EMPTY;
+                acc.info.code_size = CodeSize::LessThan24KiB;
                 acc.info.code = None;
             }
         }

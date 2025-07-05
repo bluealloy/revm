@@ -235,10 +235,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             .host
             .sstore(context.interpreter.input.target_address(), index, value)
     else {
-        context
+        return context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
-        return;
     };
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
@@ -249,10 +248,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         .is_enabled_in(ISTANBUL)
         && context.interpreter.gas.remaining() <= CALL_STIPEND
     {
-        context
+        return context
             .interpreter
             .halt(InstructionResult::ReentrancySentryOOG);
-        return;
     }
     gas!(
         context.interpreter,

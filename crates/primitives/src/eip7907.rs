@@ -2,7 +2,7 @@
 
 /// By default the limit is `0xc000` (~48KiB).
 pub const MAX_CODE_SIZE: usize = 0xc000;
-/// By default the limit is `0x18000` (~96KiB).
+/// By default the limit is `0x018000` (~96KiB).
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 /// Gas cost per word for code loading

@@ -115,7 +115,9 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let has_transfer = !value.is_zero();
     if context.interpreter.runtime_flag.is_static() && has_transfer {
-        return context.fatal_halt();
+        return context
+            .interpreter
+            .halt(InstructionResult::CallNotAllowedInsideStatic);
     }
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)

@@ -409,7 +409,7 @@ mod tests {
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
         let execution_result = result.unwrap();
         let gas_used = execution_result.gas_used();
-        assert!(gas_used > 5_000_000 && gas_used < 6_000_000);
+        assert_eq!(gas_used, 1_004_040);
     }
 
     #[test]
@@ -437,20 +437,20 @@ mod tests {
 
     #[test]
     fn test_eip7907_code_size_limit_success() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000, but EIP-7825 txn gas limit cap is 30_000_000 so only ~0x24220 (~148kb)
-        // size contract can be used. Use the simplest method to return a contract code size equal to 0x24220
-        // PUSH3 0x24220 - return size
+        // EIP-7907: MAX_CODE_SIZE = 0x40000, but EIP-7825 txn gas limit cap is 30_000_000 so only ~0x0BFFF (49151 bytes)
+        // size contract can be used. Use the simplest method to return a contract code size equal to 0x0BFFF (49151 bytes)
+        // PUSH3 0x0BFFF - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code: Vec<u8> = vec![
-            0x62, 0x02, 0x42, 0x20, // PUSH3 0x24220
+            0x62, 0x00, 0xBF, 0xFF, // PUSH3 0x0BFFF
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
-        let gas_used = result.unwrap().gas_used();
+        let r = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(r, Ok(ExecutionResult::Success { .. },)), "{r:?}");
+        let gas_used = r.unwrap().gas_used();
         assert!(gas_used > 29_000_000 && gas_used < 30_000_000);
     }
 
@@ -458,50 +458,49 @@ mod tests {
     /// to below the EIP-7907 limit. This test passes the validation code size limit check.
     #[test]
     fn test_eip7907_code_size_limit_out_of_gas_failure() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000
-        // use the  simplest method to return a contract code size equal to 0x40000
-        // PUSH3 0x40000 - return size
+        // EIP-7907: MAX_CODE_SIZE = 18000
+        // use the  simplest method to return a contract code size equal to 18000
+        // PUSH3 18000 - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x04, 0x00, 0x00, // PUSH3 0x40000
+            0x62, 0x00, 0xc0, 0x00, // PUSH3 18000
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(
-            result,
-            Ok(ExecutionResult::Halt {
-                reason: HaltReason::OutOfGas(..),
-                gas_used: 30000000
-            },)
-        ));
+        let r = deploy_contract_with_gas_limit(bytecode, Some(SpecId::OSAKA), 9_000_000);
+        assert!(
+            matches!(
+                r,
+                Ok(ExecutionResult::Halt {
+                    reason: HaltReason::OutOfGas(..),
+                    gas_used: 9_000_000
+                },)
+            ),
+            "{r:?}"
+        );
     }
 
     #[test]
     fn test_eip7907_code_size_limit_with_60m_gas_limit_success() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000
-        // use the  simplest method to return a contract code size equal to 0x40000
-        // PUSH3 0x40000 - return size
+        // EIP-7907: MAX_CODE_SIZE = 0xc000
+        // use the  simplest method to return a contract code size equal to 0x18000
+        // PUSH3 0x18000 - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x04, 0x00, 0x00, // PUSH3 0x40000
+            0x62, 0x00, 0xc0, 0x00, // PUSH3 0x40000
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract_with_gas_limit(bytecode, Some(SpecId::OSAKA), 60_000_000);
-        assert!(
-            matches!(result, Ok(ExecutionResult::Success { .. },)),
-            "{result:?}"
-        );
-        let execution_result = result.unwrap();
+        let r = deploy_contract_with_gas_limit(bytecode, Some(SpecId::OSAKA), 60_000_000);
+        assert!(matches!(r, Ok(ExecutionResult::Success { .. },)), "{r:?}");
+        let execution_result = r.unwrap();
         let gas_used = execution_result.gas_used();
-        // 200 gas per byte for storing runtime code on-chain
-        // 262,144 bytes × 200 gas/byte = 52,428,800 gas
-        assert!(gas_used > 50_000_000 && gas_used < 60_000_000);
+
+        assert_eq!(gas_used, 9892700);
     }
 
     #[test]
@@ -718,7 +717,7 @@ mod tests {
         // PUSH1 0x00      - the memory position
         // MSTORE          - store a non-zero value at the beginning of memory
 
-        // PUSH3 0x40001    - the return size (exceeds 0x40000)
+        // PUSH3 0x18001    - the return size (exceeds 0x18000)
         // PUSH1 0x00      - the memory offset
         // PUSH1 0x00      - the amount of ETH sent
         // CREATE          - create contract instruction (create contract from current memory)
@@ -735,7 +734,7 @@ mod tests {
             0x60, 0x00, // PUSH1 0x00
             0x52, // MSTORE
             // 2. prepare to create a large contract
-            0x62, 0x04, 0x00, 0x01, // PUSH3 0x40001 (exceeds 0x40000)
+            0x62, 0x01, 0x80, 0x01, // PUSH3 0x18001 (exceeds 0x18000)
             0x60, 0x00, // PUSH1 0x00 (the memory offset)
             0x60, 0x00, // PUSH1 0x00 (the amount of ETH sent)
             0xf0, // CREATE
@@ -758,7 +757,7 @@ mod tests {
             ExecutionResult::Success { output, .. } => match output {
                 Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
             },
-            _ => panic!("factory contract deployment failed"),
+            _ => panic!("factory contract deployment failed {factory_result:?}"),
         };
 
         // call factory contract to create sub contract

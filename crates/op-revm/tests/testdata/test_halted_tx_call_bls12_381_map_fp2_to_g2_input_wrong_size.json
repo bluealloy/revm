@@ -8,11 +8,12 @@
     }
   },
   "state": {
-    "0x0000000000000000000000000000000000000000": {
+    "0x0000000000000000000000000000000000000011": {
       "info": {
         "balance": "0x0",
-        "nonce": 1,
+        "nonce": 0,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
@@ -31,13 +32,14 @@
       },
       "transaction_id": 0,
       "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
+      "status": "LoadedAsNotExisting"
     },
-    "0x420000000000000000000000000000000000001b": {
+    "0x0000000000000000000000000000000000000000": {
       "info": {
         "balance": "0x0",
-        "nonce": 0,
+        "nonce": 1,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
@@ -63,6 +65,7 @@
         "balance": "0x0",
         "nonce": 0,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
@@ -83,11 +86,12 @@
       "storage": {},
       "status": "Touched | LoadedAsNotExisting"
     },
-    "0x0000000000000000000000000000000000000011": {
+    "0x420000000000000000000000000000000000001b": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
@@ -106,13 +110,14 @@
       },
       "transaction_id": 0,
       "storage": {},
-      "status": "LoadedAsNotExisting"
+      "status": "Touched | LoadedAsNotExisting"
     },
     "0x420000000000000000000000000000000000001a": {
       "info": {
         "balance": "0x0",
         "nonce": 0,
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "code_size": "LessThan24KiB",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
