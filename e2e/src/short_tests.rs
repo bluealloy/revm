@@ -129,6 +129,12 @@ mod fails_with_stack_expansion {
     }
 }
 
+mod test_test {
+    define_tests! {
+        fn code_copy_zero_paris("tests/GeneralStateTests/stExtCodeHash/codeCopyZero_Paris.json");
+    }
+}
+
 mod cancun_st_eip4844_blobtransactions {
     define_tests! {
         // fn blobhash_list_bounds10("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds10.json");

@@ -27,6 +27,8 @@ pub struct OwnableAccountBytecode {
     pub version: u8,
     /// Metadata. Extra bytes stored by runtime.
     pub metadata: Bytes,
+    /// Raw bytecode.
+    pub raw: Bytes,
 }
 
 impl OwnableAccountBytecode {
@@ -46,15 +48,21 @@ impl OwnableAccountBytecode {
             owner_address: Address::new(raw[3..23].try_into().unwrap()),
             version: OWNABLE_ACCOUNT_VERSION,
             metadata: raw.slice(23..),
+            raw,
         })
     }
 
     /// Creates a new metadata representation with the given address.
     pub fn new(address: Address, metadata: Bytes) -> Self {
+        let mut raw = OWNABLE_ACCOUNT_MAGIC_BYTES.to_vec();
+        raw.push(OWNABLE_ACCOUNT_VERSION);
+        raw.extend(&address);
+        raw.extend(&metadata);
         Self {
             owner_address: address,
             version: OWNABLE_ACCOUNT_VERSION,
             metadata,
+            raw: raw.into(),
         }
     }
 
@@ -68,6 +76,12 @@ impl OwnableAccountBytecode {
     #[inline]
     pub fn owner(&self) -> Address {
         self.owner_address
+    }
+
+    /// Returns the raw bytecode with version MAGIC number.
+    #[inline]
+    pub fn raw(&self) -> &Bytes {
+        &self.raw
     }
 }
 
@@ -125,14 +139,15 @@ mod tests {
             OwnableAccountBytecode::new_raw(metadata),
             Err(OwnableAccountDecodeError::UnsupportedVersion)
         );
-        let metadata = bytes!("ef4400deadbeef00000000000000000000000000000000");
-        let address = metadata[3..].try_into().unwrap();
+        let raw = bytes!("ef4400deadbeef00000000000000000000000000000000");
+        let address = raw[3..].try_into().unwrap();
         assert_eq!(
-            OwnableAccountBytecode::new_raw(metadata.clone()),
+            OwnableAccountBytecode::new_raw(raw.clone()),
             Ok(OwnableAccountBytecode {
                 owner_address: address,
                 version: 0,
-                metadata: metadata.slice(23..),
+                metadata: raw.slice(23..),
+                raw,
             })
         );
     }

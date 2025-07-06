@@ -166,7 +166,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.body.code,
             Self::Eip7702(code) => code.raw(),
-            Self::OwnableAccount(code) => code.metadata(),
+            Self::OwnableAccount(code) => code.raw(),
             Self::Rwasm(bytes) => bytes,
         }
     }
@@ -192,7 +192,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => &eof.raw,
             Self::Eip7702(code) => code.raw(),
-            Self::OwnableAccount(code) => code.metadata(),
+            Self::OwnableAccount(code) => code.raw(),
             Self::Rwasm(bytes) => bytes,
         }
     }
@@ -210,7 +210,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
-            Self::OwnableAccount(metadata) => metadata.metadata().clone(),
+            Self::OwnableAccount(metadata) => metadata.raw().clone(),
             Self::Rwasm(bytes) => bytes.clone(),
         }
     }
@@ -222,7 +222,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
-            Self::OwnableAccount(data) => data.metadata(),
+            Self::OwnableAccount(data) => data.raw(),
             Self::Rwasm(bytes) => bytes,
         }
     }

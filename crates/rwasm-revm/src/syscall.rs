@@ -664,7 +664,8 @@ pub(crate) fn execute_rwasm_interruption<
                     0x00,
                     0x00,
                     0x00,
-                    // pass info about an account (is_cold, is_empty)
+                    // pass info about an account (is_account_ownable, is_cold, is_empty)
+                    0x00u8,
                     account.is_cold as u8,
                     account.is_empty() as u8,
                 ]);
@@ -675,15 +676,16 @@ pub(crate) fn execute_rwasm_interruption<
                 inputs.syscall_params.input.len() == 20,
                 MalformedBuiltinParams
             );
-            let mut output = [0u8; 4 + 1 + 1];
+            let mut output = [0u8; 4 + 3];
             LittleEndian::write_u32(&mut output, ownable_account_bytecode.metadata.len() as u32);
             #[cfg(feature = "debug-print")]
             println!(
                 "SYSCALL_METADATA_SIZE: address={address} metadata_size={}",
                 ownable_account_bytecode.metadata.len() as u32
             );
-            output[4] = account.is_cold as u8;
-            output[5] = account.is_empty() as u8;
+            output[4] = 0x01u8; // the account belongs to the same runtime
+            output[5] = account.is_cold as u8;
+            output[6] = account.is_empty() as u8;
             return_result!(output, Return)
         }
         SYSCALL_ID_METADATA_CREATE => {
@@ -766,16 +768,16 @@ pub(crate) fn execute_rwasm_interruption<
                         "SYSCALL_METADATA_WRITE: address={address} offset={}, length={}",
                         offset, length,
                     );
+                    // TODO(dmitry123): "figure out a way how to optimize it"
                     let mut metadata = ownable_account_bytecode.metadata.to_vec();
                     metadata.resize(offset + length, 0);
                     metadata[offset..(offset + length)]
                         .copy_from_slice(&inputs.syscall_params.input[24..]);
                     ownable_account_bytecode.metadata = metadata.into();
-                    let metadata = ownable_account_bytecode
-                        .metadata
-                        .slice(offset..(offset + length));
+                    // code hash might change, rewrite it
+                    account.info.code_hash = account.info.code.as_ref().unwrap().hash_slow();
                     journal.touch_account(address);
-                    return_result!(metadata, Return)
+                    return_result!(Bytes::new(), Return)
                 }
                 SYSCALL_ID_METADATA_COPY => {
                     assert_return!(
