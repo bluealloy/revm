@@ -159,16 +159,16 @@ pub fn validate_against_state_and_deduct_caller<
             balance: Box::new(caller_account.info.balance),
         }
         .into());
-    } else {
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
-
-        // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = effective_balance_spending - tx.value();
-
-        new_balance = new_balance.saturating_sub(gas_balance_spending);
     }
+
+    let effective_balance_spending = tx
+        .effective_balance_spending(basefee, blob_price)
+        .expect("effective balance is always smaller than max balance so it can't overflow");
+
+    // subtracting max balance spending with value that is going to be deducted later in the call.
+    let gas_balance_spending = effective_balance_spending - tx.value();
+
+    new_balance = new_balance.saturating_sub(gas_balance_spending);
 
     let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
