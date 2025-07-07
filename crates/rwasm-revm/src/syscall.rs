@@ -773,10 +773,12 @@ pub(crate) fn execute_rwasm_interruption<
                     metadata.resize(offset + length, 0);
                     metadata[offset..(offset + length)]
                         .copy_from_slice(&inputs.syscall_params.input[24..]);
-                    ownable_account_bytecode.metadata = metadata.into();
-                    // code hash might change, rewrite it
-                    account.info.code_hash = account.info.code.as_ref().unwrap().hash_slow();
-                    journal.touch_account(address);
+                    // code might change, rewrite it with a new hash
+                    let new_bytecode = Bytecode::OwnableAccount(OwnableAccountBytecode::new(
+                        ownable_account_bytecode.owner_address,
+                        metadata.into(),
+                    ));
+                    journal.set_code(address, new_bytecode);
                     return_result!(Bytes::new(), Return)
                 }
                 SYSCALL_ID_METADATA_COPY => {
