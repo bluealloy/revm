@@ -223,3 +223,43 @@ fn test_frame_stack_index() {
     assert_eq!(evm.frame_stack.index(), None);
     compare_or_save_testdata("test_frame_stack_index.json", result1);
 }
+
+#[test]
+#[cfg(feature = "optional_balance_check")]
+fn test_disable_balance_check_deduct() {
+    use database::BENCH_CALLER_BALANCE;
+
+    const RETURN_CALLER_BALANCE_BYTECODE: &[u8] = &[
+        opcode::CALLER,
+        opcode::BALANCE,
+        opcode::PUSH1, 0x00,
+        opcode::MSTORE,
+        opcode::PUSH1, 0x20,
+        opcode::PUSH1, 0x00,
+        opcode::RETURN,
+    ];
+
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.disable_balance_check = true)
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            RETURN_CALLER_BALANCE_BYTECODE.into(),
+        )))
+        .build_mainnet();
+
+    let gas_limit = 100_000;
+
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_price(1)
+                .gas_limit(gas_limit)
+                .build_fill()
+        )
+        .unwrap();
+
+    assert!(result.is_success());
+
+    let returned_balance = U256::from_be_slice(result.output().unwrap().as_ref());
+    let expected_balance = BENCH_CALLER_BALANCE - U256::from(gas_limit);
+    assert_eq!(returned_balance, expected_balance);
+}
