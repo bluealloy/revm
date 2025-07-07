@@ -146,14 +146,9 @@ pub fn validate_against_state_and_deduct_caller<
 
     let max_balance_spending = tx.max_balance_spending()?;
 
-    let mut new_balance = caller_account.info.balance;
-
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        new_balance = caller_account.info.balance.max(tx.value());
-    } else if max_balance_spending > caller_account.info.balance {
+    if max_balance_spending > caller_account.info.balance && !is_balance_check_disabled {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(max_balance_spending),
             balance: Box::new(caller_account.info.balance),
@@ -168,7 +163,12 @@ pub fn validate_against_state_and_deduct_caller<
     // subtracting max balance spending with value that is going to be deducted later in the call.
     let gas_balance_spending = effective_balance_spending - tx.value();
 
-    new_balance = new_balance.saturating_sub(gas_balance_spending);
+    let mut new_balance = caller_account.info.balance.saturating_sub(gas_balance_spending);
+
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        new_balance = new_balance.max(tx.value());
+    }
 
     let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
