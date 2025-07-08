@@ -420,7 +420,7 @@ impl JournalEntryTr for JournalEntry {
             JournalEntry::CodeChange { address } => {
                 let acc = state.get_mut(&address).unwrap();
                 acc.info.code_hash = KECCAK_EMPTY;
-                acc.info.code_size = CodeSize::LessThan24KiB;
+                acc.info.code_size = CodeSize::Known(0);
                 acc.info.code = None;
             }
         }

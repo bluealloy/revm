@@ -181,7 +181,9 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateCodeLoad<usize>, <Self::Database as Database>::Error> {
-        self.code(address).map(|i| i.map(|b| b.len()))
+        self.load_account_code_optional(address, LoadCodeSizeType::LoadSmallCode, [])
+            // safe to unwrap as small code size is going to be loaded, and big code is already known.
+            .map(|acc| acc.map(|a| a.exact_code_size().unwrap()))
     }
 
     /// Gets code hash of account.
@@ -239,7 +241,7 @@ pub trait JournalTr {
     fn finalize(&mut self) -> Self::State;
 }
 
-/// Used inside [`JournalInner::load_account_optional`] to determine if code size should be loaded.
+/// Used inside [`JournalTr::load_account_code_optional`] to determine how code or code size should be loaded.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LoadCodeSizeType {

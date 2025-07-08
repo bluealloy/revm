@@ -37,9 +37,9 @@ pub enum CodeSize {
 }
 
 impl CodeSize {
-    /// Returns the size of the code.
+    /// Size of the code is less than 24KiB.
     pub const fn is_less_than_24_kib(&self) -> bool {
-        matches!(self, CodeSize::LessThan24KiB)
+        self.exceeds_24_kib().is_none()
     }
 
     /// Returns excess code size if code size exceeds 24KiB.

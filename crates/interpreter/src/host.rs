@@ -217,13 +217,7 @@ impl<CTX: ContextTr> Host for CTX {
 
     fn load_account_code_size(&mut self, address: Address) -> Option<StateCodeLoad<usize>> {
         self.journal_mut()
-            .load_account_code_optional(
-                address,
-                context_interface::LoadCodeSizeType::LoadSmallCode,
-                [],
-            )
-            // safe to unwrap as small code size is going to be loaded, and big code is already known.
-            .map(|acc| acc.map(|a| a.exact_code_size().unwrap()))
+            .code_size(address)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })

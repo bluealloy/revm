@@ -187,6 +187,19 @@ impl EthFrame<EthInterpreter> {
         let mut bytecode = account.info.code.clone().unwrap_or_default();
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            // EIP-7907: Cold access cost for large contract code size
+            if depth == 0 && spec_id.is_enabled_in(SpecId::OSAKA) {
+                let account = ctx
+                    .journal_mut()
+                    .load_account_delegated(eip7702_bytecode.delegated_address)?;
+
+                // add excess code size cost.
+                if let Some(excess_code_size) = account.data.code_size.exceeds_24_kib() {
+                    if !gas.record_cost(excess_contract_code_size_cost(excess_code_size as u64)) {
+                        return return_result(InstructionResult::OutOfGas, gas);
+                    }
+                }
+            }
             let account = ctx
                 .journal_mut()
                 .load_account_code(eip7702_bytecode.delegated_address)?;
@@ -581,7 +594,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~24KiB)
-    // EIP-7907 increased this limit to 0x40000 (~256KiB).
+    // EIP-7907 increased this limit to 0xc000 (~48KiB).
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
