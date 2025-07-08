@@ -1,3 +1,4 @@
+use core::panic;
 use revm::primitives::hardfork::SpecId;
 use serde::Deserialize;
 

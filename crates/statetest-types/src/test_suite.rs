@@ -1,5 +1,7 @@
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+
 use serde::Deserialize;
-use std::collections::BTreeMap;
 
 use crate::TestUnit;
 

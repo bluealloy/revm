@@ -1,5 +1,7 @@
+use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
+
 use serde::Deserialize;
-use std::collections::{BTreeMap, HashMap};
 
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use revm::{
@@ -34,7 +36,7 @@ pub struct TestUnit {
     /// A mapping of addresses to their account information before the transaction
     /// is executed. This represents the initial state of all accounts involved
     /// in the test, including their balances, nonces, code, and storage.
-    pub pre: HashMap<Address, AccountInfo>,
+    pub pre: BTreeMap<Address, AccountInfo>,
 
     /// Post-execution expectations per specification.
     ///

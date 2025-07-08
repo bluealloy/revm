@@ -1,3 +1,5 @@
+use alloc::string::String;
+
 use revm::primitives::B256;
 use thiserror::Error;
 
