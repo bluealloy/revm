@@ -103,6 +103,7 @@ pub fn test_multi_tx_create() {
             | AccountStatus::CreatedLocal
             | AccountStatus::Touched
             | AccountStatus::LoadedAsNotExisting
+            | AccountStatus::CodeLoaded
     );
 
     let result2 = evm
@@ -168,6 +169,7 @@ pub fn test_multi_tx_create() {
             | AccountStatus::Touched
             | AccountStatus::SelfDestructed
             | AccountStatus::LoadedAsNotExisting
+            | AccountStatus::CodeLoaded
     );
     let output = evm.finalize();
 

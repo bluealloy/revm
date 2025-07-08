@@ -15,7 +15,7 @@ use context_interface::{
 use core::cmp::Ordering;
 use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
-use state::AccountInfo;
+use state::{AccountInfo, CodeSize};
 use std::boxed::Box;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -129,7 +129,7 @@ pub fn validate_against_state_and_deduct_caller<
     let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    let caller_account = journal.load_account(tx.caller())?.data;
 
     validate_account_nonce_and_code(
         &mut caller_account.info,
@@ -249,6 +249,7 @@ pub fn apply_eip7702_auth_list<
             (bytecode, hash)
         };
         authority_acc.info.code_hash = hash;
+        authority_acc.info.code_size = CodeSize::Known(bytecode.len());
         authority_acc.info.code = Some(bytecode);
 
         // 9. Increase the nonce of `authority` by one.

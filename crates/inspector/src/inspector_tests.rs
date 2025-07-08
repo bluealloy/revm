@@ -9,7 +9,7 @@ mod tests {
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterTypes,
     };
     use primitives::{address, Address, Bytes, Log, TxKind, U256};
-    use state::{bytecode::opcode, AccountInfo, Bytecode};
+    use state::{bytecode::opcode, AccountInfo, Bytecode, CodeSize};
 
     #[derive(Debug, Clone)]
     struct InterpreterState {
@@ -383,6 +383,7 @@ mod tests {
                 balance: U256::from(1_000_000_000_000_000_000u64),
                 nonce: 0,
                 code_hash: primitives::keccak256(&caller_code),
+                code_size: CodeSize::LessThan24KiB,
                 code: Some(Bytecode::new_raw(caller_code)),
             },
         );
@@ -397,6 +398,7 @@ mod tests {
             AccountInfo {
                 balance: U256::ZERO,
                 nonce: 0,
+                code_size: CodeSize::LessThan24KiB,
                 code_hash: primitives::keccak256(&callee_code),
                 code: Some(Bytecode::new_raw(callee_code)),
             },

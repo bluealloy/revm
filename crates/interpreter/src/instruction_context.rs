@@ -1,4 +1,4 @@
-use crate::{interpreter_types::Jumps, Interpreter, InterpreterTypes};
+use crate::{interpreter_types::Jumps, InstructionResult, Interpreter, InterpreterTypes};
 
 use super::Instruction;
 
@@ -37,5 +37,11 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
 
         // Execute instruction.
         instruction_table[opcode as usize](self)
+    }
+
+    /// Halts the execution of the contract with a fatal error.
+    #[inline]
+    pub fn fatal_halt(&mut self) {
+        self.interpreter.halt(InstructionResult::FatalExternalError);
     }
 }

@@ -23,7 +23,7 @@ use revm::{
     inspector::{inspectors::TracerEip3155, JournalExt},
     interpreter::{
         interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
-        SelfDestructResult, StateLoad,
+        SelfDestructResult, StateCodeLoad, StateLoad,
     },
     primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
     state::{Account, Bytecode, EvmState},
@@ -108,19 +108,14 @@ impl JournalTr for Backend {
         self.journaled_state.selfdestruct(address, target)
     }
 
-    fn warm_account_and_storage(
+    fn load_account_code_optional(
         &mut self,
         address: Address,
+        load_code_size: revm::context::LoadCodeSizeType,
         storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error> {
+    ) -> Result<StateCodeLoad<&mut Account>, <Self::Database as Database>::Error> {
         self.journaled_state
-            .warm_account_and_storage(address, storage_keys)
-    }
-
-    fn warm_account(&mut self, address: Address) {
-        self.journaled_state
-            .warm_preloaded_addresses
-            .insert(address);
+            .load_account_code_optional(address, load_code_size, storage_keys)
     }
 
     fn warm_coinbase_account(&mut self, address: Address) {
@@ -152,17 +147,6 @@ impl JournalTr for Backend {
         self.journaled_state.transfer(from, to, balance)
     }
 
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, Infallible> {
-        self.journaled_state.load_account(address)
-    }
-
-    fn load_account_code(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&mut Account>, Infallible> {
-        self.journaled_state.load_account_code(address)
-    }
-
     fn load_account_delegated(
         &mut self,
         address: Address,
@@ -177,7 +161,7 @@ impl JournalTr for Backend {
     fn code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
+    ) -> Result<StateCodeLoad<revm::primitives::Bytes>, <Self::Database as Database>::Error> {
         self.journaled_state.code(address)
     }
 

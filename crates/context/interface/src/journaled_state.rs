@@ -8,6 +8,8 @@ use primitives::{
 use state::{Account, Bytecode};
 use std::vec::Vec;
 
+pub use state::CodeSize;
+
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     /// Database type that is used in the journal.
@@ -59,16 +61,6 @@ pub trait JournalTr {
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
-    /// Warms the account and storage.
-    fn warm_account_and_storage(
-        &mut self,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error>;
-
-    /// Warms the account.
-    fn warm_account(&mut self, address: Address);
-
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);
 
@@ -110,17 +102,46 @@ pub trait JournalTr {
     /// Increments the nonce of the account.
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
+    /// Loads the account code.
+    fn load_account_code_optional(
+        &mut self,
+        address: Address,
+        load_code_size: LoadCodeSizeType,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
+    ) -> Result<StateCodeLoad<&mut Account>, <Self::Database as Database>::Error>;
+
     /// Loads the account.
     fn load_account(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error> {
+        self.load_account_code_optional(address, LoadCodeSizeType::DoNotLoad, [])
+            .map(StateCodeLoad::into_state_load)
+    }
+
+    /// Warms the account and storage.
+    fn warm_account_and_storage(
+        &mut self,
+        address: Address,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
+    ) -> Result<(), <Self::Database as Database>::Error> {
+        self.load_account_code_optional(address, LoadCodeSizeType::DoNotLoad, storage_keys)?;
+        Ok(())
+    }
+
+    /// Warms the account.
+    fn warm_account(&mut self, address: Address) {
+        self.load_account_code_optional(address, LoadCodeSizeType::DoNotLoad, [])
+            .unwrap();
+    }
 
     /// Loads the account code.
     fn load_account_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    ) -> Result<StateCodeLoad<&mut Account>, <Self::Database as Database>::Error> {
+        self.load_account_code_optional(address, LoadCodeSizeType::LoadCodeAndMarkWarm, [])
+    }
 
     /// Loads the account delegated.
     fn load_account_delegated(
@@ -133,7 +154,7 @@ pub trait JournalTr {
 
     /// Sets bytecode and calculates hash.
     ///
-    /// Assume account is warm.
+    /// Assume account warm. In case of EIP-7907, marks code as warm.
     #[inline]
     fn set_code(&mut self, address: Address, code: Bytecode) {
         let hash = code.hash_slow();
@@ -145,13 +166,24 @@ pub trait JournalTr {
     fn code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
-        let a = self.load_account_code(address)?;
-        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let code = a.info.code.as_ref().unwrap();
-        let code = code.original_bytes();
+    ) -> Result<StateCodeLoad<Bytes>, <Self::Database as Database>::Error> {
+        self.load_account_code(address).map(|a| {
+            a.map(|a| {
+                // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+                a.info.code.as_ref().unwrap().original_bytes()
+            })
+        })
+    }
 
-        Ok(StateLoad::new(code, a.is_cold))
+    /// Returns code size of the account.
+    #[inline]
+    fn code_size(
+        &mut self,
+        address: Address,
+    ) -> Result<StateCodeLoad<usize>, <Self::Database as Database>::Error> {
+        self.load_account_code_optional(address, LoadCodeSizeType::LoadSmallCode, [])
+            // safe to unwrap as small code size is going to be loaded, and big code is already known.
+            .map(|acc| acc.map(|a| a.exact_code_size().unwrap()))
     }
 
     /// Gets code hash of account.
@@ -159,16 +191,11 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
-        let acc = self.load_account_code(address)?;
+        let acc = self.load_account(address)?;
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
-        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let _code = acc.info.code.as_ref().unwrap();
-
-        let hash = acc.info.code_hash;
-
-        Ok(StateLoad::new(hash, acc.is_cold))
+        Ok(acc.map(|a| a.info.code_hash))
     }
 
     /// Called at the end of the transaction to clean all residue data from journal.
@@ -212,6 +239,45 @@ pub trait JournalTr {
 
     /// Clear current journal resetting it to initial state and return changes state.
     fn finalize(&mut self) -> Self::State;
+}
+
+/// Used inside [`JournalTr::load_account_code_optional`] to determine how code or code size should be loaded.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum LoadCodeSizeType {
+    /// Do not load code size.
+    DoNotLoad,
+    /// If code size is [`state::CodeSize::LessThan24KiB`] load the bytecode. If [`state::AccountInfo::code_size`] is [`state::CodeSize::LessThan24KiB`] bytecode
+    /// will be fetched but will not be marked as warm.
+    ///
+    /// This is needed for `EXTCODESIZE` opcode.
+    LoadSmallCode,
+    /// Load small code and mark it warm. this is needed for Delegation code load, where we need to load small code and mark it warm.
+    /// Afterwards we need to load the full code and mark it warm.
+    LoadSmallCodeAndMarkWarm,
+    /// Load code regardless of [`state::AccountInfo::code_size`] and mark it warm.
+    LoadCodeAndMarkWarm,
+}
+
+impl LoadCodeSizeType {
+    /// Returns true if code should be loaded.
+    pub fn load_code(&self, is_small_code: bool) -> bool {
+        match self {
+            LoadCodeSizeType::DoNotLoad => false,
+            LoadCodeSizeType::LoadSmallCode | LoadCodeSizeType::LoadSmallCodeAndMarkWarm => {
+                is_small_code
+            }
+            LoadCodeSizeType::LoadCodeAndMarkWarm => true,
+        }
+    }
+
+    /// Should we make code as warm loaded?
+    pub fn make_warm(&self) -> bool {
+        matches!(
+            self,
+            LoadCodeSizeType::LoadCodeAndMarkWarm | LoadCodeSizeType::LoadSmallCodeAndMarkWarm
+        )
+    }
 }
 
 /// Transfer and creation result
@@ -276,6 +342,67 @@ impl<T> StateLoad<T> {
     }
 }
 
+/// Duplicates StateLoad, adding code cold status.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct StateCodeLoad<T> {
+    /// Returned data
+    pub data: T,
+    /// Is account is cold loaded
+    pub is_cold: bool,
+    /// Is account code cold loaded
+    pub is_code_cold: bool,
+}
+
+impl<T> Deref for StateCodeLoad<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<T> DerefMut for StateCodeLoad<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+impl<T> StateCodeLoad<T> {
+    /// Returns a new [`StateCodeLoad`] with the given data and cold load statuses.
+    pub fn new(data: T, is_cold: bool, is_code_cold: bool) -> Self {
+        Self {
+            data,
+            is_cold,
+            is_code_cold,
+        }
+    }
+
+    /// Creates a new [`StateCodeLoad`] from a [`StateLoad`] and a code cold status.
+    pub fn from_state_load(state_load: StateLoad<T>, is_code_cold: bool) -> Self {
+        Self {
+            data: state_load.data,
+            is_cold: state_load.is_cold,
+            is_code_cold,
+        }
+    }
+
+    /// Converts [`StateCodeLoad`] to [`StateLoad`].
+    pub fn into_state_load(self) -> StateLoad<T> {
+        StateLoad::new(self.data, self.is_cold)
+    }
+
+    /// Maps the data of the [`StateCodeLoad`] to a new value.
+    ///
+    /// Useful for transforming the data of the [`StateCodeLoad`] without changing the cold load statuses.
+    pub fn map<B, F>(self, f: F) -> StateCodeLoad<B>
+    where
+        F: FnOnce(T) -> B,
+    {
+        StateCodeLoad::new(f(self.data), self.is_cold, self.is_code_cold)
+    }
+}
+
 /// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -284,4 +411,8 @@ pub struct AccountLoad {
     pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
+    /// Is account code is cold loaded. In case of delegated code it represents delegated account code cold status.
+    pub is_code_cold: bool,
+    /// Account code size
+    pub code_size: CodeSize,
 }

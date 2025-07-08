@@ -15,6 +15,7 @@ use revm::{
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite, TestUnit};
+
 use std::{
     convert::Infallible,
     fmt::Debug,
