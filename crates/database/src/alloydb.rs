@@ -84,6 +84,13 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         let code_hash = code.hash_slow();
         let nonce = nonce?;
 
+        // If the account is empty, return None
+        // This doesn't work well with pre-state clear accounts but we don't
+        // really have a nice way to check for non-existent accounts
+        if balance.is_zero() && code.is_empty() && nonce == 0 {
+            return Ok(None);
+        }
+
         Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
     }
 
