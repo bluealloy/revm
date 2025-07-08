@@ -437,13 +437,13 @@ mod tests {
 
     #[test]
     fn test_eip7907_code_size_limit_success() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000, but EIP-7825 txn gas limit cap is 30_000_000 so only ~0x0BFFF (49151 bytes)
-        // size contract can be used. Use the simplest method to return a contract code size equal to 0x0BFFF (49151 bytes)
-        // PUSH3 0x0BFFF - return size
+        // EIP-7907: MAX_CODE_SIZE = 0xc000, but EIP-7825 txn gas limit cap is 30_000_000 so only ~0x0c000 (49152 bytes)
+        // size contract can be used. Use the simplest method to return a contract code size equal to 0x0c000 (49152 bytes)
+        // PUSH3 0x0c000 - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code: Vec<u8> = vec![
-            0x62, 0x00, 0xBF, 0xFF, // PUSH3 0x0BFFF
+            0x62, 0x00, 0xc0, 0x00, // PUSH3 0x0c000
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];
@@ -451,7 +451,7 @@ mod tests {
         let r = deploy_contract(bytecode, Some(SpecId::OSAKA));
         assert!(matches!(r, Ok(ExecutionResult::Success { .. },)), "{r:?}");
         let gas_used = r.unwrap().gas_used();
-        assert!(gas_used > 29_000_000 && gas_used < 30_000_000);
+        assert_eq!(gas_used, 9892700);
     }
 
     /// EIP-7825: Transaction Gas Limit Cap in Osaka (at 30M gas) will effectively limit the code size
@@ -717,7 +717,7 @@ mod tests {
         // PUSH1 0x00      - the memory position
         // MSTORE          - store a non-zero value at the beginning of memory
 
-        // PUSH3 0x18001    - the return size (exceeds 0x18000)
+        // PUSH3 0x18000    - the return size (exceeds 0x18000)
         // PUSH1 0x00      - the memory offset
         // PUSH1 0x00      - the amount of ETH sent
         // CREATE          - create contract instruction (create contract from current memory)
@@ -734,7 +734,7 @@ mod tests {
             0x60, 0x00, // PUSH1 0x00
             0x52, // MSTORE
             // 2. prepare to create a large contract
-            0x62, 0x01, 0x80, 0x01, // PUSH3 0x18001 (exceeds 0x18000)
+            0x62, 0x01, 0x80, 0x00, // PUSH3 0x18000
             0x60, 0x00, // PUSH1 0x00 (the memory offset)
             0x60, 0x00, // PUSH1 0x00 (the amount of ETH sent)
             0xf0, // CREATE
@@ -816,7 +816,7 @@ mod tests {
             0x60, 0x00, // PUSH1 0x00
             0x52, // MSTORE
             // 2. prepare to create a contract
-            0x62, 0x04, 0x00, 0x00, // PUSH3 0x40000
+            0x62, 0x01, 0x80, 0x00, // PUSH3 0x18000
             0x60, 0x00, // PUSH1 0x00 (the memory offset)
             0x60, 0x00, // PUSH1 0x00 (the amount of ETH sent)
             0xf0, // CREATE

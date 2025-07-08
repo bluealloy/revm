@@ -61,14 +61,12 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Gets the size of an account's code.
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
     let Some(code_size) = context.host.load_account_code_size(address) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
+        context.fatal_halt();
         return;
     };
 
@@ -128,21 +126,36 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter
     );
     let address = address.into_address();
-
-    // load code size and check if it is cold.
-    let Some(code_size) = context.host.load_account_code_size(address) else {
-        return context.fatal_halt();
-    };
-
     let len = as_usize_or_fail!(context.interpreter, len_u256);
-    gas_or_fail!(
-        context.interpreter,
-        gas::extcodecopy_cost(context.interpreter.runtime_flag.spec_id(), &code_size, len)
-    );
 
-    // load code and make it warm.
-    let Some(code) = context.host.load_account_code(address) else {
-        return context.fatal_halt();
+    let spec_id = context.interpreter.runtime_flag.spec_id();
+    let code = if spec_id.is_enabled_in(OSAKA) {
+        // load code size and check if it is cold.
+        let Some(code_size) = context.host.load_account_code_size(address) else {
+            return context.fatal_halt();
+        };
+
+        gas_or_fail!(
+            context.interpreter,
+            gas::osaka_extcodecopy_cost(spec_id, &code_size, len)
+        );
+
+        // load code and make it warm.
+        let Some(code) = context.host.load_account_code(address) else {
+            return context.fatal_halt();
+        };
+        code.data
+    } else {
+        // load code.
+        let Some(code) = context.host.load_account_code(address) else {
+            return context.fatal_halt();
+        };
+
+        gas_or_fail!(
+            context.interpreter,
+            gas::berlin_extcodecopy_cost(spec_id, &code, len)
+        );
+        code.data
     };
 
     // for len == 0 memory expansion is not done.

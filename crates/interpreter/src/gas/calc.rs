@@ -112,24 +112,56 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
     copy_cost(VERYLOW, len)
 }
 
-/// `EXTCODECOPY` opcode cost calculation.
+/// `EXTCODECOPY` opcode cost calculation, berlin specific.
 #[inline]
-pub const fn extcodecopy_cost(
+pub const fn berlin_extcodecopy_cost<T>(
+    spec_id: SpecId,
+    state_load: &StateCodeLoad<T>,
+    copy_len: usize,
+) -> Option<u64> {
+    extcodecopy_inner_cost(spec_id, state_load.is_cold, None, copy_len)
+}
+
+/// `EXTCODECOPY` opcode cost calculation, osaka specific.
+#[inline]
+pub const fn osaka_extcodecopy_cost(
     spec_id: SpecId,
     state_load: &StateCodeLoad<usize>,
     copy_len: usize,
 ) -> Option<u64> {
+    extcodecopy_inner_cost(
+        spec_id,
+        state_load.is_cold,
+        if state_load.is_code_cold {
+            Some(state_load.data)
+        } else {
+            None
+        },
+        copy_len,
+    )
+}
+
+/// `EXTCODECOPY` opcode cost calculation, common for berlin and osaka.
+#[inline]
+pub const fn extcodecopy_inner_cost(
+    spec_id: SpecId,
+    is_cold: bool,
+    is_code_cold_and_size: Option<usize>,
+    copy_len: usize,
+) -> Option<u64> {
     let mut base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(state_load.is_cold)
+        warm_cold_cost(is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
         20
     };
 
-    if spec_id.is_enabled_in(SpecId::OSAKA) && state_load.is_code_cold {
-        // extra cost for large code size.
-        base_gas += large_contract_code_size_cost(state_load.data);
+    if spec_id.is_enabled_in(SpecId::OSAKA) {
+        if let Some(code_size) = is_code_cold_and_size {
+            // extra cost for large code size.
+            base_gas += large_contract_code_size_cost(code_size);
+        }
     }
     copy_cost(base_gas, copy_len)
 }
