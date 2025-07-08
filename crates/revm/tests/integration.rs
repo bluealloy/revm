@@ -226,7 +226,7 @@ fn test_frame_stack_index() {
 
 #[test]
 #[cfg(feature = "optional_balance_check")]
-fn test_disable_balance_check_deduct() {
+fn test_disable_balance_check() {
     use database::BENCH_CALLER_BALANCE;
 
     const RETURN_CALLER_BALANCE_BYTECODE: &[u8] = &[
@@ -249,13 +249,19 @@ fn test_disable_balance_check_deduct() {
         )))
         .build_mainnet();
 
+    // Construct tx so that effective cost is more than caller balance.
+    let gas_price = 1;
     let gas_limit = 100_000;
+    // Make sure value doesn't consume all balance since we want to validate that all effective
+    // cost is deducted.
+    let tx_value = BENCH_CALLER_BALANCE - U256::from(1);
 
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_price(1)
+                .gas_price(gas_price)
                 .gas_limit(gas_limit)
+                .value(tx_value)
                 .build_fill(),
         )
         .unwrap();
@@ -263,6 +269,6 @@ fn test_disable_balance_check_deduct() {
     assert!(result.is_success());
 
     let returned_balance = U256::from_be_slice(result.output().unwrap().as_ref());
-    let expected_balance = BENCH_CALLER_BALANCE - U256::from(gas_limit);
+    let expected_balance = U256::ZERO;
     assert_eq!(returned_balance, expected_balance);
 }
