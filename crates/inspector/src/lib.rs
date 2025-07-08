@@ -17,6 +17,9 @@ mod mainnet_inspect;
 mod noop;
 mod traits;
 
+#[cfg(test)]
+mod inspector_tests;
+
 /// Inspector implementations.
 pub mod inspectors {
     #[cfg(all(feature = "std", feature = "serde-json"))]
