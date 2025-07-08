@@ -232,10 +232,13 @@ fn test_disable_balance_check_deduct() {
     const RETURN_CALLER_BALANCE_BYTECODE: &[u8] = &[
         opcode::CALLER,
         opcode::BALANCE,
-        opcode::PUSH1, 0x00,
+        opcode::PUSH1,
+        0x00,
         opcode::MSTORE,
-        opcode::PUSH1, 0x20,
-        opcode::PUSH1, 0x00,
+        opcode::PUSH1,
+        0x20,
+        opcode::PUSH1,
+        0x00,
         opcode::RETURN,
     ];
 
@@ -253,7 +256,7 @@ fn test_disable_balance_check_deduct() {
             TxEnv::builder_for_bench()
                 .gas_price(1)
                 .gas_limit(gas_limit)
-                .build_fill()
+                .build_fill(),
         )
         .unwrap();
 
