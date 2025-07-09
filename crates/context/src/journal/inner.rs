@@ -10,11 +10,18 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    Address,
+    HashMap,
+    HashSet,
+    Log,
+    StorageKey,
+    StorageValue,
+    B256,
+    KECCAK_EMPTY,
+    U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
-use fluentbase_genesis::{is_self_gas_management_contract, is_system_precompile};
 
 /// Inner journal state that contains journal and state changes.
 ///
@@ -395,7 +402,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let mut is_empty = account_load.state_clear_aware_is_empty(spec);
 
         // system precompiles are always empty...
-        if !is_empty && is_system_precompile(&target) {
+        if !is_empty && fluentbase_types::is_system_precompile(&target) {
             is_empty = true;
         }
 
@@ -507,10 +514,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let delegate_account = self.load_account(db, address)?;
             // we need to skip this flag for the full EVM gas compatibility
             // because all EVM contracts are represented though EIP-7702
-            if !is_self_gas_management_contract(&address) {
-                account_load
-                    .data
-                    .is_delegate_account_cold = Some(delegate_account.is_cold);
+            if !fluentbase_types::is_system_precompile(&address) {
+                account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
             }
         }
 

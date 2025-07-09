@@ -4,7 +4,6 @@ use crate::{
     types::{SystemInterruptionInputs, SystemInterruptionOutcome},
 };
 use core::cell::RefCell;
-use fluentbase_genesis::is_self_gas_management_contract;
 use fluentbase_runtime::{
     instruction::{exec::SyscallExec, resume::SyscallResume},
     RuntimeContext,
@@ -131,7 +130,7 @@ pub(crate) fn execute_rwasm_frame<
         .checked_mul(FUEL_DENOM_RATE)
         .unwrap_or(u64::MAX);
 
-    let is_gas_free = is_self_gas_management_contract(&effective_bytecode_address);
+    let is_gas_free = fluentbase_sdk::is_system_precompile(&effective_bytecode_address);
 
     // execute function
     let mut runtime_context = RuntimeContext::root(fuel_limit);
