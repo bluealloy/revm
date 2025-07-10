@@ -6,6 +6,11 @@
 //! It includes structures for representing account information, environment settings,
 //! test cases, and transaction data used in Ethereum state tests.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 mod account_info;
 mod deserializer;
 mod env;
