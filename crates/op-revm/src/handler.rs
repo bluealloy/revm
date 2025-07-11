@@ -1082,7 +1082,7 @@ mod tests {
 
         let mut gas = Gas::new(100);
         gas.set_spent(10);
-        let mut exec_result = FrameResult::Call(CallOutcome::new(
+        let exec_result = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
                 result: InstructionResult::Return,
                 output: Default::default(),
@@ -1092,9 +1092,7 @@ mod tests {
         ));
 
         // Reimburse the caller for the unspent portion of the fees.
-        handler
-            .reimburse_caller(&mut evm, &mut exec_result)
-            .unwrap();
+        handler.reimburse_caller(&mut evm, &exec_result).unwrap();
 
         // Compute the expected refund amount. If the transaction is a deposit, the operator fee refund never
         // applies. If the transaction is not a deposit, the operator fee refund is added to the refund amount.
