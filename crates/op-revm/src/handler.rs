@@ -285,7 +285,7 @@ where
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        frame_result: &<<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let mut additional_refund = U256::ZERO;
 
@@ -297,7 +297,7 @@ where
                 .operator_fee_refund(frame_result.gas(), spec);
         }
 
-        reimburse_caller(evm.ctx(), frame_result.gas_mut(), additional_refund).map_err(From::from)
+        reimburse_caller(evm.ctx(), frame_result.gas(), additional_refund).map_err(From::from)
     }
 
     fn refund(
@@ -327,7 +327,7 @@ where
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        frame_result: &<<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
