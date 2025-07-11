@@ -353,27 +353,21 @@ where
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
-        let mut operator_fee_cost = U256::ZERO;
-        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-            operator_fee_cost = l1_block_info.operator_fee_charge(
-                enveloped_tx,
-                U256::from(frame_result.gas().spent() - frame_result.gas().refunded() as u64),
-            );
+        let operator_fee_cost = if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            l1_block_info.operator_fee_charge(enveloped_tx, U256::from(frame_result.gas().used()))
+        } else {
+            U256::ZERO
+        };
+        let base_fee_amount = U256::from(basefee.saturating_mul(frame_result.gas().used() as u128));
+
+        // Send fees to their respective recipients
+        for (recipient, amount) in [
+            (L1_FEE_RECIPIENT, l1_cost),
+            (BASE_FEE_RECIPIENT, base_fee_amount),
+            (OPERATOR_FEE_RECIPIENT, operator_fee_cost),
+        ] {
+            ctx.journal_mut().balance_incr(recipient, amount)?;
         }
-        // Send the L1 cost of the transaction to the L1 Fee Vault.
-        ctx.journal_mut().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
-
-        // Send the base fee of the transaction to the Base Fee Vault.
-        ctx.journal_mut().balance_incr(
-            BASE_FEE_RECIPIENT,
-            U256::from(basefee.saturating_mul(
-                (frame_result.gas().spent() - frame_result.gas().refunded() as u64) as u128,
-            )),
-        )?;
-
-        // Send the operator fee of the transaction to the coinbase.
-        ctx.journal_mut()
-            .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
 
         Ok(())
     }
