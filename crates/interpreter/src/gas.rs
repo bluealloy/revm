@@ -73,6 +73,12 @@ impl Gas {
         self.limit - self.remaining
     }
 
+    /// Returns the total amount of gas used.
+    #[inline]
+    pub const fn used(&self) -> u64 {
+        self.spent() - self.refunded() as u64
+    }
+
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
