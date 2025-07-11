@@ -285,7 +285,7 @@ where
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        frame_result: &<<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let mut additional_refund = U256::ZERO;
 
@@ -297,7 +297,7 @@ where
                 .operator_fee_refund(frame_result.gas(), spec);
         }
 
-        reimburse_caller(evm.ctx(), frame_result.gas_mut(), additional_refund).map_err(From::from)
+        reimburse_caller(evm.ctx(), frame_result.gas(), additional_refund).map_err(From::from)
     }
 
     fn refund(
@@ -327,7 +327,7 @@ where
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        frame_result: &<<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
@@ -1082,7 +1082,7 @@ mod tests {
 
         let mut gas = Gas::new(100);
         gas.set_spent(10);
-        let mut exec_result = FrameResult::Call(CallOutcome::new(
+        let exec_result = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
                 result: InstructionResult::Return,
                 output: Default::default(),
@@ -1092,9 +1092,7 @@ mod tests {
         ));
 
         // Reimburse the caller for the unspent portion of the fees.
-        handler
-            .reimburse_caller(&mut evm, &mut exec_result)
-            .unwrap();
+        handler.reimburse_caller(&mut evm, &exec_result).unwrap();
 
         // Compute the expected refund amount. If the transaction is a deposit, the operator fee refund never
         // applies. If the transaction is not a deposit, the operator fee refund is added to the refund amount.

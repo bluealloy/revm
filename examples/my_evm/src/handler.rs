@@ -52,7 +52,7 @@ where
     fn reward_beneficiary(
         &self,
         _evm: &mut Self::Evm,
-        _exec_result: &mut FrameResult,
+        _exec_result: &FrameResult,
     ) -> Result<(), Self::Error> {
         // Skip beneficiary reward
         Ok(())
