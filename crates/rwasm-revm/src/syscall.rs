@@ -3,11 +3,11 @@ use crate::{
     types::{SystemInterruptionInputs, SystemInterruptionOutcome},
 };
 use core::cmp::min;
-use fluentbase_genesis::is_system_precompile;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian, ReadBytesExt},
     bytes::Buf,
     calc_create4_address,
+    is_system_precompile,
     keccak256,
     Address,
     Bytes,

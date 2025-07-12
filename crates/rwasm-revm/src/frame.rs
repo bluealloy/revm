@@ -1,13 +1,9 @@
 use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
 use core::{cmp::min, marker::PhantomData};
-use fluentbase_genesis::{
-    try_resolve_precompile_account_from_input,
-    UPDATE_GENESIS_AUTH,
-    UPDATE_GENESIS_PREFIX,
-};
 use fluentbase_sdk::{
     is_delegated_runtime_address,
     keccak256,
+    try_resolve_precompile_account_from_input,
     Address,
     Bytes,
     ERC20_MAGIC_BYTES,
@@ -17,6 +13,8 @@ use fluentbase_sdk::{
     PRECOMPILE_WASM_RUNTIME,
     SVM_ELF_MAGIC_BYTES,
     U256,
+    UPDATE_GENESIS_AUTH,
+    UPDATE_GENESIS_PREFIX,
     WASM_MAGIC_BYTES,
 };
 use revm::{

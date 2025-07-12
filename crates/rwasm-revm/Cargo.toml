@@ -31,7 +31,6 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 # fluentbase
 fluentbase-runtime.workspace = true
-fluentbase-genesis.workspace = true
 fluentbase-sdk.workspace = true
 
 [dev-dependencies]
