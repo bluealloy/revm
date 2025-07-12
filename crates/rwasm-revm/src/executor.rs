@@ -10,20 +10,9 @@ use fluentbase_runtime::{
     RuntimeContext,
 };
 use fluentbase_sdk::{
-    codec::CompactABI,
-    BlockContextV1,
-    BytecodeOrHash,
-    Bytes,
-    ContractContextV1,
-    ExitCode,
-    SharedContextInput,
-    SharedContextInputV1,
-    SyscallInvocationParams,
-    TxContextV1,
-    FUEL_DENOM_RATE,
-    STATE_DEPLOY,
-    STATE_MAIN,
-    U256,
+    codec::CompactABI, BlockContextV1, BytecodeOrHash, Bytes, ContractContextV1, ExitCode,
+    SharedContextInput, SharedContextInputV1, SyscallInvocationParams, TxContextV1,
+    FUEL_DENOM_RATE, STATE_DEPLOY, STATE_MAIN, U256,
 };
 use revm::{
     bytecode::Bytecode,
@@ -32,13 +21,7 @@ use revm::{
     interpreter::{
         interpreter::EthInterpreter,
         interpreter_types::{InputsTr, LoopControl, RuntimeFlag},
-        return_ok,
-        return_revert,
-        CallInput,
-        FrameInput,
-        Gas,
-        InstructionResult,
-        InterpreterAction,
+        return_ok, return_revert, CallInput, FrameInput, Gas, InstructionResult, InterpreterAction,
         InterpreterResult,
     },
 };
@@ -115,7 +98,20 @@ pub(crate) fn execute_rwasm_frame<
 
     let rwasm_bytecode = match &interpreter.bytecode.clone() {
         Bytecode::Rwasm(bytecode) => bytecode.clone(),
-        _ => unreachable!("revm: unexpected bytecode type: {:?}", interpreter.bytecode),
+        _ => {
+            #[cfg(feature = "std")]
+            eprintln!(
+                "WARNING: unexpected bytecode type: {:?}, need investigation",
+                interpreter.bytecode
+            );
+            return Ok(InterpreterAction::Return {
+                result: InterpreterResult {
+                    result: InstructionResult::EOFOpcodeDisabledInLegacy,
+                    output: Bytes::default(),
+                    gas: interpreter.control.gas,
+                },
+            });
+        }
     };
     let bytecode_hash = BytecodeOrHash::Bytecode {
         address: effective_bytecode_address,
