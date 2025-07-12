@@ -163,8 +163,8 @@ fn init_db() -> CacheDB<EmptyDB> {
     cache_db
         .insert_account_storage(
             BURNTPIX_MAIN_ADDRESS,
-            StorageValue::from(2),
-            StorageKey::from_be_bytes(*STORAGE_TWO),
+            StorageKey::from(2),
+            StorageValue::from_be_bytes(*STORAGE_TWO),
         )
         .unwrap();
 
