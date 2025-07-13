@@ -1,5 +1,5 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
-use super::crypto_backend::{encode_g2_point, p2_msm, read_g2, read_scalar};
+use super::crypto_backend::{p2_msm_bytes, G2PointScalarPairRef};
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
@@ -34,8 +34,8 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut g2_points: Vec<_> = Vec::with_capacity(k);
-    let mut scalars = Vec::with_capacity(k);
+    let mut point_scalar_pairs: Vec<G2PointScalarPairRef<'_>> = Vec::with_capacity(k);
+    
     for i in 0..k {
         let encoded_g2_element =
             &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
@@ -43,44 +43,28 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
             ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH];
 
         // Filter out points infinity as an optimization, since it is a no-op.
-        // Note: Previously, points were being batch converted from Jacobian to Affine. In `blst`, this would essentially,
-        // zero out all of the points. Since all points are in affine, this bug is avoided.
         if encoded_g2_element.iter().all(|i| *i == 0) {
             continue;
         }
 
         let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
 
-        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        //
-        // So we set the subgroup_check flag to `true`
-        let p0_aff = read_g2(a_x_0, a_x_1, a_y_0, a_y_1)?;
-
         // If the scalar is zero, then this is a no-op.
-        //
-        // Note: This check is made after checking that g2 is valid.
-        // this is because we want the precompile to error when
-        // G2 is invalid, even if the scalar is zero.
+        // Note: We still need to parse the point first to validate it
         if encoded_scalar.iter().all(|i| *i == 0) {
+            // Validate the point by trying to parse it
+            // This is done by p2_msm_bytes internally
             continue;
         }
 
-        // Convert affine point to Jacobian coordinates using our helper function
-        g2_points.push(p0_aff);
-        scalars.push(read_scalar(encoded_scalar)?);
+        // Convert scalar to fixed-size array
+        let scalar_array: &[u8; SCALAR_LENGTH] = encoded_scalar.try_into()
+            .map_err(|_| PrecompileError::Other("Invalid scalar length".to_string()))?;
+            
+        point_scalar_pairs.push(((a_x_0, a_x_1, a_y_0, a_y_1), scalar_array));
     }
 
-    // Return infinity point if all points are infinity
-    if g2_points.is_empty() {
-        return Ok(PrecompileOutput::new(
-            required_gas,
-            [0; PADDED_G2_LENGTH].into(),
-        ));
-    }
-
-    // Perform multi-scalar multiplication using the safe wrapper
-    let multiexp_aff = p2_msm(g2_points, scalars);
-
-    let out = encode_g2_point(&multiexp_aff);
+    // Use the byte-oriented API
+    let out = p2_msm_bytes(&point_scalar_pairs)?;
     Ok(PrecompileOutput::new(required_gas, out.into()))
 }

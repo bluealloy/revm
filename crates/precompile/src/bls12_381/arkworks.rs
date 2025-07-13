@@ -4,6 +4,21 @@ use crate::{
     },
     PrecompileError,
 };
+
+// Type aliases for MSM byte-oriented API
+pub(super) type G1PointScalarPairRef<'a> = (
+    (&'a [u8; FP_LENGTH], &'a [u8; FP_LENGTH]),
+    &'a [u8; SCALAR_LENGTH],
+);
+pub(super) type G2PointScalarPairRef<'a> = (
+    (
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH], 
+        &'a [u8; FP_LENGTH],
+        &'a [u8; FP_LENGTH],
+    ),
+    &'a [u8; SCALAR_LENGTH],
+);
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{
     hashing::{curve_maps::wb::WBMap, map_to_curve_hasher::MapToCurve},
@@ -431,5 +446,85 @@ pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; FP_LENGTH]) -> Result<[u8; PADD
 pub(super) fn map_fp2_to_g2_bytes(fp2_x: &[u8; FP_LENGTH], fp2_y: &[u8; FP_LENGTH]) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
     let fp2 = read_fp2(fp2_x, fp2_y)?;
     let result = map_fp2_to_g2(&fp2);
+    Ok(encode_g2_point(&result))
+}
+
+/// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p1_msm_bytes(
+    point_scalar_pairs: &[G1PointScalarPairRef<'_>],
+) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
+    if point_scalar_pairs.is_empty() {
+        // Return point at infinity
+        return Ok([0u8; PADDED_G1_LENGTH]);
+    }
+
+    let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x, y), scalar_bytes) in point_scalar_pairs {
+        // NB: MSM requires subgroup check
+        let point = read_g1(x, y)?;
+        
+        // Skip zero scalars after validating the point
+        if scalar_bytes.iter().all(|&b| b == 0) {
+            continue;
+        }
+        
+        let scalar = read_scalar(scalar_bytes)?;
+        g1_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Return point at infinity if all scalars were zero
+    if g1_points.is_empty() {
+        return Ok([0u8; PADDED_G1_LENGTH]);
+    }
+
+    // Perform MSM
+    let result = p1_msm(g1_points, scalars);
+
+    // Encode result
+    Ok(encode_g1_point(&result))
+}
+
+/// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
+#[inline]
+pub(super) fn p2_msm_bytes(
+    point_scalar_pairs: &[G2PointScalarPairRef<'_>],
+) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
+    if point_scalar_pairs.is_empty() {
+        // Return point at infinity
+        return Ok([0u8; PADDED_G2_LENGTH]);
+    }
+
+    let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
+    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+
+    // Parse all points and scalars
+    for ((x_0, x_1, y_0, y_1), scalar_bytes) in point_scalar_pairs {
+        // NB: MSM requires subgroup check
+        let point = read_g2(x_0, x_1, y_0, y_1)?;
+        
+        // Skip zero scalars after validating the point
+        if scalar_bytes.iter().all(|&b| b == 0) {
+            continue;
+        }
+        
+        let scalar = read_scalar(scalar_bytes)?;
+        g2_points.push(point);
+        scalars.push(scalar);
+    }
+
+    // Return point at infinity if all scalars were zero
+    if g2_points.is_empty() {
+        return Ok([0u8; PADDED_G2_LENGTH]);
+    }
+
+    // Perform MSM
+    let result = p2_msm(g2_points, scalars);
+
+    // Encode result
     Ok(encode_g2_point(&result))
 }
