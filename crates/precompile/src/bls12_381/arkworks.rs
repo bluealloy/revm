@@ -368,3 +368,68 @@ pub(super) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
     let pairing_result = Bls12_381::multi_pairing(&g1_points, &g2_points);
     pairing_result.0.is_one()
 }
+
+// Byte-oriented versions of the functions for external API compatibility
+
+/// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
+#[inline]
+pub(super) fn p1_add_affine_bytes(
+    a_x: &[u8; FP_LENGTH],
+    a_y: &[u8; FP_LENGTH],
+    b_x: &[u8; FP_LENGTH],
+    b_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
+    // Parse first point
+    let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
+
+    // Parse second point
+    let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
+
+    // Perform addition
+    let result = p1_add_affine(&p1, &p2);
+
+    // Encode result
+    Ok(encode_g1_point(&result))
+}
+
+/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
+#[inline]
+#[allow(clippy::too_many_arguments)]
+pub(super) fn p2_add_affine_bytes(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+    b_x_0: &[u8; FP_LENGTH],
+    b_x_1: &[u8; FP_LENGTH],
+    b_y_0: &[u8; FP_LENGTH],
+    b_y_1: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
+    // Parse first point
+    let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+
+    // Parse second point
+    let p2 = read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+
+    // Perform addition
+    let result = p2_add_affine(&p1, &p2);
+
+    // Encode result
+    Ok(encode_g2_point(&result))
+}
+
+/// Maps a field element to a G1 point from bytes
+#[inline]
+pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; FP_LENGTH]) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
+    let fp = read_fp(fp_bytes)?;
+    let result = map_fp_to_g1(&fp);
+    Ok(encode_g1_point(&result))
+}
+
+/// Maps field elements to a G2 point from bytes
+#[inline]
+pub(super) fn map_fp2_to_g2_bytes(fp2_x: &[u8; FP_LENGTH], fp2_y: &[u8; FP_LENGTH]) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
+    let fp2 = read_fp2(fp2_x, fp2_y)?;
+    let result = map_fp2_to_g2(&fp2);
+    Ok(encode_g2_point(&result))
+}

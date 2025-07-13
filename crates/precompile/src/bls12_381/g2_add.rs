@@ -1,5 +1,5 @@
 //! BLS12-381 G2 add precompile. More details in [`g2_add`]
-use super::crypto_backend::{encode_g2_point, p2_add_affine, read_g2_no_subgroup_check};
+use super::crypto_backend::p2_add_affine_bytes;
 use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
@@ -27,19 +27,12 @@ pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
         )));
     }
 
+    // Extract coordinates from padded input
     let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(&input[..PADDED_G2_LENGTH])?;
     let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(&input[PADDED_G2_LENGTH..])?;
 
-    // NB: There is no subgroup check for the G2 addition precompile because the time to do the subgroup
-    // check would be more than the time it takes to do the g1 addition.
-    //
-    // Users should be careful to note whether the points being added are indeed in the right subgroup.
-    let a_aff = &read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
-    let b_aff = &read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+    // Use the byte-oriented API
+    let out = p2_add_affine_bytes(a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1)?;
 
-    // Use the safe wrapper for G2 point addition
-    let p_aff = p2_add_affine(a_aff, b_aff);
-
-    let out = encode_g2_point(&p_aff);
     Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out.into()))
 }

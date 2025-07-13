@@ -8,16 +8,10 @@ use std::vec::Vec;
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
         mod substrate;
-        use substrate::{
-            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
-            read_scalar,
-        };
+        use substrate::{g1_point_add, g1_point_mul, pairing_check};
     } else {
         mod arkworks;
-        use arkworks::{
-            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
-            read_scalar,
-        };
+        use arkworks::{g1_point_add, g1_point_mul, pairing_check};
     }
 }
 
@@ -162,11 +156,9 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
-    let p1 = read_g1_point(&input[..G1_LEN])?;
-    let p2 = read_g1_point(&input[G1_LEN..])?;
-    let result = g1_point_add(p1, p2);
-
-    let output = encode_g1_point(result);
+    let p1_bytes = &input[..G1_LEN];
+    let p2_bytes = &input[G1_LEN..];
+    let output = g1_point_add(p1_bytes, p2_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
@@ -179,12 +171,9 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
-    let p = read_g1_point(&input[..G1_LEN])?;
-
-    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN]);
-    let result = g1_point_mul(p, scalar);
-
-    let output = encode_g1_point(result);
+    let point_bytes = &input[..G1_LEN];
+    let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
+    let output = g1_point_mul(point_bytes, scalar_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
@@ -217,33 +206,17 @@ pub fn run_pair(
         // This is where G1 ends.
         let g2_start = start + G1_LEN;
 
+        // Get G1 and G2 points from the input
         let encoded_g1_element = &input[g1_start..g2_start];
         let encoded_g2_element = &input[g2_start..g2_start + G2_LEN];
-
-        // If either the G1 or G2 element is the encoded representation
-        // of the point at infinity, then these two points are no-ops
-        // in the pairing computation.
-        //
-        // Note: we do not skip the validation of these two elements even if
-        // one of them is the point at infinity because we could have G1 be
-        // the point at infinity and G2 be an invalid element or vice versa.
-        // In that case, the precompile should error because one of the elements
-        // was invalid.
-        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
-        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
-
-        // Get G1 and G2 points from the input
-        let a = read_g1_point(encoded_g1_element)?;
-        let b = read_g2_point(encoded_g2_element)?;
-
-        if !g1_is_zero && !g2_is_zero {
-            points.push((a, b));
-        }
+        points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    let success = pairing_check(&points);
-
-    Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(success)))
+    let pairing_result = pairing_check(&points)?;
+    Ok(PrecompileOutput::new(
+        gas_used,
+        bool_to_bytes32(pairing_result),
+    ))
 }
 
 #[cfg(test)]
