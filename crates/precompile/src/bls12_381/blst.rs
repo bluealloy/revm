@@ -721,7 +721,7 @@ pub(super) fn p1_msm_bytes(
     // Parse all points and scalars
     for ((x, y), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
-        let point = read_g1(&x, &y)?;
+        let point = read_g1(x, y)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
@@ -761,7 +761,7 @@ pub(super) fn p2_msm_bytes(
     // Parse all points and scalars
     for ((x_0, x_1, y_0, y_1), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
-        let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
+        let point = read_g2(x_0, x_1, y_0, y_1)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
