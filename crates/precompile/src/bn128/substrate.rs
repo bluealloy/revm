@@ -150,7 +150,7 @@ pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(super) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
+pub fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
     let p1 = read_g1_point(p1_bytes)?;
     let p2 = read_g1_point(p2_bytes)?;
     let result = p1 + p2;

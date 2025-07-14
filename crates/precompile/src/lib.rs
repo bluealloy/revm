@@ -13,6 +13,7 @@ pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
 pub mod bn128;
+pub mod crypto_provider;
 pub mod hash;
 pub mod identity;
 pub mod interface;
