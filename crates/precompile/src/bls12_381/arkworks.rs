@@ -1,24 +1,10 @@
+use super::{G1Point, G2Point, PairingPair};
 use crate::{
     bls12_381_const::{
         FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
     },
     PrecompileError,
 };
-
-// Type aliases for MSM byte-oriented API
-pub(super) type G1PointScalarPairRef<'a> = (
-    (&'a [u8; FP_LENGTH], &'a [u8; FP_LENGTH]),
-    &'a [u8; SCALAR_LENGTH],
-);
-pub(super) type G2PointScalarPairRef<'a> = (
-    (
-        &'a [u8; FP_LENGTH],
-        &'a [u8; FP_LENGTH], 
-        &'a [u8; FP_LENGTH],
-        &'a [u8; FP_LENGTH],
-    ),
-    &'a [u8; SCALAR_LENGTH],
-);
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{
     hashing::{curve_maps::wb::WBMap, map_to_curve_hasher::MapToCurve},
@@ -384,6 +370,49 @@ pub(super) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
     pairing_result.0.is_one()
 }
 
+/// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
+#[inline]
+pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileError> {
+    if pairs.is_empty() {
+        return Ok(true);
+    }
+
+    let mut parsed_pairs = Vec::with_capacity(pairs.len());
+    for ((g1_x, g1_y), (g2_x_0, g2_x_1, g2_y_0, g2_y_1)) in pairs {
+        // Check if G1 point is zero (point at infinity)
+        let g1_is_zero = g1_x.iter().all(|&b| b == 0) && g1_y.iter().all(|&b| b == 0);
+
+        // Check if G2 point is zero (point at infinity)
+        let g2_is_zero = g2_x_0.iter().all(|&b| b == 0)
+            && g2_x_1.iter().all(|&b| b == 0)
+            && g2_y_0.iter().all(|&b| b == 0)
+            && g2_y_1.iter().all(|&b| b == 0);
+
+        // Skip this pair if either point is at infinity as it's a no-op
+        if g1_is_zero || g2_is_zero {
+            // Still need to validate the non-zero point if one exists
+            if !g1_is_zero {
+                read_g1(g1_x, g1_y)?;
+            }
+            if !g2_is_zero {
+                read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
+            }
+            continue;
+        }
+
+        let g1_point = read_g1(g1_x, g1_y)?;
+        let g2_point = read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
+        parsed_pairs.push((g1_point, g2_point));
+    }
+
+    // If all pairs were filtered out, return true (identity element)
+    if parsed_pairs.is_empty() {
+        return Ok(true);
+    }
+
+    Ok(pairing_check(&parsed_pairs))
+}
+
 // Byte-oriented versions of the functions for external API compatibility
 
 /// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
@@ -435,7 +464,9 @@ pub(super) fn p2_add_affine_bytes(
 
 /// Maps a field element to a G1 point from bytes
 #[inline]
-pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; FP_LENGTH]) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
+pub(super) fn map_fp_to_g1_bytes(
+    fp_bytes: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
     let fp = read_fp(fp_bytes)?;
     let result = map_fp_to_g1(&fp);
     Ok(encode_g1_point(&result))
@@ -443,7 +474,10 @@ pub(super) fn map_fp_to_g1_bytes(fp_bytes: &[u8; FP_LENGTH]) -> Result<[u8; PADD
 
 /// Maps field elements to a G2 point from bytes
 #[inline]
-pub(super) fn map_fp2_to_g2_bytes(fp2_x: &[u8; FP_LENGTH], fp2_y: &[u8; FP_LENGTH]) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
+pub(super) fn map_fp2_to_g2_bytes(
+    fp2_x: &[u8; FP_LENGTH],
+    fp2_y: &[u8; FP_LENGTH],
+) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
     let fp2 = read_fp2(fp2_x, fp2_y)?;
     let result = map_fp2_to_g2(&fp2);
     Ok(encode_g2_point(&result))
@@ -452,7 +486,7 @@ pub(super) fn map_fp2_to_g2_bytes(fp2_x: &[u8; FP_LENGTH], fp2_y: &[u8; FP_LENGT
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p1_msm_bytes(
-    point_scalar_pairs: &[G1PointScalarPairRef<'_>],
+    point_scalar_pairs: &[(&G1Point, &[u8; SCALAR_LENGTH])],
 ) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
@@ -466,12 +500,12 @@ pub(super) fn p1_msm_bytes(
     for ((x, y), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
         let point = read_g1(x, y)?;
-        
+
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
-        
+
         let scalar = read_scalar(scalar_bytes)?;
         g1_points.push(point);
         scalars.push(scalar);
@@ -492,7 +526,7 @@ pub(super) fn p1_msm_bytes(
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p2_msm_bytes(
-    point_scalar_pairs: &[G2PointScalarPairRef<'_>],
+    point_scalar_pairs: &[(&G2Point, &[u8; SCALAR_LENGTH])],
 ) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
@@ -506,12 +540,12 @@ pub(super) fn p2_msm_bytes(
     for ((x_0, x_1, y_0, y_1), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
         let point = read_g2(x_0, x_1, y_0, y_1)?;
-        
+
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
-        
+
         let scalar = read_scalar(scalar_bytes)?;
         g2_points.push(point);
         scalars.push(scalar);

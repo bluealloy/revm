@@ -1,5 +1,6 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use super::crypto_backend::{p1_msm_bytes, G1PointScalarPairRef};
+use super::crypto_backend::p1_msm_bytes;
+use super::G1Point;
 use crate::bls12_381::utils::remove_g1_padding;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
@@ -34,32 +35,28 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut point_scalar_pairs: Vec<G1PointScalarPairRef<'_>> = Vec::with_capacity(k);
-    
+    let mut point_scalar_pairs: Vec<(G1Point, &[u8; SCALAR_LENGTH])> = Vec::with_capacity(k);
+
     for i in 0..k {
         let encoded_g1_element =
             &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
         let encoded_scalar = &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
             ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH];
 
-        // Filter out points infinity as an optimization, since it is a no-op.
-        if encoded_g1_element.iter().all(|i| *i == 0) {
-            continue;
-        }
-
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
 
         // Convert scalar to fixed-size array
-        let scalar_array: &[u8; SCALAR_LENGTH] = encoded_scalar.try_into()
+        let scalar_array: &[u8; SCALAR_LENGTH] = encoded_scalar
+            .try_into()
             .map_err(|_| PrecompileError::Other("Invalid scalar length".to_string()))?;
-            
+
         // Note: We include zero scalars to ensure point validation happens
         // The actual filtering will be done inside p1_msm_bytes if needed
-        point_scalar_pairs.push(((a_x, a_y), scalar_array));
+        point_scalar_pairs.push(((*a_x, *a_y), scalar_array));
     }
 
-    // Use the byte-oriented API
-    let out = p1_msm_bytes(&point_scalar_pairs)?;
+    let pairs_ref: Vec<_> = point_scalar_pairs.iter().map(|(p, s)| (p, *s)).collect();
+    let out = p1_msm_bytes(&pairs_ref)?;
     Ok(PrecompileOutput::new(required_gas, out.into()))
 }
 
