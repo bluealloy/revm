@@ -418,16 +418,16 @@ pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, Precomp
 /// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
 #[inline]
 pub(super) fn p1_add_affine_bytes(
-    a_x: &[u8; FP_LENGTH],
-    a_y: &[u8; FP_LENGTH],
-    b_x: &[u8; FP_LENGTH],
-    b_y: &[u8; FP_LENGTH],
+    a: G1Point,
+    b: G1Point,
 ) -> Result<[u8; PADDED_G1_LENGTH], PrecompileError> {
+    let (a_x, a_y) = a;
+    let (b_x, b_y) = b;
     // Parse first point
-    let p1 = read_g1_no_subgroup_check(a_x, a_y)?;
+    let p1 = read_g1_no_subgroup_check(&a_x, &a_y)?;
 
     // Parse second point
-    let p2 = read_g1_no_subgroup_check(b_x, b_y)?;
+    let p2 = read_g1_no_subgroup_check(&b_x, &b_y)?;
 
     // Perform addition
     let result = p1_add_affine(&p1, &p2);
@@ -438,22 +438,17 @@ pub(super) fn p1_add_affine_bytes(
 
 /// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
 #[inline]
-#[allow(clippy::too_many_arguments)]
 pub(super) fn p2_add_affine_bytes(
-    a_x_0: &[u8; FP_LENGTH],
-    a_x_1: &[u8; FP_LENGTH],
-    a_y_0: &[u8; FP_LENGTH],
-    a_y_1: &[u8; FP_LENGTH],
-    b_x_0: &[u8; FP_LENGTH],
-    b_x_1: &[u8; FP_LENGTH],
-    b_y_0: &[u8; FP_LENGTH],
-    b_y_1: &[u8; FP_LENGTH],
+    a: G2Point,
+    b: G2Point,
 ) -> Result<[u8; PADDED_G2_LENGTH], PrecompileError> {
+    let (a_x_0, a_x_1, a_y_0, a_y_1) = a;
+    let (b_x_0, b_x_1, b_y_0, b_y_1) = b;
     // Parse first point
-    let p1 = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+    let p1 = read_g2_no_subgroup_check(&a_x_0, &a_x_1, &a_y_0, &a_y_1)?;
 
     // Parse second point
-    let p2 = read_g2_no_subgroup_check(b_x_0, b_x_1, b_y_0, b_y_1)?;
+    let p2 = read_g2_no_subgroup_check(&b_x_0, &b_x_1, &b_y_0, &b_y_1)?;
 
     // Perform addition
     let result = p2_add_affine(&p1, &p2);

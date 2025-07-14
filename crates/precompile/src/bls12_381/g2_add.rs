@@ -31,8 +31,9 @@ pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(&input[..PADDED_G2_LENGTH])?;
     let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(&input[PADDED_G2_LENGTH..])?;
 
-    // Use the byte-oriented API
-    let out = p2_add_affine_bytes(a_x_0, a_x_1, a_y_0, a_y_1, b_x_0, b_x_1, b_y_0, b_y_1)?;
+    let a = (*a_x_0, *a_x_1, *a_y_0, *a_y_1);
+    let b = (*b_x_0, *b_x_1, *b_y_0, *b_y_1);
+    let out = p2_add_affine_bytes(a, b)?;
 
     Ok(PrecompileOutput::new(G2_ADD_BASE_GAS_FEE, out.into()))
 }

@@ -30,8 +30,9 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let [a_x, a_y] = remove_g1_padding(&input[..PADDED_G1_LENGTH])?;
     let [b_x, b_y] = remove_g1_padding(&input[PADDED_G1_LENGTH..])?;
 
-    // Use the byte-oriented API
-    let out = p1_add_affine_bytes(a_x, a_y, b_x, b_y)?;
+    let a = (*a_x, *a_y);
+    let b = (*b_x, *b_y);
+    let out = p1_add_affine_bytes(a, b)?;
 
     Ok(PrecompileOutput::new(G1_ADD_BASE_GAS_FEE, out.into()))
 }
