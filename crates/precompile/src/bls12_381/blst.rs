@@ -708,7 +708,7 @@ pub(super) fn map_fp2_to_g2_bytes(
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p1_msm_bytes(
-    point_scalar_pairs: &[(&G1Point, &[u8; SCALAR_LENGTH])],
+    point_scalar_pairs: &[(G1Point, [u8; SCALAR_LENGTH])],
 ) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
@@ -721,14 +721,14 @@ pub(super) fn p1_msm_bytes(
     // Parse all points and scalars
     for ((x, y), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
-        let point = read_g1(x, y)?;
+        let point = read_g1(&x, &y)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
 
-        let scalar = read_scalar(*scalar_bytes)?;
+        let scalar = read_scalar(scalar_bytes)?;
         g1_points.push(point);
         scalars.push(scalar);
     }
@@ -748,7 +748,7 @@ pub(super) fn p1_msm_bytes(
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
 #[inline]
 pub(super) fn p2_msm_bytes(
-    point_scalar_pairs: &[(&G2Point, &[u8; SCALAR_LENGTH])],
+    point_scalar_pairs: &[(G2Point, [u8; SCALAR_LENGTH])],
 ) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
@@ -761,14 +761,14 @@ pub(super) fn p2_msm_bytes(
     // Parse all points and scalars
     for ((x_0, x_1, y_0, y_1), scalar_bytes) in point_scalar_pairs {
         // NB: MSM requires subgroup check
-        let point = read_g2(x_0, x_1, y_0, y_1)?;
+        let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
 
-        let scalar = read_scalar(*scalar_bytes)?;
+        let scalar = read_scalar(scalar_bytes)?;
         g2_points.push(point);
         scalars.push(scalar);
     }

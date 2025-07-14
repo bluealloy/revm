@@ -35,7 +35,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut point_scalar_pairs: Vec<(G1Point, &[u8; SCALAR_LENGTH])> = Vec::with_capacity(k);
+    let mut point_scalar_pairs: Vec<(G1Point, [u8; SCALAR_LENGTH])> = Vec::with_capacity(k);
 
     for i in 0..k {
         let encoded_g1_element =
@@ -46,7 +46,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
 
         // Convert scalar to fixed-size array
-        let scalar_array: &[u8; SCALAR_LENGTH] = encoded_scalar
+        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar
             .try_into()
             .map_err(|_| PrecompileError::Other("Invalid scalar length".to_string()))?;
 
@@ -55,8 +55,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         point_scalar_pairs.push(((*a_x, *a_y), scalar_array));
     }
 
-    let pairs_ref: Vec<_> = point_scalar_pairs.iter().map(|(p, s)| (p, *s)).collect();
-    let out = p1_msm_bytes(&pairs_ref)?;
+    let out = p1_msm_bytes(&point_scalar_pairs)?;
     Ok(PrecompileOutput::new(required_gas, out.into()))
 }
 
