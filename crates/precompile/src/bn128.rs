@@ -157,9 +157,11 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
     // Convert slices to fixed-size arrays
-    let p1: [u8; 64] = input[..G1_LEN].try_into()
+    let p1: [u8; 64] = input[..G1_LEN]
+        .try_into()
         .map_err(|_| PrecompileError::Other("Invalid input length for p1".into()))?;
-    let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN].try_into()
+    let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN]
+        .try_into()
         .map_err(|_| PrecompileError::Other("Invalid input length for p2".into()))?;
 
     // Use the crypto provider
