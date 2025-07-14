@@ -56,9 +56,9 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     }
 
     // msg signed (msg is already the hash of the original message)
-    let msg = &input[..32];
+    let msg: [u8; 32] = input[..32].try_into().expect("expected 32 bytes");
     // r, s: signature
-    let sig = &input[32..96];
+    let sig: [u8; 64] = input[32..96].try_into().expect("expected 64 bytes");
     // x, y: public key
     let pk = &input[96..160];
 
@@ -67,12 +67,16 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[0] = 0x04;
     uncompressed_pk[1..].copy_from_slice(pk);
 
+    verify_signature(msg, sig, uncompressed_pk)
+}
+
+fn verify_signature(msg: [u8; 32], sig: [u8; 64], uncompressed_pk: [u8; 65]) -> Option<()> {
     // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(sig).ok()?;
+    let signature = Signature::from_slice(&sig).ok()?;
     // Can fail if the input is not valid, so we have to propagate the error.
     let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
 
-    public_key.verify_prehash(msg, &signature).ok()
+    public_key.verify_prehash(&msg, &signature).ok()
 }
 
 #[cfg(test)]
