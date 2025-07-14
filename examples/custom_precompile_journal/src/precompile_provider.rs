@@ -119,7 +119,11 @@ fn run_custom_precompile<CTX: ContextTr>(
     match result {
         Ok(output) => {
             let mut interpreter_result = InterpreterResult {
-                result: InstructionResult::Return,
+                result: if output.reverted {
+                    InstructionResult::Revert
+                } else {
+                    InstructionResult::Return
+                },
                 gas: Gas::new(gas_limit),
                 output: output.bytes,
             };
