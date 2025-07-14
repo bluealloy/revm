@@ -392,10 +392,10 @@ pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, Precomp
         if g1_is_zero || g2_is_zero {
             // Still need to validate the non-zero point if one exists
             if !g1_is_zero {
-                read_g1(g1_x, g1_y)?;
+                let _ = read_g1(g1_x, g1_y)?;
             }
             if !g2_is_zero {
-                read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
+                let _ = read_g2(g2_x_0, g2_x_1, g2_y_0, g2_y_1)?;
             }
             continue;
         }
