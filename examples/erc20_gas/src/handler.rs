@@ -164,8 +164,7 @@ where
             effective_gas_price
         };
 
-        let reward =
-            coinbase_gas_price.saturating_mul((gas.spent() - gas.refunded() as u64) as u128);
+        let reward = coinbase_gas_price.saturating_mul(gas.used() as u128);
         token_operation::<EVM::Context, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
 
         Ok(())
