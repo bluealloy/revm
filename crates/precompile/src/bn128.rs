@@ -163,8 +163,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         .map_err(|_| PrecompileError::Other("Invalid input length for p2".into()))?;
 
     // Use the crypto provider
-    let provider = crate::crypto_provider::get_crypto_provider();
-    let output = provider.bn128_add(&p1, &p2)?;
+    let output = crate::crypto_provider::get_provider().bn128_add(&p1, &p2)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
 }
