@@ -7,9 +7,11 @@ use std::vec::Vec;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
+        /// Substrate backend for BN128 operations
         pub mod substrate;
         use substrate::{g1_point_mul, pairing_check};
     } else {
+        /// Arkworks backend for BN128 operations
         pub mod arkworks;
         use arkworks::{g1_point_mul, pairing_check};
     }
