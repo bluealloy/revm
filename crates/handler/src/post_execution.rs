@@ -31,7 +31,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
 #[inline]
 pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
-    gas: &mut Gas,
+    gas: &Gas,
     additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
@@ -53,7 +53,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
 #[inline]
 pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
-    gas: &mut Gas,
+    gas: &Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let beneficiary = context.block().beneficiary();
     let basefee = context.block().basefee() as u128;
