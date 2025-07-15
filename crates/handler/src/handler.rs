@@ -13,7 +13,6 @@ use context_interface::{
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
-use state::EvmState;
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -68,7 +67,7 @@ impl<
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<
-        Context: ContextTr<Journal: JournalTr<State = EvmState>, Local: LocalContextTr>,
+        Context: ContextTr<Journal: JournalTr, Local: LocalContextTr>,
         Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
     >;
     /// The error type returned by this handler.
