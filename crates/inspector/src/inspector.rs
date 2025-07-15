@@ -17,7 +17,7 @@ use state::EvmState;
 pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called before the interpreter is initialized.
     ///
-    /// If `interp.set_action` is set the execution of the interpreter is skipped.
+    /// If `interp.bytecode.set_action` is set the execution of the interpreter is skipped.
     #[inline]
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
@@ -91,8 +91,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
 
     /// Called when a contract has been created.
     ///
-    /// InstructionResulting anything other than the values passed to this function (`(ret, remaining_gas,
-    /// address, out)`) will alter the result of the create.
+    /// Modifying the outcome will alter the result of the create operation.
     #[inline]
     fn create_end(
         &mut self,
