@@ -31,7 +31,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// # Example
     ///
-    /// To get the current opcode, use `interp.current_opcode()`.
+    /// To get the current opcode, use `interp.bytecode.opcode()`.
     #[inline]
     fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
