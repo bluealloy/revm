@@ -103,6 +103,7 @@ std = [
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
+asm-sha2 = ["sha2/asm"]
 
 # These libraries may not work on all no_std platforms as they depend on C.
 

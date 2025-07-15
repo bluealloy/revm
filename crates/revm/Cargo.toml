@@ -99,6 +99,7 @@ c-kzg = [
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 bn = ["precompile/bn"]
+asm-sha2 = ["precompile/asm-sha2"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.
