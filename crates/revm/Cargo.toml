@@ -66,6 +66,7 @@ serde = [
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
+sha3-keccak = ["primitives/sha3-keccak"]
 asyncdb = ["database-interface/asyncdb"]
 
 # Enables alloydb inside database crate
