@@ -238,7 +238,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
+    /// `range.end <= self.len()`).
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -270,7 +276,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
+    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
+    /// memory.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
