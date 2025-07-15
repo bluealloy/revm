@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.5](https://github.com/bluealloy/revm/compare/revme-v7.0.4...revme-v7.0.5) - 2025-07-15
+
+### Other
+
+- updated the following local packages: revm, revm-inspector, revm-statetest-types
+
 ## [7.0.4](https://github.com/bluealloy/revm/compare/revme-v7.0.3...revme-v7.0.4) - 2025-07-14
 
 ### Other

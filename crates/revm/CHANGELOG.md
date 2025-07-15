@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.4](https://github.com/bluealloy/revm/compare/revm-v27.0.3...revm-v27.0.4) - 2025-07-15
+
+### Other
+
+- add asm-sha2 feature for sha2 precompile ([#2712](https://github.com/bluealloy/revm/pull/2712))
+
 ## [27.0.3](https://github.com/bluealloy/revm/compare/revm-v27.0.2...revm-v27.0.3) - 2025-07-14
 
 ### Other
