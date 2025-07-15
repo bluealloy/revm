@@ -17,6 +17,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 workspace = true
 
 [dependencies]
+# fluentbase
+fluentbase-sdk.workspace = true
+
 # revm
 primitives.workspace = true
 

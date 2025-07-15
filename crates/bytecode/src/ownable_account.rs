@@ -1,6 +1,6 @@
 use core::fmt;
+use fluentbase_sdk::PRECOMPILE_EVM_RUNTIME;
 use primitives::{b256, bytes, Address, Bytes, B256};
-
 /// Hash of EF44 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const OWNABLE_ACCOUNT_MAGIC_HASH: B256 =
     b256!("0x85160e14613bd11c0e87050b7f84bbea3095f7f0ccd58026f217fdff9043c16b");
@@ -83,6 +83,20 @@ impl OwnableAccountBytecode {
     pub fn raw(&self) -> &Bytes {
         &self.raw
     }
+
+    /// Returns EVM-compatible bytecode (original deployed bytecode without metadata).
+    pub fn evm_compatible(&self) -> Bytes {
+        // account-type (2) + version (1) + address (20)
+        const OFFSET: usize = 2 + 1 + 20;
+
+        let metadata_offset = if self.owner_address == PRECOMPILE_EVM_RUNTIME {
+            32
+        } else {
+            unreachable!("`evm_compatible` must be called only for the EVM runtime");
+        };
+
+        self.raw.slice(OFFSET + metadata_offset..)
+    }
 }
 
 /// Bytecode errors
@@ -150,6 +164,28 @@ mod tests {
                 raw,
             })
         );
+    }
+
+    #[test]
+    fn evm_compatible() {
+        let raw = bytes!("ef44\
+        00\
+        00000000000000000000000000000000005200012\
+        fa86add0aed31f33a762c9d88e807c475bd51d0f52bd0955754b2608f7e49897\
+        fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3");
+        let address = raw[3..23].try_into().unwrap();
+        let acc = OwnableAccountBytecode::new_raw(raw.clone()).unwrap();
+        assert_eq!(
+            acc,
+            OwnableAccountBytecode {
+                owner_address: address,
+                version: 0,
+                metadata: raw.slice(23..),
+                raw: raw.clone(),
+            }
+        );
+
+        assert_eq!(acc.evm_compatible(), raw[23 + 32..]);
     }
 
     #[test]
