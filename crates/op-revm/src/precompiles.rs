@@ -56,7 +56,7 @@ impl OpPrecompiles {
 
 /// Returns precompiles for Fjord spec.
 pub fn fjord() -> &'static Precompiles {
-    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
+    static INSTANCE: OnceLock<Box<Precompiles>> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // RIP-7212: secp256r1 P256verify
@@ -67,7 +67,7 @@ pub fn fjord() -> &'static Precompiles {
 
 /// Returns precompiles for Granite spec.
 pub fn granite() -> &'static Precompiles {
-    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
+    static INSTANCE: OnceLock<Box<Precompiles>> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = fjord().clone();
         // Restrict bn256Pairing input size
@@ -78,7 +78,7 @@ pub fn granite() -> &'static Precompiles {
 
 /// Returns precompiles for isthumus spec.
 pub fn isthmus() -> &'static Precompiles {
-    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
+    static INSTANCE: OnceLock<Box<Precompiles>> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = granite().clone();
         // Prague bls12 precompiles
