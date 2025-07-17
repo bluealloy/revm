@@ -58,9 +58,7 @@ op-revm = { path = "crates/op-revm", package = "op-revm", version = "8.0.3", def
 # alloy
 alloy-eip2930 = { version = "0.2.1", default-features = false }
 alloy-eip7702 = { version = "0.6.1", default-features = false }
-alloy-primitives = { version = "1.2.0", default-features = false, features = [
-    "sha3-keccak",
-] }
+alloy-primitives = { version = "1.2.0", default-features = false }
 
 # alloy in examples, revme or feature flagged.
 alloy-rlp = { version = "0.3.12", default-features = false }
