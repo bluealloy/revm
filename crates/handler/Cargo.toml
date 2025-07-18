@@ -1,7 +1,7 @@
 [package]
 name = "revm-handler"
 description = "Revm handler crates"
-version = "8.0.3"
+version = "8.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
