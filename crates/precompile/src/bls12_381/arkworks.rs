@@ -58,10 +58,7 @@ fn encode_fp(fp: &Fq) -> [u8; FP_LENGTH] {
 ///
 /// Panics if either input is not exactly 48 bytes long.
 #[inline]
-fn read_fp2(
-    input_1: &[u8; FP_LENGTH],
-    input_2: &[u8; FP_LENGTH],
-) -> Result<Fq2, PrecompileError> {
+fn read_fp2(input_1: &[u8; FP_LENGTH], input_2: &[u8; FP_LENGTH]) -> Result<Fq2, PrecompileError> {
     let fp_1 = read_fp(input_1)?;
     let fp_2 = read_fp(input_2)?;
 
@@ -126,10 +123,7 @@ fn new_g2_point_no_subgroup_check(x: Fq2, y: Fq2) -> Result<G2Affine, Precompile
 ///
 /// Panics if the inputs are not exactly 48 bytes long.
 #[inline]
-fn read_g1(
-    x: &[u8; FP_LENGTH],
-    y: &[u8; FP_LENGTH],
-) -> Result<G1Affine, PrecompileError> {
+fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, PrecompileError> {
     let point = read_g1_no_subgroup_check(x, y)?;
     if !point.is_in_correct_subgroup_assuming_on_curve() {
         return Err(PrecompileError::Other(
