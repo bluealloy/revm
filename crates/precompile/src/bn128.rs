@@ -504,5 +504,52 @@ mod tests {
             260_000,
         );
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+
+        // Test with point at infinity - should return true (identity element)
+        // G1 point at infinity (0,0) followed by a valid G2 point
+        let input = hex::decode(
+            "\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            209dd15ebff5d46c4bd888e51a93cf99a7329636c63514396b4a452003a35bf7\
+            04bf11ca01483bfa8b34b43561848d28905960114c8ac04049af4b6315a41678\
+            2bb8324af6cfc93537a2ad1a445cfd0ca2a71acd7ac41fadbf933c2a51be344d\
+            120a2a4cf30c1bf9845f20c6fe39e07ea2cce61f0c9bb048165fe5e4de877550",
+        )
+        .unwrap();
+        let expected =
+            hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
+                .unwrap();
+
+        let outcome = run_pair(
+            &input,
+            BYZANTIUM_PAIR_PER_POINT,
+            BYZANTIUM_PAIR_BASE,
+            260_000,
+        )
+        .unwrap();
+        assert_eq!(outcome.bytes, expected);
+
+        // Test with G2 point at infinity - should also return true
+        // Valid G1 point followed by G2 point at infinity (0,0,0,0)
+        let input = hex::decode(
+            "\
+            1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
+            3034dd2920f673e204fee2811c678745fc819b55d3e9d294e45c9b03a76aef41\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000",
+        )
+        .unwrap();
+
+        let outcome = run_pair(
+            &input,
+            BYZANTIUM_PAIR_PER_POINT,
+            BYZANTIUM_PAIR_BASE,
+            260_000,
+        )
+        .unwrap();
+        assert_eq!(outcome.bytes, expected);
     }
 }
