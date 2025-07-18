@@ -93,16 +93,26 @@ pub mod algo {
     #[inline(always)]
     #[allow(clippy::many_single_char_names)]
     /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
-    fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
-        v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
-        v[d] = (v[d] ^ v[a]).rotate_right(32);
-        v[c] = v[c].wrapping_add(v[d]);
-        v[b] = (v[b] ^ v[c]).rotate_right(24);
+    fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+        let mut va = v[a];
+        let mut vb = v[b];
+        let mut vc = v[c];
+        let mut vd = v[d];
 
-        v[a] = v[a].wrapping_add(v[b]).wrapping_add(y);
-        v[d] = (v[d] ^ v[a]).rotate_right(16);
-        v[c] = v[c].wrapping_add(v[d]);
-        v[b] = (v[b] ^ v[c]).rotate_right(63);
+        va = va.wrapping_add(vb).wrapping_add(x);
+        vd = (vd ^ va).rotate_right(32);
+        vc = vc.wrapping_add(vd);
+        vb = (vb ^ vc).rotate_right(24);
+
+        va = va.wrapping_add(vb).wrapping_add(y);
+        vd = (vd ^ va).rotate_right(16);
+        vc = vc.wrapping_add(vd);
+        vb = (vb ^ vc).rotate_right(63);
+
+        v[a] = va;
+        v[b] = vb;
+        v[c] = vc;
+        v[d] = vd;
     }
 
     /// Compression function F takes as an argument the state vector "h",
