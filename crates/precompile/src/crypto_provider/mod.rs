@@ -7,6 +7,9 @@ use crate::PrecompileError;
 use once_cell::race::OnceBox;
 use std::boxed::Box;
 
+/// BN128 cryptographic implementations
+pub mod bn128;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -163,34 +166,15 @@ pub struct DefaultCryptoProvider;
 
 impl CryptoProvider for DefaultCryptoProvider {
     fn bn128_add(&self, p1: &[u8; 64], p2: &[u8; 64]) -> Result<[u8; 64], PrecompileError> {
-        // Use the existing backend implementation
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")]{
-                crate::bn128::substrate::g1_point_add(p1, p2)
-            } else {
-                crate::bn128::arkworks::g1_point_add(p1, p2)
-            }
-        }
+        self::bn128::g1_point_add(p1, p2)
     }
 
     fn bn128_mul(&self, point: &[u8; 64], scalar: &[u8; 32]) -> Result<[u8; 64], PrecompileError> {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")]{
-                crate::bn128::substrate::g1_point_mul(point, scalar)
-            } else {
-                crate::bn128::arkworks::g1_point_mul(point, scalar)
-            }
-        }
+        self::bn128::g1_point_mul(point, scalar)
     }
 
     fn bn128_pairing(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")]{
-                crate::bn128::substrate::pairing_check(pairs)
-            } else {
-                crate::bn128::arkworks::pairing_check(pairs)
-            }
-        }
+        self::bn128::pairing_check(pairs)
     }
 
     fn bls12_381_g1_add(

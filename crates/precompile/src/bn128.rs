@@ -5,16 +5,6 @@ use crate::{
 };
 use std::vec::Vec;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
-        /// Substrate backend for BN128 operations
-        pub mod substrate;
-    } else {
-        /// Arkworks backend for BN128 operations
-        pub mod arkworks;
-    }
-}
-
 /// Bn128 add precompile
 pub mod add {
     use super::*;
@@ -186,7 +176,6 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         .try_into()
         .map_err(|_| PrecompileError::Other("Invalid input length for scalar".into()))?;
 
-    // Use the crypto provider
     let output = crate::crypto_provider::get_provider().bn128_mul(&point, &scalar)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
