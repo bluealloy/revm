@@ -110,8 +110,8 @@ mod tests {
     fn test_pad_g1_point_roundtrip() {
         // Create test data
         let mut unpadded = [0u8; G1_LENGTH];
-        for i in 0..G1_LENGTH {
-            unpadded[i] = (i * 2 + 1) as u8;
+        for (i, byte) in unpadded.iter_mut().enumerate() {
+            *byte = (i * 2 + 1) as u8;
         }
 
         // Pad the point
@@ -129,8 +129,8 @@ mod tests {
     fn test_pad_g2_point_roundtrip() {
         // Create test data for G2 point (192 bytes = 4 * 48)
         let mut unpadded = [0u8; 4 * FP_LENGTH];
-        for i in 0..(4 * FP_LENGTH) {
-            unpadded[i] = (i * 2 + 1) as u8;
+        for (i, byte) in unpadded.iter_mut().enumerate() {
+            *byte = (i * 2 + 1) as u8;
         }
 
         // Pad the point
