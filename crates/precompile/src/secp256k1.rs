@@ -44,14 +44,23 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let msg = <&B256>::try_from(&input[0..32]).unwrap();
+    let msg: [u8; 32] = input[0..32].try_into().expect("expected 32 bytes");
     let recid = input[63] - 27;
-    let sig = <&B512>::try_from(&input[64..128]).unwrap();
+    let sig: [u8; 64] = input[64..128].try_into().expect("expected 64 bytes");
 
-    let res = ecrecover(sig, recid, msg);
-
+    let res = ecrecover_bytes(sig, recid, msg);
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
+}
+
+fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
+    let sig = B512::from_slice(&sig);
+    let msg = B256::from_slice(&msg);
+
+    match ecrecover(&sig, recid, &msg) {
+        Ok(address) => Some(address.0),
+        Err(_) => None,
+    }
 }
 
 // Select the correct implementation based on the enabled features.
