@@ -12,13 +12,15 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
         hex!("0000000c48c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"), // 12 rounds (Blake2b standard)
         hex!("0000020048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"), // 512 rounds
         hex!("0000040048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"), // 1024 rounds
+        hex!("000186a048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"), // 100000 rounds (100K)
+        hex!("00030d4048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"), // 200000 rounds (200K)
     ];
 
     // Benchmark with 2 rounds
     group.bench_function("blake2/2_rounds", |b| {
         let input = &inputs[0]; // 2 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
@@ -26,15 +28,15 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/4_rounds", |b| {
         let input = &inputs[1]; // 4 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
-    // Benchmark with 64 rounds (stress test)
+    // Benchmark with 64 rounds
     group.bench_function("blake2/64_rounds", |b| {
         let input = &inputs[2]; // 64 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
@@ -42,7 +44,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/10_rounds", |b| {
         let input = &inputs[3]; // 10 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
@@ -50,23 +52,39 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/12_rounds", |b| {
         let input = &inputs[4]; // 12 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
-    // Benchmark with 512 rounds (stress test)
+    // Benchmark with 512 rounds
     group.bench_function("blake2/512_rounds", |b| {
         let input = &inputs[5]; // 512 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
-    // Benchmark with 1024 rounds (extreme stress test)
+    // Benchmark with 1024 rounds
     group.bench_function("blake2/1024_rounds", |b| {
         let input = &inputs[6]; // 1024 rounds
         b.iter(|| {
-            let _ = blake2::run(black_box(input), u64::MAX);
+            black_box(blake2::run(black_box(input), u64::MAX));
+        });
+    });
+
+    // Benchmark with 100K rounds
+    group.bench_function("blake2/100K_rounds", |b| {
+        let input = &inputs[7]; // 100000 rounds
+        b.iter(|| {
+            black_box(blake2::run(black_box(input), u64::MAX));
+        });
+    });
+
+    // Benchmark with 200K rounds
+    group.bench_function("blake2/200K_rounds", |b| {
+        let input = &inputs[8]; // 200000 rounds
+        b.iter(|| {
+            black_box(blake2::run(black_box(input), u64::MAX));
         });
     });
 
