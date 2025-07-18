@@ -3,6 +3,7 @@ pub mod burntpix;
 pub mod evm_build;
 pub mod gas_cost_estimator;
 pub mod snailtracer;
+pub mod snailtracer_count_inspector;
 pub mod transfer;
 pub mod transfer_multi;
 
@@ -13,6 +14,7 @@ pub enum BenchName {
     Analysis,
     Burntpix,
     Snailtracer,
+    SnailtracerCountInspector,
     Transfer,
     EvmBuild,
     TransferMulti,
@@ -24,6 +26,7 @@ impl BenchName {
         BenchName::Analysis,
         BenchName::Burntpix,
         BenchName::Snailtracer,
+        BenchName::SnailtracerCountInspector,
         BenchName::Transfer,
         BenchName::TransferMulti,
         BenchName::EvmBuild,
@@ -35,6 +38,7 @@ impl BenchName {
             BenchName::Analysis => "analysis",
             BenchName::Burntpix => "burntpix",
             BenchName::Snailtracer => "snailtracer",
+            BenchName::SnailtracerCountInspector => "snailtracer-count-inspector",
             BenchName::Transfer => "transfer",
             BenchName::EvmBuild => "evm-build",
             BenchName::TransferMulti => "transfer-multi",
@@ -79,6 +83,9 @@ impl Cmd {
             }
             BenchName::Snailtracer => {
                 snailtracer::run(&mut criterion);
+            }
+            BenchName::SnailtracerCountInspector => {
+                snailtracer_count_inspector::run(&mut criterion);
             }
             BenchName::Transfer => {
                 transfer::run(&mut criterion);

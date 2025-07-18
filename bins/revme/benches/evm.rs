@@ -5,6 +5,7 @@ fn evm(c: &mut Criterion) {
     bench::analysis::run(c);
     bench::burntpix::run(c);
     bench::snailtracer::run(c);
+    bench::snailtracer_count_inspector::run(c);
     bench::transfer::run(c);
     bench::transfer_multi::run(c);
     bench::evm_build::run(c);
