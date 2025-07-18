@@ -216,17 +216,23 @@ pub(super) fn g1_point_mul(
 /// This is different to EIP2537 which disallows the empty input.
 #[inline]
 pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-    let pairs: Vec<_> = pairs
-        .iter()
-        .map(|(g1_bytes, g2_bytes)| Ok((read_g1_point(g1_bytes)?, read_g2_point(g2_bytes)?)))
-        // TODO: Add a filter to remove points at infinity
-        .collect::<Result<Vec<_>, _>>()?;
+    let mut g1_points = Vec::with_capacity(pairs.len());
+    let mut g2_points = Vec::with_capacity(pairs.len());
 
-    if pairs.is_empty() {
-        return Ok(true);
+    for (g1_bytes, g2_bytes) in pairs {
+        let g1 = read_g1_point(g1_bytes)?;
+        let g2 = read_g2_point(g2_bytes)?;
+
+        // Skip pairs where either point is at infinity
+        if !g1.is_zero() && !g2.is_zero() {
+            g1_points.push(g1);
+            g2_points.push(g2);
+        }
     }
 
-    let (g1_points, g2_points): (Vec<G1Affine>, Vec<G2Affine>) = pairs.iter().copied().unzip();
+    if g1_points.is_empty() {
+        return Ok(true);
+    }
 
     let pairing_result = Bn254::multi_pairing(&g1_points, &g2_points);
     Ok(pairing_result.0.is_one())
