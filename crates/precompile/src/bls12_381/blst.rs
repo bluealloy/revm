@@ -76,7 +76,7 @@ fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
 /// Note: `a` and `b` can be the same, ie this method is safe to call if one wants
 /// to essentially double a point
 #[inline]
-pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
+fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
     // Convert first point to Jacobian coordinates
     let a_jacobian = p1_from_affine(a);
 
@@ -89,7 +89,7 @@ pub(super) fn p1_add_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_a
 
 /// Add two G2 points in affine form, returning the result in affine form
 #[inline]
-pub(super) fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
+fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
     // Convert first point to Jacobian coordinates
     let a_jacobian = p2_from_affine(a);
 
@@ -159,7 +159,7 @@ fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_affine {
+fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -197,7 +197,7 @@ pub(super) fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) 
 /// Note: Scalars are expected to be in Big Endian format.
 /// This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_affine {
+fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
@@ -233,7 +233,7 @@ pub(super) fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) 
 ///
 /// Takes a field element (blst_fp) and returns the corresponding G1 point in affine form
 #[inline]
-pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
+fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
     // Create a new G1 point in Jacobian coordinates
     let mut p = blst_p1::default();
 
@@ -250,7 +250,7 @@ pub(super) fn map_fp_to_g1(fp: &blst_fp) -> blst_p1_affine {
 ///
 /// Takes a field element (blst_fp2) and returns the corresponding G2 point in affine form
 #[inline]
-pub(super) fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
+fn map_fp2_to_g2(fp2: &blst_fp2) -> blst_p2_affine {
     // Create a new G2 point in Jacobian coordinates
     let mut p = blst_p2::default();
 
@@ -307,7 +307,7 @@ fn is_fp12_one(f: &blst_fp12) -> bool {
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 #[inline]
-pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
+fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
     // When no inputs are given, we return true
     // This case can only trigger, if the initial pairing components
     // all had, either the G1 element as the point at infinity
@@ -338,7 +338,7 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
 /// Encodes a G1 point in affine format into byte slice.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-pub(super) fn encode_g1_point(input: &blst_p1_affine) -> [u8; G1_LENGTH] {
+fn encode_g1_point(input: &blst_p1_affine) -> [u8; G1_LENGTH] {
     let mut out = [0u8; G1_LENGTH];
     fp_to_bytes(&mut out[..FP_LENGTH], &input.x);
     fp_to_bytes(&mut out[FP_LENGTH..], &input.y);
@@ -393,10 +393,7 @@ fn decode_g1_on_curve(
 ///
 /// Note: Coordinates are expected to be in Big Endian format.
 /// By default, subgroup checks are performed.
-pub(super) fn read_g1(
-    x: &[u8; FP_LENGTH],
-    y: &[u8; FP_LENGTH],
-) -> Result<blst_p1_affine, PrecompileError> {
+fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<blst_p1_affine, PrecompileError> {
     _extract_g1_input(x, y, true)
 }
 /// Extracts a G1 point in Affine format from the x and y coordinates
@@ -407,7 +404,7 @@ pub(super) fn read_g1(
 /// This method should only be called if:
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
-pub(super) fn read_g1_no_subgroup_check(
+fn read_g1_no_subgroup_check(
     x: &[u8; FP_LENGTH],
     y: &[u8; FP_LENGTH],
 ) -> Result<blst_p1_affine, PrecompileError> {
@@ -447,7 +444,7 @@ fn _extract_g1_input(
 /// Encodes a G2 point in affine format into byte slice.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; G2_LENGTH] {
+fn encode_g2_point(input: &blst_p2_affine) -> [u8; G2_LENGTH] {
     let mut out = [0u8; G2_LENGTH];
     fp_to_bytes(&mut out[..FP_LENGTH], &input.x.fp[0]);
     fp_to_bytes(&mut out[FP_LENGTH..2 * FP_LENGTH], &input.x.fp[1]);
@@ -495,7 +492,7 @@ fn decode_g2_on_curve(
 ///
 /// Field elements are expected to be in Big Endian format.
 /// Returns an error if either of the input field elements is not canonical.
-pub(super) fn read_fp2(
+fn read_fp2(
     input_1: &[u8; FP_LENGTH],
     input_2: &[u8; FP_LENGTH],
 ) -> Result<blst_fp2, PrecompileError> {
@@ -510,7 +507,7 @@ pub(super) fn read_fp2(
 ///
 /// Note: Coordinates are expected to be in Big Endian format.
 /// By default, subgroup checks are performed.
-pub(super) fn read_g2(
+fn read_g2(
     a_x_0: &[u8; FP_LENGTH],
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
@@ -526,7 +523,7 @@ pub(super) fn read_g2(
 /// This method should only be called if:
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
-pub(super) fn read_g2_no_subgroup_check(
+fn read_g2_no_subgroup_check(
     a_x_0: &[u8; FP_LENGTH],
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
@@ -571,7 +568,7 @@ fn _extract_g2_input(
 /// returning the field element if successful.
 ///
 /// Note: The field element is expected to be in big endian format.
-pub(super) fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileError> {
+fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileError> {
     if !is_valid_be(input) {
         return Err(PrecompileError::Other("non-canonical fp value".to_string()));
     }
@@ -595,7 +592,7 @@ pub(super) fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileErro
 /// We do not check that the scalar is a canonical Fr element, because the EIP specifies:
 /// * The corresponding integer is not required to be less than or equal than main subgroup order
 ///   `q`.
-pub(super) fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
+fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
     if input.len() != SCALAR_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {SCALAR_LENGTH} bytes, was {}",

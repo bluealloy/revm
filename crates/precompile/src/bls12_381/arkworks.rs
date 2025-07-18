@@ -1,9 +1,6 @@
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
-    bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, G1_LENGTH, G2_LENGTH, PADDED_FP_LENGTH, PADDED_G1_LENGTH,
-        PADDED_G2_LENGTH, SCALAR_LENGTH,
-    },
+    bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH},
     PrecompileError,
 };
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
@@ -27,7 +24,7 @@ use std::{string::ToString, vec::Vec};
 ///
 /// Panics if the input is not exactly 48 bytes long.
 #[inline]
-pub(super) fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
+fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
     assert_eq!(input_be.len(), FP_LENGTH, "input must be {FP_LENGTH} bytes");
 
     let mut input_le = [0u8; FP_LENGTH];
@@ -45,7 +42,7 @@ pub(super) fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
 /// # Panics
 ///
 /// Panics if serialization fails, which should not occur for a valid field element.
-pub(super) fn encode_fp(fp: &Fq) -> [u8; FP_LENGTH] {
+fn encode_fp(fp: &Fq) -> [u8; FP_LENGTH] {
     let mut bytes = [0u8; FP_LENGTH];
     fp.serialize_uncompressed(&mut bytes[..])
         .expect("Failed to serialize field element");
@@ -61,7 +58,7 @@ pub(super) fn encode_fp(fp: &Fq) -> [u8; FP_LENGTH] {
 ///
 /// Panics if either input is not exactly 48 bytes long.
 #[inline]
-pub(super) fn read_fp2(
+fn read_fp2(
     input_1: &[u8; FP_LENGTH],
     input_2: &[u8; FP_LENGTH],
 ) -> Result<Fq2, PrecompileError> {
@@ -129,7 +126,7 @@ fn new_g2_point_no_subgroup_check(x: Fq2, y: Fq2) -> Result<G2Affine, Precompile
 ///
 /// Panics if the inputs are not exactly 48 bytes long.
 #[inline]
-pub(super) fn read_g1(
+fn read_g1(
     x: &[u8; FP_LENGTH],
     y: &[u8; FP_LENGTH],
 ) -> Result<G1Affine, PrecompileError> {
@@ -149,7 +146,7 @@ pub(super) fn read_g1(
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
 #[inline]
-pub(super) fn read_g1_no_subgroup_check(
+fn read_g1_no_subgroup_check(
     x: &[u8; FP_LENGTH],
     y: &[u8; FP_LENGTH],
 ) -> Result<G1Affine, PrecompileError> {
@@ -163,7 +160,7 @@ pub(super) fn read_g1_no_subgroup_check(
 /// Converts a G1 point to affine coordinates and serializes the x and y coordinates
 /// as big-endian byte arrays.
 #[inline]
-pub(super) fn encode_g1_point(input: &G1Affine) -> [u8; G1_LENGTH] {
+fn encode_g1_point(input: &G1Affine) -> [u8; G1_LENGTH] {
     let mut output = [0u8; G1_LENGTH];
 
     let Some((x, y)) = input.xy() else {
@@ -186,7 +183,7 @@ pub(super) fn encode_g1_point(input: &G1Affine) -> [u8; G1_LENGTH] {
 /// representing the x and y coordinates in Big Endian format.
 /// Also performs a subgroup check to ensure the point is in the correct subgroup.
 #[inline]
-pub(super) fn read_g2(
+fn read_g2(
     a_x_0: &[u8; FP_LENGTH],
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
@@ -208,7 +205,7 @@ pub(super) fn read_g2(
 ///     - The EIP specifies that no subgroup check should be performed
 ///     - One can be certain that the point is in the correct subgroup.
 #[inline]
-pub(super) fn read_g2_no_subgroup_check(
+fn read_g2_no_subgroup_check(
     a_x_0: &[u8; FP_LENGTH],
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
@@ -224,7 +221,7 @@ pub(super) fn read_g2_no_subgroup_check(
 /// Converts a G2 point to affine coordinates and serializes the coordinates
 /// as big-endian byte arrays.
 #[inline]
-pub(super) fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
+fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
     let mut output = [0u8; G2_LENGTH];
 
     let Some((x, y)) = input.xy() else {
@@ -250,7 +247,7 @@ pub(super) fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
 /// Note: We do not check that the scalar is a canonical Fr element, because the EIP specifies:
 /// * The corresponding integer is not required to be less than or equal than main subgroup order.
 #[inline]
-pub(super) fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
+fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
     if input.len() != SCALAR_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {SCALAR_LENGTH} bytes, was {}",
@@ -263,7 +260,7 @@ pub(super) fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(super) fn p1_add_affine(p1: &G1Affine, p2: &G1Affine) -> G1Affine {
+fn p1_add_affine(p1: &G1Affine, p2: &G1Affine) -> G1Affine {
     let p1_proj: G1Projective = (*p1).into();
     let p3 = p1_proj + p2;
     p3.into_affine()
@@ -271,7 +268,7 @@ pub(super) fn p1_add_affine(p1: &G1Affine, p2: &G1Affine) -> G1Affine {
 
 /// Performs point addition on two G2 points.
 #[inline]
-pub(super) fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
+fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
     let p1_proj: G2Projective = (*p1).into();
     let p3 = p1_proj + p2;
     p3.into_affine()
@@ -283,7 +280,7 @@ pub(super) fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
+fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -311,7 +308,7 @@ pub(super) fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
 ///
 /// Note: This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-pub(super) fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
+fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
@@ -337,7 +334,7 @@ pub(super) fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
 ///
 /// Takes a field element (Fq) and returns the corresponding G1 point in affine form
 #[inline]
-pub(super) fn map_fp_to_g1(fp: &Fq) -> G1Affine {
+fn map_fp_to_g1(fp: &Fq) -> G1Affine {
     WBMap::map_to_curve(*fp)
         .expect("map_to_curve is infallible")
         .clear_cofactor()
@@ -347,7 +344,7 @@ pub(super) fn map_fp_to_g1(fp: &Fq) -> G1Affine {
 ///
 /// Takes a field element (Fq2) and returns the corresponding G2 point in affine form
 #[inline]
-pub(super) fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
+fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
     WBMap::map_to_curve(*fp2)
         .expect("map_to_curve is infallible")
         .clear_cofactor()
@@ -356,7 +353,7 @@ pub(super) fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 #[inline]
-pub(super) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
+fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
     if pairs.is_empty() {
         return true;
     }
