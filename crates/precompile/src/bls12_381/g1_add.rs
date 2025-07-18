@@ -1,5 +1,4 @@
 //! BLS12-381 G1 add precompile. More details in [`g1_add`]
-use super::crypto_backend::p1_add_affine_bytes;
 use super::utils::{pad_g1_point, remove_g1_padding};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
@@ -33,8 +32,8 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let a = (*a_x, *a_y);
     let b = (*b_x, *b_y);
 
-    // Get unpadded result from crypto backend
-    let unpadded_result = p1_add_affine_bytes(a, b)?;
+    // Get unpadded result from CryptoProvider
+    let unpadded_result = crate::crypto_provider::get_provider().bls12_381_g1_add(a, b)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

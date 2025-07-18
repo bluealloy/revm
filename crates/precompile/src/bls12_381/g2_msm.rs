@@ -1,5 +1,4 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
-use super::crypto_backend::p2_msm_bytes;
 use super::utils::{pad_g2_point, remove_g2_padding};
 use super::G2Point;
 use crate::bls12_381_const::{
@@ -54,8 +53,9 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         point_scalar_pairs.push(((*a_x_0, *a_x_1, *a_y_0, *a_y_1), scalar_array));
     }
 
-    // Use the byte-oriented API to get unpadded result
-    let unpadded_result = p2_msm_bytes(&point_scalar_pairs)?;
+    // Use the CryptoProvider API to get unpadded result
+    let unpadded_result =
+        crate::crypto_provider::get_provider().bls12_381_g2_msm(&point_scalar_pairs)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);

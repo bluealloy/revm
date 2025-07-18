@@ -9,11 +9,9 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
         /// Substrate backend for BN128 operations
         pub mod substrate;
-        use substrate::{g1_point_mul, pairing_check};
     } else {
         /// Arkworks backend for BN128 operations
         pub mod arkworks;
-        use arkworks::{g1_point_mul, pairing_check};
     }
 }
 
@@ -180,11 +178,18 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
-    let point_bytes = &input[..G1_LEN];
-    let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
-    let output = g1_point_mul(point_bytes, scalar_bytes)?;
+    // Convert slices to fixed-size arrays
+    let point: [u8; 64] = input[..G1_LEN]
+        .try_into()
+        .map_err(|_| PrecompileError::Other("Invalid input length for point".into()))?;
+    let scalar: [u8; 32] = input[G1_LEN..G1_LEN + SCALAR_LEN]
+        .try_into()
+        .map_err(|_| PrecompileError::Other("Invalid input length for scalar".into()))?;
 
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
+    // Use the crypto provider
+    let output = crate::crypto_provider::get_provider().bn128_mul(&point, &scalar)?;
+
+    Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
 }
 
 /// Run the Bn128 pair precompile
@@ -221,7 +226,8 @@ pub fn run_pair(
         points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    let pairing_result = pairing_check(&points)?;
+    // Use the crypto provider
+    let pairing_result = crate::crypto_provider::get_provider().bn128_pairing(&points)?;
     Ok(PrecompileOutput::new(
         gas_used,
         bool_to_bytes32(pairing_result),

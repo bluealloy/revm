@@ -67,7 +67,8 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let proof = input[144..192]
         .try_into()
         .expect("expected `proof` to be 48 bytes");
-    if !verify_kzg_proof(commitment, z, y, proof) {
+
+    if !crate::crypto_provider::get_provider().kzg_verify_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
 
