@@ -8,6 +8,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub mod count_inspector;
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
 mod gas;
