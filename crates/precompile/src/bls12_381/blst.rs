@@ -2,10 +2,7 @@
 
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
-    bls12_381_const::{
-        FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH, SCALAR_LENGTH,
-        SCALAR_LENGTH_BITS,
-    },
+    bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH, SCALAR_LENGTH_BITS},
     PrecompileError,
 };
 use blst::{
@@ -338,27 +335,25 @@ pub(super) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
     is_fp12_one(&final_result)
 }
 
-/// Encodes a G1 point in affine format into byte slice with padded elements.
+/// Encodes a G1 point in affine format into byte slice.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-pub(super) fn encode_g1_point(input: &blst_p1_affine) -> [u8; PADDED_G1_LENGTH] {
-    let mut out = [0u8; PADDED_G1_LENGTH];
-    fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x);
-    fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &input.y);
+pub(super) fn encode_g1_point(input: &blst_p1_affine) -> [u8; G1_LENGTH] {
+    let mut out = [0u8; G1_LENGTH];
+    fp_to_bytes(&mut out[..FP_LENGTH], &input.x);
+    fp_to_bytes(&mut out[FP_LENGTH..], &input.y);
     out
 }
 
-/// Encodes a single finite field element into byte slice with padding.
+/// Encodes a single finite field element into byte slice.
 ///
 /// Note: The encoded bytes are in Big Endian format.
 fn fp_to_bytes(out: &mut [u8], input: &blst_fp) {
-    if out.len() != PADDED_FP_LENGTH {
+    if out.len() != FP_LENGTH {
         return;
     }
-    let (padding, rest) = out.split_at_mut(FP_PAD_BY);
-    padding.fill(0);
     // SAFETY: Out length is checked previously, `input` is a blst value.
-    unsafe { blst_bendian_from_fp(rest.as_mut_ptr(), input) };
+    unsafe { blst_bendian_from_fp(out.as_mut_ptr(), input) };
 }
 
 /// Returns a `blst_p1_affine` from the provided byte slices, which represent the x and y
@@ -449,24 +444,15 @@ fn _extract_g1_input(
     Ok(out)
 }
 
-/// Encodes a G2 point in affine format into byte slice with padded elements.
+/// Encodes a G2 point in affine format into byte slice.
 ///
 /// Note: The encoded bytes are in Big Endian format.
-pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; PADDED_G2_LENGTH] {
-    let mut out = [0u8; PADDED_G2_LENGTH];
-    fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x.fp[0]);
-    fp_to_bytes(
-        &mut out[PADDED_FP_LENGTH..2 * PADDED_FP_LENGTH],
-        &input.x.fp[1],
-    );
-    fp_to_bytes(
-        &mut out[2 * PADDED_FP_LENGTH..3 * PADDED_FP_LENGTH],
-        &input.y.fp[0],
-    );
-    fp_to_bytes(
-        &mut out[3 * PADDED_FP_LENGTH..4 * PADDED_FP_LENGTH],
-        &input.y.fp[1],
-    );
+pub(super) fn encode_g2_point(input: &blst_p2_affine) -> [u8; G2_LENGTH] {
+    let mut out = [0u8; G2_LENGTH];
+    fp_to_bytes(&mut out[..FP_LENGTH], &input.x.fp[0]);
+    fp_to_bytes(&mut out[FP_LENGTH..2 * FP_LENGTH], &input.x.fp[1]);
+    fp_to_bytes(&mut out[2 * FP_LENGTH..3 * FP_LENGTH], &input.y.fp[0]);
+    fp_to_bytes(&mut out[3 * FP_LENGTH..4 * FP_LENGTH], &input.y.fp[1]);
     out
 }
 
@@ -637,12 +623,12 @@ fn is_valid_be(input: &[u8; 48]) -> bool {
 
 // Byte-oriented versions of the functions for external API compatibility
 
-/// Performs point addition on two G1 points taking byte coordinates and returning encoded result.
+/// Performs point addition on two G1 points taking byte coordinates.
 #[inline]
 pub(super) fn p1_add_affine_bytes(
     a: G1Point,
     b: G1Point,
-) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G1_LENGTH], crate::PrecompileError> {
     let (a_x, a_y) = a;
     let (b_x, b_y) = b;
     // Parse first point
@@ -658,12 +644,12 @@ pub(super) fn p1_add_affine_bytes(
     Ok(encode_g1_point(&result))
 }
 
-/// Performs point addition on two G2 points taking byte coordinates and returning encoded result.
+/// Performs point addition on two G2 points taking byte coordinates.
 #[inline]
 pub(super) fn p2_add_affine_bytes(
     a: G2Point,
     b: G2Point,
-) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G2_LENGTH], crate::PrecompileError> {
     let (a_x_0, a_x_1, a_y_0, a_y_1) = a;
     let (b_x_0, b_x_1, b_y_0, b_y_1) = b;
     // Parse first point
@@ -683,7 +669,7 @@ pub(super) fn p2_add_affine_bytes(
 #[inline]
 pub(super) fn map_fp_to_g1_bytes(
     fp_bytes: &[u8; FP_LENGTH],
-) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G1_LENGTH], crate::PrecompileError> {
     let fp = read_fp(fp_bytes)?;
     let result = map_fp_to_g1(&fp);
     Ok(encode_g1_point(&result))
@@ -694,20 +680,20 @@ pub(super) fn map_fp_to_g1_bytes(
 pub(super) fn map_fp2_to_g2_bytes(
     fp2_x: &[u8; FP_LENGTH],
     fp2_y: &[u8; FP_LENGTH],
-) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G2_LENGTH], crate::PrecompileError> {
     let fp2 = read_fp2(fp2_x, fp2_y)?;
     let result = map_fp2_to_g2(&fp2);
     Ok(encode_g2_point(&result))
 }
 
-/// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs and returning encoded result.
+/// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
 pub(super) fn p1_msm_bytes(
     point_scalar_pairs: &[(G1Point, [u8; SCALAR_LENGTH])],
-) -> Result<[u8; PADDED_G1_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G1_LENGTH], crate::PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
-        return Ok([0u8; PADDED_G1_LENGTH]);
+        return Ok([0u8; G1_LENGTH]);
     }
 
     let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
@@ -730,7 +716,7 @@ pub(super) fn p1_msm_bytes(
 
     // Return point at infinity if all scalars were zero
     if g1_points.is_empty() {
-        return Ok([0u8; PADDED_G1_LENGTH]);
+        return Ok([0u8; G1_LENGTH]);
     }
 
     // Perform MSM
@@ -740,14 +726,14 @@ pub(super) fn p1_msm_bytes(
     Ok(encode_g1_point(&result))
 }
 
-/// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs and returning encoded result.
+/// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
 pub(super) fn p2_msm_bytes(
     point_scalar_pairs: &[(G2Point, [u8; SCALAR_LENGTH])],
-) -> Result<[u8; PADDED_G2_LENGTH], crate::PrecompileError> {
+) -> Result<[u8; G2_LENGTH], crate::PrecompileError> {
     if point_scalar_pairs.is_empty() {
         // Return point at infinity
-        return Ok([0u8; PADDED_G2_LENGTH]);
+        return Ok([0u8; G2_LENGTH]);
     }
 
     let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
@@ -770,7 +756,7 @@ pub(super) fn p2_msm_bytes(
 
     // Return point at infinity if all scalars were zero
     if g2_points.is_empty() {
-        return Ok([0u8; PADDED_G2_LENGTH]);
+        return Ok([0u8; G2_LENGTH]);
     }
 
     // Perform MSM

@@ -1,5 +1,8 @@
 //! BLS12-381 map fp to g1 precompile. More details in [`map_fp_to_g1`]
-use super::{crypto_backend::map_fp_to_g1_bytes, utils::remove_fp_padding};
+use super::{
+    crypto_backend::map_fp_to_g1_bytes,
+    utils::{pad_g1_point, remove_fp_padding},
+};
 use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
@@ -23,8 +26,17 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     let input_p0 = remove_fp_padding(input)?;
-    let out = map_fp_to_g1_bytes(input_p0)?;
-    Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE_GAS_FEE, out.into()))
+
+    // Get unpadded result from crypto backend
+    let unpadded_result = map_fp_to_g1_bytes(input_p0)?;
+
+    // Pad the result for EVM compatibility
+    let padded_result = pad_g1_point(&unpadded_result);
+
+    Ok(PrecompileOutput::new(
+        MAP_FP_TO_G1_BASE_GAS_FEE,
+        padded_result.into(),
+    ))
 }
 
 #[cfg(test)]

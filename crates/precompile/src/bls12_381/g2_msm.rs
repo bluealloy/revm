@@ -1,6 +1,6 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
 use super::crypto_backend::p2_msm_bytes;
-use super::utils::remove_g2_padding;
+use super::utils::{pad_g2_point, remove_g2_padding};
 use super::G2Point;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
@@ -54,7 +54,11 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         point_scalar_pairs.push(((*a_x_0, *a_x_1, *a_y_0, *a_y_1), scalar_array));
     }
 
-    // Use the byte-oriented API
-    let out = p2_msm_bytes(&point_scalar_pairs)?;
-    Ok(PrecompileOutput::new(required_gas, out.into()))
+    // Use the byte-oriented API to get unpadded result
+    let unpadded_result = p2_msm_bytes(&point_scalar_pairs)?;
+
+    // Pad the result for EVM compatibility
+    let padded_result = pad_g2_point(&unpadded_result);
+
+    Ok(PrecompileOutput::new(required_gas, padded_result.into()))
 }

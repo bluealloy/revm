@@ -1,7 +1,7 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
 use super::crypto_backend::p1_msm_bytes;
 use super::G1Point;
-use crate::bls12_381::utils::remove_g1_padding;
+use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
@@ -56,8 +56,13 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         point_scalar_pairs.push(((*a_x, *a_y), scalar_array));
     }
 
-    let out = p1_msm_bytes(&point_scalar_pairs)?;
-    Ok(PrecompileOutput::new(required_gas, out.into()))
+    // Get unpadded result from crypto backend
+    let unpadded_result = p1_msm_bytes(&point_scalar_pairs)?;
+
+    // Pad the result for EVM compatibility
+    let padded_result = pad_g1_point(&unpadded_result);
+
+    Ok(PrecompileOutput::new(required_gas, padded_result.into()))
 }
 
 #[cfg(test)]
