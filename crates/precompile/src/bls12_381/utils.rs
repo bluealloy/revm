@@ -57,7 +57,7 @@ pub(super) fn remove_g2_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 4], P
 /// Takes a G1 point with 2 field elements of 48 bytes each and adds 16 bytes of
 /// zero padding before each field element.
 pub(super) fn pad_g1_point(unpadded: &[u8]) -> [u8; PADDED_G1_LENGTH] {
-    debug_assert_eq!(
+    assert_eq!(
         unpadded.len(),
         G1_LENGTH,
         "Invalid unpadded G1 point length"
@@ -79,7 +79,7 @@ pub(super) fn pad_g1_point(unpadded: &[u8]) -> [u8; PADDED_G1_LENGTH] {
 /// Takes a G2 point with 4 field elements of 48 bytes each and adds 16 bytes of
 /// zero padding before each field element.
 pub(super) fn pad_g2_point(unpadded: &[u8]) -> [u8; PADDED_G2_LENGTH] {
-    debug_assert_eq!(
+    assert_eq!(
         unpadded.len(),
         4 * FP_LENGTH,
         "Invalid unpadded G2 point length"
