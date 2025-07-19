@@ -128,7 +128,6 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let p1: [u8; 64] = input[..G1_LEN].try_into().unwrap();
     let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN].try_into().unwrap();
 
-    // Use the crypto provider
     let output = crate::crypto_provider::get_provider().bn128_add(&p1, &p2)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
