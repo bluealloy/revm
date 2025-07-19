@@ -27,6 +27,9 @@ pub mod modexp;
 /// Hash cryptographic implementations
 pub mod hash;
 
+/// Blake2 cryptographic implementations
+pub mod blake2;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -234,6 +237,28 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// # Returns
     /// The RIPEMD-160 hash as 20 bytes.
     fn ripemd160(&self, input: &[u8]) -> [u8; 20];
+
+    /// Blake2 compression function.
+    ///
+    /// Performs the Blake2b compression function F.
+    ///
+    /// # Arguments
+    /// * `rounds` - Number of rounds to perform
+    /// * `h` - State vector (8 u64 values)
+    /// * `m` - Message block (128 bytes)
+    /// * `t` - Offset counter (2 u64 values)
+    /// * `f` - Final block indicator flag
+    ///
+    /// # Returns
+    /// The compressed state vector (8 u64 values).
+    fn blake2_compress(
+        &self,
+        rounds: usize,
+        h: [u64; 8],
+        m: &[u8; 128],
+        t: [u64; 2],
+        f: bool,
+    ) -> [u64; 8];
 }
 
 /// Default crypto provider using the existing implementations
@@ -349,6 +374,17 @@ impl CryptoProvider for DefaultCryptoProvider {
 
     fn ripemd160(&self, input: &[u8]) -> [u8; 20] {
         hash::ripemd160(input)
+    }
+
+    fn blake2_compress(
+        &self,
+        rounds: usize,
+        h: [u64; 8],
+        m: &[u8; 128],
+        t: [u64; 2],
+        f: bool,
+    ) -> [u64; 8] {
+        blake2::compress(rounds, h, m, t, f)
     }
 }
 
@@ -494,6 +530,17 @@ mod tests {
 
         fn ripemd160(&self, _input: &[u8]) -> [u8; 20] {
             [53u8; 20]
+        }
+
+        fn blake2_compress(
+            &self,
+            _rounds: usize,
+            _h: [u64; 8],
+            _m: &[u8; 128],
+            _t: [u64; 2],
+            _f: bool,
+        ) -> [u64; 8] {
+            [54u64; 8]
         }
     }
 
