@@ -6,6 +6,7 @@
 use crate::PrecompileError;
 use once_cell::race::OnceBox;
 use std::boxed::Box;
+use std::vec::Vec;
 
 /// BN128 cryptographic implementations
 pub mod bn128;
