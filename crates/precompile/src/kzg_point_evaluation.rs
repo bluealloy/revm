@@ -55,18 +55,10 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     // Verify KZG proof with z and y in big endian format
-    let commitment: &[u8; 48] = commitment
-        .try_into()
-        .expect("expected `commitment` to be 48 bytes");
-    let z = input[32..64]
-        .try_into()
-        .expect("expected `z` to be 32 bytes");
-    let y = input[64..96]
-        .try_into()
-        .expect("expected `y` to be 32 bytes");
-    let proof = input[144..192]
-        .try_into()
-        .expect("expected `proof` to be 48 bytes");
+    let commitment: &[u8; 48] = commitment.try_into().unwrap();
+    let z = input[32..64].try_into().unwrap();
+    let y = input[64..96].try_into().unwrap();
+    let proof = input[144..192].try_into().unwrap();
     if !verify_kzg_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }

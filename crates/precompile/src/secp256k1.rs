@@ -44,9 +44,9 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let msg: [u8; 32] = input[0..32].try_into().expect("expected 32 bytes");
+    let msg: [u8; 32] = input[0..32].try_into().unwrap();
     let recid = input[63] - 27;
-    let sig: [u8; 64] = input[64..128].try_into().expect("expected 64 bytes");
+    let sig: [u8; 64] = input[64..128].try_into().unwrap();
 
     let res = ecrecover_bytes(sig, recid, msg);
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
