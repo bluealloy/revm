@@ -22,11 +22,6 @@ pub(super) const FQ2_LEN: usize = 2 * FQ_LEN;
 /// Note: A G1 element contains 2 Fq elements.
 pub(super) const G1_LEN: usize = 2 * FQ_LEN;
 
-/// G2_LEN specifies the number of bytes needed to represent a G2 element.
-///
-/// Note: A G2 element contains 2 Fq^2 elements.
-pub(super) const G2_LEN: usize = 2 * FQ2_LEN;
-
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")] {
         /// Substrate backend for BN128 operations
