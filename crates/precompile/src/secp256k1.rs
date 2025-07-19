@@ -49,7 +49,3 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         .unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
-
-// Re-export ecrecover from crypto_provider for backward compatibility
-// TODO: switch to crypto_provider
-pub use crate::crypto_provider::secp256k1::ecrecover;
