@@ -1,11 +1,12 @@
 //! BLS12-381 cryptographic implementations for the crypto provider
 
-use crate::bls12_381_const::FP_LENGTH;
+pub mod constants;
+pub use constants::*;
 
-/// G1 point representation as a tuple of (x, y) coordinates, each 48 bytes
+/// G1 point representation as a tuple of (x, y) coordinates
 pub type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
 
-/// G2 point representation as a tuple of (x0, x1, y0, y1) coordinates, each 48 bytes
+/// G2 point representation as a tuple of (x0, x1, y0, y1) coordinates
 pub type G2Point = (
     [u8; FP_LENGTH],
     [u8; FP_LENGTH],

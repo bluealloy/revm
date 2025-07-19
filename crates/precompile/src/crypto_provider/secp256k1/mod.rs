@@ -1,5 +1,8 @@
 //! secp256k1 cryptographic implementations for the crypto provider
 
+pub mod constants;
+pub use constants::*;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "secp256k1")] {
         /// Bitcoin secp256k1 backend

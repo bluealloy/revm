@@ -3,7 +3,7 @@
 //! This module defines a trait that abstracts cryptographic operations
 //! for various precompiles, allowing different implementations to be used.
 
-use crate::{bls12_381_const::*, PrecompileError};
+use crate::PrecompileError;
 use once_cell::race::OnceBox;
 use std::boxed::Box;
 use std::vec::Vec;
@@ -30,6 +30,9 @@ pub mod hash;
 /// Blake2 cryptographic implementations
 pub mod blake2;
 
+/// secp256r1 cryptographic implementations
+pub mod secp256r1;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -37,24 +40,32 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// Takes two points on the BN128 G1 curve and returns their sum.
     ///
     /// # Arguments
-    /// * `p1` - First point as 64 bytes (x, y coordinates, 32 bytes each)
-    /// * `p2` - Second point as 64 bytes (x, y coordinates, 32 bytes each)
+    /// * `p1` - First point as bn128::G1_LENGTH bytes (x, y coordinates, 32 bytes each)
+    /// * `p2` - Second point as bn128::G1_LENGTH bytes (x, y coordinates, 32 bytes each)
     ///
     /// # Returns
-    /// The sum of the two points as 64 bytes, or an error if the points are invalid.
-    fn bn128_add(&self, p1: &[u8; 64], p2: &[u8; 64]) -> Result<[u8; 64], PrecompileError>;
+    /// The sum of the two points as bn128::G1_LENGTH bytes, or an error if the points are invalid.
+    fn bn128_add(
+        &self,
+        p1: &[u8; bn128::G1_LENGTH],
+        p2: &[u8; bn128::G1_LENGTH],
+    ) -> Result<[u8; bn128::G1_LENGTH], PrecompileError>;
 
     /// BN128 elliptic curve scalar multiplication.
     ///
     /// Multiplies a point on the BN128 G1 curve by a scalar.
     ///
     /// # Arguments
-    /// * `point` - Point as 64 bytes (x, y coordinates, 32 bytes each)
-    /// * `scalar` - Scalar value as 32 bytes in big-endian format
+    /// * `point` - Point as bn128::G1_LENGTH bytes (x, y coordinates, 32 bytes each)
+    /// * `scalar` - Scalar value as bn128::SCALAR_LENGTH bytes in big-endian format
     ///
     /// # Returns
-    /// The product of the point and scalar as 64 bytes, or an error if inputs are invalid.
-    fn bn128_mul(&self, point: &[u8; 64], scalar: &[u8; 32]) -> Result<[u8; 64], PrecompileError>;
+    /// The product of the point and scalar as bn128::G1_LENGTH bytes, or an error if inputs are invalid.
+    fn bn128_mul(
+        &self,
+        point: &[u8; bn128::G1_LENGTH],
+        scalar: &[u8; bn128::SCALAR_LENGTH],
+    ) -> Result<[u8; bn128::G1_LENGTH], PrecompileError>;
 
     /// BN128 pairing check.
     ///
@@ -72,58 +83,58 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// BLS12-381 G1 point addition.
     ///
     /// # Arguments
-    /// * `a` - First G1 point as a tuple (x, y) with each component being FP_LENGTH bytes
-    /// * `b` - Second G1 point as a tuple (x, y) with each component being FP_LENGTH bytes
+    /// * `a` - First G1 point as a tuple (x, y) with each component being bls12_381::FP_LENGTH bytes
+    /// * `b` - Second G1 point as a tuple (x, y) with each component being bls12_381::FP_LENGTH bytes
     ///
     /// # Returns
-    /// The sum as G1_LENGTH bytes (unpadded), or an error if points are invalid.
+    /// The sum as bls12_381::G1_LENGTH bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g1_add(
         &self,
         a: bls12_381::G1Point,
         b: bls12_381::G1Point,
-    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 G2 point addition.
     ///
     /// # Arguments
-    /// * `a` - First G2 point as a tuple (x0, x1, y0, y1) with each component being FP_LENGTH bytes
-    /// * `b` - Second G2 point as a tuple (x0, x1, y0, y1) with each component being FP_LENGTH bytes
+    /// * `a` - First G2 point as a tuple (x0, x1, y0, y1) with each component being bls12_381::FP_LENGTH bytes
+    /// * `b` - Second G2 point as a tuple (x0, x1, y0, y1) with each component being bls12_381::FP_LENGTH bytes
     ///
     /// # Returns
-    /// The sum as G2_LENGTH bytes (unpadded), or an error if points are invalid.
+    /// The sum as bls12_381::G2_LENGTH bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g2_add(
         &self,
         a: bls12_381::G2Point,
         b: bls12_381::G2Point,
-    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError>;
 
     /// BLS12-381 G1 multi-scalar multiplication.
     ///
     /// # Arguments
     /// * `points_scalars` - Vector of (point, scalar) pairs where:
-    ///   - Points are G1Point tuples: (x, y) with each component being FP_LENGTH bytes
-    ///   - Scalars are SCALAR_LENGTH bytes each
+    ///   - Points are G1Point tuples: (x, y) with each component being bls12_381::FP_LENGTH bytes
+    ///   - Scalars are bls12_381::SCALAR_LENGTH bytes each
     ///
     /// # Returns
-    /// The result as G1_LENGTH bytes (unpadded), or an error if inputs are invalid.
+    /// The result as bls12_381::G1_LENGTH bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
-    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
+        points_scalars: &[(bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH])],
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 G2 multi-scalar multiplication.
     ///
     /// # Arguments
     /// * `points_scalars` - Vector of (point, scalar) pairs where:
-    ///   - Points are G2Point tuples: (x0, x1, y0, y1) with each component being FP_LENGTH bytes
-    ///   - Scalars are SCALAR_LENGTH bytes each
+    ///   - Points are G2Point tuples: (x0, x1, y0, y1) with each component being bls12_381::FP_LENGTH bytes
+    ///   - Scalars are bls12_381::SCALAR_LENGTH bytes each
     ///
     /// # Returns
-    /// The result as G2_LENGTH bytes (unpadded), or an error if inputs are invalid.
+    /// The result as bls12_381::G2_LENGTH bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
-    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
+        points_scalars: &[(bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH])],
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError>;
 
     /// BLS12-381 pairing check.
     ///
@@ -137,27 +148,27 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// BLS12-381 map field element to G1.
     ///
     /// # Arguments
-    /// * `fp` - Field element as FP_LENGTH bytes
+    /// * `fp` - Field element as bls12_381::FP_LENGTH bytes
     ///
     /// # Returns
-    /// The mapped G1 point as G1_LENGTH bytes (unpadded).
+    /// The mapped G1 point as bls12_381::G1_LENGTH bytes (unpadded).
     fn bls12_381_map_fp_to_g1(
         &self,
-        fp: &[u8; FP_LENGTH],
-    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
+        fp: &[u8; bls12_381::FP_LENGTH],
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 map field element to G2.
     ///
     /// # Arguments
-    /// * `fp2` - Fp2 element as two FP_LENGTH-byte field elements
+    /// * `fp2` - Fp2 element as two bls12_381::FP_LENGTH-byte field elements
     ///
     /// # Returns
-    /// The mapped G2 point as G2_LENGTH bytes (unpadded).
+    /// The mapped G2 point as bls12_381::G2_LENGTH bytes (unpadded).
     fn bls12_381_map_fp2_to_g2(
         &self,
-        fp2_x: &[u8; FP_LENGTH],
-        fp2_y: &[u8; FP_LENGTH],
-    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
+        fp2_x: &[u8; bls12_381::FP_LENGTH],
+        fp2_y: &[u8; bls12_381::FP_LENGTH],
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError>;
 
     /// KZG point evaluation.
     ///
@@ -185,26 +196,36 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// Recovers the Ethereum address from an ECDSA signature.
     ///
     /// # Arguments
-    /// * `sig` - The signature (64 bytes: r || s)
+    /// * `sig` - The signature (secp256k1::SIGNATURE_LENGTH bytes: r || s)
     /// * `recid` - The recovery ID (0 or 1)
-    /// * `msg` - The message hash (32 bytes)
+    /// * `msg` - The message hash (secp256k1::MESSAGE_HASH_LENGTH bytes)
     ///
     /// # Returns
-    /// The recovered address as 32 bytes (first 12 bytes are zero, last 20 bytes are the address), or None if recovery fails.
-    fn secp256k1_ecrecover(&self, sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]>;
+    /// The recovered address as secp256k1::MESSAGE_HASH_LENGTH bytes (first 12 bytes are zero, last 20 bytes are the address), or None if recovery fails.
+    fn secp256k1_ecrecover(
+        &self,
+        sig: &[u8; secp256k1::SIGNATURE_LENGTH],
+        recid: u8,
+        msg: &[u8; secp256k1::MESSAGE_HASH_LENGTH],
+    ) -> Option<[u8; secp256k1::MESSAGE_HASH_LENGTH]>;
 
     /// secp256r1 (P-256) signature verification.
     ///
     /// Verifies a secp256r1 signature.
     ///
     /// # Arguments
-    /// * `msg` - The message hash (32 bytes)
-    /// * `sig` - The signature (64 bytes: r || s)
-    /// * `pk` - The uncompressed public key (65 bytes: 0x04 || x || y)
+    /// * `msg` - The message hash (secp256r1::MESSAGE_HASH_LENGTH bytes)
+    /// * `sig` - The signature (secp256r1::SIGNATURE_LENGTH bytes: r || s)
+    /// * `pk` - The uncompressed public key (secp256r1::PUBKEY_LENGTH bytes: 0x04 || x || y)
     ///
     /// # Returns
     /// `true` if the signature is valid, `false` otherwise.
-    fn secp256r1_verify(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 65]) -> bool;
+    fn secp256r1_verify(
+        &self,
+        msg: &[u8; secp256r1::MESSAGE_HASH_LENGTH],
+        sig: &[u8; secp256r1::SIGNATURE_LENGTH],
+        pk: &[u8; secp256r1::PUBKEY_LENGTH],
+    ) -> bool;
 
     /// Modular exponentiation.
     ///
@@ -227,8 +248,8 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// * `input` - The input data to hash
     ///
     /// # Returns
-    /// The SHA-256 hash as 32 bytes.
-    fn sha256(&self, input: &[u8]) -> [u8; 32];
+    /// The SHA-256 hash as hash::SHA256_LENGTH bytes.
+    fn sha256(&self, input: &[u8]) -> [u8; hash::SHA256_LENGTH];
 
     /// RIPEMD-160 hash function.
     ///
@@ -238,8 +259,8 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// * `input` - The input data to hash
     ///
     /// # Returns
-    /// The RIPEMD-160 hash as 20 bytes.
-    fn ripemd160(&self, input: &[u8]) -> [u8; 20];
+    /// The RIPEMD-160 hash as hash::RIPEMD160_LENGTH bytes.
+    fn ripemd160(&self, input: &[u8]) -> [u8; hash::RIPEMD160_LENGTH];
 
     /// Blake2 compression function.
     ///
@@ -247,21 +268,21 @@ pub trait CryptoProvider: Send + Sync + 'static {
     ///
     /// # Arguments
     /// * `rounds` - Number of rounds to perform
-    /// * `h` - State vector (8 u64 values)
-    /// * `m` - Message block (128 bytes)
+    /// * `h` - State vector (blake2::STATE_LENGTH u64 values)
+    /// * `m` - Message block (blake2::MESSAGE_LENGTH bytes)
     /// * `t` - Offset counter (2 u64 values)
     /// * `f` - Final block indicator flag
     ///
     /// # Returns
-    /// The compressed state vector (8 u64 values).
+    /// The compressed state vector (blake2::STATE_LENGTH u64 values).
     fn blake2_compress(
         &self,
         rounds: usize,
-        h: [u64; 8],
-        m: &[u8; 128],
+        h: [u64; blake2::STATE_LENGTH],
+        m: &[u8; blake2::MESSAGE_LENGTH],
         t: [u64; 2],
         f: bool,
-    ) -> [u64; 8];
+    ) -> [u64; blake2::STATE_LENGTH];
 }
 
 /// Default crypto provider using the existing implementations
@@ -269,11 +290,19 @@ pub trait CryptoProvider: Send + Sync + 'static {
 pub struct DefaultCryptoProvider;
 
 impl CryptoProvider for DefaultCryptoProvider {
-    fn bn128_add(&self, p1: &[u8; 64], p2: &[u8; 64]) -> Result<[u8; 64], PrecompileError> {
+    fn bn128_add(
+        &self,
+        p1: &[u8; bn128::G1_LENGTH],
+        p2: &[u8; bn128::G1_LENGTH],
+    ) -> Result<[u8; bn128::G1_LENGTH], PrecompileError> {
         bn128::g1_point_add(p1, p2)
     }
 
-    fn bn128_mul(&self, point: &[u8; 64], scalar: &[u8; 32]) -> Result<[u8; 64], PrecompileError> {
+    fn bn128_mul(
+        &self,
+        point: &[u8; bn128::G1_LENGTH],
+        scalar: &[u8; bn128::SCALAR_LENGTH],
+    ) -> Result<[u8; bn128::G1_LENGTH], PrecompileError> {
         bn128::g1_point_mul(point, scalar)
     }
 
@@ -285,7 +314,7 @@ impl CryptoProvider for DefaultCryptoProvider {
         &self,
         a: bls12_381::G1Point,
         b: bls12_381::G1Point,
-    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
         bls12_381::p1_add_affine_bytes(a, b)
     }
 
@@ -293,21 +322,21 @@ impl CryptoProvider for DefaultCryptoProvider {
         &self,
         a: bls12_381::G2Point,
         b: bls12_381::G2Point,
-    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
         bls12_381::p2_add_affine_bytes(a, b)
     }
 
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
-    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+        points_scalars: &[(bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH])],
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
         bls12_381::p1_msm_bytes(points_scalars)
     }
 
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
-    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+        points_scalars: &[(bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH])],
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
         bls12_381::p2_msm_bytes(points_scalars)
     }
 
@@ -317,16 +346,16 @@ impl CryptoProvider for DefaultCryptoProvider {
 
     fn bls12_381_map_fp_to_g1(
         &self,
-        fp: &[u8; FP_LENGTH],
-    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+        fp: &[u8; bls12_381::FP_LENGTH],
+    ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
         bls12_381::map_fp_to_g1_bytes(fp)
     }
 
     fn bls12_381_map_fp2_to_g2(
         &self,
-        fp2_x: &[u8; FP_LENGTH],
-        fp2_y: &[u8; FP_LENGTH],
-    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+        fp2_x: &[u8; bls12_381::FP_LENGTH],
+        fp2_y: &[u8; bls12_381::FP_LENGTH],
+    ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
         bls12_381::map_fp2_to_g2_bytes(fp2_x, fp2_y)
     }
 
@@ -341,7 +370,12 @@ impl CryptoProvider for DefaultCryptoProvider {
         kzg::verify_kzg_proof(commitment, z, y, proof)
     }
 
-    fn secp256k1_ecrecover(&self, sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]> {
+    fn secp256k1_ecrecover(
+        &self,
+        sig: &[u8; secp256k1::SIGNATURE_LENGTH],
+        recid: u8,
+        msg: &[u8; secp256k1::MESSAGE_HASH_LENGTH],
+    ) -> Option<[u8; secp256k1::MESSAGE_HASH_LENGTH]> {
         use primitives::{alloy_primitives::B512, B256};
         let sig = B512::from_slice(sig);
         let msg = B256::from_slice(msg);
@@ -352,44 +386,35 @@ impl CryptoProvider for DefaultCryptoProvider {
         }
     }
 
-    fn secp256r1_verify(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 65]) -> bool {
-        use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
-
-        // Can fail only if the input is not exact length.
-        let signature = match Signature::from_slice(sig) {
-            Ok(sig) => sig,
-            Err(_) => return false,
-        };
-
-        // Can fail if the input is not valid, so we have to propagate the error.
-        let public_key = match VerifyingKey::from_sec1_bytes(pk) {
-            Ok(pk) => pk,
-            Err(_) => return false,
-        };
-
-        public_key.verify_prehash(msg, &signature).is_ok()
+    fn secp256r1_verify(
+        &self,
+        msg: &[u8; secp256r1::MESSAGE_HASH_LENGTH],
+        sig: &[u8; secp256r1::SIGNATURE_LENGTH],
+        pk: &[u8; secp256r1::PUBKEY_LENGTH],
+    ) -> bool {
+        secp256r1::verify(msg, sig, pk)
     }
 
     fn modexp(&self, base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
         modexp::modexp(base, exponent, modulus)
     }
 
-    fn sha256(&self, input: &[u8]) -> [u8; 32] {
+    fn sha256(&self, input: &[u8]) -> [u8; hash::SHA256_LENGTH] {
         hash::sha256(input)
     }
 
-    fn ripemd160(&self, input: &[u8]) -> [u8; 20] {
+    fn ripemd160(&self, input: &[u8]) -> [u8; hash::RIPEMD160_LENGTH] {
         hash::ripemd160(input)
     }
 
     fn blake2_compress(
         &self,
         rounds: usize,
-        h: [u64; 8],
-        m: &[u8; 128],
+        h: [u64; blake2::STATE_LENGTH],
+        m: &[u8; blake2::MESSAGE_LENGTH],
         t: [u64; 2],
         f: bool,
-    ) -> [u64; 8] {
+    ) -> [u64; blake2::STATE_LENGTH] {
         blake2::compress(rounds, h, m, t, f)
     }
 }
@@ -457,30 +482,30 @@ mod tests {
             &self,
             _a: bls12_381::G1Point,
             _b: bls12_381::G1Point,
-        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
-            Ok([44u8; G1_LENGTH])
+        ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
+            Ok([44u8; bls12_381::G1_LENGTH])
         }
 
         fn bls12_381_g2_add(
             &self,
             _a: bls12_381::G2Point,
             _b: bls12_381::G2Point,
-        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
-            Ok([45u8; G2_LENGTH])
+        ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
+            Ok([45u8; bls12_381::G2_LENGTH])
         }
 
         fn bls12_381_g1_msm(
             &self,
-            _points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
-        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
-            Ok([46u8; G1_LENGTH])
+            _points_scalars: &[(bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH])],
+        ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
+            Ok([46u8; bls12_381::G1_LENGTH])
         }
 
         fn bls12_381_g2_msm(
             &self,
-            _points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
-        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
-            Ok([47u8; G2_LENGTH])
+            _points_scalars: &[(bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH])],
+        ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
+            Ok([47u8; bls12_381::G2_LENGTH])
         }
 
         fn bls12_381_pairing(
@@ -492,17 +517,17 @@ mod tests {
 
         fn bls12_381_map_fp_to_g1(
             &self,
-            _fp: &[u8; FP_LENGTH],
-        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
-            Ok([48u8; G1_LENGTH])
+            _fp: &[u8; bls12_381::FP_LENGTH],
+        ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
+            Ok([48u8; bls12_381::G1_LENGTH])
         }
 
         fn bls12_381_map_fp2_to_g2(
             &self,
-            _fp2_x: &[u8; FP_LENGTH],
-            _fp2_y: &[u8; FP_LENGTH],
-        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
-            Ok([49u8; G2_LENGTH])
+            _fp2_x: &[u8; bls12_381::FP_LENGTH],
+            _fp2_y: &[u8; bls12_381::FP_LENGTH],
+        ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
+            Ok([49u8; bls12_381::G2_LENGTH])
         }
 
         #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
@@ -525,7 +550,12 @@ mod tests {
             Some([50u8; 32])
         }
 
-        fn secp256r1_verify(&self, _msg: &[u8; 32], _sig: &[u8; 64], _pk: &[u8; 65]) -> bool {
+        fn secp256r1_verify(
+            &self,
+            _msg: &[u8; secp256r1::MESSAGE_HASH_LENGTH],
+            _sig: &[u8; secp256r1::SIGNATURE_LENGTH],
+            _pk: &[u8; secp256r1::PUBKEY_LENGTH],
+        ) -> bool {
             true
         }
 

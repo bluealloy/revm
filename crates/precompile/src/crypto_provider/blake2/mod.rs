@@ -1,16 +1,26 @@
 //! Blake2 cryptographic implementations for the crypto provider
 
+pub mod constants;
+pub use constants::*;
+
 #[cfg(all(target_feature = "avx2", feature = "std"))]
 pub mod avx2;
 
 /// Blake2b compression function
-pub fn compress(rounds: usize, mut h: [u64; 8], m: &[u8; 128], t: [u64; 2], f: bool) -> [u64; 8] {
+pub fn compress(
+    rounds: usize,
+    mut h: [u64; STATE_LENGTH],
+    m: &[u8; MESSAGE_LENGTH],
+    t: [u64; 2],
+    f: bool,
+) -> [u64; STATE_LENGTH] {
     algo::compress(rounds, &mut h, m, t, f);
     h
 }
 
 /// Blake2 algorithm implementation
 pub mod algo {
+    use super::{MESSAGE_LENGTH, STATE_LENGTH};
     /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
     pub const SIGMA: [[usize; 16]; 10] = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -26,7 +36,7 @@ pub mod algo {
     ];
 
     /// got IV from: <https://en.wikipedia.org/wiki/BLAKE_(hash_function)>
-    pub const IV: [u64; 8] = [
+    pub const IV: [u64; STATE_LENGTH] = [
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
         0x3c6ef372fe94f82b,
@@ -67,12 +77,12 @@ pub mod algo {
     #[allow(clippy::many_single_char_names)]
     pub fn compress(
         rounds: usize,
-        h: &mut [u64; 8],
-        m_slice: &[u8; 16 * size_of::<u64>()],
+        h: &mut [u64; STATE_LENGTH],
+        m_slice: &[u8; MESSAGE_LENGTH],
         t: [u64; 2],
         f: bool,
     ) {
-        assert!(m_slice.len() == 16 * size_of::<u64>());
+        assert!(m_slice.len() == MESSAGE_LENGTH);
 
         #[cfg(all(target_feature = "avx2", feature = "std"))]
         {
@@ -117,8 +127,8 @@ pub mod algo {
             round(&mut v, &m, i);
         }
 
-        for i in 0..8 {
-            h[i] ^= v[i] ^ v[i + 8];
+        for i in 0..STATE_LENGTH {
+            h[i] ^= v[i] ^ v[i + STATE_LENGTH];
         }
     }
 

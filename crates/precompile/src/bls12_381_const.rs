@@ -1,7 +1,14 @@
 //! Constants specifying the precompile addresses for each precompile in EIP-2537
+//!
+//! This module contains EVM-specific constants for BLS12-381 precompiles.
+//! Pure cryptographic constants are imported from crypto_provider::bls12_381::constants.
 
 use crate::u64_to_address;
 use primitives::Address;
+
+pub use crate::crypto_provider::bls12_381::{
+    FP2_LENGTH, FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH, SCALAR_LENGTH_BITS,
+};
 
 /// G1 add precompile address
 pub const G1_ADD_ADDRESS: Address = u64_to_address(0x0b);
@@ -97,10 +104,6 @@ pub static DISCOUNT_TABLE_G2_MSM: [u16; 128] = [
 // Constants related to the bls12-381 precompile inputs and outputs
 
 /// FP_LENGTH specifies the number of bytes needed to represent an
-/// Fp element. This is an element in the base field of BLS12-381.
-///
-/// Note: The base field is used to define G1 and G2 elements.
-pub const FP_LENGTH: usize = 48;
 /// PADDED_FP_LENGTH specifies the number of bytes that the EVM will use
 /// to represent an Fp element according to EIP-2537.
 ///
@@ -108,19 +111,9 @@ pub const FP_LENGTH: usize = 48;
 /// but we pad the byte representation to be 32 byte aligned as specified in EIP 2537.
 pub const PADDED_FP_LENGTH: usize = 64;
 
-/// G1_LENGTH specifies the number of bytes needed to represent a G1 element.
-///
-/// Note: A G1 element contains 2 Fp elements.
-pub const G1_LENGTH: usize = 2 * FP_LENGTH;
 /// PADDED_G1_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G1 element according to padding rules specified in EIP-2537.
 pub const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
-
-/// FP2_LENGTH specifies the number of bytes needed to represent a Fp^2 element.
-///
-/// Note: This is the quadratic extension of Fp, and by definition
-/// means we need 2 Fp elements.
-pub const FP2_LENGTH: usize = 2 * FP_LENGTH;
 
 /// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a Fp^2 element according to the padding rules specified in EIP-2537.
@@ -128,15 +121,6 @@ pub const FP2_LENGTH: usize = 2 * FP_LENGTH;
 /// Note: This is the quadratic extension of Fp, and by definition
 /// means we need 2 Fp elements.
 pub const PADDED_FP2_LENGTH: usize = 2 * PADDED_FP_LENGTH;
-
-/// SCALAR_LENGTH specifies the number of bytes needed to represent an Fr element.
-/// This is an element in the scalar field of BLS12-381.
-///
-/// Note: Since it is already 32 byte aligned, there is no padded version of this constant.
-pub const SCALAR_LENGTH: usize = 32;
-/// SCALAR_LENGTH_BITS specifies the number of bits needed to represent an Fr element.
-/// This is an element in the scalar field of BLS12-381.
-pub const SCALAR_LENGTH_BITS: usize = SCALAR_LENGTH * 8;
 
 /// G1_ADD_INPUT_LENGTH specifies the number of bytes that the input to G1ADD
 /// must use.
@@ -148,11 +132,6 @@ pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
 /// of these pairs.
 pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
-
-/// G2_LENGTH specifies the number of bytes needed to represent a G2 element.
-///
-/// Note: A G2 element contains 2 Fp^2 elements.
-pub const G2_LENGTH: usize = 2 * FP2_LENGTH;
 
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.

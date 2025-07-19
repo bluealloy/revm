@@ -1,5 +1,8 @@
 //! Hash cryptographic implementations for the crypto provider
 
+pub mod constants;
+pub use constants::*;
+
 /// SHA-256 hash implementation
 pub fn sha256(input: &[u8]) -> [u8; 32] {
     use sha2::Digest;
