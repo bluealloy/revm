@@ -44,11 +44,11 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let msg: [u8; 32] = input[0..32].try_into().unwrap();
+    let msg = <&B256>::try_from(&input[0..32]).unwrap();
     let recid = input[63] - 27;
-    let sig: [u8; 64] = input[64..128].try_into().unwrap();
+    let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let res = ecrecover_bytes(sig, recid, msg);
+    let res = ecrecover_bytes(sig.0, recid, msg.0);
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
