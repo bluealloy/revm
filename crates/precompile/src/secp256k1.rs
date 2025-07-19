@@ -18,7 +18,7 @@ use crate::{
     crypto_provider::get_provider, utilities::right_pad, PrecompileError, PrecompileOutput,
     PrecompileResult, PrecompileWithAddress,
 };
-use primitives::Bytes;
+use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// `ecrecover` precompile, containing address and function to run.
 pub const ECRECOVER: PrecompileWithAddress =
@@ -43,7 +43,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let res = get_provider().secp256k1_ecrecover(&sig, recid, &msg);
+    let res = get_provider().secp256k1_ecrecover(&sig.0, recid, &msg.0);
     let out = res
         .map(|address| address.to_vec().into())
         .unwrap_or_default();

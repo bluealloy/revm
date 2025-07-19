@@ -10,7 +10,7 @@ use crate::{
     crypto_provider::get_provider, u64_to_address, PrecompileError, PrecompileOutput,
     PrecompileResult, PrecompileWithAddress,
 };
-use primitives::{Bytes, B256};
+use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// Address of secp256r1 precompile.
 pub const P256VERIFY_ADDRESS: u64 = 256;
@@ -68,7 +68,7 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[1..].copy_from_slice(pk);
 
     get_provider()
-        .secp256r1_verify(&msg, &sig, &uncompressed_pk)
+        .secp256r1_verify(&msg.0, &sig.0, &uncompressed_pk)
         .then_some(())
 }
 

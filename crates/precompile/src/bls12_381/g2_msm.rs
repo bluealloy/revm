@@ -33,20 +33,25 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let valid_pairs_iter = (0..k).map(|i| {
-        let start = i * G2_MSM_INPUT_LENGTH;
-        let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
-        let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
+    let point_scalar_pairs: Result<Vec<(G2Point, [u8; SCALAR_LENGTH])>, PrecompileError> = (0..k)
+        .map(|i| {
+            let start = i * G2_MSM_INPUT_LENGTH;
+            let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
+            let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
 
-        // Remove padding from G2 point - this validates padding format
-        let [x_0, x_1, y_0, y_1] = remove_g2_padding(padded_g2)?;
-        let scalar_array: [u8; SCALAR_LENGTH] = scalar_bytes.try_into().unwrap();
+            // Remove padding from G2 point - this validates padding format
+            let [x_0, x_1, y_0, y_1] = remove_g2_padding(padded_g2)?;
+            let scalar_array: [u8; SCALAR_LENGTH] = scalar_bytes.try_into().unwrap();
 
-        let point: G2Point = (*x_0, *x_1, *y_0, *y_1);
-        Ok((point, scalar_array))
-    });
+            let point: G2Point = (*x_0, *x_1, *y_0, *y_1);
+            Ok((point, scalar_array))
+        })
+        .collect();
 
-    let unpadded_result = p2_msm_bytes(valid_pairs_iter)?;
+    let point_scalar_pairs = point_scalar_pairs?;
+
+    let unpadded_result =
+        crate::crypto_provider::get_provider().bls12_381_g2_msm(&point_scalar_pairs)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);

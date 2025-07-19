@@ -685,7 +685,7 @@ pub fn map_fp2_to_g2_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
-pub(super) fn p1_msm_bytes(
+pub fn p1_msm_bytes(
     point_scalar_pairs: impl Iterator<
         Item = Result<(G1Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
     >,
@@ -724,7 +724,7 @@ pub(super) fn p1_msm_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
-pub(super) fn p2_msm_bytes(
+pub fn p2_msm_bytes(
     point_scalar_pairs: impl Iterator<
         Item = Result<(G2Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
     >,

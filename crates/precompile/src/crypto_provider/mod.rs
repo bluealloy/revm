@@ -330,14 +330,18 @@ impl CryptoProvider for DefaultCryptoProvider {
         &self,
         points_scalars: &[(bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH])],
     ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
-        bls12_381::p1_msm_bytes(points_scalars)
+        // Convert slice to iterator for the implementation
+        let iter = points_scalars.iter().map(|&(point, scalar)| Ok((point, scalar)));
+        bls12_381::p1_msm_bytes(iter)
     }
 
     fn bls12_381_g2_msm(
         &self,
         points_scalars: &[(bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH])],
     ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
-        bls12_381::p2_msm_bytes(points_scalars)
+        // Convert slice to iterator for the implementation
+        let iter = points_scalars.iter().map(|&(point, scalar)| Ok((point, scalar)));
+        bls12_381::p2_msm_bytes(iter)
     }
 
     fn bls12_381_pairing(&self, pairs: &[bls12_381::PairingPair]) -> Result<bool, PrecompileError> {
