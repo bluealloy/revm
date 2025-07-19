@@ -65,11 +65,11 @@ pub(super) fn pad_g1_point(unpadded: &[u8]) -> [u8; PADDED_G1_LENGTH] {
 
     let mut padded = [0u8; PADDED_G1_LENGTH];
 
-    // x
-    padded[FP_PAD_BY..PADDED_FP_LENGTH].copy_from_slice(&unpadded[0..FP_LENGTH]);
-    // y
-    padded[PADDED_FP_LENGTH + FP_PAD_BY..2 * PADDED_FP_LENGTH]
-        .copy_from_slice(&unpadded[FP_LENGTH..G1_LENGTH]);
+    // Copy each field element (x, y) with padding
+    for i in 0..2 {
+        padded[i * PADDED_FP_LENGTH + FP_PAD_BY..(i + 1) * PADDED_FP_LENGTH]
+            .copy_from_slice(&unpadded[i * FP_LENGTH..(i + 1) * FP_LENGTH]);
+    }
 
     padded
 }
@@ -87,17 +87,11 @@ pub(super) fn pad_g2_point(unpadded: &[u8]) -> [u8; PADDED_G2_LENGTH] {
 
     let mut padded = [0u8; PADDED_G2_LENGTH];
 
-    // x.c0
-    padded[FP_PAD_BY..PADDED_FP_LENGTH].copy_from_slice(&unpadded[0..FP_LENGTH]);
-    // x.c1
-    padded[PADDED_FP_LENGTH + FP_PAD_BY..2 * PADDED_FP_LENGTH]
-        .copy_from_slice(&unpadded[FP_LENGTH..2 * FP_LENGTH]);
-    // y.c0
-    padded[2 * PADDED_FP_LENGTH + FP_PAD_BY..3 * PADDED_FP_LENGTH]
-        .copy_from_slice(&unpadded[2 * FP_LENGTH..3 * FP_LENGTH]);
-    // y.c1
-    padded[3 * PADDED_FP_LENGTH + FP_PAD_BY..4 * PADDED_FP_LENGTH]
-        .copy_from_slice(&unpadded[3 * FP_LENGTH..4 * FP_LENGTH]);
+    // Copy each field element (x.c0, x.c1, y.c0, y.c1) with padding
+    for i in 0..4 {
+        padded[i * PADDED_FP_LENGTH + FP_PAD_BY..(i + 1) * PADDED_FP_LENGTH]
+            .copy_from_slice(&unpadded[i * FP_LENGTH..(i + 1) * FP_LENGTH]);
+    }
 
     padded
 }

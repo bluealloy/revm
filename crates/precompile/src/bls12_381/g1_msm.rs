@@ -7,7 +7,6 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::crypto_provider::bls12_381::G1Point;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
@@ -34,27 +33,20 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut point_scalar_pairs: Vec<(G1Point, [u8; SCALAR_LENGTH])> = Vec::with_capacity(k);
+    let valid_pairs_iter = (0..k).map(|i| {
+        let start = i * G1_MSM_INPUT_LENGTH;
+        let padded_g1 = &input[start..start + PADDED_G1_LENGTH];
+        let scalar_bytes = &input[start + PADDED_G1_LENGTH..start + G1_MSM_INPUT_LENGTH];
 
-    for i in 0..k {
-        let encoded_g1_element =
-            &input[i * G1_MSM_INPUT_LENGTH..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH];
-        let encoded_scalar = &input[i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH
-            ..i * G1_MSM_INPUT_LENGTH + PADDED_G1_LENGTH + SCALAR_LENGTH];
+        // Remove padding from G1 point - this validates padding format
+        let [x, y] = remove_g1_padding(padded_g1)?;
+        let scalar_array: [u8; SCALAR_LENGTH] = scalar_bytes.try_into().unwrap();
 
-        let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
+        let point: G1Point = (*x, *y);
+        Ok((point, scalar_array))
+    });
 
-        // Convert scalar to fixed-size array
-        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar.try_into().unwrap();
-
-        // Note: We include zero scalars to ensure point validation happens
-        // The actual filtering will be done inside p1_msm_bytes if needed
-        point_scalar_pairs.push(((*a_x, *a_y), scalar_array));
-    }
-
-    // Get unpadded result from CryptoProvider
-    let unpadded_result =
-        crate::crypto_provider::get_provider().bls12_381_g1_msm(&point_scalar_pairs)?;
+    let unpadded_result = p1_msm_bytes(valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

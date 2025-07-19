@@ -39,9 +39,9 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let msg: [u8; 32] = input[0..32].try_into().expect("expected 32 bytes");
+    let msg = <&B256>::try_from(&input[0..32]).unwrap();
     let recid = input[63] - 27;
-    let sig: [u8; 64] = input[64..128].try_into().expect("expected 64 bytes");
+    let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
     let res = get_provider().secp256k1_ecrecover(&sig, recid, &msg);
     let out = res

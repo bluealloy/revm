@@ -7,7 +7,6 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::crypto_provider::bls12_381::G2Point;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
@@ -34,25 +33,20 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut point_scalar_pairs: Vec<(G2Point, [u8; SCALAR_LENGTH])> = Vec::with_capacity(k);
+    let valid_pairs_iter = (0..k).map(|i| {
+        let start = i * G2_MSM_INPUT_LENGTH;
+        let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
+        let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
 
-    for i in 0..k {
-        let encoded_g2_element =
-            &input[i * G2_MSM_INPUT_LENGTH..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH];
-        let encoded_scalar = &input[i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH
-            ..i * G2_MSM_INPUT_LENGTH + PADDED_G2_LENGTH + SCALAR_LENGTH];
+        // Remove padding from G2 point - this validates padding format
+        let [x_0, x_1, y_0, y_1] = remove_g2_padding(padded_g2)?;
+        let scalar_array: [u8; SCALAR_LENGTH] = scalar_bytes.try_into().unwrap();
 
-        let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
+        let point: G2Point = (*x_0, *x_1, *y_0, *y_1);
+        Ok((point, scalar_array))
+    });
 
-        // Convert scalar to fixed-size array
-        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar.try_into().unwrap();
-
-        point_scalar_pairs.push(((*a_x_0, *a_x_1, *a_y_0, *a_y_1), scalar_array));
-    }
-
-    // Use the CryptoProvider API to get unpadded result
-    let unpadded_result =
-        crate::crypto_provider::get_provider().bls12_381_g2_msm(&point_scalar_pairs)?;
+    let unpadded_result = p2_msm_bytes(valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);

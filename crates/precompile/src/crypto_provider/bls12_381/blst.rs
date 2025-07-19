@@ -685,33 +685,32 @@ pub fn map_fp2_to_g2_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
-pub fn p1_msm_bytes(
-    point_scalar_pairs: &[(G1Point, [u8; SCALAR_LENGTH])],
+pub(super) fn p1_msm_bytes(
+    point_scalar_pairs: impl Iterator<
+        Item = Result<(G1Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
+    >,
 ) -> Result<[u8; G1_LENGTH], crate::PrecompileError> {
-    if point_scalar_pairs.is_empty() {
-        // Return point at infinity
-        return Ok([0u8; G1_LENGTH]);
-    }
-
-    let mut g1_points = Vec::with_capacity(point_scalar_pairs.len());
-    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+    let mut g1_points = Vec::new();
+    let mut scalars = Vec::new();
 
     // Parse all points and scalars
-    for ((x, y), scalar_bytes) in point_scalar_pairs {
+    for pair_result in point_scalar_pairs {
+        let ((x, y), scalar_bytes) = pair_result?;
+
         // NB: MSM requires subgroup check
-        let point = read_g1(x, y)?;
+        let point = read_g1(&x, &y)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
 
-        let scalar = read_scalar(scalar_bytes)?;
+        let scalar = read_scalar(&scalar_bytes)?;
         g1_points.push(point);
         scalars.push(scalar);
     }
 
-    // Return point at infinity if all scalars were zero
+    // Return point at infinity if no pairs were provided or all scalars were zero
     if g1_points.is_empty() {
         return Ok([0u8; G1_LENGTH]);
     }
@@ -725,33 +724,32 @@ pub fn p1_msm_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
-pub fn p2_msm_bytes(
-    point_scalar_pairs: &[(G2Point, [u8; SCALAR_LENGTH])],
+pub(super) fn p2_msm_bytes(
+    point_scalar_pairs: impl Iterator<
+        Item = Result<(G2Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
+    >,
 ) -> Result<[u8; G2_LENGTH], crate::PrecompileError> {
-    if point_scalar_pairs.is_empty() {
-        // Return point at infinity
-        return Ok([0u8; G2_LENGTH]);
-    }
-
-    let mut g2_points = Vec::with_capacity(point_scalar_pairs.len());
-    let mut scalars = Vec::with_capacity(point_scalar_pairs.len());
+    let mut g2_points = Vec::new();
+    let mut scalars = Vec::new();
 
     // Parse all points and scalars
-    for ((x_0, x_1, y_0, y_1), scalar_bytes) in point_scalar_pairs {
+    for pair_result in point_scalar_pairs {
+        let ((x_0, x_1, y_0, y_1), scalar_bytes) = pair_result?;
+
         // NB: MSM requires subgroup check
-        let point = read_g2(x_0, x_1, y_0, y_1)?;
+        let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
 
         // Skip zero scalars after validating the point
         if scalar_bytes.iter().all(|&b| b == 0) {
             continue;
         }
 
-        let scalar = read_scalar(scalar_bytes)?;
+        let scalar = read_scalar(&scalar_bytes)?;
         g2_points.push(point);
         scalars.push(scalar);
     }
 
-    // Return point at infinity if all scalars were zero
+    // Return point at infinity if no pairs were provided or all scalars were zero
     if g2_points.is_empty() {
         return Ok([0u8; G2_LENGTH]);
     }

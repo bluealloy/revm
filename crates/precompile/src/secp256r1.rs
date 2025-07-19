@@ -56,9 +56,9 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     }
 
     // msg signed (msg is already the hash of the original message)
-    let msg: [u8; 32] = input[..32].try_into().expect("expected 32 bytes");
+    let msg = <&B256>::try_from(&input[..32]).unwrap();
     // r, s: signature
-    let sig: [u8; 64] = input[32..96].try_into().expect("expected 64 bytes");
+    let sig = <&B512>::try_from(&input[32..96]).unwrap();
     // x, y: public key
     let pk = &input[96..160];
 
