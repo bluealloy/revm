@@ -1,15 +1,10 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
-use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-cfg_if::cfg_if! {
-    if #[cfg(feature = "c-kzg")] {
-        use c_kzg::{Bytes32, Bytes48};
-    } else if #[cfg(feature = "kzg-rs")] {
-        use kzg_rs::{Bytes32, Bytes48, KzgProof};
-    }
-}
+use crate::{
+    crypto_provider::get_provider, Address, PrecompileError, PrecompileOutput, PrecompileResult,
+    PrecompileWithAddress,
+};
 use primitives::hex_literal::hex;
-use sha2::{Digest, Sha256};
 
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
@@ -55,11 +50,12 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     // Verify KZG proof with z and y in big endian format
-    let commitment = as_bytes48(commitment);
-    let z = as_bytes32(&input[32..64]);
-    let y = as_bytes32(&input[64..96]);
-    let proof = as_bytes48(&input[144..192]);
-    if !verify_kzg_proof(commitment, z, y, proof) {
+    let commitment: &[u8; 48] = commitment.try_into().unwrap();
+    let z = input[32..64].try_into().unwrap();
+    let y = input[64..96].try_into().unwrap();
+    let proof = input[144..192].try_into().unwrap();
+
+    if !crate::crypto_provider::get_provider().kzg_verify_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
 
@@ -70,47 +66,9 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
 #[inline]
 pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
-    let mut hash: [u8; 32] = Sha256::digest(commitment).into();
+    let mut hash = get_provider().sha256(commitment);
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
-}
-
-/// Verify KZG proof.
-#[inline]
-pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "c-kzg")] {
-            let kzg_settings = c_kzg::ethereum_kzg_settings(8);
-            kzg_settings.verify_kzg_proof(commitment, z, y, proof).unwrap_or(false)
-        } else if #[cfg(feature = "kzg-rs")] {
-            let env = kzg_rs::EnvKzgSettings::default();
-            let kzg_settings = env.get();
-            KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
-        }
-    }
-}
-
-/// Convert a slice to an array of a specific size.
-#[inline]
-#[track_caller]
-pub fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
-    bytes.try_into().expect("slice with incorrect length")
-}
-
-/// Convert a slice to a 32 byte big endian array.
-#[inline]
-#[track_caller]
-pub fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
-    // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
-    unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
-}
-
-/// Convert a slice to a 48 byte big endian array.
-#[inline]
-#[track_caller]
-pub fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
-    // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
-    unsafe { &*as_array::<48>(bytes).as_ptr().cast() }
 }
 
 #[cfg(test)]
@@ -122,8 +80,7 @@ mod tests {
         // Test data from: https://github.com/ethereum/c-kzg-4844/blob/main/tests/verify_kzg_proof/kzg-mainnet/verify_kzg_proof_case_correct_proof_4_4/data.yaml
 
         let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();
-        let mut versioned_hash = Sha256::digest(&commitment).to_vec();
-        versioned_hash[0] = VERSIONED_HASH_VERSION_KZG;
+        let versioned_hash = kzg_to_versioned_hash(&commitment).to_vec();
         let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000").to_vec();
         let y = hex!("1522a4a7f34e1ea350ae07c29c96c7e79655aa926122e95fe69fcbd932ca49e9").to_vec();
         let proof = hex!("a62ad71d14c5719385c0686f1871430475bf3a00f0aa3f7b8dd99a9abc2160744faf0070725e00b60ad9a026a15b1a8c").to_vec();

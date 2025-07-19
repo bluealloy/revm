@@ -1,25 +1,13 @@
 //! BN128 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
+
+use crate::crypto_provider::bn128::{
+    G1_LENGTH as G1_LEN, G2_LENGTH as G2_LEN, SCALAR_LENGTH as SCALAR_LEN,
+};
 use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use std::vec::Vec;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
-        mod substrate;
-        use substrate::{
-            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
-            read_scalar,
-        };
-    } else {
-        mod arkworks;
-        use arkworks::{
-            encode_g1_point, g1_point_add, g1_point_mul, pairing_check, read_g1_point, read_g2_point,
-            read_scalar,
-        };
-    }
-}
 
 /// Bn128 add precompile
 pub mod add {
@@ -115,32 +103,6 @@ pub mod pair {
         });
 }
 
-/// FQ_LEN specifies the number of bytes needed to represent an
-/// Fq element. This is an element in the base field of BN254.
-///
-/// Note: The base field is used to define G1 and G2 elements.
-const FQ_LEN: usize = 32;
-
-/// SCALAR_LEN specifies the number of bytes needed to represent an Fr element.
-/// This is an element in the scalar field of BN254.
-const SCALAR_LEN: usize = 32;
-
-/// FQ2_LEN specifies the number of bytes needed to represent an
-/// Fq^2 element.
-///
-/// Note: This is the quadratic extension of Fq, and by definition
-/// means we need 2 Fq elements.
-const FQ2_LEN: usize = 2 * FQ_LEN;
-
-/// G1_LEN specifies the number of bytes needed to represent a G1 element.
-///
-/// Note: A G1 element contains 2 Fq elements.
-const G1_LEN: usize = 2 * FQ_LEN;
-/// G2_LEN specifies the number of bytes needed to represent a G2 element.
-///
-/// Note: A G2 element contains 2 Fq^2 elements.
-const G2_LEN: usize = 2 * FQ2_LEN;
-
 /// Input length for the add operation.
 /// `ADD` takes two uncompressed G1 points (64 bytes each).
 pub const ADD_INPUT_LEN: usize = 2 * G1_LEN;
@@ -162,13 +124,13 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
-    let p1 = read_g1_point(&input[..G1_LEN])?;
-    let p2 = read_g1_point(&input[G1_LEN..])?;
-    let result = g1_point_add(p1, p2);
+    // Convert slices to fixed-size arrays
+    let p1: [u8; 64] = input[..G1_LEN].try_into().unwrap();
+    let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN].try_into().unwrap();
 
-    let output = encode_g1_point(result);
+    let output = crate::crypto_provider::get_provider().bn128_add(&p1, &p2)?;
 
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
 }
 
 /// Run the Bn128 mul precompile
@@ -179,14 +141,14 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
-    let p = read_g1_point(&input[..G1_LEN])?;
+    // Convert slices to fixed-size arrays
+    // These unwraps are safe because right_pad ensures correct length and we slice exact sizes
+    let point: [u8; 64] = input[..G1_LEN].try_into().unwrap();
+    let scalar: [u8; 32] = input[G1_LEN..G1_LEN + SCALAR_LEN].try_into().unwrap();
 
-    let scalar = read_scalar(&input[G1_LEN..G1_LEN + SCALAR_LEN]);
-    let result = g1_point_mul(p, scalar);
+    let output = crate::crypto_provider::get_provider().bn128_mul(&point, &scalar)?;
 
-    let output = encode_g1_point(result);
-
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.to_vec().into()))
 }
 
 /// Run the Bn128 pair precompile
@@ -217,33 +179,18 @@ pub fn run_pair(
         // This is where G1 ends.
         let g2_start = start + G1_LEN;
 
+        // Get G1 and G2 points from the input
         let encoded_g1_element = &input[g1_start..g2_start];
         let encoded_g2_element = &input[g2_start..g2_start + G2_LEN];
-
-        // If either the G1 or G2 element is the encoded representation
-        // of the point at infinity, then these two points are no-ops
-        // in the pairing computation.
-        //
-        // Note: we do not skip the validation of these two elements even if
-        // one of them is the point at infinity because we could have G1 be
-        // the point at infinity and G2 be an invalid element or vice versa.
-        // In that case, the precompile should error because one of the elements
-        // was invalid.
-        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
-        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
-
-        // Get G1 and G2 points from the input
-        let a = read_g1_point(encoded_g1_element)?;
-        let b = read_g2_point(encoded_g2_element)?;
-
-        if !g1_is_zero && !g2_is_zero {
-            points.push((a, b));
-        }
+        points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    let success = pairing_check(&points);
+    let pairing_result = crate::crypto_provider::get_provider().bn128_pairing(&points)?;
 
-    Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(success)))
+    Ok(PrecompileOutput::new(
+        gas_used,
+        bool_to_bytes32(pairing_result),
+    ))
 }
 
 #[cfg(test)]
@@ -531,5 +478,52 @@ mod tests {
             260_000,
         );
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+
+        // Test with point at infinity - should return true (identity element)
+        // G1 point at infinity (0,0) followed by a valid G2 point
+        let input = hex::decode(
+            "\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            209dd15ebff5d46c4bd888e51a93cf99a7329636c63514396b4a452003a35bf7\
+            04bf11ca01483bfa8b34b43561848d28905960114c8ac04049af4b6315a41678\
+            2bb8324af6cfc93537a2ad1a445cfd0ca2a71acd7ac41fadbf933c2a51be344d\
+            120a2a4cf30c1bf9845f20c6fe39e07ea2cce61f0c9bb048165fe5e4de877550",
+        )
+        .unwrap();
+        let expected =
+            hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
+                .unwrap();
+
+        let outcome = run_pair(
+            &input,
+            BYZANTIUM_PAIR_PER_POINT,
+            BYZANTIUM_PAIR_BASE,
+            260_000,
+        )
+        .unwrap();
+        assert_eq!(outcome.bytes, expected);
+
+        // Test with G2 point at infinity - should also return true
+        // Valid G1 point followed by G2 point at infinity (0,0,0,0)
+        let input = hex::decode(
+            "\
+            1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
+            3034dd2920f673e204fee2811c678745fc819b55d3e9d294e45c9b03a76aef41\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000\
+            0000000000000000000000000000000000000000000000000000000000000000",
+        )
+        .unwrap();
+
+        let outcome = run_pair(
+            &input,
+            BYZANTIUM_PAIR_PER_POINT,
+            BYZANTIUM_PAIR_BASE,
+            260_000,
+        )
+        .unwrap();
+        assert_eq!(outcome.bytes, expected);
     }
 }

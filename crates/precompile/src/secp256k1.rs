@@ -13,17 +13,12 @@
 //!
 //! Output format:
 //! [32 bytes for recovered address]
-#[cfg(feature = "secp256k1")]
-pub mod bitcoin_secp256k1;
-pub mod k256;
-#[cfg(feature = "libsecp256k1")]
-pub mod parity_libsecp256k1;
 
 use crate::{
-    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    crypto_provider::get_provider, utilities::right_pad, PrecompileError, PrecompileOutput,
+    PrecompileResult, PrecompileWithAddress,
 };
-use primitives::{alloy_primitives::B512, Bytes, B256};
+use primitives::Bytes;
 
 /// `ecrecover` precompile, containing address and function to run.
 pub const ECRECOVER: PrecompileWithAddress =
@@ -44,23 +39,13 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
 
-    let msg = <&B256>::try_from(&input[0..32]).unwrap();
+    let msg: [u8; 32] = input[0..32].try_into().expect("expected 32 bytes");
     let recid = input[63] - 27;
-    let sig = <&B512>::try_from(&input[64..128]).unwrap();
+    let sig: [u8; 64] = input[64..128].try_into().expect("expected 64 bytes");
 
-    let res = ecrecover(sig, recid, msg);
-
-    let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
+    let res = get_provider().secp256k1_ecrecover(&sig, recid, &msg);
+    let out = res
+        .map(|address| address.to_vec().into())
+        .unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
-}
-
-// Select the correct implementation based on the enabled features.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "secp256k1")] {
-        pub use bitcoin_secp256k1::ecrecover;
-    } else if #[cfg(feature = "libsecp256k1")] {
-        pub use parity_libsecp256k1::ecrecover;
-    } else {
-        pub use k256::ecrecover;
-    }
 }
