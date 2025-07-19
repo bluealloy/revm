@@ -174,15 +174,15 @@ pub struct DefaultCryptoProvider;
 
 impl CryptoProvider for DefaultCryptoProvider {
     fn bn128_add(&self, p1: &[u8; 64], p2: &[u8; 64]) -> Result<[u8; 64], PrecompileError> {
-        self::bn128::g1_point_add(p1, p2)
+        bn128::g1_point_add(p1, p2)
     }
 
     fn bn128_mul(&self, point: &[u8; 64], scalar: &[u8; 32]) -> Result<[u8; 64], PrecompileError> {
-        self::bn128::g1_point_mul(point, scalar)
+        bn128::g1_point_mul(point, scalar)
     }
 
     fn bn128_pairing(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-        self::bn128::pairing_check(pairs)
+        bn128::pairing_check(pairs)
     }
 
     fn bls12_381_g1_add(
