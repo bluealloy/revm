@@ -17,6 +17,7 @@ pub mod bls12_381;
 pub mod secp256k1;
 
 /// KZG cryptographic implementations
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 
 /// Trait for cryptographic operations used by precompiles.
@@ -157,6 +158,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     ///
     /// # Returns
     /// `true` if the proof is valid, `false` otherwise.
+    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     fn kzg_verify_proof(
         &self,
         commitment: &[u8; 48],
@@ -229,6 +231,7 @@ impl CryptoProvider for DefaultCryptoProvider {
         bls12_381::map_fp2_to_g2_bytes(fp2_x, fp2_y)
     }
 
+    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     fn kzg_verify_proof(
         &self,
         commitment: &[u8; 48],
