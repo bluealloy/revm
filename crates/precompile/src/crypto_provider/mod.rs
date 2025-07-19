@@ -120,12 +120,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     fn bls12_381_g1_msm(
         &self,
         points_scalars: Box<
-            dyn Iterator<
-                    Item = Result<
-                        (bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH]),
-                        PrecompileError,
-                    >,
-                > + '_,
+            dyn Iterator<Item = Result<bls12_381::G1PointScalarPair, PrecompileError>> + '_,
         >,
     ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError>;
 
@@ -141,12 +136,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     fn bls12_381_g2_msm(
         &self,
         points_scalars: Box<
-            dyn Iterator<
-                    Item = Result<
-                        (bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH]),
-                        PrecompileError,
-                    >,
-                > + '_,
+            dyn Iterator<Item = Result<bls12_381::G2PointScalarPair, PrecompileError>> + '_,
         >,
     ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError>;
 
@@ -343,12 +333,7 @@ impl CryptoProvider for DefaultCryptoProvider {
     fn bls12_381_g1_msm(
         &self,
         points_scalars: Box<
-            dyn Iterator<
-                    Item = Result<
-                        (bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH]),
-                        PrecompileError,
-                    >,
-                > + '_,
+            dyn Iterator<Item = Result<bls12_381::G1PointScalarPair, PrecompileError>> + '_,
         >,
     ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
         bls12_381::p1_msm_bytes(points_scalars)
@@ -357,12 +342,7 @@ impl CryptoProvider for DefaultCryptoProvider {
     fn bls12_381_g2_msm(
         &self,
         points_scalars: Box<
-            dyn Iterator<
-                    Item = Result<
-                        (bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH]),
-                        PrecompileError,
-                    >,
-                > + '_,
+            dyn Iterator<Item = Result<bls12_381::G2PointScalarPair, PrecompileError>> + '_,
         >,
     ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
         bls12_381::p2_msm_bytes(points_scalars)
@@ -525,12 +505,7 @@ mod tests {
         fn bls12_381_g1_msm(
             &self,
             _points_scalars: Box<
-                dyn Iterator<
-                        Item = Result<
-                            (bls12_381::G1Point, [u8; bls12_381::SCALAR_LENGTH]),
-                            PrecompileError,
-                        >,
-                    > + '_,
+                dyn Iterator<Item = Result<bls12_381::G1PointScalarPair, PrecompileError>> + '_,
             >,
         ) -> Result<[u8; bls12_381::G1_LENGTH], PrecompileError> {
             Ok([46u8; bls12_381::G1_LENGTH])
@@ -539,12 +514,7 @@ mod tests {
         fn bls12_381_g2_msm(
             &self,
             _points_scalars: Box<
-                dyn Iterator<
-                        Item = Result<
-                            (bls12_381::G2Point, [u8; bls12_381::SCALAR_LENGTH]),
-                            PrecompileError,
-                        >,
-                    > + '_,
+                dyn Iterator<Item = Result<bls12_381::G2PointScalarPair, PrecompileError>> + '_,
             >,
         ) -> Result<[u8; bls12_381::G2_LENGTH], PrecompileError> {
             Ok([47u8; bls12_381::G2_LENGTH])

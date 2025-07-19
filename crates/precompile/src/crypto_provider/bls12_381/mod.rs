@@ -17,6 +17,12 @@ pub type G2Point = (
 /// Pairing pair consisting of a G1 point and a G2 point
 pub type PairingPair = (G1Point, G2Point);
 
+/// Type alias for G1 point-scalar pair used in MSM
+pub type G1PointScalarPair = (G1Point, [u8; SCALAR_LENGTH]);
+
+/// Type alias for G2 point-scalar pair used in MSM
+pub type G2PointScalarPair = (G2Point, [u8; SCALAR_LENGTH]);
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "blst")] {
         /// BLST backend for BLS12-381 operations
