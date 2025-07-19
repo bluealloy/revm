@@ -8,7 +8,6 @@ use crate::bls12_381_const::{
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use std::string::ToString;
 use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -47,9 +46,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         let [a_x_0, a_x_1, a_y_0, a_y_1] = remove_g2_padding(encoded_g2_element)?;
 
         // Convert scalar to fixed-size array
-        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar
-            .try_into()
-            .map_err(|_| PrecompileError::Other("Invalid scalar length".to_string()))?;
+        let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar.try_into().unwrap();
 
         point_scalar_pairs.push(((*a_x_0, *a_x_1, *a_y_0, *a_y_1), scalar_array));
     }
