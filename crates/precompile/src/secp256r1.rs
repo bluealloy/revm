@@ -65,15 +65,10 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     // x, y: public key
     let pk = &input[96..160];
 
-    // Prepend 0x04 to the public key: uncompressed form
-    let mut uncompressed_pk = [0u8; 65];
-    uncompressed_pk[0] = 0x04;
-    uncompressed_pk[1..].copy_from_slice(pk);
-
     // Can fail only if the input is not exact length.
     let signature = Signature::from_slice(sig).ok()?;
-    // Decode the uncompressed public key using EncodedPoint
-    let encoded_point = EncodedPoint::from_bytes(uncompressed_pk).ok()?;
+    // Decode the public key bytes (x,y coordinates) using EncodedPoint
+    let encoded_point = EncodedPoint::from_untagged_bytes(pk.into());
     // Create VerifyingKey from the encoded point
     let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
 
