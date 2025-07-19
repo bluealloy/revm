@@ -215,8 +215,8 @@ pub fn run_pair(
         points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    // Use the crypto provider
     let pairing_result = crate::crypto_provider::get_provider().bn128_pairing(&points)?;
+
     Ok(PrecompileOutput::new(
         gas_used,
         bool_to_bytes32(pairing_result),

@@ -20,6 +20,9 @@ pub mod secp256k1;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 
+/// Modexp cryptographic implementations
+pub mod modexp;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -166,6 +169,45 @@ pub trait CryptoProvider: Send + Sync + 'static {
         y: &[u8; 32],
         proof: &[u8; 48],
     ) -> bool;
+
+    /// secp256k1 ECDSA signature recovery.
+    ///
+    /// Recovers the Ethereum address from an ECDSA signature.
+    ///
+    /// # Arguments
+    /// * `sig` - The signature (64 bytes: r || s)
+    /// * `recid` - The recovery ID (0 or 1)
+    /// * `msg` - The message hash (32 bytes)
+    ///
+    /// # Returns
+    /// The recovered address as 32 bytes (first 12 bytes are zero, last 20 bytes are the address), or None if recovery fails.
+    fn secp256k1_ecrecover(&self, sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]>;
+
+    /// secp256r1 (P-256) signature verification.
+    ///
+    /// Verifies a secp256r1 signature.
+    ///
+    /// # Arguments
+    /// * `msg` - The message hash (32 bytes)
+    /// * `sig` - The signature (64 bytes: r || s)
+    /// * `pk` - The uncompressed public key (65 bytes: 0x04 || x || y)
+    ///
+    /// # Returns
+    /// `true` if the signature is valid, `false` otherwise.
+    fn secp256r1_verify(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 65]) -> bool;
+
+    /// Modular exponentiation.
+    ///
+    /// Computes base^exponent mod modulus.
+    ///
+    /// # Arguments
+    /// * `base` - The base value
+    /// * `exponent` - The exponent value
+    /// * `modulus` - The modulus value
+    ///
+    /// # Returns
+    /// The result of the modular exponentiation.
+    fn modexp(&self, base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8>;
 }
 
 /// Default crypto provider using the existing implementations
@@ -240,6 +282,39 @@ impl CryptoProvider for DefaultCryptoProvider {
         proof: &[u8; 48],
     ) -> bool {
         kzg::verify_kzg_proof(commitment, z, y, proof)
+    }
+
+    fn secp256k1_ecrecover(&self, sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]> {
+        use primitives::{alloy_primitives::B512, B256};
+        let sig = B512::from_slice(sig);
+        let msg = B256::from_slice(msg);
+
+        match secp256k1::ecrecover(&sig, recid, &msg) {
+            Ok(address) => Some(address.0),
+            Err(_) => None,
+        }
+    }
+
+    fn secp256r1_verify(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 65]) -> bool {
+        use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
+
+        // Can fail only if the input is not exact length.
+        let signature = match Signature::from_slice(sig) {
+            Ok(sig) => sig,
+            Err(_) => return false,
+        };
+
+        // Can fail if the input is not valid, so we have to propagate the error.
+        let public_key = match VerifyingKey::from_sec1_bytes(pk) {
+            Ok(pk) => pk,
+            Err(_) => return false,
+        };
+
+        public_key.verify_prehash(msg, &signature).is_ok()
+    }
+
+    fn modexp(&self, base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+        modexp::modexp(base, exponent, modulus)
     }
 }
 
@@ -351,6 +426,7 @@ mod tests {
             Ok([49u8; 192])
         }
 
+        #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
         fn kzg_verify_proof(
             &self,
             _commitment: &[u8; 48],
@@ -359,6 +435,23 @@ mod tests {
             _proof: &[u8; 48],
         ) -> bool {
             true
+        }
+
+        fn secp256k1_ecrecover(
+            &self,
+            _sig: &[u8; 64],
+            _recid: u8,
+            _msg: &[u8; 32],
+        ) -> Option<[u8; 32]> {
+            Some([50u8; 32])
+        }
+
+        fn secp256r1_verify(&self, _msg: &[u8; 32], _sig: &[u8; 64], _pk: &[u8; 65]) -> bool {
+            true
+        }
+
+        fn modexp(&self, _base: &[u8], _exponent: &[u8], _modulus: &[u8]) -> Vec<u8> {
+            vec![51u8; 32]
         }
     }
 

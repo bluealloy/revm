@@ -7,9 +7,9 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    crypto_provider::get_provider, u64_to_address, PrecompileError, PrecompileOutput,
+    PrecompileResult, PrecompileWithAddress,
 };
-use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use primitives::{Bytes, B256};
 
 /// Address of secp256r1 precompile.
@@ -67,16 +67,11 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[0] = 0x04;
     uncompressed_pk[1..].copy_from_slice(pk);
 
-    verify_signature(msg, sig, uncompressed_pk)
-}
-
-fn verify_signature(msg: [u8; 32], sig: [u8; 64], uncompressed_pk: [u8; 65]) -> Option<()> {
-    // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(&sig).ok()?;
-    // Can fail if the input is not valid, so we have to propagate the error.
-    let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
-
-    public_key.verify_prehash(&msg, &signature).ok()
+    if get_provider().secp256r1_verify(&msg, &sig, &uncompressed_pk) {
+        Some(())
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]

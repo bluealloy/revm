@@ -15,10 +15,10 @@
 //! [32 bytes for recovered address]
 
 use crate::{
-    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    crypto_provider::get_provider, utilities::right_pad, PrecompileError, PrecompileOutput,
+    PrecompileResult, PrecompileWithAddress,
 };
-use primitives::{alloy_primitives::B512, Bytes, B256};
+use primitives::Bytes;
 
 /// `ecrecover` precompile, containing address and function to run.
 pub const ECRECOVER: PrecompileWithAddress =
@@ -43,19 +43,11 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig: [u8; 64] = input[64..128].try_into().expect("expected 64 bytes");
 
-    let res = ecrecover_bytes(sig, recid, msg);
-    let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
+    let res = get_provider().secp256k1_ecrecover(&sig, recid, &msg);
+    let out = res
+        .map(|address| address.to_vec().into())
+        .unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
-}
-
-fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
-    let sig = B512::from_slice(&sig);
-    let msg = B256::from_slice(&msg);
-
-    match ecrecover(&sig, recid, &msg) {
-        Ok(address) => Some(address.0),
-        Err(_) => None,
-    }
 }
 
 // Re-export ecrecover from crypto_provider for backward compatibility
