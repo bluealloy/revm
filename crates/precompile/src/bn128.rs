@@ -125,12 +125,8 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
     // Convert slices to fixed-size arrays
-    let p1: [u8; 64] = input[..G1_LEN]
-        .try_into()
-        .map_err(|_| PrecompileError::Other("Invalid input length for p1".into()))?;
-    let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN]
-        .try_into()
-        .map_err(|_| PrecompileError::Other("Invalid input length for p2".into()))?;
+    let p1: [u8; 64] = input[..G1_LEN].try_into().unwrap();
+    let p2: [u8; 64] = input[G1_LEN..ADD_INPUT_LEN].try_into().unwrap();
 
     // Use the crypto provider
     let output = crate::crypto_provider::get_provider().bn128_add(&p1, &p2)?;
@@ -147,12 +143,9 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
     // Convert slices to fixed-size arrays
-    let point: [u8; 64] = input[..G1_LEN]
-        .try_into()
-        .map_err(|_| PrecompileError::Other("Invalid input length for point".into()))?;
-    let scalar: [u8; 32] = input[G1_LEN..G1_LEN + SCALAR_LEN]
-        .try_into()
-        .map_err(|_| PrecompileError::Other("Invalid input length for scalar".into()))?;
+    // These unwraps are safe because right_pad ensures correct length and we slice exact sizes
+    let point: [u8; 64] = input[..G1_LEN].try_into().unwrap();
+    let scalar: [u8; 32] = input[G1_LEN..G1_LEN + SCALAR_LEN].try_into().unwrap();
 
     let output = crate::crypto_provider::get_provider().bn128_mul(&point, &scalar)?;
 
