@@ -49,7 +49,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         // Convert scalar to fixed-size array
         let scalar_array: [u8; SCALAR_LENGTH] = encoded_scalar
             .try_into()
-            .map_err(|_| PrecompileError::Other("Invalid scalar length".to_string()))?;
+            .unwrap();
 
         // Note: We include zero scalars to ensure point validation happens
         // The actual filtering will be done inside p1_msm_bytes if needed
