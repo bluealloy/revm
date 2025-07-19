@@ -1,3 +1,5 @@
+use alloc::string::String;
+
 use revm::primitives::Address;
 use serde::{de, Deserialize};
 

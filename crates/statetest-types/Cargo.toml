@@ -16,10 +16,18 @@ rustdoc-args = ["--cfg", "docsrs"]
 [lints]
 workspace = true
 
+[features]
+default = ["std"]
+std = [
+    "revm/std",
+    "serde_json/preserve_order",
+]
+
 [dependencies]
 # revm
-revm = { workspace = true, features = ["std", "serde"] }
+revm = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive", "rc"] }
-serde_json = { workspace = true, features = ["preserve_order"] }
+serde_json = { workspace = true, features = ["alloc"] }
 k256 = { workspace = true }
 thiserror = { workspace = true }
+
