@@ -1,11 +1,11 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use super::G1Point;
 use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
+use crate::crypto_provider::bls12_381::G1Point;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use std::string::ToString;
 use std::vec::Vec;
