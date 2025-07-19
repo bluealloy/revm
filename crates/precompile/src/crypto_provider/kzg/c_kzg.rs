@@ -11,7 +11,12 @@ pub fn verify_kzg_proof(
 ) -> bool {
     let kzg_settings = c_kzg::ethereum_kzg_settings(8);
     kzg_settings
-        .verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof))
+        .verify_kzg_proof(
+            as_bytes48(commitment),
+            as_bytes32(z),
+            as_bytes32(y),
+            as_bytes48(proof),
+        )
         .unwrap_or(false)
 }
 

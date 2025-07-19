@@ -77,7 +77,6 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     hash
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
