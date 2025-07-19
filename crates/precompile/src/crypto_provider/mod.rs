@@ -10,6 +10,9 @@ use std::boxed::Box;
 /// BN128 cryptographic implementations
 pub mod bn128;
 
+/// BLS12-381 cryptographic implementations
+pub mod bls12_381;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -59,8 +62,8 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// The sum as 96 bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g1_add(
         &self,
-        a: crate::bls12_381::G1Point,
-        b: crate::bls12_381::G1Point,
+        a: bls12_381::G1Point,
+        b: bls12_381::G1Point,
     ) -> Result<[u8; 96], PrecompileError>;
 
     /// BLS12-381 G2 point addition.
@@ -73,8 +76,8 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// The sum as 192 bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g2_add(
         &self,
-        a: crate::bls12_381::G2Point,
-        b: crate::bls12_381::G2Point,
+        a: bls12_381::G2Point,
+        b: bls12_381::G2Point,
     ) -> Result<[u8; 192], PrecompileError>;
 
     /// BLS12-381 G1 multi-scalar multiplication.
@@ -88,7 +91,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// The result as 96 bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(crate::bls12_381::G1Point, [u8; 32])],
+        points_scalars: &[(bls12_381::G1Point, [u8; 32])],
     ) -> Result<[u8; 96], PrecompileError>;
 
     /// BLS12-381 G2 multi-scalar multiplication.
@@ -102,7 +105,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// The result as 192 bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(crate::bls12_381::G2Point, [u8; 32])],
+        points_scalars: &[(bls12_381::G2Point, [u8; 32])],
     ) -> Result<[u8; 192], PrecompileError>;
 
     /// BLS12-381 pairing check.
@@ -112,10 +115,7 @@ pub trait CryptoProvider: Send + Sync + 'static {
     ///
     /// # Returns
     /// `true` if the pairing check passes, `false` otherwise.
-    fn bls12_381_pairing(
-        &self,
-        pairs: &[crate::bls12_381::PairingPair],
-    ) -> Result<bool, PrecompileError>;
+    fn bls12_381_pairing(&self, pairs: &[bls12_381::PairingPair]) -> Result<bool, PrecompileError>;
 
     /// BLS12-381 map field element to G1.
     ///
@@ -179,43 +179,40 @@ impl CryptoProvider for DefaultCryptoProvider {
 
     fn bls12_381_g1_add(
         &self,
-        a: crate::bls12_381::G1Point,
-        b: crate::bls12_381::G1Point,
+        a: bls12_381::G1Point,
+        b: bls12_381::G1Point,
     ) -> Result<[u8; 96], PrecompileError> {
-        crate::bls12_381::p1_add_affine_bytes(a, b)
+        bls12_381::p1_add_affine_bytes(a, b)
     }
 
     fn bls12_381_g2_add(
         &self,
-        a: crate::bls12_381::G2Point,
-        b: crate::bls12_381::G2Point,
+        a: bls12_381::G2Point,
+        b: bls12_381::G2Point,
     ) -> Result<[u8; 192], PrecompileError> {
-        crate::bls12_381::p2_add_affine_bytes(a, b)
+        bls12_381::p2_add_affine_bytes(a, b)
     }
 
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(crate::bls12_381::G1Point, [u8; 32])],
+        points_scalars: &[(bls12_381::G1Point, [u8; 32])],
     ) -> Result<[u8; 96], PrecompileError> {
-        crate::bls12_381::p1_msm_bytes(points_scalars)
+        bls12_381::p1_msm_bytes(points_scalars)
     }
 
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(crate::bls12_381::G2Point, [u8; 32])],
+        points_scalars: &[(bls12_381::G2Point, [u8; 32])],
     ) -> Result<[u8; 192], PrecompileError> {
-        crate::bls12_381::p2_msm_bytes(points_scalars)
+        bls12_381::p2_msm_bytes(points_scalars)
     }
 
-    fn bls12_381_pairing(
-        &self,
-        pairs: &[crate::bls12_381::PairingPair],
-    ) -> Result<bool, PrecompileError> {
-        crate::bls12_381::pairing_check_bytes(pairs)
+    fn bls12_381_pairing(&self, pairs: &[bls12_381::PairingPair]) -> Result<bool, PrecompileError> {
+        bls12_381::pairing_check_bytes(pairs)
     }
 
     fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
-        crate::bls12_381::map_fp_to_g1_bytes(fp)
+        bls12_381::map_fp_to_g1_bytes(fp)
     }
 
     fn bls12_381_map_fp2_to_g2(
@@ -223,7 +220,7 @@ impl CryptoProvider for DefaultCryptoProvider {
         fp2_x: &[u8; 48],
         fp2_y: &[u8; 48],
     ) -> Result<[u8; 192], PrecompileError> {
-        crate::bls12_381::map_fp2_to_g2_bytes(fp2_x, fp2_y)
+        bls12_381::map_fp2_to_g2_bytes(fp2_x, fp2_y)
     }
 
     fn kzg_verify_proof(
@@ -298,37 +295,37 @@ mod tests {
 
         fn bls12_381_g1_add(
             &self,
-            _a: crate::bls12_381::G1Point,
-            _b: crate::bls12_381::G1Point,
+            _a: bls12_381::G1Point,
+            _b: bls12_381::G1Point,
         ) -> Result<[u8; 96], PrecompileError> {
             Ok([44u8; 96])
         }
 
         fn bls12_381_g2_add(
             &self,
-            _a: crate::bls12_381::G2Point,
-            _b: crate::bls12_381::G2Point,
+            _a: bls12_381::G2Point,
+            _b: bls12_381::G2Point,
         ) -> Result<[u8; 192], PrecompileError> {
             Ok([45u8; 192])
         }
 
         fn bls12_381_g1_msm(
             &self,
-            _points_scalars: &[(crate::bls12_381::G1Point, [u8; 32])],
+            _points_scalars: &[(bls12_381::G1Point, [u8; 32])],
         ) -> Result<[u8; 96], PrecompileError> {
             Ok([46u8; 96])
         }
 
         fn bls12_381_g2_msm(
             &self,
-            _points_scalars: &[(crate::bls12_381::G2Point, [u8; 32])],
+            _points_scalars: &[(bls12_381::G2Point, [u8; 32])],
         ) -> Result<[u8; 192], PrecompileError> {
             Ok([47u8; 192])
         }
 
         fn bls12_381_pairing(
             &self,
-            _pairs: &[crate::bls12_381::PairingPair],
+            _pairs: &[bls12_381::PairingPair],
         ) -> Result<bool, PrecompileError> {
             Ok(true)
         }
