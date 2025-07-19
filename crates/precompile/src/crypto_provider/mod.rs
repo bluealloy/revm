@@ -13,6 +13,12 @@ pub mod bn128;
 /// BLS12-381 cryptographic implementations
 pub mod bls12_381;
 
+/// secp256k1 cryptographic implementations
+pub mod secp256k1;
+
+/// KZG cryptographic implementations
+pub mod kzg;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -230,7 +236,7 @@ impl CryptoProvider for DefaultCryptoProvider {
         y: &[u8; 32],
         proof: &[u8; 48],
     ) -> bool {
-        crate::kzg_point_evaluation::verify_kzg_proof(commitment, z, y, proof)
+        kzg::verify_kzg_proof(commitment, z, y, proof)
     }
 }
 
