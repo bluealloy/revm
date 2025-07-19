@@ -24,6 +24,9 @@ pub mod kzg;
 /// Modexp cryptographic implementations
 pub mod modexp;
 
+/// Hash cryptographic implementations
+pub mod hash;
+
 /// Trait for cryptographic operations used by precompiles.
 pub trait CryptoProvider: Send + Sync + 'static {
     /// BN128 elliptic curve addition.
@@ -209,6 +212,28 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// # Returns
     /// The result of the modular exponentiation.
     fn modexp(&self, base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8>;
+
+    /// SHA-256 hash function.
+    ///
+    /// Computes the SHA-256 hash of the input data.
+    ///
+    /// # Arguments
+    /// * `input` - The input data to hash
+    ///
+    /// # Returns
+    /// The SHA-256 hash as 32 bytes.
+    fn sha256(&self, input: &[u8]) -> [u8; 32];
+
+    /// RIPEMD-160 hash function.
+    ///
+    /// Computes the RIPEMD-160 hash of the input data.
+    ///
+    /// # Arguments
+    /// * `input` - The input data to hash
+    ///
+    /// # Returns
+    /// The RIPEMD-160 hash as 20 bytes.
+    fn ripemd160(&self, input: &[u8]) -> [u8; 20];
 }
 
 /// Default crypto provider using the existing implementations
@@ -316,6 +341,14 @@ impl CryptoProvider for DefaultCryptoProvider {
 
     fn modexp(&self, base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
         modexp::modexp(base, exponent, modulus)
+    }
+
+    fn sha256(&self, input: &[u8]) -> [u8; 32] {
+        hash::sha256(input)
+    }
+
+    fn ripemd160(&self, input: &[u8]) -> [u8; 20] {
+        hash::ripemd160(input)
     }
 }
 
@@ -453,6 +486,14 @@ mod tests {
 
         fn modexp(&self, _base: &[u8], _exponent: &[u8], _modulus: &[u8]) -> Vec<u8> {
             vec![51u8; 32]
+        }
+
+        fn sha256(&self, _input: &[u8]) -> [u8; 32] {
+            [52u8; 32]
+        }
+
+        fn ripemd160(&self, _input: &[u8]) -> [u8; 20] {
+            [53u8; 20]
         }
     }
 

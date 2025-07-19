@@ -26,36 +26,8 @@ pub mod utilities;
 
 pub use interface::*;
 
-// silence arkworks lint as bn impl will be used as default if both are enabled.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
-        use ark_bn254 as _;
-        use ark_ff as _;
-        use ark_ec as _;
-        use ark_serialize as _;
-    }
-}
-
 #[cfg(not(target_feature = "avx2"))]
 use arrayref as _;
-
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
-use kzg_rs as _;
-
-// silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "blst")]{
-        use ark_bls12_381 as _;
-        use ark_ff as _;
-        use ark_ec as _;
-        use ark_serialize as _;
-    }
-}
-
-// silence aurora-engine-modexp if gmp is enabled
-#[cfg(feature = "gmp")]
-use aurora_engine_modexp as _;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;

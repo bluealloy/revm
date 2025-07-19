@@ -7,6 +7,10 @@ cfg_if::cfg_if! {
         /// C-KZG backend for KZG operations
         pub mod c_kzg;
         pub use c_kzg::verify_kzg_proof;
+
+        // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
+        #[cfg(feature = "kzg-rs")]
+        use ::kzg_rs as _;
     } else if #[cfg(feature = "kzg-rs")] {
         use ::kzg_rs::{Bytes32, Bytes48};
 

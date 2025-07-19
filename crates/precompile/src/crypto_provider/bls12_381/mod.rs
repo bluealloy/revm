@@ -26,6 +26,12 @@ cfg_if::cfg_if! {
             pairing_check_bytes,
             map_fp_to_g1_bytes, map_fp2_to_g2_bytes
         };
+
+        // silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
+        use ark_bls12_381 as _;
+        use ark_ff as _;
+        use ark_ec as _;
+        use ark_serialize as _;
     } else {
         /// Arkworks backend for BLS12-381 operations
         pub mod arkworks;

@@ -1,8 +1,10 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
-use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    crypto_provider::get_provider, Address, PrecompileError, PrecompileOutput, PrecompileResult,
+    PrecompileWithAddress,
+};
 use primitives::hex_literal::hex;
-use sha2::{Digest, Sha256};
 
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
@@ -72,7 +74,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
 #[inline]
 pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
-    let mut hash: [u8; 32] = Sha256::digest(commitment).into();
+    let mut hash = get_provider().sha256(commitment);
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
 }
@@ -86,8 +88,7 @@ mod tests {
         // Test data from: https://github.com/ethereum/c-kzg-4844/blob/main/tests/verify_kzg_proof/kzg-mainnet/verify_kzg_proof_case_correct_proof_4_4/data.yaml
 
         let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();
-        let mut versioned_hash = Sha256::digest(&commitment).to_vec();
-        versioned_hash[0] = VERSIONED_HASH_VERSION_KZG;
+        let versioned_hash = kzg_to_versioned_hash(&commitment).to_vec();
         let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000").to_vec();
         let y = hex!("1522a4a7f34e1ea350ae07c29c96c7e79655aa926122e95fe69fcbd932ca49e9").to_vec();
         let proof = hex!("a62ad71d14c5719385c0686f1871430475bf3a00f0aa3f7b8dd99a9abc2160744faf0070725e00b60ad9a026a15b1a8c").to_vec();

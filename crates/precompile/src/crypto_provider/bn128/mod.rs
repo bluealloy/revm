@@ -27,6 +27,12 @@ cfg_if::cfg_if! {
         /// Substrate backend for BN128 operations
         pub mod substrate;
         pub use substrate::{g1_point_add, g1_point_mul, pairing_check};
+
+        // silence arkworks lint as substrate impl will be used as default if both are enabled.
+        use ark_bn254 as _;
+        use ark_ff as _;
+        use ark_ec as _;
+        use ark_serialize as _;
     } else {
         /// Arkworks backend for BN128 operations
         pub mod arkworks;

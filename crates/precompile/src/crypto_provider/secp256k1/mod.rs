@@ -5,6 +5,10 @@ cfg_if::cfg_if! {
         /// Bitcoin secp256k1 backend
         pub mod bitcoin_secp256k1;
         pub use bitcoin_secp256k1::ecrecover;
+
+        // silence libsecp256k1 lint as secp256k1 will be used as default if both are enabled.
+        #[cfg(feature = "libsecp256k1")]
+        use libsecp256k1 as _;
     } else if #[cfg(feature = "libsecp256k1")] {
         /// Parity libsecp256k1 backend
         pub mod parity_libsecp256k1;
