@@ -3,7 +3,7 @@
 //! This module defines a trait that abstracts cryptographic operations
 //! for various precompiles, allowing different implementations to be used.
 
-use crate::PrecompileError;
+use crate::{bls12_381_const::*, PrecompileError};
 use once_cell::race::OnceBox;
 use std::boxed::Box;
 use std::vec::Vec;
@@ -72,58 +72,58 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// BLS12-381 G1 point addition.
     ///
     /// # Arguments
-    /// * `a` - First G1 point as a tuple (x, y) with each component being 48 bytes
-    /// * `b` - Second G1 point as a tuple (x, y) with each component being 48 bytes
+    /// * `a` - First G1 point as a tuple (x, y) with each component being FP_LENGTH bytes
+    /// * `b` - Second G1 point as a tuple (x, y) with each component being FP_LENGTH bytes
     ///
     /// # Returns
-    /// The sum as 96 bytes (unpadded), or an error if points are invalid.
+    /// The sum as G1_LENGTH bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g1_add(
         &self,
         a: bls12_381::G1Point,
         b: bls12_381::G1Point,
-    ) -> Result<[u8; 96], PrecompileError>;
+    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 G2 point addition.
     ///
     /// # Arguments
-    /// * `a` - First G2 point as a tuple (x0, x1, y0, y1) with each component being 48 bytes
-    /// * `b` - Second G2 point as a tuple (x0, x1, y0, y1) with each component being 48 bytes
+    /// * `a` - First G2 point as a tuple (x0, x1, y0, y1) with each component being FP_LENGTH bytes
+    /// * `b` - Second G2 point as a tuple (x0, x1, y0, y1) with each component being FP_LENGTH bytes
     ///
     /// # Returns
-    /// The sum as 192 bytes (unpadded), or an error if points are invalid.
+    /// The sum as G2_LENGTH bytes (unpadded), or an error if points are invalid.
     fn bls12_381_g2_add(
         &self,
         a: bls12_381::G2Point,
         b: bls12_381::G2Point,
-    ) -> Result<[u8; 192], PrecompileError>;
+    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
 
     /// BLS12-381 G1 multi-scalar multiplication.
     ///
     /// # Arguments
     /// * `points_scalars` - Vector of (point, scalar) pairs where:
-    ///   - Points are G1Point tuples: (x, y) with each component being 48 bytes
-    ///   - Scalars are 32 bytes each
+    ///   - Points are G1Point tuples: (x, y) with each component being FP_LENGTH bytes
+    ///   - Scalars are SCALAR_LENGTH bytes each
     ///
     /// # Returns
-    /// The result as 96 bytes (unpadded), or an error if inputs are invalid.
+    /// The result as G1_LENGTH bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(bls12_381::G1Point, [u8; 32])],
-    ) -> Result<[u8; 96], PrecompileError>;
+        points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
+    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 G2 multi-scalar multiplication.
     ///
     /// # Arguments
     /// * `points_scalars` - Vector of (point, scalar) pairs where:
-    ///   - Points are G2Point tuples: (x0, x1, y0, y1) with each component being 48 bytes
-    ///   - Scalars are 32 bytes each
+    ///   - Points are G2Point tuples: (x0, x1, y0, y1) with each component being FP_LENGTH bytes
+    ///   - Scalars are SCALAR_LENGTH bytes each
     ///
     /// # Returns
-    /// The result as 192 bytes (unpadded), or an error if inputs are invalid.
+    /// The result as G2_LENGTH bytes (unpadded), or an error if inputs are invalid.
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(bls12_381::G2Point, [u8; 32])],
-    ) -> Result<[u8; 192], PrecompileError>;
+        points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
+    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
 
     /// BLS12-381 pairing check.
     ///
@@ -137,24 +137,27 @@ pub trait CryptoProvider: Send + Sync + 'static {
     /// BLS12-381 map field element to G1.
     ///
     /// # Arguments
-    /// * `fp` - Field element as 48 bytes
+    /// * `fp` - Field element as FP_LENGTH bytes
     ///
     /// # Returns
-    /// The mapped G1 point as 96 bytes (unpadded).
-    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError>;
+    /// The mapped G1 point as G1_LENGTH bytes (unpadded).
+    fn bls12_381_map_fp_to_g1(
+        &self,
+        fp: &[u8; FP_LENGTH],
+    ) -> Result<[u8; G1_LENGTH], PrecompileError>;
 
     /// BLS12-381 map field element to G2.
     ///
     /// # Arguments
-    /// * `fp2` - Fp2 element as two 48-byte field elements
+    /// * `fp2` - Fp2 element as two FP_LENGTH-byte field elements
     ///
     /// # Returns
-    /// The mapped G2 point as 192 bytes (unpadded).
+    /// The mapped G2 point as G2_LENGTH bytes (unpadded).
     fn bls12_381_map_fp2_to_g2(
         &self,
-        fp2_x: &[u8; 48],
-        fp2_y: &[u8; 48],
-    ) -> Result<[u8; 192], PrecompileError>;
+        fp2_x: &[u8; FP_LENGTH],
+        fp2_y: &[u8; FP_LENGTH],
+    ) -> Result<[u8; G2_LENGTH], PrecompileError>;
 
     /// KZG point evaluation.
     ///
@@ -282,7 +285,7 @@ impl CryptoProvider for DefaultCryptoProvider {
         &self,
         a: bls12_381::G1Point,
         b: bls12_381::G1Point,
-    ) -> Result<[u8; 96], PrecompileError> {
+    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
         bls12_381::p1_add_affine_bytes(a, b)
     }
 
@@ -290,21 +293,21 @@ impl CryptoProvider for DefaultCryptoProvider {
         &self,
         a: bls12_381::G2Point,
         b: bls12_381::G2Point,
-    ) -> Result<[u8; 192], PrecompileError> {
+    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
         bls12_381::p2_add_affine_bytes(a, b)
     }
 
     fn bls12_381_g1_msm(
         &self,
-        points_scalars: &[(bls12_381::G1Point, [u8; 32])],
-    ) -> Result<[u8; 96], PrecompileError> {
+        points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
+    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
         bls12_381::p1_msm_bytes(points_scalars)
     }
 
     fn bls12_381_g2_msm(
         &self,
-        points_scalars: &[(bls12_381::G2Point, [u8; 32])],
-    ) -> Result<[u8; 192], PrecompileError> {
+        points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
+    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
         bls12_381::p2_msm_bytes(points_scalars)
     }
 
@@ -312,15 +315,18 @@ impl CryptoProvider for DefaultCryptoProvider {
         bls12_381::pairing_check_bytes(pairs)
     }
 
-    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
+    fn bls12_381_map_fp_to_g1(
+        &self,
+        fp: &[u8; FP_LENGTH],
+    ) -> Result<[u8; G1_LENGTH], PrecompileError> {
         bls12_381::map_fp_to_g1_bytes(fp)
     }
 
     fn bls12_381_map_fp2_to_g2(
         &self,
-        fp2_x: &[u8; 48],
-        fp2_y: &[u8; 48],
-    ) -> Result<[u8; 192], PrecompileError> {
+        fp2_x: &[u8; FP_LENGTH],
+        fp2_y: &[u8; FP_LENGTH],
+    ) -> Result<[u8; G2_LENGTH], PrecompileError> {
         bls12_381::map_fp2_to_g2_bytes(fp2_x, fp2_y)
     }
 
@@ -451,30 +457,30 @@ mod tests {
             &self,
             _a: bls12_381::G1Point,
             _b: bls12_381::G1Point,
-        ) -> Result<[u8; 96], PrecompileError> {
-            Ok([44u8; 96])
+        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+            Ok([44u8; G1_LENGTH])
         }
 
         fn bls12_381_g2_add(
             &self,
             _a: bls12_381::G2Point,
             _b: bls12_381::G2Point,
-        ) -> Result<[u8; 192], PrecompileError> {
-            Ok([45u8; 192])
+        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+            Ok([45u8; G2_LENGTH])
         }
 
         fn bls12_381_g1_msm(
             &self,
-            _points_scalars: &[(bls12_381::G1Point, [u8; 32])],
-        ) -> Result<[u8; 96], PrecompileError> {
-            Ok([46u8; 96])
+            _points_scalars: &[(bls12_381::G1Point, [u8; SCALAR_LENGTH])],
+        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+            Ok([46u8; G1_LENGTH])
         }
 
         fn bls12_381_g2_msm(
             &self,
-            _points_scalars: &[(bls12_381::G2Point, [u8; 32])],
-        ) -> Result<[u8; 192], PrecompileError> {
-            Ok([47u8; 192])
+            _points_scalars: &[(bls12_381::G2Point, [u8; SCALAR_LENGTH])],
+        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+            Ok([47u8; G2_LENGTH])
         }
 
         fn bls12_381_pairing(
@@ -484,16 +490,19 @@ mod tests {
             Ok(true)
         }
 
-        fn bls12_381_map_fp_to_g1(&self, _fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
-            Ok([48u8; 96])
+        fn bls12_381_map_fp_to_g1(
+            &self,
+            _fp: &[u8; FP_LENGTH],
+        ) -> Result<[u8; G1_LENGTH], PrecompileError> {
+            Ok([48u8; G1_LENGTH])
         }
 
         fn bls12_381_map_fp2_to_g2(
             &self,
-            _fp2_x: &[u8; 48],
-            _fp2_y: &[u8; 48],
-        ) -> Result<[u8; 192], PrecompileError> {
-            Ok([49u8; 192])
+            _fp2_x: &[u8; FP_LENGTH],
+            _fp2_y: &[u8; FP_LENGTH],
+        ) -> Result<[u8; G2_LENGTH], PrecompileError> {
+            Ok([49u8; G2_LENGTH])
         }
 
         #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
