@@ -67,11 +67,9 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[0] = 0x04;
     uncompressed_pk[1..].copy_from_slice(pk);
 
-    if get_provider().secp256r1_verify(&msg, &sig, &uncompressed_pk) {
-        Some(())
-    } else {
-        None
-    }
+    get_provider()
+        .secp256r1_verify(&msg, &sig, &uncompressed_pk)
+        .then_some(())
 }
 
 #[cfg(test)]
