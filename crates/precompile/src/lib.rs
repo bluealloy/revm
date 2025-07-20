@@ -16,7 +16,6 @@ pub mod bn128;
 pub mod hash;
 pub mod identity;
 pub mod interface;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -56,7 +55,6 @@ cfg_if::cfg_if! {
 #[cfg(feature = "gmp")]
 use aurora_engine_modexp as _;
 
-use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
@@ -168,18 +166,9 @@ impl Precompiles {
             let mut precompiles = Self::berlin().clone();
 
             // EIP-4844: Shard Blob Transactions
-            cfg_if! {
-                if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
-                    let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
-                } else {
-                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
-                }
-            }
+            let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
 
-
-            precompiles.extend([
-                precompile,
-            ]);
+            precompiles.extend([precompile]);
 
             Box::new(precompiles)
         })
