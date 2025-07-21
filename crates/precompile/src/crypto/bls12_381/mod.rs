@@ -26,22 +26,22 @@ cfg_if::cfg_if! {
         pub use blst::{
             p1_add_affine_bytes,
             p2_add_affine_bytes,
-            p1_msm_bytes as g1_multiexp,
-            p2_msm_bytes as g2_multiexp,
+            p1_msm_bytes,
+            p2_msm_bytes,
             pairing_check_bytes,
-            map_fp_to_g1_bytes as fp_to_g1,
-            map_fp2_to_g2_bytes as fp2_to_g2
+            map_fp_to_g1_bytes,
+            map_fp2_to_g2_bytes
         };
     } else {
         mod arkworks;
         pub use arkworks::{
             p1_add_affine_bytes,
             p2_add_affine_bytes,
-            p1_msm_bytes as g1_multiexp,
-            p2_msm_bytes as g2_multiexp,
+            p1_msm_bytes,
+            p2_msm_bytes,
             pairing_check_bytes,
-            map_fp_to_g1_bytes as fp_to_g1,
-            map_fp2_to_g2_bytes as fp2_to_g2
+            map_fp_to_g1_bytes,
+            map_fp2_to_g2_bytes
         };
     }
 }

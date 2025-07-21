@@ -30,7 +30,7 @@ pub fn map_fp2_to_g2(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_p0_y = remove_fp_padding(&input[PADDED_FP_LENGTH..PADDED_FP2_LENGTH])?;
 
     // Get unpadded result from crypto backend
-    let unpadded_result = crate::crypto::bls12_381::fp2_to_g2(input_p0_x, input_p0_y)?;
+    let unpadded_result = crate::crypto::bls12_381::map_fp2_to_g2_bytes(input_p0_x, input_p0_y)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);
