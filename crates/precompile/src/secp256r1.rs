@@ -16,7 +16,7 @@ use primitives::{Bytes, B256};
 pub const P256VERIFY_ADDRESS: u64 = 256;
 
 /// Base gas fee for secp256r1 p256verify operation.
-pub const P256VERIFY_BASE_GAS_FEE: u64 = 3450;
+pub const P256VERIFY_BASE_GAS_FEE: u64 = 6900;
 
 /// Returns the secp256r1 precompile with its address.
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
