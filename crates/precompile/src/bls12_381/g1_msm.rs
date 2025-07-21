@@ -7,6 +7,7 @@ use crate::bls12_381_const::{
 use crate::bls12_381_utils::msm_required_gas;
 use crate::crypto_provider::bls12_381::G1Point;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use std::boxed::Box;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
