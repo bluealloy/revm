@@ -25,7 +25,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 /// Implements the CLZ instruction - count leading zeros.
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, OSAKA);
-    gas!(context.interpreter, gas::VERYLOW);
+    gas!(context.interpreter, gas::LOW);
     popn_top!([], op1, context.interpreter);
 
     let leading_zeros = op1.leading_zeros();
