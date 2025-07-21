@@ -27,6 +27,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 bincode.workspace = true
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [features]
 default = ["std"]
@@ -47,3 +48,7 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+
+[[bench]]
+name = "instructions"
+harness = false
