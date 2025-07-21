@@ -100,14 +100,14 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
             0x1f83d9abfb41bd6bu64,
             0x5be0cd19137e2179u64,
         ];
-        let m = [0u8; 128];
+        let m = [0u64; 16];
         let t = [0u64, 0u64];
         b.iter(|| {
             let mut h_copy = h;
             blake2::algo::compress(
                 black_box(12),
                 &mut h_copy,
-                black_box(&m),
+                black_box(m),
                 black_box(t),
                 black_box(false),
             );
