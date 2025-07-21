@@ -87,30 +87,4 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
             black_box(blake2::run(black_box(input), u64::MAX).unwrap());
         });
     });
-
-    // Benchmark just the compression function with different round counts
-    group.bench_function("blake2/compress_12_rounds", |b| {
-        let h = [
-            0x6a09e667f3bcc908u64,
-            0xbb67ae8584caa73bu64,
-            0x3c6ef372fe94f82bu64,
-            0xa54ff53a5f1d36f1u64,
-            0x510e527fade682d1u64,
-            0x9b05688c2b3e6c1fu64,
-            0x1f83d9abfb41bd6bu64,
-            0x5be0cd19137e2179u64,
-        ];
-        let m = [0u64; 16];
-        let t = [0u64, 0u64];
-        b.iter(|| {
-            let mut h_copy = h;
-            blake2::algo::compress(
-                black_box(12),
-                &mut h_copy,
-                black_box(m),
-                black_box(t),
-                black_box(false),
-            );
-        });
-    });
 }
