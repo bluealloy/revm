@@ -1,5 +1,9 @@
 //! KZG (Kate-Zaverucha-Goldberg) point evaluation
 
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
+// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
+use kzg_rs as _;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         use c_kzg::{Bytes32, Bytes48};

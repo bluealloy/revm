@@ -2,6 +2,16 @@
 
 pub mod constants;
 
+// silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
+cfg_if::cfg_if! {
+    if #[cfg(feature = "blst")]{
+        use ark_bls12_381 as _;
+        use ark_ff as _;
+        use ark_ec as _;
+        use ark_serialize as _;
+    }
+}
+
 // Re-export type aliases used by implementations
 pub use constants::FP_LENGTH;
 /// G1 point represented as two field elements (x, y coordinates)
