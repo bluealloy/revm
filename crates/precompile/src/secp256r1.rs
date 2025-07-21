@@ -18,6 +18,9 @@ pub const P256VERIFY_ADDRESS: u64 = 256;
 /// Base gas fee for secp256r1 p256verify operation.
 pub const P256VERIFY_BASE_GAS_FEE: u64 = 3450;
 
+/// Base gas fee for secp256r1 p256verify operation post Osaka.
+pub const P256VERIFY_BASE_GAS_FEE_OSAKA: u64 = 6900;
+
 /// Returns the secp256r1 precompile with its address.
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
     [P256VERIFY].into_iter()
@@ -26,6 +29,10 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify);
+
+/// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
+pub const P256VERIFY_OSAKA: PrecompileWithAddress =
+    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify_osaka);
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the
@@ -37,7 +44,24 @@ pub const P256VERIFY: PrecompileWithAddress =
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
 pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    if P256VERIFY_BASE_GAS_FEE > gas_limit {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
+}
+
+/// secp256r1 precompile logic with Osaka gas cost. It takes the input bytes sent to the precompile
+/// and the gas limit. The output represents the result of verifying the
+/// secp256r1 signature of the input.
+///
+/// The input is encoded as follows:
+///
+/// | signed message hash |  r  |  s  | public key x | public key y |
+/// | :-----------------: | :-: | :-: | :----------: | :----------: |
+/// |          32         | 32  | 32  |     32       |      32      |
+pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
+}
+
+fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
+    if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
     let result = if verify_impl(input).is_some() {
@@ -45,7 +69,7 @@ pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutput::new(P256VERIFY_BASE_GAS_FEE, result))
+    Ok(PrecompileOutput::new(gas_cost, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is
