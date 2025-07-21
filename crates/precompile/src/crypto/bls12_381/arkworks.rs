@@ -1,5 +1,5 @@
-use super::{G1Point, G2Point, PairingPair};
 use super::constants::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH};
+use super::{G1Point, G2Point, PairingPair};
 use crate::PrecompileError;
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{
@@ -403,10 +403,7 @@ pub fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileErro
 
 /// Performs point addition on two G1 points taking byte coordinates.
 #[inline]
-pub fn p1_add_affine_bytes(
-    a: G1Point,
-    b: G1Point,
-) -> Result<[u8; G1_LENGTH], PrecompileError> {
+pub fn p1_add_affine_bytes(a: G1Point, b: G1Point) -> Result<[u8; G1_LENGTH], PrecompileError> {
     let (a_x, a_y) = a;
     let (b_x, b_y) = b;
     // Parse first point
@@ -424,10 +421,7 @@ pub fn p1_add_affine_bytes(
 
 /// Performs point addition on two G2 points taking byte coordinates.
 #[inline]
-pub fn p2_add_affine_bytes(
-    a: G2Point,
-    b: G2Point,
-) -> Result<[u8; G2_LENGTH], PrecompileError> {
+pub fn p2_add_affine_bytes(a: G2Point, b: G2Point) -> Result<[u8; G2_LENGTH], PrecompileError> {
     let (a_x_0, a_x_1, a_y_0, a_y_1) = a;
     let (b_x_0, b_x_1, b_y_0, b_y_1) = b;
     // Parse first point
@@ -445,9 +439,7 @@ pub fn p2_add_affine_bytes(
 
 /// Maps a field element to a G1 point from bytes
 #[inline]
-pub fn map_fp_to_g1_bytes(
-    fp_bytes: &[u8; FP_LENGTH],
-) -> Result<[u8; G1_LENGTH], PrecompileError> {
+pub fn map_fp_to_g1_bytes(fp_bytes: &[u8; FP_LENGTH]) -> Result<[u8; G1_LENGTH], PrecompileError> {
     let fp = read_fp(fp_bytes)?;
     let result = map_fp_to_g1(&fp);
     Ok(encode_g1_point(&result))

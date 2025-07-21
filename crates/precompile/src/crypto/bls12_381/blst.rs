@@ -1,7 +1,7 @@
 // This module contains a safe wrapper around the blst library.
 
-use super::{G1Point, G2Point, PairingPair};
 use super::constants::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH, SCALAR_LENGTH_BITS};
+use super::{G1Point, G2Point, PairingPair};
 use crate::PrecompileError;
 use blst::{
     blst_bendian_from_fp, blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul,

@@ -194,10 +194,7 @@ pub fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], Precom
 
 /// Performs a G1 scalar multiplication.
 #[inline]
-pub fn g1_point_mul(
-    point_bytes: &[u8],
-    fr_bytes: &[u8],
-) -> Result<[u8; 64], PrecompileError> {
+pub fn g1_point_mul(point_bytes: &[u8], fr_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
     let p = read_g1_point(point_bytes)?;
     let fr = read_scalar(fr_bytes);
 

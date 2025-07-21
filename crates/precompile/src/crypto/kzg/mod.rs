@@ -20,9 +20,9 @@ pub fn verify_kzg_proof(
         if #[cfg(feature = "c-kzg")] {
             let kzg_settings = c_kzg::ethereum_kzg_settings(8);
             kzg_settings.verify_kzg_proof(
-                &Bytes48::from(*commitment), 
-                &Bytes32::from(*z), 
-                &Bytes32::from(*y), 
+                &Bytes48::from(*commitment),
+                &Bytes32::from(*z),
+                &Bytes32::from(*y),
                 &Bytes48::from(*proof)
             ).unwrap_or(false)
         } else if #[cfg(feature = "kzg-rs")] {

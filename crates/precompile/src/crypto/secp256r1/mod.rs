@@ -5,7 +5,7 @@ pub mod constants;
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 
 /// Verify a secp256r1 signature
-/// 
+///
 /// # Arguments
 /// * `msg` - The message hash (32 bytes)
 /// * `sig` - The signature (64 bytes: r || s)  

@@ -14,7 +14,7 @@ pub fn sha256(input: &[u8]) -> [u8; constants::SHA256_LENGTH] {
 pub fn ripemd160(input: &[u8]) -> [u8; 32] {
     let mut hasher = ripemd::Ripemd160::new();
     hasher.update(input);
-    
+
     let mut output = [0u8; 32];
     hasher.finalize_into((&mut output[12..]).into());
     output
