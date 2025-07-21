@@ -201,7 +201,7 @@ pub fn berlin_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U2
 /// 2. Increase cost when exponent is larger than 32 bytes
 /// 3. Increase cost when base or modulus is larger than 32 bytes
 pub fn osaka_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
-    gas_calc::<500, 16, 3, _>(base_len, exp_len, mod_len, exp_highp, |max_len| -> U256 {
+    gas_calc::<500, 16, 1, _>(base_len, exp_len, mod_len, exp_highp, |max_len| -> U256 {
         if max_len <= 32 {
             return U256::from(16); // multiplication_complexity = 16
         }
@@ -410,8 +410,8 @@ mod tests {
     ];
 
     const OSAKA_GAS: [u64; 19] = [
-        151_198, 1_360, 1_360, 1_360, 500, 500, 682, 500, 500, 2_730, 682, 682, 10_922, 2_730,
-        2_730, 43_690, 10_922, 10_922, 174_762,
+        453_596, 4_080, 4_080, 4_080, 500, 500, 2_048, 512, 512, 8_192, 2_048, 2_048, 32_768,
+        8_192, 8_192, 131_072, 32_768, 32_768, 524_288,
     ];
 
     #[test]

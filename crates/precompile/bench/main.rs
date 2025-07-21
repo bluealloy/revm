@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 //! Benchmarks for the crypto precompiles
 
+pub mod blake2;
 pub mod ecrecover;
 pub mod eip1962;
 pub mod eip2537;
@@ -31,6 +32,9 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // Run KZG point evaluation benchmarks
     eip4844::add_benches(&mut group);
+
+    // Run Blake2 benchmarks
+    blake2::add_benches(&mut group);
 }
 
 criterion_group! {
