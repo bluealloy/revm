@@ -16,39 +16,44 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::Blake2WrongLength);
     }
 
-    // Rounds 4 bytes
+    // Parse number of rounds (4 bytes)
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
-    
+
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
 
-    // Parse inputs
+    // Parse final block flag
+    let f = match input[212] {
+        0 => false,
+        1 => true,
+        _ => return Err(PrecompileError::Blake2WrongFinalIndicatorFlag),
+    };
+
+    // Parse state vector h (8 × u64)
     let mut h = [0u64; 8];
-    let f: bool = input[212] != 0;
+    input[4..68]
+        .chunks_exact(8)
+        .enumerate()
+        .for_each(|(i, chunk)| {
+            h[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+        });
 
-    // state vector h
-    let h_be = &input[4..68];
+    // Parse message block m (16 × u64)
+    let mut m = [0u64; 16];
+    input[68..196]
+        .chunks_exact(8)
+        .enumerate()
+        .for_each(|(i, chunk)| {
+            m[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+        });
 
-    for (i, item) in h.iter_mut().enumerate() {
-        let mut buf = [0u8; 8];
-        buf.copy_from_slice(&h_be[i * 8..(i + 1) * 8]);
-        *item = u64::from_le_bytes(buf);
-    }
+    // Parse offset counters
+    let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
+    let t_1 = u64::from_le_bytes(input[204..212].try_into().unwrap());
 
-    // message block vector m
-    let m: [u8; 128] = input[68..196].try_into().unwrap();
-
-    // 2w-bit offset counter t
-    let t_be = &input[196..212];
-    let mut buf: [u8; 8] = t_be[..8].try_into().unwrap();
-    let t0 = u64::from_le_bytes(buf);
-    buf = t_be[8..].try_into().unwrap();
-    let t1 = u64::from_le_bytes(buf);
-    let t = [t0, t1];
-
-    crate::crypto::blake2::compress(rounds, &mut h, &m, t, f);
+    crate::crypto::blake2::compress(rounds, &mut h, m, [t_0, t_1], f);
 
     let mut out = [0u8; 64];
     for (i, h) in (0..64).step_by(8).zip(h.iter()) {
