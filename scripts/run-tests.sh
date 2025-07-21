@@ -98,12 +98,44 @@ download_fixtures() {
     # Clone legacytests repository
     echo "Cloning legacytests repository..."
     if [ ! -d "$LEGACY_DIR" ]; then
-        git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+        # Save current directory
+        CURRENT_DIR=$(pwd)
+        # Create parent directory if needed
+        mkdir -p "$LEGACY_DIR"
+        # Clone into a temp directory first to avoid git confusion
+        TEMP_DIR="${LEGACY_DIR}_temp"
+        rm -rf "$TEMP_DIR"
+        git clone --depth 1 "$LEGACY_REPO_URL" "$TEMP_DIR"
+        # Move the contents to the target directory
+        rm -rf "$LEGACY_DIR"
+        mv "$TEMP_DIR" "$LEGACY_DIR"
+        # Return to original directory
+        cd "$CURRENT_DIR"
     else
-        echo "Legacy tests directory already exists. Pulling latest changes..."
-        cd "$LEGACY_DIR"
-        git pull
-        cd ..
+        # Check if it's the correct repository
+        if [ -d "$LEGACY_DIR/.git" ]; then
+            REMOTE_URL=$(cd "$LEGACY_DIR" && git remote get-url origin 2>/dev/null || echo "")
+            if [ "$REMOTE_URL" != "$LEGACY_REPO_URL" ]; then
+                echo "Incorrect repository found. Re-cloning..."
+                rm -rf "$LEGACY_DIR"
+                # Clone into a temp directory first
+                TEMP_DIR="${LEGACY_DIR}_temp"
+                rm -rf "$TEMP_DIR"
+                git clone --depth 1 "$LEGACY_REPO_URL" "$TEMP_DIR"
+                mv "$TEMP_DIR" "$LEGACY_DIR"
+            else
+                echo "Legacy tests directory already exists. Pulling latest changes..."
+                (cd "$LEGACY_DIR" && git pull)
+            fi
+        else
+            echo "Invalid legacy tests directory. Re-cloning..."
+            rm -rf "$LEGACY_DIR"
+            # Clone into a temp directory first
+            TEMP_DIR="${LEGACY_DIR}_temp"
+            rm -rf "$TEMP_DIR"
+            git clone --depth 1 "$LEGACY_REPO_URL" "$TEMP_DIR"
+            mv "$TEMP_DIR" "$LEGACY_DIR"
+        fi
     fi
     
     echo "Fixtures download and extraction complete."
