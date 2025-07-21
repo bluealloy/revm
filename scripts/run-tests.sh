@@ -9,7 +9,7 @@ VERSION="v4.4.0"
 FIXTURES_DIR="test-fixtures"
 STABLE_DIR="$FIXTURES_DIR/stable"
 DEVELOP_DIR="$FIXTURES_DIR/develop"
-LEGACY_DIR="legacytests" 
+LEGACY_DIR="$FIXTURES_DIR/legacytests" 
 
 # URL and filenames
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
@@ -55,7 +55,6 @@ done
 clean() {
     echo "Cleaning test fixtures..."
     rm -rf "$FIXTURES_DIR"
-    rm -rf "$LEGACY_DIR"
     echo "Cleaned test fixtures directory."
 }
 
@@ -88,7 +87,7 @@ download_and_extract() {
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
-    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR"
+    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR" "$LEGACY_DIR"
 
     download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
     download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$VERSION"
