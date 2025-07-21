@@ -192,7 +192,7 @@ mod bls12_381_backend {
 
     /// Parse a G1 point from compressed format (48 bytes)
     fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<G1Affine, PrecompileError> {
-        G1Affine::deserialize_compressed(bytes)
+        G1Affine::deserialize_compressed(&bytes[..])
             .map_err(|_| PrecompileError::Other("Invalid compressed G1 point".to_string()))
     }
 
