@@ -17,7 +17,7 @@ pub const EIP7702_VERSION: u8 = 0;
 /// Bytecode of delegated account, specified in EIP-7702
 ///
 /// Format of EIP-7702 bytecode consist of:
-/// `0xEF00` (MAGIC) + `0x00` (VERSION) + 20 bytes of address.
+/// `0xEF01` (MAGIC) + `0x00` (VERSION) + 20 bytes of address.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702Bytecode {
