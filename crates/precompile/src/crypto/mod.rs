@@ -1,7 +1,7 @@
 //! Cryptographic backend implementations for precompiles
 //!
 //! This module contains pure cryptographic implementations used by various precompiles.
-//! The precompile logic (addresses, gas costs, input parsing) remains in the parent modules.
+//! The precompile and Ethereum specific logic (addresses, gas costs, input parsing, evm padding) remains in the parent modules.
 
 /// BN128 elliptic curve operations
 pub mod bn128;
