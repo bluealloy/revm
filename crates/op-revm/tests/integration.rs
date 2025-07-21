@@ -972,6 +972,56 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
     );
 }
 
+#[test]
+#[cfg(feature = "optional_balance_check")]
+fn test_disable_balance_check() {
+    const RETURN_CALLER_BALANCE_BYTECODE: &[u8] = &[
+        opcode::CALLER,
+        opcode::BALANCE,
+        opcode::PUSH1,
+        0x00,
+        opcode::MSTORE,
+        opcode::PUSH1,
+        0x20,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURN,
+    ];
+
+    let mut evm = Context::op()
+        .modify_cfg_chained(|cfg| cfg.disable_balance_check = true)
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            RETURN_CALLER_BALANCE_BYTECODE.into(),
+        )))
+        .build_op();
+
+    // Construct tx so that effective cost is more than caller balance.
+    let gas_price = 1;
+    let gas_limit = 100_000;
+    // Make sure value doesn't consume all balance since we want to validate that all effective
+    // cost is deducted.
+    let tx_value = BENCH_CALLER_BALANCE - U256::from(1);
+
+    let result = evm
+        .transact_one(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder_for_bench()
+                        .gas_price(gas_price)
+                        .gas_limit(gas_limit)
+                        .value(tx_value),
+                )
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_success());
+
+    let returned_balance = U256::from_be_slice(result.output().unwrap().as_ref());
+    let expected_balance = U256::ZERO;
+    assert_eq!(returned_balance, expected_balance);
+}
+
 #[derive(Default, Debug)]
 struct LogInspector {
     logs: Vec<Log>,
