@@ -6,6 +6,11 @@ cfg_if::cfg_if! {
         use c_kzg::{Bytes32, Bytes48};
     } else if #[cfg(feature = "kzg-rs")] {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
+    } else {
+        // These are not needed here, but as_bytes_48 and as_bytes32
+        // won't compile without them
+        pub type Bytes32 = [u8;32];
+        pub type Bytes48 = [u8;48];
     }
 }
 use primitives::hex_literal::hex;
@@ -114,10 +119,10 @@ mod bls12_381_backend {
     /// https://github.com/ethereum/consensus-specs/blob/master/specs/deneb/polynomial-commitments.md#verify_kzg_proof_impl
     #[inline]
     pub(super) fn verify_kzg_proof(
-        commitment: &[u8; 48],
-        z: &[u8; 32],
-        y: &[u8; 32],
-        proof: &[u8; 48],
+        commitment: &Bytes48,
+        z: &Bytes32,
+        y: &Bytes32,
+        proof: &Bytes48,
     ) -> bool {
         // Parse the commitment (G1 point)
         let Ok(commitment_point) = parse_g1_compressed(&commitment) else {
@@ -186,9 +191,7 @@ mod bls12_381_backend {
     }
 
     /// Parse a G1 point from compressed format (48 bytes)
-    fn parse_g1_compressed(bytes: &[u8]) -> Result<G1Affine, PrecompileError> {
-        assert_eq!(bytes.len(), 48, "input must be 48 bytes");
-
+    fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<G1Affine, PrecompileError> {
         G1Affine::deserialize_compressed(bytes)
             .map_err(|_| PrecompileError::Other("Invalid compressed G1 point".to_string()))
     }
