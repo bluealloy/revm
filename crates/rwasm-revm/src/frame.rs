@@ -1,73 +1,30 @@
 use crate::{executor::run_rwasm_loop, types::SystemInterruptionOutcome};
 use core::{cmp::min, marker::PhantomData};
 use fluentbase_sdk::{
-    is_delegated_runtime_address,
-    keccak256,
-    try_resolve_precompile_account_from_input,
-    Address,
-    Bytes,
-    ERC20_MAGIC_BYTES,
-    PRECOMPILE_ERC20_RUNTIME,
-    PRECOMPILE_EVM_RUNTIME,
-    PRECOMPILE_SVM_RUNTIME,
-    PRECOMPILE_WASM_RUNTIME,
-    SVM_ELF_MAGIC_BYTES,
-    U256,
-    UPDATE_GENESIS_AUTH,
-    UPDATE_GENESIS_PREFIX,
-    WASM_MAGIC_BYTES,
+    is_delegated_runtime_address, keccak256, try_resolve_precompile_account_from_input, Address,
+    Bytes, ERC20_MAGIC_BYTES, PRECOMPILE_ERC20_RUNTIME, PRECOMPILE_EVM_RUNTIME,
+    PRECOMPILE_SVM_RUNTIME, PRECOMPILE_WASM_RUNTIME, SVM_ELF_MAGIC_BYTES, U256,
+    UPDATE_GENESIS_AUTH, UPDATE_GENESIS_PREFIX, WASM_MAGIC_BYTES,
 };
 use revm::{
     bytecode::{ownable_account::OwnableAccountBytecode, Bytecode, Eof, EOF_MAGIC_BYTES},
     context::{
-        journaled_state::JournalCheckpoint,
-        result::FromStringError,
-        Cfg,
-        ContextTr,
-        CreateScheme,
-        JournalTr,
-        LocalContextTr,
-        Transaction,
+        journaled_state::JournalCheckpoint, result::FromStringError, Cfg, ContextTr, CreateScheme,
+        JournalTr, LocalContextTr, Transaction,
     },
     context_interface::context::ContextError,
     handler::{
-        instructions::InstructionProvider,
-        return_create,
-        return_eofcreate,
-        CallFrame,
-        CreateFrame,
-        EOFCreateFrame,
-        EvmTr,
-        Frame,
-        FrameData,
-        FrameInitOrResult,
-        FrameOrResult,
-        FrameResult,
-        ItemOrResult,
-        PrecompileProvider,
+        instructions::InstructionProvider, return_create, return_eofcreate, CallFrame, CreateFrame,
+        EOFCreateFrame, EvmTr, Frame, FrameData, FrameInitOrResult, FrameOrResult, FrameResult,
+        ItemOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, InspectorFrame},
     interpreter::{
         interpreter::{EthInterpreter, ExtBytecode},
         interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
-        return_ok,
-        return_revert,
-        CallInput,
-        CallInputs,
-        CallOutcome,
-        CallValue,
-        CreateInputs,
-        CreateOutcome,
-        EOFCreateInputs,
-        EOFCreateKind,
-        FrameInput,
-        Gas,
-        InputsImpl,
-        InstructionResult,
-        Interpreter,
-        InterpreterAction,
-        InterpreterResult,
-        InterpreterTypes,
+        return_ok, return_revert, CallInput, CallInputs, CallOutcome, CallValue, CreateInputs,
+        CreateOutcome, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, InputsImpl,
+        InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
         SharedMemory,
     },
     primitives::CALL_STACK_LIMIT,
@@ -76,7 +33,7 @@ use revm::{
 use rwasm::RwasmModule;
 use std::{boxed::Box, sync::Arc};
 
-pub(crate) struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
+pub struct RwasmFrame<EVM, ERROR, IW: InterpreterTypes> {
     phantom: PhantomData<(EVM, ERROR)>,
     /// Data of the frame.
     data: FrameData,
@@ -956,10 +913,13 @@ where
 {
     type IT = EthInterpreter;
 
-    fn run_inspect(&mut self, evm: &mut Self::Evm) -> Result<FrameInitOrResult<Self>, Self::Error> {
-        let interpreter = self.interpreter();
-        let next_action = evm.run_inspect_interpreter(interpreter);
-        self.process_next_action(evm, next_action)
+    fn run_inspect(
+        &mut self,
+        context: &mut Self::Evm,
+    ) -> Result<FrameInitOrResult<Self>, Self::Error> {
+        // TODO(dmitry123): "add support of inspectors for rwasm bytecode (simulate EVM calls?)"
+        let next_action = run_rwasm_loop(self, context)?;
+        self.process_next_action(context, next_action)
     }
 
     fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {

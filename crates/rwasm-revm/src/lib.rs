@@ -16,5 +16,6 @@ mod types;
 
 pub use api::*;
 pub use evm::RwasmEvm;
+pub use frame::*;
 pub use result::OpHaltReason;
 pub use spec::*;
