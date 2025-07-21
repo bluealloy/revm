@@ -1,5 +1,4 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use super::crypto_backend::p1_msm_bytes;
 use super::G1Point;
 use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
 use crate::bls12_381_const::{
@@ -47,7 +46,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Ok((point, scalar_array))
     });
 
-    let unpadded_result = p1_msm_bytes(valid_pairs_iter)?;
+    let unpadded_result = crate::crypto::bls12_381::g1_multiexp(valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

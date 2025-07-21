@@ -8,6 +8,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub mod crypto;
+
 pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;

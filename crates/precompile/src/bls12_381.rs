@@ -2,26 +2,8 @@
 //! For more details check modules for each precompile.
 use crate::PrecompileWithAddress;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "blst")]{
-        mod blst;
-        use blst as crypto_backend;
-    } else {
-        mod arkworks;
-        use arkworks as crypto_backend;
-    }
-}
-
 // Re-export type aliases for use in submodules
-use crate::bls12_381_const::FP_LENGTH;
-type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
-type G2Point = (
-    [u8; FP_LENGTH],
-    [u8; FP_LENGTH],
-    [u8; FP_LENGTH],
-    [u8; FP_LENGTH],
-);
-type PairingPair = (G1Point, G2Point);
+use crate::crypto::bls12_381::{G1Point, G2Point, PairingPair};
 
 pub mod g1_add;
 pub mod g1_msm;

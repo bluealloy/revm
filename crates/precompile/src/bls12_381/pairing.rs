@@ -1,5 +1,4 @@
 //! BLS12-381 pairing precompile. More details in [`pairing`]
-use super::crypto_backend::pairing_check_bytes;
 use super::utils::{remove_g1_padding, remove_g2_padding};
 use super::PairingPair;
 use crate::bls12_381_const::{
@@ -53,7 +52,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
         pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
 
-    let result = pairing_check_bytes(&pairs)?;
+    let result = crate::crypto::bls12_381::pairing_check_bytes(&pairs)?;
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(

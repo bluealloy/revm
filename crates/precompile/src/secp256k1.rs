@@ -13,11 +13,6 @@
 //!
 //! Output format:
 //! [32 bytes for recovered address]
-#[cfg(feature = "secp256k1")]
-pub mod bitcoin_secp256k1;
-pub mod k256;
-#[cfg(feature = "libsecp256k1")]
-pub mod parity_libsecp256k1;
 
 use crate::{
     utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
@@ -54,22 +49,11 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 }
 
 fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
-    let sig = B512::from_slice(&sig);
-    let msg = B256::from_slice(&msg);
-
-    match ecrecover(&sig, recid, &msg) {
-        Ok(address) => Some(address.0),
+    let sig_b512 = B512::from(sig);
+    let msg_b256 = B256::from(msg);
+    
+    match crate::crypto::secp256k1::ecrecover(&sig_b512, recid, &msg_b256) {
+        Ok(result) => Some(result.0),
         Err(_) => None,
-    }
-}
-
-// Select the correct implementation based on the enabled features.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "secp256k1")] {
-        pub use bitcoin_secp256k1::ecrecover;
-    } else if #[cfg(feature = "libsecp256k1")] {
-        pub use parity_libsecp256k1::ecrecover;
-    } else {
-        pub use k256::ecrecover;
     }
 }

@@ -1,13 +1,6 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-cfg_if::cfg_if! {
-    if #[cfg(feature = "c-kzg")] {
-        use c_kzg::{Bytes32, Bytes48};
-    } else if #[cfg(feature = "kzg-rs")] {
-        use kzg_rs::{Bytes32, Bytes48, KzgProof};
-    }
-}
 use primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
@@ -59,7 +52,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let z = input[32..64].try_into().unwrap();
     let y = input[64..96].try_into().unwrap();
     let proof = input[144..192].try_into().unwrap();
-    if !verify_kzg_proof(commitment, z, y, proof) {
+    if !crate::crypto::kzg::verify_kzg_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
 
@@ -73,49 +66,6 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     let mut hash: [u8; 32] = Sha256::digest(commitment).into();
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
-}
-
-/// Verify KZG proof.
-#[inline]
-pub fn verify_kzg_proof(
-    commitment: &[u8; 48],
-    z: &[u8; 32],
-    y: &[u8; 32],
-    proof: &[u8; 48],
-) -> bool {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "c-kzg")] {
-            let kzg_settings = c_kzg::ethereum_kzg_settings(8);
-            kzg_settings.verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof)).unwrap_or(false)
-        } else if #[cfg(feature = "kzg-rs")] {
-            let env = kzg_rs::EnvKzgSettings::default();
-            let kzg_settings = env.get();
-            KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
-        }
-    }
-}
-
-/// Convert a slice to an array of a specific size.
-#[inline]
-#[track_caller]
-fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
-    bytes.try_into().expect("slice with incorrect length")
-}
-
-/// Convert a slice to a 32 byte big endian array.
-#[inline]
-#[track_caller]
-fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
-    // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
-    unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
-}
-
-/// Convert a slice to a 48 byte big endian array.
-#[inline]
-#[track_caller]
-fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
-    // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
-    unsafe { &*as_array::<48>(bytes).as_ptr().cast() }
 }
 
 #[cfg(test)]
