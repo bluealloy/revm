@@ -12,6 +12,17 @@ cfg_if::cfg_if! {
     }
 }
 
+// Re-export type aliases for use in submodules
+use crate::bls12_381_const::FP_LENGTH;
+type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
+type G2Point = (
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+    [u8; FP_LENGTH],
+);
+type PairingPair = (G1Point, G2Point);
+
 pub mod g1_add;
 pub mod g1_msm;
 pub mod g2_add;
