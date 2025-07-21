@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.4](https://github.com/bluealloy/revm/compare/op-revm-v8.0.3...op-revm-v8.0.4) - 2025-07-21
+
+### Fixed
+
+- gas deduction with `disable_balance_check` ([#2699](https://github.com/bluealloy/revm/pull/2699))
+
+### Other
+
+- *(op-revm)* test for optional balance check ([#2746](https://github.com/bluealloy/revm/pull/2746))
+- change gas parameter to immutable reference ([#2702](https://github.com/bluealloy/revm/pull/2702))
+
 ## [8.0.3](https://github.com/bluealloy/revm/compare/op-revm-v8.0.2...op-revm-v8.0.3) - 2025-07-14
 
 ### Other

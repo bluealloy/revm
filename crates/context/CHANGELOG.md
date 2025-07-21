@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.4](https://github.com/bluealloy/revm/compare/revm-context-v8.0.3...revm-context-v8.0.4) - 2025-07-21
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-database-interface, revm-bytecode, revm-state, revm-context-interface
+
 ## [8.0.3](https://github.com/bluealloy/revm/compare/revm-context-v8.0.2...revm-context-v8.0.3) - 2025-07-14
 
 ### Fixed
