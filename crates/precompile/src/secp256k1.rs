@@ -49,11 +49,11 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 }
 
 fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
-    let sig_b512 = B512::from(sig);
-    let msg_b256 = B256::from(msg);
+    let sig = B512::from(sig);
+    let msg = B256::from(msg);
 
-    match crate::crypto::secp256k1::ecrecover(&sig_b512, recid, &msg_b256) {
-        Ok(result) => Some(result.0),
+    match crate::crypto::secp256k1::ecrecover(&sig, recid, &msg) {
+        Ok(address) => Some(address.0),
         Err(_) => None,
     }
 }
