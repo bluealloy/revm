@@ -1,7 +1,7 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "27.0.2"
+version = "27.0.3"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -66,6 +66,7 @@ serde = [
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
+sha3-keccak = ["primitives/sha3-keccak"]
 asyncdb = ["database-interface/asyncdb"]
 
 # Enables alloydb inside database crate
@@ -99,6 +100,7 @@ c-kzg = [
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 bn = ["precompile/bn"]
+asm-sha2 = ["precompile/asm-sha2"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.

@@ -1,5 +1,21 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v82
+date 14.07.2025
+
+Fix for inspector not calling `step_end`.
+
+* `revm-context`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revm-interpreter`: 23.0.1 -> 23.0.2 (✓ API compatible changes)
+* `revm-precompile`: 24.0.0 -> 24.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revm-inspector`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revme`: 7.0.3 -> 7.0.4 (✓ API compatible changes)
+* `op-revm`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `custom_precompile_journal`: 0.1.0
+* `revm`: 27.0.2 -> 27.0.3
+* `revm-statetest-types`: 8.0.3 -> 8.0.4
+
 # v81
 date: 03.07.2025
 
