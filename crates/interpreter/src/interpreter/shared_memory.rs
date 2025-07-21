@@ -80,9 +80,14 @@ impl MemoryTr for SharedMemory {
 
     /// Returns a byte slice of the memory region at the given offset.
     ///
+    /// # Panics
+    ///
+    /// Panics on out of bounds access in debug builds only.
+    ///
     /// # Safety
     ///
-    /// In debug this will panic on out of bounds. In release it will silently fail.
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -238,7 +243,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
+    /// `range.end <= self.len()`).
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -255,7 +266,12 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -270,7 +286,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
+    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
+    /// memory.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
@@ -404,6 +426,15 @@ impl SharedMemory {
     }
 
     /// Returns a reference to the memory of the current context, the active memory.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint is invalid in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an invalid checkpoint triggers undefined
+    /// behavior. The checkpoint must be within the bounds of the buffer.
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
         let buffer = self.buffer().borrow();
@@ -414,6 +445,15 @@ impl SharedMemory {
     }
 
     /// Returns a mutable reference to the memory of the current context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint is invalid in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an invalid checkpoint triggers undefined
+    /// behavior. The checkpoint must be within the bounds of the buffer.
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
         let buffer = self.buffer().borrow_mut(); // Borrow the inner Vec<u8> mutably

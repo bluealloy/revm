@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v24.0.0...revm-precompile-v24.0.1) - 2025-07-14
+
+### Other
+
+- use c-kzg precompute value 8 ([#2698](https://github.com/bluealloy/revm/pull/2698))
+
 ## [24.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v23.0.0...revm-precompile-v24.0.0) - 2025-06-30
 
 ### Added

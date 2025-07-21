@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.3](https://github.com/bluealloy/revm/compare/op-revm-v8.0.2...op-revm-v8.0.3) - 2025-07-14
+
+### Other
+
+- simplify gas calculations by introducing a used() method ([#2703](https://github.com/bluealloy/revm/pull/2703))
+
 ## [8.0.2](https://github.com/bluealloy/revm/compare/op-revm-v8.0.1...op-revm-v8.0.2) - 2025-07-03
 
 ### Other

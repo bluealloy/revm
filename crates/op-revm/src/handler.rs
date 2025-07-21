@@ -174,11 +174,7 @@ where
 
         // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if is_balance_check_disabled {
-            // Make sure the caller's balance is at least the value of the transaction.
-            // this is not consensus critical, and it is used in testing.
-            new_balance = caller_account.info.balance.max(tx.value());
-        } else if !is_deposit && max_balance_spending > new_balance {
+        if !is_deposit && max_balance_spending > new_balance && !is_balance_check_disabled {
             // skip max balance check for deposit transactions.
             // this check for deposit was skipped previously in `validate_tx_against_state` function
             return Err(InvalidTransaction::LackOfFundForMaxFee {
@@ -186,23 +182,28 @@ where
                 balance: Box::new(new_balance),
             }
             .into());
-        } else {
-            let effective_balance_spending =
-                tx.effective_balance_spending(basefee, blob_price).expect(
-                    "effective balance is always smaller than max balance so it can't overflow",
-                );
+        }
 
-            // subtracting max balance spending with value that is going to be deducted later in the call.
-            let gas_balance_spending = effective_balance_spending - tx.value();
+        let effective_balance_spending = tx
+            .effective_balance_spending(basefee, blob_price)
+            .expect("effective balance is always smaller than max balance so it can't overflow");
 
-            // If the transaction is not a deposit transaction, subtract the L1 data fee from the
-            // caller's balance directly after minting the requested amount of ETH.
-            // Additionally deduct the operator fee from the caller's account.
-            //
-            // In case of deposit additional cost will be zero.
-            let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
+        // subtracting max balance spending with value that is going to be deducted later in the call.
+        let gas_balance_spending = effective_balance_spending - tx.value();
 
-            new_balance = new_balance.saturating_sub(op_gas_balance_spending);
+        // If the transaction is not a deposit transaction, subtract the L1 data fee from the
+        // caller's balance directly after minting the requested amount of ETH.
+        // Additionally deduct the operator fee from the caller's account.
+        //
+        // In case of deposit additional cost will be zero.
+        let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
+
+        new_balance = new_balance.saturating_sub(op_gas_balance_spending);
+
+        if is_balance_check_disabled {
+            // Make sure the caller's balance is at least the value of the transaction.
+            // this is not consensus critical, and it is used in testing.
+            new_balance = new_balance.max(tx.value());
         }
 
         // Touch account so we know it is changed.
@@ -297,7 +298,7 @@ where
                 .operator_fee_refund(frame_result.gas(), spec);
         }
 
-        reimburse_caller(evm.ctx(), frame_result.gas_mut(), additional_refund).map_err(From::from)
+        reimburse_caller(evm.ctx(), frame_result.gas(), additional_refund).map_err(From::from)
     }
 
     fn refund(
@@ -353,27 +354,21 @@ where
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
-        let mut operator_fee_cost = U256::ZERO;
-        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-            operator_fee_cost = l1_block_info.operator_fee_charge(
-                enveloped_tx,
-                U256::from(frame_result.gas().spent() - frame_result.gas().refunded() as u64),
-            );
+        let operator_fee_cost = if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            l1_block_info.operator_fee_charge(enveloped_tx, U256::from(frame_result.gas().used()))
+        } else {
+            U256::ZERO
+        };
+        let base_fee_amount = U256::from(basefee.saturating_mul(frame_result.gas().used() as u128));
+
+        // Send fees to their respective recipients
+        for (recipient, amount) in [
+            (L1_FEE_RECIPIENT, l1_cost),
+            (BASE_FEE_RECIPIENT, base_fee_amount),
+            (OPERATOR_FEE_RECIPIENT, operator_fee_cost),
+        ] {
+            ctx.journal_mut().balance_incr(recipient, amount)?;
         }
-        // Send the L1 cost of the transaction to the L1 Fee Vault.
-        ctx.journal_mut().balance_incr(L1_FEE_RECIPIENT, l1_cost)?;
-
-        // Send the base fee of the transaction to the Base Fee Vault.
-        ctx.journal_mut().balance_incr(
-            BASE_FEE_RECIPIENT,
-            U256::from(basefee.saturating_mul(
-                (frame_result.gas().spent() - frame_result.gas().refunded() as u64) as u128,
-            )),
-        )?;
-
-        // Send the operator fee of the transaction to the coinbase.
-        ctx.journal_mut()
-            .balance_incr(OPERATOR_FEE_RECIPIENT, operator_fee_cost)?;
 
         Ok(())
     }

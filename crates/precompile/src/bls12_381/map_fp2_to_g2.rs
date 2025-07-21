@@ -1,7 +1,7 @@
 //! BLS12-381 map fp2 to g2 precompile. More details in [`map_fp2_to_g2`]
 use super::{
-    crypto_backend::{encode_g2_point, map_fp2_to_g2 as blst_map_fp2_to_g2, read_fp2},
-    utils::remove_fp_padding,
+    crypto_backend::map_fp2_to_g2_bytes,
+    utils::{pad_g2_point, remove_fp_padding},
 };
 use crate::bls12_381_const::{
     MAP_FP2_TO_G2_ADDRESS, MAP_FP2_TO_G2_BASE_GAS_FEE, PADDED_FP2_LENGTH, PADDED_FP_LENGTH,
@@ -31,12 +31,15 @@ pub fn map_fp2_to_g2(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
     let input_p0_x = remove_fp_padding(&input[..PADDED_FP_LENGTH])?;
     let input_p0_y = remove_fp_padding(&input[PADDED_FP_LENGTH..PADDED_FP2_LENGTH])?;
-    let fp2 = read_fp2(input_p0_x, input_p0_y)?;
-    let p_aff = blst_map_fp2_to_g2(&fp2);
 
-    let out = encode_g2_point(&p_aff);
+    // Get unpadded result from crypto backend
+    let unpadded_result = map_fp2_to_g2_bytes(input_p0_x, input_p0_y)?;
+
+    // Pad the result for EVM compatibility
+    let padded_result = pad_g2_point(&unpadded_result);
+
     Ok(PrecompileOutput::new(
         MAP_FP2_TO_G2_BASE_GAS_FEE,
-        out.into(),
+        padded_result.into(),
     ))
 }

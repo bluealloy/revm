@@ -5,6 +5,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod count_inspector;
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
 mod either;
@@ -27,6 +28,7 @@ pub mod inspectors {
     pub use super::gas::GasInspector;
 }
 
+pub use count_inspector::CountInspector;
 pub use handler::{inspect_instructions, InspectorHandler};
 pub use inspect::{InspectCommitEvm, InspectEvm};
 pub use inspector::*;
