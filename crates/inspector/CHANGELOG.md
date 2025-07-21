@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.3](https://github.com/bluealloy/revm/compare/revm-inspector-v8.0.2...revm-inspector-v8.0.3) - 2025-07-14
+
+### Fixed
+
+- *(Inspector)* call_end not calle on first call fast return ([#2697](https://github.com/bluealloy/revm/pull/2697))
+
 ## [8.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v8.0.1...revm-inspector-v8.0.2) - 2025-07-03
 
 ### Fixed

@@ -1,7 +1,7 @@
 //! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{
-    result::FromStringError, Block, Cfg, Database, JournalTr, LocalContextTr, Transaction,
+    result::FromStringError, Block, Cfg, Database, Host, JournalTr, LocalContextTr, Transaction,
 };
 use auto_impl::auto_impl;
 use primitives::StorageValue;
@@ -15,7 +15,7 @@ use std::string::String;
 ///
 /// All function has a `*_mut` variant except the function for [`ContextTr::tx`] and [`ContextTr::block`].
 #[auto_impl(&mut, Box)]
-pub trait ContextTr {
+pub trait ContextTr: Host {
     /// Block type
     type Block: Block;
     /// Transaction type

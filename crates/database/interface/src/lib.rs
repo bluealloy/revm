@@ -142,3 +142,31 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
         self.0.commit(changes)
     }
 }
+
+impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
+    type Error = T::Error;
+
+    #[inline]
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        self.0.basic_ref(address)
+    }
+
+    #[inline]
+    fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        self.0.code_by_hash_ref(code_hash)
+    }
+
+    #[inline]
+    fn storage_ref(
+        &self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.0.storage_ref(address, index)
+    }
+
+    #[inline]
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        self.0.block_hash_ref(number)
+    }
+}

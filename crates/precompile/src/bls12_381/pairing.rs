@@ -1,5 +1,6 @@
 //! BLS12-381 pairing precompile. More details in [`pairing`]
 use super::utils::{remove_g1_padding, remove_g2_padding};
+use super::PairingPair;
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,

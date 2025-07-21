@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.4](https://github.com/bluealloy/revm/compare/revme-v7.0.3...revme-v7.0.4) - 2025-07-14
+
+### Other
+
+- incorrect StorageKey and StorageValue parameter order in burntpix benchmark ([#2704](https://github.com/bluealloy/revm/pull/2704))
+
 ## [7.0.3](https://github.com/bluealloy/revm/compare/revme-v7.0.2...revme-v7.0.3) - 2025-07-03
 
 ### Other

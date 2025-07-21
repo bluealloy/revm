@@ -115,6 +115,12 @@ pub const PADDED_FP_LENGTH: usize = 64;
 /// a G1 element according to padding rules specified in EIP-2537.
 pub const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 
+/// FP2_LENGTH specifies the number of bytes needed to represent a Fp^2 element.
+///
+/// Note: This is the quadratic extension of Fp, and by definition
+/// means we need 2 Fp elements.
+pub const FP2_LENGTH: usize = 2 * FP_LENGTH;
+
 /// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a Fp^2 element according to the padding rules specified in EIP-2537.
 ///
@@ -132,6 +138,11 @@ pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
 /// of these pairs.
 pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
+
+/// G2_LENGTH specifies the number of bytes needed to represent a G2 element.
+///
+/// Note: A G2 element contains 2 Fp^2 elements.
+pub const G2_LENGTH: usize = 2 * FP2_LENGTH;
 
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.
