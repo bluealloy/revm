@@ -6,7 +6,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "gmp")] {
         // Silence aurora-engine-modexp when gmp is enabled
         use aurora_engine_modexp as _;
-        
+
         /// GMP-based modular exponentiation implementation
         pub fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
             use rug::{integer::Order::Msf, Integer};
