@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.2...revm-interpreter-v24.0.0) - 2025-07-21
+
+### Added
+
+- *(interpreter)* update CLZ cost ([#2739](https://github.com/bluealloy/revm/pull/2739))
+
+### Other
+
+- discard generic host implementation ([#2738](https://github.com/bluealloy/revm/pull/2738))
+- add release safety section for SharedMemory fn ([#2718](https://github.com/bluealloy/revm/pull/2718))
+- *(interpreter)* update docs for slice_mut and slice_range ([#2714](https://github.com/bluealloy/revm/pull/2714))
+
 ## [23.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.1...revm-interpreter-v23.0.2) - 2025-07-14
 
 ### Other

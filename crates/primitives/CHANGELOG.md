@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.0.0...revm-primitives-v20.1.0) - 2025-07-21
+
+### Added
+
+- expose sha3-keccak in revm and revm-primitives ([#2713](https://github.com/bluealloy/revm/pull/2713))
+
 ## [20.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v19.2.0...revm-primitives-v20.0.0) - 2025-06-19
 
 ### Added
