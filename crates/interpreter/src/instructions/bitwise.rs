@@ -172,12 +172,70 @@ pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 
 #[cfg(test)]
 mod tests {
+    use core::time::Duration;
+
     use crate::{
         host::DummyHost,
-        instructions::bitwise::{byte, clz, sar, shl, shr},
+        instructions::{
+            arithmetic::mul,
+            bitwise::{byte, clz, iszero, lt, sar, shl, shr},
+        },
         InstructionContext, Interpreter,
     };
     use primitives::{hardfork::SpecId, uint, U256};
+
+    #[test]
+    fn bench_clz() {
+        let mut interpreter = Interpreter::default();
+
+        let _ = interpreter.stack.push(U256::from(0x1_u128));
+
+        let mut elapsed = Duration::from_nanos(0);
+        for _ in 0..10_000_000 {
+            let _ = interpreter.stack.push(U256::from(0x1_u128));
+            let context = InstructionContext {
+                host: &mut DummyHost,
+                interpreter: &mut interpreter,
+            };
+            let time = std::time::Instant::now();
+            iszero(context);
+            elapsed += time.elapsed();
+            interpreter.stack.pop().unwrap();
+        }
+        println!("ISZERO took {:?}", elapsed);
+
+        let mut elapsed = Duration::from_nanos(0);
+        for _ in 0..10_000_000 {
+            let _ = interpreter.stack.push(U256::from(0x1_u128));
+            let context = InstructionContext {
+                host: &mut DummyHost,
+                interpreter: &mut interpreter,
+            };
+            let time = std::time::Instant::now();
+            clz(context);
+            elapsed += time.elapsed();
+            interpreter.stack.pop().unwrap();
+        }
+        println!("CLZ took {:?}", elapsed);
+
+        let mut elapsed = Duration::from_nanos(0);
+        for _ in 0..10_000_000 {
+            let _ = interpreter.stack.push(U256::from(0x1_u128));
+            let context = InstructionContext {
+                host: &mut DummyHost,
+                interpreter: &mut interpreter,
+            };
+            let time = std::time::Instant::now();
+            mul(context);
+            elapsed += time.elapsed();
+        }
+        println!("MUL took {:?}", elapsed);
+
+        // Output:
+        // ISZERO took 392.208017ms
+        // CLZ took 329.755764ms
+        // MUL took 1.072599878s
+    }
 
     #[test]
     fn test_shift_left() {
