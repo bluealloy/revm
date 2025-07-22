@@ -193,6 +193,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Halt the interpreter with the given result.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    #[cold]
+    #[inline(never)]
     pub fn halt(&mut self, result: InstructionResult) {
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
