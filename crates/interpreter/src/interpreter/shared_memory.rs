@@ -505,6 +505,42 @@ pub const fn num_words(len: usize) -> usize {
     len.saturating_add(31) / 32
 }
 
+/// Performs EVM memory resize.
+#[inline]
+#[must_use]
+pub fn resize_memory<Memory: MemoryTr>(
+    gas: &mut crate::Gas,
+    memory: &mut Memory,
+    offset: usize,
+    len: usize,
+) -> bool {
+    let new_num_words = num_words(offset.saturating_add(len));
+    if new_num_words > gas.memory().words_num {
+        resize_memory_cold(gas, memory, new_num_words)
+    } else {
+        true
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn resize_memory_cold<Memory: MemoryTr>(
+    gas: &mut crate::Gas,
+    memory: &mut Memory,
+    new_num_words: usize,
+) -> bool {
+    let cost = unsafe {
+        gas.memory_mut()
+            .record_new_len(new_num_words)
+            .unwrap_unchecked()
+    };
+    if !gas.record_cost(cost) {
+        return false;
+    }
+    memory.resize(new_num_words * 32);
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

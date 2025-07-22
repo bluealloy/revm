@@ -99,17 +99,15 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
-        match $interpreter.gas.record_memory_expansion(words_num) {
-            $crate::gas::MemoryExtensionResult::Extended => {
-                $interpreter.memory.resize(words_num * 32);
-            }
-            $crate::gas::MemoryExtensionResult::OutOfGas => {
-                $interpreter.halt($crate::InstructionResult::MemoryOOG);
-                return $ret;
-            }
-            $crate::gas::MemoryExtensionResult::Same => (), // no action
-        };
+        if !$crate::interpreter::resize_memory(
+            &mut $interpreter.gas,
+            &mut $interpreter.memory,
+            $offset,
+            $len,
+        ) {
+            $interpreter.halt($crate::InstructionResult::MemoryOOG);
+            return $ret;
+        }
     };
 }
 
