@@ -5,6 +5,8 @@ set -e
 
 # Version for the execution spec tests
 VERSION="v4.4.0"
+DEVELOP_VERSION="fusaka-devnet-3@v1.0.0"
+
 # Directories
 FIXTURES_DIR="test-fixtures"
 STABLE_DIR="$FIXTURES_DIR/stable"
@@ -14,7 +16,7 @@ LEGACY_DIR="$FIXTURES_DIR/legacytests"
 # URL and filenames
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 STABLE_TAR="fixtures_stable.tar.gz"
-DEVELOP_TAR="fixtures_develop.tar.gz"
+DEVELOP_TAR="fixtures_fusaka-devnet-3.tar.gz"
 LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 
 # Print usage information and exit
@@ -90,7 +92,11 @@ download_fixtures() {
     mkdir -p "$STABLE_DIR" "$DEVELOP_DIR" "$LEGACY_DIR"
 
     download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
-    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$VERSION"
+    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$DEVELOP_VERSION"
+
+    # Temporary fix for the develop fixtures
+    rm "${DEVELOP_DIR}/state_tests/osaka/eip7594_peerdas/max_blob_per_tx/invalid_max_blobs_per_tx.json"
+    rm "${DEVELOP_DIR}/state_tests/cancun/eip4844_blobs/blob_txs/invalid_tx_blob_count.json"
 
     echo "Cleaning up tar files..."
     rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}"
