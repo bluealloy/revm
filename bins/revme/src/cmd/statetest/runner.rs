@@ -324,7 +324,9 @@ pub fn execute_test_suite(
             cfg.spec = spec_name.to_spec_id();
 
             // Configure max blobs per spec
-            if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
+            if cfg.spec.is_enabled_in(SpecId::OSAKA) {
+                cfg.set_max_blobs_per_tx(6);
+            } else if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
                 cfg.set_max_blobs_per_tx(9);
             } else {
                 cfg.set_max_blobs_per_tx(6);
