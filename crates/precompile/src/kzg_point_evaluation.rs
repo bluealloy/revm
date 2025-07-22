@@ -52,7 +52,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let z = input[32..64].try_into().unwrap();
     let y = input[64..96].try_into().unwrap();
     let proof = input[144..192].try_into().unwrap();
-    if !crate::crypto::kzg::verify_kzg_proof(commitment, z, y, proof) {
+    if !crate::crypto::get_provider().verify_kzg_proof(commitment, z, y, proof) {
         return Err(PrecompileError::BlobVerifyKzgProofFailed);
     }
 

@@ -90,7 +90,7 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[0] = 0x04;
     uncompressed_pk[1..].copy_from_slice(pk);
 
-    crate::crypto::secp256r1::verify_signature(&msg.0, &sig.0, &uncompressed_pk)
+    crate::crypto::get_provider().secp256r1_verify_signature(&msg.0, &sig.0, &uncompressed_pk)
 }
 
 #[cfg(test)]

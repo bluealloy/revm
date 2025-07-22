@@ -133,7 +133,7 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = crate::crypto::modexp::modexp(base, exponent, modulus);
+    let output = crate::crypto::get_provider().modexp(base, exponent, modulus);
 
     // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(

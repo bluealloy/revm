@@ -33,7 +33,7 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let b = (*b_x, *b_y);
 
     // Get unpadded result from crypto backend
-    let unpadded_result = crate::crypto::bls12_381::p1_add_affine_bytes(a, b)?;
+    let unpadded_result = crate::crypto::get_provider().bls12_381_g1_add(a, b)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

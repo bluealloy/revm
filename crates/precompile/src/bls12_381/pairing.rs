@@ -52,7 +52,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
         pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
 
-    let result = crate::crypto::bls12_381::pairing_check_bytes(&pairs)?;
+    let result = crate::crypto::get_provider().bls12_381_pairing_check(&pairs)?;
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(

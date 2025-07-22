@@ -47,8 +47,7 @@ fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> 
     let sig = B512::from(sig);
     let msg = B256::from(msg);
 
-    match crate::crypto::secp256k1::ecrecover(&sig, recid, &msg) {
-        Ok(address) => Some(address.0),
-        Err(_) => None,
-    }
+    crate::crypto::get_provider()
+        .ecrecover(&sig, recid, &msg)
+        .map(|address| address.0)
 }
