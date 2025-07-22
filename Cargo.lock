@@ -3041,6 +3041,7 @@ dependencies = [
  "auto_impl",
  "once_cell",
  "revm",
+ "revm-common-test-util",
  "rstest",
  "serde",
  "serde_json",
@@ -3776,6 +3777,7 @@ name = "revm"
 version = "27.0.3"
 dependencies = [
  "revm-bytecode",
+ "revm-common-test-util",
  "revm-context",
  "revm-context-interface",
  "revm-database",
@@ -3800,6 +3802,14 @@ dependencies = [
  "phf",
  "revm-primitives",
  "serde",
+]
+
+[[package]]
+name = "revm-common-test-util"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

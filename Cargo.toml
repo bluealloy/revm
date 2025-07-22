@@ -22,6 +22,7 @@ members = [
 
     # utility
     "crates/statetest-types",
+    "crates/utils/common-test-util",
 
     # examples
     "examples/block_traces",

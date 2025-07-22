@@ -34,6 +34,7 @@ sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 alloy-primitives.workspace = true
 serde = { workspace = true, features = ["derive"] }
+revm-common-test-util = { path = "../utils/common-test-util", features = ["serde"] }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
