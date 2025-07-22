@@ -94,10 +94,6 @@ download_fixtures() {
     download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
     download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$DEVELOP_VERSION"
 
-    # Temporary fix for the develop fixtures
-    rm "${DEVELOP_DIR}/state_tests/osaka/eip7594_peerdas/max_blob_per_tx/invalid_max_blobs_per_tx.json"
-    rm "${DEVELOP_DIR}/state_tests/cancun/eip4844_blobs/blob_txs/invalid_tx_blob_count.json"
-
     echo "Cleaning up tar files..."
     rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}"
     
