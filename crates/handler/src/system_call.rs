@@ -26,7 +26,7 @@ use crate::{
 use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
-use primitives::{address, eip7825, Address, Bytes, TxKind};
+use primitives::{address, Address, Bytes, TxKind};
 use state::EvmState;
 
 /// The system address used for system calls.
@@ -62,7 +62,7 @@ impl SystemCallTx for TxEnv {
             .caller(caller)
             .data(data)
             .kind(TxKind::Call(system_contract_address))
-            .gas_limit(eip7825::TX_GAS_LIMIT_CAP)
+            .gas_limit(30_000_000)
             .build()
             .unwrap()
     }
@@ -197,7 +197,7 @@ mod tests {
     use super::*;
     use context::{
         result::{ExecutionResult, Output, SuccessReason},
-        Context,
+        Context, Transaction,
     };
     use database::InMemoryDB;
     use primitives::{b256, bytes, StorageKey, U256};
@@ -217,14 +217,17 @@ mod tests {
         let block_hash =
             b256!("0x1111111111111111111111111111111111111111111111111111111111111111");
 
-        let mut my_evm = Context::mainnet()
+        let mut evm = Context::mainnet()
             .with_db(db)
             // block with number 1 will set storage at slot 0.
             .modify_block_chained(|b| b.number = U256::ONE)
             .build_mainnet();
-        let output = my_evm
+        let output = evm
             .transact_system_call_finalize(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
+
+        // system call gas limit is 30M
+        assert_eq!(evm.ctx.tx().gas_limit(), 30_000_000);
 
         assert_eq!(
             output.result,
