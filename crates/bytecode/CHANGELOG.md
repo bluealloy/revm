@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.0.1...revm-bytecode-v6.0.2) - 2025-07-22
+
+### Other
+
+- Fix typo in EIP-7702 bytecode format comment (magic byte) ([#2733](https://github.com/bluealloy/revm/pull/2733))
+
 ## [6.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.0.0...revm-bytecode-v6.0.1) - 2025-07-03
 
 ### Other
