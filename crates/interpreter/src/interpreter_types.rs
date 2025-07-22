@@ -170,6 +170,14 @@ pub trait StackTr {
     #[must_use]
     fn push(&mut self, value: U256) -> bool;
 
+    /// Pushes slice to the stack.
+    ///
+    /// Returns `true` if push was successful, `false` if stack overflow.
+    ///
+    /// # Note
+    /// Error is internally set in interpreter.
+    fn push_slice(&mut self, slice: &[u8]) -> bool;
+
     /// Pushes B256 value to the stack.
     ///
     /// Internally converts B256 to U256 and then calls [`StackTr::push`].

@@ -48,6 +48,7 @@ impl Clone for Stack {
 }
 
 impl StackTr for Stack {
+    #[inline]
     fn len(&self) -> usize {
         self.len()
     }
@@ -75,16 +76,24 @@ impl StackTr for Stack {
         Some(unsafe { self.popn_top::<POPN>() })
     }
 
+    #[inline]
     fn exchange(&mut self, n: usize, m: usize) -> bool {
         self.exchange(n, m)
     }
 
+    #[inline]
     fn dup(&mut self, n: usize) -> bool {
         self.dup(n)
     }
 
+    #[inline]
     fn push(&mut self, value: U256) -> bool {
         self.push(value)
+    }
+
+    #[inline]
+    fn push_slice(&mut self, slice: &[u8]) -> bool {
+        self.push_slice_(slice)
     }
 }
 
@@ -292,14 +301,25 @@ impl Stack {
     /// if necessary.
     #[inline]
     pub fn push_slice(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
+        if self.push_slice_(slice) {
+            Ok(())
+        } else {
+            Err(InstructionResult::StackOverflow)
+        }
+    }
+
+    /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
+    /// if necessary.
+    #[inline]
+    fn push_slice_(&mut self, slice: &[u8]) -> bool {
         if slice.is_empty() {
-            return Ok(());
+            return true;
         }
 
         let n_words = slice.len().div_ceil(32);
         let new_len = self.data.len() + n_words;
         if new_len > STACK_LIMIT {
-            return Err(InstructionResult::StackOverflow);
+            return false;
         }
 
         // SAFETY: Length checked above.
@@ -322,7 +342,7 @@ impl Stack {
             }
 
             if partial_last_word.is_empty() {
-                return Ok(());
+                return true;
             }
 
             // Write limbs of partial last word
@@ -350,7 +370,7 @@ impl Stack {
             }
         }
 
-        Ok(())
+        true
     }
 
     /// Set a value at given index for the stack, where the top of the
