@@ -275,19 +275,6 @@ impl Precompiles {
         self.inner.get(address)
     }
 
-    /// Execute a precompile at the given address with input and gas limit.
-    #[inline]
-    pub fn execute(
-        &self,
-        address: &Address,
-        input: &[u8],
-        gas_limit: u64,
-    ) -> Option<PrecompileResult> {
-        self.inner
-            .get(address)
-            .map(|f| f(input, gas_limit, self.crypto.as_ref()))
-    }
-
     /// Returns the precompile for the given address.
     #[inline]
     pub fn get_mut(&mut self, address: &Address) -> Option<&mut PrecompileFn> {
