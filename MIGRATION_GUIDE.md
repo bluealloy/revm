@@ -1,3 +1,14 @@
+# v82 tag (revm v27.1.0) from v81 tag (revm v27.0.3)
+
+* `ContextTr` gained `Host` supertrait.
+  * Previously Host was implemented for any T that has ContextTr, this restricts specializations.
+  https://github.com/bluealloy/revm/issues/2732
+  * `Host` is moved to `revm-context-interface`
+  * If you custom struct that implement `ContextTr` you would need to manually implement `Host` trait, in most cases no action needed.
+* In `revm-interpreter`, fn `cast_slice_to_u256` was removed and `push_slice` fn is added to `StackTrait`.
+* `PrecompileOutput` now contains revert flag.
+  * It is safe to put to false.
+* In `kzg` and `blake2` modules few internal functions were made private or removed.
 
 # v80 tag (revm v27.0.0) -> v81 tag ( revm v27.0.1)
 
