@@ -1,7 +1,7 @@
 [package]
 name = "revm-database-interface"
 description = "Revm Database interface"
-version = "7.0.1"
+version = "7.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
