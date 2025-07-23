@@ -161,13 +161,13 @@ mod bls12_381_backend {
 
         // Compute P_minus_y = commitment - [y]G₁
         let minus_y = y_fr.neg();
-        let minus_y_g1 = g1.mul_bigint(minus_y.into_bigint()).into_affine();
-        let p_minus_y = (commitment_point.into_group() + minus_y_g1.into_group()).into_affine();
+        let minus_y_g1 = g1.mul_bigint(minus_y.into_bigint());
+        let p_minus_y = (commitment_point.into_group() + minus_y_g1).into_affine();
 
         // Compute X_minus_z = [τ]G₂ - [z]G₂
         let minus_z = z_fr.neg();
-        let minus_z_g2 = g2.mul_bigint(minus_z.into_bigint()).into_affine();
-        let x_minus_z = (tau_g2.into_group() + minus_z_g2.into_group()).into_affine();
+        let minus_z_g2 = g2.mul_bigint(minus_z.into_bigint());
+        let x_minus_z = (tau_g2.into_group() + minus_z_g2).into_affine();
 
         // Verify: P - y = Q * (X - z)
         // Using pairing_check([[P_minus_y, -G₂], [proof, X_minus_z]]) == 1
