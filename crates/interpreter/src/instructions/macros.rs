@@ -99,17 +99,15 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
-        match $interpreter.gas.record_memory_expansion(words_num) {
-            $crate::gas::MemoryExtensionResult::Extended => {
-                $interpreter.memory.resize(words_num * 32);
-            }
-            $crate::gas::MemoryExtensionResult::OutOfGas => {
-                $interpreter.halt($crate::InstructionResult::MemoryOOG);
-                return $ret;
-            }
-            $crate::gas::MemoryExtensionResult::Same => (), // no action
-        };
+        if !$crate::interpreter::resize_memory(
+            &mut $interpreter.gas,
+            &mut $interpreter.memory,
+            $offset,
+            $len,
+        ) {
+            $interpreter.halt($crate::InstructionResult::MemoryOOG);
+            return $ret;
+        }
     };
 }
 
@@ -124,14 +122,31 @@ macro_rules! popn {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! _count {
+    (@count) => { 0 };
+    (@count $head:tt $($tail:tt)*) => { 1 + _count!(@count $($tail)*) };
+    ($($arg:tt)*) => { _count!(@count $($arg)*) };
+}
+
 /// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
 #[macro_export]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreter:expr $(,$ret:expr)? ) => {
+        /*
         let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
             $interpreter.halt($crate::InstructionResult::StackUnderflow);
             return $($ret)?;
         };
+        */
+
+        // Workaround for https://github.com/rust-lang/rust/issues/144329.
+        if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
+            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+            return $($ret)?;
+        }
+        let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
     };
 }
 

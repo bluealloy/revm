@@ -14,7 +14,7 @@ pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
-pub use shared_memory::{num_words, SharedMemory};
+pub use shared_memory::{num_words, resize_memory, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
 // imports
@@ -183,6 +183,13 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
 }
 
 impl<IW: InterpreterTypes> Interpreter<IW> {
+    /// Performs EVM memory resize.
+    #[inline]
+    #[must_use]
+    pub fn resize_memory(&mut self, offset: usize, len: usize) -> bool {
+        resize_memory(&mut self.gas, &mut self.memory, offset, len)
+    }
+
     /// Takes the next action from the control and returns it.
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
@@ -193,6 +200,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Halt the interpreter with the given result.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    #[cold]
+    #[inline(never)]
     pub fn halt(&mut self, result: InstructionResult) {
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
