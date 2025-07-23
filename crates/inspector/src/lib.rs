@@ -23,7 +23,7 @@ mod inspector_tests;
 
 /// Inspector implementations.
 pub mod inspectors {
-    #[cfg(all(feature = "std", feature = "serde-json"))]
+    #[cfg(feature = "tracer")]
     pub use super::eip3155::TracerEip3155;
     pub use super::gas::GasInspector;
 }
