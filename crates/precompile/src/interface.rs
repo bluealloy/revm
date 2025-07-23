@@ -1,6 +1,6 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
-use core::fmt;
+use core::fmt::{self, Debug};
 use primitives::Bytes;
 use std::string::String;
 
@@ -46,8 +46,17 @@ impl PrecompileOutput {
     }
 }
 
-/// Precompile function type. Takes input and gas limit and returns precompile result.
-pub type PrecompileFn = fn(&[u8], u64) -> PrecompileResult;
+/// Crypto operations trait for precompiles.
+pub trait Crypto: Send + Sync + Debug {
+    /// Clone box type
+    fn clone_box(&self) -> Box<dyn Crypto>;
+
+    /// Compute SHA-256 hash
+    fn sha256(&self, input: &[u8]) -> [u8; 32];
+}
+
+/// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
+pub type PrecompileFn = fn(&[u8], u64, &dyn Crypto) -> PrecompileResult;
 
 /// Precompile error type.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -119,5 +128,21 @@ impl fmt::Display for PrecompileError {
             Self::Other(s) => s,
         };
         f.write_str(s)
+    }
+}
+
+/// Default implementation of the Crypto trait using the existing crypto libraries.
+#[derive(Clone, Debug)]
+pub struct DefaultCrypto;
+
+impl Crypto for DefaultCrypto {
+    fn clone_box(&self) -> Box<dyn Crypto> {
+        Box::new(self.clone())
+    }
+
+    fn sha256(&self, input: &[u8]) -> [u8; 32] {
+        use sha2::Digest;
+        let output = sha2::Sha256::digest(input);
+        output.into()
     }
 }

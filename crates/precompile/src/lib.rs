@@ -67,12 +67,34 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 }
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
-#[derive(Clone, Default, Debug)]
+#[derive(Debug)]
 pub struct Precompiles {
     /// Precompiles
     inner: HashMap<Address, PrecompileFn>,
     /// Addresses of precompile
     addresses: HashSet<Address>,
+    /// Crypto implementation
+    crypto: Box<dyn Crypto>,
+}
+
+impl Clone for Precompiles {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            addresses: self.addresses.clone(),
+            crypto: self.crypto.clone_box(),
+        }
+    }
+}
+
+impl Default for Precompiles {
+    fn default() -> Self {
+        Self {
+            inner: Default::default(),
+            addresses: Default::default(),
+            crypto: Box::new(DefaultCrypto),
+        }
+    }
 }
 
 impl Precompiles {
@@ -87,6 +109,26 @@ impl Precompiles {
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::OSAKA => Self::osaka(),
         }
+    }
+
+    /// Creates a new Precompiles instance with a custom crypto implementation.
+    pub fn with_crypto(spec: PrecompileSpecId, crypto: Box<dyn Crypto>) -> Self {
+        let base = Self::new(spec).clone();
+        Self {
+            inner: base.inner,
+            addresses: base.addresses,
+            crypto,
+        }
+    }
+
+    /// Returns the crypto implementation.
+    pub fn crypto(&self) -> &dyn Crypto {
+        &*self.crypto
+    }
+
+    /// Sets a custom crypto implementation.
+    pub fn set_crypto(&mut self, crypto: Box<dyn Crypto>) {
+        self.crypto = crypto;
     }
 
     /// Returns precompiles for Homestead spec.
@@ -278,7 +320,11 @@ impl Precompiles {
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
-        Self { inner, addresses }
+        Self {
+            inner,
+            addresses,
+            crypto: self.crypto.clone_box(),
+        }
     }
 
     /// Returns intersection of `self` and `other`.
@@ -295,7 +341,11 @@ impl Precompiles {
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
-        Self { inner, addresses }
+        Self {
+            inner,
+            addresses,
+            crypto: self.crypto.clone_box(),
+        }
     }
 }
 

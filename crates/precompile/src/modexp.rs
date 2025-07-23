@@ -45,7 +45,11 @@ fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn byzantium_run(
+    input: &[u8],
+    gas_limit: u64,
+    _crypto: &dyn crate::Crypto,
+) -> PrecompileResult {
     run_inner::<_, false>(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
@@ -53,7 +57,7 @@ pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-2565>
 /// Gas cost of berlin is modified from byzantium.
-pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn berlin_run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     run_inner::<_, false>(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
@@ -61,7 +65,7 @@ pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-7823>
 /// Gas cost of berlin is modified from byzantium.
-pub fn osaka_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn osaka_run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     run_inner::<_, true>(input, gas_limit, 500, |a, b, c, d| {
         osaka_gas_calc(a, b, c, d)
     })

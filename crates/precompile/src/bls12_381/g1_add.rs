@@ -14,7 +14,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_ADD_ADDRE
 /// Output is an encoding of addition operation result - single G1 point (`128`
 /// bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
-pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn g1_add(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     if G1_ADD_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

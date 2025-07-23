@@ -46,8 +46,8 @@ pub const P256VERIFY_OSAKA: PrecompileWithAddress =
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
+pub fn p256_verify(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE, crypto)
 }
 
 /// secp256r1 precompile logic with Osaka gas cost. It takes the input bytes sent to the precompile
@@ -59,15 +59,24 @@ pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
+pub fn p256_verify_osaka(
+    input: &[u8],
+    gas_limit: u64,
+    crypto: &dyn crate::Crypto,
+) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA, crypto)
 }
 
-fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
+fn p256_verify_inner(
+    input: &[u8],
+    gas_limit: u64,
+    gas_cost: u64,
+    crypto: &dyn crate::Crypto,
+) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
-    let result = if verify_impl(input).is_some() {
+    let result = if verify_impl(input, crypto).is_some() {
         B256::with_last_byte(1).into()
     } else {
         Bytes::new()
@@ -77,7 +86,7 @@ fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileR
 
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
-pub fn verify_impl(input: &[u8]) -> Option<()> {
+pub fn verify_impl(input: &[u8], _crypto: &dyn crate::Crypto) -> Option<()> {
     if input.len() != 160 {
         return None;
     }
