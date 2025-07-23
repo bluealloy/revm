@@ -68,5 +68,5 @@ serde = [
 
 tracer = ["std", "serde", "dep:serde_json"]
 
-# deprecated please use [`tracer`] feature instead
+# Deprecated, please use `tracer` feature instead.
 serde-json = ["tracer"]
