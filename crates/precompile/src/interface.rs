@@ -6,7 +6,7 @@ use primitives::Bytes;
 extern crate alloc;
 use alloc::{boxed::Box, string::String, vec::Vec};
 
-use crate::bls12_381::{G1Point, G2Point};
+use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
 /// A precompile operation result type
 ///
@@ -115,7 +115,7 @@ pub trait Crypto: Send + Sync + Debug {
     /// BLS12-381 G1 multi-scalar multiplication (returns 96-byte unpadded G1 point)
     fn bls12_381_g1_msm<'a>(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<(G1Point, [u8; 32]), PrecompileError>> + 'a>,
+        pairs: Box<dyn Iterator<Item = Result<G1PointScalar, PrecompileError>> + 'a>,
     ) -> Result<[u8; 96], PrecompileError>;
 
     /// BLS12-381 G2 addition (returns 192-byte unpadded G2 point)
@@ -124,7 +124,7 @@ pub trait Crypto: Send + Sync + Debug {
     /// BLS12-381 G2 multi-scalar multiplication (returns 192-byte unpadded G2 point)
     fn bls12_381_g2_msm<'a>(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<(G2Point, [u8; 32]), PrecompileError>> + 'a>,
+        pairs: Box<dyn Iterator<Item = Result<G2PointScalar, PrecompileError>> + 'a>,
     ) -> Result<[u8; 192], PrecompileError>;
 
     /// BLS12-381 pairing check.
@@ -225,12 +225,14 @@ impl Crypto for DefaultCrypto {
         Box::new(self.clone())
     }
 
+    #[inline]
     fn sha256(&self, input: &[u8]) -> [u8; 32] {
         use sha2::Digest;
         let output = sha2::Sha256::digest(input);
         output.into()
     }
 
+    #[inline]
     fn ripemd160(&self, input: &[u8]) -> [u8; 32] {
         use ripemd::Digest;
         let mut hasher = ripemd::Ripemd160::new();
@@ -241,10 +243,12 @@ impl Crypto for DefaultCrypto {
         output
     }
 
+    #[inline]
     fn bn128_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
         crate::bn128::crypto_backend::g1_point_add(p1, p2)
     }
 
+    #[inline]
     fn bn128_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
         crate::bn128::crypto_backend::g1_point_mul(point, scalar)
     }
@@ -253,6 +257,7 @@ impl Crypto for DefaultCrypto {
         crate::bn128::crypto_backend::pairing_check(pairs)
     }
 
+    #[inline]
     fn secp256k1_ecrecover(
         &self,
         sig: &[u8; 64],
@@ -267,6 +272,7 @@ impl Crypto for DefaultCrypto {
         Ok(crate::modexp::modexp(base, exp, modulus))
     }
 
+    #[inline]
     fn blake2_compress(
         &self,
         rounds: u32,
@@ -309,7 +315,7 @@ impl Crypto for DefaultCrypto {
 
     fn bls12_381_g1_msm<'a>(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<(G1Point, [u8; 32]), PrecompileError>> + 'a>,
+        pairs: Box<dyn Iterator<Item = Result<G1PointScalar, PrecompileError>> + 'a>,
     ) -> Result<[u8; 96], PrecompileError> {
         crate::bls12_381::crypto_backend::p1_msm_bytes(pairs)
     }
@@ -320,7 +326,7 @@ impl Crypto for DefaultCrypto {
 
     fn bls12_381_g2_msm<'a>(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<(G2Point, [u8; 32]), PrecompileError>> + 'a>,
+        pairs: Box<dyn Iterator<Item = Result<G2PointScalar, PrecompileError>> + 'a>,
     ) -> Result<[u8; 192], PrecompileError> {
         crate::bls12_381::crypto_backend::p2_msm_bytes(pairs)
     }
