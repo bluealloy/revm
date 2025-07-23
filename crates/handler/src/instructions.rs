@@ -1,6 +1,6 @@
 use auto_impl::auto_impl;
 use interpreter::{
-    instructions::{instruction_table, InstructionTable},
+    instructions::{instruction_table_tail, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
 use std::boxed::Box;
@@ -42,7 +42,7 @@ where
 {
     /// Returns `EthInstructions` with mainnet spec.
     pub fn new_mainnet() -> Self {
-        Self::new(instruction_table::<WIRE, HOST>())
+        Self::new(instruction_table_tail::<WIRE, HOST>())
     }
 
     /// Rerurns new `EthInstructions` with custom instruction table.

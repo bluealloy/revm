@@ -22,6 +22,15 @@ impl<H: ?Sized, ITy: InterpreterTypes> std::fmt::Debug for InstructionContext<'_
 }
 
 impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
+    /// Reborrows the context.
+    #[inline]
+    pub fn reborrow<'b>(&'b mut self) -> InstructionContext<'b, H, ITy> {
+        InstructionContext {
+            interpreter: self.interpreter,
+            host: self.host,
+        }
+    }
+
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
