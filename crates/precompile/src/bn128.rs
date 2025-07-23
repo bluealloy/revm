@@ -344,7 +344,13 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
+        let outcome = run_mul(
+            &input,
+            BYZANTIUM_MUL_GAS_COST,
+            40_000,
+            &crate::DefaultCrypto,
+        )
+        .unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Out of gas test
@@ -356,7 +362,12 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999, &crate::DefaultCrypto);
+        let res = run_mul(
+            &input,
+            BYZANTIUM_MUL_GAS_COST,
+            39_999,
+            &crate::DefaultCrypto,
+        );
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Zero multiplication test
@@ -374,7 +385,13 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
+        let outcome = run_mul(
+            &input,
+            BYZANTIUM_MUL_GAS_COST,
+            40_000,
+            &crate::DefaultCrypto,
+        )
+        .unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // No input test
@@ -386,7 +403,13 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
+        let outcome = run_mul(
+            &input,
+            BYZANTIUM_MUL_GAS_COST,
+            40_000,
+            &crate::DefaultCrypto,
+        )
+        .unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Point not on curve fail
@@ -398,7 +421,12 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto);
+        let res = run_mul(
+            &input,
+            BYZANTIUM_MUL_GAS_COST,
+            40_000,
+            &crate::DefaultCrypto,
+        );
         assert!(matches!(
             res,
             Err(PrecompileError::Bn128AffineGFailedToCreate)
