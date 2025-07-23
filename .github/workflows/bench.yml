@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -Csymbol-mangling-version=v0
+  # RUSTFLAGS: -Csymbol-mangling-version=v0
 
 jobs:
   codspeed:
