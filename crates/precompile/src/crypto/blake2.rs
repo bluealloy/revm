@@ -1,7 +1,5 @@
 //! Blake2 cryptographic implementations
 
-// Silence arrayref when AVX2 is not available
-#[cfg(not(all(target_feature = "avx2", feature = "std")))]
 use arrayref as _;
 
 // Re-export the main compress function for external use
