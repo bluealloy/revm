@@ -2,7 +2,6 @@
 //! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost_u32;
 use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use sha2::Digest;
 
 /// SHA-256 precompile
 pub const SHA256: PrecompileWithAddress =
@@ -34,20 +33,12 @@ pub fn sha256_run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> P
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
 /// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003)
-pub fn ripemd160_run(
-    input: &[u8],
-    gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
-) -> PrecompileResult {
+pub fn ripemd160_run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
     if gas_used > gas_limit {
         Err(PrecompileError::OutOfGas)
     } else {
-        let mut hasher = ripemd::Ripemd160::new();
-        hasher.update(input);
-
-        let mut output = [0u8; 32];
-        hasher.finalize_into((&mut output[12..]).into());
+        let output = crypto.ripemd160(input);
         Ok(PrecompileOutput::new(gas_used, output.to_vec().into()))
     }
 }

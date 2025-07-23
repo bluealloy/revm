@@ -53,6 +53,9 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Compute SHA-256 hash
     fn sha256(&self, input: &[u8]) -> [u8; 32];
+
+    /// Compute RIPEMD-160 hash
+    fn ripemd160(&self, input: &[u8]) -> [u8; 32];
 }
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
@@ -144,5 +147,15 @@ impl Crypto for DefaultCrypto {
         use sha2::Digest;
         let output = sha2::Sha256::digest(input);
         output.into()
+    }
+
+    fn ripemd160(&self, input: &[u8]) -> [u8; 32] {
+        use ripemd::Digest;
+        let mut hasher = ripemd::Ripemd160::new();
+        hasher.update(input);
+
+        let mut output = [0u8; 32];
+        hasher.finalize_into((&mut output[12..]).into());
+        output
     }
 }
