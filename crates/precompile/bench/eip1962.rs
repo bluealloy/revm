@@ -22,7 +22,15 @@ pub fn add_bn128_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     let input = Bytes::from(ecadd_input);
 
     group.bench_function("bn128 add precompile", |b| {
-        b.iter(|| run_add(&input, ISTANBUL_ADD_GAS_COST, 150).unwrap())
+        b.iter(|| {
+            run_add(
+                &input,
+                ISTANBUL_ADD_GAS_COST,
+                150,
+                &revm_precompile::DefaultCrypto,
+            )
+            .unwrap()
+        })
     });
 }
 
@@ -38,7 +46,15 @@ pub fn add_bn128_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     let input = Bytes::from(ecmul_input);
 
     group.bench_function("bn128 mul precompile", |b| {
-        b.iter(|| run_mul(&input, ISTANBUL_MUL_GAS_COST, 6000).unwrap())
+        b.iter(|| {
+            run_mul(
+                &input,
+                ISTANBUL_MUL_GAS_COST,
+                6000,
+                &revm_precompile::DefaultCrypto,
+            )
+            .unwrap()
+        })
     });
 }
 
@@ -69,6 +85,7 @@ pub fn add_bn128_pair_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>)
                 ISTANBUL_PAIR_PER_POINT,
                 ISTANBUL_PAIR_BASE,
                 u64::MAX,
+                &revm_precompile::DefaultCrypto,
             )
             .unwrap()
         })

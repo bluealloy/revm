@@ -30,7 +30,11 @@ pub const ECRECOVER: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(1), ec_recover_run);
 
 /// `ecrecover` precompile function. Read more about input and output format in [this module docs](self).
-pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn ec_recover_run(
+    input: &[u8],
+    gas_limit: u64,
+    _crypto: &dyn crate::Crypto,
+) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {

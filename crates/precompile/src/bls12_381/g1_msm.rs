@@ -20,7 +20,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRE
 /// Output is an encoding of multi-scalar-multiplication operation result - single G1
 /// point (`128` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
-pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn g1_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -63,7 +63,7 @@ mod test {
     #[test]
     fn bls_g1multiexp_g1_not_on_curve_but_in_subgroup() {
         let input = Bytes::from(hex!("000000000000000000000000000000000a2833e497b38ee3ca5c62828bf4887a9f940c9e426c7890a759c20f248c23a7210d2432f4c98a514e524b5184a0ddac00000000000000000000000000000000150772d56bf9509469f9ebcd6e47570429fd31b0e262b66d512e245c38ec37255529f2271fd70066473e393a8bead0c30000000000000000000000000000000000000000000000000000000000000000"));
-        let fail = g1_msm(&input, G1_MSM_BASE_GAS_FEE);
+        let fail = g1_msm(&input, G1_MSM_BASE_GAS_FEE, &crate::DefaultCrypto);
         assert_eq!(
             fail,
             Err(PrecompileError::Other(

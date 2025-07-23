@@ -1,7 +1,7 @@
 [package]
 name = "revm-primitives"
 description = "Revm primitives types"
-version = "20.0.0"
+version = "20.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -26,15 +26,11 @@ num_enum = { version = "0.7.3", default-features = false }
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
-
 [features]
 default = ["std"]
-std = [
-	"alloy-primitives/std",
-	"serde?/std",
-	"num_enum/std"
-]
+std = ["alloy-primitives/std", "serde?/std", "num_enum/std"]
 serde = ["dep:serde", "alloy-primitives/serde"]
+map-foldhash = ["alloy-primitives/map-foldhash"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]

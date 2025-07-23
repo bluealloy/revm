@@ -101,6 +101,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
+
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
             gas: Gas::new(gas_limit),
@@ -120,7 +121,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
         };
 
-        match (*precompile)(input_bytes, gas_limit) {
+        match (*precompile)(input_bytes, gas_limit, self.precompiles.crypto()) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");

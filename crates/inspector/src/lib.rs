@@ -6,7 +6,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod count_inspector;
-#[cfg(all(feature = "std", feature = "serde-json"))]
+#[cfg(feature = "tracer")]
 mod eip3155;
 mod either;
 mod gas;
@@ -23,7 +23,7 @@ mod inspector_tests;
 
 /// Inspector implementations.
 pub mod inspectors {
-    #[cfg(all(feature = "std", feature = "serde-json"))]
+    #[cfg(feature = "tracer")]
     pub use super::eip3155::TracerEip3155;
     pub use super::gas::GasInspector;
 }

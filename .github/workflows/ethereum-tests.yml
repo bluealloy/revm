@@ -22,13 +22,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Checkout ethereum/tests
-        uses: actions/checkout@v4
-        with:
-          repository: ethereum/legacytests
-          path: legacytests
-          submodules: recursive
-
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -41,9 +34,4 @@ jobs:
 
       - name: Run tests
         run: |
-          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} \
-          ${{ matrix.target != 'i686-unknown-linux-gnu' && '--features gmp' || '' }} \
-          -p revme -- statetest \
-          legacytests/Cancun/GeneralStateTests/ \
-          legacytests/Constantinople/GeneralStateTests/
           ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}

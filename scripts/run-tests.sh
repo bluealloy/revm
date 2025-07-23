@@ -5,15 +5,19 @@ set -e
 
 # Version for the execution spec tests
 VERSION="v4.4.0"
+DEVELOP_VERSION="fusaka-devnet-3@v1.0.0"
+
 # Directories
 FIXTURES_DIR="test-fixtures"
 STABLE_DIR="$FIXTURES_DIR/stable"
-DEVELOP_DIR="$FIXTURES_DIR/develop" 
+DEVELOP_DIR="$FIXTURES_DIR/develop"
+LEGACY_DIR="$FIXTURES_DIR/legacytests" 
 
 # URL and filenames
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 STABLE_TAR="fixtures_stable.tar.gz"
-DEVELOP_TAR="fixtures_develop.tar.gz"
+DEVELOP_TAR="fixtures_fusaka-devnet-3.tar.gz"
+LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 
 # Print usage information and exit
 usage() {
@@ -58,7 +62,7 @@ clean() {
 
 # Check if all required fixture directories exist
 check_fixtures() {
-    if [ -d "$STABLE_DIR" ] && [ -d "$DEVELOP_DIR" ]; then
+    if [ -d "$STABLE_DIR" ] && [ -d "$DEVELOP_DIR" ] && [ -d "$LEGACY_DIR" ]; then
         return 0
     else
         return 1
@@ -85,13 +89,18 @@ download_and_extract() {
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
-    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR"
+    mkdir -p "$STABLE_DIR" "$DEVELOP_DIR" "$LEGACY_DIR"
 
     download_and_extract "$STABLE_DIR" "$STABLE_TAR" "stable" "$VERSION"
-    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$VERSION"
+    download_and_extract "$DEVELOP_DIR" "$DEVELOP_TAR" "develop" "$DEVELOP_VERSION"
 
     echo "Cleaning up tar files..."
     rm "${FIXTURES_DIR}/${STABLE_TAR}" "${FIXTURES_DIR}/${DEVELOP_TAR}"
+    
+    # Clone legacytests repository
+    echo "Cloning legacytests repository..."
+    git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+    
     echo "Fixtures download and extraction complete."
 }
 
@@ -123,6 +132,9 @@ run_tests() {
 
     echo "Running develop statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$DEVELOP_DIR/state_tests"
+    
+    echo "Running legacy tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Cancun/GeneralStateTests"
 }
 
 ##############################
