@@ -35,7 +35,6 @@ cfg_if::cfg_if! {
     }
 }
 
-#[cfg(not(target_feature = "avx2"))]
 use arrayref as _;
 
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]

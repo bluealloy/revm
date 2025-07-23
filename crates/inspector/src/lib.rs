@@ -6,7 +6,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod count_inspector;
-#[cfg(all(feature = "std", feature = "serde-json"))]
+#[cfg(feature = "tracer")]
 mod eip3155;
 mod either;
 mod gas;
