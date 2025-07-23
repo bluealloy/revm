@@ -159,6 +159,7 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
+        assume!(!self.data.is_empty());
         self.data.pop().unwrap_unchecked()
     }
 
@@ -170,8 +171,8 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
-        let len = self.data.len();
-        self.data.get_unchecked_mut(len - 1)
+        assume!(!self.data.is_empty());
+        self.data.last_mut().unwrap_unchecked()
     }
 
     /// Pops `N` values from the stack.
@@ -182,14 +183,8 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
-        if N == 0 {
-            return [U256::ZERO; N];
-        }
-        let mut result = [U256::ZERO; N];
-        for v in &mut result {
-            *v = self.data.pop().unwrap_unchecked();
-        }
-        result
+        assume!(self.data.len() >= N);
+        core::array::from_fn(|_| unsafe { self.pop_unsafe() })
     }
 
     /// Pops `N` values from the stack and returns the top of the stack.

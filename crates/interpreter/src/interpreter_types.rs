@@ -197,7 +197,7 @@ pub trait StackTr {
     /// Returns top value from the stack.
     #[must_use]
     fn top(&mut self) -> Option<&mut U256> {
-        self.popn_top::<0>().map(|(_, top)| top)
+        self.popn_top().map(|([], top)| top)
     }
 
     /// Pops one value from the stack.
