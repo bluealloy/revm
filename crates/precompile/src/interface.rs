@@ -86,8 +86,8 @@ pub trait Crypto: Send + Sync + Debug {
         &self,
         rounds: u32,
         h: &mut [u64; 8],
-        m: &[u64; 16],
-        t: &[u64; 2],
+        m: [u64; 16],
+        t: [u64; 2],
         f: bool,
     ) -> Result<(), PrecompileError>;
 
@@ -271,11 +271,11 @@ impl Crypto for DefaultCrypto {
         &self,
         rounds: u32,
         h: &mut [u64; 8],
-        m: &[u64; 16],
-        t: &[u64; 2],
+        m: [u64; 16],
+        t: [u64; 2],
         f: bool,
     ) -> Result<(), PrecompileError> {
-        crate::blake2::algo::compress(rounds as usize, h, *m, *t, f);
+        crate::blake2::algo::compress(rounds as usize, h, m, t, f);
         Ok(())
     }
 
