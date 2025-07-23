@@ -213,7 +213,7 @@ impl Precompiles {
                 if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
                     let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
                 } else {
-                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
+                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
 
