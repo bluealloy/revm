@@ -1,5 +1,27 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+
+# v83 
+date: 23.07.2025
+
+Fusaka devnet-3 support. Performance regresion fixes.
+
+`revm-primitives`: 20.0.0 -> 20.1.0 (✓ API compatible changes)
+`revm-bytecode`: 6.0.1 -> 6.1.0 (✓ API compatible changes)
+`revm-database-interface`: 7.0.1 -> 7.0.2 (✓ API compatible changes)
+`revm-context-interface`: 8.0.1 -> 9.0.0 (⚠ API breaking changes)
+`revm-context`: 8.0.3 -> 8.0.4 (✓ API compatible changes)
+`revm-interpreter`: 23.0.2 -> 24.0.0 (⚠ API breaking changes)
+`revm-precompile`: 24.0.1 -> 25.0.0 (⚠ API breaking changes)
+`revm-handler`: 8.0.3 -> 8.1.0 (✓ API compatible changes)
+`revm-inspector`: 8.0.3 -> 8.1.0 (✓ API compatible changes)
+`revm`: 27.0.3 -> 27.1.0 (✓ API compatible changes)
+`revme`: 7.0.4 -> 7.1.0 (✓ API compatible changes)
+`op-revm`: 8.0.3 -> 8.1.0 (✓ API compatible changes)
+`revm-state`: 7.0.1 -> 7.0.2
+`revm-database`: 7.0.1 -> 7.0.2
+`revm-statetest-types`: 8.0.4 -> 8.0.5
+
 # v82
 date 14.07.2025
 
