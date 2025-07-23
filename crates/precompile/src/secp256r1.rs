@@ -9,7 +9,10 @@
 use crate::{
     u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
+use p256::{
+    ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
+    EncodedPoint,
+};
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// Address of secp256r1 precompile.
@@ -84,21 +87,18 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     // r, s: signature
     let sig = <&B512>::try_from(&input[32..96]).unwrap();
     // x, y: public key
-    let pk = &input[96..160];
+    let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    // Prepend 0x04 to the public key: uncompressed form
-    let mut uncompressed_pk = [0u8; 65];
-    uncompressed_pk[0] = 0x04;
-    uncompressed_pk[1..].copy_from_slice(pk);
-
-    verify_signature(msg.0, sig.0, uncompressed_pk)
+    verify_signature(msg.0, sig.0, pk.0)
 }
 
-fn verify_signature(msg: [u8; 32], sig: [u8; 64], uncompressed_pk: [u8; 65]) -> Option<()> {
+fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
     // Can fail only if the input is not exact length.
     let signature = Signature::from_slice(&sig).ok()?;
-    // Can fail if the input is not valid, so we have to propagate the error.
-    let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
+    // Decode the public key bytes (x,y coordinates) using EncodedPoint
+    let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
+    // Create VerifyingKey from the encoded point
+    let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
 
     public_key.verify_prehash(&msg, &signature).ok()
 }
