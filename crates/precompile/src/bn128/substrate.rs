@@ -151,7 +151,7 @@ pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(super) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
+pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
     let p1 = read_g1_point(p1_bytes)?;
     let p2 = read_g1_point(p2_bytes)?;
     let result = p1 + p2;
@@ -160,7 +160,7 @@ pub(super) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64],
 
 /// Performs a G1 scalar multiplication.
 #[inline]
-pub(super) fn g1_point_mul(
+pub(crate) fn g1_point_mul(
     point_bytes: &[u8],
     fr_bytes: &[u8],
 ) -> Result<[u8; 64], PrecompileError> {
@@ -176,7 +176,7 @@ pub(super) fn g1_point_mul(
 /// Note: If the input is empty, this function returns true.
 /// This is different to EIP2537 which disallows the empty input.
 #[inline]
-pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+pub(crate) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
     let mut parsed_pairs = Vec::with_capacity(pairs.len());
 
     for (g1_bytes, g2_bytes) in pairs {

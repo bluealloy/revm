@@ -7,11 +7,9 @@ use std::vec::Vec;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
-        mod substrate;
-        use substrate::{g1_point_add, g1_point_mul, pairing_check};
+        pub(crate) mod substrate;
     } else {
-        mod arkworks;
-        use arkworks::{g1_point_add, g1_point_mul, pairing_check};
+        pub(crate) mod arkworks;
     }
 }
 
@@ -155,7 +153,7 @@ pub fn run_add(
     input: &[u8],
     gas_cost: u64,
     gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
+    crypto: &dyn crate::Crypto,
 ) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -165,7 +163,7 @@ pub fn run_add(
 
     let p1_bytes = &input[..G1_LEN];
     let p2_bytes = &input[G1_LEN..];
-    let output = g1_point_add(p1_bytes, p2_bytes)?;
+    let output = crypto.bn128_add(p1_bytes, p2_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
@@ -175,7 +173,7 @@ pub fn run_mul(
     input: &[u8],
     gas_cost: u64,
     gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
+    crypto: &dyn crate::Crypto,
 ) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -185,7 +183,7 @@ pub fn run_mul(
 
     let point_bytes = &input[..G1_LEN];
     let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
-    let output = g1_point_mul(point_bytes, scalar_bytes)?;
+    let output = crypto.bn128_mul(point_bytes, scalar_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
@@ -196,7 +194,7 @@ pub fn run_pair(
     pair_per_point_cost: u64,
     pair_base_cost: u64,
     gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
+    crypto: &dyn crate::Crypto,
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
@@ -225,7 +223,7 @@ pub fn run_pair(
         points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    let pairing_result = pairing_check(&points)?;
+    let pairing_result = crypto.bn128_pairing_check(&points)?;
     Ok(PrecompileOutput::new(
         gas_used,
         bool_to_bytes32(pairing_result),

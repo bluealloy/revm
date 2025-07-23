@@ -56,6 +56,15 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Compute RIPEMD-160 hash
     fn ripemd160(&self, input: &[u8]) -> [u8; 32];
+
+    /// Perform BN128 point addition on G1
+    fn bn128_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError>;
+
+    /// Perform BN128 scalar multiplication on G1
+    fn bn128_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError>;
+
+    /// Perform BN128 pairing check
+    fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError>;
 }
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
@@ -157,5 +166,35 @@ impl Crypto for DefaultCrypto {
         let mut output = [0u8; 32];
         hasher.finalize_into((&mut output[12..]).into());
         output
+    }
+
+    fn bn128_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                crate::bn128::substrate::g1_point_add(p1, p2)
+            } else {
+                crate::bn128::arkworks::g1_point_add(p1, p2)
+            }
+        }
+    }
+
+    fn bn128_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                crate::bn128::substrate::g1_point_mul(point, scalar)
+            } else {
+                crate::bn128::arkworks::g1_point_mul(point, scalar)
+            }
+        }
+    }
+
+    fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                crate::bn128::substrate::pairing_check(pairs)
+            } else {
+                crate::bn128::arkworks::pairing_check(pairs)
+            }
+        }
     }
 }
