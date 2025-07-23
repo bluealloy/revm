@@ -242,33 +242,15 @@ impl Crypto for DefaultCrypto {
     }
 
     fn bn128_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")] {
-                crate::bn128::substrate::g1_point_add(p1, p2)
-            } else {
-                crate::bn128::arkworks::g1_point_add(p1, p2)
-            }
-        }
+        crate::bn128::crypto_backend::g1_point_add(p1, p2)
     }
 
     fn bn128_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")] {
-                crate::bn128::substrate::g1_point_mul(point, scalar)
-            } else {
-                crate::bn128::arkworks::g1_point_mul(point, scalar)
-            }
-        }
+        crate::bn128::crypto_backend::g1_point_mul(point, scalar)
     }
 
     fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "bn")] {
-                crate::bn128::substrate::pairing_check(pairs)
-            } else {
-                crate::bn128::arkworks::pairing_check(pairs)
-            }
-        }
+        crate::bn128::crypto_backend::pairing_check(pairs)
     }
 
     fn secp256k1_ecrecover(
