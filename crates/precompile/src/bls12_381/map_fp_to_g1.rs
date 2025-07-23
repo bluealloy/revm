@@ -24,7 +24,7 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) ->
 
     let input_p0 = remove_fp_padding(input)?;
 
-    let unpadded_result = crypto.bls12_381_map_fp_to_g1(input_p0)?;
+    let unpadded_result = crypto.bls12_381_fp_to_g1(input_p0)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

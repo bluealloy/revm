@@ -59,7 +59,7 @@ pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Precompi
     let z = input[32..64].try_into().unwrap();
     let y = input[64..96].try_into().unwrap();
     let proof = input[144..192].try_into().unwrap();
-    crypto.kzg_point_evaluation(z, y, commitment, proof)?;
+    crypto.verify_kzg_proof(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
     Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))

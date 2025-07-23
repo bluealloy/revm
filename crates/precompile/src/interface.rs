@@ -61,16 +61,16 @@ pub trait Crypto: Send + Sync + Debug {
     /// Compute RIPEMD-160 hash
     fn ripemd160(&self, input: &[u8]) -> [u8; 32];
 
-    /// Perform BN128 point addition on G1
-    fn bn128_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError>;
+    /// BN128 elliptic curve addition.
+    fn bn128_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError>;
 
-    /// Perform BN128 scalar multiplication on G1
-    fn bn128_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError>;
+    /// BN128 elliptic curve scalar multiplication.
+    fn bn128_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError>;
 
-    /// Perform BN128 pairing check
+    /// BN128 pairing check.
     fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError>;
 
-    /// Perform secp256k1 ecrecover
+    /// secp256k1 ECDSA signature recovery.
     fn secp256k1_ecrecover(
         &self,
         sig: &[u8; 64],
@@ -78,11 +78,11 @@ pub trait Crypto: Send + Sync + Debug {
         msg: &[u8; 32],
     ) -> Result<[u8; 32], PrecompileError>;
 
-    /// Perform modular exponentiation
+    /// Modular exponentiation.
     fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileError>;
 
-    /// Perform Blake2 F compression function
-    fn blake2_f(
+    /// Blake2 compression function.
+    fn blake2_compress(
         &self,
         rounds: u32,
         h: &mut [u64; 8],
@@ -91,17 +91,17 @@ pub trait Crypto: Send + Sync + Debug {
         f: bool,
     ) -> Result<(), PrecompileError>;
 
-    /// Verify secp256r1 (P256) signature
-    fn secp256r1_verify(
+    /// secp256r1 (P-256) signature verification.
+    fn secp256r1_verify_signature(
         &self,
         msg: &[u8; 32],
         sig: &[u8; 64],
         pk: &[u8; 64],
     ) -> Result<bool, PrecompileError>;
 
-    /// KZG point evaluation
+    /// KZG point evaluation.
     #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-    fn kzg_point_evaluation(
+    fn verify_kzg_proof(
         &self,
         z: &[u8; 32],
         y: &[u8; 32],
@@ -127,17 +127,17 @@ pub trait Crypto: Send + Sync + Debug {
         pairs: Box<dyn Iterator<Item = Result<(G2Point, [u8; 32]), PrecompileError>> + 'a>,
     ) -> Result<[u8; 192], PrecompileError>;
 
-    /// BLS12-381 pairing check
-    fn bls12_381_pairing(&self, pairs: &[(G1Point, G2Point)]) -> Result<bool, PrecompileError>;
-
-    /// BLS12-381 map field element to G1 (returns 96-byte unpadded G1 point)
-    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError>;
-
-    /// BLS12-381 map field element to G2 (returns 192-byte unpadded G2 point)
-    fn bls12_381_map_fp2_to_g2(
+    /// BLS12-381 pairing check.
+    fn bls12_381_pairing_check(
         &self,
-        fp2: ([u8; 48], [u8; 48]),
-    ) -> Result<[u8; 192], PrecompileError>;
+        pairs: &[(G1Point, G2Point)],
+    ) -> Result<bool, PrecompileError>;
+
+    /// BLS12-381 map field element to G1.
+    fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError>;
+
+    /// BLS12-381 map field element to G2.
+    fn bls12_381_fp2_to_g2(&self, fp2: ([u8; 48], [u8; 48])) -> Result<[u8; 192], PrecompileError>;
 }
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
@@ -241,11 +241,11 @@ impl Crypto for DefaultCrypto {
         output
     }
 
-    fn bn128_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    fn bn128_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
         crate::bn128::crypto_backend::g1_point_add(p1, p2)
     }
 
-    fn bn128_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    fn bn128_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
         crate::bn128::crypto_backend::g1_point_mul(point, scalar)
     }
 
@@ -267,7 +267,7 @@ impl Crypto for DefaultCrypto {
         Ok(crate::modexp::modexp(base, exp, modulus))
     }
 
-    fn blake2_f(
+    fn blake2_compress(
         &self,
         rounds: u32,
         h: &mut [u64; 8],
@@ -279,7 +279,7 @@ impl Crypto for DefaultCrypto {
         Ok(())
     }
 
-    fn secp256r1_verify(
+    fn secp256r1_verify_signature(
         &self,
         msg: &[u8; 32],
         sig: &[u8; 64],
@@ -289,7 +289,7 @@ impl Crypto for DefaultCrypto {
     }
 
     #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-    fn kzg_point_evaluation(
+    fn verify_kzg_proof(
         &self,
         z: &[u8; 32],
         y: &[u8; 32],
@@ -325,18 +325,18 @@ impl Crypto for DefaultCrypto {
         crate::bls12_381::crypto_backend::p2_msm_bytes(pairs)
     }
 
-    fn bls12_381_pairing(&self, pairs: &[(G1Point, G2Point)]) -> Result<bool, PrecompileError> {
+    fn bls12_381_pairing_check(
+        &self,
+        pairs: &[(G1Point, G2Point)],
+    ) -> Result<bool, PrecompileError> {
         crate::bls12_381::crypto_backend::pairing_check_bytes(pairs)
     }
 
-    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
+    fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
         crate::bls12_381::crypto_backend::map_fp_to_g1_bytes(fp)
     }
 
-    fn bls12_381_map_fp2_to_g2(
-        &self,
-        fp2: ([u8; 48], [u8; 48]),
-    ) -> Result<[u8; 192], PrecompileError> {
+    fn bls12_381_fp2_to_g2(&self, fp2: ([u8; 48], [u8; 48])) -> Result<[u8; 192], PrecompileError> {
         crate::bls12_381::crypto_backend::map_fp2_to_g2_bytes(&fp2.0, &fp2.1)
     }
 }

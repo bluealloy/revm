@@ -99,7 +99,7 @@ pub fn verify_impl(input: &[u8], crypto: &dyn crate::Crypto) -> Option<()> {
     let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
     crypto
-        .secp256r1_verify(&msg.0, &sig.0, &pk.0)
+        .secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
         .ok()
         .and_then(|verified| if verified { Some(()) } else { None })
 }

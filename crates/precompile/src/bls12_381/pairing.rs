@@ -52,7 +52,7 @@ pub fn pairing(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Prec
         pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
 
-    let result = crypto.bls12_381_pairing(&pairs)?;
+    let result = crypto.bls12_381_pairing_check(&pairs)?;
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(
