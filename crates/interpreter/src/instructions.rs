@@ -263,7 +263,8 @@ pub(crate) fn tail_call_instr<const OP: u8, H: Host + ?Sized, W: InterpreterType
     let instruction_table = const { &instruction_table_tail::<W, H>() };
     let opcode = context.interpreter.bytecode.opcode();
     context.interpreter.bytecode.relative_jump(1);
-    become instruction_table[opcode as usize](context);
+    // become
+    instruction_table[opcode as usize](context);
 }
 
 #[cfg(test)]
