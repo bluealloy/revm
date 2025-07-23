@@ -1,6 +1,5 @@
 use crate::{
     gas,
-    instructions::utility::cast_slice_to_u256,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
     InstructionResult,
 };
@@ -33,11 +32,12 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     gas!(context.interpreter, gas::VERYLOW);
-    push!(context.interpreter, U256::ZERO);
-    popn_top!([], top, context.interpreter);
 
-    let imm = context.interpreter.bytecode.read_slice(N);
-    cast_slice_to_u256(imm, top);
+    let slice = context.interpreter.bytecode.read_slice(N);
+    if !context.interpreter.stack.push_slice(slice) {
+        context.interpreter.halt(InstructionResult::StackOverflow);
+        return;
+    }
 
     // Can ignore return. as relative N jump is safe operation
     context.interpreter.bytecode.relative_jump(N as isize);

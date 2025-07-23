@@ -60,7 +60,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo check --no-default-features -p revm  --features=${{ matrix.features }}
+      - run: cargo check --no-default-features -p revm --features=${{ matrix.features }}
+
+  feature-checks:
+    name: features
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: cargo hack
+        run: cargo hack check --feature-powerset --depth 1
 
   clippy:
     name: clippy
@@ -96,7 +110,7 @@ jobs:
         with:
           components: rustfmt
       - run: cargo fmt --all --check
-  
+
   # Check crates correctly propagate features
   feature-propagation:
     runs-on: ubuntu-latest
