@@ -263,7 +263,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Zero sum test
@@ -282,7 +282,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Out of gas test
@@ -295,7 +295,7 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
+        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499, &crate::DefaultCrypto);
 
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
@@ -308,7 +308,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Point not on curve fail
@@ -321,7 +321,7 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
+        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500, &crate::DefaultCrypto);
         assert!(matches!(
             res,
             Err(PrecompileError::Bn128AffineGFailedToCreate)
@@ -344,7 +344,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Out of gas test
@@ -356,7 +356,7 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
+        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999, &crate::DefaultCrypto);
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Zero multiplication test
@@ -374,7 +374,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // No input test
@@ -386,7 +386,7 @@ mod tests {
         )
         .unwrap();
 
-        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Point not on curve fail
@@ -398,7 +398,7 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
+        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000, &crate::DefaultCrypto);
         assert!(matches!(
             res,
             Err(PrecompileError::Bn128AffineGFailedToCreate)
@@ -432,6 +432,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         )
         .unwrap();
         assert_eq!(outcome.bytes, expected);
@@ -459,6 +460,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             259_999,
+            &crate::DefaultCrypto,
         );
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
@@ -473,6 +475,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         )
         .unwrap();
         assert_eq!(outcome.bytes, expected);
@@ -494,6 +497,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         );
         assert!(matches!(
             res,
@@ -515,6 +519,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         );
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
 
@@ -539,6 +544,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         )
         .unwrap();
         assert_eq!(outcome.bytes, expected);
@@ -561,6 +567,7 @@ mod tests {
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
+            &crate::DefaultCrypto,
         )
         .unwrap();
         assert_eq!(outcome.bytes, expected);

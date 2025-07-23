@@ -11,7 +11,7 @@ pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_addre
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Blake2WrongLength);
     }
@@ -639,7 +639,7 @@ mod tests {
 
         let time = Instant::now();
         for i in 0..3000 {
-            let _ = run(&input[i % 3], u64::MAX).unwrap();
+            let _ = run(&input[i % 3], u64::MAX, &crate::DefaultCrypto).unwrap();
         }
         println!("duration: {:?}", time.elapsed());
     }

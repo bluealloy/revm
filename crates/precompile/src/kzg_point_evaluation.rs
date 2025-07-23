@@ -137,7 +137,7 @@ mod tests {
 
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
-        let output = run(&input, gas).unwrap();
+        let output = run(&input, gas, &crate::DefaultCrypto).unwrap();
         assert_eq!(output.gas_used, gas);
         assert_eq!(output.bytes[..], expected_output);
     }
