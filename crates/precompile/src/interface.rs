@@ -82,14 +82,7 @@ pub trait Crypto: Send + Sync + Debug {
     fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileError>;
 
     /// Blake2 compression function.
-    fn blake2_compress(
-        &self,
-        rounds: u32,
-        h: &mut [u64; 8],
-        m: [u64; 16],
-        t: [u64; 2],
-        f: bool,
-    ) -> Result<(), PrecompileError>;
+    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool);
 
     /// secp256r1 (P-256) signature verification.
     fn secp256r1_verify_signature(
@@ -273,16 +266,8 @@ impl Crypto for DefaultCrypto {
     }
 
     #[inline]
-    fn blake2_compress(
-        &self,
-        rounds: u32,
-        h: &mut [u64; 8],
-        m: [u64; 16],
-        t: [u64; 2],
-        f: bool,
-    ) -> Result<(), PrecompileError> {
+    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
         crate::blake2::algo::compress(rounds as usize, h, m, t, f);
-        Ok(())
     }
 
     fn secp256r1_verify_signature(
