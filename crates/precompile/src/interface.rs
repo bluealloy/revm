@@ -100,6 +100,7 @@ pub trait Crypto: Send + Sync + Debug {
     ) -> Result<bool, PrecompileError>;
 
     /// KZG point evaluation
+    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     fn kzg_point_evaluation(
         &self,
         z: &[u8; 32],
@@ -305,6 +306,7 @@ impl Crypto for DefaultCrypto {
         Ok(crate::secp256r1::verify_signature(*msg, *sig, *pk).is_some())
     }
 
+    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     fn kzg_point_evaluation(
         &self,
         z: &[u8; 32],
