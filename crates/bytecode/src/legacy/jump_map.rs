@@ -1,30 +1,50 @@
 use bitvec::vec::BitVec;
-use core::hash::{Hash, Hasher};
+use core::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+};
 use once_cell::race::OnceBox;
 use primitives::hex;
 use std::{fmt::Debug, sync::Arc};
 
-/// A table of valid `jump` destinations. Cheap to clone and memory efficient, one bit per opcode.
-#[derive(Clone, Eq, Ord, PartialOrd)]
+/// A table of valid `jump` destinations.
+///
+/// It is immutable, cheap to clone and memory efficient, with one bit per byte in the bytecode.
+#[derive(Clone, Eq)]
 pub struct JumpTable {
+    /// Pointer into `table` to avoid `Arc` overhead on lookup.
+    table_ptr: *const u8,
+    /// Number of bits in the table.
+    len: usize,
     /// Actual bit vec
     table: Arc<BitVec<u8>>,
-    /// Fast pointer that skips Arc overhead
-    table_ptr: *const u8,
-    /// Number of bits in the table
-    len: usize,
 }
+
+// SAFETY: BitVec data is immutable through Arc, pointer won't be invalidated
+unsafe impl Send for JumpTable {}
+unsafe impl Sync for JumpTable {}
 
 impl PartialEq for JumpTable {
     fn eq(&self, other: &Self) -> bool {
-        self.table.eq(&other.table) && self.len.eq(&other.len)
+        self.table.eq(&other.table)
     }
 }
 
 impl Hash for JumpTable {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.table.hash(state);
-        self.len.hash(state);
+    }
+}
+
+impl PartialOrd for JumpTable {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for JumpTable {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.table.cmp(&other.table)
     }
 }
 
@@ -48,10 +68,6 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
         Ok(Self::new(bitvec))
     }
 }
-
-// SAFETY: BitVec data is immutable through Arc, pointer won't be invalidated
-unsafe impl Send for JumpTable {}
-unsafe impl Sync for JumpTable {}
 
 impl Debug for JumpTable {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -121,16 +137,7 @@ impl JumpTable {
         );
         let mut bitvec = BitVec::from_slice(slice);
         unsafe { bitvec.set_len(bit_len) };
-
-        let table = Arc::new(bitvec);
-        let table_ptr = table.as_raw_slice().as_ptr();
-        let len = table.len();
-
-        Self {
-            table,
-            table_ptr,
-            len,
-        }
+        Self::new(bitvec)
     }
 
     /// Checks if `pc` is a valid jump destination.
