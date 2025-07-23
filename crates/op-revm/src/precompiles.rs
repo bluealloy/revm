@@ -151,7 +151,11 @@ pub mod bn128_pair {
         });
 
     /// Run the bn128 pair precompile with Optimism input limit.
-    pub fn run_pair(input: &[u8], gas_limit: u64, crypto: &dyn precompile::Crypto) -> PrecompileResult {
+    pub fn run_pair(
+        input: &[u8],
+        gas_limit: u64,
+        crypto: &dyn precompile::Crypto,
+    ) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength);
         }
@@ -191,7 +195,11 @@ pub mod bls12_381 {
         PrecompileWithAddress(PAIRING_ADDRESS, run_pair);
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm(input: &[u8], gas_limit: u64, crypto: &dyn precompile::Crypto) -> PrecompileResult {
+    pub fn run_g1_msm(
+        input: &[u8],
+        gas_limit: u64,
+        crypto: &dyn precompile::Crypto,
+    ) -> PrecompileResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G1MSM input length too long for OP Stack input size limitation".to_string(),
@@ -201,7 +209,11 @@ pub mod bls12_381 {
     }
 
     /// Run the g2 msm precompile with Optimism input limit.
-    pub fn run_g2_msm(input: &[u8], gas_limit: u64, crypto: &dyn precompile::Crypto) -> PrecompileResult {
+    pub fn run_g2_msm(
+        input: &[u8],
+        gas_limit: u64,
+        crypto: &dyn precompile::Crypto,
+    ) -> PrecompileResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G2MSM input length too long for OP Stack input size limitation".to_string(),
@@ -211,7 +223,11 @@ pub mod bls12_381 {
     }
 
     /// Run the pairing precompile with Optimism input limit.
-    pub fn run_pair(input: &[u8], gas_limit: u64, crypto: &dyn precompile::Crypto) -> PrecompileResult {
+    pub fn run_pair(
+        input: &[u8],
+        gas_limit: u64,
+        crypto: &dyn precompile::Crypto,
+    ) -> PrecompileResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "Pairing input length too long for OP Stack input size limitation".to_string(),
