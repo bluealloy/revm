@@ -4,18 +4,20 @@ use crate::PrecompileWithAddress;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "blst")]{
-        mod blst;
-        use blst as crypto_backend;
+        pub(crate) mod blst;
+        pub(crate) use blst as crypto_backend;
     } else {
-        mod arkworks;
-        use arkworks as crypto_backend;
+        pub(crate) mod arkworks;
+        pub(crate) use arkworks as crypto_backend;
     }
 }
 
 // Re-export type aliases for use in submodules
 use crate::bls12_381_const::FP_LENGTH;
-type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
-type G2Point = (
+/// G1 point represented as two field elements (x, y coordinates)
+pub type G1Point = ([u8; FP_LENGTH], [u8; FP_LENGTH]);
+/// G2 point represented as four field elements (x0, x1, y0, y1 coordinates)
+pub type G2Point = (
     [u8; FP_LENGTH],
     [u8; FP_LENGTH],
     [u8; FP_LENGTH],

@@ -11,13 +11,13 @@ pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_addre
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-pub fn run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Blake2WrongLength);
     }
 
     // Parse number of rounds (4 bytes)
-    let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
+    let rounds = u32::from_be_bytes(input[..4].try_into().unwrap());
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -52,7 +52,7 @@ pub fn run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Precomp
     let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
     let t_1 = u64::from_le_bytes(input[204..212].try_into().unwrap());
 
-    algo::compress(rounds, &mut h, m, [t_0, t_1], f);
+    crypto.blake2_f(rounds, &mut h, &m, &[t_0, t_1], f)?;
 
     let mut out = [0u8; 64];
     for (i, h) in (0..64).step_by(8).zip(h.iter()) {

@@ -1,5 +1,4 @@
 //! BLS12-381 pairing precompile. More details in [`pairing`]
-use super::crypto_backend::pairing_check_bytes;
 use super::utils::{remove_g1_padding, remove_g2_padding};
 use super::PairingPair;
 use crate::bls12_381_const::{
@@ -25,7 +24,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDR
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn pairing(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -53,7 +52,7 @@ pub fn pairing(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Pre
         pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
 
-    let result = pairing_check_bytes(&pairs)?;
+    let result = crypto.bls12_381_pairing(&pairs)?;
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(

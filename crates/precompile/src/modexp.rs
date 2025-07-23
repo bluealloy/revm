@@ -21,7 +21,7 @@ pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_add
 
 #[cfg(feature = "gmp")]
 /// GMP-based modular exponentiation implementation
-fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     use rug::{integer::Order::Msf, Integer};
     // Convert byte slices to GMP integers
     let base_int = Integer::from_digits(base, Msf);
@@ -39,34 +39,30 @@ fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
 }
 
 #[cfg(not(feature = "gmp"))]
-fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     aurora_engine_modexp::modexp(base, exponent, modulus)
 }
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-pub fn byzantium_run(
-    input: &[u8],
-    gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
-) -> PrecompileResult {
-    run_inner::<_, false>(input, gas_limit, 0, |a, b, c, d| {
+pub fn byzantium_run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+    run_inner::<_, false>(input, gas_limit, 0, crypto, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
 }
 
 /// See: <https://eips.ethereum.org/EIPS/eip-2565>
 /// Gas cost of berlin is modified from byzantium.
-pub fn berlin_run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
-    run_inner::<_, false>(input, gas_limit, 200, |a, b, c, d| {
+pub fn berlin_run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+    run_inner::<_, false>(input, gas_limit, 200, crypto, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
 }
 
 /// See: <https://eips.ethereum.org/EIPS/eip-7823>
 /// Gas cost of berlin is modified from byzantium.
-pub fn osaka_run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
-    run_inner::<_, true>(input, gas_limit, 500, |a, b, c, d| {
+pub fn osaka_run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+    run_inner::<_, true>(input, gas_limit, 500, crypto, |a, b, c, d| {
         osaka_gas_calc(a, b, c, d)
     })
 }
@@ -92,6 +88,7 @@ pub fn run_inner<F, const OSAKA: bool>(
     input: &[u8],
     gas_limit: u64,
     min_gas: u64,
+    crypto: &dyn crate::Crypto,
     calc_gas: F,
 ) -> PrecompileResult
 where
@@ -162,7 +159,7 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = modexp(base, exponent, modulus);
+    let output = crypto.modexp(base, exponent, modulus)?;
 
     // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(

@@ -86,7 +86,7 @@ fn p256_verify_inner(
 
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
-pub fn verify_impl(input: &[u8], _crypto: &dyn crate::Crypto) -> Option<()> {
+pub fn verify_impl(input: &[u8], crypto: &dyn crate::Crypto) -> Option<()> {
     if input.len() != 160 {
         return None;
     }
@@ -98,10 +98,13 @@ pub fn verify_impl(input: &[u8], _crypto: &dyn crate::Crypto) -> Option<()> {
     // x, y: public key
     let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    verify_signature(msg.0, sig.0, pk.0)
+    crypto
+        .secp256r1_verify(&msg.0, &sig.0, &pk.0)
+        .ok()
+        .and_then(|verified| if verified { Some(()) } else { None })
 }
 
-fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
     // Can fail only if the input is not exact length.
     let signature = Signature::from_slice(&sig).ok()?;
     // Decode the public key bytes (x,y coordinates) using EncodedPoint

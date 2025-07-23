@@ -2,7 +2,11 @@
 //! the precompile output type, and the precompile error type.
 use core::fmt::{self, Debug};
 use primitives::Bytes;
-use std::{boxed::Box, string::String};
+
+extern crate alloc;
+use alloc::{boxed::Box, string::String, vec::Vec};
+
+use crate::bls12_381::{G1Point, G2Point};
 
 /// A precompile operation result type
 ///
@@ -65,6 +69,74 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Perform BN128 pairing check
     fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError>;
+
+    /// Perform secp256k1 ecrecover
+    fn secp256k1_ecrecover(
+        &self,
+        sig: &[u8; 64],
+        recid: u8,
+        msg: &[u8; 32],
+    ) -> Result<[u8; 32], PrecompileError>;
+
+    /// Perform modular exponentiation
+    fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileError>;
+
+    /// Perform Blake2 F compression function
+    fn blake2_f(
+        &self,
+        rounds: u32,
+        h: &mut [u64; 8],
+        m: &[u64; 16],
+        t: &[u64; 2],
+        f: bool,
+    ) -> Result<(), PrecompileError>;
+
+    /// Verify secp256r1 (P256) signature
+    fn secp256r1_verify(
+        &self,
+        msg: &[u8; 32],
+        sig: &[u8; 64],
+        pk: &[u8; 64],
+    ) -> Result<bool, PrecompileError>;
+
+    /// KZG point evaluation
+    fn kzg_point_evaluation(
+        &self,
+        z: &[u8; 32],
+        y: &[u8; 32],
+        commitment: &[u8; 48],
+        proof: &[u8; 48],
+    ) -> Result<(), PrecompileError>;
+
+    /// BLS12-381 G1 addition (returns 96-byte unpadded G1 point)
+    fn bls12_381_g1_add(&self, a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileError>;
+
+    /// BLS12-381 G1 multi-scalar multiplication (returns 96-byte unpadded G1 point)
+    fn bls12_381_g1_msm<'a>(
+        &self,
+        pairs: Box<dyn Iterator<Item = Result<(G1Point, [u8; 32]), PrecompileError>> + 'a>,
+    ) -> Result<[u8; 96], PrecompileError>;
+
+    /// BLS12-381 G2 addition (returns 192-byte unpadded G2 point)
+    fn bls12_381_g2_add(&self, a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileError>;
+
+    /// BLS12-381 G2 multi-scalar multiplication (returns 192-byte unpadded G2 point)
+    fn bls12_381_g2_msm<'a>(
+        &self,
+        pairs: Box<dyn Iterator<Item = Result<(G2Point, [u8; 32]), PrecompileError>> + 'a>,
+    ) -> Result<[u8; 192], PrecompileError>;
+
+    /// BLS12-381 pairing check
+    fn bls12_381_pairing(&self, pairs: &[(G1Point, G2Point)]) -> Result<bool, PrecompileError>;
+
+    /// BLS12-381 map field element to G1 (returns 96-byte unpadded G1 point)
+    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError>;
+
+    /// BLS12-381 map field element to G2 (returns 192-byte unpadded G2 point)
+    fn bls12_381_map_fp2_to_g2(
+        &self,
+        fp2: ([u8; 48], [u8; 48]),
+    ) -> Result<[u8; 192], PrecompileError>;
 }
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
@@ -196,5 +268,91 @@ impl Crypto for DefaultCrypto {
                 crate::bn128::arkworks::pairing_check(pairs)
             }
         }
+    }
+
+    fn secp256k1_ecrecover(
+        &self,
+        sig: &[u8; 64],
+        recid: u8,
+        msg: &[u8; 32],
+    ) -> Result<[u8; 32], PrecompileError> {
+        crate::secp256k1::ecrecover_bytes(*sig, recid, *msg)
+            .ok_or_else(|| PrecompileError::other("ecrecover failed"))
+    }
+
+    fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileError> {
+        Ok(crate::modexp::modexp(base, exp, modulus))
+    }
+
+    fn blake2_f(
+        &self,
+        rounds: u32,
+        h: &mut [u64; 8],
+        m: &[u64; 16],
+        t: &[u64; 2],
+        f: bool,
+    ) -> Result<(), PrecompileError> {
+        crate::blake2::algo::compress(rounds as usize, h, *m, *t, f);
+        Ok(())
+    }
+
+    fn secp256r1_verify(
+        &self,
+        msg: &[u8; 32],
+        sig: &[u8; 64],
+        pk: &[u8; 64],
+    ) -> Result<bool, PrecompileError> {
+        Ok(crate::secp256r1::verify_signature(*msg, *sig, *pk).is_some())
+    }
+
+    fn kzg_point_evaluation(
+        &self,
+        z: &[u8; 32],
+        y: &[u8; 32],
+        commitment: &[u8; 48],
+        proof: &[u8; 48],
+    ) -> Result<(), PrecompileError> {
+        if !crate::kzg_point_evaluation::verify_kzg_proof(commitment, z, y, proof) {
+            return Err(PrecompileError::BlobVerifyKzgProofFailed);
+        }
+
+        Ok(())
+    }
+
+    fn bls12_381_g1_add(&self, a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileError> {
+        crate::bls12_381::crypto_backend::p1_add_affine_bytes(a, b)
+    }
+
+    fn bls12_381_g1_msm<'a>(
+        &self,
+        pairs: Box<dyn Iterator<Item = Result<(G1Point, [u8; 32]), PrecompileError>> + 'a>,
+    ) -> Result<[u8; 96], PrecompileError> {
+        crate::bls12_381::crypto_backend::p1_msm_bytes(pairs)
+    }
+
+    fn bls12_381_g2_add(&self, a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileError> {
+        crate::bls12_381::crypto_backend::p2_add_affine_bytes(a, b)
+    }
+
+    fn bls12_381_g2_msm<'a>(
+        &self,
+        pairs: Box<dyn Iterator<Item = Result<(G2Point, [u8; 32]), PrecompileError>> + 'a>,
+    ) -> Result<[u8; 192], PrecompileError> {
+        crate::bls12_381::crypto_backend::p2_msm_bytes(pairs)
+    }
+
+    fn bls12_381_pairing(&self, pairs: &[(G1Point, G2Point)]) -> Result<bool, PrecompileError> {
+        crate::bls12_381::crypto_backend::pairing_check_bytes(pairs)
+    }
+
+    fn bls12_381_map_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
+        crate::bls12_381::crypto_backend::map_fp_to_g1_bytes(fp)
+    }
+
+    fn bls12_381_map_fp2_to_g2(
+        &self,
+        fp2: ([u8; 48], [u8; 48]),
+    ) -> Result<[u8; 192], PrecompileError> {
+        crate::bls12_381::crypto_backend::map_fp2_to_g2_bytes(&fp2.0, &fp2.1)
     }
 }

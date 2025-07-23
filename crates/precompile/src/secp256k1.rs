@@ -33,7 +33,7 @@ pub const ECRECOVER: PrecompileWithAddress =
 pub fn ec_recover_run(
     input: &[u8],
     gas_limit: u64,
-    _crypto: &dyn crate::Crypto,
+    crypto: &dyn crate::Crypto,
 ) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
@@ -52,12 +52,12 @@ pub fn ec_recover_run(
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let res = ecrecover_bytes(sig.0, recid, msg.0);
+    let res = crypto.secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
 
-fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
+pub(crate) fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option<[u8; 32]> {
     let sig = B512::from_slice(&sig);
     let msg = B256::from_slice(&msg);
 

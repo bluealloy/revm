@@ -1,7 +1,6 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use super::crypto_backend::p1_msm_bytes;
-use super::G1Point;
 use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
+use crate::bls12_381::G1Point;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
@@ -20,7 +19,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRE
 /// Output is an encoding of multi-scalar-multiplication operation result - single G1
 /// point (`128` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
-pub fn g1_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn g1_msm(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -47,7 +46,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Prec
         Ok((point, scalar_array))
     });
 
-    let unpadded_result = p1_msm_bytes(valid_pairs_iter)?;
+    let unpadded_result = crypto.bls12_381_g1_msm(Box::new(valid_pairs_iter))?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

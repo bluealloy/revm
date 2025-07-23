@@ -37,7 +37,7 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(PrecompileError::OutOfGas);
     }
@@ -59,9 +59,7 @@ pub fn run(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Precomp
     let z = input[32..64].try_into().unwrap();
     let y = input[64..96].try_into().unwrap();
     let proof = input[144..192].try_into().unwrap();
-    if !verify_kzg_proof(commitment, z, y, proof) {
-        return Err(PrecompileError::BlobVerifyKzgProofFailed);
-    }
+    crypto.kzg_point_evaluation(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
     Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
