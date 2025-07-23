@@ -83,14 +83,9 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     // r, s: signature
     let sig = <&B512>::try_from(&input[32..96]).unwrap();
     // x, y: public key
-    let pk = &input[96..160];
+    let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    // Prepend 0x04 to the public key: uncompressed form
-    let mut uncompressed_pk = [0u8; 65];
-    uncompressed_pk[0] = 0x04;
-    uncompressed_pk[1..].copy_from_slice(pk);
-
-    crate::crypto::secp256r1::verify_signature(&msg.0, &sig.0, &uncompressed_pk)
+    crate::crypto::secp256r1::verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
 #[cfg(test)]
