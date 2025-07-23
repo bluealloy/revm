@@ -1,17 +1,18 @@
-use context_interface::{
-    context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::AccountLoad,
-    Block, Cfg, Database, JournalTr, Transaction, TransactionType,
-};
-use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+//! Host interface for external blockchain state access.
 
-use crate::instructions::utility::IntoU256;
+use crate::{
+    context::{SStoreResult, SelfDestructResult, StateLoad},
+    journaled_state::AccountLoad,
+};
+use auto_impl::auto_impl;
+use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 
 /// Host trait with all methods that are needed by the Interpreter.
 ///
 /// This trait is implemented for all types that have `ContextTr` trait.
 ///
 /// There are few groups of functions which are Block, Transaction, Config, Database and Journal functions.
+#[auto_impl(&mut, Box)]
 pub trait Host {
     /* Block */
 
@@ -86,182 +87,6 @@ pub trait Host {
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
     /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
-}
-
-impl<CTX: ContextTr> Host for CTX {
-    /* Block */
-
-    fn basefee(&self) -> U256 {
-        U256::from(self.block().basefee())
-    }
-
-    fn blob_gasprice(&self) -> U256 {
-        U256::from(self.block().blob_gasprice().unwrap_or(0))
-    }
-
-    fn gas_limit(&self) -> U256 {
-        U256::from(self.block().gas_limit())
-    }
-
-    fn difficulty(&self) -> U256 {
-        self.block().difficulty()
-    }
-
-    fn prevrandao(&self) -> Option<U256> {
-        self.block().prevrandao().map(|r| r.into_u256())
-    }
-
-    fn block_number(&self) -> U256 {
-        self.block().number()
-    }
-
-    fn timestamp(&self) -> U256 {
-        U256::from(self.block().timestamp())
-    }
-
-    fn beneficiary(&self) -> Address {
-        self.block().beneficiary()
-    }
-
-    fn chain_id(&self) -> U256 {
-        U256::from(self.cfg().chain_id())
-    }
-
-    /* Transaction */
-
-    fn effective_gas_price(&self) -> U256 {
-        let basefee = self.block().basefee();
-        U256::from(self.tx().effective_gas_price(basefee as u128))
-    }
-
-    fn caller(&self) -> Address {
-        self.tx().caller()
-    }
-
-    fn blob_hash(&self, number: usize) -> Option<U256> {
-        let tx = &self.tx();
-        if tx.tx_type() != TransactionType::Eip4844 {
-            return None;
-        }
-        tx.blob_versioned_hashes()
-            .get(number)
-            .map(|t| U256::from_be_bytes(t.0))
-    }
-
-    /* Config */
-
-    fn max_initcode_size(&self) -> usize {
-        self.cfg().max_initcode_size()
-    }
-
-    /* Database */
-
-    fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        self.db_mut()
-            .block_hash(requested_number)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /* Journal */
-
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.journal_mut()
-            .load_account_delegated(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.journal_mut()
-            .load_account(address)
-            .map(|acc| acc.map(|a| a.info.balance))
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.journal_mut()
-            .code(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.journal_mut()
-            .code_hash(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
-        self.journal_mut()
-            .sload(address, index)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Sets storage value of account address at index.
-    ///
-    /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: StorageKey,
-        value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.journal_mut()
-            .sstore(address, index, value)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets the transient storage value of `address` at `index`.
-    fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
-        self.journal_mut().tload(address, index)
-    }
-
-    /// Sets the transient storage value of `address` at `index`.
-    fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
-        self.journal_mut().tstore(address, index, value)
-    }
-
-    /// Emits a log owned by `address` with given `LogData`.
-    fn log(&mut self, log: Log) {
-        self.journal_mut().log(log);
-    }
-
-    /// Marks `address` to be deleted, with funds transferred to `target`.
-    fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        self.journal_mut()
-            .selfdestruct(address, target)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.

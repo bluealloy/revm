@@ -9,14 +9,20 @@
 use crate::{
     u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
-use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
-use primitives::{Bytes, B256};
+use p256::{
+    ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
+    EncodedPoint,
+};
+use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// Address of secp256r1 precompile.
 pub const P256VERIFY_ADDRESS: u64 = 256;
 
 /// Base gas fee for secp256r1 p256verify operation.
 pub const P256VERIFY_BASE_GAS_FEE: u64 = 3450;
+
+/// Base gas fee for secp256r1 p256verify operation post Osaka.
+pub const P256VERIFY_BASE_GAS_FEE_OSAKA: u64 = 6900;
 
 /// Returns the secp256r1 precompile with its address.
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
@@ -26,6 +32,10 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify);
+
+/// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
+pub const P256VERIFY_OSAKA: PrecompileWithAddress =
+    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify_osaka);
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the
@@ -37,7 +47,24 @@ pub const P256VERIFY: PrecompileWithAddress =
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
 pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    if P256VERIFY_BASE_GAS_FEE > gas_limit {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
+}
+
+/// secp256r1 precompile logic with Osaka gas cost. It takes the input bytes sent to the precompile
+/// and the gas limit. The output represents the result of verifying the
+/// secp256r1 signature of the input.
+///
+/// The input is encoded as follows:
+///
+/// | signed message hash |  r  |  s  | public key x | public key y |
+/// | :-----------------: | :-: | :-: | :----------: | :----------: |
+/// |          32         | 32  | 32  |     32       |      32      |
+pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
+}
+
+fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
+    if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
     let result = if verify_impl(input).is_some() {
@@ -45,7 +72,7 @@ pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutput::new(P256VERIFY_BASE_GAS_FEE, result))
+    Ok(PrecompileOutput::new(gas_cost, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is
@@ -56,23 +83,24 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     }
 
     // msg signed (msg is already the hash of the original message)
-    let msg = &input[..32];
+    let msg = <&B256>::try_from(&input[..32]).unwrap();
     // r, s: signature
-    let sig = &input[32..96];
+    let sig = <&B512>::try_from(&input[32..96]).unwrap();
     // x, y: public key
-    let pk = &input[96..160];
+    let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    // Prepend 0x04 to the public key: uncompressed form
-    let mut uncompressed_pk = [0u8; 65];
-    uncompressed_pk[0] = 0x04;
-    uncompressed_pk[1..].copy_from_slice(pk);
+    verify_signature(msg.0, sig.0, pk.0)
+}
 
+fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
     // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(sig).ok()?;
-    // Can fail if the input is not valid, so we have to propagate the error.
-    let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
+    let signature = Signature::from_slice(&sig).ok()?;
+    // Decode the public key bytes (x,y coordinates) using EncodedPoint
+    let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
+    // Create VerifyingKey from the encoded point
+    let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
 
-    public_key.verify_prehash(msg, &signature).ok()
+    public_key.verify_prehash(&msg, &signature).ok()
 }
 
 #[cfg(test)]

@@ -54,4 +54,6 @@ serde = [
 	"database-interface/serde",
 	"either/serde",
 ]
+
+# Deprecated, please use `serde` feature instead.
 serde-json = ["serde"]

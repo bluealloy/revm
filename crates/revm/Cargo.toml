@@ -52,6 +52,7 @@ std = [
 	"serde_json/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+map-foldhash = ["primitives/map-foldhash"]
 serde = [
 	"interpreter/serde",
 	"database-interface/serde",

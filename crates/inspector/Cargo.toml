@@ -52,9 +52,10 @@ std = [
 	"interpreter/std",
 	"primitives/std",
 	"state/std",
-	"either/std"
+	"either/std",
 ]
 serde = [
+	"dep:serde",
 	"database/serde",
 	"context/serde",
 	"database-interface/serde",
@@ -62,9 +63,10 @@ serde = [
 	"interpreter/serde",
 	"primitives/serde",
 	"state/serde",
-	"either/serde"
+	"either/serde",
 ]
 
-# deprecated please use [`tracer`] feature instead
-serde-json = ["dep:serde", "dep:serde_json", "serde"]
-tracer = ["serde-json"]
+tracer = ["std", "serde", "dep:serde_json"]
+
+# Deprecated, please use `tracer` feature instead.
+serde-json = ["tracer"]

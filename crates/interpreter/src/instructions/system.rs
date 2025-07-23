@@ -96,7 +96,6 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
 /// Loads 32 bytes of input data from the specified offset.
 pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     gas!(context.interpreter, gas::VERYLOW);
-    //pop_top!(interpreter, offset_ptr);
     popn_top!([], offset_ptr, context.interpreter);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);

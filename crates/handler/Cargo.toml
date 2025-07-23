@@ -27,14 +27,13 @@ primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
 
-
 auto_impl.workspace = true
 derive-where.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
+	"derive",
+	"rc",
 ], optional = true }
 
 [dev-dependencies]
@@ -57,7 +56,7 @@ std = [
 	"interpreter/std",
 	"precompile/std",
 	"primitives/std",
-	"state/std"
+	"state/std",
 ]
 serde = [
 	"dep:serde",
@@ -70,6 +69,8 @@ serde = [
 	"database/serde",
 	"database-interface/serde",
 	"interpreter/serde",
-	"derive-where/serde"
+	"derive-where/serde",
 ]
+
+# Deprecated, please use `serde` feature instead.
 serde-json = ["serde"]

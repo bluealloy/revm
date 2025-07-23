@@ -1,6 +1,7 @@
 //! BLS12-381 pairing precompile. More details in [`pairing`]
-use super::crypto_backend::{pairing_check, read_g1, read_g2};
+use super::crypto_backend::pairing_check_bytes;
 use super::utils::{remove_g1_padding, remove_g2_padding};
+use super::PairingPair;
 use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
@@ -39,38 +40,21 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     // Collect pairs of points for the pairing check
-    let mut pairs = Vec::with_capacity(k);
+    let mut pairs: Vec<PairingPair> = Vec::with_capacity(k);
     for i in 0..k {
         let encoded_g1_element =
             &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH];
         let encoded_g2_element = &input[i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH
             ..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH + PADDED_G2_LENGTH];
 
-        // If either the G1 or G2 element is the encoded representation
-        // of the point at infinity, then these two points are no-ops
-        // in the pairing computation.
-        //
-        // Note: we do not skip the validation of these two elements even if
-        // one of them is the point at infinity because we could have G1 be
-        // the point at infinity and G2 be an invalid element or vice versa.
-        // In that case, the precompile should error because one of the elements
-        // was invalid.
-        let g1_is_zero = encoded_g1_element.iter().all(|i| *i == 0);
-        let g2_is_zero = encoded_g2_element.iter().all(|i| *i == 0);
-
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
         let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(encoded_g2_element)?;
 
-        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
-        // extract_g1_input and extract_g2_input perform the necessary checks
-        let p1_aff = read_g1(a_x, a_y)?;
-        let p2_aff = read_g2(b_x_0, b_x_1, b_y_0, b_y_1)?;
-
-        if !g1_is_zero & !g2_is_zero {
-            pairs.push((p1_aff, p2_aff));
-        }
+        pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
-    let result = if pairing_check(&pairs) { 1 } else { 0 };
+
+    let result = pairing_check_bytes(&pairs)?;
+    let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(
         required_gas,
