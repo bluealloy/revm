@@ -20,7 +20,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/2_rounds", |b| {
         let input = &inputs[0]; // 2 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -28,7 +28,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/4_rounds", |b| {
         let input = &inputs[1]; // 4 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -36,7 +36,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/64_rounds", |b| {
         let input = &inputs[2]; // 64 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -44,7 +44,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/10_rounds", |b| {
         let input = &inputs[3]; // 10 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -52,7 +52,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/12_rounds", |b| {
         let input = &inputs[4]; // 12 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -60,7 +60,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/512_rounds", |b| {
         let input = &inputs[5]; // 512 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -68,7 +68,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/1024_rounds", |b| {
         let input = &inputs[6]; // 1024 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -76,7 +76,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/100K_rounds", |b| {
         let input = &inputs[7]; // 100000 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 
@@ -84,7 +84,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
     group.bench_function("blake2/200K_rounds", |b| {
         let input = &inputs[8]; // 200000 rounds
         b.iter(|| {
-            black_box(blake2::run(black_box(input), u64::MAX).unwrap());
+            black_box(blake2::run(black_box(input), u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
         });
     });
 

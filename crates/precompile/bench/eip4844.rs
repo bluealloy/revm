@@ -18,6 +18,6 @@ pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let gas = 50000;
 
     group.bench_function("kzg precompile", |b| {
-        b.iter(|| run(&kzg_input, gas).unwrap())
+        b.iter(|| run(&kzg_input, gas, &revm_precompile::DefaultCrypto).unwrap())
     });
 }

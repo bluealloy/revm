@@ -27,6 +27,6 @@ pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let message_and_signature = Bytes::from(message_and_signature);
 
     group.bench_function("ecrecover precompile", |b| {
-        b.iter(|| ec_recover_run(&message_and_signature, u64::MAX).unwrap())
+        b.iter(|| ec_recover_run(&message_and_signature, u64::MAX, &revm_precompile::DefaultCrypto).unwrap())
     });
 }
