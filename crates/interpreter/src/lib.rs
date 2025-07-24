@@ -18,8 +18,8 @@ pub fn f() -> impl Sized {
     type W = crate::interpreter::EthInterpreter;
     type H = context_interface::DummyHost;
     (
-        instructions::tail_call_instr::<69, H, W> as fn(_) -> _,
         instruction_table::<W, H>(),
+        instruction_table_tail::<W, H>(),
     )
 }
 /// b
@@ -59,3 +59,5 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};
+
+use crate::instructions::instruction_table_tail;

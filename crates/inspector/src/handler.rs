@@ -200,11 +200,7 @@ where
         interpreter.bytecode.relative_jump(1);
 
         // Execute instruction.
-        let instruction_context = InstructionContext {
-            interpreter,
-            host: context,
-        };
-        instructions[opcode as usize](instruction_context);
+        InstructionContext::new(interpreter, context).call(instructions[opcode as usize]);
 
         // check if new log is added
         let new_log = context.journal_mut().logs().len();

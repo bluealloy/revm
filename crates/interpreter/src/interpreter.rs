@@ -227,11 +227,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InstructionReturn {
-        let context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-        context.step(instruction_table)
+        InstructionContext::new(self, host).step(instruction_table)
     }
 
     /// Executes the instruction at the current instruction pointer.

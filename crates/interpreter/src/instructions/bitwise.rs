@@ -295,13 +295,11 @@ mod tests {
             ];
         }
 
+        let mut host = DummyHost;
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext {
-                host: &mut DummyHost,
-                interpreter: &mut interpreter,
-            };
+            let context = InstructionContext::new(&mut interpreter, &mut host);
             shl(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
@@ -311,6 +309,7 @@ mod tests {
     #[test]
     fn test_logical_shift_right() {
         let mut interpreter = Interpreter::default();
+        let mut host = DummyHost;
 
         struct TestCase {
             value: U256,
@@ -381,10 +380,7 @@ mod tests {
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext {
-                host: &mut DummyHost,
-                interpreter: &mut interpreter,
-            };
+            let context = InstructionContext::new(&mut interpreter, &mut host);
             shr(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
@@ -394,6 +390,7 @@ mod tests {
     #[test]
     fn test_arithmetic_shift_right() {
         let mut interpreter = Interpreter::default();
+        let mut host = DummyHost;
 
         struct TestCase {
             value: U256,
@@ -489,10 +486,7 @@ mod tests {
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext {
-                host: &mut DummyHost,
-                interpreter: &mut interpreter,
-            };
+            let context = InstructionContext::new(&mut interpreter, &mut host);
             sar(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
@@ -508,6 +502,7 @@ mod tests {
         }
 
         let mut interpreter = Interpreter::default();
+        let mut host = DummyHost;
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);
         let test_cases = (0..32)
@@ -527,10 +522,7 @@ mod tests {
         for test in test_cases.iter() {
             assert!(interpreter.stack.push(test.input));
             assert!(interpreter.stack.push(U256::from(test.index)));
-            let context = InstructionContext {
-                host: &mut DummyHost,
-                interpreter: &mut interpreter,
-            };
+            let context = InstructionContext::new(&mut interpreter, &mut host);
             byte(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected, "Failed at index: {}", test.index);
@@ -541,6 +533,8 @@ mod tests {
     fn test_clz() {
         let mut interpreter = Interpreter::default();
         interpreter.set_spec_id(SpecId::OSAKA);
+
+        let mut host = DummyHost;
 
         struct TestCase {
             value: U256,
@@ -580,10 +574,7 @@ mod tests {
 
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
-            let context = InstructionContext {
-                host: &mut DummyHost,
-                interpreter: &mut interpreter,
-            };
+            let context = InstructionContext::new(&mut interpreter, &mut host);
             clz(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(
