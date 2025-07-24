@@ -152,7 +152,7 @@ pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function("g1_add", |b| {
-        b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+        b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
 
@@ -167,7 +167,7 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function("g2_add", |b| {
-        b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+        b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
 
@@ -185,7 +185,7 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("g1_msm (size {size})"), |b| {
-            b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+            b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
 }
@@ -230,7 +230,7 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("g2_msm (size {size})"), |b| {
-            b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+            b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
 }
@@ -263,7 +263,7 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("pairing ({pairs} pairs)"), |b| {
-            b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+            b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
 }
@@ -284,7 +284,7 @@ pub fn add_map_fp_to_g1_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function("map_fp_to_g1", |b| {
-        b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+        b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }
 
@@ -311,6 +311,6 @@ pub fn add_map_fp2_to_g2_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, 
     let precompile = *PRECOMPILE.precompile();
 
     group.bench_function("map_fp2_to_g2", |b| {
-        b.iter(|| precompile(&input, u64::MAX, &revm_precompile::DefaultCrypto).unwrap());
+        b.iter(|| precompile(&input, u64::MAX).unwrap());
     });
 }

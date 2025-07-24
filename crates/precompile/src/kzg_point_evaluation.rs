@@ -1,6 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
-use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    crypto, Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+};
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         use c_kzg::{Bytes32, Bytes48};
@@ -36,7 +38,7 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(PrecompileError::OutOfGas);
     }
@@ -49,7 +51,7 @@ pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Precompi
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
-    if kzg_to_versioned_hash(commitment, crypto) != versioned_hash {
+    if kzg_to_versioned_hash(commitment) != versioned_hash {
         return Err(PrecompileError::BlobMismatchedVersion);
     }
 
@@ -58,7 +60,7 @@ pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Precompi
     let z = input[32..64].try_into().unwrap();
     let y = input[64..96].try_into().unwrap();
     let proof = input[144..192].try_into().unwrap();
-    crypto.verify_kzg_proof(z, y, commitment, proof)?;
+    crypto().verify_kzg_proof(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
     Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
@@ -66,8 +68,8 @@ pub fn run(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Precompi
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
 #[inline]
-pub fn kzg_to_versioned_hash(commitment: &[u8], crypto: &dyn crate::Crypto) -> [u8; 32] {
-    let mut hash = crypto.sha256(commitment);
+pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
+    let mut hash = crypto().sha256(commitment);
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
 }
@@ -135,7 +137,7 @@ mod tests {
 
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
-        let output = run(&input, gas, &crate::DefaultCrypto).unwrap();
+        let output = run(&input, gas).unwrap();
         assert_eq!(output.gas_used, gas);
         assert_eq!(output.bytes[..], expected_output);
     }

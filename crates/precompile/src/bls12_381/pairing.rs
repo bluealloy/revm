@@ -5,7 +5,7 @@ use crate::bls12_381_const::{
     PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
     PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
 };
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::B256;
 use std::vec::Vec;
 
@@ -24,7 +24,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(PAIRING_ADDR
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % PAIRING_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -52,7 +52,7 @@ pub fn pairing(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Prec
         pairs.push(((*a_x, *a_y), (*b_x_0, *b_x_1, *b_y_0, *b_y_1)));
     }
 
-    let result = crypto.bls12_381_pairing_check(&pairs)?;
+    let result = crypto().bls12_381_pairing_check(&pairs)?;
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(

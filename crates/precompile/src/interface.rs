@@ -1,12 +1,28 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
 use core::fmt::{self, Debug};
+use once_cell::race::OnceBox;
 use primitives::Bytes;
 
 extern crate alloc;
 use alloc::{boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
+
+/// Global crypto provider instance
+static CRYPTO: OnceBox<Box<dyn Crypto>> = OnceBox::new();
+
+/// Install a custom crypto provider globally.
+pub fn install_crypto<C: Crypto + 'static>(crypto: C) -> bool {
+    CRYPTO.set(Box::new(Box::new(crypto))).is_ok()
+}
+
+/// Get the installed crypto provider, or the default if none is installed.
+pub fn crypto() -> &'static dyn Crypto {
+    CRYPTO
+        .get_or_init(|| Box::new(Box::new(DefaultCrypto)))
+        .as_ref()
+}
 
 /// A precompile operation result type
 ///
@@ -134,7 +150,7 @@ pub trait Crypto: Send + Sync + Debug {
 }
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
-pub type PrecompileFn = fn(&[u8], u64, &dyn Crypto) -> PrecompileResult;
+pub type PrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 /// Precompile error type.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

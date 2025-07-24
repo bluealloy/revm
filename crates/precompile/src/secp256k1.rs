@@ -20,7 +20,7 @@ pub mod k256;
 pub mod parity_libsecp256k1;
 
 use crate::{
-    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
+    crypto, utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
     PrecompileWithAddress,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
@@ -30,11 +30,7 @@ pub const ECRECOVER: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(1), ec_recover_run);
 
 /// `ecrecover` precompile function. Read more about input and output format in [this module docs](self).
-pub fn ec_recover_run(
-    input: &[u8],
-    gas_limit: u64,
-    crypto: &dyn crate::Crypto,
-) -> PrecompileResult {
+pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
@@ -52,7 +48,7 @@ pub fn ec_recover_run(
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let res = crypto.secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
+    let res = crypto().secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }

@@ -5,7 +5,7 @@ use crate::bls12_381_const::{
     PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use std::boxed::Box;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -19,7 +19,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRE
 /// Output is an encoding of multi-scalar-multiplication operation result - single G2
 /// point (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
-pub fn g2_msm(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % G2_MSM_INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -45,7 +45,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> Preco
         Ok(((*x_0, *x_1, *y_0, *y_1), scalar_array))
     });
 
-    let unpadded_result = crypto.bls12_381_g2_msm(Box::new(valid_pairs_iter))?;
+    let unpadded_result = crypto().bls12_381_g2_msm(Box::new(valid_pairs_iter))?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);
