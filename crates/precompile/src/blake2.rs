@@ -190,6 +190,7 @@ macro_rules! _MM_SHUFFLE {
 
 /// Code adapted from https://github.com/oconnor663/blake2_simd/blob/82b3e2aee4d2384aabbeb146058301ff0dbd453f/blake2b/src/avx2.rs
 #[cfg(all(target_feature = "avx2", feature = "std"))]
+#[allow(clippy::ptr_offset_with_cast)] // From array_refs
 mod avx2 {
     #[cfg(target_arch = "x86")]
     use core::arch::x86::*;
@@ -510,7 +511,7 @@ mod avx2 {
 
     #[inline(always)]
     pub(crate) fn count_high(count: Count) -> Word {
-        (count >> (Word::BITS as usize)) as Word
+        (count >> Word::BITS as usize) as Word
     }
 
     #[inline(always)]

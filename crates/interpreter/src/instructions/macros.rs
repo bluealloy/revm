@@ -2,6 +2,7 @@
 
 /// `const` Option `?`.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! tri {
     ($e:expr) => {
         match $e {
@@ -13,6 +14,7 @@ macro_rules! tri {
 
 /// Fails the instruction if the current call is static.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! require_non_staticcall {
     ($interpreter:expr) => {
         if $interpreter.runtime_flag.is_static() {
@@ -25,6 +27,7 @@ macro_rules! require_non_staticcall {
 /// Macro for optional try - returns early if the expression evaluates to None.
 /// Similar to the `?` operator but for use in instruction implementations.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! otry {
     ($expression: expr) => {{
         let Some(value) = $expression else {
@@ -34,19 +37,9 @@ macro_rules! otry {
     }};
 }
 
-/// Error if the current call is executing EOF.
-#[macro_export]
-macro_rules! require_eof {
-    ($interpreter:expr) => {
-        if !$interpreter.runtime_flag.is_eof() {
-            $interpreter.halt($crate::InstructionResult::EOFOpcodeDisabledInLegacy);
-            return $crate::instructions::InstructionReturn::halt();
-        }
-    };
-}
-
 /// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! check {
     ($interpreter:expr, $min:ident) => {
         if !$interpreter
@@ -62,6 +55,7 @@ macro_rules! check {
 
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! gas {
     ($interpreter:expr, $gas:expr) => {
         $crate::gas!(
@@ -80,6 +74,7 @@ macro_rules! gas {
 
 /// Same as [`gas!`], but with `gas` as an option.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! gas_or_fail {
     ($interpreter:expr, $gas:expr) => {
         $crate::gas_or_fail!(
@@ -102,6 +97,7 @@ macro_rules! gas_or_fail {
 /// Resizes the interpreterreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! resize_memory {
     ($interpreter:expr, $offset:expr, $len:expr) => {
         $crate::resize_memory!(
@@ -126,6 +122,7 @@ macro_rules! resize_memory {
 
 /// Pops n values from the stack. Fails the instruction if n values can't be popped.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreterreter:expr) => {
         let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
@@ -143,6 +140,7 @@ macro_rules! popn {
 
 #[doc(hidden)]
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! _count {
     (@count) => { 0 };
     (@count $head:tt $($tail:tt)*) => { 1 + _count!(@count $($tail)*) };
@@ -151,6 +149,7 @@ macro_rules! _count {
 
 /// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
@@ -172,6 +171,7 @@ macro_rules! popn_top {
 
 /// Pushes a `B256` value onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! push {
     ($interpreter:expr, $x:expr) => {
         $crate::push!(
@@ -190,6 +190,7 @@ macro_rules! push {
 
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! as_u64_saturated {
     ($v:expr) => {
         match $v.as_limbs() {
@@ -206,6 +207,7 @@ macro_rules! as_u64_saturated {
 
 /// Converts a `U256` value to a `usize`, saturating to `MAX` if the value is too large.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! as_usize_saturated {
     ($v:expr) => {
         usize::try_from($crate::as_u64_saturated!($v)).unwrap_or(usize::MAX)
@@ -214,6 +216,7 @@ macro_rules! as_usize_saturated {
 
 /// Converts a `U256` value to a `isize`, saturating to `isize::MAX` if the value is too large.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! as_isize_saturated {
     ($v:expr) => {
         // `isize_try_from(u64::MAX)`` will fail and return isize::MAX
@@ -224,6 +227,7 @@ macro_rules! as_isize_saturated {
 
 /// Converts a `U256` value to a `usize`, failing the instruction if the value is too large.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail {
     ($interpreter:expr, $v:expr) => {
         $crate::as_usize_or_fail_ret!(
@@ -245,6 +249,7 @@ macro_rules! as_usize_or_fail {
 /// Converts a `U256` value to a `usize` and returns `ret`,
 /// failing the instruction if the value is too large.
 #[macro_export]
+#[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail_ret {
     ($interpreter:expr, $v:expr, $ret:expr) => {
         $crate::as_usize_or_fail_ret!(
