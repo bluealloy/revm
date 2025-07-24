@@ -58,7 +58,7 @@ use aurora_engine_modexp as _;
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet, OnceLock};
-use std::{boxed::Box, vec::Vec};
+use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -66,21 +66,12 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 }
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles
     inner: HashMap<Address, PrecompileFn>,
     /// Addresses of precompile
     addresses: HashSet<Address>,
-}
-
-impl Clone for Precompiles {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            addresses: self.addresses.clone(),
-        }
-    }
 }
 
 impl Precompiles {
@@ -94,15 +85,6 @@ impl Precompiles {
             PrecompileSpecId::CANCUN => Self::cancun(),
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::OSAKA => Self::osaka(),
-        }
-    }
-
-    /// Creates a new Precompiles instance with a custom crypto implementation.
-    pub fn with_crypto(spec: PrecompileSpecId) -> Self {
-        let base = Self::new(spec).clone();
-        Self {
-            inner: base.inner,
-            addresses: base.addresses,
         }
     }
 

@@ -6,7 +6,6 @@ use crate::bls12_381_const::{
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use std::boxed::Box;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
@@ -33,7 +32,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let valid_pairs_iter = (0..k).map(|i| {
+    let mut valid_pairs_iter = (0..k).map(|i| {
         let start = i * G2_MSM_INPUT_LENGTH;
         let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
         let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
@@ -45,7 +44,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Ok(((*x_0, *x_1, *y_0, *y_1), scalar_array))
     });
 
-    let unpadded_result = crypto().bls12_381_g2_msm(Box::new(valid_pairs_iter))?;
+    let unpadded_result = crypto().bls12_381_g2_msm(&mut valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);

@@ -2,6 +2,7 @@
 
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
+    bls12_381::{G1PointScalar, G2PointScalar},
     bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH, SCALAR_LENGTH_BITS},
     PrecompileError,
 };
@@ -686,9 +687,7 @@ pub(crate) fn map_fp2_to_g2_bytes(
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
 pub(crate) fn p1_msm_bytes(
-    point_scalar_pairs: impl Iterator<
-        Item = Result<(G1Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
-    >,
+    point_scalar_pairs: impl Iterator<Item = Result<G1PointScalar, crate::PrecompileError>>,
 ) -> Result<[u8; G1_LENGTH], crate::PrecompileError> {
     let mut g1_points = Vec::new();
     let mut scalars = Vec::new();
@@ -725,9 +724,7 @@ pub(crate) fn p1_msm_bytes(
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
 pub(crate) fn p2_msm_bytes(
-    point_scalar_pairs: impl Iterator<
-        Item = Result<(G2Point, [u8; SCALAR_LENGTH]), crate::PrecompileError>,
-    >,
+    point_scalar_pairs: impl Iterator<Item = Result<G2PointScalar, crate::PrecompileError>>,
 ) -> Result<[u8; G2_LENGTH], crate::PrecompileError> {
     let mut g2_points = Vec::new();
     let mut scalars = Vec::new();

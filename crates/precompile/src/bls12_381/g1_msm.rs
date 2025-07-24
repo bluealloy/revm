@@ -7,7 +7,6 @@ use crate::bls12_381_const::{
 };
 use crate::bls12_381_utils::msm_required_gas;
 use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
-use std::boxed::Box;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
@@ -34,7 +33,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let valid_pairs_iter = (0..k).map(|i| {
+    let mut valid_pairs_iter = (0..k).map(|i| {
         let start = i * G1_MSM_INPUT_LENGTH;
         let padded_g1 = &input[start..start + PADDED_G1_LENGTH];
         let scalar_bytes = &input[start + PADDED_G1_LENGTH..start + G1_MSM_INPUT_LENGTH];
@@ -47,7 +46,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Ok((point, scalar_array))
     });
 
-    let unpadded_result = crypto().bls12_381_g1_msm(Box::new(valid_pairs_iter))?;
+    let unpadded_result = crypto().bls12_381_g1_msm(&mut valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

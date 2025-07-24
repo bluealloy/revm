@@ -1,25 +1,22 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
 use core::fmt::{self, Debug};
-use once_cell::race::OnceBox;
-use primitives::Bytes;
+use primitives::{Bytes, OnceLock};
 use std::{boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
 /// Global crypto provider instance
-static CRYPTO: OnceBox<Box<dyn Crypto>> = OnceBox::new();
+static CRYPTO: OnceLock<Box<dyn Crypto>> = OnceLock::new();
 
 /// Install a custom crypto provider globally.
 pub fn install_crypto<C: Crypto + 'static>(crypto: C) -> bool {
-    CRYPTO.set(Box::new(Box::new(crypto))).is_ok()
+    CRYPTO.set(Box::new(crypto)).is_ok()
 }
 
 /// Get the installed crypto provider, or the default if none is installed.
 pub fn crypto() -> &'static dyn Crypto {
-    CRYPTO
-        .get_or_init(|| Box::new(Box::new(DefaultCrypto)))
-        .as_ref()
+    CRYPTO.get_or_init(|| Box::new(DefaultCrypto)).as_ref()
 }
 
 /// A precompile operation result type
@@ -162,9 +159,9 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// BLS12-381 G1 multi-scalar multiplication (returns 96-byte unpadded G1 point)
-    fn bls12_381_g1_msm<'a>(
+    fn bls12_381_g1_msm(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<G1PointScalar, PrecompileError>> + 'a>,
+        pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileError>>,
     ) -> Result<[u8; 96], PrecompileError> {
         crate::bls12_381::crypto_backend::p1_msm_bytes(pairs)
     }
@@ -175,9 +172,9 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// BLS12-381 G2 multi-scalar multiplication (returns 192-byte unpadded G2 point)
-    fn bls12_381_g2_msm<'a>(
+    fn bls12_381_g2_msm(
         &self,
-        pairs: Box<dyn Iterator<Item = Result<G2PointScalar, PrecompileError>> + 'a>,
+        pairs: &mut dyn Iterator<Item = Result<G2PointScalar, PrecompileError>>,
     ) -> Result<[u8; 192], PrecompileError> {
         crate::bls12_381::crypto_backend::p2_msm_bytes(pairs)
     }
