@@ -1,7 +1,7 @@
 use super::{Immediates, Jumps, LegacyBytecode};
 use crate::{interpreter_types::LoopControl, InterpreterAction};
 use bytecode::{utils::read_u16, Bytecode};
-use core::{ops::Deref, ptr};
+use core::ops::Deref;
 use primitives::B256;
 
 #[cfg(feature = "serde")]
@@ -14,10 +14,9 @@ pub struct ExtBytecode {
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
     pub action: Option<InterpreterAction>,
+    has_set_action: bool,
     /// The base bytecode.
     base: Bytecode,
-    /// The previous instruction pointer.
-    previous_pointer: Option<*const u8>,
     /// The current instruction pointer.
     instruction_pointer: *const u8,
 }
@@ -47,7 +46,7 @@ impl ExtBytecode {
             instruction_pointer,
             bytecode_hash: None,
             action: None,
-            previous_pointer: None,
+            has_set_action: false,
         }
     }
 
@@ -59,7 +58,7 @@ impl ExtBytecode {
             instruction_pointer,
             bytecode_hash: Some(hash),
             action: None,
-            previous_pointer: None,
+            has_set_action: false,
         }
     }
 
@@ -79,23 +78,18 @@ impl ExtBytecode {
 impl LoopControl for ExtBytecode {
     #[inline]
     fn is_end(&self) -> bool {
-        self.instruction_pointer.is_null()
+        self.has_set_action
     }
 
     #[inline]
-    fn revert_to_previous_pointer(&mut self) {
-        if let Some(previous_pointer) = self.previous_pointer {
-            self.instruction_pointer = previous_pointer;
-        }
+    fn reset_action(&mut self) {
+        self.has_set_action = false;
     }
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
+        self.has_set_action = true;
         self.action = Some(action);
-        self.previous_pointer = Some(core::mem::replace(
-            &mut self.instruction_pointer,
-            ptr::null(),
-        ));
     }
 
     #[inline]

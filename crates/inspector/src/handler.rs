@@ -4,8 +4,8 @@ use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
-    FrameInput, Host, InitialAndFloorGas, InstructionContext, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterTypes,
+    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
 use state::bytecode::opcode;
 
@@ -185,32 +185,20 @@ where
 {
     loop {
         inspector.step(interpreter, context);
+        if interpreter.bytecode.is_end() {
+            break;
+        }
 
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
         let opcode = interpreter.bytecode.opcode();
-        interpreter.bytecode.relative_jump(1);
-
-        // Execute instruction.
-        let instruction_context = InstructionContext {
-            interpreter,
-            host: context,
-        };
-        instructions[opcode as usize](instruction_context);
+        interpreter.step(instructions, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
         }
 
-        let done = interpreter.bytecode.is_end();
-        if done {
-            interpreter.bytecode.revert_to_previous_pointer();
-        }
-
         inspector.step_end(interpreter, context);
 
-        if done {
+        if interpreter.bytecode.is_end() {
             break;
         }
     }
