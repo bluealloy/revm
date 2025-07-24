@@ -60,6 +60,12 @@ Some quick links can be found here. Some point to code documentation or the book
 * How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
 * If there is more need for explanations please open a PR request.
 
+## Supported Rust Versions (MSRV)
+
+Revm always aims to stay up-to-date with the latest stable Rust release.
+
+The Minimum Supported Rust Version (MSRV) may be updated at any time, so we can take advantage of new features and improvements in Rust.
+
 ### Community:
 For questions please open a github issue or join the public telegram group: [https://t.me/+Ig4WDWOzikA3MzA0](https://t.me/+Ig4WDWOzikA3MzA0)
 
