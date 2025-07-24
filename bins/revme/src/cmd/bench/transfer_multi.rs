@@ -73,7 +73,7 @@ pub fn run(criterion: &mut Criterion) {
             |inputs| {
                 for (i, tx) in inputs.into_iter().enumerate() {
                     let _ = evm.transact_one(tx).unwrap();
-                    if i % 40 == 0 {
+                    if i.is_multiple_of(40) {
                         evm.commit_inner();
                     }
                 }
