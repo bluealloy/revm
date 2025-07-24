@@ -193,6 +193,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Takes the next action from the control and returns it.
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
+        self.bytecode.reset_action();
         // Return next action if it is some.
         core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
     }
@@ -222,6 +223,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
+    #[must_use]
     pub fn step<H: ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
@@ -252,11 +254,10 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         loop {
             if !self.step(instruction_table, host).can_continue() {
+                debug_assert!(self.bytecode.is_end());
                 break;
             }
         }
-        self.bytecode.revert_to_previous_pointer();
-
         self.take_next_action()
     }
 }

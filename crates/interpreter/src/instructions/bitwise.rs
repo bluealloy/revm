@@ -10,7 +10,7 @@ use primitives::U256;
 
 /// Implements the LT instruction - less than comparison.
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -20,7 +20,7 @@ pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the GT instruction - greater than comparison.
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -31,7 +31,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the CLZ instruction - count leading zeros.
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, OSAKA);
     gas!(context.interpreter, gas::LOW);
@@ -46,7 +46,7 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Signed less than comparison of two values from stack.
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -59,7 +59,7 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Signed greater than comparison of two values from stack.
 pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -72,7 +72,7 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Equality comparison of two values from stack.
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -85,7 +85,7 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Checks if the top stack value is zero.
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
@@ -97,7 +97,7 @@ pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Bitwise AND of two values from stack.
 pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -109,7 +109,7 @@ pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Bitwise OR of two values from stack.
 pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -122,7 +122,7 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Bitwise XOR of two values from stack.
 pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -135,7 +135,7 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Bitwise NOT (negation) of the top stack value.
 pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
@@ -148,7 +148,7 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Extracts a single byte from a word at a given index.
 pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -165,7 +165,7 @@ pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, CONSTANTINOPLE);
     gas!(context.interpreter, gas::VERYLOW);
@@ -182,7 +182,7 @@ pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, CONSTANTINOPLE);
     gas!(context.interpreter, gas::VERYLOW);
@@ -199,7 +199,7 @@ pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, CONSTANTINOPLE);
     gas!(context.interpreter, gas::VERYLOW);
@@ -299,8 +299,7 @@ mod tests {
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext::new(&mut interpreter, &mut host);
-            shl(context);
+            shl(&mut InstructionContext::new(&mut interpreter, &mut host));
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -380,8 +379,7 @@ mod tests {
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext::new(&mut interpreter, &mut host);
-            shr(context);
+            shr(&mut InstructionContext::new(&mut interpreter, &mut host));
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -486,8 +484,7 @@ mod tests {
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
             assert!(interpreter.stack.push(test.shift));
-            let context = InstructionContext::new(&mut interpreter, &mut host);
-            sar(context);
+            sar(&mut InstructionContext::new(&mut interpreter, &mut host));
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected);
         }
@@ -522,8 +519,7 @@ mod tests {
         for test in test_cases.iter() {
             assert!(interpreter.stack.push(test.input));
             assert!(interpreter.stack.push(U256::from(test.index)));
-            let context = InstructionContext::new(&mut interpreter, &mut host);
-            byte(context);
+            byte(&mut InstructionContext::new(&mut interpreter, &mut host));
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(res, test.expected, "Failed at index: {}", test.index);
         }
@@ -574,8 +570,7 @@ mod tests {
 
         for test in test_cases {
             assert!(interpreter.stack.push(test.value));
-            let context = InstructionContext::new(&mut interpreter, &mut host);
-            clz(context);
+            clz(&mut InstructionContext::new(&mut interpreter, &mut host));
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(
                 res, test.expected,

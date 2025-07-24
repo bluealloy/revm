@@ -2,10 +2,8 @@ use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
-    instructions::InstructionTable,
-    interpreter_types::{Jumps, LoopControl},
-    FrameInput, Host, InitialAndFloorGas, InstructionContext, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterTypes,
+    instructions::InstructionTable, interpreter_types::LoopControl, FrameInput, Host,
+    InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
 };
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -183,25 +181,15 @@ where
     IT: InterpreterTypes,
 {
     let mut log_num = context.journal_mut().logs().len();
-    // Main loop
-    while interpreter.bytecode.is_not_end() {
-        // Get current opcode.
-        let opcode = interpreter.bytecode.opcode();
-
-        // Call Inspector step.
+    loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
             break;
         }
 
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        interpreter.bytecode.relative_jump(1);
-
         // Execute instruction.
         // TODO: `ip` is unused
-        InstructionContext::new(interpreter, context).call(instructions[opcode as usize]);
+        let ret = interpreter.step(instructions, context);
 
         // check if new log is added
         let new_log = context.journal_mut().logs().len();
@@ -212,18 +200,13 @@ where
             log_num = new_log;
         }
 
-        // if loops is ending, break the loop so we can revert to the previous pointer and then call step_end.
-        if interpreter.bytecode.is_end() {
-            break;
-        }
-
         // Call step_end.
         inspector.step_end(interpreter, context);
-    }
 
-    interpreter.bytecode.revert_to_previous_pointer();
-    // call step_end again to handle the last instruction
-    inspector.step_end(interpreter, context);
+        if !ret.can_continue() {
+            break;
+        }
+    }
 
     let next_action = interpreter.take_next_action();
 

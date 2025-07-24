@@ -37,7 +37,7 @@ pub fn main() {
     )));
 
     // Create a new instruction set with our mainnet opcodes.
-    let mut instructions = EthInstructions::<EthInterpreter, _>::new_mainnet();
+    let mut instructions = EthInstructions::<EthInterpreter, _>::new_mainnet_no_tail();
     // insert our custom opcode
     instructions.insert_instruction(MY_STATIC_JUMP, |interpreter, _host, _ip| {
         let offset = interpreter.bytecode.read_i16();

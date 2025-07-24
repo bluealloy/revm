@@ -27,10 +27,7 @@ pub mod tx_info;
 /// Utility functions and helpers for instruction implementation.
 pub mod utility;
 
-use crate::{
-    interpreter_types::{InterpreterTypes, Jumps},
-    Host, InstructionContext, Interpreter,
-};
+use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext, Interpreter};
 
 /// EVM opcode function signature.
 ///
@@ -99,7 +96,12 @@ mod cx {
                     host: &mut H,
                     ip: *const u8,
                 ) -> InstructionReturn {
-                    $instr_fn(InstructionContext { interpreter, host, ip })
+                    let mut cx = InstructionContext { interpreter, host, ip };
+                    let ret = $instr_fn(&mut cx);
+                    if cx.ip != ip {
+                        cx.flush();
+                    }
+                    ret
                 }
             )*
 
@@ -144,17 +146,17 @@ mod tail {
                     host: &mut H,
                     ip: *const u8,
                 ) -> InstructionReturn {
-                    let ret = $instr_fn(InstructionContext { interpreter, host, ip });
+                    let mut cx = InstructionContext { interpreter, host, ip };
+                    let ret = $instr_fn(&mut cx);
                     if !ret.can_continue() {
-                        // TODO: cold
+                        primitives::cold_path();
+                        cx.flush();
                         return ret;
                     }
 
-                    // TODO: use ip
-                    let opcode = interpreter.bytecode.opcode();
-                    interpreter.bytecode.relative_jump(1);
+                    let opcode = cx.pre_step();
                     // become
-                    (const { &self::table::<W, H>() })[opcode as usize](interpreter, host, ip)
+                    (const { &self::table::<W, H>() })[opcode as usize](cx.interpreter, cx.host, cx.ip)
                 }
             )*
 

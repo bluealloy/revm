@@ -44,6 +44,7 @@ where
     /// Returns an instance with the default mainnet instructions.
     #[inline]
     pub fn new_mainnet() -> Self {
+        println!("tail");
         Self::new(instruction_table_tail::<WIRE, HOST>())
     }
 
@@ -52,6 +53,7 @@ where
     /// Use this for inspectors and for stepping through the instructions.
     #[inline]
     pub fn new_mainnet_no_tail() -> Self {
+        println!("no tail");
         Self::new(instruction_table::<WIRE, HOST>())
     }
 

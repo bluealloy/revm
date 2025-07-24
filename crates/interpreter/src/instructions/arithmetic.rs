@@ -9,7 +9,7 @@ use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
 pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -19,7 +19,7 @@ pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the MUL instruction - multiplies two values from stack.
 pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -29,7 +29,7 @@ pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the SUB instruction - subtracts two values from stack.
 pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
@@ -39,7 +39,7 @@ pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the DIV instruction - divides two values from stack.
 pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -53,7 +53,7 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Performs signed division of two values from stack.
 pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -65,7 +65,7 @@ pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Pops two values from stack and pushes the remainder of their division.
 pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -79,7 +79,7 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Performs signed modulo of two values from stack.
 pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
@@ -91,7 +91,7 @@ pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Pops three values from stack and pushes (a + b) % n.
 pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
@@ -103,7 +103,7 @@ pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Pops three values from stack and pushes (a * b) % n.
 pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
@@ -113,7 +113,7 @@ pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
 
 /// Implements the EXP instruction - exponentiates two values from stack.
 pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     let spec_id = context.interpreter.runtime_flag.spec_id();
     popn_top!([op1], op2, context.interpreter);
@@ -152,7 +152,7 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
 pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([ext], x, context.interpreter);

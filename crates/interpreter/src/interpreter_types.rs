@@ -71,10 +71,14 @@ pub trait Jumps {
     fn absolute_jump(&mut self, offset: usize);
     /// Check legacy jump destination from jump table.
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
+    /// Returns the base pointer of the bytecode.
+    fn base(&self) -> *const u8;
     /// Returns current program counter.
     fn pc(&self) -> usize;
     /// Returns instruction pointer.
     fn ip(&self) -> *const u8;
+    /// Sets instruction pointer.
+    fn set_ip(&mut self, ip: *const u8);
     /// Returns instruction opcode.
     fn opcode(&self) -> u8;
 }
@@ -257,12 +261,8 @@ pub trait LoopControl {
     /// Is end of the loop.
     fn is_end(&self) -> bool;
     /// Reverts to previous instruction pointer.
-    ///
-    /// After the loop is finished, the instruction pointer is set to the previous one.
-    fn revert_to_previous_pointer(&mut self);
-    /// Set return action and set instruction pointer to null. Preserve previous pointer
-    ///
-    /// Previous pointer can be restored by calling [`LoopControl::revert_to_previous_pointer`].
+    fn reset_action(&mut self);
+    /// Set return action.
     fn set_action(&mut self, action: InterpreterAction);
     /// Takes next action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;

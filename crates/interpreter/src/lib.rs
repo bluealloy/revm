@@ -9,6 +9,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// TODO(dani): rename `context` to `cx`
+
 #[macro_use]
 mod macros;
 
@@ -19,8 +21,8 @@ pub fn instruction_tables() -> impl Sized {
     type W = crate::interpreter::EthInterpreter;
     type H = context_interface::DummyHost;
     (
-        instruction_table::<W, H>(),
-        instruction_table_tail::<W, H>(),
+        instructions::instruction_table::<W, H>(),
+        instructions::instruction_table_tail::<W, H>(),
     )
 }
 /// b
@@ -60,5 +62,3 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};
-
-use crate::instructions::instruction_table_tail;

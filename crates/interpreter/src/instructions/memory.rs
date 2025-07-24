@@ -12,7 +12,7 @@ use crate::InstructionContext;
 ///
 /// Loads a 32-byte word from memory.
 pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], top, context.interpreter);
@@ -27,7 +27,7 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Stores a 32-byte word to memory.
 pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -44,7 +44,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Stores a single byte to memory.
 pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
@@ -58,7 +58,7 @@ pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Gets the size of active memory in bytes.
 pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::BASE);
     push!(
@@ -72,7 +72,7 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// EIP-5656: Memory copying instruction that copies memory from one location to another.
 pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);

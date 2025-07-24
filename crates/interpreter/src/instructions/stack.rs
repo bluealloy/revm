@@ -12,7 +12,7 @@ use crate::InstructionContext;
 ///
 /// Removes the top item from the stack.
 pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
@@ -24,7 +24,7 @@ pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
 pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     check!(context.interpreter, SHANGHAI);
     gas!(context.interpreter, gas::BASE);
@@ -36,7 +36,7 @@ pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Pushes N bytes from bytecode onto the stack as a 32-byte value.
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
 
@@ -55,7 +55,7 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Duplicates the Nth stack item to the top of the stack.
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     if !context.interpreter.stack.dup(N) {
@@ -68,7 +68,7 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Swaps the top stack item with the Nth stack item.
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     assert!(N != 0);
