@@ -11,8 +11,8 @@ use primitives::U256;
 pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_add(*op2);
     InstructionReturn::cont()
 }
@@ -21,8 +21,8 @@ pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_mul(*op2);
     InstructionReturn::cont()
 }
@@ -31,8 +31,8 @@ pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_sub(*op2);
     InstructionReturn::cont()
 }
@@ -41,8 +41,8 @@ pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
@@ -55,8 +55,8 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     *op2 = i256_div(op1, *op2);
     InstructionReturn::cont()
 }
@@ -67,8 +67,8 @@ pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
@@ -81,8 +81,8 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     *op2 = i256_mod(op1, *op2);
     InstructionReturn::cont()
 }
@@ -93,8 +93,8 @@ pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::MID);
-    popn_top!([op1, op2], op3, context.interpreter);
+    gas!(context, gas::MID);
+    popn_top!([op1, op2], op3, context);
     *op3 = op1.add_mod(op2, *op3);
     InstructionReturn::cont()
 }
@@ -105,8 +105,8 @@ pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::MID);
-    popn_top!([op1, op2], op3, context.interpreter);
+    gas!(context, gas::MID);
+    popn_top!([op1, op2], op3, context);
     *op3 = op1.mul_mod(op2, *op3);
     InstructionReturn::cont()
 }
@@ -116,8 +116,8 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    popn_top!([op1], op2, context.interpreter);
-    gas_or_fail!(context.interpreter, gas::exp_cost(spec_id, *op2));
+    popn_top!([op1], op2, context);
+    gas_or_fail!(context, gas::exp_cost(spec_id, *op2));
     *op2 = op1.pow(*op2);
     InstructionReturn::cont()
 }
@@ -154,8 +154,8 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([ext], x, context.interpreter);
+    gas!(context, gas::LOW);
+    popn_top!([ext], x, context);
     // For 31 we also don't need to do anything.
     if ext < U256::from(31) {
         let ext = ext.as_limbs()[0];

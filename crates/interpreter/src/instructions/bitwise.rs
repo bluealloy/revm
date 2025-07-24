@@ -12,8 +12,8 @@ use primitives::U256;
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = U256::from(op1 < *op2);
     InstructionReturn::cont()
 }
@@ -22,8 +22,8 @@ pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = U256::from(op1 > *op2);
     InstructionReturn::cont()
@@ -33,9 +33,9 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, OSAKA);
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([], op1, context.interpreter);
+    check!(context, OSAKA);
+    gas!(context, gas::LOW);
+    popn_top!([], op1, context);
 
     let leading_zeros = op1.leading_zeros();
     *op1 = U256::from(leading_zeros);
@@ -48,8 +48,8 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
     InstructionReturn::cont()
@@ -61,8 +61,8 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
     InstructionReturn::cont()
@@ -74,8 +74,8 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = U256::from(op1 == *op2);
     InstructionReturn::cont()
@@ -87,8 +87,8 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], op1, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([], op1, context);
     *op1 = U256::from(op1.is_zero());
     InstructionReturn::cont()
 }
@@ -99,8 +99,8 @@ pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = op1 & *op2;
     InstructionReturn::cont()
 }
@@ -111,8 +111,8 @@ pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = op1 | *op2;
     InstructionReturn::cont()
@@ -124,8 +124,8 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     *op2 = op1 ^ *op2;
     InstructionReturn::cont()
@@ -137,8 +137,8 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], op1, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([], op1, context);
 
     *op1 = !*op1;
     InstructionReturn::cont()
@@ -150,8 +150,8 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
@@ -167,9 +167,9 @@ pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CONSTANTINOPLE);
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    check!(context, CONSTANTINOPLE);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
@@ -184,9 +184,9 @@ pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CONSTANTINOPLE);
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    check!(context, CONSTANTINOPLE);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
@@ -201,9 +201,9 @@ pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CONSTANTINOPLE);
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+    check!(context, CONSTANTINOPLE);
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
 
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {

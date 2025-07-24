@@ -18,7 +18,7 @@ use crate::InstructionContext;
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn_top!([], top, context.interpreter);
+    popn_top!([], top, context);
     let address = top.into_address();
     let Some(balance) = context.host.balance(address) else {
         context
@@ -28,7 +28,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
     gas!(
-        context.interpreter,
+        context,
         if spec_id.is_enabled_in(BERLIN) {
             warm_cold_cost(balance.is_cold)
         } else if spec_id.is_enabled_in(ISTANBUL) {
@@ -48,8 +48,8 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, ISTANBUL);
-    gas!(context.interpreter, gas::LOW);
+    check!(context, ISTANBUL);
+    gas!(context, gas::LOW);
 
     let Some(balance) = context
         .host
@@ -60,7 +60,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return InstructionReturn::halt();
     };
-    push!(context.interpreter, balance.data);
+    push!(context, balance.data);
     InstructionReturn::cont()
 }
 
@@ -70,7 +70,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn_top!([], top, context.interpreter);
+    popn_top!([], top, context);
     let address = top.into_address();
     let Some(code) = context.host.load_account_code(address) else {
         context
@@ -80,11 +80,11 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code.is_cold));
+        gas!(context, warm_cold_cost(code.is_cold));
     } else if spec_id.is_enabled_in(TANGERINE) {
-        gas!(context.interpreter, 700);
+        gas!(context, 700);
     } else {
-        gas!(context.interpreter, 20);
+        gas!(context, 20);
     }
 
     *top = U256::from(code.len());
@@ -95,8 +95,8 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CONSTANTINOPLE);
-    popn_top!([], top, context.interpreter);
+    check!(context, CONSTANTINOPLE);
+    popn_top!([], top, context);
     let address = top.into_address();
     let Some(code_hash) = context.host.load_account_code_hash(address) else {
         context
@@ -106,11 +106,11 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code_hash.is_cold));
+        gas!(context, warm_cold_cost(code_hash.is_cold));
     } else if spec_id.is_enabled_in(ISTANBUL) {
-        gas!(context.interpreter, 700);
+        gas!(context, 700);
     } else {
-        gas!(context.interpreter, 400);
+        gas!(context, 400);
     }
     *top = code_hash.into_u256();
     InstructionReturn::cont()
@@ -124,7 +124,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionReturn {
     popn!(
         [address, memory_offset, code_offset, len_u256],
-        context.interpreter
+        context
     );
     let address = address.into_address();
     let Some(code) = context.host.load_account_code(address) else {
@@ -134,9 +134,9 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return InstructionReturn::halt();
     };
 
-    let len = as_usize_or_fail!(context.interpreter, len_u256);
+    let len = as_usize_or_fail!(context, len_u256);
     gas_or_fail!(
-        context.interpreter,
+        context,
         gas::extcodecopy_cost(
             context.interpreter.runtime_flag.spec_id(),
             len,
@@ -146,9 +146,9 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if len == 0 {
         return InstructionReturn::cont();
     }
-    let memory_offset = as_usize_or_fail!(context.interpreter, memory_offset);
+    let memory_offset = as_usize_or_fail!(context, memory_offset);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    resize_memory!(context.interpreter, memory_offset, len);
+    resize_memory!(context, memory_offset, len);
 
     // Note: This can't panic because we resized memory to fit.
     context
@@ -164,8 +164,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BLOCKHASH);
-    popn_top!([], number, context.interpreter);
+    gas!(context, gas::BLOCKHASH);
+    popn_top!([], number, context);
 
     let requested_number = *number;
     let block_number = context.host.block_number();
@@ -203,7 +203,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn_top!([], index, context.interpreter);
+    popn_top!([], index, context);
 
     let Some(value) = context
         .host
@@ -216,7 +216,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     gas!(
-        context.interpreter,
+        context,
         gas::sload_cost(context.interpreter.runtime_flag.spec_id(), value.is_cold)
     );
     *index = value.data;
@@ -229,9 +229,9 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    require_non_staticcall!(context.interpreter);
+    require_non_staticcall!(context);
 
-    popn!([index, value], context.interpreter);
+    popn!([index, value], context);
 
     let Some(state_load) =
         context
@@ -258,7 +258,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return InstructionReturn::halt();
     }
     gas!(
-        context.interpreter,
+        context,
         gas::sstore_cost(
             context.interpreter.runtime_flag.spec_id(),
             &state_load.data,
@@ -278,11 +278,11 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CANCUN);
-    require_non_staticcall!(context.interpreter);
-    gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
+    check!(context, CANCUN);
+    require_non_staticcall!(context);
+    gas!(context, gas::WARM_STORAGE_READ_COST);
 
-    popn!([index, value], context.interpreter);
+    popn!([index, value], context);
 
     context
         .host
@@ -295,10 +295,10 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
+    check!(context, CANCUN);
+    gas!(context, gas::WARM_STORAGE_READ_COST);
 
-    popn_top!([], index, context.interpreter);
+    popn_top!([], index, context);
 
     *index = context
         .host
@@ -312,24 +312,24 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn log<const N: usize, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
 ) -> InstructionReturn {
-    require_non_staticcall!(context.interpreter);
+    require_non_staticcall!(context);
 
-    popn!([offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    gas_or_fail!(context.interpreter, gas::log_cost(N as u8, len as u64));
+    popn!([offset, len], context);
+    let len = as_usize_or_fail!(context, len);
+    gas_or_fail!(context, gas::log_cost(N as u8, len as u64));
     let data = if len == 0 {
         Bytes::new()
     } else {
-        let offset = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, offset, len);
+        let offset = as_usize_or_fail!(context, offset);
+        resize_memory!(context, offset, len);
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     if context.interpreter.stack.len() < N {
-        context.interpreter.halt(InstructionResult::StackUnderflow);
+        context.halt(InstructionResult::StackUnderflow);
         return InstructionReturn::halt();
     }
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
-        context.interpreter.halt(InstructionResult::StackUnderflow);
+        context.halt(InstructionResult::StackUnderflow);
         return InstructionReturn::halt();
     };
 
@@ -349,8 +349,8 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    require_non_staticcall!(context.interpreter);
-    popn!([target], context.interpreter);
+    require_non_staticcall!(context);
+    popn!([target], context);
     let target = target.into_address();
 
     let Some(res) = context
@@ -375,10 +375,10 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     gas!(
-        context.interpreter,
+        context,
         gas::selfdestruct_cost(context.interpreter.runtime_flag.spec_id(), res)
     );
 
-    context.interpreter.halt(InstructionResult::SelfDestruct);
+    context.halt(InstructionResult::SelfDestruct);
     InstructionReturn::halt()
 }

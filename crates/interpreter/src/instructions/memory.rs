@@ -14,10 +14,10 @@ use crate::InstructionContext;
 pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], top, context.interpreter);
-    let offset = as_usize_or_fail!(context.interpreter, top);
-    resize_memory!(context.interpreter, offset, 32);
+    gas!(context, gas::VERYLOW);
+    popn_top!([], top, context);
+    let offset = as_usize_or_fail!(context, top);
+    resize_memory!(context, offset, 32);
     *top =
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap();
     InstructionReturn::cont()
@@ -29,10 +29,10 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn!([offset, value], context.interpreter);
-    let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, offset, 32);
+    gas!(context, gas::VERYLOW);
+    popn!([offset, value], context);
+    let offset = as_usize_or_fail!(context, offset);
+    resize_memory!(context, offset, 32);
     context
         .interpreter
         .memory
@@ -46,10 +46,10 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn!([offset, value], context.interpreter);
-    let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, offset, 1);
+    gas!(context, gas::VERYLOW);
+    popn!([offset, value], context);
+    let offset = as_usize_or_fail!(context, offset);
+    resize_memory!(context, offset, 1);
     context.interpreter.memory.set(offset, &[value.byte(0)]);
     InstructionReturn::cont()
 }
@@ -60,9 +60,9 @@ pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         U256::from(context.interpreter.memory.size())
     );
     InstructionReturn::cont()
@@ -74,21 +74,21 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CANCUN);
-    popn!([dst, src, len], context.interpreter);
+    check!(context, CANCUN);
+    popn!([dst, src, len], context);
 
     // Into usize or fail
-    let len = as_usize_or_fail!(context.interpreter, len);
+    let len = as_usize_or_fail!(context, len);
     // Deduce gas
-    gas_or_fail!(context.interpreter, gas::copy_cost_verylow(len));
+    gas_or_fail!(context, gas::copy_cost_verylow(len));
     if len == 0 {
         return InstructionReturn::cont();
     }
 
-    let dst = as_usize_or_fail!(context.interpreter, dst);
-    let src = as_usize_or_fail!(context.interpreter, src);
+    let dst = as_usize_or_fail!(context, dst);
+    let src = as_usize_or_fail!(context, src);
     // Resize memory
-    resize_memory!(context.interpreter, max(dst, src), len);
+    resize_memory!(context, max(dst, src), len);
     // Copy memory in place
     context.interpreter.memory.copy(dst, src, len);
     InstructionReturn::cont()

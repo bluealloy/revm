@@ -1,7 +1,6 @@
 use crate::{
     gas,
     instructions::InstructionReturn,
-    interpreter::Interpreter,
     interpreter_types::{
         InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
@@ -18,14 +17,14 @@ use crate::InstructionContext;
 pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn_top!([offset], top, context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, top);
-    gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
+    popn_top!([offset], top, context);
+    let len = as_usize_or_fail!(context, top);
+    gas_or_fail!(context, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, from, len);
+        let from = as_usize_or_fail!(context, offset);
+        resize_memory!(context, from, len);
         primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
     };
     *top = hash.into();
@@ -38,9 +37,9 @@ pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn address<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         context
             .interpreter
             .input
@@ -57,9 +56,9 @@ pub fn address<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         context
             .interpreter
             .input
@@ -76,9 +75,9 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         U256::from(context.interpreter.bytecode.bytecode_len())
     );
     InstructionReturn::cont()
@@ -90,9 +89,9 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn!([memory_offset, code_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    popn!([memory_offset, code_offset, len], context);
+    let len = as_usize_or_fail!(context, len);
+    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
         return InstructionReturn::cont();
     };
     let code_offset = as_usize_saturated!(code_offset);
@@ -113,8 +112,8 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], offset_ptr, context.interpreter);
+    gas!(context, gas::VERYLOW);
+    popn_top!([], offset_ptr, context);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
     let input = context.interpreter.input.input();
@@ -154,11 +153,8 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.input.input().len())
-    );
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.interpreter.input.input().len()));
     InstructionReturn::cont()
 }
 
@@ -168,8 +164,8 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.interpreter.input.call_value());
+    gas!(context, gas::BASE);
+    push!(context, context.interpreter.input.call_value());
     InstructionReturn::cont()
 }
 
@@ -179,9 +175,9 @@ pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn!([memory_offset, data_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    popn!([memory_offset, data_offset, len], context);
+    let len = as_usize_or_fail!(context, len);
+    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
         return InstructionReturn::cont();
     };
 
@@ -209,10 +205,10 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, BYZANTIUM);
-    gas!(context.interpreter, gas::BASE);
+    check!(context, BYZANTIUM);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         U256::from(context.interpreter.return_data.buffer().len())
     );
     InstructionReturn::cont()
@@ -222,20 +218,20 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, BYZANTIUM);
-    popn!([memory_offset, offset, len], context.interpreter);
+    check!(context, BYZANTIUM);
+    popn!([memory_offset, offset, len], context);
 
-    let len = as_usize_or_fail!(context.interpreter, len);
+    let len = as_usize_or_fail!(context, len);
     let data_offset = as_usize_saturated!(offset);
 
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     let data_end = data_offset.saturating_add(len);
     if data_end > context.interpreter.return_data.buffer().len() {
-        context.interpreter.halt(InstructionResult::OutOfOffset);
+        context.halt(InstructionResult::OutOfOffset);
         return InstructionReturn::halt();
     }
 
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
         return InstructionReturn::cont();
     };
 
@@ -255,29 +251,26 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.gas.remaining())
-    );
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.interpreter.gas.remaining()));
     InstructionReturn::cont()
 }
 
 /// Common logic for copying data from a source buffer to the EVM's memory.
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
-pub fn memory_resize(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+pub fn memory_resize<H: ?Sized>(
+    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {
     // Safe to cast usize to u64
-    gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
+    gas_or_fail!(context, gas::copy_cost_verylow(len), None);
     if len == 0 {
         return None;
     }
-    let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
-    resize_memory!(interpreter, memory_offset, len, None);
+    let memory_offset = as_usize_or_fail_ret!(context, memory_offset, None);
+    resize_memory!(context, memory_offset, len, None);
 
     Some(memory_offset)
 }

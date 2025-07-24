@@ -12,9 +12,9 @@ use crate::InstructionContext;
 pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, ISTANBUL);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.chain_id());
+    check!(context, ISTANBUL);
+    gas!(context, gas::BASE);
+    push!(context, context.host.chain_id());
     InstructionReturn::cont()
 }
 
@@ -24,9 +24,9 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     push!(
-        context.interpreter,
+        context,
         context.host.beneficiary().into_word().into()
     );
     InstructionReturn::cont()
@@ -38,8 +38,8 @@ pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.timestamp());
+    gas!(context, gas::BASE);
+    push!(context, context.host.timestamp());
     InstructionReturn::cont()
 }
 
@@ -49,8 +49,8 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, U256::from(context.host.block_number()));
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.host.block_number()));
     InstructionReturn::cont()
 }
 
@@ -60,7 +60,7 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     if context
         .interpreter
         .runtime_flag
@@ -68,9 +68,9 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .is_enabled_in(MERGE)
     {
         // Unwrap is safe as this fields is checked in validation handler.
-        push!(context.interpreter, context.host.prevrandao().unwrap());
+        push!(context, context.host.prevrandao().unwrap());
     } else {
-        push!(context.interpreter, context.host.difficulty());
+        push!(context, context.host.difficulty());
     }
     InstructionReturn::cont()
 }
@@ -81,8 +81,8 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.gas_limit());
+    gas!(context, gas::BASE);
+    push!(context, context.host.gas_limit());
     InstructionReturn::cont()
 }
 
@@ -90,9 +90,9 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, LONDON);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.basefee());
+    check!(context, LONDON);
+    gas!(context, gas::BASE);
+    push!(context, context.host.basefee());
     InstructionReturn::cont()
 }
 
@@ -100,8 +100,8 @@ pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.blob_gasprice());
+    check!(context, CANCUN);
+    gas!(context, gas::BASE);
+    push!(context, context.host.blob_gasprice());
     InstructionReturn::cont()
 }

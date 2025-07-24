@@ -16,9 +16,9 @@ macro_rules! tri {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! require_non_staticcall {
-    ($interpreter:expr) => {
-        if $interpreter.runtime_flag.is_static() {
-            $interpreter.halt($crate::InstructionResult::StateChangeDuringStaticCall);
+    ($context:expr) => {
+        if $context.interpreter.runtime_flag.is_static() {
+            $context.halt($crate::InstructionResult::StateChangeDuringStaticCall);
             return $crate::instructions::InstructionReturn::halt();
         }
     };
@@ -41,13 +41,14 @@ macro_rules! otry {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! check {
-    ($interpreter:expr, $min:ident) => {
-        if !$interpreter
+    ($context:expr, $min:ident) => {
+        if !$context
+            .interpreter
             .runtime_flag
             .spec_id()
             .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
-            $interpreter.halt($crate::InstructionResult::NotActivated);
+            $context.halt($crate::InstructionResult::NotActivated);
             return $crate::instructions::InstructionReturn::halt();
         }
     };
@@ -57,16 +58,16 @@ macro_rules! check {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! gas {
-    ($interpreter:expr, $gas:expr) => {
+    ($context:expr, $gas:expr) => {
         $crate::gas!(
-            $interpreter,
+            $context,
             $gas,
             $crate::instructions::InstructionReturn::halt()
         )
     };
-    ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.gas.record_cost($gas) {
-            $interpreter.halt($crate::InstructionResult::OutOfGas);
+    ($context:expr, $gas:expr, $ret:expr) => {
+        if !$context.interpreter.gas.record_cost($gas) {
+            $context.halt($crate::InstructionResult::OutOfGas);
             return $ret;
         }
     };
@@ -76,18 +77,18 @@ macro_rules! gas {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! gas_or_fail {
-    ($interpreter:expr, $gas:expr) => {
+    ($context:expr, $gas:expr) => {
         $crate::gas_or_fail!(
-            $interpreter,
+            $context,
             $gas,
             $crate::instructions::InstructionReturn::halt()
         )
     };
-    ($interpreter:expr, $gas:expr, $ret:expr) => {
+    ($context:expr, $gas:expr, $ret:expr) => {
         match $gas {
-            Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
+            Some(gas_used) => $crate::gas!($context, gas_used, $ret),
             None => {
-                $interpreter.halt($crate::InstructionResult::OutOfGas);
+                $context.halt($crate::InstructionResult::OutOfGas);
                 return $ret;
             }
         }
@@ -99,22 +100,22 @@ macro_rules! gas_or_fail {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! resize_memory {
-    ($interpreter:expr, $offset:expr, $len:expr) => {
+    ($context:expr, $offset:expr, $len:expr) => {
         $crate::resize_memory!(
-            $interpreter,
+            $context,
             $offset,
             $len,
             $crate::instructions::InstructionReturn::halt()
         )
     };
-    ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
+    ($context:expr, $offset:expr, $len:expr, $ret:expr) => {
         if !$crate::interpreter::resize_memory(
-            &mut $interpreter.gas,
-            &mut $interpreter.memory,
+            &mut $context.interpreter.gas,
+            &mut $context.interpreter.memory,
             $offset,
             $len,
         ) {
-            $interpreter.halt($crate::InstructionResult::MemoryOOG);
+            $context.halt($crate::InstructionResult::MemoryOOG);
             return $ret;
         }
     };
@@ -124,15 +125,15 @@ macro_rules! resize_memory {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn {
-    ([ $($x:ident),* ], $interpreter:expr) => {
-        let Some([$( $x ),*]) = $interpreter.stack.popn() else {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+    ([ $($x:ident),* ], $context:expr) => {
+        let Some([$( $x ),*]) = $context.interpreter.stack.popn() else {
+            $context.halt($crate::InstructionResult::StackUnderflow);
             return $crate::instructions::InstructionReturn::halt();
         };
     };
-    ([ $($x:ident),* ], $interpreter:expr, $ret:expr) => {
-        let Some([$( $x ),*]) = $interpreter.stack.popn() else {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+    ([ $($x:ident),* ], $context:expr, $ret:expr) => {
+        let Some([$( $x ),*]) = $context.interpreter.stack.popn() else {
+            $context.halt($crate::InstructionResult::StackUnderflow);
             return $ret;
         };
     };
@@ -151,21 +152,21 @@ macro_rules! _count {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn_top {
-    ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
+    ([ $($x:ident),* ], $top:ident, $context:expr) => {
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
-        if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+        if $context.interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
+            $context.halt($crate::InstructionResult::StackUnderflow);
             return $crate::instructions::InstructionReturn::halt();
         }
-        let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
+        let ([$( $x ),*], $top) = unsafe { $context.interpreter.stack.popn_top().unwrap_unchecked() };
     };
-    ([ $($x:ident),* ], $top:ident, $interpreter:expr, $ret:expr) => {
+    ([ $($x:ident),* ], $top:ident, $context:expr, $ret:expr) => {
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
-        if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+        if $context.interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
+            $context.halt($crate::InstructionResult::StackUnderflow);
             return $ret;
         }
-        let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
+        let ([$( $x ),*], $top) = unsafe { $context.interpreter.stack.popn_top().unwrap_unchecked() };
     };
 }
 
@@ -173,16 +174,16 @@ macro_rules! popn_top {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! push {
-    ($interpreter:expr, $x:expr) => {
+    ($context:expr, $x:expr) => {
         $crate::push!(
-            $interpreter,
+            $context,
             $x,
             $crate::instructions::InstructionReturn::halt()
         )
     };
-    ($interpreter:expr, $x:expr, $ret: expr) => {
-        if !$interpreter.stack.push($x) {
-            $interpreter.halt($crate::InstructionResult::StackOverflow);
+    ($context:expr, $x:expr, $ret: expr) => {
+        if !$context.interpreter.stack.push($x) {
+            $context.halt($crate::InstructionResult::StackOverflow);
             return $ret;
         }
     };
@@ -229,16 +230,16 @@ macro_rules! as_isize_saturated {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail {
-    ($interpreter:expr, $v:expr) => {
+    ($context:expr, $v:expr) => {
         $crate::as_usize_or_fail_ret!(
-            $interpreter,
+            $context,
             $v,
             $crate::instructions::InstructionReturn::halt()
         )
     };
-    ($interpreter:expr, $v:expr, $reason:expr) => {
+    ($context:expr, $v:expr, $reason:expr) => {
         $crate::as_usize_or_fail_ret!(
-            $interpreter,
+            $context,
             $v,
             $reason,
             $crate::instructions::InstructionReturn::halt()
@@ -251,20 +252,20 @@ macro_rules! as_usize_or_fail {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail_ret {
-    ($interpreter:expr, $v:expr, $ret:expr) => {
+    ($context:expr, $v:expr, $ret:expr) => {
         $crate::as_usize_or_fail_ret!(
-            $interpreter,
+            $context,
             $v,
             $crate::InstructionResult::InvalidOperandOOG,
             $ret
         )
     };
 
-    ($interpreter:expr, $v:expr, $reason:expr, $ret:expr) => {
+    ($context:expr, $v:expr, $reason:expr, $ret:expr) => {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
-                    $interpreter.halt($reason);
+                    $context.halt($reason);
                     return $ret;
                 }
                 x[0] as usize

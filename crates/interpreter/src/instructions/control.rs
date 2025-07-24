@@ -1,7 +1,6 @@
 use crate::{
     gas,
     instructions::InstructionReturn,
-    interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     InstructionResult, InterpreterAction,
 };
@@ -15,8 +14,8 @@ use crate::InstructionContext;
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, ITy>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::MID);
-    popn!([target], context.interpreter);
+    gas!(context, gas::MID);
+    popn!([target], context);
     jump_inner(context, target)
 }
 
@@ -26,8 +25,8 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::HIGH);
-    popn!([target, cond], context.interpreter);
+    gas!(context, gas::HIGH);
+    popn!([target, cond], context);
 
     if !cond.is_zero() {
         jump_inner(context, target)
@@ -66,7 +65,7 @@ fn jump_inner<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::JUMPDEST);
+    gas!(context, gas::JUMPDEST);
     InstructionReturn::cont()
 }
 
@@ -76,9 +75,9 @@ pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
-    push!(context.interpreter, U256::from(context.pc() - 1));
+    push!(context, U256::from(context.pc() - 1));
     InstructionReturn::cont()
 }
 
@@ -87,28 +86,34 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
 /// Handles memory data retrieval and sets the return action.
 #[inline]
 #[allow(clippy::unused_unit)]
-fn return_inner(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+fn return_inner<WIRE: InterpreterTypes, H: ?Sized>(
+    context: &mut InstructionContext<'_, H, WIRE>,
     instruction_result: InstructionResult,
 ) {
     // Zero gas cost
     // gas!(interpreter, gas::ZERO)
-    popn!([offset, len], interpreter, ());
-    let len = as_usize_or_fail_ret!(interpreter, len, ());
+    popn!([offset, len], context, ());
+    let len = as_usize_or_fail_ret!(context, len, ());
     // Important: Offset must be ignored if len is zeros
     let mut output = Bytes::default();
     if len != 0 {
-        let offset = as_usize_or_fail_ret!(interpreter, offset, ());
-        resize_memory!(interpreter, offset, len, ());
-        output = interpreter.memory.slice_len(offset, len).to_vec().into()
+        let offset = as_usize_or_fail_ret!(context, offset, ());
+        resize_memory!(context, offset, len, ());
+        output = context
+            .interpreter
+            .memory
+            .slice_len(offset, len)
+            .to_vec()
+            .into()
     }
 
-    interpreter
+    context
+        .interpreter
         .bytecode
         .set_action(InterpreterAction::new_return(
             instruction_result,
             output,
-            interpreter.gas,
+            context.interpreter.gas,
         ));
 }
 
@@ -118,7 +123,7 @@ fn return_inner(
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    return_inner(context.interpreter, InstructionResult::Return);
+    return_inner(context, InstructionResult::Return);
     InstructionReturn::halt()
 }
 
@@ -126,8 +131,8 @@ pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, BYZANTIUM);
-    return_inner(context.interpreter, InstructionResult::Revert);
+    check!(context, BYZANTIUM);
+    return_inner(context, InstructionResult::Revert);
     InstructionReturn::halt()
 }
 
@@ -135,7 +140,7 @@ pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    context.interpreter.halt(InstructionResult::Stop);
+    context.halt(InstructionResult::Stop);
     InstructionReturn::halt()
 }
 
@@ -143,7 +148,7 @@ pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    context.interpreter.halt(InstructionResult::InvalidFEOpcode);
+    context.halt(InstructionResult::InvalidFEOpcode);
     InstructionReturn::halt()
 }
 
@@ -151,6 +156,6 @@ pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    context.interpreter.halt(InstructionResult::OpcodeNotFound);
+    context.halt(InstructionResult::OpcodeNotFound);
     InstructionReturn::halt()
 }

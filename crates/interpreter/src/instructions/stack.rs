@@ -12,9 +12,9 @@ use primitives::U256;
 pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::BASE);
+    gas!(context, gas::BASE);
     // Can ignore return. as relative N jump is safe operation.
-    popn!([_i], context.interpreter);
+    popn!([_i], context);
     InstructionReturn::cont()
 }
 
@@ -24,9 +24,9 @@ pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, SHANGHAI);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, U256::ZERO);
+    check!(context, SHANGHAI);
+    gas!(context, gas::BASE);
+    push!(context, U256::ZERO);
     InstructionReturn::cont()
 }
 
@@ -36,11 +36,11 @@ pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
+    gas!(context, gas::VERYLOW);
 
     let slice = context.read_slice(N);
     if !context.interpreter.stack.push_slice(slice) {
-        context.interpreter.halt(InstructionResult::StackOverflow);
+        context.halt(InstructionResult::StackOverflow);
         return InstructionReturn::halt();
     }
 
@@ -55,9 +55,9 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
+    gas!(context, gas::VERYLOW);
     if !context.interpreter.stack.dup(N) {
-        context.interpreter.halt(InstructionResult::StackOverflow);
+        context.halt(InstructionResult::StackOverflow);
     }
     InstructionReturn::cont()
 }
@@ -68,10 +68,10 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    gas!(context.interpreter, gas::VERYLOW);
+    gas!(context, gas::VERYLOW);
     assert!(N != 0);
     if !context.interpreter.stack.exchange(0, N) {
-        context.interpreter.halt(InstructionResult::StackOverflow);
+        context.halt(InstructionResult::StackOverflow);
     }
     InstructionReturn::cont()
 }

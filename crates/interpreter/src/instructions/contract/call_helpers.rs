@@ -12,7 +12,10 @@ use primitives::{hardfork::SpecId::*, U256};
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
 ) -> Option<(Range<usize>, Range<usize>)> {
-    popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
+    let Some([in_offset, in_len, out_offset, out_len]) = interpreter.stack.popn() else {
+        interpreter.halt(crate::InstructionResult::StackUnderflow);
+        return None;
+    };
 
     let mut in_range = resize_memory(interpreter, in_offset, in_len)?;
 
@@ -36,7 +39,10 @@ pub fn resize_memory(
     let len = as_usize_or_fail_ret!(interpreter, len, None);
     let offset = if len != 0 {
         let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        resize_memory!(interpreter, offset, len, None);
+        if !interpreter.resize_memory(offset, len) {
+            interpreter.halt(crate::InstructionResult::MemoryOOG);
+            return None;
+        };
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -57,7 +63,10 @@ pub fn calc_call_gas(
         has_transfer,
         account_load,
     );
-    gas!(interpreter, call_cost, None);
+    if !interpreter.gas.record_cost(call_cost) {
+        interpreter.halt(crate::InstructionResult::OutOfGas);
+        return None;
+    };
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {

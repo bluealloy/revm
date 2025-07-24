@@ -22,15 +22,15 @@ use crate::InstructionContext;
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    require_non_staticcall!(context.interpreter);
+    require_non_staticcall!(context);
 
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {
-        check!(context.interpreter, PETERSBURG);
+        check!(context, PETERSBURG);
     }
 
-    popn!([value, code_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
+    popn!([value, code_offset, len], context);
+    let len = as_usize_or_fail!(context, len);
 
     let mut code = Bytes::new();
     if len != 0 {
@@ -48,11 +48,11 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                     .halt(InstructionResult::CreateInitCodeSizeLimit);
                 return InstructionReturn::halt();
             }
-            gas!(context.interpreter, gas::initcode_cost(len));
+            gas!(context, gas::initcode_cost(len));
         }
 
-        let code_offset = as_usize_or_fail!(context.interpreter, code_offset);
-        resize_memory!(context.interpreter, code_offset, len);
+        let code_offset = as_usize_or_fail!(context, code_offset);
+        resize_memory!(context, code_offset, len);
         code = Bytes::copy_from_slice(
             context
                 .interpreter
@@ -64,12 +64,12 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
-        popn!([salt], context.interpreter);
+        popn!([salt], context);
         // SAFETY: `len` is reasonable in size as gas for it is already deducted.
-        gas_or_fail!(context.interpreter, gas::create2_cost(len));
+        gas_or_fail!(context, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
-        gas!(context.interpreter, gas::CREATE);
+        gas!(context, gas::CREATE);
         CreateScheme::Create
     };
 
@@ -85,7 +85,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // Take remaining gas and deduce l64 part of it.
         gas_limit -= gas_limit / 64
     }
-    gas!(context.interpreter, gas_limit);
+    gas!(context, gas_limit);
 
     // Call host to interact with target contract
     context
@@ -109,7 +109,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn!([local_gas_limit, to, value], context.interpreter);
+    popn!([local_gas_limit, to, value], context);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -143,7 +143,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return InstructionReturn::halt();
     };
 
-    gas!(context.interpreter, gas_limit);
+    gas!(context, gas_limit);
 
     // Add call stipend if there is value to be transferred.
     if has_transfer {
@@ -176,7 +176,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    popn!([local_gas_limit, to, value], context.interpreter);
+    popn!([local_gas_limit, to, value], context);
     let to = Address::from_word(B256::from(to));
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -202,7 +202,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return InstructionReturn::halt();
     };
 
-    gas!(context.interpreter, gas_limit);
+    gas!(context, gas_limit);
 
     // Add call stipend if there is value to be transferred.
     if !value.is_zero() {
@@ -235,8 +235,8 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, HOMESTEAD);
-    popn!([local_gas_limit, to], context.interpreter);
+    check!(context, HOMESTEAD);
+    popn!([local_gas_limit, to], context);
     let to = Address::from_word(B256::from(to));
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -259,7 +259,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return InstructionReturn::halt();
     };
 
-    gas!(context.interpreter, gas_limit);
+    gas!(context, gas_limit);
 
     // Call host to interact with target contract
     context
@@ -287,8 +287,8 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
-    check!(context.interpreter, BYZANTIUM);
-    popn!([local_gas_limit, to], context.interpreter);
+    check!(context, BYZANTIUM);
+    popn!([local_gas_limit, to], context);
     let to = Address::from_word(B256::from(to));
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -309,7 +309,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let Some(gas_limit) = calc_call_gas(context.interpreter, load, false, local_gas_limit) else {
         return InstructionReturn::halt();
     };
-    gas!(context.interpreter, gas_limit);
+    gas!(context, gas_limit);
 
     // Call host to interact with target contract
     context
