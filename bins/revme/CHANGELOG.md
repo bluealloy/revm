@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.1](https://github.com/bluealloy/revm/compare/revme-v7.1.0...revme-v7.1.1) - 2025-07-24
+
+### Other
+
+- add gas_limit to revme evm ([#2779](https://github.com/bluealloy/revm/pull/2779))
+
 ## [7.1.0](https://github.com/bluealloy/revm/compare/revme-v7.0.4...revme-v7.1.0) - 2025-07-23
 
 ### Added
