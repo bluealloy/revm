@@ -22,7 +22,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRE
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
 pub fn g1_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
+    if input_len == 0 || !input_len.is_multiple_of(G1_MSM_INPUT_LENGTH) {
         return Err(PrecompileError::Other(format!(
             "G1MSM input length should be multiple of {G1_MSM_INPUT_LENGTH}, was {input_len}",
         )));
