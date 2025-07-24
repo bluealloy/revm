@@ -36,3 +36,20 @@ pub use handler::{
     SystemCallEvm,
 };
 pub use inspector::{InspectCommitEvm, InspectEvm, Inspector};
+
+/// a
+#[no_mangle]
+#[cfg(feature = "asm")]
+pub fn build_evm() -> impl Sized {
+    let mut evm = context::Context::mainnet()
+        .with_db(database_interface::EmptyDB::default())
+        .build_mainnet();
+    evm.transact(Default::default()).unwrap();
+    inspector::inspect_instructions(
+        &mut evm.ctx,
+        &mut evm.frame_stack.get().interpreter,
+        &mut inspector::NoOpInspector as &mut dyn Inspector<_, _>,
+        &evm.instruction.instruction_table,
+    );
+    evm
+}

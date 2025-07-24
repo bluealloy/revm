@@ -6,6 +6,9 @@ target
 .vscode
 .idea
 pkg/
+*.s
+*.ll
+*.mir
 
 bins/revme/temp_folder
 bins/revme/tests

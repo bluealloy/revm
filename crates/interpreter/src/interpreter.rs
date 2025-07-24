@@ -19,8 +19,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, instructions::InstructionReturn,
+    interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -222,12 +222,12 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
-        let context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-        context.step(instruction_table);
+    pub fn step<H: ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) -> InstructionReturn {
+        InstructionContext::new(self, host).step(instruction_table)
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -236,12 +236,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// This uses dummy Host.
     #[inline]
-    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        let context = InstructionContext {
-            interpreter: self,
-            host: &mut DummyHost,
-        };
-        context.step(instruction_table);
+    pub fn step_dummy(
+        &mut self,
+        instruction_table: &InstructionTable<IW, DummyHost>,
+    ) -> InstructionReturn {
+        self.step(instruction_table, &mut DummyHost)
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -251,20 +250,10 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            // Get current opcode.
-            let opcode = self.bytecode.opcode();
-
-            // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-            // it will do noop and just stop execution of this contract
-            self.bytecode.relative_jump(1);
-            let context = InstructionContext {
-                interpreter: self,
-                host,
-            };
-            // Execute instruction.
-            instruction_table[opcode as usize](context);
+        loop {
+            if !self.step(instruction_table, host).can_continue() {
+                break;
+            }
         }
         self.bytecode.revert_to_previous_pointer();
 

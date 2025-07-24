@@ -193,11 +193,8 @@ where
         interpreter.bytecode.relative_jump(1);
 
         // Execute instruction.
-        let instruction_context = InstructionContext {
-            interpreter,
-            host: context,
-        };
-        instructions[opcode as usize](instruction_context);
+        // TODO: `ip` is unused
+        InstructionContext::new(interpreter, context).call(instructions[opcode as usize]);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);

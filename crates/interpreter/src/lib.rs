@@ -3,12 +3,28 @@
 //! Interpreter is part of the project that executes EVM instructions.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
+// #![feature(explicit_tail_calls)]
+// #![allow(incomplete_features)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
 #[macro_use]
 mod macros;
+
+/// a
+#[no_mangle]
+#[cfg(feature = "asm")]
+pub fn instruction_tables() -> impl Sized {
+    type W = crate::interpreter::EthInterpreter;
+    type H = context_interface::DummyHost;
+    (
+        instruction_table::<W, H>(),
+        instruction_table_tail::<W, H>(),
+    )
+}
+/// b
+pub type EEEInterpreter = crate::interpreter::Interpreter<crate::interpreter::EthInterpreter>;
 
 /// Gas calculation utilities and constants.
 pub mod gas;
@@ -44,3 +60,5 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};
+
+use crate::instructions::instruction_table_tail;

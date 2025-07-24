@@ -652,6 +652,11 @@ opcodes! {
     0xFF => SELFDESTRUCT => stack_io(1, 0), terminating;
 }
 
+/// Designated opcode value of an unknown instruction.
+///
+/// The value of this is for internal use as a marker only, and should not be relied upon.
+pub const UNKNOWN: u8 = 0xEF;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -664,6 +669,11 @@ mod tests {
         assert!(!opcode.is_push());
         assert_eq!(opcode.as_str(), "STOP");
         assert_eq!(opcode.get(), 0x00);
+    }
+
+    #[test]
+    fn test_unknown() {
+        assert_eq!(OpCode::new(UNKNOWN), None);
     }
 
     #[test]

@@ -73,6 +73,8 @@ pub trait Jumps {
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
     /// Returns current program counter.
     fn pc(&self) -> usize;
+    /// Returns instruction pointer.
+    fn ip(&self) -> *const u8;
     /// Returns instruction opcode.
     fn opcode(&self) -> u8;
 }
