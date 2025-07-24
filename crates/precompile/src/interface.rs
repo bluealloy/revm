@@ -132,13 +132,8 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// secp256r1 (P-256) signature verification.
     #[inline]
-    fn secp256r1_verify_signature(
-        &self,
-        msg: &[u8; 32],
-        sig: &[u8; 64],
-        pk: &[u8; 64],
-    ) -> Result<bool, PrecompileError> {
-        Ok(crate::secp256r1::verify_signature(*msg, *sig, *pk).is_some())
+    fn secp256r1_verify_signature(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 64]) -> bool {
+        crate::secp256r1::verify_signature(*msg, *sig, *pk).is_some()
     }
 
     /// KZG point evaluation.

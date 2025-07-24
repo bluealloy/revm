@@ -68,7 +68,7 @@ fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileR
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
-    let result = if verify_impl(input).is_some() {
+    let result = if verify_impl(input) {
         B256::with_last_byte(1).into()
     } else {
         Bytes::new()
@@ -78,9 +78,9 @@ fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileR
 
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
-pub fn verify_impl(input: &[u8]) -> Option<()> {
+pub fn verify_impl(input: &[u8]) -> bool {
     if input.len() != 160 {
-        return None;
+        return false;
     }
 
     // msg signed (msg is already the hash of the original message)
@@ -90,10 +90,7 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     // x, y: public key
     let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    crypto()
-        .secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
-        .ok()
-        .and_then(|verified| if verified { Some(()) } else { None })
+    crypto().secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
 pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
@@ -161,6 +158,6 @@ mod test {
         let input = Bytes::from_hex(input).unwrap();
         let result = verify_impl(&input);
 
-        assert_eq!(result.is_some(), expect_success);
+        assert_eq!(result, expect_success);
     }
 }
