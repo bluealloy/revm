@@ -25,9 +25,6 @@ aurora-engine-modexp.workspace = true
 # gmp wrapper
 # rug = { workspace = true, features = ["integer"], optional = true }
 
-# static precompile sets.
-once_cell = { workspace = true, features = ["alloc"] }
-
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
 secp256k1 = { workspace = true, features = [
@@ -85,7 +82,6 @@ default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"primitives/std",
 	"k256/std",
-	"once_cell/std",
 	"ripemd/std",
 	"sha2/std",
 	"c-kzg?/std",

@@ -57,8 +57,7 @@ use aurora_engine_modexp as _;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
-use once_cell::race::OnceBox;
-use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
+use primitives::{hardfork::SpecId, Address, HashMap, HashSet, OnceLock};
 use std::{boxed::Box, vec::Vec};
 
 /// Calculate the linear cost of a precompile.
@@ -133,7 +132,7 @@ impl Precompiles {
 
     /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Precompiles::default();
             precompiles.extend([
@@ -142,7 +141,7 @@ impl Precompiles {
                 hash::RIPEMD160,
                 identity::FUN,
             ]);
-            Box::new(precompiles)
+            precompiles
         })
     }
 
@@ -153,7 +152,7 @@ impl Precompiles {
 
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
             precompiles.extend([
@@ -165,13 +164,13 @@ impl Precompiles {
                 bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
             ]);
-            Box::new(precompiles)
+            precompiles
         })
     }
 
     /// Returns precompiles for Istanbul spec.
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
@@ -182,20 +181,20 @@ impl Precompiles {
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
             ]);
-            Box::new(precompiles)
+            precompiles
         })
     }
 
     /// Returns precompiles for Berlin spec.
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::istanbul().clone();
             precompiles.extend([
                 // EIP-2565: ModExp Gas Cost.
                 modexp::BERLIN,
             ]);
-            Box::new(precompiles)
+            precompiles
         })
     }
 
@@ -204,7 +203,7 @@ impl Precompiles {
     /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
     /// effectively making this the same as Berlin.
     pub fn cancun() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::berlin().clone();
 
@@ -222,27 +221,27 @@ impl Precompiles {
                 precompile,
             ]);
 
-            Box::new(precompiles)
+            precompiles
         })
     }
 
     /// Returns precompiles for Prague spec.
     pub fn prague() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::cancun().clone();
             precompiles.extend(bls12_381::precompiles());
-            Box::new(precompiles)
+            precompiles
         })
     }
 
     /// Returns precompiles for Osaka spec.
     pub fn osaka() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::prague().clone();
             precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
-            Box::new(precompiles)
+            precompiles
         })
     }
 
