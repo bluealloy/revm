@@ -295,6 +295,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.discard_tx();
     }
 
+    #[inline]
+    fn begin_tx(&mut self) {
+        self.inner.begin_tx();
+    }
+
     /// Clear current journal resetting it to initial state and return changes state.
     #[inline]
     fn finalize(&mut self) -> Self::State {

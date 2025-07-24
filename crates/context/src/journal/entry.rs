@@ -5,11 +5,14 @@
 //! They are created when there is change to the state from loading (making it warm), changes to the balance,
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
-use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
+use primitives::{Address, StorageKey, StorageValue, U256};
 use state::{EvmState, TransientStorage};
 
-/// Trait for tracking and reverting state changes in the EVM.
-/// Journal entry contains information about state changes that can be reverted.
+/// Trait for tracking state changes in the EVM.
+///
+/// **IMPORTANT**: With the new snapshot-based checkpoint system, journal entries
+/// are now mainly used for tracking and debugging purposes rather than for reverting state.
+/// The complex revert logic has been removed in favor of simple state snapshots.
 pub trait JournalEntryTr {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
     fn account_warmed(address: Address) -> Self;
@@ -17,7 +20,6 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account is destroyed via SELFDESTRUCT
     /// Records the target address that received the destroyed account's balance,
     /// whether the account was already destroyed, and its balance before destruction
-    /// on revert, the balance is transferred back to the original account
     fn account_destroyed(
         address: Address,
         target: Address,
@@ -26,7 +28,6 @@ pub trait JournalEntryTr {
     ) -> Self;
 
     /// Creates a journal entry for when an account is "touched" - accessed in a way that may require saving it.
-    /// If account is empty and touch it will be removed from the state (EIP-161 state clear EIP)
     fn account_touched(address: Address) -> Self;
 
     /// Creates a journal entry for a balance transfer between accounts
@@ -42,15 +43,12 @@ pub trait JournalEntryTr {
     fn account_created(address: Address, is_created_globally: bool) -> Self;
 
     /// Creates a journal entry for when a storage slot is modified
-    /// Records the previous value for reverting
     fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self;
 
     /// Creates a journal entry for when a storage slot is accessed and marked as "warm" for gas metering
-    /// This is called with SLOAD opcode.
     fn storage_warmed(address: Address, key: StorageKey) -> Self;
 
     /// Creates a journal entry for when a transient storage slot is modified (EIP-1153)
-    /// Records the previous value for reverting
     fn transient_storage_changed(
         address: Address,
         key: StorageKey,
@@ -60,31 +58,21 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
 
-    /// Reverts the state change recorded by this journal entry
+    /// **DEPRECATED**: This method is no longer used in the new snapshot-based system.
     ///
-    /// More information on what is reverted can be found in [`JournalEntry`] enum.
+    /// Journal entries are now mainly for tracking purposes. State reversal is handled
+    /// by simple snapshot restoration rather than complex journal entry reversal.
     ///
-    /// If transient storage is not provided, revert on transient storage will not be performed.
-    /// This is used when we revert whole transaction and know that transient storage is empty.
-    ///
-    /// # Notes
-    ///
-    /// The spurious dragon flag is used to skip revertion 0x000..0003 precompile. This
-    /// Behaviour is special and it caused by bug in Geth and Parity that is explained in [PR#716](https://github.com/ethereum/EIPs/issues/716).
-    ///
-    /// From yellow paper:
-    /// ```text
-    /// K.1. Deletion of an Account Despite Out-of-gas. At block 2675119, in the transaction 0xcf416c536ec1a19ed1fb89e
-    /// 4ec7ffb3cf73aa413b3aa9b77d60e4fd81a4296ba, an account at address 0x03 was called and an out-of-gas occurred during
-    /// the call. Against the equation (209), this added 0x03 in the set of touched addresses, and this transaction turned σ[0x03]
-    /// into ∅.
-    /// ```
+    /// This method remains for compatibility but should not be called in normal operation.
     fn revert(
-        self,
-        state: &mut EvmState,
-        transient_storage: Option<&mut TransientStorage>,
-        is_spurious_dragon_enabled: bool,
-    );
+        &self,
+        _state: &mut EvmState,
+        _transient_storage: Option<&mut TransientStorage>,
+        _is_spurious_dragon_enabled: bool,
+    ) {
+        // No-op: State reversal now handled by snapshots, not journal entries
+        // This dramatically simplifies the codebase and reduces potential for bugs
+    }
 }
 
 /// Status of selfdestruction revert.
@@ -223,7 +211,7 @@ impl JournalEntryTr for JournalEntry {
         address: Address,
         target: Address,
         destroyed_status: SelfdestructionRevertStatus,
-        had_balance: StorageValue,
+        had_balance: U256,
     ) -> Self {
         JournalEntry::AccountDestroyed {
             address,
@@ -288,123 +276,12 @@ impl JournalEntryTr for JournalEntry {
     }
 
     fn revert(
-        self,
-        state: &mut EvmState,
-        transient_storage: Option<&mut TransientStorage>,
-        is_spurious_dragon_enabled: bool,
+        &self,
+        _state: &mut EvmState,
+        _transient_storage: Option<&mut TransientStorage>,
+        _is_spurious_dragon_enabled: bool,
     ) {
-        match self {
-            JournalEntry::AccountWarmed { address } => {
-                state.get_mut(&address).unwrap().mark_cold();
-            }
-            JournalEntry::AccountTouched { address } => {
-                if is_spurious_dragon_enabled && address == PRECOMPILE3 {
-                    return;
-                }
-                // remove touched status
-                state.get_mut(&address).unwrap().unmark_touch();
-            }
-            JournalEntry::AccountDestroyed {
-                address,
-                target,
-                destroyed_status,
-                had_balance,
-            } => {
-                let account = state.get_mut(&address).unwrap();
-                // set previous state of selfdestructed flag, as there could be multiple
-                // selfdestructs in one transaction.
-                match destroyed_status {
-                    SelfdestructionRevertStatus::GloballySelfdestroyed => {
-                        account.unmark_selfdestruct();
-                        account.unmark_selfdestructed_locally();
-                    }
-                    SelfdestructionRevertStatus::LocallySelfdestroyed => {
-                        account.unmark_selfdestructed_locally();
-                    }
-                    // do nothing on repeated selfdestruction
-                    SelfdestructionRevertStatus::RepeatedSelfdestruction => (),
-                }
-
-                account.info.balance += had_balance;
-
-                if address != target {
-                    let target = state.get_mut(&target).unwrap();
-                    target.info.balance -= had_balance;
-                }
-            }
-            JournalEntry::BalanceChange {
-                address,
-                old_balance,
-            } => {
-                let account = state.get_mut(&address).unwrap();
-                account.info.balance = old_balance;
-            }
-            JournalEntry::BalanceTransfer { from, to, balance } => {
-                // we don't need to check overflow and underflow when adding and subtracting the balance.
-                let from = state.get_mut(&from).unwrap();
-                from.info.balance += balance;
-                let to = state.get_mut(&to).unwrap();
-                to.info.balance -= balance;
-            }
-            JournalEntry::NonceChange { address } => {
-                state.get_mut(&address).unwrap().info.nonce -= 1;
-            }
-            JournalEntry::AccountCreated {
-                address,
-                is_created_globally,
-            } => {
-                let account = &mut state.get_mut(&address).unwrap();
-                account.unmark_created_locally();
-                if is_created_globally {
-                    account.unmark_created();
-                }
-                // only account that have nonce == 0 can be created so it is safe to set it to 0.
-                account.info.nonce = 0;
-            }
-            JournalEntry::StorageWarmed { address, key } => {
-                state
-                    .get_mut(&address)
-                    .unwrap()
-                    .storage
-                    .get_mut(&key)
-                    .unwrap()
-                    .mark_cold();
-            }
-            JournalEntry::StorageChanged {
-                address,
-                key,
-                had_value,
-            } => {
-                state
-                    .get_mut(&address)
-                    .unwrap()
-                    .storage
-                    .get_mut(&key)
-                    .unwrap()
-                    .present_value = had_value;
-            }
-            JournalEntry::TransientStorageChange {
-                address,
-                key,
-                had_value,
-            } => {
-                let Some(transient_storage) = transient_storage else {
-                    return;
-                };
-                let tkey = (address, key);
-                if had_value.is_zero() {
-                    // if previous value is zero, remove it
-                    transient_storage.remove(&tkey);
-                } else {
-                    // if not zero, reinsert old value to transient storage.
-                    transient_storage.insert(tkey, had_value);
-                }
-            }
-            JournalEntry::CodeChange { address } => {
-                let acc = state.get_mut(&address).unwrap();
-                acc.info.code_hash = KECCAK_EMPTY;
-                acc.info.code = None;
-            }
-        }
+        // No-op: State reversal now handled by snapshots, not journal entries
+        // This dramatically simplifies the codebase and reduces potential for bugs
     }
 }

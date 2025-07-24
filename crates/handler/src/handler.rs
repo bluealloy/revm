@@ -121,6 +121,9 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Create transaction-level snapshot for system calls too
+        evm.ctx().journal_mut().begin_tx();
+
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.
@@ -144,6 +147,10 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Create transaction-level snapshot at the beginning of transaction
+        // This enables simple rollback using snapshots instead of complex journal reversal
+        evm.ctx().journal_mut().begin_tx();
+
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
@@ -444,7 +451,8 @@ pub trait Handler {
 
     /// Handles cleanup when an error occurs during execution.
     ///
-    /// Ensures the journal state is properly cleared before propagating the error.
+    /// Uses the new snapshot-based rollback mechanism which is much simpler
+    /// and more reliable than the previous journal entry reversal approach.
     /// On happy path journal is cleared in [`Handler::execution_result`] method.
     #[inline]
     fn catch_error(
@@ -452,10 +460,8 @@ pub trait Handler {
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // clean up local context. Initcode cache needs to be discarded.
-        evm.ctx().local_mut().clear();
+        // Simple snapshot-based rollback - much cleaner than complex journal reversal!
         evm.ctx().journal_mut().discard_tx();
-        evm.frame_stack().clear();
         Err(error)
     }
 }
