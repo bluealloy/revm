@@ -9,6 +9,7 @@ use primitives::U256;
 /// Implements the POP instruction.
 ///
 /// Removes the top item from the stack.
+#[inline]
 pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -21,6 +22,7 @@ pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
+#[inline]
 pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -33,6 +35,7 @@ pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the PUSH1-PUSH32 instructions.
 ///
 /// Pushes N bytes from bytecode onto the stack as a 32-byte value.
+#[inline]
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -52,6 +55,7 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the DUP1-DUP16 instructions.
 ///
 /// Duplicates the Nth stack item to the top of the stack.
+#[inline]
 pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -65,6 +69,7 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the SWAP1-SWAP16 instructions.
 ///
 /// Swaps the top stack item with the Nth stack item.
+#[inline]
 pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

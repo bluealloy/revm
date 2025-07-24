@@ -9,6 +9,7 @@ use core::cmp::Ordering;
 use primitives::U256;
 
 /// Implements the LT instruction - less than comparison.
+#[inline]
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -19,6 +20,7 @@ pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the GT instruction - greater than comparison.
+#[inline]
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -30,6 +32,7 @@ pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the CLZ instruction - count leading zeros.
+#[inline]
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -45,6 +48,7 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the SLT instruction.
 ///
 /// Signed less than comparison of two values from stack.
+#[inline]
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -58,6 +62,7 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the SGT instruction.
 ///
 /// Signed greater than comparison of two values from stack.
+#[inline]
 pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -71,6 +76,7 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the EQ instruction.
 ///
 /// Equality comparison of two values from stack.
+#[inline]
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -84,6 +90,7 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the ISZERO instruction.
 ///
 /// Checks if the top stack value is zero.
+#[inline]
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -96,6 +103,7 @@ pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the AND instruction.
 ///
 /// Bitwise AND of two values from stack.
+#[inline]
 pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -108,6 +116,7 @@ pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the OR instruction.
 ///
 /// Bitwise OR of two values from stack.
+#[inline]
 pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -121,6 +130,7 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the XOR instruction.
 ///
 /// Bitwise XOR of two values from stack.
+#[inline]
 pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -134,6 +144,7 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the NOT instruction.
 ///
 /// Bitwise NOT (negation) of the top stack value.
+#[inline]
 pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -147,6 +158,7 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the BYTE instruction.
 ///
 /// Extracts a single byte from a word at a given index.
+#[inline]
 pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -164,6 +176,7 @@ pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
+#[inline]
 pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -181,6 +194,7 @@ pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
+#[inline]
 pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -198,6 +212,7 @@ pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
+#[inline]
 pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

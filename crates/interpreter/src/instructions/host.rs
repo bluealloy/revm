@@ -15,6 +15,7 @@ use crate::InstructionContext;
 /// Implements the BALANCE instruction.
 ///
 /// Gets the balance of the given account.
+#[inline]
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -45,6 +46,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
+#[inline]
 pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -67,6 +69,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the EXTCODESIZE instruction.
 ///
 /// Gets the size of an account's code.
+#[inline]
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -92,6 +95,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-1052: EXTCODEHASH opcode
+#[inline]
 pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -119,6 +123,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the EXTCODECOPY instruction.
 ///
 /// Copies a portion of an account's code to memory.
+#[inline]
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -161,6 +166,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the BLOCKHASH instruction.
 ///
 /// Gets the hash of one of the 256 most recent complete blocks.
+#[inline]
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -200,6 +206,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the SLOAD instruction.
 ///
 /// Loads a word from storage.
+#[inline]
 pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -226,6 +233,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
+#[inline]
 pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -275,6 +283,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
+#[inline]
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -292,6 +301,7 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
+#[inline]
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -309,6 +319,7 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the LOG0-LOG4 instructions.
 ///
 /// Appends log record with N topics.
+#[inline]
 pub fn log<const N: usize, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
 ) -> InstructionReturn {
@@ -346,6 +357,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 /// Implements the SELFDESTRUCT instruction.
 ///
 /// Halt execution and register account for later deletion.
+#[inline]
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

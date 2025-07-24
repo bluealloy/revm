@@ -11,6 +11,7 @@ use crate::InstructionContext;
 /// Implements the JUMP instruction.
 ///
 /// Unconditional jump to a valid destination.
+#[inline]
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, ITy>,
 ) -> InstructionReturn {
@@ -22,6 +23,7 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
 /// Implements the JUMPI instruction.
 ///
 /// Conditional jump to a valid destination if condition is true.
+#[inline]
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -62,6 +64,7 @@ fn jump_inner<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
+#[inline]
 pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -72,6 +75,7 @@ pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
+#[inline]
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -120,6 +124,7 @@ fn return_inner<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
+#[inline]
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -128,6 +133,7 @@ pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// EIP-140: REVERT instruction
+#[inline]
 pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -137,6 +143,7 @@ pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Stop opcode. This opcode halts the execution.
+#[inline]
 pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -145,6 +152,7 @@ pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Invalid opcode. This opcode halts the execution.
+#[inline]
 pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -153,6 +161,7 @@ pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Unknown opcode. This opcode halts the execution.
+#[inline]
 pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

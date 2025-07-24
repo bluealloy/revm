@@ -11,6 +11,7 @@ use crate::InstructionContext;
 /// Implements the GASPRICE instruction.
 ///
 /// Gets the gas price of the originating transaction.
+#[inline]
 pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -25,6 +26,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the ORIGIN instruction.
 ///
 /// Gets the execution origination address.
+#[inline]
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -39,6 +41,7 @@ pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the BLOBHASH instruction.
 ///
 /// EIP-4844: Shard Blob Transactions - gets the hash of a transaction blob.
+#[inline]
 pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

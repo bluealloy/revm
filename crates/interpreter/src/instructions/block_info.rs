@@ -9,6 +9,7 @@ use primitives::{hardfork::SpecId::*, U256};
 use crate::InstructionContext;
 
 /// EIP-1344: ChainID opcode
+#[inline]
 pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -21,6 +22,7 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the COINBASE instruction.
 ///
 /// Pushes the current block's beneficiary address onto the stack.
+#[inline]
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -35,6 +37,7 @@ pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the TIMESTAMP instruction.
 ///
 /// Pushes the current block's timestamp onto the stack.
+#[inline]
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -46,6 +49,7 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the NUMBER instruction.
 ///
 /// Pushes the current block number onto the stack.
+#[inline]
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -57,6 +61,7 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the DIFFICULTY/PREVRANDAO instruction.
 ///
 /// Pushes the block difficulty (pre-merge) or prevrandao (post-merge) onto the stack.
+#[inline]
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -78,6 +83,7 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the GASLIMIT instruction.
 ///
 /// Pushes the current block's gas limit onto the stack.
+#[inline]
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -87,6 +93,7 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-3198: BASEFEE opcode
+#[inline]
 pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -97,6 +104,7 @@ pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
+#[inline]
 pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

@@ -8,6 +8,7 @@ use crate::{
 use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
+#[inline]
 pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -18,6 +19,7 @@ pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the MUL instruction - multiplies two values from stack.
+#[inline]
 pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -28,6 +30,7 @@ pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the SUB instruction - subtracts two values from stack.
+#[inline]
 pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -38,6 +41,7 @@ pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the DIV instruction - divides two values from stack.
+#[inline]
 pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -52,6 +56,7 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the SDIV instruction.
 ///
 /// Performs signed division of two values from stack.
+#[inline]
 pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -64,6 +69,7 @@ pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MOD instruction.
 ///
 /// Pops two values from stack and pushes the remainder of their division.
+#[inline]
 pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -78,6 +84,7 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the SMOD instruction.
 ///
 /// Performs signed modulo of two values from stack.
+#[inline]
 pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -90,6 +97,7 @@ pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the ADDMOD instruction.
 ///
 /// Pops three values from stack and pushes (a + b) % n.
+#[inline]
 pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -102,6 +110,7 @@ pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MULMOD instruction.
 ///
 /// Pops three values from stack and pushes (a * b) % n.
+#[inline]
 pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -112,6 +121,7 @@ pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the EXP instruction - exponentiates two values from stack.
+#[inline]
 pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -151,6 +161,7 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
+#[inline]
 pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

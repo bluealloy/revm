@@ -11,6 +11,7 @@ use crate::InstructionContext;
 /// Implements the MLOAD instruction.
 ///
 /// Loads a 32-byte word from memory.
+#[inline]
 pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -26,6 +27,7 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MSTORE instruction.
 ///
 /// Stores a 32-byte word to memory.
+#[inline]
 pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -43,6 +45,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MSTORE8 instruction.
 ///
 /// Stores a single byte to memory.
+#[inline]
 pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -57,6 +60,7 @@ pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MSIZE instruction.
 ///
 /// Gets the size of active memory in bytes.
+#[inline]
 pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -71,6 +75,7 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the MCOPY instruction.
 ///
 /// EIP-5656: Memory copying instruction that copies memory from one location to another.
+#[inline]
 pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {

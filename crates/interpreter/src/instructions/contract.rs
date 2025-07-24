@@ -19,6 +19,7 @@ use crate::InstructionContext;
 /// Implements the CREATE/CREATE2 instruction.
 ///
 /// Creates a new contract with provided bytecode.
+#[inline]
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -106,6 +107,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Implements the CALL instruction.
 ///
 /// Message call with value transfer to another account.
+#[inline]
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -173,6 +175,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the CALLCODE instruction.
 ///
 /// Message call with alternative account's code.
+#[inline]
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -232,6 +235,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the DELEGATECALL instruction.
 ///
 /// Message call with alternative account's code but same sender and value.
+#[inline]
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
@@ -284,6 +288,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the STATICCALL instruction.
 ///
 /// Static message call (cannot modify state).
+#[inline]
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
 ) -> InstructionReturn {
