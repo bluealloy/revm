@@ -3,9 +3,7 @@
 use core::fmt::{self, Debug};
 use once_cell::race::OnceBox;
 use primitives::Bytes;
-
-extern crate alloc;
-use alloc::{boxed::Box, string::String, vec::Vec};
+use std::{boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
