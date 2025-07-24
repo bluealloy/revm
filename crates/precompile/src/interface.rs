@@ -11,7 +11,12 @@ static CRYPTO: OnceLock<Box<dyn Crypto>> = OnceLock::new();
 
 /// Install a custom crypto provider globally.
 pub fn install_crypto<C: Crypto + 'static>(crypto: C) -> bool {
-    CRYPTO.set(Box::new(crypto)).is_ok()
+    if CRYPTO.get().is_some() {
+        return false;
+    }
+
+    CRYPTO.get_or_init(|| Box::new(crypto));
+    true
 }
 
 /// Get the installed crypto provider, or the default if none is installed.
