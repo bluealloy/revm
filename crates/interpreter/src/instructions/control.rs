@@ -1,5 +1,6 @@
 use crate::{
     gas,
+    instructions::InstructionReturn,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     InstructionResult, InterpreterAction,
@@ -115,6 +116,9 @@ pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     context.interpreter.halt(InstructionResult::OpcodeNotFound);
+    InstructionReturn::halt()
 }

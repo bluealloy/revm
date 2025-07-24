@@ -1,16 +1,20 @@
 use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
+    instructions::InstructionReturn,
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     InstructionContext,
 };
 use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
-pub fn add<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_add(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the MUL instruction - multiplies two values from stack.

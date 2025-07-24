@@ -1,4 +1,6 @@
-use crate::{interpreter_types::Jumps, Interpreter, InterpreterTypes};
+use crate::{
+    instructions::InstructionReturn, interpreter_types::Jumps, Interpreter, InterpreterTypes,
+};
 
 use super::Instruction;
 
@@ -35,7 +37,7 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
+    pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) -> InstructionReturn {
         // Get current opcode.
         let opcode = self.interpreter.bytecode.opcode();
 

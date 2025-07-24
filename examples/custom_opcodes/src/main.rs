@@ -8,6 +8,7 @@ use revm::{
     handler::{instructions::EthInstructions, EthPrecompiles},
     inspector::inspectors::TracerEip3155,
     interpreter::{
+        instructions::InstructionReturn,
         interpreter::EthInterpreter,
         interpreter_types::{Immediates, Jumps},
         InstructionContext,
@@ -44,6 +45,7 @@ pub fn main() {
         |ctx: InstructionContext<'_, _, EthInterpreter>| {
             let offset = ctx.interpreter.bytecode.read_i16();
             ctx.interpreter.bytecode.relative_jump(offset as isize);
+            InstructionReturn::cont()
         },
     );
 

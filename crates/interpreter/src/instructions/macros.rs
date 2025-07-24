@@ -153,12 +153,15 @@ macro_rules! popn_top {
 /// Pushes a `B256` value onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push {
-    ($interpreter:expr, $x:expr $(,$ret:item)?) => (
-        if !($interpreter.stack.push($x)) {
+    ($interpreter:expr, $x:expr) => {
+        $crate::push!($interpreter, $x, $crate::InstructionReturn::halt())
+    };
+    ($interpreter:expr, $x:expr, $ret: expr) => {
+        if !$interpreter.stack.push($x) {
             $interpreter.halt($crate::InstructionResult::StackOverflow);
-            return $($ret)?;
+            return $ret;
         }
-    )
+    };
 }
 
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
