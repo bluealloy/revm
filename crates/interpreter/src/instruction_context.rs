@@ -1,6 +1,8 @@
 use crate::{
-    instructions::InstructionReturn, interpreter_types::Jumps, Instruction, InstructionResult,
-    InstructionTable, Interpreter, InterpreterAction, InterpreterTypes,
+    instructions::InstructionReturn,
+    interpreter_types::{Jumps, LoopControl},
+    Instruction, InstructionResult, InstructionTable, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
 use primitives::Bytes;
 
@@ -64,8 +66,19 @@ impl<'a, H: ?Sized, ITy: InterpreterTypes> InstructionContext<'a, H, ITy> {
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
     #[inline]
     pub fn halt(&mut self, result: InstructionResult) {
-        self.flush();
-        self.interpreter.halt(result);
+        #[inline(never)]
+        #[cold]
+        fn do_halt<ITy: InterpreterTypes>(
+            interpreter: &mut Interpreter<ITy>,
+            result: InstructionResult,
+            ip: *const u8,
+        ) {
+            interpreter.bytecode.set_ip(ip);
+            interpreter
+                .bytecode
+                .set_action(InterpreterAction::new_halt(result, interpreter.gas));
+        }
+        do_halt(self.interpreter, result, self.ip)
     }
 
     /// Return with the given output.
@@ -73,7 +86,6 @@ impl<'a, H: ?Sized, ITy: InterpreterTypes> InstructionContext<'a, H, ITy> {
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
     #[inline]
     pub fn return_with_output(&mut self, output: Bytes) {
-        self.flush();
         self.interpreter.return_with_output(output);
     }
 
@@ -81,6 +93,21 @@ impl<'a, H: ?Sized, ITy: InterpreterTypes> InstructionContext<'a, H, ITy> {
     #[inline]
     pub fn opcode(&self) -> u8 {
         unsafe { *self.ip }
+    }
+
+    /// Returns the current program counter.
+    #[inline]
+    pub fn pc(&self) -> usize {
+        unsafe {
+            self.ip
+                .offset_from_unsigned(self.interpreter.bytecode.base())
+        }
+    }
+
+    /// Reads a slice of the bytecode.
+    #[inline]
+    pub fn read_slice(&self, len: usize) -> &'a [u8] {
+        unsafe { std::slice::from_raw_parts(self.ip, len) }
     }
 
     /// Relative jump.

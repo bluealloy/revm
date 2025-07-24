@@ -17,8 +17,7 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
-    jump_inner(context, target);
-    InstructionReturn::cont()
+    jump_inner(context, target)
 }
 
 /// Implements the JUMPI instruction.
@@ -31,9 +30,10 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(
     popn!([target, cond], context.interpreter);
 
     if !cond.is_zero() {
-        jump_inner(context, target);
+        jump_inner(context, target)
+    } else {
+        InstructionReturn::cont()
     }
-    InstructionReturn::cont()
 }
 
 /// Internal helper function for jump operations.
@@ -44,14 +44,20 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(
 fn jump_inner<WIRE: InterpreterTypes, H: ?Sized>(
     context: &mut InstructionContext<'_, H, WIRE>,
     target: U256,
-) {
-    let target = as_usize_or_fail_ret!(context, target, InstructionResult::InvalidJump, ());
+) -> InstructionReturn {
+    let target = as_usize_or_fail_ret!(
+        context,
+        target,
+        InstructionResult::InvalidJump,
+        InstructionReturn::halt()
+    );
     if !context.interpreter.bytecode.is_valid_legacy_jump(target) {
         context.halt(InstructionResult::InvalidJump);
-        return;
+        return InstructionReturn::halt();
     }
     // SAFETY: `is_valid_jump` ensures that `dest` is in bounds.
     context.absolute_jump(target);
+    InstructionReturn::cont()
 }
 
 /// Implements the JUMPDEST instruction.
@@ -72,17 +78,14 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.bytecode.pc() - 1)
-    );
+    push!(context.interpreter, U256::from(context.pc() - 1));
     InstructionReturn::cont()
 }
 
-#[inline]
 /// Internal helper function for return operations.
 ///
 /// Handles memory data retrieval and sets the return action.
+#[inline]
 #[allow(clippy::unused_unit)]
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,

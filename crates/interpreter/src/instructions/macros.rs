@@ -124,13 +124,13 @@ macro_rules! resize_memory {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn {
-    ([ $($x:ident),* ],$interpreter:expr) => {
+    ([ $($x:ident),* ], $interpreter:expr) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
             $interpreter.halt($crate::InstructionResult::StackUnderflow);
             return $crate::instructions::InstructionReturn::halt();
         };
     };
-    ([ $($x:ident),* ],$interpreter:expr, $ret:expr) => {
+    ([ $($x:ident),* ], $interpreter:expr, $ret:expr) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
             $interpreter.halt($crate::InstructionResult::StackUnderflow);
             return $ret;

@@ -1,12 +1,10 @@
 use crate::{
     gas,
     instructions::InstructionReturn,
-    interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
-    InstructionResult,
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
+    InstructionContext, InstructionResult,
 };
 use primitives::U256;
-
-use crate::InstructionContext;
 
 /// Implements the POP instruction.
 ///
@@ -40,14 +38,14 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 ) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
 
-    let slice = context.interpreter.bytecode.read_slice(N);
+    let slice = context.read_slice(N);
     if !context.interpreter.stack.push_slice(slice) {
         context.interpreter.halt(InstructionResult::StackOverflow);
         return InstructionReturn::halt();
     }
 
     // Can ignore return. as relative N jump is safe operation
-    context.interpreter.bytecode.relative_jump(N as isize);
+    context.relative_jump(N as isize);
     InstructionReturn::cont()
 }
 

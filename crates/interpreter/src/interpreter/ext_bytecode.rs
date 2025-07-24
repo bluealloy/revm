@@ -144,7 +144,7 @@ impl Jumps for ExtBytecode {
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
         unsafe {
             self.instruction_pointer
-                .offset_from(self.base.bytes_ref().as_ptr()) as usize
+                .offset_from_unsigned(self.base.bytes_ref().as_ptr())
         }
     }
 }

@@ -254,7 +254,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         loop {
             if !self.step(instruction_table, host).can_continue() {
-                debug_assert!(self.bytecode.is_end());
                 break;
             }
         }
