@@ -203,7 +203,7 @@ pub fn run_pair(
         return Err(PrecompileError::OutOfGas);
     }
 
-    if input.len() % PAIR_ELEMENT_LEN != 0 {
+    if !input.len().is_multiple_of(PAIR_ELEMENT_LEN) {
         return Err(PrecompileError::Bn128PairLength);
     }
 

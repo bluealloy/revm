@@ -12,30 +12,37 @@ use crate::InstructionContext;
 /// Implements the JUMP instruction.
 ///
 /// Unconditional jump to a valid destination.
-pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
+pub fn jump<ITy: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, ITy>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
+    InstructionReturn::cont()
 }
 
 /// Implements the JUMPI instruction.
 ///
 /// Conditional jump to a valid destination if condition is true.
-pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
 
     if !cond.is_zero() {
         jump_inner(context.interpreter, target);
     }
+    InstructionReturn::cont()
 }
 
 /// Internal helper function for jump operations.
 ///
 /// Validates jump target and performs the actual jump.
 #[inline(always)]
+#[allow(clippy::unused_unit)]
 fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
-    let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
+    let target = as_usize_or_fail_ret!(interpreter, target, InstructionResult::InvalidJump, ());
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter.halt(InstructionResult::InvalidJump);
         return;
@@ -47,39 +54,46 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::JUMPDEST);
+    InstructionReturn::cont()
 }
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
-pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
         U256::from(context.interpreter.bytecode.pc() - 1)
     );
+    InstructionReturn::cont()
 }
 
 #[inline]
 /// Internal helper function for return operations.
 ///
 /// Handles memory data retrieval and sets the return action.
+#[allow(clippy::unused_unit)]
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
 ) {
     // Zero gas cost
     // gas!(interpreter, gas::ZERO)
-    popn!([offset, len], interpreter);
-    let len = as_usize_or_fail!(interpreter, len);
+    popn!([offset, len], interpreter, ());
+    let len = as_usize_or_fail_ret!(interpreter, len, ());
     // Important: Offset must be ignored if len is zeros
     let mut output = Bytes::default();
     if len != 0 {
-        let offset = as_usize_or_fail!(interpreter, offset);
-        resize_memory!(interpreter, offset, len);
+        let offset = as_usize_or_fail_ret!(interpreter, offset, ());
+        resize_memory!(interpreter, offset, len, ());
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 
@@ -95,24 +109,36 @@ fn return_inner(
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
-pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     return_inner(context.interpreter, InstructionResult::Return);
+    InstructionReturn::halt()
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     check!(context.interpreter, BYZANTIUM);
     return_inner(context.interpreter, InstructionResult::Revert);
+    InstructionReturn::halt()
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     context.interpreter.halt(InstructionResult::Stop);
+    InstructionReturn::halt()
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     context.interpreter.halt(InstructionResult::InvalidFEOpcode);
+    InstructionReturn::halt()
 }
 
 /// Unknown opcode. This opcode halts the execution.

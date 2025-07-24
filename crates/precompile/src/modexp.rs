@@ -19,7 +19,7 @@ pub const BERLIN: PrecompileWithAddress =
 /// `modexp` precompile with OSAKA gas rules.
 pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(5), osaka_run);
 
-#[cfg(feature = "gmp")]
+#[cfg(false)]
 /// GMP-based modular exponentiation implementation
 fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     use rug::{integer::Order::Msf, Integer};
@@ -38,7 +38,7 @@ fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     output
 }
 
-#[cfg(not(feature = "gmp"))]
+// #[cfg(not(feature = "gmp"))]
 fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     aurora_engine_modexp::modexp(base, exponent, modulus)
 }

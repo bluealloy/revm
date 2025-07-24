@@ -510,7 +510,7 @@ mod avx2 {
 
     #[inline(always)]
     pub(crate) fn count_high(count: Count) -> Word {
-        (count >> 8 * size_of::<Word>()) as Word
+        (count >> (Word::BITS as usize)) as Word
     }
 
     #[inline(always)]

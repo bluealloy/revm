@@ -18,81 +18,108 @@ pub fn add<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// Implements the MUL instruction - multiplies two values from stack.
-pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_mul(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the SUB instruction - subtracts two values from stack.
-pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_sub(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the DIV instruction - divides two values from stack.
-pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn div<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
+    InstructionReturn::cont()
 }
 
 /// Implements the SDIV instruction.
 ///
 /// Performs signed division of two values from stack.
-pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_div(op1, *op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the MOD instruction.
 ///
 /// Pops two values from stack and pushes the remainder of their division.
-pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
+    InstructionReturn::cont()
 }
 
 /// Implements the SMOD instruction.
 ///
 /// Performs signed modulo of two values from stack.
-pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([op1], op2, context.interpreter);
-    *op2 = i256_mod(op1, *op2)
+    *op2 = i256_mod(op1, *op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the ADDMOD instruction.
 ///
 /// Pops three values from stack and pushes (a + b) % n.
-pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
-    *op3 = op1.add_mod(op2, *op3)
+    *op3 = op1.add_mod(op2, *op3);
+    InstructionReturn::cont()
 }
 
 /// Implements the MULMOD instruction.
 ///
 /// Pops three values from stack and pushes (a * b) % n.
-pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::MID);
     popn_top!([op1, op2], op3, context.interpreter);
-    *op3 = op1.mul_mod(op2, *op3)
+    *op3 = op1.mul_mod(op2, *op3);
+    InstructionReturn::cont()
 }
 
 /// Implements the EXP instruction - exponentiates two values from stack.
-pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     let spec_id = context.interpreter.runtime_flag.spec_id();
     popn_top!([op1], op2, context.interpreter);
     gas_or_fail!(context.interpreter, gas::exp_cost(spec_id, *op2));
     *op2 = op1.pow(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
@@ -124,7 +151,9 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionReturn {
     gas!(context.interpreter, gas::LOW);
     popn_top!([ext], x, context.interpreter);
     // For 31 we also don't need to do anything.
@@ -135,4 +164,5 @@ pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext
         let mask = (U256::from(1) << bit_index) - U256::from(1);
         *x = if bit { *x | !mask } else { *x & mask };
     }
+    InstructionReturn::cont()
 }

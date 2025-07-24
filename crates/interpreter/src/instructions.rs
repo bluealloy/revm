@@ -82,7 +82,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host + ?Sized>(
     macro_rules! assign {
         ($($idx:ident = $instr:expr;)*) => {
             $(
-                table[$idx as usize] = unsafe { std::mem::transmute::<fn(InstructionContext<'_, H, WIRE>) -> _, _>($instr) };
+                table[$idx as usize] = $instr;
             )*
         };
     }
