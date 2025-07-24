@@ -12,6 +12,19 @@ extern crate alloc as std;
 #[macro_use]
 mod macros;
 
+/// a
+#[no_mangle]
+pub fn f() -> impl Sized {
+    type W = crate::interpreter::EthInterpreter;
+    type H = context_interface::DummyHost;
+    (
+        instructions::tail_call_instr::<69, H, W> as fn(_) -> _,
+        instruction_table::<W, H>(),
+    )
+}
+/// b
+pub type EEEInterpreter = crate::interpreter::Interpreter<crate::interpreter::EthInterpreter>;
+
 /// Gas calculation utilities and constants.
 pub mod gas;
 /// Context passed to instruction implementations.
