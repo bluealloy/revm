@@ -111,7 +111,6 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all --check
 
-  # Check crates correctly propagate features
   feature-propagation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -123,13 +122,9 @@ jobs:
           zepter --version
           time zepter run check
 
-  typos-check:
-    name: TyposCheck
-    timeout-minutes: 5
+  typos:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: crate-ci/typos@v1.22.7
-        with:
-          config: ./typos.toml
-          isolated: true
+      - uses: crate-ci/typos@v1
