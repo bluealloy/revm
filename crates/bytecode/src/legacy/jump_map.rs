@@ -3,8 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use once_cell::race::OnceBox;
-use primitives::hex;
+use primitives::{hex, OnceLock};
 use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations.
@@ -80,10 +79,8 @@ impl Debug for JumpTable {
 impl Default for JumpTable {
     #[inline]
     fn default() -> Self {
-        static DEFAULT: OnceBox<JumpTable> = OnceBox::new();
-        DEFAULT
-            .get_or_init(|| Self::new(BitVec::default()).into())
-            .clone()
+        static DEFAULT: OnceLock<JumpTable> = OnceLock::new();
+        DEFAULT.get_or_init(|| Self::new(BitVec::default())).clone()
     }
 }
 

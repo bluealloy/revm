@@ -22,7 +22,6 @@ primitives.workspace = true
 
 # Jumpmap
 bitvec = { workspace = true, features = ["alloc"] }
-once_cell = { workspace = true, features = ["alloc"] }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -37,7 +36,6 @@ std = [
     "serde?/std",
     "primitives/std",
     "bitvec/std",
-    "once_cell/std",
     "phf?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
