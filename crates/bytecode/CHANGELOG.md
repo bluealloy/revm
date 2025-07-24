@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.1.0...revm-bytecode-v6.1.1) - 2025-07-24
+
+### Other
+
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+
 ## [6.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.0.1...revm-bytecode-v6.1.0) - 2025-07-23
 
 ### Added

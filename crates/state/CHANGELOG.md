@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [7.0.3](https://github.com/bluealloy/revm/compare/revm-state-v7.0.2...revm-state-v7.0.3) - 2025-07-24
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 
 ## [4.0.0](https://github.com/bluealloy/revm/compare/revm-state-v3.0.1...revm-state-v4.0.0) - 2025-05-07
 
