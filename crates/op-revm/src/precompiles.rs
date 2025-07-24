@@ -1,6 +1,5 @@
 //! Contains Optimism specific precompiles.
 use crate::OpSpecId;
-use once_cell::race::OnceBox;
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
@@ -10,7 +9,7 @@ use revm::{
         self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
         Precompiles,
     },
-    primitives::{hardfork::SpecId, Address},
+    primitives::{hardfork::SpecId, Address, OnceLock},
 };
 use std::boxed::Box;
 use std::string::String;
@@ -56,29 +55,29 @@ impl OpPrecompiles {
 
 /// Returns precompiles for Fjord spec.
 pub fn fjord() -> &'static Precompiles {
-    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // RIP-7212: secp256r1 P256verify
         precompiles.extend([secp256r1::P256VERIFY]);
-        Box::new(precompiles)
+        precompiles
     })
 }
 
 /// Returns precompiles for Granite spec.
 pub fn granite() -> &'static Precompiles {
-    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = fjord().clone();
         // Restrict bn256Pairing input size
         precompiles.extend([bn128_pair::GRANITE]);
-        Box::new(precompiles)
+        precompiles
     })
 }
 
 /// Returns precompiles for isthumus spec.
 pub fn isthmus() -> &'static Precompiles {
-    static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+    static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = granite().clone();
         // Prague bls12 precompiles
@@ -89,7 +88,7 @@ pub fn isthmus() -> &'static Precompiles {
             bls12_381::ISTHMUS_G2_MSM,
             bls12_381::ISTHMUS_PAIRING,
         ]);
-        Box::new(precompiles)
+        precompiles
     })
 }
 
