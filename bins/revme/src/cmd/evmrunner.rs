@@ -40,12 +40,18 @@ pub struct Cmd {
     /// Overrides the positional `bytecode` argument.
     #[arg(long)]
     path: Option<PathBuf>,
+
     /// Whether to run in benchmarking mode
     #[arg(long)]
     bench: bool,
+
     /// Hex-encoded input/calldata bytes
     #[arg(long, default_value = "")]
     input: String,
+    /// Gas limit
+    #[arg(long, default_value = "1000000000")]
+    gas_limit: u64,
+
     /// Whether to print the state
     #[arg(long)]
     state: bool,
@@ -92,6 +98,7 @@ impl Cmd {
             .kind(TxKind::Call(BENCH_TARGET))
             .data(input)
             .nonce(nonce)
+            .gas_limit(self.gas_limit)
             .build()
             .unwrap();
 
