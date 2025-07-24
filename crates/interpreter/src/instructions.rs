@@ -67,6 +67,8 @@ impl InstructionReturn {
     }
 }
 
+// TODO: flip naming? default to tail?
+
 /// Returns the default instruction table for the given interpreter types and host.
 #[inline]
 pub const fn instruction_table<W: InterpreterTypes, H: Host + ?Sized>() -> InstructionTable<W, H> {
@@ -132,7 +134,7 @@ mod tail {
     //     // SAFETY: We are adding an arbitrary value that is unobserved.
     //     unsafe { core::mem::transmute(f) }
     // }
-    use std::convert::identity as conv;
+    use core::convert::identity as conv;
 
     macro_rules! tail_instrs {
         ($($instr:ident = $instr_fn:expr;)*) => {

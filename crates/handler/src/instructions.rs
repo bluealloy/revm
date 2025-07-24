@@ -1,5 +1,6 @@
 use auto_impl::auto_impl;
 use interpreter::{
+    instruction_table,
     instructions::{instruction_table_tail, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
@@ -40,19 +41,30 @@ where
     WIRE: InterpreterTypes,
     HOST: Host,
 {
-    /// Returns `EthInstructions` with mainnet spec.
+    /// Returns an instance with the default mainnet instructions.
+    #[inline]
     pub fn new_mainnet() -> Self {
         Self::new(instruction_table_tail::<WIRE, HOST>())
     }
 
-    /// Rerurns new `EthInstructions` with custom instruction table.
+    /// Returns an instance with the default mainnet inspectable instructions.
+    ///
+    /// Use this for inspectors and for stepping through the instructions.
+    #[inline]
+    pub fn new_mainnet_no_tail() -> Self {
+        Self::new(instruction_table::<WIRE, HOST>())
+    }
+
+    /// Returns an instance new `EthInstructions` with custom instruction table.
+    #[inline]
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         Self {
             instruction_table: Box::new(base_table),
         }
     }
 
-    /// Inserts a new instruction into the instruction table.s
+    /// Inserts a new instruction into the instruction table.
+    #[inline]
     pub fn insert_instruction(&mut self, opcode: u8, instruction: Instruction<WIRE, HOST>) {
         self.instruction_table[opcode as usize] = instruction;
     }

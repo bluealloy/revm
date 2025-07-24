@@ -200,6 +200,7 @@ where
         interpreter.bytecode.relative_jump(1);
 
         // Execute instruction.
+        // TODO: `ip` is unused
         InstructionContext::new(interpreter, context).call(instructions[opcode as usize]);
 
         // check if new log is added
