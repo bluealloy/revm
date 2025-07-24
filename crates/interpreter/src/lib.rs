@@ -14,7 +14,8 @@ mod macros;
 
 /// a
 #[no_mangle]
-pub fn f() -> impl Sized {
+#[cfg(feature = "asm")]
+pub fn instruction_tables() -> impl Sized {
     type W = crate::interpreter::EthInterpreter;
     type H = context_interface::DummyHost;
     (

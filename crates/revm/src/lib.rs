@@ -39,7 +39,8 @@ pub use inspector::{InspectCommitEvm, InspectEvm, Inspector};
 
 /// a
 #[no_mangle]
-pub fn f() -> impl Sized {
+#[cfg(feature = "asm")]
+pub fn build_evm() -> impl Sized {
     let mut evm = context::Context::mainnet()
         .with_db(database_interface::EmptyDB::default())
         .build_mainnet();
