@@ -1,8 +1,8 @@
 use crate::PrecompileError;
 use ::blst::{
-    blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop, blst_p1, blst_p1_affine,
-    blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p1_from_affine, blst_p1_mult,
-    blst_p1_to_affine, blst_p2_affine, blst_scalar, blst_scalar_from_bendian,
+    blst_fp12, blst_fp12_is_one, blst_miller_loop, blst_p1, blst_p1_affine, blst_p1_affine_in_g1,
+    blst_p1_affine_on_curve, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2_affine,
+    blst_scalar, blst_scalar_from_bendian,
 };
 use primitives::hex_literal::hex;
 use std::string::ToString;
@@ -52,25 +52,10 @@ pub fn verify_kzg_proof(
     let x_minus_z = p2_sub_affine(&tau_g2, &z_g2);
 
     // Verify: P - y = Q * (X - z)
-    // Using pairing_check([[P_minus_y, -G₂], [proof, X_minus_z]]) == 1
+    // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
     let neg_g2 = p2_neg(&g2);
 
-    // Compute miller loops
-    let ml1 = compute_miller_loop(&p_minus_y, &neg_g2);
-    let ml2 = compute_miller_loop(&proof_point, &x_minus_z);
-
-    // Multiply miller loop results
-    let mut acc = blst_fp12::default();
-    unsafe { blst_fp12_mul(&mut acc, &ml1, &ml2) };
-
-    // Apply final exponentiation and check if result is 1
-    let mut final_result = blst_fp12::default();
-    unsafe {
-        blst::blst_final_exp(&mut final_result, &acc);
-    }
-
-    // Check if the result is one (identity element)
-    unsafe { blst_fp12_is_one(&final_result) }
+    pairing_check_2(&p_minus_y, &neg_g2, &proof_point, &x_minus_z)
 }
 
 /// Get the trusted setup G2 point [τ]₂ from the Ethereum KZG ceremony.
@@ -279,11 +264,34 @@ fn p2_to_affine(p: &blst::blst_p2) -> blst_p2_affine {
     p_affine
 }
 
-/// Compute miller loop for pairing
-fn compute_miller_loop(g1: &blst_p1_affine, g2: &blst_p2_affine) -> blst_fp12 {
-    let mut result = blst_fp12::default();
+/// Perform pairing check for exactly 2 pairs
+/// Specialized for KZG verification: e(g1_1, g2_1) * e(g1_2, g2_2) == 1
+#[inline]
+fn pairing_check_2(
+    g1_1: &blst_p1_affine,
+    g2_1: &blst_p2_affine,
+    g1_2: &blst_p1_affine,
+    g2_2: &blst_p2_affine,
+) -> bool {
+    // Compute both miller loops and multiply inline
+    let mut ml_product = blst_fp12::default();
     unsafe {
-        blst_miller_loop(&mut result, g2, g1);
+        // First miller loop
+        let mut ml1 = blst_fp12::default();
+        blst_miller_loop(&mut ml1, g2_1, g1_1);
+
+        // Second miller loop
+        let mut ml2 = blst_fp12::default();
+        blst_miller_loop(&mut ml2, g2_2, g1_2);
+
+        // Multiply results
+        ::blst::blst_fp12_mul(&mut ml_product, &ml1, &ml2);
+
+        // Apply final exponentiation
+        let mut final_result = blst_fp12::default();
+        ::blst::blst_final_exp(&mut final_result, &ml_product);
+
+        // Check if result equals 1
+        blst_fp12_is_one(&final_result)
     }
-    result
 }
