@@ -13,6 +13,8 @@ use state::bytecode::opcode;
 ///
 /// Similar how [`Handler::run`] method serves as the entry point,
 /// [`InspectorHandler::inspect_run`] method serves as the entry point for inspection.
+/// For system calls, [`InspectorHandler::inspect_run_system_call`] provides inspection
+/// support similar to [`Handler::run_system_call`].
 ///
 /// Notice that when inspection is run it skips few functions from handler, this can be
 /// a problem if custom EVM is implemented and some of skipped functions have changed logic.
@@ -24,6 +26,7 @@ use state::bytecode::opcode;
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
 ///   * `run_exec_loop` calls `inspect_frame_init` and `inspect_frame_run` that call inspector inside.
+/// * [`Handler::run_system_call`] replaced with [`InspectorHandler::inspect_run_system_call`]
 pub trait InspectorHandler: Handler
 where
     Self::Evm:
@@ -119,6 +122,27 @@ where
             if let Some(result) = evm.frame_return_result(result)? {
                 return Ok(result);
             }
+        }
+    }
+
+    /// Run system call with inspection support.
+    ///
+    /// This method acts as [`Handler::run_system_call`] method for inspection.
+    /// Similar to [`InspectorHandler::inspect_run`] but skips validation and pre-execution phases,
+    /// going directly to execution with inspection support.
+    fn inspect_run_system_call(
+        &mut self,
+        evm: &mut Self::Evm,
+    ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // dummy values that are not used.
+        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        // call execution with inspection and then output.
+        match self
+            .inspect_execution(evm, &init_and_floor_gas)
+            .and_then(|exec_result| self.execution_result(evm, exec_result))
+        {
+            out @ Ok(_) => out,
+            Err(e) => self.catch_error(evm, e),
         }
     }
 }
