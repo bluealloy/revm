@@ -1,7 +1,7 @@
-# ./run-tests --help
+#!/usr/bin/env bash
+set -eo pipefail
 
-#!/bin/bash
-set -e
+# Usage: ./scripts/run-tests.sh --help
 
 # Version for the execution spec tests
 VERSION="v4.4.0"
