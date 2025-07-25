@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+zargo=(cargo +stage1)
 # Usage: ./asm_both.sh "OPCODE"
-cargo asm -F asm -p revm-interpreter "cx::$1::" > a.s
-cargo asm -F asm -p revm-interpreter "cx::$1::" --llvm > a.ll
-cargo asm -F asm -p revm-interpreter "tail::$1::" > b.s
-cargo asm -F asm -p revm-interpreter "tail::$1::" --llvm > b.ll
+"${zargo[@]}" asm -F asm -p revm-interpreter "cx::$1::" > a.s
+"${zargo[@]}" asm -F asm -p revm-interpreter "cx::$1::" --llvm > a.ll
+"${zargo[@]}" asm -F asm -p revm-interpreter "tail::$1::" > b.s
+"${zargo[@]}" asm -F asm -p revm-interpreter "tail::$1::" --llvm > b.ll
