@@ -264,7 +264,7 @@ pub trait LoopControl {
     fn reset_action(&mut self);
     /// Set return action.
     fn set_action(&mut self, action: InterpreterAction);
-    /// Takes next action.
+    /// Returns the current action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
     /// Returns instruction result
     #[inline]

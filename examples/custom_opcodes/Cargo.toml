@@ -8,6 +8,7 @@ keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -17,4 +18,4 @@ rustdoc-args = ["--cfg", "docsrs"]
 workspace = true
 
 [dependencies]
-revm = {workspace = true, features = ["std", "tracer"]}
+revm = { workspace = true, features = ["std", "tracer"] }

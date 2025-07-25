@@ -1555,14 +1555,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "custom_precompile_journal"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "revm",
-]
-
-[[package]]
 name = "darling"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1860,6 +1852,14 @@ dependencies = [
 name = "example-custom-opcodes"
 version = "0.0.0"
 dependencies = [
+ "revm",
+]
+
+[[package]]
+name = "example-custom-precompile-journal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "revm",
 ]
 

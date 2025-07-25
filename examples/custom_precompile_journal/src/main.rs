@@ -6,7 +6,9 @@
 //! 3. Modifying account balances and storage from within a precompile
 //! 4. Integrating the custom precompile into a custom EVM implementation
 
-use custom_precompile_journal::{precompile_provider::CUSTOM_PRECOMPILE_ADDRESS, CustomEvm};
+use example_custom_precompile_journal::{
+    precompile_provider::CUSTOM_PRECOMPILE_ADDRESS, CustomEvm,
+};
 use revm::{
     context::{result::InvalidTransaction, Context, ContextSetters, ContextTr, TxEnv},
     context_interface::result::EVMError,

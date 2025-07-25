@@ -2,9 +2,12 @@ use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
-    instructions::InstructionTable, interpreter_types::LoopControl, FrameInput, Host,
-    InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction, InterpreterTypes,
+    instructions::InstructionTable,
+    interpreter_types::{Jumps, LoopControl},
+    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
+use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -170,6 +173,7 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
 /// This function is used to inspect the Interpreter loop.
 /// It will call [`Inspector::step`] and [`Inspector::step_end`] after each instruction.
 /// And [`Inspector::log`],[`Inspector::selfdestruct`] for each log and selfdestruct instruction.
+// TODO: `ip` is unused
 pub fn inspect_instructions<CTX, IT>(
     context: &mut CTX,
     interpreter: &mut Interpreter<IT>,
@@ -180,27 +184,19 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    let mut log_num = context.journal_mut().logs().len();
     loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
             break;
         }
 
-        // Execute instruction.
-        // TODO: `ip` is unused
+        let opcode = interpreter.bytecode.opcode();
         let ret = interpreter.step(instructions, context);
 
-        // check if new log is added
-        let new_log = context.journal_mut().logs().len();
-        if log_num < new_log {
-            // as there is a change in log number this means new log is added
-            let log = context.journal_mut().logs().last().unwrap().clone();
-            inspector.log(interpreter, context, log);
-            log_num = new_log;
+        if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
+            inspect_log(interpreter, context, &mut inspector);
         }
 
-        // Call step_end.
         inspector.step_end(interpreter, context);
 
         if !ret.can_continue() {
@@ -210,27 +206,62 @@ where
 
     let next_action = interpreter.take_next_action();
 
-    // handle selfdestruct
+    // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            match context.journal_mut().journal().last() {
-                Some(JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    had_balance,
-                    ..
-                }) => {
-                    inspector.selfdestruct(*address, *target, *had_balance);
-                }
-                Some(JournalEntry::BalanceTransfer {
-                    from, to, balance, ..
-                }) => {
-                    inspector.selfdestruct(*from, *to, *balance);
-                }
-                _ => {}
-            }
+            inspect_selfdestruct(context, &mut inspector);
         }
     }
 
     next_action
+}
+
+#[inline(never)]
+#[cold]
+fn inspect_log<CTX, IT>(
+    interpreter: &mut Interpreter<IT>,
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+) where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    // `LOG*` instruction reverted.
+    if interpreter
+        .bytecode
+        .action()
+        .as_ref()
+        .is_some_and(|x| x.is_return())
+    {
+        return;
+    }
+
+    let log = context.journal_mut().logs().last().unwrap().clone();
+    inspector.log(interpreter, context, log);
+}
+
+#[inline(never)]
+#[cold]
+fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
+where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    if let Some(
+        JournalEntry::AccountDestroyed {
+            address: contract,
+            target: to,
+            had_balance: balance,
+            ..
+        }
+        | JournalEntry::BalanceTransfer {
+            from: contract,
+            to,
+            balance,
+            ..
+        },
+    ) = context.journal_mut().journal().last()
+    {
+        inspector.selfdestruct(*contract, *to, *balance);
+    }
 }
