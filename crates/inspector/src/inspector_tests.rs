@@ -735,7 +735,8 @@ mod tests {
     #[test]
     fn test_system_call_inspection_basic() {
         // Test that system calls can be inspected similar to regular transactions
-        const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
+        const HISTORY_STORAGE_ADDRESS: Address =
+            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
         static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
 
         let mut db = InMemoryDB::default();
@@ -763,15 +764,18 @@ mod tests {
         // Verify that inspection captured events
         let inspector = &evm.inspector;
         let events = inspector.get_events();
-        
+
         // Should have captured step events from system call execution
         let step_count = events
             .iter()
             .filter(|e| matches!(e, InspectorEvent::Step(_)))
             .count();
-        
-        assert!(step_count > 0, "System call inspection should capture step events");
-        
+
+        assert!(
+            step_count > 0,
+            "System call inspection should capture step events"
+        );
+
         // Verify system call was properly executed by checking state
         assert_eq!(result.state.len(), 1);
         assert_eq!(
@@ -790,25 +794,31 @@ mod tests {
         // Test system call inspection with a custom caller address
         // Use a simple contract that doesn't check caller address
         const SIMPLE_CONTRACT: Address = address!("0x1000000000000000000000000000000000000001");
-        
+
         // Simple contract that stores the input data and returns the caller address
         let code = vec![
             // Store input data at storage slot 0
             opcode::CALLDATASIZE,
             opcode::ISZERO,
-            opcode::PUSH1, 0x0C, // Skip storage if no calldata
+            opcode::PUSH1,
+            0x0C, // Skip storage if no calldata
             opcode::JUMPI,
-            opcode::PUSH1, 0x00, // calldata offset
+            opcode::PUSH1,
+            0x00, // calldata offset
             opcode::CALLDATALOAD,
-            opcode::PUSH1, 0x00, // storage slot
+            opcode::PUSH1,
+            0x00, // storage slot
             opcode::SSTORE,
             opcode::JUMPDEST,
             // Return caller address
             opcode::CALLER,
-            opcode::PUSH1, 0x00, // Memory offset
+            opcode::PUSH1,
+            0x00, // Memory offset
             opcode::MSTORE,
-            opcode::PUSH1, 0x20, // Return size (32 bytes)
-            opcode::PUSH1, 0x00, // Return offset
+            opcode::PUSH1,
+            0x20, // Return size (32 bytes)
+            opcode::PUSH1,
+            0x00, // Return offset
             opcode::RETURN,
         ];
 
@@ -827,11 +837,7 @@ mod tests {
 
         // Inspect system call with custom caller
         let result = evm
-            .inspect_system_call_with_caller(
-                custom_caller,
-                SIMPLE_CONTRACT,
-                test_data.0.into(),
-            )
+            .inspect_system_call_with_caller(custom_caller, SIMPLE_CONTRACT, test_data.0.into())
             .unwrap();
 
         // Verify execution success
@@ -844,15 +850,22 @@ mod tests {
             .iter()
             .filter(|e| matches!(e, InspectorEvent::Step(_)))
             .count();
-        
-        assert!(step_count > 0, "System call with custom caller should capture step events");
+
+        assert!(
+            step_count > 0,
+            "System call with custom caller should capture step events"
+        );
 
         // Verify the custom caller was used
         let output = result.result.output().unwrap();
         let mut expected_caller = [0u8; 32];
         expected_caller[12..].copy_from_slice(custom_caller.as_slice());
         assert_eq!(output.len(), 32, "Should return 32 bytes (address)");
-        assert_eq!(output.as_ref(), &expected_caller, "Caller should be custom_caller");
+        assert_eq!(
+            output.as_ref(),
+            &expected_caller,
+            "Caller should be custom_caller"
+        );
 
         // Verify storage was updated with input data
         assert_eq!(
@@ -869,7 +882,8 @@ mod tests {
     #[test]
     fn test_system_call_inspection_with_custom_inspector() {
         // Test system call inspection with a custom inspector provided at call time
-        const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
+        const HISTORY_STORAGE_ADDRESS: Address =
+            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
         static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
 
         let mut db = InMemoryDB::default();
@@ -908,8 +922,11 @@ mod tests {
             .iter()
             .filter(|e| matches!(e, InspectorEvent::Step(_)))
             .count();
-        
-        assert!(step_count > 0, "System call with custom inspector should capture step events");
+
+        assert!(
+            step_count > 0,
+            "System call with custom inspector should capture step events"
+        );
 
         // Verify state was updated correctly
         assert_eq!(
@@ -926,7 +943,8 @@ mod tests {
     #[test]
     fn test_system_call_inspection_one_vs_finalized() {
         // Test the difference between inspect_system_call_one and inspect_system_call
-        const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
+        const HISTORY_STORAGE_ADDRESS: Address =
+            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
         static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
 
         let mut db = InMemoryDB::default();
@@ -957,13 +975,16 @@ mod tests {
             .iter()
             .filter(|e| matches!(e, InspectorEvent::Step(_)))
             .count();
-        
-        assert!(step_count > 0, "inspect_system_call_one should capture step events");
+
+        assert!(
+            step_count > 0,
+            "inspect_system_call_one should capture step events"
+        );
 
         // Now test inspect_system_call (execution result + finalized state)
         // Reset inspector for clean test
         evm.inspector = TestInspector::new();
-        
+
         let result_and_state = evm
             .inspect_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
@@ -971,7 +992,7 @@ mod tests {
         // Verify both execution result and state are returned
         assert!(result_and_state.result.is_success());
         assert!(!result_and_state.state.is_empty());
-        
+
         // Verify state contains the expected storage update
         assert_eq!(
             result_and_state.state[&HISTORY_STORAGE_ADDRESS]
@@ -989,15 +1010,18 @@ mod tests {
         // Test that system call inspection uses SYSTEM_ADDRESS as default caller
         // This is verified by checking the transaction context during inspection
         const SIMPLE_CONTRACT: Address = address!("0x1000000000000000000000000000000000000001");
-        
+
         // Simple contract that returns the caller address
         let code = vec![
-            opcode::CALLER,     // Get caller address
-            opcode::PUSH1, 0x00, // Memory offset
-            opcode::MSTORE,     // Store caller in memory
-            opcode::PUSH1, 0x20, // Return size (32 bytes)
-            opcode::PUSH1, 0x00, // Return offset
-            opcode::RETURN,     // Return the caller address
+            opcode::CALLER, // Get caller address
+            opcode::PUSH1,
+            0x00,           // Memory offset
+            opcode::MSTORE, // Store caller in memory
+            opcode::PUSH1,
+            0x20, // Return size (32 bytes)
+            opcode::PUSH1,
+            0x00,           // Return offset
+            opcode::RETURN, // Return the caller address
         ];
 
         let mut db = InMemoryDB::default();
@@ -1017,7 +1041,7 @@ mod tests {
 
         // Verify execution was successful
         assert!(result.result.is_success());
-        
+
         // Verify inspection captured the execution
         let inspector = &evm.inspector;
         let events = inspector.get_events();
@@ -1025,8 +1049,11 @@ mod tests {
             .iter()
             .filter(|e| matches!(e, InspectorEvent::Step(_)))
             .count();
-        
-        assert!(step_count > 0, "System call inspection should capture execution steps");
+
+        assert!(
+            step_count > 0,
+            "System call inspection should capture execution steps"
+        );
 
         // The returned data should be the SYSTEM_ADDRESS (caller)
         let output = result.result.output().unwrap();
@@ -1034,6 +1061,10 @@ mod tests {
         let mut expected_caller = [0u8; 32];
         expected_caller[12..].copy_from_slice(SYSTEM_ADDRESS.as_slice());
         assert_eq!(output.len(), 32, "Should return 32 bytes (address)");
-        assert_eq!(output.as_ref(), &expected_caller, "Caller should be SYSTEM_ADDRESS");
+        assert_eq!(
+            output.as_ref(),
+            &expected_caller,
+            "Caller should be SYSTEM_ADDRESS"
+        );
     }
 }

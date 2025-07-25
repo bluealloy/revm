@@ -1,5 +1,5 @@
 use crate::{
-    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm, InspectSystemCallCommitEvm},
+    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallCommitEvm, InspectSystemCallEvm},
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
 };
 use context::{ContextSetters, ContextTr, Evm, JournalTr};

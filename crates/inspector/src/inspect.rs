@@ -1,5 +1,7 @@
 use context::result::ExecResultAndState;
-use handler::{system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallEvm, SystemCallCommitEvm};
+use handler::{
+    system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallCommitEvm, SystemCallEvm,
+};
 use primitives::{Address, Bytes};
 
 /// InspectEvm is a API that allows inspecting the EVM.
@@ -93,11 +95,7 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.inspect_system_call_with_caller_one(
-            SYSTEM_ADDRESS,
-            system_contract_address,
-            data,
-        )
+        self.inspect_system_call_with_caller_one(SYSTEM_ADDRESS, system_contract_address, data)
     }
 
     /// Inspect a system call with the current inspector and a custom caller.
@@ -160,11 +158,8 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         data: Bytes,
         inspector: Self::Inspector,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_system_call_with_inspector_one(
-            system_contract_address,
-            data,
-            inspector,
-        )?;
+        let output =
+            self.inspect_system_call_with_inspector_one(system_contract_address, data, inspector)?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
     }
@@ -207,11 +202,8 @@ pub trait InspectSystemCallCommitEvm:
         data: Bytes,
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_system_call_with_inspector_one(
-            system_contract_address,
-            data,
-            inspector,
-        )?;
+        let output =
+            self.inspect_system_call_with_inspector_one(system_contract_address, data, inspector)?;
         self.commit_inner();
         Ok(output)
     }
