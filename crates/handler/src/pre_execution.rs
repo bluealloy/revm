@@ -138,12 +138,6 @@ pub fn validate_against_state_and_deduct_caller<
         is_nonce_check_disabled,
     )?;
 
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
-    if tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
-
     let max_balance_spending = tx.max_balance_spending()?;
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
@@ -177,6 +171,12 @@ pub fn validate_against_state_and_deduct_caller<
     // Touch account so we know it is changed.
     caller_account.mark_touch();
     caller_account.info.balance = new_balance;
+
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
+    if tx.kind().is_call() {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
