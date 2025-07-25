@@ -137,7 +137,6 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// KZG point evaluation.
-    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     #[inline]
     fn verify_kzg_proof(
         &self,

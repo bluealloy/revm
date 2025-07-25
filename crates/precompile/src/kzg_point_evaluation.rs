@@ -3,11 +3,16 @@
 use crate::{
     crypto, Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         use c_kzg::{Bytes32, Bytes48};
     } else if #[cfg(feature = "kzg-rs")] {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
+    } else if #[cfg(feature = "blst")] {
+        pub mod blst;
+    } else {
+        pub mod arkworks;
     }
 }
 use primitives::hex_literal::hex;
@@ -90,6 +95,10 @@ pub fn verify_kzg_proof(
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
             KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
+        } else if #[cfg(feature = "blst")] {
+            blst::verify_kzg_proof(commitment, z, y, proof)
+        } else {
+            arkworks::verify_kzg_proof(commitment, z, y, proof)
         }
     }
 }
@@ -97,6 +106,7 @@ pub fn verify_kzg_proof(
 /// Convert a slice to an array of a specific size.
 #[inline]
 #[track_caller]
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
     bytes.try_into().expect("slice with incorrect length")
 }
@@ -104,6 +114,7 @@ fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
 /// Convert a slice to a 32 byte big endian array.
 #[inline]
 #[track_caller]
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
@@ -112,6 +123,7 @@ fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
 /// Convert a slice to a 48 byte big endian array.
 #[inline]
 #[track_caller]
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
     // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
     unsafe { &*as_array::<48>(bytes).as_ptr().cast() }

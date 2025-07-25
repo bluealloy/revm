@@ -16,7 +16,6 @@ pub mod bn128;
 pub mod hash;
 pub mod identity;
 pub mod interface;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
