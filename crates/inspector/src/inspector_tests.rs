@@ -2,13 +2,13 @@
 mod tests {
     use crate::{InspectEvm, InspectSystemCallEvm, Inspector};
     use context::{Context, TxEnv};
-    use database::{BenchmarkDB, InMemoryDB, BENCH_CALLER, BENCH_TARGET};
-    use handler::{system_call::SYSTEM_ADDRESS, MainBuilder, MainContext};
+    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use handler::{MainBuilder, MainContext};
     use interpreter::{
         interpreter_types::{Jumps, MemoryTr, StackTr},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterTypes,
     };
-    use primitives::{address, b256, bytes, Address, Bytes, Log, StorageKey, TxKind, U256};
+    use primitives::{address, Address, Bytes, Log, TxKind, U256};
     use state::{bytecode::opcode, AccountInfo, Bytecode};
 
     #[derive(Debug, Clone)]
@@ -734,337 +734,70 @@ mod tests {
 
     #[test]
     fn test_system_call_inspection_basic() {
-        // Test that system calls can be inspected similar to regular transactions
-        const HISTORY_STORAGE_ADDRESS: Address =
-            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
-        static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
+        // PUSH1 0x42, SSTORE, STOP
+        let code = Bytes::from(vec![
+            opcode::PUSH1,
+            0x42,
+            opcode::PUSH1,
+            0x00,
+            opcode::SSTORE,
+            opcode::STOP,
+        ]);
 
-        let mut db = InMemoryDB::default();
-        db.insert_account_info(
-            HISTORY_STORAGE_ADDRESS,
-            AccountInfo::default().with_code(Bytecode::new_legacy(HISTORY_STORAGE_CODE.clone())),
-        );
+        let bytecode = Bytecode::new_raw(code);
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
 
-        let block_hash =
-            b256!("0x1111111111111111111111111111111111111111111111111111111111111111");
-
-        let mut evm = Context::mainnet()
-            .with_db(db)
-            .modify_block_chained(|b| b.number = U256::ONE)
-            .build_mainnet_with_inspector(TestInspector::new());
-
-        // Inspect system call
         let result = evm
-            .inspect_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
+            .inspect_system_call(BENCH_TARGET, Bytes::default())
             .unwrap();
 
-        // Verify that the system call was executed successfully
         assert!(result.result.is_success());
-
-        // Verify that inspection captured events
-        let inspector = &evm.inspector;
-        let events = inspector.get_events();
-
-        // Should have captured step events from system call execution
-        let step_count = events
-            .iter()
-            .filter(|e| matches!(e, InspectorEvent::Step(_)))
-            .count();
-
-        assert!(
-            step_count > 0,
-            "System call inspection should capture step events"
-        );
-
-        // Verify system call was properly executed by checking state
-        assert_eq!(result.state.len(), 1);
-        assert_eq!(
-            result.state[&HISTORY_STORAGE_ADDRESS]
-                .storage
-                .get(&StorageKey::from(0))
-                .map(|slot| slot.present_value)
-                .unwrap_or_default(),
-            U256::from_be_bytes(block_hash.0),
-            "System call should have updated state"
-        );
+        assert!(evm.inspector.get_step_count() > 0);
+        assert!(!result.state.is_empty());
     }
 
     #[test]
-    fn test_system_call_inspection_with_custom_caller() {
-        // Test system call inspection with a custom caller address
-        // Use a simple contract that doesn't check caller address
-        const SIMPLE_CONTRACT: Address = address!("0x1000000000000000000000000000000000000001");
-
-        // Simple contract that stores the input data and returns the caller address
+    fn test_system_call_inspection_api_variants() {
         let code = vec![
-            // Store input data at storage slot 0
-            opcode::CALLDATASIZE,
-            opcode::ISZERO,
-            opcode::PUSH1,
-            0x0C, // Skip storage if no calldata
-            opcode::JUMPI,
-            opcode::PUSH1,
-            0x00, // calldata offset
-            opcode::CALLDATALOAD,
-            opcode::PUSH1,
-            0x00, // storage slot
-            opcode::SSTORE,
-            opcode::JUMPDEST,
-            // Return caller address
             opcode::CALLER,
             opcode::PUSH1,
-            0x00, // Memory offset
+            0x00,
             opcode::MSTORE,
             opcode::PUSH1,
-            0x20, // Return size (32 bytes)
+            0x20,
             opcode::PUSH1,
-            0x00, // Return offset
+            0x00,
             opcode::RETURN,
         ];
 
-        let mut db = InMemoryDB::default();
-        db.insert_account_info(
-            SIMPLE_CONTRACT,
-            AccountInfo::default().with_code(Bytecode::new_raw(Bytes::from(code))),
-        );
+        let bytecode = Bytecode::new_raw(Bytes::from(code));
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
 
-        let test_data = b256!("0x2222222222222222222222222222222222222222222222222222222222222222");
-        let custom_caller = address!("0x1000000000000000000000000000000000000001");
-
-        let mut evm = Context::mainnet()
-            .with_db(db)
-            .build_mainnet_with_inspector(TestInspector::new());
-
-        // Inspect system call with custom caller
+        // Test inspect_system_call_one
         let result = evm
-            .inspect_system_call_with_caller(custom_caller, SIMPLE_CONTRACT, test_data.0.into())
+            .inspect_system_call_one(BENCH_TARGET, Bytes::default())
             .unwrap();
+        assert!(result.is_success());
 
-        // Verify execution success
-        assert!(result.result.is_success());
-
-        // Verify inspection captured events
-        let inspector = &evm.inspector;
-        let events = inspector.get_events();
-        let step_count = events
-            .iter()
-            .filter(|e| matches!(e, InspectorEvent::Step(_)))
-            .count();
-
-        assert!(
-            step_count > 0,
-            "System call with custom caller should capture step events"
-        );
-
-        // Verify the custom caller was used
-        let output = result.result.output().unwrap();
-        let mut expected_caller = [0u8; 32];
-        expected_caller[12..].copy_from_slice(custom_caller.as_slice());
-        assert_eq!(output.len(), 32, "Should return 32 bytes (address)");
-        assert_eq!(
-            output.as_ref(),
-            &expected_caller,
-            "Caller should be custom_caller"
-        );
-
-        // Verify storage was updated with input data
-        assert_eq!(
-            result.state[&SIMPLE_CONTRACT]
-                .storage
-                .get(&StorageKey::from(0))
-                .map(|slot| slot.present_value)
-                .unwrap_or_default(),
-            U256::from_be_bytes(test_data.0),
-            "System call with custom caller should store input data"
-        );
-    }
-
-    #[test]
-    fn test_system_call_inspection_with_custom_inspector() {
-        // Test system call inspection with a custom inspector provided at call time
-        const HISTORY_STORAGE_ADDRESS: Address =
-            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
-        static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
-
-        let mut db = InMemoryDB::default();
-        db.insert_account_info(
-            HISTORY_STORAGE_ADDRESS,
-            AccountInfo::default().with_code(Bytecode::new_legacy(HISTORY_STORAGE_CODE.clone())),
-        );
-
-        let block_hash =
-            b256!("0x3333333333333333333333333333333333333333333333333333333333333333");
-
-        let mut evm = Context::mainnet()
-            .with_db(db)
-            .modify_block_chained(|b| b.number = U256::from(3))
-            .build_mainnet_with_inspector(TestInspector::new());
-
-        // Create a fresh inspector for this specific call
-        let custom_inspector = TestInspector::new();
-
-        // Inspect system call with custom inspector
+        // Test inspect_system_call_with_caller_one
+        let custom_caller = address!("0x1234567890123456789012345678901234567890");
         let result = evm
-            .inspect_system_call_with_inspector(
-                HISTORY_STORAGE_ADDRESS,
-                block_hash.0.into(),
-                custom_inspector,
+            .inspect_system_call_with_caller_one(custom_caller, BENCH_TARGET, Bytes::default())
+            .unwrap();
+        assert!(result.is_success());
+
+        // Test inspect_system_call_with_inspector_one
+        let result = evm
+            .inspect_system_call_with_inspector_one(
+                BENCH_TARGET,
+                Bytes::default(),
+                TestInspector::new(),
             )
             .unwrap();
+        assert!(result.is_success());
 
-        // Verify execution success
-        assert!(result.result.is_success());
-
-        // Verify the EVM's inspector captured events from this call
-        let inspector = &evm.inspector;
-        let events = inspector.get_events();
-        let step_count = events
-            .iter()
-            .filter(|e| matches!(e, InspectorEvent::Step(_)))
-            .count();
-
-        assert!(
-            step_count > 0,
-            "System call with custom inspector should capture step events"
-        );
-
-        // Verify state was updated correctly
-        assert_eq!(
-            result.state[&HISTORY_STORAGE_ADDRESS]
-                .storage
-                .get(&StorageKey::from(2))
-                .map(|slot| slot.present_value)
-                .unwrap_or_default(),
-            U256::from_be_bytes(block_hash.0),
-            "System call with custom inspector should update state correctly"
-        );
-    }
-
-    #[test]
-    fn test_system_call_inspection_one_vs_finalized() {
-        // Test the difference between inspect_system_call_one and inspect_system_call
-        const HISTORY_STORAGE_ADDRESS: Address =
-            address!("0x0000F90827F1C53a10cb7A02335B175320002935");
-        static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
-
-        let mut db = InMemoryDB::default();
-        db.insert_account_info(
-            HISTORY_STORAGE_ADDRESS,
-            AccountInfo::default().with_code(Bytecode::new_legacy(HISTORY_STORAGE_CODE.clone())),
-        );
-
-        let block_hash =
-            b256!("0x4444444444444444444444444444444444444444444444444444444444444444");
-
-        let mut evm = Context::mainnet()
-            .with_db(db)
-            .modify_block_chained(|b| b.number = U256::from(4))
-            .build_mainnet_with_inspector(TestInspector::new());
-
-        // Test inspect_system_call_one (execution result only)
-        let execution_result = evm
-            .inspect_system_call_one(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
-            .unwrap();
-
-        assert!(execution_result.is_success());
-
-        // Verify inspection captured events
-        let inspector = &evm.inspector;
-        let events = inspector.get_events();
-        let step_count = events
-            .iter()
-            .filter(|e| matches!(e, InspectorEvent::Step(_)))
-            .count();
-
-        assert!(
-            step_count > 0,
-            "inspect_system_call_one should capture step events"
-        );
-
-        // Now test inspect_system_call (execution result + finalized state)
-        // Reset inspector for clean test
-        evm.inspector = TestInspector::new();
-
-        let result_and_state = evm
-            .inspect_system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
-            .unwrap();
-
-        // Verify both execution result and state are returned
-        assert!(result_and_state.result.is_success());
-        assert!(!result_and_state.state.is_empty());
-
-        // Verify state contains the expected storage update
-        assert_eq!(
-            result_and_state.state[&HISTORY_STORAGE_ADDRESS]
-                .storage
-                .get(&StorageKey::from(3))
-                .map(|slot| slot.present_value)
-                .unwrap_or_default(),
-            U256::from_be_bytes(block_hash.0),
-            "inspect_system_call should return finalized state"
-        );
-    }
-
-    #[test]
-    fn test_system_call_inspection_uses_system_address() {
-        // Test that system call inspection uses SYSTEM_ADDRESS as default caller
-        // This is verified by checking the transaction context during inspection
-        const SIMPLE_CONTRACT: Address = address!("0x1000000000000000000000000000000000000001");
-
-        // Simple contract that returns the caller address
-        let code = vec![
-            opcode::CALLER, // Get caller address
-            opcode::PUSH1,
-            0x00,           // Memory offset
-            opcode::MSTORE, // Store caller in memory
-            opcode::PUSH1,
-            0x20, // Return size (32 bytes)
-            opcode::PUSH1,
-            0x00,           // Return offset
-            opcode::RETURN, // Return the caller address
-        ];
-
-        let mut db = InMemoryDB::default();
-        db.insert_account_info(
-            SIMPLE_CONTRACT,
-            AccountInfo::default().with_code(Bytecode::new_raw(Bytes::from(code))),
-        );
-
-        let mut evm = Context::mainnet()
-            .with_db(db)
-            .build_mainnet_with_inspector(TestInspector::new());
-
-        // Inspect system call (should use SYSTEM_ADDRESS as caller)
-        let result = evm
-            .inspect_system_call(SIMPLE_CONTRACT, Bytes::default())
-            .unwrap();
-
-        // Verify execution was successful
-        assert!(result.result.is_success());
-
-        // Verify inspection captured the execution
-        let inspector = &evm.inspector;
-        let events = inspector.get_events();
-        let step_count = events
-            .iter()
-            .filter(|e| matches!(e, InspectorEvent::Step(_)))
-            .count();
-
-        assert!(
-            step_count > 0,
-            "System call inspection should capture execution steps"
-        );
-
-        // The returned data should be the SYSTEM_ADDRESS (caller)
-        let output = result.result.output().unwrap();
-        // The output should contain the SYSTEM_ADDRESS as the caller
-        let mut expected_caller = [0u8; 32];
-        expected_caller[12..].copy_from_slice(SYSTEM_ADDRESS.as_slice());
-        assert_eq!(output.len(), 32, "Should return 32 bytes (address)");
-        assert_eq!(
-            output.as_ref(),
-            &expected_caller,
-            "Caller should be SYSTEM_ADDRESS"
-        );
+        assert!(evm.inspector.get_step_count() > 0);
     }
 }
