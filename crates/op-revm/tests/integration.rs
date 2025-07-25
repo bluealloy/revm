@@ -1,11 +1,13 @@
 //! Integration tests for the `op-revm` crate.
 mod common;
 
+use alloy_primitives::bytes;
 use common::compare_or_save_testdata;
 use op_revm::{
     precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
 };
+use revm::SystemCallEvm;
 use revm::{
     bytecode::opcode,
     context::{
@@ -1071,4 +1073,19 @@ fn test_log_inspector() {
     assert!(!inspector.logs.is_empty());
 
     compare_or_save_testdata("test_log_inspector.json", &output);
+}
+
+#[test]
+fn test_system_call() {
+    let ctx = Context::op();
+
+    let mut evm = ctx.build_op();
+
+    evm.transact_system_call(BENCH_TARGET, bytes!("0x0001"))
+        .unwrap();
+
+    // Run evm.
+    let output = evm.replay().unwrap();
+
+    compare_or_save_testdata("test_system_call.json", &output);
 }
