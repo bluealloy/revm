@@ -1080,7 +1080,7 @@ fn test_system_call() {
     let ctx = Context::op();
 
     let mut evm = ctx.build_op();
-    
+
     evm.transact_system_call(BENCH_TARGET, bytes!("0x0001"))
         .unwrap();
 
