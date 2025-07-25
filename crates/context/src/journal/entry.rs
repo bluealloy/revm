@@ -57,22 +57,6 @@ pub trait JournalEntryTr {
 
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
-
-    /// **DEPRECATED**: This method is no longer used in the new snapshot-based system.
-    ///
-    /// Journal entries are now mainly for tracking purposes. State reversal is handled
-    /// by simple snapshot restoration rather than complex journal entry reversal.
-    ///
-    /// This method remains for compatibility but should not be called in normal operation.
-    fn revert(
-        &self,
-        _state: &mut EvmState,
-        _transient_storage: Option<&mut TransientStorage>,
-        _is_spurious_dragon_enabled: bool,
-    ) {
-        // No-op: State reversal now handled by snapshots, not journal entries
-        // This dramatically simplifies the codebase and reduces potential for bugs
-    }
 }
 
 /// Status of selfdestruction revert.
@@ -273,15 +257,5 @@ impl JournalEntryTr for JournalEntry {
 
     fn code_changed(address: Address) -> Self {
         JournalEntry::CodeChange { address }
-    }
-
-    fn revert(
-        &self,
-        _state: &mut EvmState,
-        _transient_storage: Option<&mut TransientStorage>,
-        _is_spurious_dragon_enabled: bool,
-    ) {
-        // No-op: State reversal now handled by snapshots, not journal entries
-        // This dramatically simplifies the codebase and reduces potential for bugs
     }
 }
