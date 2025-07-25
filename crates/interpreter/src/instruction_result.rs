@@ -4,16 +4,17 @@ use context_interface::{
 };
 use core::fmt::Debug;
 
+/// Result of executing an EVM instruction.
+///
+/// This enum represents all possible outcomes when executing an instruction,
+/// including successful execution, reverts, and various error conditions.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-/// Result of executing an EVM instruction.
-/// This enum represents all possible outcomes when executing an instruction,
-/// including successful execution, reverts, and various error conditions.
 pub enum InstructionResult {
     /// Encountered a `STOP` opcode
     #[default]
-    Stop,
+    Stop = 1, // Start at 1 so that `Result<(), _>::Ok(())` is 0.
     /// Return from the current call.
     Return,
     /// Self-destruct the current contract.
@@ -35,7 +36,7 @@ pub enum InstructionResult {
 
     // Error Codes
     /// Out of gas error.
-    OutOfGas = 0x50,
+    OutOfGas = 0x20,
     /// Out of gas error encountered during memory expansion.
     MemoryOOG,
     /// The memory limit of the EVM has been exceeded.
@@ -195,19 +196,19 @@ impl InstructionResult {
     /// Returns whether the result is a success.
     #[inline]
     pub const fn is_ok(self) -> bool {
-        matches!(self, crate::return_ok!())
+        matches!(self, return_ok!())
     }
 
     #[inline]
     /// Returns whether the result is a success or revert (not an error).
     pub const fn is_ok_or_revert(self) -> bool {
-        matches!(self, crate::return_ok!() | crate::return_revert!())
+        matches!(self, return_ok!() | return_revert!())
     }
 
     /// Returns whether the result is a revert.
     #[inline]
     pub const fn is_revert(self) -> bool {
-        matches!(self, crate::return_revert!())
+        matches!(self, return_revert!())
     }
 
     /// Returns whether the result is an error.
@@ -353,7 +354,7 @@ mod tests {
     use crate::InstructionResult;
 
     #[test]
-    fn all_results_are_covered() {
+    fn exhaustiveness() {
         match InstructionResult::Stop {
             return_error!() => {}
             return_revert!() => {}
@@ -363,31 +364,29 @@ mod tests {
 
     #[test]
     fn test_results() {
-        let ok_results = vec![
+        let ok_results = [
             InstructionResult::Stop,
             InstructionResult::Return,
             InstructionResult::SelfDestruct,
         ];
-
         for result in ok_results {
             assert!(result.is_ok());
             assert!(!result.is_revert());
             assert!(!result.is_error());
         }
 
-        let revert_results = vec![
+        let revert_results = [
             InstructionResult::Revert,
             InstructionResult::CallTooDeep,
             InstructionResult::OutOfFunds,
         ];
-
         for result in revert_results {
             assert!(!result.is_ok());
             assert!(result.is_revert());
             assert!(!result.is_error());
         }
 
-        let error_results = vec![
+        let error_results = [
             InstructionResult::OutOfGas,
             InstructionResult::MemoryOOG,
             InstructionResult::MemoryLimitOOG,
@@ -411,7 +410,6 @@ mod tests {
             InstructionResult::CreateInitCodeSizeLimit,
             InstructionResult::FatalExternalError,
         ];
-
         for result in error_results {
             assert!(!result.is_ok());
             assert!(!result.is_revert());
