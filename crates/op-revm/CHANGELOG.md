@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.1.1](https://github.com/bluealloy/revm/compare/op-revm-v8.1.0...op-revm-v8.1.1) - 2025-07-25
+
+### Other
+
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+
 ## [8.1.0](https://github.com/bluealloy/revm/compare/op-revm-v8.0.3...op-revm-v8.1.0) - 2025-07-23
 
 ### Added
