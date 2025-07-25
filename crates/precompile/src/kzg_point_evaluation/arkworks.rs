@@ -1,9 +1,10 @@
-use super::*;
+use crate::PrecompileError;
 use ark_bls12_381::{Bls12_381, Fr, G1Affine, G2Affine};
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{BigInteger, One, PrimeField};
 use ark_serialize::CanonicalDeserialize;
 use core::ops::Neg;
+use primitives::hex_literal::hex;
 use std::string::ToString;
 
 /// Verify KZG proof using BLS12-381 implementation.
@@ -40,28 +41,22 @@ pub fn verify_kzg_proof(
     let tau_g2 = get_trusted_setup_g2();
 
     // Get generators
-    let g1 = G1Affine::generator();
-    let g2 = G2Affine::generator();
+    let g1 = get_g1_generator();
+    let g2 = get_g2_generator();
 
     // Compute P_minus_y = commitment - [y]G₁
-    let minus_y = y_fr.neg();
-    let minus_y_g1 = g1.mul_bigint(minus_y.into_bigint());
-    let p_minus_y = (commitment_point.into_group() + minus_y_g1).into_affine();
+    let y_g1 = scalar_mul_g1(&g1, &y_fr);
+    let p_minus_y = p1_sub_affine(&commitment_point, &y_g1);
 
     // Compute X_minus_z = [τ]G₂ - [z]G₂
-    let minus_z = z_fr.neg();
-    let minus_z_g2 = g2.mul_bigint(minus_z.into_bigint());
-    let x_minus_z = (tau_g2.into_group() + minus_z_g2).into_affine();
+    let z_g2 = scalar_mul_g2(&g2, &z_fr);
+    let x_minus_z = p2_sub_affine(&tau_g2, &z_g2);
 
     // Verify: P - y = Q * (X - z)
-    // Using pairing_check([[P_minus_y, -G₂], [proof, X_minus_z]]) == 1
-    let neg_g2 = g2.neg();
+    // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
+    let neg_g2 = p2_neg(&g2);
 
-    let g1_points = [p_minus_y, proof_point];
-    let g2_points = [neg_g2, x_minus_z];
-
-    let pairing_result = Bls12_381::multi_pairing(&g1_points, &g2_points);
-    pairing_result.0.is_one()
+    pairing_check_2(&p_minus_y, &neg_g2, &proof_point, &x_minus_z)
 }
 
 /// Get the trusted setup G2 point [τ]₂ from the Ethereum KZG ceremony.
@@ -99,4 +94,63 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<Fr, PrecompileError> {
     }
 
     Ok(fr)
+}
+
+/// Get G1 generator point
+#[inline]
+fn get_g1_generator() -> G1Affine {
+    G1Affine::generator()
+}
+
+/// Get G2 generator point
+#[inline]
+fn get_g2_generator() -> G2Affine {
+    G2Affine::generator()
+}
+
+/// Scalar multiplication for G1 points
+#[inline]
+fn scalar_mul_g1(point: &G1Affine, scalar: &Fr) -> G1Affine {
+    point.mul_bigint(scalar.into_bigint()).into_affine()
+}
+
+/// Scalar multiplication for G2 points
+#[inline]
+fn scalar_mul_g2(point: &G2Affine, scalar: &Fr) -> G2Affine {
+    point.mul_bigint(scalar.into_bigint()).into_affine()
+}
+
+/// Subtract two G1 points in affine form
+#[inline]
+fn p1_sub_affine(a: &G1Affine, b: &G1Affine) -> G1Affine {
+    (a.into_group() - b.into_group()).into_affine()
+}
+
+/// Subtract two G2 points in affine form
+#[inline]
+fn p2_sub_affine(a: &G2Affine, b: &G2Affine) -> G2Affine {
+    (a.into_group() - b.into_group()).into_affine()
+}
+
+/// Negate a G1 point
+#[inline]
+fn p1_neg(p: &G1Affine) -> G1Affine {
+    p.neg()
+}
+
+/// Negate a G2 point
+#[inline]
+fn p2_neg(p: &G2Affine) -> G2Affine {
+    p.neg()
+}
+
+/// Perform pairing check for exactly 2 pairs
+/// Specialized for KZG verification: e(g1_1, g2_1) * e(g1_2, g2_2) == 1
+#[inline]
+fn pairing_check_2(g1_1: &G1Affine, g2_1: &G2Affine, g1_2: &G1Affine, g2_2: &G2Affine) -> bool {
+    let g1_points = [*g1_1, *g1_2];
+    let g2_points = [*g2_1, *g2_2];
+
+    let pairing_result = Bls12_381::multi_pairing(&g1_points, &g2_points);
+    pairing_result.0.is_one()
 }
