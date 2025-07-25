@@ -11,7 +11,7 @@ use std::string::ToString;
 /// https://github.com/ethereum/EIPs/blob/4d2a00692bb131366ede1a16eced2b0e25b1bf99/EIPS/eip-4844.md?plain=1#L203
 /// https://github.com/ethereum/consensus-specs/blob/master/specs/deneb/polynomial-commitments.md#verify_kzg_proof_impl
 #[inline]
-pub(super) fn verify_kzg_proof(
+pub fn verify_kzg_proof(
     commitment: &[u8; 48],
     z: &[u8; 32],
     y: &[u8; 32],

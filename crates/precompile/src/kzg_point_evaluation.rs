@@ -9,8 +9,10 @@ cfg_if::cfg_if! {
         use c_kzg::{Bytes32, Bytes48};
     } else if #[cfg(feature = "kzg-rs")] {
         use kzg_rs::{Bytes32, Bytes48, KzgProof};
+    } else if #[cfg(feature = "blst")] {
+        pub mod blst;
     } else {
-        mod arkworks;
+        pub mod arkworks;
     }
 }
 use primitives::hex_literal::hex;
@@ -93,6 +95,8 @@ pub fn verify_kzg_proof(
             let env = kzg_rs::EnvKzgSettings::default();
             let kzg_settings = env.get();
             KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
+        } else if #[cfg(feature = "blst")] {
+            blst::verify_kzg_proof(commitment, z, y, proof)
         } else {
             arkworks::verify_kzg_proof(commitment, z, y, proof)
         }
