@@ -19,6 +19,7 @@ mod no_std_impl {
 
     impl<T> OnceLock<T> {
         /// Creates a new empty OnceLock.
+        #[inline]
         pub const fn new() -> Self {
             Self {
                 inner: OnceBox::new(),
@@ -26,12 +27,19 @@ mod no_std_impl {
         }
 
         /// Gets the contents of the OnceLock, initializing it if necessary.
+        #[inline]
         pub fn get_or_init<F>(&self, f: F) -> &T
         where
             F: FnOnce() -> T,
             T: Into<Box<T>>,
         {
             self.inner.get_or_init(|| f().into())
+        }
+
+        /// Gets the contents of the OnceLock, returning None if it is not initialized.
+        #[inline]
+        pub fn get(&self) -> Option<&T> {
+            self.inner.get()
         }
     }
 }

@@ -7,7 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    crypto, u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult,
+    PrecompileWithAddress,
 };
 use p256::{
     ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
@@ -46,8 +47,8 @@ pub const P256VERIFY_OSAKA: PrecompileWithAddress =
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> PrecompileResult {
-    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE, crypto)
+pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
 }
 
 /// secp256r1 precompile logic with Osaka gas cost. It takes the input bytes sent to the precompile
@@ -59,24 +60,15 @@ pub fn p256_verify(input: &[u8], gas_limit: u64, crypto: &dyn crate::Crypto) -> 
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify_osaka(
-    input: &[u8],
-    gas_limit: u64,
-    crypto: &dyn crate::Crypto,
-) -> PrecompileResult {
-    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA, crypto)
+pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
 }
 
-fn p256_verify_inner(
-    input: &[u8],
-    gas_limit: u64,
-    gas_cost: u64,
-    crypto: &dyn crate::Crypto,
-) -> PrecompileResult {
+fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
-    let result = if verify_impl(input, crypto).is_some() {
+    let result = if verify_impl(input) {
         B256::with_last_byte(1).into()
     } else {
         Bytes::new()
@@ -86,9 +78,9 @@ fn p256_verify_inner(
 
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
-pub fn verify_impl(input: &[u8], _crypto: &dyn crate::Crypto) -> Option<()> {
+pub fn verify_impl(input: &[u8]) -> bool {
     if input.len() != 160 {
-        return None;
+        return false;
     }
 
     // msg signed (msg is already the hash of the original message)
@@ -98,10 +90,10 @@ pub fn verify_impl(input: &[u8], _crypto: &dyn crate::Crypto) -> Option<()> {
     // x, y: public key
     let pk = <&B512>::try_from(&input[96..160]).unwrap();
 
-    verify_signature(msg.0, sig.0, pk.0)
+    crypto().secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
-fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
     // Can fail only if the input is not exact length.
     let signature = Signature::from_slice(&sig).ok()?;
     // Decode the public key bytes (x,y coordinates) using EncodedPoint
@@ -139,7 +131,7 @@ mod test {
     fn test_sig_verify(#[case] input: &str, #[case] expect_success: bool) {
         let input = Bytes::from_hex(input).unwrap();
         let target_gas = 3_500u64;
-        let outcome = p256_verify(&input, target_gas, &crate::DefaultCrypto).unwrap();
+        let outcome = p256_verify(&input, target_gas).unwrap();
         assert_eq!(outcome.gas_used, 3_450u64);
         let expected_result = if expect_success {
             B256::with_last_byte(1).into()
@@ -153,7 +145,7 @@ mod test {
     fn test_not_enough_gas_errors() {
         let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
         let target_gas = 2_500u64;
-        let result = p256_verify(&input, target_gas, &crate::DefaultCrypto);
+        let result = p256_verify(&input, target_gas);
 
         assert!(result.is_err());
         assert_eq!(result.err(), Some(PrecompileError::OutOfGas));
@@ -164,8 +156,8 @@ mod test {
     #[case::fail_1("b5a77e7a90aa14e0bf5f337f06f597148676424fae26e175c6e5621c34351955289f319789da424845c9eac935245fcddd805950e2f02506d09be7e411199556d262144475b1fa46ad85250728c600c53dfd10f8b3f4adf140e27241aec3c2daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaef8afe82d200a5bb36b5462166e8ce77f2d831a52ef2135b2af188110beaefb1", false)]
     fn test_verify_impl(#[case] input: &str, #[case] expect_success: bool) {
         let input = Bytes::from_hex(input).unwrap();
-        let result = verify_impl(&input, &crate::DefaultCrypto);
+        let result = verify_impl(&input);
 
-        assert_eq!(result.is_some(), expect_success);
+        assert_eq!(result, expect_success);
     }
 }

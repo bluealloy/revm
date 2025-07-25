@@ -145,16 +145,12 @@ pub mod bn128_pair {
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
     /// Bn128 pair precompile.
     pub const GRANITE: PrecompileWithAddress =
-        PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit, crypto| {
-            run_pair(input, gas_limit, crypto)
+        PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
+            run_pair(input, gas_limit)
         });
 
     /// Run the bn128 pair precompile with Optimism input limit.
-    pub fn run_pair(
-        input: &[u8],
-        gas_limit: u64,
-        crypto: &dyn precompile::Crypto,
-    ) -> PrecompileResult {
+    pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength);
         }
@@ -163,7 +159,6 @@ pub mod bn128_pair {
             bn128::pair::ISTANBUL_PAIR_PER_POINT,
             bn128::pair::ISTANBUL_PAIR_BASE,
             gas_limit,
-            crypto,
         )
     }
 }
@@ -194,45 +189,33 @@ pub mod bls12_381 {
         PrecompileWithAddress(PAIRING_ADDRESS, run_pair);
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm(
-        input: &[u8],
-        gas_limit: u64,
-        crypto: &dyn precompile::Crypto,
-    ) -> PrecompileResult {
+    pub fn run_g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G1MSM input length too long for OP Stack input size limitation".to_string(),
             ));
         }
-        precompile::bls12_381::g1_msm::g1_msm(input, gas_limit, crypto)
+        precompile::bls12_381::g1_msm::g1_msm(input, gas_limit)
     }
 
     /// Run the g2 msm precompile with Optimism input limit.
-    pub fn run_g2_msm(
-        input: &[u8],
-        gas_limit: u64,
-        crypto: &dyn precompile::Crypto,
-    ) -> PrecompileResult {
+    pub fn run_g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G2MSM input length too long for OP Stack input size limitation".to_string(),
             ));
         }
-        precompile::bls12_381::g2_msm::g2_msm(input, gas_limit, crypto)
+        precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
 
     /// Run the pairing precompile with Optimism input limit.
-    pub fn run_pair(
-        input: &[u8],
-        gas_limit: u64,
-        crypto: &dyn precompile::Crypto,
-    ) -> PrecompileResult {
+    pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "Pairing input length too long for OP Stack input size limitation".to_string(),
             ));
         }
-        precompile::bls12_381::pairing::pairing(input, gas_limit, crypto)
+        precompile::bls12_381::pairing::pairing(input, gas_limit)
     }
 }
 
@@ -271,7 +254,7 @@ mod tests {
         let expected =
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
-        let outcome = bn128_pair::run_pair(&input, 260_000, &precompile::DefaultCrypto).unwrap();
+        let outcome = bn128_pair::run_pair(&input, 260_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Invalid input length
@@ -284,17 +267,17 @@ mod tests {
         )
         .unwrap();
 
-        let res = bn128_pair::run_pair(&input, 260_000, &precompile::DefaultCrypto);
+        let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
 
         // Valid input length shorter than 112687
         let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
-        let res = bn128_pair::run_pair(&input, 260_000, &precompile::DefaultCrypto);
+        let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Input length longer than 112687
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
-        let res = bn128_pair::run_pair(&input, 260_000, &precompile::DefaultCrypto);
+        let res = bn128_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
     }
 
@@ -336,7 +319,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_G1_MSM_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = run_g1_msm(&input, 260_000, &precompile::DefaultCrypto);
+        let res = run_g1_msm(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
@@ -347,7 +330,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_G2_MSM_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = run_g2_msm(&input, 260_000, &precompile::DefaultCrypto);
+        let res = run_g2_msm(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
@@ -358,7 +341,7 @@ mod tests {
         let oversized_input = vec![0u8; ISTHMUS_PAIRING_MAX_INPUT_SIZE + 1];
         let input = Bytes::from(oversized_input);
 
-        let res = bls12_381::run_pair(&input, 260_000, &precompile::DefaultCrypto);
+        let res = bls12_381::run_pair(&input, 260_000);
 
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))

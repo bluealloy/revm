@@ -1,13 +1,11 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
-use super::crypto_backend::p2_msm_bytes;
 use super::utils::{pad_g2_point, remove_g2_padding};
-use super::G2Point;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
     PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
@@ -20,7 +18,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRE
 /// Output is an encoding of multi-scalar-multiplication operation result - single G2
 /// point (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
-pub fn g2_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> PrecompileResult {
+pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(G2_MSM_INPUT_LENGTH) {
         return Err(PrecompileError::Other(format!(
@@ -34,7 +32,7 @@ pub fn g2_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Prec
         return Err(PrecompileError::OutOfGas);
     }
 
-    let valid_pairs_iter = (0..k).map(|i| {
+    let mut valid_pairs_iter = (0..k).map(|i| {
         let start = i * G2_MSM_INPUT_LENGTH;
         let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
         let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
@@ -43,11 +41,10 @@ pub fn g2_msm(input: &[u8], gas_limit: u64, _crypto: &dyn crate::Crypto) -> Prec
         let [x_0, x_1, y_0, y_1] = remove_g2_padding(padded_g2)?;
         let scalar_array: [u8; SCALAR_LENGTH] = scalar_bytes.try_into().unwrap();
 
-        let point: G2Point = (*x_0, *x_1, *y_0, *y_1);
-        Ok((point, scalar_array))
+        Ok(((*x_0, *x_1, *y_0, *y_1), scalar_array))
     });
 
-    let unpadded_result = p2_msm_bytes(valid_pairs_iter)?;
+    let unpadded_result = crypto().bls12_381_g2_msm(&mut valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);
