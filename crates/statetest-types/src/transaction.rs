@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
 use revm::{
     context::TransactionType,
