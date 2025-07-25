@@ -30,7 +30,7 @@ pub mod inspectors {
 
 pub use count_inspector::CountInspector;
 pub use handler::{inspect_instructions, InspectorHandler};
-pub use inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallCommitEvm, InspectSystemCallEvm};
+pub use inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm};
 pub use inspector::*;
 pub use noop::NoOpInspector;
 pub use traits::*;

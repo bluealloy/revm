@@ -1,5 +1,5 @@
 use crate::{
-    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallCommitEvm, InspectSystemCallEvm},
+    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm},
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
 };
 use context::{ContextSetters, ContextTr, Evm, JournalTr};
@@ -83,22 +83,6 @@ where
         // Use inspect_run_system_call instead of run_system_call for inspection
         MainnetHandler::default().inspect_run_system_call(self)
     }
-}
-
-// Implementing InspectSystemCallCommitEvm for Evm
-impl<CTX, INSP, INST, PRECOMPILES> InspectSystemCallCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
-where
-    CTX: ContextSetters
-        + ContextTr<
-            Journal: JournalTr<State = EvmState> + JournalExt,
-            Db: DatabaseCommit,
-            Tx: SystemCallTx,
-        >,
-    INSP: Inspector<CTX, EthInterpreter>,
-    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
-    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
-{
 }
 
 // Implementing InspectorEvmTr for Evm

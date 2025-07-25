@@ -1,7 +1,5 @@
 use context::result::ExecResultAndState;
-use handler::{
-    system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallCommitEvm, SystemCallEvm,
-};
+use handler::{system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallEvm};
 use primitives::{Address, Bytes};
 
 /// InspectEvm is a API that allows inspecting the EVM.
@@ -162,49 +160,5 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
             self.inspect_system_call_with_inspector_one(system_contract_address, data, inspector)?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
-    }
-}
-
-/// InspectSystemCallCommitEvm is an API that allows inspecting system calls similar to
-/// [`InspectSystemCallEvm`] but commits the state diff to the database.
-pub trait InspectSystemCallCommitEvm:
-    InspectSystemCallEvm + SystemCallCommitEvm + InspectCommitEvm
-{
-    /// Inspect a system call with the current inspector and commit the state diff to the database.
-    fn inspect_system_call_commit(
-        &mut self,
-        system_contract_address: Address,
-        data: Bytes,
-    ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_system_call_one(system_contract_address, data)?;
-        self.commit_inner();
-        Ok(output)
-    }
-
-    /// Inspect a system call with the current inspector and a custom caller,
-    /// then commit the state diff to the database.
-    fn inspect_system_call_with_caller_commit(
-        &mut self,
-        caller: Address,
-        system_contract_address: Address,
-        data: Bytes,
-    ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output =
-            self.inspect_system_call_with_caller_one(caller, system_contract_address, data)?;
-        self.commit_inner();
-        Ok(output)
-    }
-
-    /// Inspect a system call with a given inspector and commit the state diff to the database.
-    fn inspect_system_call_with_inspector_commit(
-        &mut self,
-        system_contract_address: Address,
-        data: Bytes,
-        inspector: Self::Inspector,
-    ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output =
-            self.inspect_system_call_with_inspector_one(system_contract_address, data, inspector)?;
-        self.commit_inner();
-        Ok(output)
     }
 }
