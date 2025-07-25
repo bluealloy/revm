@@ -16,6 +16,7 @@ use primitives::{
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
+
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -33,7 +34,13 @@ pub struct JournalInner<ENTRY> {
     /// The current call stack depth
     pub depth: usize,
     /// The journal of state changes, one for each transaction
+    /// NOTE: This is now mainly used for tracking rather than reverting
     pub journal: Vec<ENTRY>,
+    /// Transaction-level state snapshot taken at the beginning of each transaction
+    /// Used for transaction-level rollback in case of errors
+    pub tx_state_snapshot: Option<EvmState>,
+    /// Transaction-level transient storage snapshot
+    pub tx_transient_snapshot: Option<TransientStorage>,
     /// Global transaction id that represent number of transactions executed (Including reverted ones).
     /// It can be different from number of `journal_history` as some transaction could be
     /// reverted or had a error on execution.
@@ -83,6 +90,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
+            tx_state_snapshot: None,
+            tx_transient_snapshot: None,
             transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
@@ -96,6 +105,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn take_logs(&mut self) -> Vec<Log> {
         mem::take(&mut self.logs)
+    }
+
+    /// Creates a transaction-level snapshot that can be used for transaction rollback.
+    /// This should be called at the beginning of each transaction.
+    pub fn begin_tx(&mut self) {
+        // Save current state as transaction baseline
+        self.tx_state_snapshot = Some(self.state.clone());
+        self.tx_transient_snapshot = Some(self.transient_storage.clone());
     }
 
     /// Prepare for next transaction, by committing the current journal to history, incrementing the transaction id
@@ -114,6 +131,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
+            tx_state_snapshot,
+            tx_transient_snapshot,
             transaction_id,
             spec,
             warm_preloaded_addresses,
@@ -130,6 +149,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Do nothing with journal history so we can skip cloning present journal.
         journal.clear();
 
+        // Clear transaction snapshots as transaction is committed
+        *tx_state_snapshot = None;
+        *tx_transient_snapshot = None;
+
         // Clear coinbase address warming for next tx
         *warm_coinbase_address = None;
         // Load precompiles into warm_preloaded_addresses.
@@ -141,28 +164,34 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         logs.clear();
     }
 
-    /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
+    /// Discard the current transaction using state snapshots instead of complex journal reversal.
+    /// This is much simpler and more reliable than the previous approach.
     pub fn discard_tx(&mut self) {
-        // if there is no journal entries, there has not been any changes.
         let Self {
             state,
             transient_storage,
             logs,
             depth,
             journal,
+            tx_state_snapshot,
+            tx_transient_snapshot,
             transaction_id,
-            spec,
+            spec: _,
             warm_preloaded_addresses,
             warm_coinbase_address,
             precompiles,
         } = self;
 
-        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
-        // iterate over all journals entries and revert our global state
-        journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
-        });
-        transient_storage.clear();
+        // Simple rollback using snapshots - much cleaner than journal entry reversal!
+        if let Some(snapshot) = tx_state_snapshot.take() {
+            *state = snapshot;
+        }
+        if let Some(transient_snapshot) = tx_transient_snapshot.take() {
+            *transient_storage = transient_snapshot;
+        }
+
+        // Clear other transaction state
+        journal.clear();
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
@@ -185,6 +214,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
+            tx_state_snapshot,
+            tx_transient_snapshot,
             transaction_id,
             spec,
             warm_preloaded_addresses,
@@ -201,6 +232,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let state = mem::take(state);
         logs.clear();
         transient_storage.clear();
+
+        // Clear transaction snapshots
+        *tx_state_snapshot = None;
+        *tx_transient_snapshot = None;
 
         // clear journal and journal history.
         journal.clear();
@@ -464,39 +499,40 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(checkpoint)
     }
 
-    /// Makes a checkpoint that in case of Revert can bring back state to this point.
+    /// Makes a checkpoint that captures a complete snapshot of current state.
+    /// This allows for simple and reliable rollback without complex journal entry reversal.
     #[inline]
     pub fn checkpoint(&mut self) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
-            journal_i: self.journal.len(),
+            state_snapshot: self.state.clone(), // Snapshot current state
+            transient_snapshot: self.transient_storage.clone(), // Snapshot transient storage
+            depth: self.depth,
         };
         self.depth += 1;
         checkpoint
     }
 
-    /// Commits the checkpoint.
+    /// Commits the checkpoint by simply decrementing depth.
+    /// No complex state management needed with snapshot approach.
     #[inline]
     pub fn checkpoint_commit(&mut self) {
         self.depth -= 1;
     }
 
-    /// Reverts all changes to state until given checkpoint.
+    /// Reverts all changes to state by restoring from checkpoint snapshot.
+    /// Much simpler and more reliable than journal entry reversal.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state;
-        let transient_storage = &mut self.transient_storage;
-        self.depth -= 1;
+        // Restore depth level
+        self.depth = checkpoint.depth;
+
+        // Restore logs to checkpoint state
         self.logs.truncate(checkpoint.log_i);
 
-        // iterate over last N journals sets and revert our global state
-        self.journal
-            .drain(checkpoint.journal_i..)
-            .rev()
-            .for_each(|entry| {
-                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
-            });
+        // Simple restore from snapshots - no complex reversal logic needed!
+        self.state = checkpoint.state_snapshot;
+        self.transient_storage = checkpoint.transient_snapshot;
     }
 
     /// Performs selfdestruct action.

@@ -3,7 +3,7 @@ use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, Address, Bytes, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
 use state::{Account, Bytecode};
 use std::vec::Vec;
@@ -210,6 +210,10 @@ pub trait JournalTr {
     /// any already committed changes and it is safe to call it multiple times.
     fn discard_tx(&mut self);
 
+    /// Creates a transaction-level snapshot for rollback purposes.
+    /// This should be called at the beginning of each transaction.
+    fn begin_tx(&mut self);
+
     /// Clear current journal resetting it to initial state and return changes state.
     fn finalize(&mut self) -> Self::State;
 }
@@ -226,13 +230,29 @@ pub enum TransferError {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+/// Now uses state snapshots instead of journal indices for simpler and more reliable rollback
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
-    /// Checkpoint to where on revert we will go back to.
+    /// Number of logs at checkpoint time - still needed for log rollback
     pub log_i: usize,
-    /// Checkpoint to where on revert we will go back to and revert other journal entries.
-    pub journal_i: usize,
+    /// Complete snapshot of EVM state at checkpoint time
+    pub state_snapshot: HashMap<Address, Account>,
+    /// Complete snapshot of transient storage at checkpoint time  
+    pub transient_snapshot: HashMap<(Address, StorageKey), StorageValue>,
+    /// Depth level when checkpoint was created
+    pub depth: usize,
+}
+
+impl Default for JournalCheckpoint {
+    fn default() -> Self {
+        Self {
+            log_i: 0,
+            state_snapshot: HashMap::default(),
+            transient_snapshot: HashMap::default(),
+            depth: 0,
+        }
+    }
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded

@@ -256,7 +256,11 @@ impl JournalTr for Backend {
     }
 
     fn discard_tx(&mut self) {
-        self.journaled_state.discard_tx()
+        self.journaled_state.discard_tx();
+    }
+
+    fn begin_tx(&mut self) {
+        self.journaled_state.begin_tx();
     }
 }
 

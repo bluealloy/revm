@@ -545,7 +545,9 @@ impl EthFrame<EthInterpreter> {
                 if interpreter_result.result.is_ok() {
                     context.journal_mut().checkpoint_commit();
                 } else {
-                    context.journal_mut().checkpoint_revert(self.checkpoint);
+                    context
+                        .journal_mut()
+                        .checkpoint_revert(self.checkpoint.clone());
                 }
                 ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
@@ -557,7 +559,7 @@ impl EthFrame<EthInterpreter> {
                 let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
                 return_create(
                     context.journal_mut(),
-                    self.checkpoint,
+                    self.checkpoint.clone(),
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,

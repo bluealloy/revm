@@ -80,11 +80,6 @@ impl<
     }
 
     #[inline]
-    fn journal_ref(&self) -> &Self::Journal {
-        &self.journaled_state
-    }
-
-    #[inline]
     fn db(&self) -> &Self::Db {
         self.journaled_state.db()
     }
