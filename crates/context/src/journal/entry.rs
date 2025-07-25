@@ -6,7 +6,6 @@
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
 use primitives::{Address, StorageKey, StorageValue, U256};
-use state::{EvmState, TransientStorage};
 
 /// Trait for tracking state changes in the EVM.
 ///
