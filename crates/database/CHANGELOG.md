@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.3](https://github.com/bluealloy/revm/compare/revm-database-v7.0.2...revm-database-v7.0.3) - 2025-07-25
+
+### Other
+
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+
 ## [7.0.2](https://github.com/bluealloy/revm/compare/revm-database-v7.0.1...revm-database-v7.0.2) - 2025-07-23
 
 ### Other
