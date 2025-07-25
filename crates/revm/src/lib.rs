@@ -35,4 +35,6 @@ pub use handler::{
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext, MainnetEvm, SystemCallCommitEvm,
     SystemCallEvm,
 };
-pub use inspector::{InspectCommitEvm, InspectEvm, Inspector};
+pub use inspector::{
+    InspectCommitEvm, InspectEvm, InspectSystemCallCommitEvm, InspectSystemCallEvm, Inspector,
+};

@@ -1,14 +1,15 @@
 use crate::{
-    inspect::{InspectCommitEvm, InspectEvm},
+    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm, InspectSystemCallCommitEvm},
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
 };
 use context::{ContextSetters, ContextTr, Evm, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::InstructionProvider, EthFrame, EvmTr, EvmTrError, Handler, MainnetHandler,
-    PrecompileProvider,
+    instructions::InstructionProvider, system_call::SystemCallTx, EthFrame, EvmTr, EvmTrError,
+    Handler, MainnetHandler, PrecompileProvider,
 };
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
+use primitives::{Address, Bytes};
 use state::EvmState;
 
 // Implementing InspectorHandler for MainnetHandler.
@@ -51,6 +52,49 @@ impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm
 where
     CTX: ContextSetters
         + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Db: DatabaseCommit>,
+    INSP: Inspector<CTX, EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+{
+}
+
+// Implementing InspectSystemCallEvm for Evm
+impl<CTX, INSP, INST, PRECOMPILES> InspectSystemCallEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+where
+    CTX: ContextSetters
+        + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Tx: SystemCallTx>,
+    INSP: Inspector<CTX, EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+{
+    fn inspect_system_call_with_caller_one(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        // Set system call transaction fields similar to transact_system_call_with_caller
+        self.set_tx(CTX::Tx::new_system_tx_with_caller(
+            caller,
+            system_contract_address,
+            data,
+        ));
+        // Use inspect_run_system_call instead of run_system_call for inspection
+        MainnetHandler::default().inspect_run_system_call(self)
+    }
+}
+
+// Implementing InspectSystemCallCommitEvm for Evm
+impl<CTX, INSP, INST, PRECOMPILES> InspectSystemCallCommitEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+where
+    CTX: ContextSetters
+        + ContextTr<
+            Journal: JournalTr<State = EvmState> + JournalExt,
+            Db: DatabaseCommit,
+            Tx: SystemCallTx,
+        >,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
