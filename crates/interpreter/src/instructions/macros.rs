@@ -86,7 +86,7 @@ macro_rules! gas_or_fail {
     };
 }
 
-/// Resizes the interpreterreter memory if necessary. Fails the instruction if the memory or gas limit
+/// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]
 #[collapse_debuginfo(yes)]
@@ -111,9 +111,9 @@ macro_rules! resize_memory {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn {
-    ([ $($x:ident),* ],$interpreterreter:expr $(,$ret:expr)? ) => {
-        let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
-            $interpreterreter.halt($crate::InstructionResult::StackUnderflow);
+    ([ $($x:ident),* ],$interpreter:expr $(,$ret:expr)? ) => {
+        let Some([$( $x ),*]) = $interpreter.stack.popn() else {
+            $interpreter.halt($crate::InstructionResult::StackUnderflow);
             return $($ret)?;
         };
     };

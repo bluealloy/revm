@@ -38,3 +38,4 @@ pub use handler::{
 pub use inspector::{
     InspectCommitEvm, InspectEvm, InspectSystemCallCommitEvm, InspectSystemCallEvm, Inspector,
 };
+pub use precompile::install_crypto;
