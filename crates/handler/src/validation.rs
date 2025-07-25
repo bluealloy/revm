@@ -389,13 +389,16 @@ mod tests {
         ];
         let bytecode: Bytes = init_code.into();
         let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
-        assert!(matches!(
-            result,
-            Ok(ExecutionResult::Halt {
-                reason: HaltReason::CreateContractSizeLimit,
-                ..
-            },)
-        ));
+        assert!(
+            matches!(
+                result,
+                Ok(ExecutionResult::Halt {
+                    reason: HaltReason::CreateContractSizeLimit,
+                    ..
+                },)
+            ),
+            "{result:?}"
+        );
     }
 
     #[test]
@@ -411,13 +414,16 @@ mod tests {
         ];
         let bytecode: Bytes = init_code.into();
         let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
-        assert!(matches!(
-            result,
-            Ok(ExecutionResult::Halt {
-                reason: HaltReason::CreateContractSizeLimit,
-                ..
-            },)
-        ));
+        assert!(
+            matches!(
+                result,
+                Ok(ExecutionResult::Halt {
+                    reason: HaltReason::CreateContractSizeLimit,
+                    ..
+                },)
+            ),
+            "{result:?}"
+        );
     }
 
     #[test]
