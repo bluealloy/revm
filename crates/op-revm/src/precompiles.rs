@@ -69,7 +69,7 @@ pub fn granite() -> &'static Precompiles {
     static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = fjord().clone();
-        // Restrict bn256Pairing input size
+        // Restrict bn254Pairing input size
         precompiles.extend([bn254_pair::GRANITE]);
         precompiles
     })

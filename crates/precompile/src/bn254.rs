@@ -235,7 +235,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_alt_bn254_add() {
+    fn test_bn254_add() {
         let input = hex::decode(
             "\
              18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
@@ -317,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn test_alt_bn254_mul() {
+    fn test_bn254_mul() {
         let input = hex::decode(
             "\
             2bd3e6d0f3b142924f5ca7b49ce5b9d54c4703d7ae5648e61d02268b1a0a9fb7\
@@ -394,7 +394,7 @@ mod tests {
     }
 
     #[test]
-    fn test_alt_bn254_pair() {
+    fn test_bn254_pair() {
         let input = hex::decode(
             "\
             1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\

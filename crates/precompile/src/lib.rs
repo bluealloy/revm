@@ -116,8 +116,8 @@ impl Precompiles {
             precompiles.extend([
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn254.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn254.
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve bn254.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve bn254.
                 bn254::add::BYZANTIUM,
                 bn254::mul::BYZANTIUM,
                 bn254::pair::BYZANTIUM,
@@ -132,7 +132,7 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
-                // EIP-1108: Reduce alt_bn254 precompile gas costs.
+                // EIP-1108: Reduce bn254 precompile gas costs.
                 bn254::add::ISTANBUL,
                 bn254::mul::ISTANBUL,
                 bn254::pair::ISTANBUL,
@@ -340,7 +340,7 @@ pub enum PrecompileSpecId {
     BYZANTIUM,
     /// Istanbul spec introduced
     /// * [`EIP-152: Add BLAKE2 compression function`](https://eips.ethereum.org/EIPS/eip-152) `F` precompile (at 0x09 address).
-    /// * [`EIP-1108: Reduce alt_bn254 precompile gas costs`](https://eips.ethereum.org/EIPS/eip-1108). It reduced the
+    /// * [`EIP-1108: Reduce bn254 precompile gas costs`](https://eips.ethereum.org/EIPS/eip-1108). It reduced the
     ///   gas cost of the bn_add, bn_mul, and bn_pair precompiles.
     ISTANBUL,
     /// Berlin spec made a change to:
