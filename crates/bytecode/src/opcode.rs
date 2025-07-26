@@ -206,6 +206,7 @@ impl PartialEq<u8> for OpCode {
 /// Information about opcode, such as name, and stack inputs and outputs
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
+    static_gas: u16,
     /// Invariant: `(name_ptr, name_len)` is a [`&'static str`][str].
     ///
     /// It is a shorted variant of [`str`] as
@@ -246,6 +247,7 @@ impl OpCodeInfo {
     pub const fn new(name: &'static str) -> Self {
         assert!(name.len() < 256, "opcode name is too long");
         Self {
+            static_gas: 0,
             name_ptr: unsafe { NonNull::new_unchecked(name.as_ptr().cast_mut()) },
             name_len: name.len() as u8,
             inputs: 0,
@@ -294,6 +296,12 @@ impl OpCodeInfo {
     pub const fn immediate_size(&self) -> u8 {
         self.immediate_size
     }
+
+    /// Returns the static gas cost of the opcode.
+    #[inline]
+    pub const fn static_gas(&self) -> u16 {
+        self.static_gas
+    }
 }
 
 /// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
@@ -318,6 +326,13 @@ pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
 pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo {
     op.inputs = inputs;
     op.outputs = outputs;
+    op
+}
+
+/// Use for [`OPCODE_INFO`] to sets the static gas in the [`OpCodeInfo`].
+#[inline]
+pub const fn gas(mut op: OpCodeInfo, static_gas: u16) -> OpCodeInfo {
+    op.static_gas = static_gas;
     op
 }
 
@@ -389,36 +404,36 @@ macro_rules! stringify_with_cb {
 // 2. implement the opcode in the corresponding module;
 //    the function signature must be the exact same as the others
 opcodes! {
-    0x00 => STOP     => stack_io(0, 0), terminating;
-    0x01 => ADD      => stack_io(2, 1);
-    0x02 => MUL      => stack_io(2, 1);
-    0x03 => SUB      => stack_io(2, 1);
-    0x04 => DIV      => stack_io(2, 1);
-    0x05 => SDIV     => stack_io(2, 1);
-    0x06 => MOD      => stack_io(2, 1);
-    0x07 => SMOD     => stack_io(2, 1);
-    0x08 => ADDMOD   => stack_io(3, 1);
-    0x09 => MULMOD   => stack_io(3, 1);
+    0x00 => STOP     => stack_io(0, 0), terminating, gas(0);
+    0x01 => ADD      => stack_io(2, 1), gas(3);
+    0x02 => MUL      => stack_io(2, 1), gas(5);
+    0x03 => SUB      => stack_io(2, 1), gas(3);
+    0x04 => DIV      => stack_io(2, 1), gas(5);
+    0x05 => SDIV     => stack_io(2, 1), gas(5);
+    0x06 => MOD      => stack_io(2, 1), gas(5);
+    0x07 => SMOD     => stack_io(2, 1), gas(5);
+    0x08 => ADDMOD   => stack_io(3, 1), gas(8);
+    0x09 => MULMOD   => stack_io(3, 1), gas(8);
     0x0A => EXP      => stack_io(2, 1);
-    0x0B => SIGNEXTEND => stack_io(2, 1);
+    0x0B => SIGNEXTEND => stack_io(2, 1), gas(5);
     // 0x0C
     // 0x0D
     // 0x0E
     // 0x0F
-    0x10 => LT   => stack_io(2, 1);
-    0x11 => GT   => stack_io(2, 1);
+    0x10 => LT   => stack_io(2, 1), gas(3);
+    0x11 => GT   => stack_io(2, 1), gas(3);
     0x12 => SLT  => stack_io(2, 1);
     0x13 => SGT  => stack_io(2, 1);
-    0x14 => EQ   => stack_io(2, 1);
-    0x15 => ISZERO => stack_io(1, 1);
-    0x16 => AND  => stack_io(2, 1);
-    0x17 => OR   => stack_io(2, 1);
-    0x18 => XOR  => stack_io(2, 1);
-    0x19 => NOT  => stack_io(1, 1);
-    0x1A => BYTE => stack_io(2, 1);
-    0x1B => SHL  => stack_io(2, 1);
-    0x1C => SHR  => stack_io(2, 1);
-    0x1D => SAR  => stack_io(2, 1);
+    0x14 => EQ   => stack_io(2, 1), gas(5);
+    0x15 => ISZERO => stack_io(1, 1), gas(3);
+    0x16 => AND  => stack_io(2, 1), gas(3);
+    0x17 => OR   => stack_io(2, 1), gas(3);
+    0x18 => XOR  => stack_io(2, 1), gas(3);
+    0x19 => NOT  => stack_io(1, 1), gas(3);
+    0x1A => BYTE => stack_io(2, 1), gas(3);
+    0x1B => SHL  => stack_io(2, 1), gas(3);
+    0x1C => SHR  => stack_io(2, 1), gas(3);
+    0x1D => SAR  => stack_io(2, 1), gas(3);
     0x1E => CLZ => stack_io(1, 1);
     // 0x1F
     0x20 => KECCAK256 => stack_io(2, 1);
@@ -437,32 +452,32 @@ opcodes! {
     // 0x2D
     // 0x2E
     // 0x2F
-    0x30 => ADDRESS    => stack_io(0, 1);
-    0x31 => BALANCE    => stack_io(1, 1);
-    0x32 => ORIGIN     => stack_io(0, 1);
-    0x33 => CALLER     => stack_io(0, 1);
-    0x34 => CALLVALUE  => stack_io(0, 1);
+    0x30 => ADDRESS    => stack_io(0, 1), gas(2);
+    0x31 => BALANCE    => stack_io(1, 1), gas(5);
+    0x32 => ORIGIN     => stack_io(0, 1), gas(2);
+    0x33 => CALLER     => stack_io(0, 1), gas(2);
+    0x34 => CALLVALUE  => stack_io(0, 1), gas(2);
     0x35 => CALLDATALOAD => stack_io(1, 1);
-    0x36 => CALLDATASIZE => stack_io(0, 1);
+    0x36 => CALLDATASIZE => stack_io(0, 1), gas(2);
     0x37 => CALLDATACOPY => stack_io(3, 0);
-    0x38 => CODESIZE   => stack_io(0, 1);
+    0x38 => CODESIZE   => stack_io(0, 1), gas(2);
     0x39 => CODECOPY   => stack_io(3, 0);
 
-    0x3A => GASPRICE     => stack_io(0, 1);
+    0x3A => GASPRICE     => stack_io(0, 1), gas(3);
     0x3B => EXTCODESIZE  => stack_io(1, 1);
     0x3C => EXTCODECOPY  => stack_io(4, 0);
-    0x3D => RETURNDATASIZE => stack_io(0, 1);
+    0x3D => RETURNDATASIZE => stack_io(0, 1), gas(3);
     0x3E => RETURNDATACOPY => stack_io(3, 0);
     0x3F => EXTCODEHASH  => stack_io(1, 1);
-    0x40 => BLOCKHASH    => stack_io(1, 1);
-    0x41 => COINBASE     => stack_io(0, 1);
-    0x42 => TIMESTAMP    => stack_io(0, 1);
-    0x43 => NUMBER       => stack_io(0, 1);
-    0x44 => DIFFICULTY   => stack_io(0, 1);
-    0x45 => GASLIMIT     => stack_io(0, 1);
-    0x46 => CHAINID      => stack_io(0, 1);
+    0x40 => BLOCKHASH    => stack_io(1, 1), gas(20);
+    0x41 => COINBASE     => stack_io(0, 1), gas(2);
+    0x42 => TIMESTAMP    => stack_io(0, 1), gas(2);
+    0x43 => NUMBER       => stack_io(0, 1), gas(2);
+    0x44 => DIFFICULTY   => stack_io(0, 1), gas(2);
+    0x45 => GASLIMIT     => stack_io(0, 1), gas(2);
+    0x46 => CHAINID      => stack_io(0, 1), gas(2);
     0x47 => SELFBALANCE  => stack_io(0, 1);
-    0x48 => BASEFEE      => stack_io(0, 1);
+    0x48 => BASEFEE      => stack_io(0, 1), gas(2);
     0x49 => BLOBHASH     => stack_io(1, 1);
     0x4A => BLOBBASEFEE  => stack_io(0, 1);
     // 0x4B
@@ -470,23 +485,23 @@ opcodes! {
     // 0x4D
     // 0x4E
     // 0x4F
-    0x50 => POP      => stack_io(1, 0);
-    0x51 => MLOAD    => stack_io(1, 1);
-    0x52 => MSTORE   => stack_io(2, 0);
-    0x53 => MSTORE8  => stack_io(2, 0);
+    0x50 => POP      => stack_io(1, 0), gas(2);
+    0x51 => MLOAD    => stack_io(1, 1), gas(3);
+    0x52 => MSTORE   => stack_io(2, 0), gas(3);
+    0x53 => MSTORE8  => stack_io(2, 0), gas(3);
     0x54 => SLOAD    => stack_io(1, 1);
     0x55 => SSTORE   => stack_io(2, 0);
-    0x56 => JUMP     => stack_io(1, 0);
-    0x57 => JUMPI    => stack_io(2, 0);
-    0x58 => PC       => stack_io(0, 1);
-    0x59 => MSIZE    => stack_io(0, 1);
-    0x5A => GAS      => stack_io(0, 1);
-    0x5B => JUMPDEST => stack_io(0, 0);
+    0x56 => JUMP     => stack_io(1, 0), gas(8);
+    0x57 => JUMPI    => stack_io(2, 0), gas(10);
+    0x58 => PC       => stack_io(0, 1), gas(2);
+    0x59 => MSIZE    => stack_io(0, 1), gas(2);
+    0x5A => GAS      => stack_io(0, 1), gas(2);
+    0x5B => JUMPDEST => stack_io(0, 0), gas(1);
     0x5C => TLOAD    => stack_io(1, 1);
     0x5D => TSTORE   => stack_io(2, 0);
     0x5E => MCOPY    => stack_io(3, 0);
 
-    0x5F => PUSH0  => stack_io(0, 1);
+    0x5F => PUSH0  => stack_io(0, 1), gas(2);
     0x60 => PUSH1  => stack_io(0, 1), immediate_size(1);
     0x61 => PUSH2  => stack_io(0, 1), immediate_size(2);
     0x62 => PUSH3  => stack_io(0, 1), immediate_size(3);
@@ -520,39 +535,39 @@ opcodes! {
     0x7E => PUSH31 => stack_io(0, 1), immediate_size(31);
     0x7F => PUSH32 => stack_io(0, 1), immediate_size(32);
 
-    0x80 => DUP1  => stack_io(1, 2);
-    0x81 => DUP2  => stack_io(2, 3);
-    0x82 => DUP3  => stack_io(3, 4);
-    0x83 => DUP4  => stack_io(4, 5);
-    0x84 => DUP5  => stack_io(5, 6);
-    0x85 => DUP6  => stack_io(6, 7);
-    0x86 => DUP7  => stack_io(7, 8);
-    0x87 => DUP8  => stack_io(8, 9);
-    0x88 => DUP9  => stack_io(9, 10);
-    0x89 => DUP10 => stack_io(10, 11);
-    0x8A => DUP11 => stack_io(11, 12);
-    0x8B => DUP12 => stack_io(12, 13);
-    0x8C => DUP13 => stack_io(13, 14);
-    0x8D => DUP14 => stack_io(14, 15);
-    0x8E => DUP15 => stack_io(15, 16);
-    0x8F => DUP16 => stack_io(16, 17);
+    0x80 => DUP1  => stack_io(1, 2), gas(3);
+    0x81 => DUP2  => stack_io(2, 3), gas(3);
+    0x82 => DUP3  => stack_io(3, 4), gas(3);
+    0x83 => DUP4  => stack_io(4, 5), gas(3);
+    0x84 => DUP5  => stack_io(5, 6), gas(3);
+    0x85 => DUP6  => stack_io(6, 7), gas(3);
+    0x86 => DUP7  => stack_io(7, 8), gas(3);
+    0x87 => DUP8  => stack_io(8, 9), gas(3);
+    0x88 => DUP9  => stack_io(9, 10), gas(3);
+    0x89 => DUP10 => stack_io(10, 11), gas(3);
+    0x8A => DUP11 => stack_io(11, 12), gas(3);
+    0x8B => DUP12 => stack_io(12, 13), gas(3);
+    0x8C => DUP13 => stack_io(13, 14), gas(3);
+    0x8D => DUP14 => stack_io(14, 15), gas(3);
+    0x8E => DUP15 => stack_io(15, 16), gas(3);
+    0x8F => DUP16 => stack_io(16, 17), gas(3);
 
-    0x90 => SWAP1  => stack_io(2, 2);
-    0x91 => SWAP2  => stack_io(3, 3);
-    0x92 => SWAP3  => stack_io(4, 4);
-    0x93 => SWAP4  => stack_io(5, 5);
-    0x94 => SWAP5  => stack_io(6, 6);
-    0x95 => SWAP6  => stack_io(7, 7);
-    0x96 => SWAP7  => stack_io(8, 8);
-    0x97 => SWAP8  => stack_io(9, 9);
-    0x98 => SWAP9  => stack_io(10, 10);
-    0x99 => SWAP10 => stack_io(11, 11);
-    0x9A => SWAP11 => stack_io(12, 12);
-    0x9B => SWAP12 => stack_io(13, 13);
-    0x9C => SWAP13 => stack_io(14, 14);
-    0x9D => SWAP14 => stack_io(15, 15);
-    0x9E => SWAP15 => stack_io(16, 16);
-    0x9F => SWAP16 => stack_io(17, 17);
+    0x90 => SWAP1  => stack_io(2, 2), gas(3);
+    0x91 => SWAP2  => stack_io(3, 3), gas(3);
+    0x92 => SWAP3  => stack_io(4, 4), gas(3);
+    0x93 => SWAP4  => stack_io(5, 5), gas(3);
+    0x94 => SWAP5  => stack_io(6, 6), gas(3);
+    0x95 => SWAP6  => stack_io(7, 7), gas(3);
+    0x96 => SWAP7  => stack_io(8, 8), gas(3);
+    0x97 => SWAP8  => stack_io(9, 9), gas(3);
+    0x98 => SWAP9  => stack_io(10, 10), gas(3);
+    0x99 => SWAP10 => stack_io(11, 11), gas(3);
+    0x9A => SWAP11 => stack_io(12, 12), gas(3);
+    0x9B => SWAP12 => stack_io(13, 13), gas(3);
+    0x9C => SWAP13 => stack_io(14, 14), gas(3);
+    0x9D => SWAP14 => stack_io(15, 15), gas(3);
+    0x9E => SWAP15 => stack_io(16, 16), gas(3);
+    0x9F => SWAP16 => stack_io(17, 17), gas(3);
 
     0xA0 => LOG0 => stack_io(2, 0);
     0xA1 => LOG1 => stack_io(3, 0);
@@ -634,7 +649,7 @@ opcodes! {
     // 0xED
     // 0xEE
     // 0xEF
-    0xF0 => CREATE       => stack_io(3, 1);
+    0xF0 => CREATE       => stack_io(3, 1), gas(32000);
     0xF1 => CALL         => stack_io(7, 1);
     0xF2 => CALLCODE     => stack_io(7, 1);
     0xF3 => RETURN       => stack_io(2, 0), terminating;

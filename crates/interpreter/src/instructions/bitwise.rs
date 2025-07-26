@@ -36,7 +36,7 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Signed less than comparison of two values from stack.
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::VERYLOW);
+    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
 
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
@@ -66,7 +66,7 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 ///
 /// Checks if the top stack value is zero.
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::VERYLOW);
+    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
     *op1 = U256::from(op1.is_zero());
 }

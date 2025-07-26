@@ -1,4 +1,6 @@
-use crate::{interpreter_types::Jumps, Interpreter, InterpreterTypes};
+use bytecode::opcode::OPCODE_INFO;
+
+use crate::{gas, interpreter_types::Jumps, Interpreter, InterpreterTypes};
 
 use super::Instruction;
 
@@ -21,6 +23,16 @@ impl<H: ?Sized, ITy: InterpreterTypes> std::fmt::Debug for InstructionContext<'_
     }
 }
 
+static GAS_COST: [u32; 256] = {
+    let mut gas_cost = [0; 256];
+    let mut i: u32 = 0;
+    while i < 256 {
+        gas_cost[i as usize] = i % 10;
+        i += 1;
+    }
+    gas_cost
+};
+
 impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     /// Executes the instruction at the current instruction pointer.
     ///
@@ -29,6 +41,8 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
         // Get current opcode.
         let opcode = self.interpreter.bytecode.opcode();
+
+        gas!(self.interpreter, OPCODE_INFO[opcode as usize].unwrap().static_gas() as u64);
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
