@@ -14,7 +14,7 @@ use std::vec::Vec;
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
 fn read_fq(input: &[u8]) -> Result<Fq, PrecompileError> {
-    Fq::from_slice(&input[..FQ_LEN]).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
+    Fq::from_slice(&input[..FQ_LEN]).map_err(|_| PrecompileError::Bn254FieldPointNotAMember)
 }
 /// Reads a Fq2 (quadratic extension field element) from the input slice.
 ///
@@ -49,13 +49,13 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
     } else {
         AffineG1::new(px, py)
             .map(Into::into)
-            .map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)
+            .map_err(|_| PrecompileError::Bn254AffineGFailedToCreate)
     }
 }
 
 /// Creates a new `G2` point from the given Fq2 coordinates.
 ///
-/// G2 points in BN128 are defined over a quadratic extension field Fq2.
+/// G2 points in BN254 are defined over a quadratic extension field Fq2.
 /// This function takes two Fq2 elements representing the x and y coordinates
 /// and creates a G2 point.
 ///
@@ -69,7 +69,7 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2, PrecompileError> {
     let point = if x.is_zero() && y.is_zero() {
         G2::zero()
     } else {
-        G2::from(AffineG2::new(x, y).map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)?)
+        G2::from(AffineG2::new(x, y).map_err(|_| PrecompileError::Bn254AffineGFailedToCreate)?)
     };
 
     Ok(point)

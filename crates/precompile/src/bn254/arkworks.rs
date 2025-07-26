@@ -27,7 +27,7 @@ fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileError> {
     input_le.reverse();
 
     Fq::deserialize_uncompressed(&input_le[..])
-        .map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
+        .map_err(|_| PrecompileError::Bn254FieldPointNotAMember)
 }
 /// Reads a Fq2 (quadratic extension field element) from the input slice.
 ///
@@ -64,7 +64,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileError> {
         // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G1Affine::new_unchecked(px, py);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
-            return Err(PrecompileError::Bn128AffineGFailedToCreate);
+            return Err(PrecompileError::Bn254AffineGFailedToCreate);
         }
         Ok(point)
     }
@@ -72,7 +72,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileError> {
 
 /// Creates a new `G2` point from the given Fq2 coordinates.
 ///
-/// G2 points in BN128 are defined over a quadratic extension field Fq2.
+/// G2 points in BN254 are defined over a quadratic extension field Fq2.
 /// This function takes two Fq2 elements representing the x and y coordinates
 /// and creates a G2 point.
 ///
@@ -89,7 +89,7 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileError> {
         // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G2Affine::new_unchecked(x, y);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
-            return Err(PrecompileError::Bn128AffineGFailedToCreate);
+            return Err(PrecompileError::Bn254AffineGFailedToCreate);
         }
         point
     };

@@ -1,16 +1,16 @@
-//! Benchmarks for the BN128 precompiles
+//! Benchmarks for the BN254 precompiles
 use criterion::{measurement::Measurement, BenchmarkGroup};
 use primitives::hex;
 use primitives::Bytes;
-use revm_precompile::bn128::{
+use revm_precompile::bn254::{
     add::ISTANBUL_ADD_GAS_COST,
     mul::ISTANBUL_MUL_GAS_COST,
     pair::{ISTANBUL_PAIR_BASE, ISTANBUL_PAIR_PER_POINT},
     run_add, run_mul, run_pair,
 };
 
-/// Add benches for the BN128 add precompile
-pub fn add_bn128_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
+/// Add benches for the BN254 add precompile
+pub fn add_bn254_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecadd_input = hex::decode(
         "\
          18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
@@ -21,13 +21,13 @@ pub fn add_bn128_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     .unwrap();
     let input = Bytes::from(ecadd_input);
 
-    group.bench_function("bn128 add precompile", |b| {
+    group.bench_function("bn254 add precompile", |b| {
         b.iter(|| run_add(&input, ISTANBUL_ADD_GAS_COST, 150).unwrap())
     });
 }
 
-/// Add benches for the BN128 mul precompile
-pub fn add_bn128_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
+/// Add benches for the BN254 mul precompile
+pub fn add_bn254_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecmul_input = hex::decode(
         "\
          18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
@@ -37,13 +37,13 @@ pub fn add_bn128_mul_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) 
     .unwrap();
     let input = Bytes::from(ecmul_input);
 
-    group.bench_function("bn128 mul precompile", |b| {
+    group.bench_function("bn254 mul precompile", |b| {
         b.iter(|| run_mul(&input, ISTANBUL_MUL_GAS_COST, 6000).unwrap())
     });
 }
 
-/// Add benches for the BN128 pair precompile
-pub fn add_bn128_pair_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
+/// Add benches for the BN254 pair precompile
+pub fn add_bn254_pair_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let ecpair_input = hex::decode(
         "\
         1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\

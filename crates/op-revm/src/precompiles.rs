@@ -6,7 +6,7 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{InputsImpl, InterpreterResult},
     precompile::{
-        self, bn128, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
+        self, bn254, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
         Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
@@ -69,8 +69,8 @@ pub fn granite() -> &'static Precompiles {
     static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = fjord().clone();
-        // Restrict bn256Pairing input size
-        precompiles.extend([bn128_pair::GRANITE]);
+        // Restrict bn254Pairing input size
+        precompiles.extend([bn254_pair::GRANITE]);
         precompiles
     })
 }
@@ -137,27 +137,27 @@ impl Default for OpPrecompiles {
     }
 }
 
-/// Bn128 pair precompile.
-pub mod bn128_pair {
+/// Bn254 pair precompile.
+pub mod bn254_pair {
     use super::*;
 
-    /// Max input size for the bn128 pair precompile.
+    /// Max input size for the bn254 pair precompile.
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
-    /// Bn128 pair precompile.
+    /// Bn254 pair precompile.
     pub const GRANITE: PrecompileWithAddress =
-        PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
+        PrecompileWithAddress(bn254::pair::ADDRESS, |input, gas_limit| {
             run_pair(input, gas_limit)
         });
 
-    /// Run the bn128 pair precompile with Optimism input limit.
+    /// Run the bn254 pair precompile with Optimism input limit.
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Bn128PairLength);
+            return Err(PrecompileError::Bn254PairLength);
         }
-        bn128::run_pair(
+        bn254::run_pair(
             input,
-            bn128::pair::ISTANBUL_PAIR_PER_POINT,
-            bn128::pair::ISTANBUL_PAIR_BASE,
+            bn254::pair::ISTANBUL_PAIR_PER_POINT,
+            bn254::pair::ISTANBUL_PAIR_BASE,
             gas_limit,
         )
     }
@@ -234,7 +234,7 @@ mod tests {
     use std::vec;
 
     #[test]
-    fn test_bn128_pair() {
+    fn test_bn254_pair() {
         let input = hex::decode(
             "\
       1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
@@ -254,7 +254,7 @@ mod tests {
         let expected =
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
-        let outcome = bn128_pair::run_pair(&input, 260_000).unwrap();
+        let outcome = bn254_pair::run_pair(&input, 260_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
         // Invalid input length
@@ -267,18 +267,18 @@ mod tests {
         )
         .unwrap();
 
-        let res = bn128_pair::run_pair(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+        let res = bn254_pair::run_pair(&input, 260_000);
+        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
 
         // Valid input length shorter than 112687
-        let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
-        let res = bn128_pair::run_pair(&input, 260_000);
+        let input = vec![1u8; 586 * bn254::PAIR_ELEMENT_LEN];
+        let res = bn254_pair::run_pair(&input, 260_000);
         assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Input length longer than 112687
-        let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
-        let res = bn128_pair::run_pair(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+        let input = vec![1u8; 587 * bn254::PAIR_ELEMENT_LEN];
+        let res = bn254_pair::run_pair(&input, 260_000);
+        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
     }
 
     #[test]
@@ -290,7 +290,7 @@ mod tests {
     #[test]
     fn test_cancun_precompiles_in_granite() {
         // granite has p256verify (fjord)
-        // granite has modification of cancun's bn128 pair (doesn't count as new precompile)
+        // granite has modification of cancun's bn254 pair (doesn't count as new precompile)
         assert_eq!(granite().difference(Precompiles::cancun()).len(), 1)
     }
 
