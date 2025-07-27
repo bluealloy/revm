@@ -170,3 +170,6 @@ inherits = "profiling"
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
+
+[patch.crates-io]
+ruint = { git = "https://github.com/danipopes/uint", rev = "55a06f6fa7966765d997154c239c371717d00783" }
