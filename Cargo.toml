@@ -172,4 +172,5 @@ inherits = "test"
 opt-level = 3
 
 [patch.crates-io]
-ruint = { git = "https://github.com/danipopes/uint", rev = "55a06f6fa7966765d997154c239c371717d00783" }
+ruint = { git = "https://github.com/danipopes/uint", rev = "1f0340c409b79502e424387d2c5ca628b9e328b6" }
+# ruint = { path = "../../danipopes/uint" }
