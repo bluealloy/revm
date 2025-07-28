@@ -88,18 +88,18 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
     ///
     /// Similar to [`InspectEvm::inspect_one_tx`] but for system calls.
     /// Uses [`SYSTEM_ADDRESS`] as the caller.
-    fn inspect_system_call_one(
+    fn inspect_one_system_call(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.inspect_system_call_with_caller_one(SYSTEM_ADDRESS, system_contract_address, data)
+        self.inspect_one_system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
     }
 
     /// Inspect a system call with the current inspector and a custom caller.
     ///
     /// Similar to [`InspectEvm::inspect_one_tx`] but for system calls with a custom caller.
-    fn inspect_system_call_with_caller_one(
+    fn inspect_one_system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
@@ -114,7 +114,7 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_system_call_one(system_contract_address, data)?;
+        let output = self.inspect_one_system_call(system_contract_address, data)?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
     }
@@ -129,7 +129,7 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output =
-            self.inspect_system_call_with_caller_one(caller, system_contract_address, data)?;
+            self.inspect_one_system_call_with_caller(caller, system_contract_address, data)?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
     }
@@ -137,14 +137,14 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
     /// Inspect a system call with a given inspector.
     ///
     /// Similar to [`InspectEvm::inspect_one`] but for system calls.
-    fn inspect_system_call_with_inspector_one(
+    fn inspect_one_system_call_with_inspector(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
         self.set_inspector(inspector);
-        self.inspect_system_call_one(system_contract_address, data)
+        self.inspect_one_system_call(system_contract_address, data)
     }
 
     /// Inspect a system call with a given inspector and finalize the state.
@@ -157,7 +157,7 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         inspector: Self::Inspector,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         let output =
-            self.inspect_system_call_with_inspector_one(system_contract_address, data, inspector)?;
+            self.inspect_one_system_call_with_inspector(system_contract_address, data, inspector)?;
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
     }

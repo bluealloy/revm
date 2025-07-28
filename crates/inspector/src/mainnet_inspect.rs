@@ -68,7 +68,7 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn inspect_system_call_with_caller_one(
+    fn inspect_one_system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,

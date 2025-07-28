@@ -775,22 +775,22 @@ mod tests {
         let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
         let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
 
-        // Test inspect_system_call_one
+        // Test inspect_one_system_call
         let result = evm
-            .inspect_system_call_one(BENCH_TARGET, Bytes::default())
+            .inspect_one_system_call(BENCH_TARGET, Bytes::default())
             .unwrap();
         assert!(result.is_success());
 
-        // Test inspect_system_call_with_caller_one
+        // Test inspect_one_system_call_with_caller
         let custom_caller = address!("0x1234567890123456789012345678901234567890");
         let result = evm
-            .inspect_system_call_with_caller_one(custom_caller, BENCH_TARGET, Bytes::default())
+            .inspect_one_system_call_with_caller(custom_caller, BENCH_TARGET, Bytes::default())
             .unwrap();
         assert!(result.is_success());
 
-        // Test inspect_system_call_with_inspector_one
+        // Test inspect_one_system_call_with_inspector
         let result = evm
-            .inspect_system_call_with_inspector_one(
+            .inspect_one_system_call_with_inspector(
                 BENCH_TARGET,
                 Bytes::default(),
                 TestInspector::new(),
