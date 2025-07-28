@@ -60,7 +60,7 @@ use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
-use std::{boxed::Box, vec::Vec};
+use std::{borrow::Cow, boxed::Box, vec::Vec};
 
 /// Calculate the linear cost of a precompile.
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -340,7 +340,17 @@ pub enum PrecompileId {
     /// ECDSA signature verification over the secp256r1 elliptic curve (also known as P-256 or prime256v1).
     P256Verify,
     /// Custom precompile identifier.
-    Custom(String),
+    Custom(Cow<'static, str>),
+}
+
+impl PrecompileId {
+    /// Create new custom precompile ID.
+    pub fn custom<I>(id: I) -> Self
+    where
+        I: Into<Cow<'static, str>>,
+    {
+        Self::Custom(id.into())
+    }
 }
 
 /// Precompile.
