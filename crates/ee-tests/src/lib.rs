@@ -4,6 +4,8 @@
 
 use std::path::PathBuf;
 
+use serde_json::Value;
+
 /// Configuration for the test data comparison utility.
 pub struct TestdataConfig {
     /// The directory where test data files are stored.
@@ -71,8 +73,15 @@ where
         fs::create_dir_all(&config.testdata_dir).unwrap();
     }
 
-    // Serialize the output to JSON for saving
-    let output_json = serde_json::to_string_pretty(&output).unwrap();
+    // Serialize the output to serde Value.
+    let output_json = serde_json::to_string(&output).unwrap();
+
+    // convert to Value and sort all objects.
+    let mut temp: Value = serde_json::from_str(&output_json).unwrap();
+    temp.sort_all_objects();
+
+    // serialize to pretty string
+    let output_json = serde_json::to_string_pretty(&temp).unwrap();
 
     // If the testdata file doesn't exist, save the output
     if !testdata_file.exists() {

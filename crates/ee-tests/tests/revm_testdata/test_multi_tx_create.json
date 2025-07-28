@@ -1,145 +1,145 @@
 [
   {
     "Success": {
-      "reason": "Return",
-      "gas_used": 54260,
       "gas_refunded": 0,
+      "gas_used": 54260,
       "logs": [],
       "output": {
         "Create": [
           "0x61ffffff00",
           "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2"
         ]
-      }
+      },
+      "reason": "Return"
     }
   },
   {
     "Success": {
-      "reason": "SelfDestruct",
-      "gas_used": 14302,
       "gas_refunded": 14301,
+      "gas_used": 14302,
       "logs": [],
       "output": {
         "Call": "0x"
-      }
+      },
+      "reason": "SelfDestruct"
     }
   },
   {
     "Success": {
-      "reason": "Return",
-      "gas_used": 54260,
       "gas_refunded": 0,
+      "gas_used": 54260,
       "logs": [],
       "output": {
         "Create": [
           "0x61ffffff00",
           "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2"
         ]
-      }
+      },
+      "reason": "Return"
     }
   },
   {
     "0x0000000000000000000000000000000000000000": {
       "info": {
         "balance": "0x0",
-        "nonce": 0,
-        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
-            "original_len": 0,
             "jump_table": {
-              "order": "bitvec::order::Lsb0",
-              "head": {
-                "width": 8,
-                "index": 0
-              },
               "bits": 0,
-              "data": []
-            }
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
           }
-        }
-      },
-      "transaction_id": 2,
-      "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
-    },
-    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
-      "info": {
-        "balance": "0x2386f26fc10000",
-        "nonce": 1,
+        },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "code": {
-          "LegacyAnalyzed": {
-            "bytecode": "0x00",
-            "original_len": 0,
-            "jump_table": {
-              "order": "bitvec::order::Lsb0",
-              "head": {
-                "width": 8,
-                "index": 0
-              },
-              "bits": 0,
-              "data": []
-            }
-          }
-        }
+        "nonce": 0
       },
-      "transaction_id": 2,
+      "status": "Touched | LoadedAsNotExisting",
       "storage": {},
-      "status": "Touched"
+      "transaction_id": 2
     },
     "0x000000000000000000000000000000000000ffff": {
       "info": {
         "balance": "0x0",
-        "nonce": 0,
-        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
-            "original_len": 0,
             "jump_table": {
-              "order": "bitvec::order::Lsb0",
-              "head": {
-                "width": 8,
-                "index": 0
-              },
               "bits": 0,
-              "data": []
-            }
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
           }
-        }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0
       },
-      "transaction_id": 1,
+      "status": "Touched | LoadedAsNotExisting",
       "storage": {},
-      "status": "Touched | LoadedAsNotExisting"
+      "transaction_id": 1
     },
     "0x84bcbaa99ae6d1f7f70b37d5f6c27c9631eeb2f2": {
       "info": {
         "balance": "0x0",
-        "nonce": 1,
-        "code_hash": "0x9125466aa9ef15459d85e7318f6d3bdc5f6978c0565bee37a8e768d7c202a67a",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x61ffffff00",
-            "original_len": 5,
             "jump_table": {
-              "order": "bitvec::order::Lsb0",
-              "head": {
-                "width": 8,
-                "index": 0
-              },
               "bits": 5,
               "data": [
                 0
-              ]
-            }
+              ],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 5
           }
-        }
+        },
+        "code_hash": "0x9125466aa9ef15459d85e7318f6d3bdc5f6978c0565bee37a8e768d7c202a67a",
+        "nonce": 1
       },
-      "transaction_id": 2,
+      "status": "Created | CreatedLocal | SelfDestructed | Touched | LoadedAsNotExisting",
       "storage": {},
-      "status": "Created | CreatedLocal | SelfDestructed | Touched | LoadedAsNotExisting"
+      "transaction_id": 2
+    },
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
+      "info": {
+        "balance": "0x2386f26fc10000",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "jump_table": {
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
+          }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 1
+      },
+      "status": "Touched",
+      "storage": {},
+      "transaction_id": 2
     }
   }
 ]
