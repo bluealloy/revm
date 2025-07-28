@@ -4,10 +4,11 @@ use super::utils::remove_g2_padding;
 use crate::bls12_381_const::{
     G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
 };
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
-pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_ADD_ADDRESS, g2_add);
+pub const PRECOMPILE: Precompile =
+    Precompile::new(PrecompileId::Bls12G2Add, G2_ADD_ADDRESS, g2_add);
 
 /// G2 addition call expects `512` bytes as an input that is interpreted as byte
 /// concatenation of two G2 points (`256` bytes each).

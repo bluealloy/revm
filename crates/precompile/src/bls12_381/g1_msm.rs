@@ -6,12 +6,13 @@ use crate::bls12_381_const::{
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult};
 use primitives::Bytes;
 use std::vec::Vec;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
-pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
+pub const PRECOMPILE: Precompile =
+    Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, g1_msm);
 
 /// Implements EIP-2537 G1MSM precompile.
 /// G1 multi-scalar-multiplication call expects `160*k` bytes as an input that is interpreted

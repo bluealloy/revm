@@ -1,6 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
-use crate::{Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    Address, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+};
 cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         use c_kzg::{Bytes32, Bytes48};
@@ -12,7 +14,8 @@ use primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
 /// KZG point evaluation precompile, containing address and function to run.
-pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
+pub const POINT_EVALUATION: Precompile =
+    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, run);
 
 /// Address of the KZG point evaluation precompile.
 pub const ADDRESS: Address = crate::u64_to_address(0x0A);

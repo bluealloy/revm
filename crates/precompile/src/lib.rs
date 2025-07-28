@@ -71,8 +71,8 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles
-    inner: HashMap<Address, PrecompileFn>,
-    /// Addresses of precompile
+    inner: HashMap<Address, Precompile>,
+    /// Addresses of precompiles.
     addresses: HashSet<Address>,
 }
 
@@ -106,7 +106,7 @@ impl Precompiles {
     }
 
     /// Returns inner HashMap of precompiles.
-    pub fn inner(&self) -> &HashMap<Address, PrecompileFn> {
+    pub fn inner(&self) -> &HashMap<Address, Precompile> {
         &self.inner
     }
 
@@ -172,7 +172,7 @@ impl Precompiles {
                 if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
                     let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
                 } else {
-                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
+                    let precompile = Precompile(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
 
@@ -231,13 +231,13 @@ impl Precompiles {
     /// Returns the precompile for the given address.
     #[inline]
     pub fn get(&self, address: &Address) -> Option<&PrecompileFn> {
-        self.inner.get(address)
+        self.inner.get(address).map(|p| &p.fn_)
     }
 
     /// Returns the precompile for the given address.
     #[inline]
     pub fn get_mut(&mut self, address: &Address) -> Option<&mut PrecompileFn> {
-        self.inner.get_mut(address)
+        self.inner.get_mut(address).map(|p| &mut p.fn_)
     }
 
     /// Is the precompiles list empty.
@@ -259,10 +259,10 @@ impl Precompiles {
     ///
     /// Other precompiles with overwrite existing precompiles.
     #[inline]
-    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
-        self.addresses.extend(items.iter().map(|p| *p.address()));
-        self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
+    pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
+        let items: Vec<Precompile> = other.into_iter().collect::<Vec<_>>();
+        self.addresses.extend(items.iter().map(|p| p.address));
+        self.inner.extend(items.into_iter().map(|p| (p.address, p)));
     }
 
     /// Returns complement of `other` in `self`.
@@ -274,7 +274,7 @@ impl Precompiles {
         let inner = inner
             .iter()
             .filter(|(a, _)| !other.inner.contains_key(*a))
-            .map(|(a, p)| (*a, *p))
+            .map(|(a, p)| (*a, p.clone()))
             .collect::<HashMap<_, _>>();
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
@@ -291,7 +291,7 @@ impl Precompiles {
         let inner = inner
             .iter()
             .filter(|(a, _)| other.inner.contains_key(*a))
-            .map(|(a, p)| (*a, *p))
+            .map(|(a, p)| (*a, p.clone()))
             .collect::<HashMap<_, _>>();
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
@@ -300,33 +300,85 @@ impl Precompiles {
     }
 }
 
-/// Precompile with address and function.
+/// Unique precompile identifier.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum PrecompileId {
+    /// Elliptic curve digital signature algorithm (ECDSA) public key recovery function.
+    EcRec,
+    /// SHA2-256 hash function.
+    Sha256,
+    /// RIPEMD-160 hash function.
+    Ripemd160,
+    /// Identity precompile.
+    Identity,
+    ///	Arbitrary-precision exponentiation under modulo.
+    ModExp,
+    /// Point addition (ADD) on the elliptic curve 'alt_bn128'.
+    Bn128Add,
+    /// Scalar multiplication (MUL) on the elliptic curve 'alt_bn128'.
+    Bn128Mul,
+    /// Bilinear function on groups on the elliptic curve 'alt_bn128'.
+    Bn128Pairing,
+    /// Compression function F used in the BLAKE2 cryptographic hashing algorithm.
+    Blake2F,
+    /// Verify p(z) = y given commitment that corresponds to the polynomial p(x) and a KZG proof. Also verify that the provided commitment matches the provided versioned_hash.
+    KzgPointEvaluation,
+    Bls12G1Add,
+    Bls12G1Msm,
+    Bls12G2Add,
+    Bls12G2Msm,
+    Bls12Pairing,
+    Bls12MapFpToGp1,
+    Bls12MapFp2ToGp2,
+    P256Verify,
+    Custom(String),
+}
+
+/// Precompile.
 #[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(pub Address, pub PrecompileFn);
+pub struct Precompile {
+    /// Unique identifier.
+    id: PrecompileId,
+    /// Precompile address.
+    address: Address,
+    /// Precompile implementation.
+    fn_: PrecompileFn,
+}
 
-impl From<(Address, PrecompileFn)> for PrecompileWithAddress {
-    fn from(value: (Address, PrecompileFn)) -> Self {
-        PrecompileWithAddress(value.0, value.1)
+impl From<(PrecompileId, Address, PrecompileFn)> for Precompile {
+    fn from((id, address, fn_): (PrecompileId, Address, PrecompileFn)) -> Self {
+        Precompile { id, address, fn_ }
     }
 }
 
-impl From<PrecompileWithAddress> for (Address, PrecompileFn) {
-    fn from(value: PrecompileWithAddress) -> Self {
-        (value.0, value.1)
+impl From<Precompile> for (PrecompileId, Address, PrecompileFn) {
+    fn from(value: Precompile) -> Self {
+        (value.id, value.address, value.fn_)
     }
 }
 
-impl PrecompileWithAddress {
-    /// Returns reference of address.
+impl Precompile {
+    /// Create new precompile.
+    pub const fn new(id: PrecompileId, address: Address, fn_: PrecompileFn) -> Self {
+        Self { id, address, fn_ }
+    }
+
+    /// Returns reference to precompile identifier.
+    #[inline]
+    pub fn id(&self) -> &PrecompileId {
+        &self.id
+    }
+
+    /// Returns reference to address.
     #[inline]
     pub fn address(&self) -> &Address {
-        &self.0
+        &self.address
     }
 
-    /// Returns reference of precompile.
+    /// Returns reference to precompile implementation.
     #[inline]
     pub fn precompile(&self) -> &PrecompileFn {
-        &self.1
+        &self.fn_
     }
 }
 
