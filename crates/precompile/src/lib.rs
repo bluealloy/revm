@@ -323,14 +323,23 @@ pub enum PrecompileId {
     Blake2F,
     /// Verify p(z) = y given commitment that corresponds to the polynomial p(x) and a KZG proof. Also verify that the provided commitment matches the provided versioned_hash.
     KzgPointEvaluation,
+    /// Point addition in G1 (curve over base prime field).
     Bls12G1Add,
+    /// Multi-scalar-multiplication (MSM) in G1 (curve over base prime field).
     Bls12G1Msm,
+    /// Point addition in G2 (curve over quadratic extension of the base prime field).
     Bls12G2Add,
+    /// Multi-scalar-multiplication (MSM) in G2 (curve over quadratic extension of the base prime field).
     Bls12G2Msm,
+    /// Pairing operations between a set of pairs of (G1, G2) points.
     Bls12Pairing,
+    /// Base field element mapping into the G1 point.
     Bls12MapFpToGp1,
+    /// Extension field element mapping into the G2 point.
     Bls12MapFp2ToGp2,
+    /// ECDSA signature verification over the secp256r1 elliptic curve (also known as P-256 or prime256v1).
     P256Verify,
+    /// Custom precompile identifier.
     Custom(String),
 }
 
