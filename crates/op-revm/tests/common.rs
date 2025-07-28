@@ -1,13 +1,13 @@
 //! Common test utilities used to compare execution results against testdata.
 #![allow(dead_code)]
 
+use op_revm::OpHaltReason;
 use revm::{
     context::result::ResultAndState,
     context_interface::result::{ExecutionResult, Output, SuccessReason},
     primitives::Bytes,
     state::EvmState,
 };
-use op_revm::OpHaltReason;
 
 // Re-export the compare_or_save_testdata function from the common test util crate
 pub(crate) use revm_common_test_util::compare_or_save_testdata;
@@ -37,5 +37,5 @@ fn template_test() {
 
     // Simply use the testdata comparison utility
     // No assertions needed - full validation is done by comparing with testdata
-    compare_or_save_testdata("template_test.json", result);
+    compare_or_save_testdata("template_test.json", &result);
 }

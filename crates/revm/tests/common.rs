@@ -36,5 +36,5 @@ fn template_test() {
 
     // Simply use the testdata comparison utility
     // No assertions needed - full validation is done by comparing with testdata
-    compare_or_save_testdata("template_test.json", result);
+    compare_or_save_testdata("template_test.json", &result);
 }

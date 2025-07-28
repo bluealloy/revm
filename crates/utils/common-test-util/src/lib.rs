@@ -42,7 +42,7 @@ impl Default for TestdataConfig {
 /// cargo test --features serde
 /// ```
 #[cfg(feature = "serde")]
-pub fn compare_or_save_testdata<T>(filename: &str, output: T)
+pub fn compare_or_save_testdata<T>(filename: &str, output: &T)
 where
     T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
 {
@@ -60,11 +60,8 @@ where
 /// * `output` - The execution output to compare or save
 /// * `config` - Configuration for the test data comparison
 #[cfg(feature = "serde")]
-pub fn compare_or_save_testdata_with_config<T>(
-    filename: &str,
-    output: T,
-    config: TestdataConfig,
-) where
+pub fn compare_or_save_testdata_with_config<T>(filename: &str, output: &T, config: TestdataConfig)
+where
     T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
 {
     use std::fs;
@@ -77,7 +74,7 @@ pub fn compare_or_save_testdata_with_config<T>(
     }
 
     // Serialize the output to JSON for saving
-    let output_json = serde_json::to_string_pretty(&output).unwrap();
+    let output_json = serde_json::to_string_pretty(output).unwrap();
 
     // If the testdata file doesn't exist, save the output
     if !testdata_file.exists() {
@@ -93,7 +90,7 @@ pub fn compare_or_save_testdata_with_config<T>(
     let expected: T = serde_json::from_str(&expected_json).unwrap();
 
     // Compare the output objects directly
-    if output != expected {
+    if *output != expected {
         // If they don't match, generate a nicer error by pretty-printing both as JSON
         // This helps with debugging by showing the exact differences
         let expected_pretty = serde_json::to_string_pretty(&expected).unwrap();
@@ -106,7 +103,7 @@ pub fn compare_or_save_testdata_with_config<T>(
 
 /// No-op version when serde feature is not enabled.
 #[cfg(not(feature = "serde"))]
-pub fn compare_or_save_testdata<T>(_filename: &str, _output: T) {
+pub fn compare_or_save_testdata<T>(_filename: &str, _output: &T) {
     // serde needs to be enabled to use this function
 }
 
@@ -114,7 +111,7 @@ pub fn compare_or_save_testdata<T>(_filename: &str, _output: T) {
 #[cfg(not(feature = "serde"))]
 pub fn compare_or_save_testdata_with_config<T>(
     _filename: &str,
-    _output: T,
+    _output: &T,
     _config: TestdataConfig,
 ) {
     // serde needs to be enabled to use this function
@@ -140,6 +137,6 @@ mod tests {
         };
 
         // This will save the test data on first run, then compare on subsequent runs
-        compare_or_save_testdata("test_data.json", test_data);
+        compare_or_save_testdata("test_data.json", &test_data);
     }
 }
