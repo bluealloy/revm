@@ -7,7 +7,6 @@ use op_revm::{
     precompiles::bn254_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
 };
-use revm::SystemCallEvm;
 use revm::{
     bytecode::opcode,
     context::{
@@ -25,6 +24,7 @@ use revm::{
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal,
 };
+use revm::{handler::system_call::SYSTEM_ADDRESS, SystemCallEvm};
 use std::vec::Vec;
 
 #[test]
@@ -1081,7 +1081,7 @@ fn test_system_call() {
 
     let mut evm = ctx.build_op();
 
-    evm.transact_system_call(BENCH_TARGET, bytes!("0x0001"))
+    evm.system_call_one(SYSTEM_ADDRESS, BENCH_TARGET, bytes!("0x0001"))
         .unwrap();
 
     // Run evm.
