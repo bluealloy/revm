@@ -26,10 +26,10 @@ pub enum OpTransactionError {
     /// are cause for non-inclusion, so a special [OpHaltReason][crate::OpHaltReason] variant was introduced to handle this
     /// case for failed deposit transactions.
     DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
+    /// Deposit transaction halts bubble up to the global main return handler, wiping state and
     /// only increasing the nonce + persisting the mint value.
     ///
-    /// This is a catch-all error for any deposit transaction that is results in a [OpHaltReason][crate::OpHaltReason] error
+    /// This is a catch-all error for any deposit transaction that results in a [OpHaltReason][crate::OpHaltReason] error
     /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
     /// a deposit transaction fails during validation, but must still be included in the block.
     ///
