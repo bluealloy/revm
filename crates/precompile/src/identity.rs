@@ -1,11 +1,14 @@
 //! Identity precompile returns
 use super::calc_linear_cost_u32;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult};
 use primitives::Bytes;
 
 /// Address of the identity precompile.
-pub const FUN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(4), identity_run);
+pub const FUN: Precompile = Precompile::new(
+    PrecompileId::Identity,
+    crate::u64_to_address(4),
+    identity_run,
+);
 
 /// The base cost of the operation
 pub const IDENTITY_BASE: u64 = 15;

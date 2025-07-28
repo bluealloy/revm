@@ -2,22 +2,26 @@
 //! and reprices in berlin hardfork with [`EIP-2565`](https://eips.ethereum.org/EIPS/eip-2565).
 use crate::{
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
-    PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
 use std::vec::Vec;
 
 /// `modexp` precompile with BYZANTIUM gas rules.
-pub const BYZANTIUM: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);
+pub const BYZANTIUM: Precompile = Precompile::new(
+    PrecompileId::ModExp,
+    crate::u64_to_address(5),
+    byzantium_run,
+);
 
 /// `modexp` precompile with BERLIN gas rules.
-pub const BERLIN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
+pub const BERLIN: Precompile =
+    Precompile::new(PrecompileId::ModExp, crate::u64_to_address(5), berlin_run);
 
 /// `modexp` precompile with OSAKA gas rules.
-pub const OSAKA: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(5), osaka_run);
+pub const OSAKA: Precompile =
+    Precompile::new(PrecompileId::ModExp, crate::u64_to_address(5), osaka_run);
 
 #[cfg(feature = "gmp")]
 /// GMP-based modular exponentiation implementation
