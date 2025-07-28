@@ -205,10 +205,8 @@ mod tests {
             let bytecode = vec![opcode::PUSH1, 0x01, terminating_opcode];
             let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
             assert_eq!(
-                padded_bytecode.len(),
-                bytecode.len(),
-                "Terminating opcode 0x{:02X} should not require padding",
-                terminating_opcode
+                padded_bytecode.len(), 
+                bytecode.len()
             );
         }
     }
