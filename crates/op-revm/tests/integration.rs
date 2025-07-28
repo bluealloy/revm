@@ -3,6 +3,7 @@ mod common;
 
 use alloy_primitives::bytes;
 use common::compare_or_save_testdata;
+use op_revm::OpTransactionError;
 use op_revm::{
     precompiles::bn254_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
@@ -14,7 +15,7 @@ use revm::{
         result::{ExecutionResult, OutOfGasError},
         BlockEnv, CfgEnv, TxEnv,
     },
-    context_interface::result::HaltReason,
+    context_interface::result::{EVMError, HaltReason, InvalidTransaction},
     database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
     interpreter::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
