@@ -1,5 +1,6 @@
-//! BN128 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
+//! BN254 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
+    crypto,
     utilities::{bool_to_bytes32, right_pad},
     Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
@@ -7,80 +8,80 @@ use std::vec::Vec;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
-        mod substrate;
-        use substrate::{g1_point_add, g1_point_mul, pairing_check};
+        pub(crate) mod substrate;
+        pub(crate) use substrate as crypto_backend;
     } else {
-        mod arkworks;
-        use arkworks::{g1_point_add, g1_point_mul, pairing_check};
+        pub(crate) mod arkworks;
+        pub(crate) use arkworks as crypto_backend;
     }
 }
 
-/// Bn128 add precompile
+/// Bn254 add precompile
 pub mod add {
     use super::*;
 
-    /// Bn128 add precompile address
+    /// Bn254 add precompile address
     pub const ADDRESS: Address = crate::u64_to_address(6);
 
-    /// Bn128 add precompile with ISTANBUL gas rules
+    /// Bn254 add precompile with ISTANBUL gas rules
     pub const ISTANBUL_ADD_GAS_COST: u64 = 150;
 
-    /// Bn128 add precompile with ISTANBUL gas rules
+    /// Bn254 add precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
         });
 
-    /// Bn128 add precompile with BYZANTIUM gas rules
+    /// Bn254 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
 
-    /// Bn128 add precompile with BYZANTIUM gas rules
+    /// Bn254 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
         });
 }
 
-/// Bn128 mul precompile
+/// Bn254 mul precompile
 pub mod mul {
     use super::*;
 
-    /// Bn128 mul precompile address
+    /// Bn254 mul precompile address
     pub const ADDRESS: Address = crate::u64_to_address(7);
 
-    /// Bn128 mul precompile with ISTANBUL gas rules
+    /// Bn254 mul precompile with ISTANBUL gas rules
     pub const ISTANBUL_MUL_GAS_COST: u64 = 6_000;
 
-    /// Bn128 mul precompile with ISTANBUL gas rules
+    /// Bn254 mul precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
         });
 
-    /// Bn128 mul precompile with BYZANTIUM gas rules
+    /// Bn254 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;
 
-    /// Bn128 mul precompile with BYZANTIUM gas rules
+    /// Bn254 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
         });
 }
 
-/// Bn128 pair precompile
+/// Bn254 pair precompile
 pub mod pair {
     use super::*;
 
-    /// Bn128 pair precompile address
+    /// Bn254 pair precompile address
     pub const ADDRESS: Address = crate::u64_to_address(8);
 
-    /// Bn128 pair precompile with ISTANBUL gas rules
+    /// Bn254 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
 
-    /// Bn128 pair precompile with ISTANBUL gas rules
+    /// Bn254 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL_PAIR_BASE: u64 = 45_000;
 
-    /// Bn128 pair precompile with ISTANBUL gas rules
+    /// Bn254 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_pair(
@@ -91,13 +92,13 @@ pub mod pair {
             )
         });
 
-    /// Bn128 pair precompile with BYZANTIUM gas rules
+    /// Bn254 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
 
-    /// Bn128 pair precompile with BYZANTIUM gas rules
+    /// Bn254 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_PAIR_BASE: u64 = 100_000;
 
-    /// Bn128 pair precompile with BYZANTIUM gas rules
+    /// Bn254 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: PrecompileWithAddress =
         PrecompileWithAddress(ADDRESS, |input, gas_limit| {
             run_pair(
@@ -148,7 +149,7 @@ pub const MUL_INPUT_LEN: usize = G1_LEN + SCALAR_LEN;
 /// (128 bytes).
 pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 
-/// Run the Bn128 add precompile
+/// Run the Bn254 add precompile
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -158,12 +159,12 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let p1_bytes = &input[..G1_LEN];
     let p2_bytes = &input[G1_LEN..];
-    let output = g1_point_add(p1_bytes, p2_bytes)?;
+    let output = crypto().bn254_g1_add(p1_bytes, p2_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
-/// Run the Bn128 mul precompile
+/// Run the Bn254 mul precompile
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -173,12 +174,12 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
     let point_bytes = &input[..G1_LEN];
     let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
-    let output = g1_point_mul(point_bytes, scalar_bytes)?;
+    let output = crypto().bn254_g1_mul(point_bytes, scalar_bytes)?;
 
     Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
-/// Run the Bn128 pair precompile
+/// Run the Bn254 pair precompile
 pub fn run_pair(
     input: &[u8],
     pair_per_point_cost: u64,
@@ -190,8 +191,8 @@ pub fn run_pair(
         return Err(PrecompileError::OutOfGas);
     }
 
-    if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(PrecompileError::Bn128PairLength);
+    if !input.len().is_multiple_of(PAIR_ELEMENT_LEN) {
+        return Err(PrecompileError::Bn254PairLength);
     }
 
     let elements = input.len() / PAIR_ELEMENT_LEN;
@@ -212,7 +213,7 @@ pub fn run_pair(
         points.push((encoded_g1_element, encoded_g2_element));
     }
 
-    let pairing_result = pairing_check(&points)?;
+    let pairing_result = crypto().bn254_pairing_check(&points)?;
     Ok(PrecompileOutput::new(
         gas_used,
         bool_to_bytes32(pairing_result),
@@ -222,7 +223,7 @@ pub fn run_pair(
 #[cfg(test)]
 mod tests {
     use crate::{
-        bn128::{
+        bn254::{
             add::BYZANTIUM_ADD_GAS_COST,
             mul::BYZANTIUM_MUL_GAS_COST,
             pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT},
@@ -234,7 +235,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_alt_bn128_add() {
+    fn test_bn254_add() {
         let input = hex::decode(
             "\
              18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
@@ -311,12 +312,12 @@ mod tests {
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
         assert!(matches!(
             res,
-            Err(PrecompileError::Bn128AffineGFailedToCreate)
+            Err(PrecompileError::Bn254AffineGFailedToCreate)
         ));
     }
 
     #[test]
-    fn test_alt_bn128_mul() {
+    fn test_bn254_mul() {
         let input = hex::decode(
             "\
             2bd3e6d0f3b142924f5ca7b49ce5b9d54c4703d7ae5648e61d02268b1a0a9fb7\
@@ -388,12 +389,12 @@ mod tests {
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
         assert!(matches!(
             res,
-            Err(PrecompileError::Bn128AffineGFailedToCreate)
+            Err(PrecompileError::Bn254AffineGFailedToCreate)
         ));
     }
 
     #[test]
-    fn test_alt_bn128_pair() {
+    fn test_bn254_pair() {
         let input = hex::decode(
             "\
             1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
@@ -484,7 +485,7 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(PrecompileError::Bn128AffineGFailedToCreate)
+            Err(PrecompileError::Bn254AffineGFailedToCreate)
         ));
 
         // Invalid input length
@@ -503,7 +504,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(PrecompileError::Bn128PairLength)));
+        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
 
         // Test with point at infinity - should return true (identity element)
         // G1 point at infinity (0,0) followed by a valid G2 point

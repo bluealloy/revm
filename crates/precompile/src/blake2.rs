@@ -1,6 +1,6 @@
 //! Blake2 precompile. More details in [`run`]
 
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
@@ -17,7 +17,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     // Parse number of rounds (4 bytes)
-    let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
+    let rounds = u32::from_be_bytes(input[..4].try_into().unwrap());
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
         return Err(PrecompileError::OutOfGas);
@@ -52,7 +52,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
     let t_1 = u64::from_le_bytes(input[204..212].try_into().unwrap());
 
-    algo::compress(rounds, &mut h, m, [t_0, t_1], f);
+    crypto().blake2_compress(rounds, &mut h, m, [t_0, t_1], f);
 
     let mut out = [0u8; 64];
     for (i, h) in (0..64).step_by(8).zip(h.iter()) {
@@ -190,6 +190,7 @@ macro_rules! _MM_SHUFFLE {
 
 /// Code adapted from https://github.com/oconnor663/blake2_simd/blob/82b3e2aee4d2384aabbeb146058301ff0dbd453f/blake2b/src/avx2.rs
 #[cfg(all(target_feature = "avx2", feature = "std"))]
+#[allow(clippy::ptr_offset_with_cast)] // From array_refs
 mod avx2 {
     #[cfg(target_arch = "x86")]
     use core::arch::x86::*;
@@ -510,7 +511,7 @@ mod avx2 {
 
     #[inline(always)]
     pub(crate) fn count_high(count: Count) -> Word {
-        (count >> 8 * size_of::<Word>()) as Word
+        (count >> Word::BITS as usize) as Word
     }
 
     #[inline(always)]

@@ -1,13 +1,14 @@
 [package]
 name = "revm-database-interface"
 description = "Revm Database interface"
-version = "7.0.1"
+version = "7.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -37,16 +38,6 @@ rstest.workspace = true
 
 [features]
 default = ["std"]
-std = [
-	"serde?/std",
-	"primitives/std",
-	"state/std",
-	"either/std"
-]
-serde = [
-	"dep:serde",
-	"primitives/serde",
-	"state/serde",
-	"either/serde"
-]
+std = ["serde?/std", "primitives/std", "state/std", "either/std"]
+serde = ["dep:serde", "primitives/serde", "state/serde", "either/serde"]
 asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]

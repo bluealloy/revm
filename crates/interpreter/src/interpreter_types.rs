@@ -170,6 +170,14 @@ pub trait StackTr {
     #[must_use]
     fn push(&mut self, value: U256) -> bool;
 
+    /// Pushes slice to the stack.
+    ///
+    /// Returns `true` if push was successful, `false` if stack overflow.
+    ///
+    /// # Note
+    /// Error is internally set in interpreter.
+    fn push_slice(&mut self, slice: &[u8]) -> bool;
+
     /// Pushes B256 value to the stack.
     ///
     /// Internally converts B256 to U256 and then calls [`StackTr::push`].
@@ -189,7 +197,7 @@ pub trait StackTr {
     /// Returns top value from the stack.
     #[must_use]
     fn top(&mut self) -> Option<&mut U256> {
-        self.popn_top::<0>().map(|(_, top)| top)
+        self.popn_top().map(|([], top)| top)
     }
 
     /// Pops one value from the stack.
@@ -246,15 +254,11 @@ pub trait LoopControl {
     }
     /// Is end of the loop.
     fn is_end(&self) -> bool;
-    /// Reverts to previous instruction pointer.
-    ///
-    /// After the loop is finished, the instruction pointer is set to the previous one.
-    fn revert_to_previous_pointer(&mut self);
-    /// Set return action and set instruction pointer to null. Preserve previous pointer
-    ///
-    /// Previous pointer can be restored by calling [`LoopControl::revert_to_previous_pointer`].
+    /// Sets the `end` flag internally. Action should be taken after.
+    fn reset_action(&mut self);
+    /// Set return action.
     fn set_action(&mut self, action: InterpreterAction);
-    /// Takes next action.
+    /// Returns the current action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
     /// Returns instruction result
     #[inline]

@@ -1,13 +1,14 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "27.0.3"
+version = "27.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -53,6 +54,7 @@ std = [
 	"serde_json/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+map-foldhash = ["primitives/map-foldhash"]
 serde = [
 	"interpreter/serde",
 	"database-interface/serde",

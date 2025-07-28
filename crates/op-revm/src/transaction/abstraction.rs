@@ -89,11 +89,15 @@ impl<TX: Transaction + SystemCallTx> SystemCallTx for OpTransaction<TX> {
         system_contract_address: Address,
         data: Bytes,
     ) -> Self {
-        OpTransaction::new(TX::new_system_tx_with_caller(
+        let mut tx = OpTransaction::new(TX::new_system_tx_with_caller(
             caller,
             system_contract_address,
             data,
-        ))
+        ));
+
+        tx.enveloped_tx = Some(Bytes::default());
+
+        tx
     }
 }
 

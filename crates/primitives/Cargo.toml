@@ -1,13 +1,14 @@
 [package]
 name = "revm-primitives"
 description = "Revm primitives types"
-version = "20.0.0"
+version = "20.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -22,19 +23,19 @@ alloy-primitives = { workspace = true, features = ["rlp", "map"] }
 
 # mics
 num_enum = { version = "0.7.3", default-features = false }
+once_cell = { version = "1.21", default-features = false, features = [
+    "alloc",
+    "race",
+] }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
-
 [features]
 default = ["std"]
-std = [
-	"alloy-primitives/std",
-	"serde?/std",
-	"num_enum/std"
-]
+std = ["alloy-primitives/std", "serde?/std", "num_enum/std", "once_cell/std"]
 serde = ["dep:serde", "alloy-primitives/serde"]
+map-foldhash = ["alloy-primitives/map-foldhash"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]

@@ -1,13 +1,14 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "24.0.1"
+version = "25.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -24,9 +25,6 @@ primitives.workspace = true
 aurora-engine-modexp.workspace = true
 # gmp wrapper
 rug = { workspace = true, features = ["integer"], optional = true }
-
-# static precompile sets.
-once_cell = { workspace = true, features = ["alloc"] }
 
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
@@ -85,7 +83,6 @@ default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
 	"primitives/std",
 	"k256/std",
-	"once_cell/std",
 	"ripemd/std",
 	"sha2/std",
 	"c-kzg?/std",

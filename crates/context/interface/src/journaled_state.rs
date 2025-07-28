@@ -20,10 +20,10 @@ pub trait JournalTr {
     /// Dont forget to set spec_id.
     fn new(database: Self::Database) -> Self;
 
-    /// Returns the database.
+    /// Returns a mutable reference to the database.
     fn db_mut(&mut self) -> &mut Self::Database;
 
-    /// Returns the mutable database.
+    /// Returns an immutable reference to the database.
     fn db(&self) -> &Self::Database;
 
     /// Returns the storage value from Journal state.

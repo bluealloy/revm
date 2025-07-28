@@ -1,7 +1,7 @@
 {
   "result": {
     "Halt": {
-      "gas_used": 30000000,
+      "gas_used": 16777216,
       "reason": "FailedDeposit"
     }
   },

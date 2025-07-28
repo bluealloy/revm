@@ -1,13 +1,14 @@
 [package]
 name = "revm-database"
 description = "Revm Database implementations"
-version = "7.0.1"
+version = "7.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -27,8 +28,8 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 # alloydb
 tokio = { workspace = true, features = [
-    "rt-multi-thread",
-    "macros",
+	"rt-multi-thread",
+	"macros",
 ], optional = true }
 alloy-provider = { workspace = true, optional = true }
 alloy-eips = { workspace = true, optional = true }
@@ -48,7 +49,7 @@ std = [
 	"database-interface/std",
 	"primitives/std",
 	"state/std",
-	"serde_json/std"
+	"serde_json/std",
 ]
 serde = [
 	"dep:serde",
@@ -56,13 +57,13 @@ serde = [
 	"bytecode/serde",
 	"database-interface/serde",
 	"primitives/serde",
-	"state/serde"
+	"state/serde",
 ]
 alloydb = [
-    "std",
-    "database-interface/asyncdb",
-    "dep:tokio",
-    "dep:alloy-provider",
-    "dep:alloy-eips",
-    "dep:alloy-transport",
+	"std",
+	"database-interface/asyncdb",
+	"dep:tokio",
+	"dep:alloy-provider",
+	"dep:alloy-eips",
+	"dep:alloy-transport",
 ]

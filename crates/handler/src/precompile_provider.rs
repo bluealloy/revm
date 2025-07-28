@@ -101,6 +101,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let Some(precompile) = self.precompiles.get(address) else {
             return Ok(None);
         };
+
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
             gas: Gas::new(gas_limit),

@@ -1,13 +1,14 @@
 [package]
 name = "revm-statetest-types"
 description = "Statetest types for revme"
-version = "8.0.4"
+version = "8.0.5"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

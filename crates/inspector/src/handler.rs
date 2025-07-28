@@ -4,9 +4,10 @@ use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
-    FrameInput, Host, InitialAndFloorGas, InstructionContext, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterTypes,
+    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
+use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -182,75 +183,84 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    let mut log_num = context.journal_mut().logs().len();
-    // Main loop
-    while interpreter.bytecode.is_not_end() {
-        // Get current opcode.
-        let opcode = interpreter.bytecode.opcode();
-
-        // Call Inspector step.
+    loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
             break;
         }
 
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        interpreter.bytecode.relative_jump(1);
+        let opcode = interpreter.bytecode.opcode();
+        interpreter.step(instructions, context);
 
-        // Execute instruction.
-        let instruction_context = InstructionContext {
-            interpreter,
-            host: context,
-        };
-        instructions[opcode as usize](instruction_context);
-
-        // check if new log is added
-        let new_log = context.journal_mut().logs().len();
-        if log_num < new_log {
-            // as there is a change in log number this means new log is added
-            let log = context.journal_mut().logs().last().unwrap().clone();
-            inspector.log(interpreter, context, log);
-            log_num = new_log;
+        if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
+            inspect_log(interpreter, context, &mut inspector);
         }
 
-        // if loops is ending, break the loop so we can revert to the previous pointer and then call step_end.
+        inspector.step_end(interpreter, context);
+
         if interpreter.bytecode.is_end() {
             break;
         }
-
-        // Call step_end.
-        inspector.step_end(interpreter, context);
     }
-
-    interpreter.bytecode.revert_to_previous_pointer();
-    // call step_end again to handle the last instruction
-    inspector.step_end(interpreter, context);
 
     let next_action = interpreter.take_next_action();
 
-    // handle selfdestruct
+    // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            match context.journal_mut().journal().last() {
-                Some(JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    had_balance,
-                    ..
-                }) => {
-                    inspector.selfdestruct(*address, *target, *had_balance);
-                }
-                Some(JournalEntry::BalanceTransfer {
-                    from, to, balance, ..
-                }) => {
-                    inspector.selfdestruct(*from, *to, *balance);
-                }
-                _ => {}
-            }
+            inspect_selfdestruct(context, &mut inspector);
         }
     }
 
     next_action
+}
+
+#[inline(never)]
+#[cold]
+fn inspect_log<CTX, IT>(
+    interpreter: &mut Interpreter<IT>,
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+) where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    // `LOG*` instruction reverted.
+    if interpreter
+        .bytecode
+        .action()
+        .as_ref()
+        .is_some_and(|x| x.is_return())
+    {
+        return;
+    }
+
+    let log = context.journal_mut().logs().last().unwrap().clone();
+    inspector.log(interpreter, context, log);
+}
+
+#[inline(never)]
+#[cold]
+fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
+where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    if let Some(
+        JournalEntry::AccountDestroyed {
+            address: contract,
+            target: to,
+            had_balance: balance,
+            ..
+        }
+        | JournalEntry::BalanceTransfer {
+            from: contract,
+            to,
+            balance,
+            ..
+        },
+    ) = context.journal_mut().journal().last()
+    {
+        inspector.selfdestruct(*contract, *to, *balance);
+    }
 }

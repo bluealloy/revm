@@ -17,8 +17,10 @@ pub mod eip7825;
 pub mod eip7907;
 pub mod eip7918;
 pub mod hardfork;
+mod once_lock;
 
 pub use constants::*;
+pub use once_lock::OnceLock;
 
 // Reexport alloy primitives.
 

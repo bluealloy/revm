@@ -1,11 +1,7 @@
 [package]
-name = "custom_precompile_journal"
+name = "example-custom-precompile-journal"
 version = "0.1.0"
 edition = "2021"
-
-[[bin]]
-name = "custom_precompile_journal"
-path = "src/main.rs"
 
 [dependencies]
 revm = { path = "../../crates/revm", features = ["optional_eip3607"] }

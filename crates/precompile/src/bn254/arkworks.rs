@@ -1,6 +1,11 @@
 use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
 use crate::PrecompileError;
-use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
+use std::vec::Vec;
+
+use ark_bn254::{Bn254, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
+use ark_ff::{One, PrimeField, Zero};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
 /// Reads a single `Fq` field element from the input slice.
 ///
@@ -12,8 +17,17 @@ use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 ///
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
-fn read_fq(input: &[u8]) -> Result<Fq, PrecompileError> {
-    Fq::from_slice(&input[..FQ_LEN]).map_err(|_| PrecompileError::Bn128FieldPointNotAMember)
+fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileError> {
+    assert_eq!(input_be.len(), FQ_LEN, "input must be {FQ_LEN} bytes");
+
+    let mut input_le = [0u8; FQ_LEN];
+    input_le.copy_from_slice(input_be);
+
+    // Reverse in-place to convert from big-endian to little-endian.
+    input_le.reverse();
+
+    Fq::deserialize_uncompressed(&input_le[..])
+        .map_err(|_| PrecompileError::Bn254FieldPointNotAMember)
 }
 /// Reads a Fq2 (quadratic extension field element) from the input slice.
 ///
@@ -29,6 +43,7 @@ fn read_fq(input: &[u8]) -> Result<Fq, PrecompileError> {
 fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileError> {
     let y = read_fq(&input[..FQ_LEN])?;
     let x = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
+
     Ok(Fq2::new(x, y))
 }
 
@@ -42,19 +57,22 @@ fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileError> {
 /// In particular, when we convert from `AffineG1` to `G1`, the point
 /// will be (0,0,1) instead of (0,1,0)
 #[inline]
-fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
-    if px == Fq::zero() && py == Fq::zero() {
-        Ok(G1::zero())
+fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileError> {
+    if px.is_zero() && py.is_zero() {
+        Ok(G1Affine::zero())
     } else {
-        AffineG1::new(px, py)
-            .map(Into::into)
-            .map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)
+        // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
+        let point = G1Affine::new_unchecked(px, py);
+        if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
+            return Err(PrecompileError::Bn254AffineGFailedToCreate);
+        }
+        Ok(point)
     }
 }
 
 /// Creates a new `G2` point from the given Fq2 coordinates.
 ///
-/// G2 points in BN128 are defined over a quadratic extension field Fq2.
+/// G2 points in BN254 are defined over a quadratic extension field Fq2.
 /// This function takes two Fq2 elements representing the x and y coordinates
 /// and creates a G2 point.
 ///
@@ -64,11 +82,16 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, PrecompileError> {
 /// In particular, when we convert from `AffineG2` to `G2`, the point
 /// will be (0,0,1) instead of (0,1,0)
 #[inline]
-fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2, PrecompileError> {
+fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileError> {
     let point = if x.is_zero() && y.is_zero() {
-        G2::zero()
+        G2Affine::zero()
     } else {
-        G2::from(AffineG2::new(x, y).map_err(|_| PrecompileError::Bn128AffineGFailedToCreate)?)
+        // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
+        let point = G2Affine::new_unchecked(x, y);
+        if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
+            return Err(PrecompileError::Bn254AffineGFailedToCreate);
+        }
+        point
     };
 
     Ok(point)
@@ -83,7 +106,7 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2, PrecompileError> {
 ///
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
-pub(super) fn read_g1_point(input: &[u8]) -> Result<G1, PrecompileError> {
+pub(super) fn read_g1_point(input: &[u8]) -> Result<G1Affine, PrecompileError> {
     let px = read_fq(&input[0..FQ_LEN])?;
     let py = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
     new_g1_point(px, py)
@@ -97,19 +120,27 @@ pub(super) fn read_g1_point(input: &[u8]) -> Result<G1, PrecompileError> {
 /// Note: If the point is the point at infinity, this function returns
 /// all zeroes.
 #[inline]
-pub(super) fn encode_g1_point(point: G1) -> [u8; G1_LEN] {
+pub(super) fn encode_g1_point(point: G1Affine) -> [u8; G1_LEN] {
     let mut output = [0u8; G1_LEN];
+    let Some((x, y)) = point.xy() else {
+        return output;
+    };
 
-    if let Some(point_affine) = AffineG1::from_jacobian(point) {
-        point_affine
-            .x()
-            .to_big_endian(&mut output[..FQ_LEN])
-            .unwrap();
-        point_affine
-            .y()
-            .to_big_endian(&mut output[FQ_LEN..])
-            .unwrap();
-    }
+    let mut x_bytes = [0u8; FQ_LEN];
+    x.serialize_uncompressed(&mut x_bytes[..])
+        .expect("Failed to serialize x coordinate");
+
+    let mut y_bytes = [0u8; FQ_LEN];
+    y.serialize_uncompressed(&mut y_bytes[..])
+        .expect("Failed to serialize x coordinate");
+
+    // Convert to big endian by reversing the bytes.
+    x_bytes.reverse();
+    y_bytes.reverse();
+
+    // Place x in the first half, y in the second half.
+    output[0..FQ_LEN].copy_from_slice(&x_bytes);
+    output[FQ_LEN..(FQ_LEN * 2)].copy_from_slice(&y_bytes);
 
     output
 }
@@ -123,7 +154,7 @@ pub(super) fn encode_g1_point(point: G1) -> [u8; G1_LEN] {
 ///
 /// Panics if the input is not at least 128 bytes long.
 #[inline]
-pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
+pub(super) fn read_g2_point(input: &[u8]) -> Result<G2Affine, PrecompileError> {
     let ba = read_fq2(&input[0..FQ2_LEN])?;
     let bb = read_fq2(&input[FQ2_LEN..2 * FQ2_LEN])?;
     new_g2_point(ba, bb)
@@ -137,36 +168,45 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2, PrecompileError> {
 ///
 /// If `input.len()` is not equal to [`SCALAR_LEN`].
 #[inline]
-pub(super) fn read_scalar(input: &[u8]) -> bn::Fr {
+pub(super) fn read_scalar(input: &[u8]) -> Fr {
     assert_eq!(
         input.len(),
         SCALAR_LEN,
         "unexpected scalar length. got {}, expected {SCALAR_LEN}",
         input.len()
     );
-    // `Fr::from_slice` can only fail when the length is not `SCALAR_LEN`.
-    bn::Fr::from_slice(input).unwrap()
+    Fr::from_be_bytes_mod_order(input)
 }
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(super) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
+pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
     let p1 = read_g1_point(p1_bytes)?;
     let p2 = read_g1_point(p2_bytes)?;
-    let result = p1 + p2;
-    Ok(encode_g1_point(result))
+
+    let p1_jacobian: G1Projective = p1.into();
+
+    let p3 = p1_jacobian + p2;
+    let output = encode_g1_point(p3.into_affine());
+
+    Ok(output)
 }
 
 /// Performs a G1 scalar multiplication.
 #[inline]
-pub(super) fn g1_point_mul(
+pub(crate) fn g1_point_mul(
     point_bytes: &[u8],
     fr_bytes: &[u8],
 ) -> Result<[u8; 64], PrecompileError> {
     let p = read_g1_point(point_bytes)?;
     let fr = read_scalar(fr_bytes);
-    let result = p * fr;
-    Ok(encode_g1_point(result))
+
+    let big_int = fr.into_bigint();
+    let result = p.mul_bigint(big_int);
+
+    let output = encode_g1_point(result.into_affine());
+
+    Ok(output)
 }
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
@@ -175,8 +215,9 @@ pub(super) fn g1_point_mul(
 /// Note: If the input is empty, this function returns true.
 /// This is different to EIP2537 which disallows the empty input.
 #[inline]
-pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-    let mut parsed_pairs = Vec::with_capacity(pairs.len());
+pub(crate) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+    let mut g1_points = Vec::with_capacity(pairs.len());
+    let mut g2_points = Vec::with_capacity(pairs.len());
 
     for (g1_bytes, g2_bytes) in pairs {
         let g1 = read_g1_point(g1_bytes)?;
@@ -184,13 +225,15 @@ pub(super) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, Precompile
 
         // Skip pairs where either point is at infinity
         if !g1.is_zero() && !g2.is_zero() {
-            parsed_pairs.push((g1, g2));
+            g1_points.push(g1);
+            g2_points.push(g2);
         }
     }
 
-    if parsed_pairs.is_empty() {
+    if g1_points.is_empty() {
         return Ok(true);
     }
 
-    Ok(bn::pairing_batch(&parsed_pairs) == Gt::one())
+    let pairing_result = Bn254::multi_pairing(&g1_points, &g2_points);
+    Ok(pairing_result.0.is_one())
 }

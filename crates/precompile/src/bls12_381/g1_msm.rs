@@ -1,13 +1,12 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use super::crypto_backend::p1_msm_bytes;
-use super::G1Point;
 use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
+use crate::bls12_381::G1Point;
 use crate::bls12_381_const::{
     DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
     PADDED_G1_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRESS, g1_msm);
@@ -22,7 +21,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_MSM_ADDRE
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
 pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
-    if input_len == 0 || input_len % G1_MSM_INPUT_LENGTH != 0 {
+    if input_len == 0 || !input_len.is_multiple_of(G1_MSM_INPUT_LENGTH) {
         return Err(PrecompileError::Other(format!(
             "G1MSM input length should be multiple of {G1_MSM_INPUT_LENGTH}, was {input_len}",
         )));
@@ -34,7 +33,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let valid_pairs_iter = (0..k).map(|i| {
+    let mut valid_pairs_iter = (0..k).map(|i| {
         let start = i * G1_MSM_INPUT_LENGTH;
         let padded_g1 = &input[start..start + PADDED_G1_LENGTH];
         let scalar_bytes = &input[start + PADDED_G1_LENGTH..start + G1_MSM_INPUT_LENGTH];
@@ -47,7 +46,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Ok((point, scalar_array))
     });
 
-    let unpadded_result = p1_msm_bytes(valid_pairs_iter)?;
+    let unpadded_result = crypto().bls12_381_g1_msm(&mut valid_pairs_iter)?;
 
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);

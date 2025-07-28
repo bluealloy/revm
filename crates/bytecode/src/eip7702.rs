@@ -47,7 +47,7 @@ impl Eip7702Bytecode {
 
         Ok(Self {
             delegated_address: Address::new(raw[3..].try_into().unwrap()),
-            version: EIP7702_VERSION,
+            version: raw[2],
             raw,
         })
     }
@@ -74,6 +74,12 @@ impl Eip7702Bytecode {
     #[inline]
     pub fn address(&self) -> Address {
         self.delegated_address
+    }
+
+    /// Returns the EIP7702 version of the delegated contract.
+    #[inline]
+    pub fn version(&self) -> u8 {
+        self.version
     }
 }
 
