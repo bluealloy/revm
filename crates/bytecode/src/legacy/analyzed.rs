@@ -1,4 +1,5 @@
 use super::JumpTable;
+use crate::opcode;
 use primitives::Bytes;
 
 /// Legacy analyzed bytecode represents the original bytecode format used in Ethereum.
@@ -76,6 +77,16 @@ impl LegacyAnalyzedBytecode {
             "jump table length is less than original length"
         );
         assert!(!bytecode.is_empty(), "bytecode cannot be empty");
+
+        if let Some(&last_opcode) = bytecode.last() {
+            assert!(
+                opcode::OpCode::info_by_op(last_opcode)
+                    .map(|o| o.is_terminating())
+                    .unwrap_or(false),
+                "last bytecode byte should be terminating"
+            );
+        }
+
         Self {
             bytecode,
             original_len,
