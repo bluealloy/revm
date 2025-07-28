@@ -4,7 +4,7 @@ mod common;
 use alloy_primitives::bytes;
 use common::compare_or_save_testdata;
 use op_revm::{
-    precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
+    precompiles::bn254_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
 };
 use revm::SystemCallEvm;
@@ -20,7 +20,7 @@ use revm::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
         Interpreter, InterpreterTypes,
     },
-    precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
+    precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
     primitives::{eip7825, Address, Bytes, Log, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal,
@@ -163,7 +163,7 @@ fn test_halted_tx_call_p256verify() {
     compare_or_save_testdata("test_halted_tx_call_p256verify.json", &output);
 }
 
-fn bn128_pair_test_tx(
+fn bn254_pair_test_tx(
     spec: OpSpecId,
 ) -> Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpecId>, EmptyDB, Journal<EmptyDB>, L1BlockInfo>
 {
@@ -176,7 +176,7 @@ fn bn128_pair_test_tx(
             OpTransaction::builder()
                 .base(
                     TxEnv::builder()
-                        .kind(TxKind::Call(bn128::pair::ADDRESS))
+                        .kind(TxKind::Call(bn254::pair::ADDRESS))
                         .data(input)
                         .gas_limit(initial_gas),
                 )
@@ -186,8 +186,8 @@ fn bn128_pair_test_tx(
 }
 
 #[test]
-fn test_halted_tx_call_bn128_pair_fjord() {
-    let ctx = bn128_pair_test_tx(OpSpecId::FJORD);
+fn test_halted_tx_call_bn254_pair_fjord() {
+    let ctx = bn254_pair_test_tx(OpSpecId::FJORD);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -201,12 +201,12 @@ fn test_halted_tx_call_bn128_pair_fjord() {
         }
     ));
 
-    compare_or_save_testdata("test_halted_tx_call_bn128_pair_fjord.json", &output);
+    compare_or_save_testdata("test_halted_tx_call_bn254_pair_fjord.json", &output);
 }
 
 #[test]
-fn test_halted_tx_call_bn128_pair_granite() {
-    let ctx = bn128_pair_test_tx(OpSpecId::GRANITE);
+fn test_halted_tx_call_bn254_pair_granite() {
+    let ctx = bn254_pair_test_tx(OpSpecId::GRANITE);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -220,7 +220,7 @@ fn test_halted_tx_call_bn128_pair_granite() {
         }
     ));
 
-    compare_or_save_testdata("test_halted_tx_call_bn128_pair_granite.json", &output);
+    compare_or_save_testdata("test_halted_tx_call_bn254_pair_granite.json", &output);
 }
 
 #[test]
