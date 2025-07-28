@@ -4,6 +4,17 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
 use std::vec::Vec;
 
+/// Check if an opcode is terminating (will end execution)
+fn is_terminating_opcode(opcode: u8) -> bool {
+    // First check if it's a known opcode
+    if let Some(opcode_info) = opcode::OpCode::info_by_op(opcode) {
+        opcode_info.is_terminating()
+    } else {
+        // Unknown opcodes are also terminating (cause INVALID instruction behavior)
+        true
+    }
+}
+
 /// Analyzes the bytecode for use in [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode).
 ///
 /// See [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode) for more details.
@@ -39,7 +50,12 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         }
     }
 
-    let padding = (iterator as usize) - (end as usize) + (opcode != opcode::STOP) as usize;
+    let overflow_padding = (iterator as usize) - (end as usize);
+
+    let stop_padding = if !is_terminating_opcode(opcode) { 1 } else { 0 };
+
+    let padding = overflow_padding + stop_padding;
+
     let bytecode = if padding > 0 {
         let mut padded = Vec::with_capacity(bytecode.len() + padding);
         padded.extend_from_slice(&bytecode);
@@ -172,5 +188,28 @@ mod tests {
         ];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
         assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
+    }
+
+    #[test]
+    fn test_terminating_opcodes_behavior() {
+        // Test all known terminating opcodes
+        let terminating_opcodes = [
+            opcode::STOP,
+            opcode::RETURN,
+            opcode::REVERT,
+            opcode::INVALID,
+            opcode::SELFDESTRUCT,
+        ];
+
+        for &terminating_opcode in &terminating_opcodes {
+            let bytecode = vec![opcode::PUSH1, 0x01, terminating_opcode];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            assert_eq!(
+                padded_bytecode.len(),
+                bytecode.len(),
+                "Terminating opcode 0x{:02X} should not require padding",
+                terminating_opcode
+            );
+        }
     }
 }
