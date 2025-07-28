@@ -19,9 +19,9 @@ use revm::{
         Interpreter, InterpreterTypes,
     },
     precompile::{bls12_381_const, bls12_381_utils, bn128, secp256r1, u64_to_address},
-    primitives::{eip7825, Address, Bytes, Log, TxKind, U256},
+    primitives::{bytes, eip7825, Address, Bytes, Log, TxKind, U256},
     state::Bytecode,
-    Context, ExecuteEvm, InspectEvm, Inspector, Journal,
+    Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
 use std::vec::Vec;
 
@@ -1071,4 +1071,19 @@ fn test_log_inspector() {
     assert!(!inspector.logs.is_empty());
 
     compare_or_save_testdata("test_log_inspector.json", &output);
+}
+
+#[test]
+fn test_system_call() {
+    let ctx = Context::op();
+
+    let mut evm = ctx.build_op();
+
+    evm.transact_system_call(BENCH_TARGET, bytes!("0x0001"))
+        .unwrap();
+
+    // Run evm.
+    let output = evm.replay().unwrap();
+
+    compare_or_save_testdata("test_system_call.json", &output);
 }

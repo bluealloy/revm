@@ -217,6 +217,8 @@ pub struct OpCodeInfo {
     inputs: u8,
     /// Stack outputs
     outputs: u8,
+    /// Stack difference (outputs - inputs)
+    io_diff: i8,
     /// Number of intermediate bytes
     ///
     /// RJUMPV is a special case where the bytes len depends on bytecode value,
@@ -252,6 +254,7 @@ impl OpCodeInfo {
             name_len: name.len() as u8,
             inputs: 0,
             outputs: 0,
+            io_diff: 0,
             terminating: false,
             immediate_size: 0,
         }
@@ -267,10 +270,10 @@ impl OpCodeInfo {
         }
     }
 
-    /// Calculates the difference between the number of input and output stack elements.
+    /// Returns the difference between the number of input and output stack elements.
     #[inline]
     pub const fn io_diff(&self) -> i16 {
-        self.outputs as i16 - self.inputs as i16
+        self.io_diff as i16
     }
 
     /// Returns the number of input stack elements.
@@ -326,6 +329,7 @@ pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
 pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo {
     op.inputs = inputs;
     op.outputs = outputs;
+    op.io_diff = outputs as i8 - inputs as i8;
     op
 }
 

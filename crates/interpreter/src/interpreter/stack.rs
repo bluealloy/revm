@@ -77,6 +77,24 @@ impl StackTr for Stack {
     }
 
     #[inline]
+    fn popn_ref<const N: usize>(&mut self) -> Option<&mut [U256; N]> {
+        if self.len() < N {
+            return None;
+        }
+        // SAFETY: Stack length is checked above.
+        Some(unsafe { self.popn_ref::<N>() })
+    }
+
+    #[inline]
+    fn popn_top_ref<const POPN: usize>(&mut self) -> Option<(&mut [U256; POPN], &mut U256)> {
+        if self.len() < POPN + 1 {
+            return None;
+        }
+        // SAFETY: Stack length is checked above.
+        Some(unsafe { self.popn_top_ref::<POPN>() })
+    }
+
+    #[inline]
     fn exchange(&mut self, n: usize, m: usize) -> bool {
         self.exchange(n, m)
     }
@@ -198,6 +216,59 @@ impl Stack {
         let result = self.popn::<POPN>();
         let top = self.top_unsafe();
         (result, top)
+    }
+
+    /// Pops `N` values from the stack and returns a mutable reference to them.
+    /// This is more efficient than `popn` as it uses split_at_mut and avoids copying.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    /// The returned reference points to memory that's still allocated but outside the vector's length.
+    /// The caller must ensure they don't access this memory after any subsequent stack operations.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub unsafe fn popn_ref<const N: usize>(&mut self) -> &mut [U256; N] {
+        assume!(self.data.len() >= N);
+        let len = self.data.len();
+        let new_len = len - N;
+        
+        // Get pointer to the data before we modify the length
+        let ptr = self.data.as_mut_ptr().add(new_len) as *mut [U256; N];
+        
+        // Update the length
+        self.data.set_len(new_len);
+        
+        // Return reference to the popped data
+        // SAFETY: The data is still in allocated memory, just outside the "active" vector
+        &mut *ptr
+    }
+
+    /// Pops `N` values from the stack and returns mutable references to both the popped slice and the top value.
+    /// This is more efficient than `popn_top` as it uses split_at_mut and avoids copying.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    /// The returned references point to memory that's still allocated but outside the vector's length.
+    /// The caller must ensure they don't access this memory after any subsequent stack operations.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub unsafe fn popn_top_ref<const POPN: usize>(&mut self) -> (&mut [U256; POPN], &mut U256) {
+        assume!(self.data.len() >= POPN + 1);
+        let len = self.data.len();
+        let new_len = len - POPN;
+        
+        // Get pointers to the data before we modify the length
+        let popped_ptr = self.data.as_mut_ptr().add(new_len) as *mut [U256; POPN];
+        let top_ptr = self.data.as_mut_ptr().add(new_len - 1);
+        
+        // Update the length to remove the popped values
+        self.data.set_len(new_len);
+        
+        // Return references to the data
+        // SAFETY: The data is still in allocated memory, just outside the "active" vector
+        (&mut *popped_ptr, &mut *top_ptr)
     }
 
     /// Push a new value onto the stack.
@@ -501,5 +572,81 @@ mod tests {
         // Test push to the full original or cloned stack should return StackOverflow
         assert!(!full_stack.push(U256::from(100)));
         assert!(!cloned_full.push(U256::from(100)));
+    }
+
+    #[test]
+    fn popn_top() {
+        use core::hint::black_box;
+
+        let mut stack = Stack::new();
+        let _ = stack.push(U256::from(1));
+        let _ = stack.push(U256::from(2));
+        let _ = stack.push(U256::from(3));
+        let _ = stack.push(U256::from(4));
+        let _ = stack.push(U256::from(5));
+        let _ = stack.push(U256::from(6));
+        let _ = stack.push(U256::from(7));
+        let _ = stack.push(U256::from(8));
+        let _ = stack.push(U256::from(9));
+
+        let time = std::time::Instant::now();
+        for _ in 0..10000 {
+            black_box({
+                let ([op1, op2], top) = unsafe { stack.popn_top::<2>() };
+                *top = op1 + op2;
+            });
+            unsafe {
+                stack.data.set_len(9);
+            }
+        }
+        println!("popn_top: {:?}", time.elapsed());
+
+        let time = std::time::Instant::now();
+        for _ in 0..10000 {
+            black_box({
+                let len = stack.data.len();
+                let (top, [op1, op2]) = unsafe {
+                    stack
+                        .data
+                        .split_at_mut(len - 3)
+                        .1
+                        .split_first_mut()
+                        .map(|(top, slice)| (top, slice.try_into().unwrap_unchecked()))
+                        .unwrap_unchecked()
+                };
+                *top = op1 + op2;
+                unsafe {
+                    stack.data.set_len(9 - 3);
+                }
+            });
+            unsafe {
+                stack.data.set_len(9);
+            }
+        }
+        println!("split_at_mut: {:?}", time.elapsed());
+    }
+
+    #[test]
+    fn test_popn_ref_functions() {
+        let mut stack = Stack::new();
+        
+        // Push some test values
+        for i in 1..=5 {
+            assert!(stack.push(U256::from(i)));
+        }
+        assert_eq!(stack.len(), 5);
+        
+        // Test popn_ref
+        let popped = unsafe { stack.popn_ref::<2>() };
+        assert_eq!(popped[0], U256::from(4)); // Second to top
+        assert_eq!(popped[1], U256::from(5)); // Top
+        assert_eq!(stack.len(), 3); // Should be reduced by 2
+        
+        // Test popn_top_ref
+        let (popped, top) = unsafe { stack.popn_top_ref::<2>() };
+        assert_eq!(popped[0], U256::from(2));
+        assert_eq!(popped[1], U256::from(3));
+        assert_eq!(*top, U256::from(1)); // Remaining top element
+        assert_eq!(stack.len(), 1); // Should be reduced by 2
     }
 }

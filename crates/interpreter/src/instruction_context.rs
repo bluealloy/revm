@@ -1,6 +1,10 @@
 use bytecode::opcode::OPCODE_INFO;
 
-use crate::{gas, interpreter_types::Jumps, Interpreter, InterpreterTypes};
+use crate::{
+    gas,
+    interpreter_types::{Jumps, StackTr},
+    InstructionResult, Interpreter, InterpreterTypes, STACK_LIMIT,
+};
 
 use super::Instruction;
 
@@ -41,8 +45,22 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
         // Get current opcode.
         let opcode = self.interpreter.bytecode.opcode();
+        let opcode_info = unsafe { OPCODE_INFO[opcode as usize].unwrap_unchecked() };
 
-        gas!(self.interpreter, OPCODE_INFO[opcode as usize].unwrap().static_gas() as u64);
+        // Check if stack has enough inputs for this instruction
+        let stack_len = self.interpreter.stack.len();
+        let underflow = stack_len < opcode_info.inputs() as usize;
+        let overflow = (stack_len as isize + opcode_info.io_diff() as isize) as usize > STACK_LIMIT;
+        let oog = !self
+            .interpreter
+            .gas
+            .record_cost(opcode_info.static_gas() as u64);
+
+        // Check if stack will overflow after this instruction
+        if underflow || overflow || oog {
+            self.interpreter.halt(InstructionResult::StackUnderflow);
+            return;
+        }
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction

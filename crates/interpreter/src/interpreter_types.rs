@@ -194,6 +194,16 @@ pub trait StackTr {
     #[must_use]
     fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)>;
 
+    /// Pops N values from the stack and returns a reference to the popped slice.
+    /// This is more efficient than `popn` as it avoids copying the values.
+    #[must_use]
+    fn popn_ref<const N: usize>(&mut self) -> Option<&mut [U256; N]>;
+
+    /// Pops N values from the stack and returns references to both the popped slice and the top value.
+    /// This is more efficient than `popn_top` as it avoids copying the values.
+    #[must_use]
+    fn popn_top_ref<const POPN: usize>(&mut self) -> Option<(&mut [U256; POPN], &mut U256)>;
+
     /// Returns top value from the stack.
     #[must_use]
     fn top(&mut self) -> Option<&mut U256> {
