@@ -4,17 +4,6 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
 use std::vec::Vec;
 
-/// Check if an opcode is terminating (will end execution)
-fn is_terminating_opcode(opcode: u8) -> bool {
-    // First check if it's a known opcode
-    if let Some(opcode_info) = opcode::OpCode::info_by_op(opcode) {
-        opcode_info.is_terminating()
-    } else {
-        // Unknown opcodes are also terminating (cause INVALID instruction behavior)
-        true
-    }
-}
-
 /// Analyzes the bytecode for use in [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode).
 ///
 /// See [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode) for more details.
@@ -52,7 +41,9 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
 
     let overflow_padding = (iterator as usize) - (end as usize);
 
-    let stop_padding = if !is_terminating_opcode(opcode) { 1 } else { 0 };
+    let stop_padding = opcode::OpCode::info_by_op(opcode)
+        .map(|o| !o.is_terminating() as usize)
+        .unwrap_or(1);
 
     let padding = overflow_padding + stop_padding;
 
