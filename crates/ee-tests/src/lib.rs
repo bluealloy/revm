@@ -41,7 +41,6 @@ impl Default for TestdataConfig {
 /// ```bash
 /// cargo test --features serde
 /// ```
-#[cfg(feature = "serde")]
 pub fn compare_or_save_testdata<T>(filename: &str, output: &T)
 where
     T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
@@ -59,7 +58,6 @@ where
 /// * `filename` - The name of the testdata file, relative to the testdata directory
 /// * `output` - The execution output to compare or save
 /// * `config` - Configuration for the test data comparison
-#[cfg(feature = "serde")]
 pub fn compare_or_save_testdata_with_config<T>(filename: &str, output: &T, config: TestdataConfig)
 where
     T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
@@ -74,7 +72,7 @@ where
     }
 
     // Serialize the output to JSON for saving
-    let output_json = serde_json::to_string_pretty(output).unwrap();
+    let output_json = serde_json::to_string_pretty(&output).unwrap();
 
     // If the testdata file doesn't exist, save the output
     if !testdata_file.exists() {
@@ -101,35 +99,17 @@ where
     }
 }
 
-/// No-op version when serde feature is not enabled.
-#[cfg(not(feature = "serde"))]
-pub fn compare_or_save_testdata<T>(_filename: &str, _output: &T) {
-    // serde needs to be enabled to use this function
-}
-
-/// No-op version when serde feature is not enabled.
-#[cfg(not(feature = "serde"))]
-pub fn compare_or_save_testdata_with_config<T>(
-    _filename: &str,
-    _output: &T,
-    _config: TestdataConfig,
-) {
-    // serde needs to be enabled to use this function
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[derive(Debug, PartialEq)]
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
     struct TestData {
         value: u32,
         message: String,
     }
 
     #[test]
-    #[cfg(feature = "serde")]
     fn test_compare_or_save_testdata() {
         let test_data = TestData {
             value: 42,
@@ -140,3 +120,9 @@ mod tests {
         compare_or_save_testdata("test_data.json", &test_data);
     }
 }
+
+#[cfg(test)]
+mod op_revm_tests;
+
+#[cfg(test)]
+mod revm_tests;

@@ -1,7 +1,6 @@
 //! Integration tests for the `op-revm` crate.
-mod common;
 
-use common::compare_or_save_testdata;
+use crate::TestdataConfig;
 use op_revm::{
     precompiles::bn128_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
@@ -23,7 +22,24 @@ use revm::{
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal,
 };
+use std::path::PathBuf;
 use std::vec::Vec;
+
+// Re-export the constant for testdata directory path
+const TESTS_TESTDATA: &str = "tests/op_revm_testdata";
+
+fn op_revm_testdata_config() -> TestdataConfig {
+    TestdataConfig {
+        testdata_dir: PathBuf::from(TESTS_TESTDATA),
+    }
+}
+
+fn compare_or_save_op_testdata<T>(filename: &str, output: &T)
+where
+    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
+{
+    crate::compare_or_save_testdata_with_config(filename, output, op_revm_testdata_config());
+}
 
 #[test]
 fn test_deposit_tx() {
@@ -49,7 +65,7 @@ fn test_deposit_tx() {
             .map(|a| a.info.balance),
         Some(U256::from(100))
     );
-    compare_or_save_testdata("test_deposit_tx.json", &output);
+    compare_or_save_op_testdata("test_deposit_tx.json", &output);
 }
 
 #[test]
@@ -90,7 +106,7 @@ fn test_halted_deposit_tx() {
         Some(U256::from(100) + BENCH_CALLER_BALANCE)
     );
 
-    compare_or_save_testdata("test_halted_deposit_tx.json", &output);
+    compare_or_save_op_testdata("test_halted_deposit_tx.json", &output);
 }
 
 fn p256verify_test_tx(
@@ -124,7 +140,7 @@ fn test_tx_call_p256verify() {
     // assert successful call to P256VERIFY
     assert!(output.result.is_success());
 
-    compare_or_save_testdata("test_tx_call_p256verify.json", &output);
+    compare_or_save_op_testdata("test_tx_call_p256verify.json", &output);
 }
 
 #[test]
@@ -158,7 +174,7 @@ fn test_halted_tx_call_p256verify() {
         }
     ));
 
-    compare_or_save_testdata("test_halted_tx_call_p256verify.json", &output);
+    compare_or_save_op_testdata("test_halted_tx_call_p256verify.json", &output);
 }
 
 fn bn128_pair_test_tx(
@@ -199,7 +215,7 @@ fn test_halted_tx_call_bn128_pair_fjord() {
         }
     ));
 
-    compare_or_save_testdata("test_halted_tx_call_bn128_pair_fjord.json", &output);
+    compare_or_save_op_testdata("test_halted_tx_call_bn128_pair_fjord.json", &output);
 }
 
 #[test]
@@ -218,7 +234,7 @@ fn test_halted_tx_call_bn128_pair_granite() {
         }
     ));
 
-    compare_or_save_testdata("test_halted_tx_call_bn128_pair_granite.json", &output);
+    compare_or_save_op_testdata("test_halted_tx_call_bn128_pair_granite.json", &output);
 }
 
 #[test]
@@ -252,7 +268,7 @@ fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g1_add_out_of_gas.json",
         &output,
     );
@@ -288,7 +304,7 @@ fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g1_add_input_wrong_size.json",
         &output,
     );
@@ -367,7 +383,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g1_msm_input_wrong_size.json",
         &output,
     );
@@ -414,7 +430,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g1_msm_out_of_gas.json",
         &output,
     );
@@ -436,7 +452,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout.json",
         &output,
     );
@@ -473,7 +489,7 @@ fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g2_add_out_of_gas.json",
         &output,
     );
@@ -510,7 +526,7 @@ fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g2_add_input_wrong_size.json",
         &output,
     );
@@ -589,7 +605,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g2_msm_input_wrong_size.json",
         &output,
     );
@@ -636,7 +652,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g2_msm_out_of_gas.json",
         &output,
     );
@@ -658,7 +674,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout.json",
         &output,
     );
@@ -732,7 +748,7 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_pairing_input_wrong_size.json",
         &output,
     );
@@ -776,7 +792,7 @@ fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_pairing_out_of_gas.json",
         &output,
     );
@@ -798,7 +814,7 @@ fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_pairing_wrong_input_layout.json",
         &output,
     );
@@ -840,7 +856,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas.json",
         &output,
     );
@@ -882,7 +898,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size.json",
         &output,
     );
@@ -924,7 +940,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas.json",
         &output,
     );
@@ -966,7 +982,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
         }
     ));
 
-    compare_or_save_testdata(
+    compare_or_save_op_testdata(
         "test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size.json",
         &output,
     );
@@ -1070,5 +1086,5 @@ fn test_log_inspector() {
     let inspector = &evm.0.inspector;
     assert!(!inspector.logs.is_empty());
 
-    compare_or_save_testdata("test_log_inspector.json", &output);
+    compare_or_save_op_testdata("test_log_inspector.json", &output);
 }

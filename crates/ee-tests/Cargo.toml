@@ -1,0 +1,25 @@
+[package]
+name = "revm-ee-tests"
+version = "0.1.0"
+authors = ["revm"]
+edition = "2021"
+rust-version = "1.80.1"
+license = "MIT"
+description = "Common test utilities for REVM crates"
+repository = "https://github.com/bluealloy/revm"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+revm = { workspace = true, features = ["serde"] }
+op-revm = { workspace = true, features = ["serde"] }
+
+[dev-dependencies]
+rstest = { workspace = true }
+alloy-sol-types = { workspace = true }
+sha2 = { workspace = true }
+alloy-primitives = { workspace = true }
+
+[features]
+default = []
+optional_balance_check = ["revm/optional_balance_check", "op-revm/optional_balance_check"]

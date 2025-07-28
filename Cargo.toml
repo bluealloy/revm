@@ -22,7 +22,7 @@ members = [
 
     # utility
     "crates/statetest-types",
-    "crates/utils/common-test-util",
+    "crates/ee-tests",
 
     # examples
     "examples/block_traces",
@@ -55,6 +55,7 @@ context = { path = "crates/context", package = "revm-context", version = "8.0.3"
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "8.0.1", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "8.0.3", default-features = false }
 op-revm = { path = "crates/op-revm", package = "op-revm", version = "8.0.3", default-features = false }
+ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.1.0", default-features = false }
 
 # alloy
 alloy-eip2930 = { version = "0.2.1", default-features = false }
@@ -166,7 +167,9 @@ strip = false
 
 # Make sure debug symbols are in the bench profile
 [profile.bench]
-inherits = "profiling"
+debug = 2
+inherits = "release"
+strip = false
 
 [profile.ethtests]
 inherits = "test"

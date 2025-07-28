@@ -3041,7 +3041,7 @@ dependencies = [
  "auto_impl",
  "once_cell",
  "revm",
- "revm-common-test-util",
+ "revm-ee-tests",
  "rstest",
  "serde",
  "serde_json",
@@ -3777,11 +3777,11 @@ name = "revm"
 version = "27.0.3"
 dependencies = [
  "revm-bytecode",
- "revm-common-test-util",
  "revm-context",
  "revm-context-interface",
  "revm-database",
  "revm-database-interface",
+ "revm-ee-tests",
  "revm-handler",
  "revm-inspector",
  "revm-interpreter",
@@ -3802,14 +3802,6 @@ dependencies = [
  "phf",
  "revm-primitives",
  "serde",
-]
-
-[[package]]
-name = "revm-common-test-util"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -3871,6 +3863,20 @@ dependencies = [
  "rstest",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "revm-ee-tests"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "op-revm",
+ "revm",
+ "rstest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
 ]
 
 [[package]]

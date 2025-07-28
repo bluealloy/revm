@@ -1,19 +1,31 @@
-//! Integration tests for the `op-revm` crate.
-mod common;
+//! Integration tests for the `revm` crate.
 
-use common::compare_or_save_testdata;
-use context::ContextTr;
-use database::BENCH_CALLER;
-use primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY};
+use crate::TestdataConfig;
 use revm::{
     bytecode::opcode,
-    context::TxEnv,
-    database::{BenchmarkDB, BENCH_TARGET},
-    primitives::U256,
-    state::Bytecode,
+    context::{ContextTr, TxEnv},
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
+    state::{AccountStatus, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
-use state::AccountStatus;
+use std::path::PathBuf;
+
+// Re-export the constant for testdata directory path
+const TESTS_TESTDATA: &str = "tests/revm_testdata";
+
+fn revm_testdata_config() -> TestdataConfig {
+    TestdataConfig {
+        testdata_dir: PathBuf::from(TESTS_TESTDATA),
+    }
+}
+
+fn compare_or_save_revm_testdata<T>(filename: &str, output: &T)
+where
+    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
+{
+    crate::compare_or_save_testdata_with_config(filename, output, revm_testdata_config());
+}
 
 const SELFDESTRUCT_BYTECODE: &[u8] = &[
     opcode::PUSH2,
@@ -60,7 +72,7 @@ fn test_selfdestruct_multi_tx() {
 
     let output = evm.finalize();
 
-    compare_or_save_testdata(
+    compare_or_save_revm_testdata(
         "test_selfdestruct_multi_tx.json",
         &(result1, result2, output),
     );
@@ -171,7 +183,7 @@ pub fn test_multi_tx_create() {
     );
     let output = evm.finalize();
 
-    compare_or_save_testdata(
+    compare_or_save_revm_testdata(
         "test_multi_tx_create.json",
         &(result1, result2, result3, output),
     );
@@ -221,14 +233,13 @@ fn test_frame_stack_index() {
         .unwrap();
 
     assert_eq!(evm.frame_stack.index(), None);
-    compare_or_save_testdata("test_frame_stack_index.json", &result1);
+    compare_or_save_revm_testdata("test_frame_stack_index.json", &result1);
 }
 
 #[test]
 #[cfg(feature = "optional_balance_check")]
 fn test_disable_balance_check() {
-    use database::BENCH_CALLER_BALANCE;
-
+    use revm::database::BENCH_CALLER_BALANCE;
     const RETURN_CALLER_BALANCE_BYTECODE: &[u8] = &[
         opcode::CALLER,
         opcode::BALANCE,
