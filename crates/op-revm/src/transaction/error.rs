@@ -87,6 +87,11 @@ mod test {
     #[test]
     fn test_display_op_errors() {
         assert_eq!(
+            OpTransactionError::Base(InvalidTransaction::NonceTooHigh { tx: 2, state: 1 })
+                .to_string(),
+            "nonce 2 too high, expected 1"
+        );
+        assert_eq!(
             OpTransactionError::DepositSystemTxPostRegolith.to_string(),
             "deposit system transactions post regolith hardfork are not supported"
         );
