@@ -1,5 +1,6 @@
 use context::result::ExecResultAndState;
-use handler::{ExecuteCommitEvm, ExecuteEvm};
+use handler::{system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallEvm};
+use primitives::{Address, Bytes};
 
 /// InspectEvm is a API that allows inspecting the EVM.
 ///
@@ -74,5 +75,90 @@ pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
         let output = self.inspect_one(tx, inspector)?;
         self.commit_inner();
         Ok(output)
+    }
+}
+
+/// InspectSystemCallEvm is an API that allows inspecting system calls in the EVM.
+///
+/// It extends [`InspectEvm`] and [`SystemCallEvm`] traits to provide inspection
+/// capabilities for system transactions, enabling tracing and debugging of
+/// system calls similar to regular transactions.
+pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
+    /// Inspect a system call with the current inspector.
+    ///
+    /// Similar to [`InspectEvm::inspect_one_tx`] but for system calls.
+    /// Uses [`SYSTEM_ADDRESS`] as the caller.
+    fn inspect_one_system_call(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.inspect_one_system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+
+    /// Inspect a system call with the current inspector and a custom caller.
+    ///
+    /// Similar to [`InspectEvm::inspect_one_tx`] but for system calls with a custom caller.
+    fn inspect_one_system_call_with_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error>;
+
+    /// Inspect a system call and finalize the state.
+    ///
+    /// Similar to [`InspectEvm::inspect_tx`] but for system calls.
+    fn inspect_system_call(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output = self.inspect_one_system_call(system_contract_address, data)?;
+        let state = self.finalize();
+        Ok(ExecResultAndState::new(output, state))
+    }
+
+    /// Inspect a system call with a custom caller and finalize the state.
+    ///
+    /// Similar to [`InspectEvm::inspect_tx`] but for system calls with a custom caller.
+    fn inspect_system_call_with_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output =
+            self.inspect_one_system_call_with_caller(caller, system_contract_address, data)?;
+        let state = self.finalize();
+        Ok(ExecResultAndState::new(output, state))
+    }
+
+    /// Inspect a system call with a given inspector.
+    ///
+    /// Similar to [`InspectEvm::inspect_one`] but for system calls.
+    fn inspect_one_system_call_with_inspector(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+        inspector: Self::Inspector,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.set_inspector(inspector);
+        self.inspect_one_system_call(system_contract_address, data)
+    }
+
+    /// Inspect a system call with a given inspector and finalize the state.
+    ///
+    /// Similar to [`InspectEvm::inspect`] but for system calls.
+    fn inspect_system_call_with_inspector(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+        inspector: Self::Inspector,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output =
+            self.inspect_one_system_call_with_inspector(system_contract_address, data, inspector)?;
+        let state = self.finalize();
+        Ok(ExecResultAndState::new(output, state))
     }
 }
