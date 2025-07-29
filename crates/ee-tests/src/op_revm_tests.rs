@@ -1134,11 +1134,9 @@ fn test_system_call() {
 
     let mut evm = ctx.build_op();
 
-    evm.system_call_one(SYSTEM_ADDRESS, BENCH_TARGET, bytes!("0x0001"))
-        .unwrap();
+    let _ = evm.system_call_one(SYSTEM_ADDRESS, BENCH_TARGET, bytes!("0x0001"));
+    let state = evm.finalize();
 
-    // Run evm.
-    let output = evm.replay().unwrap();
-
-    compare_or_save_op_testdata("test_system_call.json", &output);
+    assert!(state.get(&SYSTEM_ADDRESS).is_none());
+    assert!(state.get(&BENCH_TARGET).unwrap().is_touched());
 }

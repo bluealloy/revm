@@ -1109,4 +1109,37 @@ mod tests {
         let account = evm.ctx().journal_mut().load_account(SENDER).unwrap();
         assert_eq!(account.info.balance, expected_refund);
     }
+
+    #[test]
+    fn test_tx_low_balance_nonce_unchanged() {
+        let ctx = Context::op().with_tx(
+            OpTransaction::builder()
+                .base(TxEnv::builder().value(U256::from(1000)))
+                .build_fill(),
+        );
+
+        let mut evm = ctx.build_op();
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+
+        let result = handler.validate_against_state_and_deduct_caller(&mut evm);
+
+        assert!(matches!(
+            result.err().unwrap(),
+            EVMError::Transaction(OpTransactionError::Base(
+                InvalidTransaction::LackOfFundForMaxFee { .. }
+            ))
+        ));
+        assert_eq!(
+            evm.0
+                .ctx
+                .journal_mut()
+                .load_account(Address::ZERO)
+                .unwrap()
+                .info
+                .nonce,
+            0
+        );
+    }
 }
