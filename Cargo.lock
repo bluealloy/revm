@@ -3040,6 +3040,7 @@ dependencies = [
  "alloy-sol-types",
  "auto_impl",
  "revm",
+ "revm-ee-tests",
  "rstest",
  "serde",
  "serde_json",
@@ -3779,6 +3780,7 @@ dependencies = [
  "revm-context-interface",
  "revm-database",
  "revm-database-interface",
+ "revm-ee-tests",
  "revm-handler",
  "revm-inspector",
  "revm-interpreter",
@@ -3859,6 +3861,20 @@ dependencies = [
  "rstest",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "revm-ee-tests"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "op-revm",
+ "revm",
+ "rstest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
 ]
 
 [[package]]
