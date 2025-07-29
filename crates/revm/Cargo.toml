@@ -34,6 +34,7 @@ state.workspace = true
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
+ee-tests.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]

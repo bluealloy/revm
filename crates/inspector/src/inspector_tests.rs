@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{InspectEvm, Inspector};
+    use crate::{InspectEvm, InspectSystemCallEvm, Inspector};
     use context::{Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
@@ -730,5 +730,74 @@ mod tests {
             0x17,
             "Should have jumped to JUMPDEST"
         );
+    }
+
+    #[test]
+    fn test_system_call_inspection_basic() {
+        // PUSH1 0x42, SSTORE, STOP
+        let code = Bytes::from(vec![
+            opcode::PUSH1,
+            0x42,
+            opcode::PUSH1,
+            0x00,
+            opcode::SSTORE,
+            opcode::STOP,
+        ]);
+
+        let bytecode = Bytecode::new_raw(code);
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm
+            .inspect_system_call(BENCH_TARGET, Bytes::default())
+            .unwrap();
+
+        assert!(result.result.is_success());
+        assert!(evm.inspector.get_step_count() > 0);
+        assert!(!result.state.is_empty());
+    }
+
+    #[test]
+    fn test_system_call_inspection_api_variants() {
+        let code = vec![
+            opcode::CALLER,
+            opcode::PUSH1,
+            0x00,
+            opcode::MSTORE,
+            opcode::PUSH1,
+            0x20,
+            opcode::PUSH1,
+            0x00,
+            opcode::RETURN,
+        ];
+
+        let bytecode = Bytecode::new_raw(Bytes::from(code));
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        // Test inspect_one_system_call
+        let result = evm
+            .inspect_one_system_call(BENCH_TARGET, Bytes::default())
+            .unwrap();
+        assert!(result.is_success());
+
+        // Test inspect_one_system_call_with_caller
+        let custom_caller = address!("0x1234567890123456789012345678901234567890");
+        let result = evm
+            .inspect_one_system_call_with_caller(custom_caller, BENCH_TARGET, Bytes::default())
+            .unwrap();
+        assert!(result.is_success());
+
+        // Test inspect_one_system_call_with_inspector
+        let result = evm
+            .inspect_one_system_call_with_inspector(
+                BENCH_TARGET,
+                Bytes::default(),
+                TestInspector::new(),
+            )
+            .unwrap();
+        assert!(result.is_success());
+
+        assert!(evm.inspector.get_step_count() > 0);
     }
 }
