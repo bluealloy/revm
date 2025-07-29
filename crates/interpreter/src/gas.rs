@@ -146,10 +146,9 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let remaining = self.remaining.checked_sub(cost);
-        let oog = remaining.is_some();
-        self.remaining = remaining.unwrap_or_default();
-        oog
+        let t = self.remaining < cost;
+        self.remaining = self.remaining.wrapping_sub(cost);
+        !t
     }
 
     /// Record memory expansion
