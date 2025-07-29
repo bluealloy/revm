@@ -19,6 +19,7 @@ use fluentbase_sdk::{
     SVM_ELF_MAGIC_BYTES,
     SVM_MAX_CODE_SIZE,
     SYSCALL_ID_BALANCE,
+    SYSCALL_ID_BLOCK_HASH,
     SYSCALL_ID_CALL,
     SYSCALL_ID_CALL_CODE,
     SYSCALL_ID_CODE_COPY,
@@ -59,6 +60,7 @@ use revm::{
         CreateInputs,
         FrameInput,
         Gas,
+        Host,
         InstructionResult,
         InterpreterAction,
         InterpreterResult,
@@ -67,6 +69,7 @@ use revm::{
         hardfork::{SpecId, BERLIN, ISTANBUL, TANGERINE},
         MAX_INITCODE_SIZE,
     },
+    Database,
 };
 use std::{boxed::Box, vec::Vec};
 
@@ -839,6 +842,32 @@ pub(crate) fn execute_rwasm_interruption<
             journal.tstore(current_target_address, slot, value);
             // empty result
             return_result!(Bytes::new(), Return);
+        }
+
+        SYSCALL_ID_BLOCK_HASH => {
+            assert_return!(
+                inputs.syscall_params.input.len() == 8 && inputs.syscall_params.state == STATE_MAIN,
+                MalformedBuiltinParams
+            );
+            charge_gas!(gas::BLOCKHASH);
+
+            let requested_block = LittleEndian::read_u64(&inputs.syscall_params.input[0..8]);
+            let current_block = evm.ctx().block_number();
+
+            #[cfg(feature = "debug-print")]
+            println!(
+                "SYSCALL_BLOCK_HASH: requested_block={}; current_block={}",
+                requested_block, current_block
+            );
+            // https://ethervm.io/#40
+            let hash = match current_block.checked_sub(requested_block) {
+                Some(diff) if diff > 0 && diff <= 256 => {
+                    evm.ctx().block_hash(requested_block).unwrap_or(B256::ZERO)
+                }
+                _ => B256::ZERO,
+            };
+
+            return_result!(hash, Return);
         }
 
         _ => return_result!(MalformedBuiltinParams),
