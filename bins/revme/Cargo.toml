@@ -48,3 +48,10 @@ k256 = { workspace = true, features = ["ecdsa"] }
 [[bench]]
 name = "evm"
 harness = false
+
+[features]
+json = [
+	"revm/json",
+	"inspector/json",
+	"statetest-types/json"
+]

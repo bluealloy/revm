@@ -53,3 +53,6 @@ arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
 debug-print = []
+json = [
+	"fluentbase-sdk/json"
+]

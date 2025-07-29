@@ -26,3 +26,8 @@ all = "warn"
 revm = { workspace = true, features = ["std", "serde"] }
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
+
+[features]
+json = [
+	"revm/json"
+]

@@ -65,3 +65,7 @@ serde = [
 ]
 # serde is used only for TracerEip33155
 serde-json = ["dep:serde", "dep:serde_json", "serde"]
+json = [
+	"handler/json",
+	"interpreter/json"
+]
