@@ -146,11 +146,10 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
-            self.remaining = new_remaining;
-            return true;
-        }
-        false
+        let remaining = self.remaining.checked_sub(cost);
+        let oog = remaining.is_some();
+        self.remaining = remaining.unwrap_or_default();
+        oog
     }
 
     /// Record memory expansion
@@ -217,4 +216,24 @@ impl MemoryGas {
         // Notice the swap above.
         Some(self.expansion_cost - cost)
     }
+}
+
+/// Record a cost in the gas.
+///
+/// Returns `false` if the gas limit is exceeded.
+#[inline]
+pub fn record_cost(gas: &mut Gas, cost: u64) -> bool {
+    let remaining = gas.remaining.checked_sub(cost);
+    let oog = remaining.is_none();
+    gas.remaining = remaining.unwrap_or_default();
+    oog
+}
+
+#[inline(never)]
+pub fn record_cost_jump(gas: &mut Gas, cost: u64) -> bool {
+    if let Some(remaining) = gas.remaining.checked_sub(cost) {
+        gas.remaining = remaining;
+        return true;
+    }
+    return false;
 }
