@@ -11,7 +11,7 @@ use revm::{
         result::{ExecutionResult, OutOfGasError},
         BlockEnv, CfgEnv, TxEnv,
     },
-    context_interface::result::{EVMError, HaltReason, InvalidTransaction},
+    context_interface::result::HaltReason,
     database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
     handler::system_call::SYSTEM_ADDRESS,
     interpreter::{
@@ -1134,11 +1134,9 @@ fn test_system_call() {
 
     let mut evm = ctx.build_op();
 
-    let _ = evm
-        .transact_system_call(BENCH_TARGET, bytes!("0x0001"))
-        .unwrap();
+    let _ = evm.system_call_one(SYSTEM_ADDRESS, BENCH_TARGET, bytes!("0x0001"));
     let state = evm.finalize();
 
-    assert!(state.get(&Address::ZERO).is_none());
+    assert!(state.get(&SYSTEM_ADDRESS).is_none());
     assert!(state.get(&BENCH_TARGET).unwrap().is_touched());
 }
