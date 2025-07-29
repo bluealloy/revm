@@ -1082,11 +1082,11 @@ fn test_system_call() {
 
     let mut evm = ctx.build_op();
 
-    evm.transact_system_call(BENCH_TARGET, bytes!("0x0001"))
+    let _ = evm
+        .transact_system_call(BENCH_TARGET, bytes!("0x0001"))
         .unwrap();
+    let state = evm.finalize();
 
-    // Run evm.
-    let output = evm.replay().unwrap();
-
-    compare_or_save_testdata("test_system_call.json", &output);
+    assert!(state.get(&Address::ZERO).is_none());
+    assert!(state.get(&BENCH_TARGET).unwrap().is_touched());
 }
