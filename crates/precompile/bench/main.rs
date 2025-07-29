@@ -22,10 +22,10 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     eip2537::add_map_fp_to_g1_benches(&mut group);
     eip2537::add_map_fp2_to_g2_benches(&mut group);
 
-    // Run BN128 benchmarks
-    eip1962::add_bn128_add_benches(&mut group);
-    eip1962::add_bn128_mul_benches(&mut group);
-    eip1962::add_bn128_pair_benches(&mut group);
+    // Run BN254 benchmarks
+    eip1962::add_bn254_add_benches(&mut group);
+    eip1962::add_bn254_mul_benches(&mut group);
+    eip1962::add_bn254_pair_benches(&mut group);
 
     // Run secp256k1 benchmarks
     ecrecover::add_benches(&mut group);

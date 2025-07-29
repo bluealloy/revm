@@ -254,13 +254,9 @@ pub trait LoopControl {
     }
     /// Is end of the loop.
     fn is_end(&self) -> bool;
-    /// Reverts to previous instruction pointer.
-    ///
-    /// After the loop is finished, the instruction pointer is set to the previous one.
-    fn revert_to_previous_pointer(&mut self);
-    /// Set return action and set instruction pointer to null. Preserve previous pointer
-    ///
-    /// Previous pointer can be restored by calling [`LoopControl::revert_to_previous_pointer`].
+    /// Sets the `end` flag internally. Action should be taken after.
+    fn reset_action(&mut self);
+    /// Set return action.
     fn set_action(&mut self, action: InterpreterAction);
     /// Returns the current action.
     fn action(&mut self) -> &mut Option<InterpreterAction>;
