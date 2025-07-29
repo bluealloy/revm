@@ -68,6 +68,11 @@ impl InterpreterAction {
         matches!(self, InterpreterAction::Return { .. })
     }
 
+    /// Returns `true` if action is out of gas.
+    pub fn is_oog(&self) -> bool {
+        matches!(self, InterpreterAction::Return(result) if result.result == InstructionResult::OutOfGas)
+    }
+
     /// Returns [`InterpreterResult`] if action is return.
     ///
     /// Else it returns [None].

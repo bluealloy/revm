@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas, host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -195,7 +195,12 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn take_next_action(&mut self) -> InterpreterAction {
         self.bytecode.reset_action();
         // Return next action if it is some.
-        core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
+        let action = core::mem::take(self.bytecode.action()).expect("Interpreter to set action");
+
+        if action.is_oog() {
+            self.gas.spend_all();
+        }
+        action
     }
 
     /// Halt the interpreter with the given result.
