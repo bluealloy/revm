@@ -163,4 +163,12 @@ mod tests {
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 0]);
         let _ = LegacyAnalyzedBytecode::new(bytecode, 0, jump_table);
     }
+
+    #[test]
+    #[should_panic(expected = "last bytecode byte should be terminating")]
+    fn test_panic_on_non_stop_bytecode() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
+        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
+        let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
+    }
 }
