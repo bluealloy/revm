@@ -13,7 +13,9 @@ use revm::{
         instructions::EthInstructions, system_call::SystemCallEvm, EthFrame, Handler,
         PrecompileProvider, SystemCallTx,
     },
-    inspector::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm, Inspector, InspectorHandler, JournalExt},
+    inspector::{
+        InspectCommitEvm, InspectEvm, InspectSystemCallEvm, Inspector, InspectorHandler, JournalExt,
+    },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
     primitives::{Address, Bytes},
     state::EvmState,

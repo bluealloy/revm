@@ -1078,28 +1078,28 @@ fn test_log_inspector() {
 #[test]
 fn test_system_call_inspection() {
     use revm::InspectSystemCallEvm;
-    
+
     let ctx = Context::op();
-    
+
     let mut evm = ctx.build_op_with_inspector(LogInspector::default());
-    
+
     // Test system call inspection
     let result = evm
         .inspect_one_system_call(BENCH_TARGET, Bytes::default())
         .unwrap();
-    
+
     // Should succeed
     assert!(result.is_success());
-    
+
     // Test system call inspection with caller
     let custom_caller = Address::from([0x12; 20]);
     let result = evm
         .inspect_one_system_call_with_caller(custom_caller, BENCH_TARGET, Bytes::default())
         .unwrap();
-    
+
     // Should also succeed
     assert!(result.is_success());
-    
+
     // Test system call inspection with inspector
     let result = evm
         .inspect_one_system_call_with_inspector(
@@ -1108,7 +1108,7 @@ fn test_system_call_inspection() {
             LogInspector::default(),
         )
         .unwrap();
-    
+
     // Should succeed
     assert!(result.is_success());
 }
