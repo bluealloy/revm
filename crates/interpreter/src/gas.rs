@@ -143,14 +143,12 @@ impl Gas {
     /// Records an explicit cost.
     ///
     /// Returns `false` if the gas limit is exceeded.
-    #[inline]
+    #[inline]//(never)]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
-            self.remaining = new_remaining;
-            return true;
-        }
-        false
+        let t = self.remaining < cost;
+        self.remaining = self.remaining.wrapping_sub(cost);
+        !t
     }
 
     /// Record memory expansion
