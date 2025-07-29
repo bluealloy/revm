@@ -1,5 +1,4 @@
 use crate::{
-    gas,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
     InstructionResult,
 };

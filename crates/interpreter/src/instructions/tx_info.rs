@@ -13,7 +13,7 @@ use crate::InstructionContext;
 pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BASE);
+    //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
         U256::from(context.host.effective_gas_price())
@@ -24,7 +24,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Gets the execution origination address.
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
+    //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
         context.host.caller().into_word().into()
