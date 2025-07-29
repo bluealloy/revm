@@ -54,9 +54,7 @@ impl<'a> BytecodeIterator<'a> {
     #[inline]
     fn skip_immediate(&mut self, opcode: u8) {
         // Get base immediate size from opcode info
-        let immediate_size = opcode::OPCODE_INFO[opcode as usize]
-            .map(|info| info.immediate_size() as usize)
-            .unwrap_or_default();
+        let immediate_size = opcode::OPCODE_INFO[opcode as usize].immediate_size() as usize;
 
         // Advance the iterator by the immediate size
         if immediate_size > 0 {

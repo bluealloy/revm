@@ -32,7 +32,7 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
         // Get current opcode.
         let opcode = self.interpreter.bytecode.opcode();
 
-        let info = unsafe { OPCODE_INFO[opcode as usize].unwrap_unchecked() };
+        let info = unsafe { &OPCODE_INFO.get_unchecked(opcode as usize) };
         gas!(self.interpreter, info.static_gas() as u64);
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last

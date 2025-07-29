@@ -146,24 +146,9 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let t = self.remaining < cost;
+        let is_recorded = self.remaining >= cost;
         self.remaining = self.remaining.wrapping_sub(cost);
-        !t
-    }
-
-    /// Record memory expansion
-    #[inline]
-    #[must_use = "internally uses record_cost that flags out of gas error"]
-    pub fn record_memory_expansion(&mut self, new_len: usize) -> MemoryExtensionResult {
-        let Some(additional_cost) = self.memory.record_new_len(new_len) else {
-            return MemoryExtensionResult::Same;
-        };
-
-        if !self.record_cost(additional_cost) {
-            return MemoryExtensionResult::OutOfGas;
-        }
-
-        MemoryExtensionResult::Extended
+        is_recorded
     }
 }
 
@@ -215,24 +200,4 @@ impl MemoryGas {
         // Notice the swap above.
         Some(self.expansion_cost - cost)
     }
-}
-
-/// Record a cost in the gas.
-///
-/// Returns `false` if the gas limit is exceeded.
-#[inline]
-pub fn record_cost(gas: &mut Gas, cost: u64) -> bool {
-    let remaining = gas.remaining.checked_sub(cost);
-    let oog = remaining.is_none();
-    gas.remaining = remaining.unwrap_or_default();
-    oog
-}
-
-#[inline(never)]
-pub fn record_cost_jump(gas: &mut Gas, cost: u64) -> bool {
-    if let Some(remaining) = gas.remaining.checked_sub(cost) {
-        gas.remaining = remaining;
-        return true;
-    }
-    return false;
 }

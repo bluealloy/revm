@@ -17,10 +17,7 @@ use crate::InstructionContext;
 pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
-    gas_or_fail!(
-        context.interpreter,
-        gas::keccak256_cost(len).map(|c| c - gas::KECCAK256)
-    );
+    gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {

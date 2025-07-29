@@ -17,10 +17,11 @@ impl fmt::Display for OpCode {
     /// Formats the opcode as a string
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let n = self.get();
-        if let Some(val) = OPCODE_INFO[n as usize] {
-            f.write_str(val.name())
-        } else {
+        let info = OPCODE_INFO[n as usize];
+        if info.unknown {
             write!(f, "UNKNOWN(0x{n:02X})")
+        } else {
+            f.write_str(info.name())
         }
     }
 }
@@ -31,10 +32,11 @@ impl OpCode {
     /// Returns None if the opcode is not valid.
     #[inline]
     pub const fn new(opcode: u8) -> Option<Self> {
-        match OPCODE_INFO[opcode as usize] {
-            Some(_) => Some(Self(opcode)),
-            None => None,
+        let info = OPCODE_INFO[opcode as usize];
+        if info.unknown {
+            return None;
         }
+        Some(Self(opcode))
     }
 
     /// Returns true if the opcode is a jump destination.
@@ -151,11 +153,7 @@ impl OpCode {
     /// Returns the opcode information.
     #[inline]
     pub const fn info(&self) -> OpCodeInfo {
-        if let Some(t) = OPCODE_INFO[self.0 as usize] {
-            t
-        } else {
-            panic!("opcode not found")
-        }
+        OPCODE_INFO[self.0 as usize]
     }
 
     /// Returns the number of both input and output stack elements.
@@ -207,16 +205,16 @@ impl PartialEq<u8> for OpCode {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
     static_gas: u16,
+    /// Stack inputs
+    inputs: u8,
+    /// Stack outputs
+    outputs: u8,
     /// Invariant: `(name_ptr, name_len)` is a [`&'static str`][str].
     ///
     /// It is a shorted variant of [`str`] as
     /// the name length is always less than 256 characters.
     name_ptr: NonNull<u8>,
     name_len: u8,
-    /// Stack inputs
-    inputs: u8,
-    /// Stack outputs
-    outputs: u8,
     /// Number of intermediate bytes
     ///
     /// RJUMPV is a special case where the bytes len depends on bytecode value,
@@ -224,6 +222,7 @@ pub struct OpCodeInfo {
     immediate_size: u8,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
+    unknown: bool,
 }
 
 // SAFETY: The `NonNull` is just a `&'static str`.
@@ -254,6 +253,7 @@ impl OpCodeInfo {
             outputs: 0,
             terminating: false,
             immediate_size: 0,
+            unknown: false,
         }
     }
 
@@ -355,8 +355,8 @@ macro_rules! opcodes {
         )*}
 
         /// Maps each opcode to its info.
-        pub static OPCODE_INFO: [Option<OpCodeInfo>; 256] = {
-            let mut map = [None; 256];
+        pub static OPCODE_INFO: [OpCodeInfo; 256] = {
+            let mut map = [OpCodeInfo::new(""); 256];
             let mut prev: u8 = 0;
             $(
                 let val: u8 = $val;
@@ -366,7 +366,7 @@ macro_rules! opcodes {
                 $(
                 let info = $modifier(info, $($($modifier_arg),*)?);
                 )*
-                map[$val] = Some(info);
+                map[$val] = info;
             )*
             let _ = prev;
             map
@@ -436,7 +436,7 @@ opcodes! {
     0x1D => SAR  => stack_io(2, 1), gas(3); //
     0x1E => CLZ => stack_io(1, 1), gas(5); //
     // 0x1F
-    0x20 => KECCAK256 => stack_io(2, 1), gas(30); //
+    0x20 => KECCAK256 => stack_io(2, 1); // dynamic
     // 0x21
     // 0x22
     // 0x23
@@ -690,13 +690,11 @@ mod tests {
         }
 
         for (i, opcode) in OPCODE_INFO.iter().enumerate() {
-            if let Some(opcode) = opcode {
-                assert_eq!(
-                    opcode.immediate_size(),
-                    expected[i],
-                    "immediate_size check failed for {opcode:#?}",
-                );
-            }
+            assert_eq!(
+                opcode.immediate_size(),
+                expected[i],
+                "immediate_size check failed for {opcode:#?}",
+            );
         }
     }
 
@@ -731,7 +729,7 @@ mod tests {
     #[test]
     fn count_opcodes() {
         let mut opcode_num = 0;
-        for _ in OPCODE_INFO.into_iter().flatten() {
+        for _ in OPCODE_INFO.into_iter() {
             opcode_num += 1;
         }
         assert_eq!(opcode_num, 150);
@@ -747,7 +745,7 @@ mod tests {
 
         for (i, opcode) in OPCODE_INFO.into_iter().enumerate() {
             assert_eq!(
-                opcode.map(|opcode| opcode.terminating).unwrap_or_default(),
+                opcode.is_terminating(),
                 opcodes[i],
                 "Opcode {opcode:?} terminating check failed."
             );
