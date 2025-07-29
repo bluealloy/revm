@@ -1079,11 +1079,7 @@ fn test_log_inspector() {
 fn test_system_call_inspection() {
     use revm::InspectSystemCallEvm;
     
-    // Create a simple contract that returns success (STOP opcode)
-    let contract_data = Bytes::from([opcode::STOP]);
-    let bytecode = Bytecode::new_raw(contract_data);
-    
-    let ctx = Context::op().with_db(BenchmarkDB::new_bytecode(bytecode));
+    let ctx = Context::op();
     
     let mut evm = ctx.build_op_with_inspector(LogInspector::default());
     
