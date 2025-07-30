@@ -22,7 +22,7 @@ use crate::{
     host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
-use bytecode::Bytecode;
+use bytecode::{opcode::OPCODE_INFO, Bytecode};
 use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
@@ -213,7 +213,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[cold]
     #[inline(never)]
     pub fn halt_oog(&mut self) {
-        //self.gas.spend_all();
+        self.gas.spend_all();
         self.bytecode.set_action(InterpreterAction::new_halt(
             InstructionResult::OutOfGas,
             self.gas,
@@ -236,11 +236,18 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Internally it will increment instruction pointer by one.
     #[inline]
     pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
+        // Get current opcode.
+        let opcode = self.bytecode.opcode();
+
+        let info = unsafe { &OPCODE_INFO.get_unchecked(opcode as usize) };
+        if !self.gas.record_cost_unsafe(info.static_gas() as u64) {
+            self.halt_oog();
+        }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        context.step(instruction_table);
+        context.step(opcode, instruction_table);
     }
 
     /// Executes the instruction at the current instruction pointer.

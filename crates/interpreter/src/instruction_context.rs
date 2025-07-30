@@ -28,19 +28,8 @@ impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step(self, instruction_table: &[Instruction<ITy, H>; 256]) {
-        // Get current opcode.
-        let opcode = self.interpreter.bytecode.opcode();
-
-        let info = unsafe { &OPCODE_INFO.get_unchecked(opcode as usize) };
-        // if !self
-        //     .interpreter
-        //     .gas
-        //     .record_cost(info.static_gas() as u64)
-        // {
-        //     self.interpreter.halt_oog();
-        // }
-        gas!(self.interpreter, info.static_gas() as u64);
+    pub(crate) fn step(self,opcode: u8, instruction_table: &[Instruction<ITy, H>; 256]) {
+        //gas!(self.interpreter, info.static_gas() as u64);
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction

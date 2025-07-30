@@ -156,7 +156,7 @@ impl Gas {
     /// Records an explicit cost. In case of underflow the gas will wrap around cost.
     ///
     /// Returns `false` if the gas limit is exceeded.
-    #[inline]
+    #[inline(always)]
     pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
         let is_recorded = self.remaining >= cost;
         self.remaining = self.remaining.wrapping_sub(cost);
