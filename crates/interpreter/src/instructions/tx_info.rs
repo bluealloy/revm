@@ -1,5 +1,4 @@
 use crate::{
-    gas,
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
@@ -38,7 +37,7 @@ pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::VERYLOW);
+    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], index, context.interpreter);
     let i = as_usize_saturated!(index);
     *index = context.host.blob_hash(i).unwrap_or_default();

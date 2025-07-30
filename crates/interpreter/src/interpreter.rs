@@ -196,10 +196,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.reset_action();
         // Return next action if it is some.
         let action = core::mem::take(self.bytecode.action()).expect("Interpreter to set action");
-
-        if action.is_oog() {
-            self.gas.spend_all();
-        }
         action
     }
 
@@ -211,6 +207,17 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn halt(&mut self, result: InstructionResult) {
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
+    }
+
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_oog(&mut self) {
+        //self.gas.spend_all();
+        self.bytecode.set_action(InterpreterAction::new_halt(
+            InstructionResult::OutOfGas,
+            self.gas,
+        ));
     }
 
     /// Return with the given output.

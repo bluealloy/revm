@@ -1,5 +1,4 @@
 use crate::{
-    gas,
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };

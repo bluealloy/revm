@@ -479,7 +479,7 @@ opcodes! {
     0x47 => SELFBALANCE  => stack_io(0, 1), gas(5); //
     0x48 => BASEFEE      => stack_io(0, 1), gas(2); //
     0x49 => BLOBHASH     => stack_io(1, 1), gas(3); //
-    0x4A => BLOBBASEFEE  => stack_io(0, 1); //
+    0x4A => BLOBBASEFEE  => stack_io(0, 1), gas(2); //
     // 0x4B
     // 0x4C
     // 0x4D

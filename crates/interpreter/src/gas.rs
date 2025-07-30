@@ -146,6 +146,18 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
+        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
+            self.remaining = new_remaining;
+            return true;
+        }
+        false
+    }
+
+    /// Records an explicit cost. In case of underflow the gas will wrap around cost.
+    ///
+    /// Returns `false` if the gas limit is exceeded.
+    #[inline]
+    pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
         let is_recorded = self.remaining >= cost;
         self.remaining = self.remaining.wrapping_sub(cost);
         is_recorded

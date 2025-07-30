@@ -54,28 +54,36 @@ pub enum InterpreterAction {
 
 impl InterpreterAction {
     /// Returns `true` if action is call.
+    #[inline]
     pub fn is_call(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Call(..)))
     }
 
     /// Returns `true` if action is create.
+    #[inline]
     pub fn is_create(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Create(..)))
     }
 
     /// Returns `true` if action is return.
+    #[inline]
     pub fn is_return(&self) -> bool {
         matches!(self, InterpreterAction::Return { .. })
     }
 
-    /// Returns `true` if action is out of gas.
-    pub fn is_oog(&self) -> bool {
-        matches!(self, InterpreterAction::Return(result) if result.result == InstructionResult::OutOfGas)
+    /// Returns [`Gas`] if action is return.
+    #[inline]
+    pub fn gas_mut(&mut self) -> Option<&mut Gas> {
+        match self {
+            InterpreterAction::Return(result) => Some(&mut result.gas),
+            _ => None,
+        }
     }
 
     /// Returns [`InterpreterResult`] if action is return.
     ///
     /// Else it returns [None].
+    #[inline]
     pub fn into_result_return(self) -> Option<InterpreterResult> {
         match self {
             InterpreterAction::Return(result) => Some(result),
@@ -86,6 +94,7 @@ impl InterpreterAction {
     /// Returns [`InstructionResult`] if action is return.
     ///
     /// Else it returns [None].
+    #[inline]
     pub fn instruction_result(&self) -> Option<InstructionResult> {
         match self {
             InterpreterAction::Return(result) => Some(result.result),
@@ -94,21 +103,25 @@ impl InterpreterAction {
     }
 
     /// Create new frame action with the given frame input.
+    #[inline]
     pub fn new_frame(frame_input: FrameInput) -> Self {
         Self::NewFrame(frame_input)
     }
 
     /// Create new halt action with the given result and gas.
+    #[inline]
     pub fn new_halt(result: InstructionResult, gas: Gas) -> Self {
         Self::Return(InterpreterResult::new(result, Bytes::new(), gas))
     }
 
     /// Create new return action with the given result, output and gas.
+    #[inline]
     pub fn new_return(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
         Self::Return(InterpreterResult::new(result, output, gas))
     }
 
     /// Create new stop action.
+    #[inline]
     pub fn new_stop() -> Self {
         Self::Return(InterpreterResult::new(
             InstructionResult::Stop,
