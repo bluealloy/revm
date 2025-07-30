@@ -234,7 +234,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline]
+    #[inline(always)]
     pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
