@@ -72,6 +72,11 @@ impl SystemCallTx for TxEnv {
 /// beneficiary. They are used before and after block execution to insert or obtain blockchain state.
 ///
 /// It act similar to `transact` function and sets default Tx with data and system contract as a target.
+///
+/// # Note
+///
+/// Only one function needs implementation [`SystemCallEvm::system_call_one_with_caller`], other functions
+/// are derived from it.
 pub trait SystemCallEvm: ExecuteEvm {
     /// System call is a special transaction call that is used to call a system contract.
     ///
@@ -79,7 +84,7 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// given values.
     ///
     /// Block values are taken into account and will determent how system call will be executed.
-    fn system_call_one(
+    fn system_call_one_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
@@ -92,38 +97,59 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// given values.
     ///
     /// Block values are taken into account and will determent how system call will be executed.
-    #[deprecated(since = "0.1.0", note = "Use `system_call_one` instead")]
-    fn transact_system_call_with_caller(
-        &mut self,
-        caller: Address,
-        system_contract_address: Address,
-        data: Bytes,
-    ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.system_call_one(caller, system_contract_address, data)
-    }
-
-    /// Calls [`SystemCallEvm::system_call_one`] with [`SYSTEM_ADDRESS`] as a caller.
-    #[deprecated(
-        since = "0.1.0",
-        note = "Use `system_call_one` with SYSTEM_ADDRESS instead"
-    )]
-    fn transact_system_call(
+    fn system_call_one(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        self.system_call_one(SYSTEM_ADDRESS, system_contract_address, data)
+        self.system_call_one_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
     }
 
-    /// Transact the system call and finalize.
-    ///
-    /// Internally calls combo of `system_call_one` and `finalize` functions.
+    /// Internally calls [`SystemCallEvm::system_call_with_caller`].
     fn system_call(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         self.system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+
+    /// Internally calls [`SystemCallEvm::system_call_one`] and [`ExecuteEvm::finalize`] functions to obtain the changed state.
+    fn system_call_with_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let result = self.system_call_one_with_caller(caller, system_contract_address, data)?;
+        let state = self.finalize();
+        Ok(ExecResultAndState::new(result, state))
+    }
+
+    /// System call is a special transaction call that is used to call a system contract.
+    ///
+    /// Transaction fields are reset and set in [`SystemCallTx`] and data and target are set to
+    /// given values.
+    ///
+    /// Block values are taken into account and will determent how system call will be executed.
+    #[deprecated(since = "0.1.0", note = "Use `system_call_one_with_caller` instead")]
+    fn transact_system_call_with_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.system_call_one_with_caller(caller, system_contract_address, data)
+    }
+
+    /// Calls [`SystemCallEvm::system_call_one`] with [`SYSTEM_ADDRESS`] as a caller.
+    #[deprecated(since = "0.1.0", note = "Use `system_call_one` instead")]
+    fn transact_system_call(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.system_call_one(system_contract_address, data)
     }
 
     /// Transact the system call and finalize.
@@ -136,18 +162,6 @@ pub trait SystemCallEvm: ExecuteEvm {
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
         self.system_call(system_contract_address, data)
-    }
-
-    /// Calls [`SystemCallEvm::system_call_one`] and `finalize` functions.
-    fn system_call_with_caller(
-        &mut self,
-        caller: Address,
-        system_contract_address: Address,
-        data: Bytes,
-    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let result = self.system_call_one(caller, system_contract_address, data)?;
-        let state = self.finalize();
-        Ok(ExecResultAndState::new(result, state))
     }
 
     /// Calls [`SystemCallEvm::system_call_one`] and `finalize` functions.
@@ -210,7 +224,7 @@ where
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
-    fn system_call_one(
+    fn system_call_one_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
