@@ -26,7 +26,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 #### Tools
 - [**Foundry:**](https://github.com/foundry-rs/foundry) A portable and modular toolkit for rapid Ethereum application development in Rust.
 - [**Hardhat:**](https://github.com/NomicFoundation/hardhat) A comprehensive development environment for compiling, deploying, testing, and debugging Ethereum software.
-- [**Arbiter:**](https://github.com/primitivefinance/arbiter) smart-contract simulation.
+- [**Arbiter:**](https://github.com/harnesslabs/arbiter) smart-contract simulation.
 
 #### Frameworks and Libraries
 - [**revm-inspectors:**](https://github.com/paradigmxyz/revm-inspectors) Hooks for EVM execution.
@@ -40,6 +40,6 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 #### Tutorials
 - [**MyEvm**](https://github.com/bluealloy/revm/tree/main/examples/my_evm): Custom EVM Implementation Example
 - [**Revm is All You Need:**](https://medium.com/@solidquant/revm-is-all-you-need-e01b5b0421e4): Guide on building simulated blockchain environments.
-- [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/tree/main/examples/uniswap_get_reserves) Demonstrates a USDC swap on Uniswap V2.evm is available in the [awesome-revm](./awesome.md) section o
-- [**revm-by-example:**](https://github.com/Cionn3/revm-by-example) Practical examples using the Rust Ethereum Virtual Machine.
+- [**Uniswap Swap Example:**](https://github.com/bluealloy/revm/tree/main/examples/uniswap_get_reserves) Demonstrates a USDC swap on Uniswap V2.
+- [**revm-by-example:**](https://github.com/greekfetacheese/revm-by-example) Practical examples using the Rust Ethereum Virtual Machine.
 - [**How to Discover long-tail MEV Strategies using Revm**](https://pawelurbanek.com/long-tail-mev-revm) 
