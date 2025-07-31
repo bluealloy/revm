@@ -1,12 +1,16 @@
-use bytecode::Bytecode;
 use core::hash::{Hash, Hasher};
-use primitives::{B256, KECCAK_EMPTY, U256};
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize};
+
+use bytecode::Bytecode;
+use primitives::{B256, KECCAK_EMPTY, U256, hardfork};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-#[derive(Clone, Debug, Eq, Ord, PartialOrd, Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
@@ -24,13 +28,14 @@ pub struct AccountInfo {
 }
 
 // Manual Deserialize implementation to support both formats
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for AccountInfo {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
+        use core::fmt;
         use serde::de::{self, MapAccess, Visitor};
-        use std::fmt;
 
         struct AccountInfoVisitor;
 
@@ -50,7 +55,7 @@ impl<'de> Deserialize<'de> for AccountInfo {
                 let mut code_hash = None;
                 let mut code = None;
 
-                while let Some(key) = map.next_key::<String>()? {
+                while let Some(key) = map.next_key::<hardfork::String>()? {
                     match key.as_str() {
                         "balance" => {
                             if balance.is_some() {
@@ -77,7 +82,6 @@ impl<'de> Deserialize<'de> for AccountInfo {
                             code = Some(map.next_value()?);
                         }
                         _ => {
-                            // Ignore unknown fields for forward compatibility
                             let _ = map.next_value::<serde::de::IgnoredAny>()?;
                         }
                     }
@@ -86,24 +90,19 @@ impl<'de> Deserialize<'de> for AccountInfo {
                 let balance = balance.ok_or_else(|| de::Error::missing_field("balance"))?;
                 let nonce = nonce.ok_or_else(|| de::Error::missing_field("nonce"))?;
 
-                // Handle the two different formats:
                 match (code_hash, code) {
-                    // Case 1: Both code_hash and code are present (current REVM format)
                     (Some(hash), Some(bytecode)) => Ok(AccountInfo {
                         balance,
                         nonce,
                         code_hash: hash,
                         code: Some(bytecode),
                     }),
-                    // Case 2: Only code_hash is present (no code)
                     (Some(hash), None) => Ok(AccountInfo {
                         balance,
                         nonce,
                         code_hash: hash,
                         code: None,
                     }),
-                    // Case 3: Only code is present (eth_getAccountInfo RPC format)
-                    // Compute code_hash from the bytecode
                     (None, Some(bytecode)) => {
                         let computed_hash = bytecode.hash_slow();
                         Ok(AccountInfo {
@@ -113,7 +112,6 @@ impl<'de> Deserialize<'de> for AccountInfo {
                             code: Some(bytecode),
                         })
                     }
-                    // Case 4: Neither present (empty account)
                     (None, None) => Ok(AccountInfo {
                         balance,
                         nonce,
