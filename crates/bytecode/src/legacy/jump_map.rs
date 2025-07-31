@@ -183,6 +183,156 @@ mod tests {
         assert!(!jump_table.is_valid(11));
         assert!(!jump_table.is_valid(12));
     }
+
+    #[test]
+    fn test_as_slice() {
+        let data = &[0x0D, 0x06];
+        let jump_table = JumpTable::from_slice(data, 13);
+
+        let slice = jump_table.as_slice();
+        assert_eq!(slice, data);
+    }
+
+    #[test]
+    fn test_is_empty() {
+        // Empty jump table
+        let empty_table = JumpTable::default();
+        assert!(empty_table.is_empty());
+        assert_eq!(empty_table.len(), 0);
+
+        // Non-empty jump table
+        let non_empty_table = JumpTable::from_slice(&[0x00], 5);
+        assert!(!non_empty_table.is_empty());
+        assert_eq!(non_empty_table.len(), 5);
+    }
+
+    #[test]
+    fn test_partial_cmp() {
+        let table1 = JumpTable::from_slice(&[0x00], 5);
+        let table2 = JumpTable::from_slice(&[0x01], 5);
+        let table3 = JumpTable::from_slice(&[0x00], 5);
+
+        assert_eq!(table1.partial_cmp(&table2), Some(Ordering::Less));
+        assert_eq!(table2.partial_cmp(&table1), Some(Ordering::Greater));
+        assert_eq!(table1.partial_cmp(&table3), Some(Ordering::Equal));
+    }
+
+    #[test]
+    fn test_eq() {
+        let table1 = JumpTable::from_slice(&[0x0D, 0x06], 13);
+        let table2 = JumpTable::from_slice(&[0x0D, 0x06], 13);
+        let table3 = JumpTable::from_slice(&[0x0D, 0x07], 13);
+
+        assert_eq!(table1, table2);
+        assert_ne!(table1, table3);
+    }
+
+    #[test]
+    fn test_hash() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let table1 = JumpTable::from_slice(&[0x0D, 0x06], 13);
+        let table2 = JumpTable::from_slice(&[0x0D, 0x06], 13);
+
+        let mut hasher1 = DefaultHasher::new();
+        table1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = DefaultHasher::new();
+        table2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        assert_eq!(hash1, hash2);
+    }
+
+    #[test]
+    fn test_cmp() {
+        let table1 = JumpTable::from_slice(&[0x00], 5);
+        let table2 = JumpTable::from_slice(&[0x01], 5);
+
+        assert_eq!(table1.cmp(&table2), Ordering::Less);
+        assert_eq!(table2.cmp(&table1), Ordering::Greater);
+        assert_eq!(table1.cmp(&table1), Ordering::Equal);
+    }
+
+    #[test]
+    fn test_clone() {
+        let table = JumpTable::from_slice(&[0x0D, 0x06], 13);
+        let cloned = table.clone();
+
+        assert_eq!(table, cloned);
+        assert_eq!(table.len(), cloned.len());
+        assert_eq!(table.as_slice(), cloned.as_slice());
+    }
+
+    #[test]
+    fn test_debug() {
+        let table = JumpTable::from_slice(&[0x0D, 0x06], 13);
+        let debug_str = format!("{:?}", table);
+
+        assert!(debug_str.contains("JumpTable"));
+        assert!(debug_str.contains("map"));
+    }
+
+    #[test]
+    fn test_default() {
+        let table1 = JumpTable::default();
+        let table2 = JumpTable::default();
+
+        // Default tables should be equal
+        assert_eq!(table1, table2);
+        assert!(table1.is_empty());
+
+        // Should reuse the same default instance (OnceLock)
+        assert_eq!(Arc::as_ptr(&table1.table), Arc::as_ptr(&table2.table));
+    }
+
+    #[test]
+    fn test_new() {
+        use bitvec::bitvec;
+
+        let mut bitvec = bitvec![u8, bitvec::order::Lsb0; 0; 10];
+        bitvec.set(0, true);
+        bitvec.set(5, true);
+
+        let table = JumpTable::new(bitvec);
+        assert_eq!(table.len(), 10);
+        assert!(table.is_valid(0));
+        assert!(table.is_valid(5));
+        assert!(!table.is_valid(1));
+    }
+
+    #[test]
+    fn test_is_valid_out_of_bounds() {
+        let table = JumpTable::from_slice(&[0x0D], 8);
+
+        // Out of bounds should return false
+        assert!(!table.is_valid(8));
+        assert!(!table.is_valid(100));
+        assert!(!table.is_valid(usize::MAX));
+    }
+
+    #[test]
+    fn test_from_slice_exact_bits() {
+        // Test when bit_len is exactly the number of bits in the slice
+        let table = JumpTable::from_slice(&[0xFF, 0xFF], 16);
+        assert_eq!(table.len(), 16);
+
+        // All bits should be valid
+        for i in 0..8 {
+            assert!(table.is_valid(i));
+        }
+    }
+
+    #[test]
+    fn test_send_sync() {
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+
+        assert_send::<JumpTable>();
+        assert_sync::<JumpTable>();
+    }
 }
 
 #[cfg(test)]

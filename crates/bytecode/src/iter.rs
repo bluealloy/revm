@@ -294,4 +294,188 @@ mod tests {
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::STOP]);
     }
+
+    #[test]
+    fn test_eip7702_bytecode_iteration() {
+        // Test that EIP7702 bytecode returns empty iterator
+        use primitives::Address;
+        let address = Address::new([0x11; 20]);
+        let bytecode = Bytecode::new_eip7702(address);
+
+        let mut iter = BytecodeIterator::new(&bytecode);
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.position(), 0);
+    }
+
+    #[test]
+    fn test_skip_to_next_opcode() {
+        // Test the skip_to_next_opcode method
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::PUSH2, 0x02, 0x03, opcode::ADD];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Skip to next opcode
+        iter.skip_to_next_opcode();
+        // Should have advanced past PUSH1 and its immediate
+        assert_eq!(iter.position(), 2);
+
+        // Skip again
+        iter.skip_to_next_opcode();
+        // Should have advanced past PUSH2 and its immediates
+        assert_eq!(iter.position(), 5);
+    }
+
+    #[test]
+    fn test_as_slice() {
+        let bytecode_data = vec![
+            opcode::PUSH1,
+            0x01,
+            opcode::ADD, // Non-terminating opcode
+        ];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Initial slice should contain all bytes including padded STOP
+        let slice = iter.as_slice();
+        assert_eq!(slice.len(), 4); // 3 original + 1 STOP padding
+
+        // After consuming one opcode (PUSH1 and its immediate)
+        iter.next();
+        let slice = iter.as_slice();
+        assert_eq!(slice.len(), 2); // ADD, STOP
+    }
+
+    #[test]
+    fn test_peek() {
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD, opcode::STOP];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Peek should return current opcode without advancing
+        assert_eq!(iter.peek(), Some(opcode::PUSH1));
+        assert_eq!(iter.peek(), Some(opcode::PUSH1)); // Still the same
+
+        // Advance and peek again
+        iter.next();
+        assert_eq!(iter.peek(), Some(opcode::ADD));
+
+        // Consume all and peek should return None
+        iter.next();
+        iter.next();
+        iter.next();
+        assert_eq!(iter.peek(), None);
+    }
+
+    #[test]
+    fn test_peek_opcode() {
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Peek should return OpCode
+        assert_eq!(iter.peek_opcode(), Some(OpCode::PUSH1));
+
+        // Advance to ADD
+        iter.next();
+        assert_eq!(iter.peek_opcode(), Some(OpCode::ADD));
+
+        // Advance to STOP (appended by analysis because ADD is non-terminating)
+        iter.next();
+        assert_eq!(iter.peek_opcode(), Some(OpCode::STOP));
+
+        // Advance to end
+        iter.next();
+        assert_eq!(iter.peek_opcode(), None);
+    }
+
+    #[test]
+    fn test_size_hint() {
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Initial size hint
+        let (lower, upper) = iter.size_hint();
+        assert_eq!(lower, 1); // At least 1 opcode
+        assert_eq!(upper, Some(4)); // 3 + STOP appended
+
+        // After consuming some opcodes
+        iter.next();
+        iter.next();
+        let (lower, upper) = iter.size_hint();
+        assert_eq!(lower, 1);
+        assert_eq!(upper, Some(1));
+
+        // After consuming all
+        iter.next();
+        let (lower, upper) = iter.size_hint();
+        assert_eq!(lower, 0);
+        assert_eq!(upper, Some(0));
+    }
+
+    #[test]
+    fn test_clone() {
+        let bytecode_data = vec![opcode::PUSH1, 0x01, opcode::ADD];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter1 = bytecode.iter_opcodes();
+        iter1.next(); // Advance iter1
+
+        let iter2 = iter1.clone();
+
+        // Both iterators should be at the same position
+        assert_eq!(iter1.position(), iter2.position());
+        assert_eq!(iter1.peek(), iter2.peek());
+    }
+
+    #[test]
+    fn test_debug() {
+        let bytecode = Bytecode::new();
+        let iter = bytecode.iter_opcodes();
+
+        let debug_str = format!("{:?}", iter);
+        assert!(debug_str.contains("BytecodeIterator"));
+    }
+
+    #[test]
+    fn test_fused_iterator() {
+        // Test that BytecodeIterator implements FusedIterator
+        let bytecode_data = vec![opcode::STOP];
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let mut iter = bytecode.iter_opcodes();
+
+        // Consume the iterator
+        while iter.next().is_some() {}
+
+        // FusedIterator guarantees that after returning None, it will always return None
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_opcode_with_no_info() {
+        // Test handling of opcodes that might not have info (edge case)
+        // Use REVERT which is a terminating opcode
+        let bytecode_data = vec![opcode::REVERT]; // A terminating opcode
+        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+
+        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+        // REVERT is terminating, so no STOP should be appended
+        assert_eq!(opcodes.len(), 1);
+        assert_eq!(opcodes[0], opcode::REVERT);
+    }
 }

@@ -171,4 +171,120 @@ mod tests {
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
         let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
     }
+
+    #[test]
+    fn test_default() {
+        let analyzed = LegacyAnalyzedBytecode::default();
+        assert_eq!(analyzed.original_len(), 0);
+        assert_eq!(analyzed.bytecode(), &Bytes::from_static(&[0]));
+        assert_eq!(analyzed.jump_table().len(), 0);
+    }
+
+    #[test]
+    fn test_original_bytes() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::ADD]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode.clone());
+
+        // Original bytes should be the same as input
+        assert_eq!(analyzed.original_bytes(), bytecode);
+        assert_eq!(analyzed.original_byte_slice(), bytecode.as_ref());
+    }
+
+    #[test]
+    fn test_analyze() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::JUMPDEST, opcode::STOP]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode.clone());
+
+        assert_eq!(analyzed.original_len(), 4);
+        // JUMPDEST at position 2 should be marked as valid jump destination
+        assert!(analyzed.jump_table().is_valid(2));
+        assert!(!analyzed.jump_table().is_valid(0));
+        assert!(!analyzed.jump_table().is_valid(1));
+    }
+
+    #[test]
+    fn test_unknown_terminating_opcode() {
+        // Test with an opcode that has no info but is at position 0x00 (which makes it terminating)
+        let bytecode = Bytes::from_static(&[0x00]); // STOP opcode
+        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 1]);
+        let analyzed = LegacyAnalyzedBytecode::new(bytecode, 1, jump_table);
+        assert_eq!(analyzed.original_len(), 1);
+    }
+
+    #[test]
+    fn test_bytecode_getter() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode);
+
+        let bytecode_ref = analyzed.bytecode();
+        assert!(bytecode_ref.len() >= 3);
+        assert_eq!(bytecode_ref[0], opcode::PUSH1);
+        assert_eq!(bytecode_ref[1], 0x01);
+        assert_eq!(bytecode_ref[2], opcode::STOP);
+    }
+
+    #[test]
+    fn test_clone() {
+        let bytecode = Bytes::from_static(&[opcode::JUMPDEST, opcode::STOP]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode);
+
+        let cloned = analyzed.clone();
+        assert_eq!(analyzed, cloned);
+        assert_eq!(analyzed.original_len(), cloned.original_len());
+        assert_eq!(analyzed.bytecode(), cloned.bytecode());
+    }
+
+    #[test]
+    fn test_debug() {
+        let bytecode = Bytes::from_static(&[opcode::STOP]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode);
+
+        let debug_str = format!("{:?}", analyzed);
+        assert!(debug_str.contains("LegacyAnalyzedBytecode"));
+    }
+
+    #[test]
+    fn test_eq() {
+        let bytecode1 = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
+        let analyzed1 = LegacyAnalyzedBytecode::analyze(bytecode1);
+
+        let bytecode2 = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
+        let analyzed2 = LegacyAnalyzedBytecode::analyze(bytecode2);
+
+        assert_eq!(analyzed1, analyzed2);
+    }
+
+    #[test]
+    fn test_hash() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
+        let analyzed = LegacyAnalyzedBytecode::analyze(bytecode);
+
+        let mut hasher = DefaultHasher::new();
+        analyzed.hash(&mut hasher);
+        let _ = hasher.finish();
+    }
+
+    #[test]
+    fn test_ord() {
+        let bytecode1 = Bytes::from_static(&[opcode::STOP]);
+        let analyzed1 = LegacyAnalyzedBytecode::analyze(bytecode1);
+
+        let bytecode2 = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
+        let analyzed2 = LegacyAnalyzedBytecode::analyze(bytecode2);
+
+        assert!(analyzed1 < analyzed2 || analyzed1 > analyzed2 || analyzed1 == analyzed2);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde() {
+        use serde::{Deserialize, Serialize};
+
+        // Test that the type implements Serialize and Deserialize traits
+        fn assert_serde<T: Serialize + for<'de> Deserialize<'de>>() {}
+        assert_serde::<LegacyAnalyzedBytecode>();
+    }
 }

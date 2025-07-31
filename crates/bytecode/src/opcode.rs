@@ -748,4 +748,408 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_opcode_display() {
+        // Test valid opcodes
+        let stop = OpCode::new(0x00).unwrap();
+        assert_eq!(format!("{}", stop), "STOP");
+
+        let add = OpCode::new(0x01).unwrap();
+        assert_eq!(format!("{}", add), "ADD");
+
+        let push1 = OpCode::new(0x60).unwrap();
+        assert_eq!(format!("{}", push1), "PUSH1");
+    }
+
+    #[test]
+    fn test_is_jumpdest() {
+        let jumpdest = OpCode::new(JUMPDEST).unwrap();
+        assert!(jumpdest.is_jumpdest());
+
+        let stop = OpCode::new(0x00).unwrap();
+        assert!(!stop.is_jumpdest());
+    }
+
+    #[test]
+    fn test_is_jumpdest_by_op() {
+        assert!(OpCode::is_jumpdest_by_op(JUMPDEST));
+        assert!(!OpCode::is_jumpdest_by_op(0x00));
+        // Test invalid opcode
+        assert!(!OpCode::is_jumpdest_by_op(0xEF));
+    }
+
+    #[test]
+    fn test_is_jump() {
+        let jump = OpCode::new(JUMP).unwrap();
+        assert!(jump.is_jump());
+
+        let stop = OpCode::new(0x00).unwrap();
+        assert!(!stop.is_jump());
+    }
+
+    #[test]
+    fn test_is_jump_by_op() {
+        assert!(OpCode::is_jump_by_op(JUMP));
+        assert!(!OpCode::is_jump_by_op(0x00));
+        // Test invalid opcode
+        assert!(!OpCode::is_jump_by_op(0xEF));
+    }
+
+    #[test]
+    fn test_is_push() {
+        for i in PUSH1..=PUSH32 {
+            let push = OpCode::new(i).unwrap();
+            assert!(push.is_push(), "PUSH{} should be push", i - PUSH1 + 1);
+        }
+
+        let stop = OpCode::new(0x00).unwrap();
+        assert!(!stop.is_push());
+    }
+
+    #[test]
+    fn test_is_push_by_op() {
+        for i in PUSH1..=PUSH32 {
+            assert!(OpCode::is_push_by_op(i));
+        }
+        assert!(!OpCode::is_push_by_op(0x00));
+        // Test invalid opcode
+        assert!(!OpCode::is_push_by_op(0xEF));
+    }
+
+    #[test]
+    fn test_new_unchecked() {
+        // Test that unchecked creation works
+        unsafe {
+            let opcode = OpCode::new_unchecked(0x00);
+            assert_eq!(opcode.get(), 0x00);
+
+            // Even invalid opcodes can be created
+            let invalid = OpCode::new_unchecked(0xEF);
+            assert_eq!(invalid.get(), 0xEF);
+        }
+    }
+
+    #[test]
+    fn test_name_by_op() {
+        assert_eq!(OpCode::name_by_op(0x00), "STOP");
+        assert_eq!(OpCode::name_by_op(0x01), "ADD");
+        // Test invalid opcode
+        assert_eq!(OpCode::name_by_op(0xEF), "Unknown");
+    }
+
+    #[test]
+    fn test_inputs_outputs() {
+        let add = OpCode::new(0x01).unwrap(); // ADD
+        assert_eq!(add.inputs(), 2);
+        assert_eq!(add.outputs(), 1);
+
+        let stop = OpCode::new(0x00).unwrap(); // STOP
+        assert_eq!(stop.inputs(), 0);
+        assert_eq!(stop.outputs(), 0);
+    }
+
+    #[test]
+    fn test_io_diff() {
+        let add = OpCode::new(0x01).unwrap(); // ADD: 2 inputs, 1 output
+        assert_eq!(add.io_diff(), -1);
+
+        let push1 = OpCode::new(0x60).unwrap(); // PUSH1: 0 inputs, 1 output
+        assert_eq!(push1.io_diff(), 1);
+
+        let stop = OpCode::new(0x00).unwrap(); // STOP: 0 inputs, 0 outputs
+        assert_eq!(stop.io_diff(), 0);
+    }
+
+    #[test]
+    fn test_info_by_op() {
+        let info = OpCode::info_by_op(0x00).unwrap();
+        assert_eq!(info.name(), "STOP");
+
+        // Test invalid opcode
+        assert!(OpCode::info_by_op(0xEF).is_none());
+    }
+
+    #[test]
+    fn test_as_usize() {
+        let stop = OpCode::new(0x00).unwrap();
+        assert_eq!(stop.as_usize(), 0);
+
+        let invalid = OpCode::new(0xFE).unwrap();
+        assert_eq!(invalid.as_usize(), 254);
+    }
+
+    #[test]
+    fn test_input_output() {
+        let add = OpCode::new(0x01).unwrap(); // ADD
+        assert_eq!(add.input_output(), (2, 1));
+
+        let push1 = OpCode::new(0x60).unwrap(); // PUSH1
+        assert_eq!(push1.input_output(), (0, 1));
+    }
+
+    #[test]
+    fn test_modifies_memory() {
+        // Test opcodes that modify memory
+        assert!(OpCode::new(EXTCODECOPY).unwrap().modifies_memory());
+        assert!(OpCode::new(MLOAD).unwrap().modifies_memory());
+        assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
+        assert!(OpCode::new(MSTORE8).unwrap().modifies_memory());
+        assert!(OpCode::new(MCOPY).unwrap().modifies_memory());
+        assert!(OpCode::new(CODECOPY).unwrap().modifies_memory());
+        assert!(OpCode::new(CALLDATACOPY).unwrap().modifies_memory());
+        assert!(OpCode::new(RETURNDATACOPY).unwrap().modifies_memory());
+        assert!(OpCode::new(CALL).unwrap().modifies_memory());
+        assert!(OpCode::new(CALLCODE).unwrap().modifies_memory());
+        assert!(OpCode::new(DELEGATECALL).unwrap().modifies_memory());
+        assert!(OpCode::new(STATICCALL).unwrap().modifies_memory());
+
+        // Test opcodes that don't modify memory
+        assert!(!OpCode::new(0x00).unwrap().modifies_memory()); // STOP
+        assert!(!OpCode::new(0x01).unwrap().modifies_memory()); // ADD
+        assert!(!OpCode::new(0x60).unwrap().modifies_memory()); // PUSH1
+    }
+
+    #[test]
+    fn test_partial_eq_u8() {
+        let stop = OpCode::new(0x00).unwrap();
+        assert!(stop == 0x00);
+        assert!(!(stop == 0x01));
+    }
+
+    #[test]
+    fn test_opcode_info_new() {
+        let info = OpCodeInfo::new("TEST_OPCODE");
+        assert_eq!(info.name(), "TEST_OPCODE");
+        assert_eq!(info.inputs(), 0);
+        assert_eq!(info.outputs(), 0);
+        assert!(!info.is_terminating());
+        assert_eq!(info.immediate_size(), 0);
+    }
+
+    #[test]
+    fn test_opcode_info_methods() {
+        // Get info from a real opcode
+        let add = OpCode::new(0x01).unwrap();
+        let info = add.info();
+
+        assert_eq!(info.name(), "ADD");
+        assert_eq!(info.inputs(), 2);
+        assert_eq!(info.outputs(), 1);
+        assert_eq!(info.io_diff(), -1);
+        assert!(!info.is_terminating());
+        assert_eq!(info.immediate_size(), 0);
+    }
+
+    #[test]
+    fn test_opcode_info_debug() {
+        let info = OpCodeInfo::new("TEST");
+        let debug_str = format!("{:?}", info);
+        assert!(debug_str.contains("TEST"));
+        assert!(debug_str.contains("inputs"));
+        assert!(debug_str.contains("outputs"));
+        assert!(debug_str.contains("terminating"));
+        assert!(debug_str.contains("immediate_size"));
+    }
+
+    #[test]
+    fn test_invalid_opcode_display() {
+        // Create an invalid opcode using unsafe
+        let invalid = unsafe { OpCode::new_unchecked(0xEF) };
+        let display = format!("{}", invalid);
+        assert!(display.starts_with("UNKNOWN"));
+        assert!(display.contains("0xEF"));
+    }
+
+    #[test]
+    #[should_panic(expected = "opcode not found")]
+    fn test_info_panic_on_invalid() {
+        // Create an invalid opcode using unsafe and try to get info
+        let invalid = unsafe { OpCode::new_unchecked(0xEF) };
+        let _ = invalid.info(); // This should panic
+    }
+
+    #[test]
+    fn test_all_terminating_opcodes() {
+        // Test that terminating opcodes are properly marked
+        assert!(OpCode::new(STOP).unwrap().info().is_terminating());
+        assert!(OpCode::new(RETURN).unwrap().info().is_terminating());
+        assert!(OpCode::new(REVERT).unwrap().info().is_terminating());
+        assert!(OpCode::new(INVALID).unwrap().info().is_terminating());
+        assert!(OpCode::new(SELFDESTRUCT).unwrap().info().is_terminating());
+
+        // Non-terminating
+        assert!(!OpCode::new(ADD).unwrap().info().is_terminating());
+        assert!(!OpCode::new(PUSH1).unwrap().info().is_terminating());
+    }
+
+    #[test]
+    fn test_push_immediate_sizes() {
+        for i in 1..=32 {
+            let push_op = OpCode::new(PUSH1 + i - 1).unwrap();
+            assert_eq!(
+                push_op.info().immediate_size(),
+                i,
+                "PUSH{} should have immediate size {}",
+                i,
+                i
+            );
+        }
+
+        // Non-push opcodes should have 0 immediate size
+        assert_eq!(OpCode::new(ADD).unwrap().info().immediate_size(), 0);
+        assert_eq!(OpCode::new(STOP).unwrap().info().immediate_size(), 0);
+    }
+
+    #[test]
+    fn test_stack_io_for_various_opcodes() {
+        // Test various opcodes for correct stack I/O
+        let test_cases = vec![
+            (STOP, 0, 0),
+            (ADD, 2, 1),
+            (MUL, 2, 1),
+            (SUB, 2, 1),
+            (DIV, 2, 1),
+            (LT, 2, 1),
+            (GT, 2, 1),
+            (PUSH1, 0, 1),
+            (PUSH32, 0, 1),
+            (DUP1, 1, 2),
+            (DUP16, 16, 17),
+            (SWAP1, 2, 2),
+            (SWAP16, 17, 17),
+            (LOG0, 2, 0),
+            (LOG4, 6, 0),
+            (CALL, 7, 1),
+            (RETURN, 2, 0),
+        ];
+
+        for (opcode, expected_inputs, expected_outputs) in test_cases {
+            let op = OpCode::new(opcode).unwrap();
+            assert_eq!(
+                op.inputs(),
+                expected_inputs,
+                "Opcode 0x{:02x} inputs mismatch",
+                opcode
+            );
+            assert_eq!(
+                op.outputs(),
+                expected_outputs,
+                "Opcode 0x{:02x} outputs mismatch",
+                opcode
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_opcode_info_serde_trait() {
+        // OpCodeInfo should have Send and Sync traits
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<OpCodeInfo>();
+    }
+
+    #[test]
+    fn test_default_opcode() {
+        // Test Default trait
+        let default_opcode = OpCode::default();
+        assert_eq!(default_opcode.get(), 0);
+        assert_eq!(default_opcode.as_str(), "STOP");
+    }
+
+    #[test]
+    fn test_opcode_traits() {
+        let op1 = OpCode::new(0x00).unwrap();
+        let op2 = OpCode::new(0x00).unwrap();
+        let op3 = OpCode::new(0x01).unwrap();
+
+        // Test Clone
+        let cloned = op1.clone();
+        assert_eq!(op1, cloned);
+
+        // Test Copy
+        let copied = op1;
+        assert_eq!(op1, copied);
+
+        // Test PartialEq
+        assert_eq!(op1, op2);
+        assert_ne!(op1, op3);
+
+        // Test Ord
+        assert!(op1 < op3);
+
+        // Test Hash
+        use std::collections::HashMap;
+        let mut map = HashMap::new();
+        map.insert(op1, "STOP");
+        assert_eq!(map.get(&op1), Some(&"STOP"));
+    }
+
+    #[test]
+    fn test_opcode_info_helpers() {
+        // These helper functions are used in the opcode macro but might not be covered
+
+        // Test immediate_size helper
+        let info = OpCodeInfo::new("TEST");
+        let info_with_size = immediate_size(info, 5);
+        assert_eq!(info_with_size.immediate_size(), 5);
+
+        // Test terminating helper
+        let info2 = OpCodeInfo::new("TEST2");
+        let info_terminating = terminating(info2);
+        assert!(info_terminating.is_terminating());
+
+        // Test stack_io helper
+        let info3 = OpCodeInfo::new("TEST3");
+        let info_io = stack_io(info3, 3, 2);
+        assert_eq!(info_io.inputs(), 3);
+        assert_eq!(info_io.outputs(), 2);
+        assert_eq!(info_io.io_diff(), -1);
+    }
+
+    #[test]
+    #[should_panic(expected = "opcode name is too long")]
+    fn test_opcode_info_name_too_long() {
+        // Create a string longer than 255 characters
+        let long_name = "a".repeat(256);
+        let _ = OpCodeInfo::new(Box::leak(long_name.into_boxed_str()));
+    }
+
+    #[test]
+    fn test_opcode_info_equality() {
+        let info1 = OpCodeInfo::new("TEST");
+        let info2 = OpCodeInfo::new("TEST");
+        let info3 = OpCodeInfo::new("OTHER");
+
+        // OpCodeInfo doesn't derive PartialEq, but we can test through OpCode
+        // Test that two infos with same properties are functionally equivalent
+        assert_eq!(info1.name(), info2.name());
+        assert_eq!(info1.inputs(), info2.inputs());
+        assert_eq!(info1.outputs(), info2.outputs());
+        assert_ne!(info1.name(), info3.name());
+    }
+
+    #[test]
+    fn test_send_sync_traits() {
+        // Verify that OpCodeInfo implements Send and Sync
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+
+        assert_send::<OpCodeInfo>();
+        assert_sync::<OpCodeInfo>();
+    }
+
+    #[test]
+    fn test_new_invalid_opcodes() {
+        // Test OpCode::new with various invalid opcodes
+        assert!(OpCode::new(0x0C).is_none()); // Unused
+        assert!(OpCode::new(0x0D).is_none()); // Unused
+        assert!(OpCode::new(0x0E).is_none()); // Unused
+        assert!(OpCode::new(0x0F).is_none()); // Unused
+        assert!(OpCode::new(0x1F).is_none()); // Unused after CLZ
+        assert!(OpCode::new(0x21).is_none()); // Unused after KECCAK256
+        assert!(OpCode::new(0x2F).is_none()); // Unused
+        assert!(OpCode::new(0x4B).is_none()); // Unused after BLOBBASEFEE
+        assert!(OpCode::new(0xEF).is_none()); // Reserved for EOF
+    }
 }

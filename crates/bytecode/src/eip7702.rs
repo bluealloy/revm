@@ -154,4 +154,67 @@ mod tests {
             bytes!("ef01000101010101010101010101010101010101010101")
         );
     }
+
+    #[test]
+    fn test_invalid_magic() {
+        // Test bytecode that doesn't start with 0xEF01 but has correct length
+        let raw = bytes!("deadbeef00000000000000000000000000000000000000");
+        assert_eq!(raw.len(), 23); // Ensure it has correct length
+        assert_eq!(
+            Eip7702Bytecode::new_raw(raw),
+            Err(Eip7702DecodeError::InvalidMagic)
+        );
+    }
+
+    #[test]
+    fn test_address_method() {
+        let address = Address::new([0x42; 20]);
+        let bytecode = Eip7702Bytecode::new(address);
+        assert_eq!(bytecode.address(), address);
+    }
+
+    #[test]
+    fn test_version_method() {
+        let address = Address::new([0x42; 20]);
+        let bytecode = Eip7702Bytecode::new(address);
+        assert_eq!(bytecode.version(), EIP7702_VERSION);
+        assert_eq!(bytecode.version(), 0);
+    }
+
+    #[test]
+    fn test_raw_method() {
+        let address = Address::new([0x42; 20]);
+        let bytecode = Eip7702Bytecode::new(address);
+        let raw = bytecode.raw();
+        assert_eq!(raw.len(), 23);
+        assert!(raw.starts_with(&EIP7702_MAGIC_BYTES));
+        assert_eq!(raw[2], EIP7702_VERSION);
+    }
+
+    #[test]
+    fn test_decode_error_display() {
+        assert_eq!(
+            Eip7702DecodeError::InvalidLength.to_string(),
+            "Eip7702 is not 23 bytes long"
+        );
+        assert_eq!(
+            Eip7702DecodeError::InvalidMagic.to_string(),
+            "Bytecode is not starting with 0xEF01"
+        );
+        assert_eq!(
+            Eip7702DecodeError::UnsupportedVersion.to_string(),
+            "Unsupported Eip7702 version."
+        );
+    }
+
+    #[test]
+    fn test_decode_error_traits() {
+        // Test Error trait
+        let err = Eip7702DecodeError::InvalidLength;
+        let _: &dyn core::error::Error = &err;
+
+        // Test Display through error
+        let err_str = format!("{}", err);
+        assert_eq!(err_str, "Eip7702 is not 23 bytes long");
+    }
 }
