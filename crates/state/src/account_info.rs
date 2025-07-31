@@ -4,7 +4,7 @@ use core::hash::{Hash, Hasher};
 use serde::{Deserialize, Deserializer, Serialize};
 
 use bytecode::Bytecode;
-use primitives::{B256, KECCAK_EMPTY, U256, hardfork};
+use primitives::{hardfork, B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
