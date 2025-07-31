@@ -16,7 +16,6 @@ pub mod bn254;
 pub mod hash;
 pub mod identity;
 pub mod interface;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -55,7 +54,6 @@ cfg_if::cfg_if! {
 #[cfg(feature = "gmp")]
 use aurora_engine_modexp as _;
 
-use cfg_if::cfg_if;
 use core::hash::Hash;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet, OnceLock};
 use std::vec::Vec;
@@ -164,21 +162,10 @@ impl Precompiles {
         static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::berlin().clone();
-
-            // EIP-4844: Shard Blob Transactions
-            cfg_if! {
-                if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
-                    let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
-                } else {
-                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
-                }
-            }
-
-
             precompiles.extend([
-                precompile,
+                // EIP-4844: Shard Blob Transactions
+                kzg_point_evaluation::POINT_EVALUATION,
             ]);
-
             precompiles
         })
     }

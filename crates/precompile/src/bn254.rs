@@ -6,12 +6,14 @@ use crate::{
 };
 use std::vec::Vec;
 
+#[allow(dead_code)]
+pub mod arkworks;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
         pub(crate) mod substrate;
         pub(crate) use substrate as crypto_backend;
     } else {
-        pub(crate) mod arkworks;
         pub(crate) use arkworks as crypto_backend;
     }
 }
