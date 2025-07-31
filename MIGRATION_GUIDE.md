@@ -1,3 +1,9 @@
+# v83 tag (revm v28.0.0) from v82 tag (revm v27.1.0)
+
+* `SystemCallEvm` functions got renamed and old ones are deprecated. Renaming is done to align it with other API calls.
+   * `transact_system_call_finalize` is now `system_call`.
+   * `transact_system_call` is now `system_call_one`.
+
 # v82 tag (revm v27.1.0) from v81 tag (revm v27.0.3)
 
 * `ContextTr` gained `Host` supertrait.

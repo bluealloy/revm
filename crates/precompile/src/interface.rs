@@ -88,22 +88,22 @@ pub trait Crypto: Send + Sync + Debug {
         output
     }
 
-    /// BN128 elliptic curve addition.
+    /// BN254 elliptic curve addition.
     #[inline]
-    fn bn128_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
-        crate::bn128::crypto_backend::g1_point_add(p1, p2)
+    fn bn254_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
+        crate::bn254::crypto_backend::g1_point_add(p1, p2)
     }
 
-    /// BN128 elliptic curve scalar multiplication.
+    /// BN254 elliptic curve scalar multiplication.
     #[inline]
-    fn bn128_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
-        crate::bn128::crypto_backend::g1_point_mul(point, scalar)
+    fn bn254_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
+        crate::bn254::crypto_backend::g1_point_mul(point, scalar)
     }
 
-    /// BN128 pairing check.
+    /// BN254 pairing check.
     #[inline]
-    fn bn128_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
-        crate::bn128::crypto_backend::pairing_check(pairs)
+    fn bn254_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+        crate::bn254::crypto_backend::pairing_check(pairs)
     }
 
     /// secp256k1 ECDSA signature recovery.
@@ -217,12 +217,12 @@ pub enum PrecompileError {
     ModexpModOverflow,
     /// Modexp limit all input sizes.
     ModexpEip7823LimitSize,
-    /// Bn128 errors
-    Bn128FieldPointNotAMember,
-    /// Bn128 affine g failed to create
-    Bn128AffineGFailedToCreate,
-    /// Bn128 pair length
-    Bn128PairLength,
+    /// Bn254 errors
+    Bn254FieldPointNotAMember,
+    /// Bn254 affine g failed to create
+    Bn254AffineGFailedToCreate,
+    /// Bn254 pair length
+    Bn254PairLength,
     // Blob errors
     /// The input length is not exactly 192 bytes
     BlobInvalidInputLength,
@@ -260,9 +260,9 @@ impl fmt::Display for PrecompileError {
             Self::ModexpBaseOverflow => "modexp base overflow",
             Self::ModexpModOverflow => "modexp mod overflow",
             Self::ModexpEip7823LimitSize => "Modexp limit all input sizes.",
-            Self::Bn128FieldPointNotAMember => "field point not a member of bn128 curve",
-            Self::Bn128AffineGFailedToCreate => "failed to create affine g point for bn128 curve",
-            Self::Bn128PairLength => "bn128 invalid pair length",
+            Self::Bn254FieldPointNotAMember => "field point not a member of bn254 curve",
+            Self::Bn254AffineGFailedToCreate => "failed to create affine g point for bn254 curve",
+            Self::Bn254PairLength => "bn254 invalid pair length",
             Self::BlobInvalidInputLength => "invalid blob input length",
             Self::BlobMismatchedVersion => "mismatched blob version",
             Self::BlobVerifyKzgProofFailed => "verifying blob kzg proof failed",
