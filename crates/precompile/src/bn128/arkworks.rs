@@ -1,3 +1,4 @@
+//! BN128 precompile using Arkworks BLS12-381 implementation.
 use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
 use crate::PrecompileError;
 use std::vec::Vec;

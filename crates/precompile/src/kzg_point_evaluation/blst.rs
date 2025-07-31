@@ -1,10 +1,15 @@
+//! KZG point evaluation precompile using BLST BLS12-381 implementation.
+use crate::bls12_381::blst::{
+    p1_add_or_double, p1_from_affine, p1_scalar_mul, p1_to_affine, p2_add_or_double,
+    p2_from_affine, p2_scalar_mul, p2_to_affine, pairing_check,
+};
+use crate::bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES;
 use crate::PrecompileError;
 use ::blst::{
-    blst_fp12, blst_fp12_is_one, blst_miller_loop, blst_p1, blst_p1_affine, blst_p1_affine_in_g1,
-    blst_p1_affine_on_curve, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2_affine,
-    blst_scalar, blst_scalar_from_bendian,
+    blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
+    blst_scalar_fr_check, blst_scalar_from_bendian,
 };
-use primitives::hex_literal::hex;
+//use blst::{blst_fp12, blst_fp12_is_one, blst_miller_loop, blst_scalar_fr_check};
 use std::string::ToString;
 
 /// Verify KZG proof using BLST BLS12-381 implementation.
@@ -44,29 +49,23 @@ pub fn verify_kzg_proof(
     let g2 = get_g2_generator();
 
     // Compute P_minus_y = commitment - [y]G₁
-    let y_g1 = scalar_mul_g1(&g1, &y_scalar);
+    let y_g1 = p1_scalar_mul(&g1, &y_scalar);
     let p_minus_y = p1_sub_affine(&commitment_point, &y_g1);
 
     // Compute X_minus_z = [τ]G₂ - [z]G₂
-    let z_g2 = scalar_mul_g2(&g2, &z_scalar);
+    let z_g2 = p2_scalar_mul(&g2, &z_scalar);
     let x_minus_z = p2_sub_affine(&tau_g2, &z_g2);
 
     // Verify: P - y = Q * (X - z)
     // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
     let neg_g2 = p2_neg(&g2);
 
-    pairing_check_2(&p_minus_y, &neg_g2, &proof_point, &x_minus_z)
+    pairing_check(&[(p_minus_y, neg_g2), (proof_point, x_minus_z)])
 }
 
 /// Get the trusted setup G2 point [τ]₂ from the Ethereum KZG ceremony.
 /// This is g2_monomial_1 from trusted_setup_4096.json
 fn get_trusted_setup_g2() -> blst_p2_affine {
-    // The trusted setup G2 point [τ]₂ from the Ethereum KZG ceremony (compressed format)
-    // Taken from: https://github.com/ethereum/consensus-specs/blob/adc514a1c29532ebc1a67c71dc8741a2fdac5ed4/presets/mainnet/trusted_setups/trusted_setup_4096.json#L8200C6-L8200C200
-    const TRUSTED_SETUP_TAU_G2_BYTES: &[u8; 96] = &hex!(
-        "b5bfd7dd8cdeb128843bc287230af38926187075cbfbefa81009a2ce615ac53d2914e5870cb452d2afaaab24f3499f72185cbfee53492714734429b7b38608e23926c911cceceac9a36851477ba4c60b087041de621000edc98edada20c1def2"
-    );
-
     // For compressed G2, we need to decompress
     let mut g2_affine = blst_p2_affine::default();
     unsafe {
@@ -125,53 +124,13 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileErro
         blst_scalar_from_bendian(&mut scalar, bytes.as_ptr());
     }
 
-    // Check if the scalar is canonical by converting back and comparing
-    let mut bytes_roundtrip = [0u8; 32];
-    unsafe {
-        blst::blst_bendian_from_scalar(bytes_roundtrip.as_mut_ptr(), &scalar);
-    }
-
-    if bytes_roundtrip != *bytes {
+    if unsafe { !blst_scalar_fr_check(&scalar) } {
         return Err(PrecompileError::Other(
             "Non-canonical scalar field element".to_string(),
         ));
     }
 
     Ok(scalar)
-}
-
-/// Scalar multiplication for G1 points
-fn scalar_mul_g1(point: &blst_p1_affine, scalar: &blst_scalar) -> blst_p1_affine {
-    let p_jacobian = p1_from_affine(point);
-    let mut result = blst_p1::default();
-
-    unsafe {
-        blst_p1_mult(
-            &mut result,
-            &p_jacobian,
-            scalar.b.as_ptr(),
-            scalar.b.len() * 8,
-        );
-    }
-
-    p1_to_affine(&result)
-}
-
-/// Scalar multiplication for G2 points
-fn scalar_mul_g2(point: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
-    let p_jacobian = p2_from_affine(point);
-    let mut result = ::blst::blst_p2::default();
-
-    unsafe {
-        ::blst::blst_p2_mult(
-            &mut result,
-            &p_jacobian,
-            scalar.b.as_ptr(),
-            scalar.b.len() * 8,
-        );
-    }
-
-    p2_to_affine(&result)
 }
 
 /// Subtract two G1 points in affine form
@@ -183,10 +142,7 @@ fn p1_sub_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
     let neg_b = p1_neg(b);
 
     // Add a + (-b)
-    let mut result = blst_p1::default();
-    unsafe {
-        blst::blst_p1_add_or_double_affine(&mut result, &a_jacobian, &neg_b);
-    }
+    let result = p1_add_or_double(&a_jacobian, &neg_b);
 
     p1_to_affine(&result)
 }
@@ -200,10 +156,7 @@ fn p2_sub_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
     let neg_b = p2_neg(b);
 
     // Add a + (-b)
-    let mut result = ::blst::blst_p2::default();
-    unsafe {
-        blst::blst_p2_add_or_double_affine(&mut result, &a_jacobian, &neg_b);
-    }
+    let result = p2_add_or_double(&a_jacobian, &neg_b);
 
     p2_to_affine(&result)
 }
@@ -226,72 +179,4 @@ fn p2_neg(p: &blst_p2_affine) -> blst_p2_affine {
         ::blst::blst_p2_cneg(&mut p_jacobian, true);
     }
     p2_to_affine(&p_jacobian)
-}
-
-/// Convert affine to Jacobian for G1
-fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
-    let mut p = blst_p1::default();
-    unsafe {
-        blst_p1_from_affine(&mut p, p_affine);
-    }
-    p
-}
-
-/// Convert Jacobian to affine for G1
-fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
-    let mut p_affine = blst_p1_affine::default();
-    unsafe {
-        blst_p1_to_affine(&mut p_affine, p);
-    }
-    p_affine
-}
-
-/// Convert affine to Jacobian for G2
-fn p2_from_affine(p_affine: &blst_p2_affine) -> blst::blst_p2 {
-    let mut p = blst::blst_p2::default();
-    unsafe {
-        blst::blst_p2_from_affine(&mut p, p_affine);
-    }
-    p
-}
-
-/// Convert Jacobian to affine for G2
-fn p2_to_affine(p: &blst::blst_p2) -> blst_p2_affine {
-    let mut p_affine = blst_p2_affine::default();
-    unsafe {
-        blst::blst_p2_to_affine(&mut p_affine, p);
-    }
-    p_affine
-}
-
-/// Perform pairing check for exactly 2 pairs
-/// Specialized for KZG verification: e(g1_1, g2_1) * e(g1_2, g2_2) == 1
-#[inline]
-fn pairing_check_2(
-    g1_1: &blst_p1_affine,
-    g2_1: &blst_p2_affine,
-    g1_2: &blst_p1_affine,
-    g2_2: &blst_p2_affine,
-) -> bool {
-    // Compute both miller loops and multiply inline
-    let mut ml_product = blst_fp12::default();
-    unsafe {
-        // First miller loop
-        let mut ml1 = blst_fp12::default();
-        blst_miller_loop(&mut ml1, g2_1, g1_1);
-
-        // Second miller loop
-        let mut ml2 = blst_fp12::default();
-        blst_miller_loop(&mut ml2, g2_2, g1_2);
-
-        // Multiply results
-        ::blst::blst_fp12_mul(&mut ml_product, &ml1, &ml2);
-
-        // Apply final exponentiation
-        let mut final_result = blst_fp12::default();
-        ::blst::blst_final_exp(&mut final_result, &ml_product);
-
-        // Check if result equals 1
-        blst_fp12_is_one(&final_result)
-    }
 }
