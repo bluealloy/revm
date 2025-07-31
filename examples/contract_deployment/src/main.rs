@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     println!("storage U256(0) at {address}:  {storage0:#?}");
     assert_eq!(
         storage0.present_value(),
-        param.try_into()?,
+        StorageValue::try_from(param)?,
         "{:#?}",
         output.result
     );
