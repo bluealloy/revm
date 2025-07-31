@@ -437,7 +437,7 @@ mod tests {
     #[test]
     fn test_debug() {
         let bytecode = Bytecode::new();
-        let debug_str = format!("{:?}", bytecode);
+        let debug_str = format!("{bytecode:?}");
         assert!(debug_str.contains("LegacyAnalyzed"));
     }
 

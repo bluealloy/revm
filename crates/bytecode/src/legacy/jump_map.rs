@@ -269,7 +269,7 @@ mod tests {
     #[test]
     fn test_debug() {
         let table = JumpTable::from_slice(&[0x0D, 0x06], 13);
-        let debug_str = format!("{:?}", table);
+        let debug_str = format!("{table:?}");
 
         assert!(debug_str.contains("JumpTable"));
         assert!(debug_str.contains("map"));

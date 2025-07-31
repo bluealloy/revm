@@ -239,7 +239,7 @@ mod tests {
         let bytecode = Bytes::from_static(&[opcode::STOP]);
         let analyzed = LegacyAnalyzedBytecode::analyze(bytecode);
 
-        let debug_str = format!("{:?}", analyzed);
+        let debug_str = format!("{analyzed:?}");
         assert!(debug_str.contains("LegacyAnalyzedBytecode"));
     }
 
@@ -275,7 +275,8 @@ mod tests {
         let bytecode2 = Bytes::from_static(&[opcode::PUSH1, 0x01, opcode::STOP]);
         let analyzed2 = LegacyAnalyzedBytecode::analyze(bytecode2);
 
-        assert!(analyzed1 < analyzed2 || analyzed1 > analyzed2 || analyzed1 == analyzed2);
+        // Test that comparison operations work correctly
+        assert_ne!(analyzed1, analyzed2);
     }
 
     #[cfg(feature = "serde")]

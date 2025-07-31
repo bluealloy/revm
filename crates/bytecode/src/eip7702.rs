@@ -214,7 +214,7 @@ mod tests {
         let _: &dyn core::error::Error = &err;
 
         // Test Display through error
-        let err_str = format!("{}", err);
+        let err_str = format!("{err}");
         assert_eq!(err_str, "Eip7702 is not 23 bytes long");
     }
 }

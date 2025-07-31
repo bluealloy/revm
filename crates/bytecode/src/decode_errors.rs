@@ -56,21 +56,18 @@ mod tests {
     fn test_display() {
         // Test Display implementation for each error variant
         let invalid_length = BytecodeDecodeError::Eip7702(Eip7702DecodeError::InvalidLength);
-        assert_eq!(
-            format!("{}", invalid_length),
-            "Eip7702 is not 23 bytes long"
-        );
+        assert_eq!(format!("{invalid_length}"), "Eip7702 is not 23 bytes long");
 
         let invalid_magic = BytecodeDecodeError::Eip7702(Eip7702DecodeError::InvalidMagic);
         assert_eq!(
-            format!("{}", invalid_magic),
+            format!("{invalid_magic}"),
             "Bytecode is not starting with 0xEF01"
         );
 
         let unsupported_version =
             BytecodeDecodeError::Eip7702(Eip7702DecodeError::UnsupportedVersion);
         assert_eq!(
-            format!("{}", unsupported_version),
+            format!("{unsupported_version}"),
             "Unsupported Eip7702 version."
         );
     }
@@ -86,7 +83,7 @@ mod tests {
     #[test]
     fn test_debug_trait() {
         let error = BytecodeDecodeError::Eip7702(Eip7702DecodeError::InvalidMagic);
-        let debug_str = format!("{:?}", error);
+        let debug_str = format!("{error:?}");
         assert!(debug_str.contains("Eip7702"));
         assert!(debug_str.contains("InvalidMagic"));
     }
@@ -94,7 +91,7 @@ mod tests {
     #[test]
     fn test_clone() {
         let error = BytecodeDecodeError::Eip7702(Eip7702DecodeError::UnsupportedVersion);
-        let cloned = error.clone();
+        let cloned = error;
         assert_eq!(error, cloned);
     }
 

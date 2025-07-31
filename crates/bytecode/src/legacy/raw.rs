@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn test_debug() {
         let raw = LegacyRawBytecode(bytes!("6060"));
-        let debug_str = format!("{:?}", raw);
+        let debug_str = format!("{raw:?}");
         assert!(debug_str.contains("LegacyRawBytecode"));
         assert!(debug_str.contains("6060"));
     }

@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn test_opcode_error_debug() {
         let err = OpCodeError(());
-        let debug_str = format!("{:?}", err);
+        let debug_str = format!("{err:?}");
         assert_eq!(debug_str, "OpCodeError(())");
     }
 
@@ -114,9 +114,7 @@ mod tests {
                     assert_eq!(
                         OpCode::parse(name),
                         Some(opcode),
-                        "Failed to parse {} back to opcode 0x{:02x}",
-                        name,
-                        byte
+                        "Failed to parse {name} back to opcode 0x{byte:02x}"
                     );
                 }
             }
@@ -130,14 +128,12 @@ mod tests {
             assert_eq!(
                 OpCode::parse(name),
                 Some(opcode),
-                "Failed to parse {} from NAME_TO_OPCODE",
-                name
+                "Failed to parse {name} from NAME_TO_OPCODE"
             );
             assert_eq!(
                 OpCode::from_str(name),
                 Ok(opcode),
-                "Failed to parse {} via FromStr",
-                name
+                "Failed to parse {name} via FromStr"
             );
         }
     }

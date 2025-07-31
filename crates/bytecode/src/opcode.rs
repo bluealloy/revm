@@ -753,13 +753,13 @@ mod tests {
     fn test_opcode_display() {
         // Test valid opcodes
         let stop = OpCode::new(0x00).unwrap();
-        assert_eq!(format!("{}", stop), "STOP");
+        assert_eq!(format!("{stop}"), "STOP");
 
         let add = OpCode::new(0x01).unwrap();
-        assert_eq!(format!("{}", add), "ADD");
+        assert_eq!(format!("{add}"), "ADD");
 
         let push1 = OpCode::new(0x60).unwrap();
-        assert_eq!(format!("{}", push1), "PUSH1");
+        assert_eq!(format!("{push1}"), "PUSH1");
     }
 
     #[test]
@@ -914,7 +914,7 @@ mod tests {
     fn test_partial_eq_u8() {
         let stop = OpCode::new(0x00).unwrap();
         assert!(stop == 0x00);
-        assert!(!(stop == 0x01));
+        assert!((stop != 0x01));
     }
 
     #[test]
@@ -944,7 +944,7 @@ mod tests {
     #[test]
     fn test_opcode_info_debug() {
         let info = OpCodeInfo::new("TEST");
-        let debug_str = format!("{:?}", info);
+        let debug_str = format!("{info:?}");
         assert!(debug_str.contains("TEST"));
         assert!(debug_str.contains("inputs"));
         assert!(debug_str.contains("outputs"));
@@ -956,7 +956,7 @@ mod tests {
     fn test_invalid_opcode_display() {
         // Create an invalid opcode using unsafe
         let invalid = unsafe { OpCode::new_unchecked(0xEF) };
-        let display = format!("{}", invalid);
+        let display = format!("{invalid}");
         assert!(display.starts_with("UNKNOWN"));
         assert!(display.contains("0xEF"));
     }
@@ -990,9 +990,7 @@ mod tests {
             assert_eq!(
                 push_op.info().immediate_size(),
                 i,
-                "PUSH{} should have immediate size {}",
-                i,
-                i
+                "PUSH{i} should have immediate size {i}"
             );
         }
 
@@ -1029,14 +1027,12 @@ mod tests {
             assert_eq!(
                 op.inputs(),
                 expected_inputs,
-                "Opcode 0x{:02x} inputs mismatch",
-                opcode
+                "Opcode 0x{opcode:02x} inputs mismatch"
             );
             assert_eq!(
                 op.outputs(),
                 expected_outputs,
-                "Opcode 0x{:02x} outputs mismatch",
-                opcode
+                "Opcode 0x{opcode:02x} outputs mismatch"
             );
         }
     }
@@ -1064,7 +1060,7 @@ mod tests {
         let op3 = OpCode::new(0x01).unwrap();
 
         // Test Clone
-        let cloned = op1.clone();
+        let cloned = op1;
         assert_eq!(op1, cloned);
 
         // Test Copy

@@ -444,7 +444,7 @@ mod tests {
         let bytecode = Bytecode::new();
         let iter = bytecode.iter_opcodes();
 
-        let debug_str = format!("{:?}", iter);
+        let debug_str = format!("{iter:?}");
         assert!(debug_str.contains("BytecodeIterator"));
     }
 
