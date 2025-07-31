@@ -1,5 +1,6 @@
-//! EIP-4844 constants
+//! EIP-4844: Shard Blob Transactions
 //!
+//! Constants for blob transaction support in Cancun and Prague hard forks.
 
 /// First version of the blob
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
