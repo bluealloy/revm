@@ -1,4 +1,6 @@
-//! EIP-3860: Limit and meter initcode
+//! EIP-3860: Limit and Meter Initcode
+//!
+//! Introduces limits and gas metering for contract creation code.
 
 use crate::eip170;
 

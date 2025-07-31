@@ -1,5 +1,6 @@
-//! EIP-7825: Transaction Gas Limit Cap  
-//! Introduce a protocol-level cap on the maximum gas used by a transaction to 16 777 216.
+//! EIP-7825: Transaction Gas Limit Cap
+//!
+//! Introduces a protocol-level cap on the maximum gas used by a transaction.
 
 /// Transaction gas limit cap.
 ///

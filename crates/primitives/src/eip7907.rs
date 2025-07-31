@@ -1,4 +1,6 @@
-//! TODO dont have specific EIP. It is part of: EIP-7907: Meter Contract Code Size And Increase Limit
+//! EIP-7907: Meter Contract Code Size And Increase Limit (Prague)
+//!
+//! This EIP introduces updated code size limits that apply starting from the Prague hard fork.
 
 /// By default the limit is `0xC000` (49_152 bytes).
 pub const MAX_CODE_SIZE: usize = 0xC000;

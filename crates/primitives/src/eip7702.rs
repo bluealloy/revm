@@ -1,4 +1,6 @@
-//! EIP-7702 constants
+//! EIP-7702: Set EOA Account Code
+//!
+//! Constants for account authorization and delegation functionality.
 
 /// Base cost of updating authorized account.
 pub const PER_AUTH_BASE_COST: u64 = 12500;
