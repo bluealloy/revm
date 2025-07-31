@@ -14,8 +14,8 @@ use std::string::ToString;
 
 /// Verify KZG proof using BLST BLS12-381 implementation.
 ///
-/// https://github.com/ethereum/EIPs/blob/4d2a00692bb131366ede1a16eced2b0e25b1bf99/EIPS/eip-4844.md?plain=1#L203
-/// https://github.com/ethereum/consensus-specs/blob/master/specs/deneb/polynomial-commitments.md#verify_kzg_proof_impl
+/// <https://github.com/ethereum/EIPs/blob/4d2a00692bb131366ede1a16eced2b0e25b1bf99/EIPS/eip-4844.md?plain=1#L203>
+/// <https://github.com/ethereum/consensus-specs/blob/master/specs/deneb/polynomial-commitments.md#verify_kzg_proof_impl>
 #[inline]
 pub fn verify_kzg_proof(
     commitment: &[u8; 48],
@@ -63,7 +63,7 @@ pub fn verify_kzg_proof(
     pairing_check(&[(p_minus_y, neg_g2), (proof_point, x_minus_z)])
 }
 
-/// Get the trusted setup G2 point [τ]₂ from the Ethereum KZG ceremony.
+/// Get the trusted setup G2 point `[τ]₂` from the Ethereum KZG ceremony.
 /// This is g2_monomial_1 from trusted_setup_4096.json
 fn get_trusted_setup_g2() -> blst_p2_affine {
     // For compressed G2, we need to decompress
