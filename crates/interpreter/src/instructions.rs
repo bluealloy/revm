@@ -146,6 +146,7 @@ mod tail {
                     host: &mut H,
                     ip: *const u8,
                 ) -> InstructionReturn {
+                    eprintln!("ip={ip:p} - {}", stringify!($instr));
                     let mut cx = InstructionContext { interpreter, host, ip };
                     let ret = $instr_fn(&mut cx);
                     if !ret.can_continue() {
@@ -161,13 +162,14 @@ mod tail {
             )*
 
             pub(super) const fn table<W: InterpreterTypes, H: Host + ?Sized>() -> InstructionTable<W, H> {
-                const {
-                    let mut table: InstructionTable<W, H> = [conv(self::UNKNOWN); 256];
-                    $(
-                        table[bytecode::opcode::$instr as usize] = conv(self::$instr);
-                    )*
-                    table
-                };
+                // const {
+                //     let mut table: InstructionTable<W, H> = [conv(self::UNKNOWN); 256];
+                //     $(
+                //         table[bytecode::opcode::$instr as usize] = conv(self::$instr);
+                //     )*
+                //     table
+                // };
+                // TODO
                 super::cx::table::<W, H>()
             }
         };
